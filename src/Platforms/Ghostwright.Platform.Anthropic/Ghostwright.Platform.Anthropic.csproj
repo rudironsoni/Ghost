@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\Core\Ghostwright\Ghostwright.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghostwright.Contracts\Ghostwright.Contracts.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghostwright.Contracts.Inference\Ghostwright.Contracts.Inference.csproj" />
+    <ProjectReference Include="..\..\Hosting\Ghostwright.Hosting\Ghostwright.Hosting.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Options" />

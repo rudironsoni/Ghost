@@ -9,9 +9,8 @@ namespace Ghostwright.Platform.OpenAI.Tests
         public void Defaults_AreReasonable()
         {
             var opts = new OpenAIOptions();
-            opts.ApiKey.Should().BeNull();
-            opts.BaseUrl.Should().BeNull();
-            opts.Timeout.Should().BeGreaterOrEqualTo(System.TimeSpan.Zero);
+            opts.BaseUrl.Should().NotBeNull();
+            opts.ResponseTimeout.Should().BeGreaterOrEqualTo(System.TimeSpan.Zero);
         }
 
         [Fact]
@@ -19,13 +18,13 @@ namespace Ghostwright.Platform.OpenAI.Tests
         {
             var opts = new OpenAIOptions
             {
-                ApiKey = "key",
-                BaseUrl = "https://api.openai.com",
-                Timeout = System.TimeSpan.FromSeconds(5)
+                BaseUrl = "https://chatgpt.com",
+                ResponseTimeout = System.TimeSpan.FromSeconds(5),
+                DefaultModel = "gpt-3"
             };
-            opts.ApiKey.Should().Be("key");
-            opts.BaseUrl.Should().Be("https://api.openai.com");
-            opts.Timeout.Should().Be(System.TimeSpan.FromSeconds(5));
+            opts.BaseUrl.Should().Be("https://chatgpt.com");
+            opts.ResponseTimeout.Should().Be(System.TimeSpan.FromSeconds(5));
+            opts.DefaultModel.Should().Be("gpt-3");
         }
     }
 }

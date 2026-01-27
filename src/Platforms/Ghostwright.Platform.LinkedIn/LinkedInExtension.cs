@@ -1,12 +1,13 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Ghostwright.Hosting;
 
 namespace Ghostwright.Platform.LinkedIn;
 
 /// <summary>
 /// Registers LinkedIn-related clients.
 /// </summary>
-public sealed class LinkedInExtension : Ghostwright.Contracts.IExtension
+public sealed class LinkedInExtension : IExtension
 {
     public string Name => "LinkedIn";
     public Version Version => new(1, 0, 0);

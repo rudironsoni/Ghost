@@ -25,7 +25,19 @@ public sealed class LinkedInJobClient : IJobClient
 
     public Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(criteria);
+
+        var list = new List<JobListing>();
+        // Reuse the async enumerable search implementation
+        var e = SearchJobsAsync(criteria.Query ?? string.Empty, criteria.Location ?? string.Empty, criteria.MaxResults, ct);
+        return Task.Run(async () =>
+        {
+            await foreach (var item in e.WithCancellation(ct))
+            {
+                list.Add(item);
+            }
+            return (IReadOnlyList<JobListing>)list;
+        }, ct);
     }
 
     public Task<JobListing> GetJobDetailsAsync(string jobId, CancellationToken ct = default)
@@ -35,7 +47,65 @@ public sealed class LinkedInJobClient : IJobClient
 
     public Task<JobApplication> ApplyAsync(string jobId, ApplicationDetails details, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(jobId);
+        ArgumentNullException.ThrowIfNull(details);
+
+        return ApplyInternalAsync(jobId, details, ct);
+    }
+
+    private async Task<JobApplication> ApplyInternalAsync(string jobId, ApplicationDetails details, CancellationToken ct)
+    {
+        var page = await _session.NewPageAsync(ct: ct);
+        try
+        {
+            var url = $"{_options.BaseUrl}/jobs/view/{jobId}";
+            await page.NavigateAsync(url, ct: ct);
+            await page.WaitForLoadStateAsync(ct: ct);
+
+            // Try to find a button that contains the text "Easy Apply"
+            var buttons = await page.QuerySelectorAllAsync("button", ct: ct);
+            IElement? applyBtn = null;
+            foreach (var b in buttons)
+            {
+                try
+                {
+                    var txt = await b.GetTextContentAsync(ct) ?? string.Empty;
+                    if (!string.IsNullOrEmpty(txt) && txt.Contains("Easy Apply", StringComparison.OrdinalIgnoreCase))
+                    {
+                        applyBtn = b;
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LinkedInLog.LogFailedToParseJobNode(_logger, ex);
+                }
+            }
+
+            if (applyBtn is null)
+            {
+                // No easy apply button found - indicate not applied
+                return null!; // per spec: return null when button not found
+            }
+
+            await applyBtn.ClickAsync(ct: ct);
+            // Wait a short moment for any potential modal or navigation
+            try { await page.WaitForLoadStateAsync(ct: ct); } catch { }
+
+            return new JobApplication
+            {
+                Id = Guid.NewGuid().ToString(),
+                JobId = jobId,
+                ApplicantId = details.ApplicantEmail ?? string.Empty,
+                Status = "Applied",
+                SubmittedAt = DateTimeOffset.UtcNow,
+                Details = details
+            };
+        }
+        finally
+        {
+            try { await page.DisposeAsync(); } catch { }
+        }
     }
 
     public Task<IReadOnlyList<JobApplication>> GetApplicationsAsync(ApplicationsFilter? filter = null, CancellationToken ct = default)
