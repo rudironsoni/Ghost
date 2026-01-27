@@ -71,6 +71,6 @@ public sealed class LinkedInNewsClient : INewsClient
     public Task<IReadOnlyList<NewsArticle>> SearchAsync(string query, Ghostwright.Contracts.News.NewsSearchOptions? options = null, CancellationToken ct = default)
     {
         // LinkedIn does not provide open article search; reuse feed scraping as fallback.
-        return GetArticlesAsync(new Ghostwright.Contracts.News.NewsFilter { Limit = options?.Limit ?? 20 }, ct: ct);
+        return GetArticlesAsync(new Ghostwright.Contracts.News.NewsFilter { MaxResults = options?.MaxResults ?? 20 }, ct: ct);
     }
 }

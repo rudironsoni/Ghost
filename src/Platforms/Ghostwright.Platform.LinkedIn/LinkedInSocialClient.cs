@@ -159,8 +159,10 @@ public sealed class LinkedInSocialClient : ISocialClient
             {
                 try
                 {
-                    var id = await n.QuerySelectorAsync("a", ct)?.GetAttributeAsync("href", ct) ?? string.Empty;
-                    var name = await n.QuerySelectorAsync(".mn-connection-card__name", ct)?.GetTextContentAsync(ct) ?? string.Empty;
+                    var aEl = await n.QuerySelectorAsync("a", ct);
+                    var id = aEl is not null ? await aEl.GetAttributeAsync("href", ct) ?? string.Empty : string.Empty;
+                    var nameEl = await n.QuerySelectorAsync(".mn-connection-card__name", ct);
+                    var name = nameEl is not null ? await nameEl.GetTextContentAsync(ct) ?? string.Empty : string.Empty;
                     list.Add(new Ghostwright.Contracts.Social.SocialConnection { Id = id, FromProfileId = string.Empty, ToProfileId = string.Empty });
                 }
                 catch { }
