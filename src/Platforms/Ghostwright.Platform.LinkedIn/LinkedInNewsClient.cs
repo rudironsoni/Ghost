@@ -38,9 +38,18 @@ public sealed class LinkedInNewsClient : INewsClient
                 try
                 {
                     var titleEl = await n.QuerySelectorAsync("h3", ct);
-                    var title = await titleEl?.GetTextContentAsync(ct) ?? string.Empty;
+                    string title;
+                    if (titleEl is not null)
+                        title = await titleEl.GetTextContentAsync(ct) ?? string.Empty;
+                    else
+                        title = string.Empty;
+
                     var aEl = await n.QuerySelectorAsync("a", ct);
-                    var url = await aEl?.GetAttributeAsync("href", ct) ?? string.Empty;
+                    string url;
+                    if (aEl is not null)
+                        url = await aEl.GetAttributeAsync("href", ct) ?? string.Empty;
+                    else
+                        url = string.Empty;
                     list.Add(new NewsArticle { Id = Guid.NewGuid().ToString(), Title = title, Url = url });
                 }
                 catch { }

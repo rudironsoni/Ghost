@@ -72,14 +72,19 @@ public sealed class LinkedInJobClient : IJobClient
                 if (count++ >= limit) break;
                 try
                 {
-                    var id = await n.GetAttributeAsync("data-id", ct);
+                    var idEl = await n.QuerySelectorAsync("[data-id]", ct);
+                    string id = idEl is not null ? await idEl.GetAttributeAsync("data-id", ct) ?? Guid.NewGuid().ToString() : Guid.NewGuid().ToString();
+
                     var titleEl = await n.QuerySelectorAsync(".job-card-list__title", ct);
-                    var title = await titleEl?.GetTextContentAsync(ct) ?? string.Empty;
+                    string title = titleEl is not null ? await titleEl.GetTextContentAsync(ct) ?? string.Empty : string.Empty;
+
                     var companyEl = await n.QuerySelectorAsync(".job-card-container__company-name", ct);
-                    var company = await companyEl?.GetTextContentAsync(ct) ?? string.Empty;
+                    string company = companyEl is not null ? await companyEl.GetTextContentAsync(ct) ?? string.Empty : string.Empty;
+
                     var locationEl = await n.QuerySelectorAsync(".job-card-container__metadata-item", ct);
-                    var locationText = await locationEl?.GetTextContentAsync(ct) ?? string.Empty;
-                    list.Add(new JobListing { Id = id ?? Guid.NewGuid().ToString(), Title = title, Company = company, Location = locationText });
+                    string locationText = locationEl is not null ? await locationEl.GetTextContentAsync(ct) ?? string.Empty : string.Empty;
+
+                    list.Add(new JobListing { Id = id, Title = title, Company = company, Location = locationText });
                 }
                 catch (Exception ex)
                 {

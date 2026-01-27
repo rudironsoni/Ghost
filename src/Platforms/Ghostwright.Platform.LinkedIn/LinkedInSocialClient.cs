@@ -33,10 +33,10 @@ public sealed class LinkedInSocialClient : ISocialClient
             await page.WaitForLoadStateAsync(ct: ct);
 
             var name = await page.EvaluateAsync<string>("() => document.querySelector('.text-heading-xlarge')?.innerText || ''", ct: ct);
-            var headline = await page.EvaluateAsync<string>("() => document.querySelector('.text-body-medium')?.innerText || ''", ct: ct);
+            var bio = await page.EvaluateAsync<string>("() => document.querySelector('.text-body-medium')?.innerText || ''", ct: ct);
             var about = await page.EvaluateAsync<string>("() => document.querySelector('.pv-about__summary-text')?.innerText || ''", ct: ct);
 
-            return new SocialProfile { Id = profileId, Name = name ?? string.Empty, Headline = headline ?? string.Empty, Summary = about ?? string.Empty };
+            return new SocialProfile { Id = profileId, Name = name ?? string.Empty, Bio = string.IsNullOrWhiteSpace(about) ? bio : about };
         }
         finally
         {
