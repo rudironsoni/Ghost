@@ -33,6 +33,11 @@ public sealed record JobListing
     public string? Description { get; init; }
 
     /// <summary>
+    /// Salary info if available (free-form string).
+    /// </summary>
+    public string? Salary { get; init; }
+
+    /// <summary>
     /// The type of job (FullTime/PartTime/etc.).
     /// </summary>
     public JobType JobType { get; init; } = JobType.Unknown;

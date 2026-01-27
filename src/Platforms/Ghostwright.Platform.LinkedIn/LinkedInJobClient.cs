@@ -12,13 +12,21 @@ public sealed class LinkedInJobClient : IJobClient
     private readonly Ghostwright.IBrowserSession _session;
     private readonly LinkedInOptions _options;
     private readonly ILogger<LinkedInJobClient> _logger;
+    private readonly Internal.GuestJobSearch _guestSearch;
 
-    public LinkedInJobClient(Ghostwright.IBrowserSession session, IOptions<LinkedInOptions> options, ILogger<LinkedInJobClient> logger)
+    public LinkedInJobClient(Ghostwright.IBrowserSession session, IOptions<LinkedInOptions> options, ILogger<LinkedInJobClient> logger, Internal.GuestJobSearch guestSearch)
     {
         ArgumentNullException.ThrowIfNull(session);
         _session = session;
         _options = options?.Value ?? new LinkedInOptions();
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<LinkedInJobClient>.Instance;
+        _guestSearch = guestSearch ?? throw new ArgumentNullException(nameof(guestSearch));
+    }
+
+    // Back-compat constructor used by tests and callers that don't use DI for GuestJobSearch
+    public LinkedInJobClient(Ghostwright.IBrowserSession session, IOptions<LinkedInOptions> options, ILogger<LinkedInJobClient> logger)
+        : this(session, options, logger, new Internal.GuestJobSearch(session, Microsoft.Extensions.Logging.Abstractions.NullLogger<Internal.GuestJobSearch>.Instance))
+    {
     }
 
     public string PlatformName => "LinkedIn";
@@ -40,9 +48,39 @@ public sealed class LinkedInJobClient : IJobClient
         }, ct);
     }
 
-    public Task<JobListing> GetJobDetailsAsync(string jobId, CancellationToken ct = default)
+    public async Task<JobListing> GetJobDetailsAsync(string jobId, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(jobId);
+
+        if (_options.ScrapingStrategy == JobScrapingStrategy.GuestApi)
+        {
+            var job = await _guestSearch.FetchJobDetailsAsync(jobId, ct).ConfigureAwait(false);
+            if (job != null) return job;
+            // fallthrough to browser if guest returns null
+        }
+
+        // fallback to browser logic
+        return await GetJobDetailsBrowserAsync(jobId, ct).ConfigureAwait(false);
+    }
+
+    private async Task<JobListing> GetJobDetailsBrowserAsync(string jobId, CancellationToken ct = default)
+    {
+        var page = await _session.NewPageAsync(ct: ct);
+        try
+        {
+            var url = $"{_options.BaseUrl}/jobs/view/{jobId}";
+            await page.NavigateAsync(url, ct: ct);
+            await page.WaitForLoadStateAsync(ct: ct);
+
+            // attempt to parse JSON-LD from page content
+            var html = await page.GetContentAsync(ct);
+            var parsed = Internal.JsonLdParser.Parse(html ?? string.Empty, jobId, url);
+            return parsed ?? new JobListing { Id = jobId, Url = url };
+        }
+        finally
+        {
+            try { await page.DisposeAsync(); } catch { }
+        }
     }
 
     public Task<JobApplication> ApplyAsync(string jobId, ApplicationDetails details, CancellationToken ct = default)
@@ -125,6 +163,79 @@ public sealed class LinkedInJobClient : IJobClient
 
     public async IAsyncEnumerable<JobListing> SearchJobsAsync(string keywords, string location, int limit = 25, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
     {
+        if (_options.ScrapingStrategy == JobScrapingStrategy.GuestApi)
+        {
+            // Use guest API to search then fetch details (do work outside iterator yields)
+            var criteria = new Ghostwright.Contracts.Jobs.JobSearchCriteria { Query = keywords, Location = location, MaxResults = limit };
+            var ids = await _guestSearch.SearchAsync(criteria, limit, ct);
+            if (ids.Count == 0)
+            {
+                // no results
+                yield break;
+            }
+
+            var results = new List<JobListing>();
+            var returned = 0;
+            foreach (var id in ids)
+            {
+                if (returned++ >= limit) break;
+                ct.ThrowIfCancellationRequested();
+                try
+                {
+                    var job = await _guestSearch.FetchJobDetailsAsync(id, ct);
+                    if (job != null) results.Add(job);
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex)
+                {
+                    LinkedInLog.LogFailedToParseJobNode(_logger, ex);
+                }
+            }
+
+            foreach (var job in results)
+            {
+                yield return job;
+            }
+
+            yield break;
+        }
+
+        if (_options.ScrapingStrategy == JobScrapingStrategy.Hybrid)
+        {
+            // Try guest API first (collect results before yielding)
+            var criteria = new Ghostwright.Contracts.Jobs.JobSearchCriteria { Query = keywords, Location = location, MaxResults = limit };
+            var ids = await _guestSearch.SearchAsync(criteria, limit, ct);
+            if (ids.Count > 0)
+            {
+                var results = new List<JobListing>();
+                var returned = 0;
+                foreach (var id in ids)
+                {
+                    if (returned++ >= limit) break;
+                    ct.ThrowIfCancellationRequested();
+                    try
+                    {
+                        var job = await _guestSearch.FetchJobDetailsAsync(id, ct);
+                        if (job != null) results.Add(job);
+                    }
+                    catch (OperationCanceledException) { throw; }
+                    catch (Exception ex)
+                    {
+                        LinkedInLog.LogFailedToParseJobNode(_logger, ex);
+                    }
+                }
+
+                foreach (var job in results)
+                {
+                    yield return job;
+                }
+
+                yield break;
+            }
+
+            // else fallthrough to browser
+        }
+
         var page = await _session.NewPageAsync(ct: ct);
         try
         {

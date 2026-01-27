@@ -17,6 +17,8 @@ public sealed class LinkedInExtension : IExtension
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<LinkedInOptions>(configuration.GetSection("LinkedIn"));
+        // GuestJobSearch implements guest API scraping logic
+        services.AddScoped<Internal.GuestJobSearch>();
         services.AddScoped<Ghostwright.Contracts.Social.ISocialClient, LinkedInSocialClient>();
         services.AddScoped<Ghostwright.Contracts.Jobs.IJobClient, LinkedInJobClient>();
         services.AddScoped<Ghostwright.Contracts.News.INewsClient, LinkedInNewsClient>();
