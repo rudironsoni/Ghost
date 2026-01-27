@@ -15,13 +15,18 @@ public sealed class LaunchOptions
     public Proxy? Proxy { get; set; }
 }
 
-public sealed class Proxy { public string? Server { get; set; } }
+public sealed class Proxy { public string? Server { get; set; } public string? Username { get; set; } public string? Password { get; set; } public string? Bypass { get; set; } }
+
+public sealed class PlaywrightGeolocation { public double Latitude { get; set; } public double Longitude { get; set; } public double Accuracy { get; set; } }
 
 public sealed class BrowserNewContextOptions
 {
     public int? ViewportWidth { get; set; }
     public int? ViewportHeight { get; set; }
     public string? UserAgent { get; set; }
+    public Proxy? Proxy { get; set; }
+    public PlaywrightGeolocation? Geolocation { get; set; }
+    public List<string>? Permissions { get; set; }
 }
 
 public sealed class ClickOptions { public string? Button { get; set; } public int ClickCount { get; set; } public int Delay { get; set; } public string[] Modifiers { get; set; } = Array.Empty<string>(); }
