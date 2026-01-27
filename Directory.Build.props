@@ -1,0 +1,84 @@
+<Project>
+  <!-- Ghostwright Monorepo - Global Build Properties -->
+  
+  <PropertyGroup>
+    <!-- Lockstep versioning - all packages share same version -->
+    <GhostwriterVersion>1.0.0</GhostwriterVersion>
+    <Version>$(GhostwriterVersion)</Version>
+    <AssemblyVersion>$(GhostwriterVersion)</AssemblyVersion>
+    <FileVersion>$(GhostwriterVersion)</FileVersion>
+    <InformationalVersion>$(GhostwriterVersion)</InformationalVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Common settings -->
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Package metadata -->
+    <Authors>Ghostwright Team</Authors>
+    <Company>Ghostwright</Company>
+    <Product>Ghostwright</Product>
+    <Copyright>Copyright (c) 2026 Ghostwright</Copyright>
+    <RepositoryUrl>https://github.com/rudironsoni/Ghost</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Build output -->
+    <BaseOutputPath>$(MSBuildThisFileDirectory)artifacts\bin\$(MSBuildProjectName)\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)artifacts\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <PackageOutputPath>$(MSBuildThisFileDirectory)artifacts\packages\</PackageOutputPath>
+  </PropertyGroup>
+
+  <!-- Layer detection -->
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Core'))">
+    <GhostwriterLayer>Kernel</GhostwriterLayer>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Contracts'))">
+    <GhostwriterLayer>Contracts</GhostwriterLayer>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Platforms'))">
+    <GhostwriterLayer>Platforms</GhostwriterLayer>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Hosting'))">
+    <GhostwriterLayer>Hosting</GhostwriterLayer>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Sdk'))">
+    <GhostwriterLayer>Sdk</GhostwriterLayer>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('tests'))">
+    <GhostwriterLayer>Tests</GhostwriterLayer>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('samples'))">
+    <GhostwriterLayer>Samples</GhostwriterLayer>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('tools'))">
+    <GhostwriterLayer>Tools</GhostwriterLayer>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+</Project>

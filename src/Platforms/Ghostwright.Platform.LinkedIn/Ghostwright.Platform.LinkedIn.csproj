@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>Ghostwright.Platform.LinkedIn</RootNamespace>
+    <Description>Ghostwright LinkedIn platform integration</Description>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\Ghostwright\Ghostwright.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghostwright.Contracts\Ghostwright.Contracts.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghostwright.Contracts.Social\Ghostwright.Contracts.Social.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghostwright.Contracts.Jobs\Ghostwright.Contracts.Jobs.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghostwright.Contracts.News\Ghostwright.Contracts.News.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+  </ItemGroup>
+</Project>
