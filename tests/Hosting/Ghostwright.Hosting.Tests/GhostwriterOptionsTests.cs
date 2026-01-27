@@ -1,30 +1,31 @@
 using FluentAssertions;
 using Xunit;
 
-namespace Ghostwright.Hosting.Tests
+namespace Ghostwright.Hosting.Tests;
+
+public class GhostwriterOptionsTests
 {
-    public class GhostwriterOptionsTests
+    [Fact]
+    public void DefaultValues_AreCorrect()
     {
-        [Fact]
-        public void DefaultValues_AreCorrect()
-        {
-            var opts = new GhostwriterOptions();
-            opts.Kernel.Should().Be("DefaultKernel");
-            opts.ValidateExtensionDependencies.Should().BeTrue();
-        }
+        var options = new GhostwriterOptions();
+        options.ValidateExtensionDependencies.Should().BeTrue();
+        options.Kernel.Should().NotBeNull();
+    }
 
-        [Fact]
-        public void Kernel_CanBeModified()
-        {
-            var opts = new GhostwriterOptions { Kernel = "X" };
-            opts.Kernel.Should().Be("X");
-        }
+    [Fact]
+    public void Kernel_CanBeModified()
+    {
+        var options = new GhostwriterOptions();
+        options.Kernel.Headless = true;
+        options.Kernel.Headless.Should().BeTrue();
+    }
 
-        [Fact]
-        public void ValidateExtensionDependencies_DefaultTrue()
-        {
-            var opts = new GhostwriterOptions();
-            opts.ValidateExtensionDependencies.Should().BeTrue();
-        }
+    [Fact]
+    public void ValidateExtensionDependencies_CanBeDisabled()
+    {
+        var options = new GhostwriterOptions();
+        options.ValidateExtensionDependencies = false;
+        options.ValidateExtensionDependencies.Should().BeFalse();
     }
 }

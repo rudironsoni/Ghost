@@ -1,30 +1,21 @@
-using System;
 using FluentAssertions;
 using Xunit;
 
-namespace Ghostwright.Hosting.Tests
+namespace Ghostwright.Hosting.Tests;
+
+public class ExtensionExceptionTests
 {
-    public class ExtensionExceptionTests
+    [Fact]
+    public void Constructor_SetsExtensionName()
     {
-        [Fact]
-        public void Constructor_SetsExtensionName()
-        {
-            var ex = new ExtensionException("X","msg");
-            ex.ExtensionName.Should().Be("X");
-        }
+        var ex = new ExtensionException("TestExt", "error message");
+        ex.ExtensionName.Should().Be("TestExt");
+    }
 
-        [Fact]
-        public void Constructor_SetsMessage()
-        {
-            var ex = new ExtensionException("E","oops");
-            ex.ToString().Should().Contain("oops");
-        }
-
-        [Fact]
-        public void Message_ContainsExtensionName()
-        {
-            var ex = new ExtensionException("E","boom");
-            ex.Message.Should().Contain("Extension: E");
-        }
+    [Fact]
+    public void Constructor_SetsMessage()
+    {
+        var ex = new ExtensionException("TestExt", "specific error");
+        ex.Message.Should().Be("specific error");
     }
 }

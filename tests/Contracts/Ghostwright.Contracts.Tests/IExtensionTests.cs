@@ -36,6 +36,6 @@ public class IExtensionTests
 
         var services = new ServiceCollection();
         ext.ConfigureServices(services, new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build());
-        services.Should().Contain(sd => sd.ServiceType == typeof(int));
+        services.Should().Contain(sd => sd.ServiceType == typeof(FakeService));
     }
 }

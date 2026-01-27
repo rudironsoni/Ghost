@@ -2,23 +2,24 @@ using System;
 using FluentAssertions;
 using Xunit;
 
-namespace Ghostwright.Platform.Anthropic.Tests
+namespace Ghostwright.Platform.Anthropic.Tests;
+
+public class AnthropicExtensionTests
 {
-    public class AnthropicExtensionTests
-    {
         [Fact]
         public void Name_ShouldContainAnthropic()
         {
             var ext = new AnthropicExtension();
             ext.Name.Should().NotBeNullOrEmpty();
-            ext.Name.Should().Contain("Anthropic", StringComparison.OrdinalIgnoreCase);
+            ext.Name.ToLowerInvariant().Should().Contain("anthropic");
         }
 
         [Fact]
         public void Version_ShouldBeSet()
         {
             var ext = new AnthropicExtension();
-            ext.Version.Should().NotBeNullOrEmpty();
+            ext.Version.Should().NotBeNull();
+            ext.Version.Major.Should().BeGreaterOrEqualTo(1);
         }
 
         [Fact]
@@ -34,8 +35,8 @@ namespace Ghostwright.Platform.Anthropic.Tests
         {
             var ext = new AnthropicExtension();
             var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
-            Action act = () => ext.ConfigureServices(services);
+            var configuration = new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build();
+            Action act = () => ext.ConfigureServices(services, configuration);
             act.Should().NotThrow();
         }
     }
-}

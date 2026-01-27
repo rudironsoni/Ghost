@@ -1,5 +1,8 @@
 using System;
 using FluentAssertions;
+using NSubstitute;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace Ghostwright.Platform.OpenAI.Tests
@@ -11,15 +14,18 @@ namespace Ghostwright.Platform.OpenAI.Tests
         {
             var ext = new OpenAIExtension();
             ext.Name.Should().NotBeNullOrEmpty();
-            ext.Name.Should().Contain("OpenAI", StringComparison.OrdinalIgnoreCase);
+            ext.Name.ToLowerInvariant().Should().Contain("openai");
         }
 
         [Fact]
         public void ConfigureServices_DoesNotThrow()
         {
             var ext = new OpenAIExtension();
-            var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
-            Action act = () => ext.ConfigureServices(services);
+            var services = new ServiceCollection();
+            var config = Substitute.For<IConfiguration>();
+            var section = Substitute.For<IConfigurationSection>();
+            config.GetSection(Arg.Any<string>()).Returns(section);
+            Action act = () => ext.ConfigureServices(services, config);
             act.Should().NotThrow();
         }
     }

@@ -1,13 +1,14 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using FluentAssertions;
 using NSubstitute;
 using Xunit;
 
-namespace Ghostwright.Platform.Google.Tests
+namespace Ghostwright.Platform.Google.Tests;
+
+public class GoogleClientTests
 {
-    public class GoogleClientTests
-    {
         [Fact]
         public async Task CompleteAsync_ReturnsText_WhenPageEvaluates()
         {
@@ -19,9 +20,11 @@ namespace Ghostwright.Platform.Google.Tests
             mockPage.EvaluateAsync<string>(Arg.Any<string>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult("ok"));
 
-            var client = new GoogleClient(mockSession, new GoogleOptions());
-            var resp = await client.CompleteAsync("p", CancellationToken.None);
-            resp.Text.Should().Be("ok");
+            var logger = Substitute.For<ILogger<GoogleClient>>();
+            var client = new GoogleClient(mockSession, Microsoft.Extensions.Options.Options.Create(new GoogleOptions()), logger);
+            var req = new Ghostwright.Contracts.Inference.InferenceRequest { Messages = new[] { new Ghostwright.Contracts.Inference.InferenceMessage { Content = "p" } } };
+            var resp = await client.CompleteAsync(req, CancellationToken.None);
+            resp.Content.Should().Be("ok");
         }
 
         [Fact]
@@ -31,13 +34,18 @@ namespace Ghostwright.Platform.Google.Tests
             var mockPage = Substitute.For<IPage>();
             mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
                 .Returns(ValueTask.FromResult(mockPage));
-            mockPage.EvaluateAsync(Arg.Any<string>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
-                .Returns(Task.CompletedTask);
+            mockPage.EvaluateAsync<string>(Arg.Any<string>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult("streaming"));
 
-            var client = new GoogleClient(mockSession, new GoogleOptions());
+            var logger = Substitute.For<ILogger<GoogleClient>>();
+            var client = new GoogleClient(mockSession, Microsoft.Extensions.Options.Options.Create(new GoogleOptions()), logger);
             var called = false;
-            await client.StreamAsync("p", chunk => { called = true; return Task.CompletedTask; }, CancellationToken.None);
+            var req = new Ghostwright.Contracts.Inference.InferenceRequest { Messages = new[] { new Ghostwright.Contracts.Inference.InferenceMessage { Content = "p" } } };
+            await foreach (var _ in client.StreamAsync(req, CancellationToken.None))
+            {
+                called = true;
+                break;
+            }
             called.Should().BeTrue();
         }
     }
-}

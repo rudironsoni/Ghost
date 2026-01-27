@@ -72,6 +72,13 @@ public sealed class GhostwriterBuilder
             return GhostwriterKernel.CreateAsync(opts).GetAwaiter().GetResult();
         });
 
+        // Register IBrowserSession as a factory from the kernel
+        _services.AddScoped<IBrowserSession>(provider =>
+        {
+            var kernel = provider.GetRequiredService<GhostwriterKernel>();
+            return kernel.NewSessionAsync().AsTask().GetAwaiter().GetResult();
+        });
+
         // Load extensions via loader (validates and registers)
             var loader = new ExtensionLoader();
             if (_extensions.Count > 0)
@@ -83,7 +90,9 @@ public sealed class GhostwriterBuilder
 
             if (_services is null) throw new InvalidOperationException("Services collection is missing");
 
-            ExtensionLoader.LoadExtensions(_extensions, _services, _configuration);
+            // Tell the extension loader that IBrowserSession is provided by the kernel
+            var kernelProvidedServices = new HashSet<Type> { typeof(IBrowserSession) };
+            ExtensionLoader.LoadExtensions(_extensions, _services, _configuration, kernelProvidedServices);
         }
     }
 }

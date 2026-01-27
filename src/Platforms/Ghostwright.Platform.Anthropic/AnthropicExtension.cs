@@ -1,12 +1,13 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Ghostwright.Hosting;
 
 namespace Ghostwright.Platform.Anthropic;
 
 /// <summary>
 /// Registers the Anthropic platform integration as an extension.
 /// </summary>
-public sealed class AnthropicExtension : Ghostwright.Contracts.IExtension
+public sealed class AnthropicExtension : IExtension
 {
     /// <inheritdoc />
     public string Name => "Anthropic";

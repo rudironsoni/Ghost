@@ -16,12 +16,16 @@ internal sealed class ExtensionLoader
     /// Validates the provided extensions for missing dependencies and cycles.
     /// </summary>
     /// <param name="extensions">List of extensions to validate.</param>
-    public static void ValidateExtensions(IReadOnlyList<IExtension> extensions)
+    /// <param name="kernelProvidedServices">Services provided by the kernel (e.g., IBrowserSession).</param>
+    public static void ValidateExtensions(IReadOnlyList<IExtension> extensions, IReadOnlySet<Type>? kernelProvidedServices = null)
     {
         if (extensions is null) ArgumentNullException.ThrowIfNull(extensions);
 
-        // Collect all provided service types
-        var provided = new HashSet<Type>();
+        // Collect all provided service types (start with kernel-provided if any)
+        var provided = kernelProvidedServices != null
+            ? new HashSet<Type>(kernelProvidedServices)
+            : new HashSet<Type>();
+
         foreach (var ext in extensions)
         {
             foreach (var t in ext.ProvidedServices)
@@ -30,7 +34,7 @@ internal sealed class ExtensionLoader
             }
         }
 
-        // Check required services are provided by some extension
+        // Check required services are provided by some extension or the kernel
         foreach (var ext in extensions)
         {
             foreach (var req in ext.RequiredServices)
@@ -52,14 +56,15 @@ internal sealed class ExtensionLoader
     /// <param name="extensions">Extensions to load.</param>
     /// <param name="services">Service collection to register into.</param>
     /// <param name="configuration">Configuration instance.</param>
-    public static void LoadExtensions(IReadOnlyList<IExtension> extensions, IServiceCollection services, IConfiguration configuration)
+    /// <param name="kernelProvidedServices">Services provided by the kernel.</param>
+    public static void LoadExtensions(IReadOnlyList<IExtension> extensions, IServiceCollection services, IConfiguration configuration, IReadOnlySet<Type>? kernelProvidedServices = null)
     {
         ArgumentNullException.ThrowIfNull(extensions);
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
         // Validate first
-        ValidateExtensions(extensions);
+        ValidateExtensions(extensions, kernelProvidedServices);
 
         var ordered = TopologicalSort(extensions);
 

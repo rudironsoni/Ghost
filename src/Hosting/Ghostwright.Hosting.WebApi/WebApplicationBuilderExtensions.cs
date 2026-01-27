@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Builder;
+
 namespace Ghostwright.Hosting.WebApi;
 
 /// <summary>

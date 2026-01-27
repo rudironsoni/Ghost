@@ -16,4 +16,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Options" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ghostwright.Hosting.Tests" />
+  </ItemGroup>
 </Project>
