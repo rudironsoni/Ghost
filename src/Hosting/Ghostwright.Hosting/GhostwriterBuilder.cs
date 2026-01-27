@@ -73,9 +73,9 @@ public sealed class GhostwriterBuilder
         });
 
         // Load extensions via loader (validates and registers)
-        var loader = new ExtensionLoader();
-        if (_extensions.Count > 0)
-        {
+            var loader = new ExtensionLoader();
+            if (_extensions.Count > 0)
+            {
             if (_services.Any(sd => sd.ServiceType == typeof(GhostwriterOptions)))
             {
                 // nothing special
@@ -83,7 +83,7 @@ public sealed class GhostwriterBuilder
 
             if (_services is null) throw new InvalidOperationException("Services collection is missing");
 
-            loader.LoadExtensions(_extensions, _services, _configuration);
+            ExtensionLoader.LoadExtensions(_extensions, _services, _configuration);
         }
     }
 }

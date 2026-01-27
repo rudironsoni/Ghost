@@ -55,16 +55,16 @@ public sealed class LinkedInSocialClient : ISocialClient
             await page.WaitForLoadStateAsync(ct: ct);
 
             // Very simple parsing: find profile links
-            var nodes = await page.QuerySelectorAllAsync(".reusable-search__result-container a.app-aware-link");
+            var nodes = await page.QuerySelectorAllAsync(".reusable-search__result-container a.app-aware-link", ct: ct);
             var list = new List<SocialProfile>();
-            foreach (var n in nodes.Take(criteria.Limit))
+            foreach (var n in nodes.Take(criteria.MaxResults))
             {
                 try
                 {
-                    var href = await n.EvaluateAsync<string>("el => el.getAttribute('href')", ct: ct);
+                    var href = await n.GetAttributeAsync("href", ct);
                     if (href is null) continue;
                     var id = href.Split('/').LastOrDefault() ?? href;
-                    var name = await n.EvaluateAsync<string>("el => el.innerText", ct: ct);
+                    var name = await n.GetTextContentAsync(ct) ?? string.Empty;
                     list.Add(new SocialProfile { Id = id, Name = name });
                 }
                 catch (Exception ex)
@@ -109,13 +109,13 @@ public sealed class LinkedInSocialClient : ISocialClient
             await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct);
             await page.WaitForLoadStateAsync(ct: ct);
 
-            var nodes = await page.QuerySelectorAllAsync(".feed-shared-update-v2");
+            var nodes = await page.QuerySelectorAllAsync(".feed-shared-update-v2", ct: ct);
             var list = new List<SocialPost>();
-            foreach (var n in nodes.Take(options?.Limit ?? 20))
+            foreach (var n in nodes.Take(options?.PageSize ?? 20))
             {
                 try
                 {
-                    var content = await n.EvaluateAsync<string>("el => el.innerText", ct: ct);
+                    var content = await n.GetTextContentAsync(ct) ?? string.Empty;
                     list.Add(new SocialPost { Id = Guid.NewGuid().ToString(), Content = content });
                 }
                 catch { }
@@ -153,15 +153,15 @@ public sealed class LinkedInSocialClient : ISocialClient
             await page.NavigateAsync($"{_options.BaseUrl}/mynetwork/invite-connect/connections/", ct: ct);
             await page.WaitForLoadStateAsync(ct: ct);
 
-            var nodes = await page.QuerySelectorAllAsync(".mn-connection-card__details");
+            var nodes = await page.QuerySelectorAllAsync(".mn-connection-card__details", ct: ct);
             var list = new List<Ghostwright.Contracts.Social.SocialConnection>();
-            foreach (var n in nodes.Take(options?.Limit ?? 20))
+            foreach (var n in nodes.Take(options?.MaxResults ?? 20))
             {
                 try
                 {
-                    var id = await n.EvaluateAsync<string>("el => el.querySelector('a')?.getAttribute('href') || ''", ct: ct);
-                    var name = await n.EvaluateAsync<string>("el => el.querySelector('.mn-connection-card__name')?.innerText || ''", ct: ct);
-                    list.Add(new Ghostwright.Contracts.Social.SocialConnection { Id = id ?? string.Empty, Name = name ?? string.Empty });
+                    var id = await n.QuerySelectorAsync("a", ct)?.GetAttributeAsync("href", ct) ?? string.Empty;
+                    var name = await n.QuerySelectorAsync(".mn-connection-card__name", ct)?.GetTextContentAsync(ct) ?? string.Empty;
+                    list.Add(new Ghostwright.Contracts.Social.SocialConnection { Id = id, FromProfileId = string.Empty, ToProfileId = string.Empty });
                 }
                 catch { }
             }

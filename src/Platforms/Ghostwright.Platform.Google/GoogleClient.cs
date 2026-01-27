@@ -2,7 +2,6 @@ using Ghostwright.Contracts.Inference;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Logging;
 
 namespace Ghostwright.Platform.Google;
 
@@ -17,7 +16,8 @@ namespace Ghostwright.Platform.Google;
 
     public GoogleClient(Ghostwright.IBrowserSession session, IOptions<GoogleOptions> options, ILogger<GoogleClient> logger)
     {
-        _session = session ?? throw new ArgumentNullException(nameof(session));
+        ArgumentNullException.ThrowIfNull(session);
+        _session = session;
         _options = options?.Value ?? new GoogleOptions();
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GoogleClient>.Instance;
     }
@@ -83,4 +83,10 @@ internal static partial class GoogleClientLog
 {
     [LoggerMessage(Level = LogLevel.Debug, Message = "Failed to evaluate gemini page")]
     public static partial void LogFailedToEvaluateGoogle(ILogger logger, Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Navigating to {Url}")]
+    public static partial void NavigatingTo(ILogger logger, string url);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Response element not found")]
+    public static partial void ResponseNotFound(ILogger logger);
 }

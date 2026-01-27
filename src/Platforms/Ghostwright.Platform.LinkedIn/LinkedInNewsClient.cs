@@ -31,14 +31,16 @@ public sealed class LinkedInNewsClient : INewsClient
             await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct);
             await page.WaitForLoadStateAsync(ct: ct);
 
-            var nodes = await page.QuerySelectorAllAsync(".feed-shared-update-v2");
+            var nodes = await page.QuerySelectorAllAsync(".feed-shared-update-v2", ct: ct);
             var list = new List<NewsArticle>();
-            foreach (var n in nodes.Take(filter?.Limit ?? 20))
+            foreach (var n in nodes.Take(filter?.MaxResults ?? 20))
             {
                 try
                 {
-                    var title = await n.EvaluateAsync<string>("el => el.querySelector('h3')?.innerText || ''", ct: ct);
-                    var url = await n.EvaluateAsync<string>("el => el.querySelector('a')?.getAttribute('href') || ''", ct: ct);
+                    var titleEl = await n.QuerySelectorAsync("h3", ct);
+                    var title = await titleEl?.GetTextContentAsync(ct) ?? string.Empty;
+                    var aEl = await n.QuerySelectorAsync("a", ct);
+                    var url = await aEl?.GetAttributeAsync("href", ct) ?? string.Empty;
                     list.Add(new NewsArticle { Id = Guid.NewGuid().ToString(), Title = title, Url = url });
                 }
                 catch { }

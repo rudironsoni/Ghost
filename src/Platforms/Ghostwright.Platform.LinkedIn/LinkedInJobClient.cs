@@ -64,23 +64,32 @@ public sealed class LinkedInJobClient : IJobClient
             await page.NavigateAsync(url, ct: ct);
             await page.WaitForLoadStateAsync(ct: ct);
 
-            var nodes = await page.QuerySelectorAllAsync(".jobs-search-results__list-item");
+            var nodes = await page.QuerySelectorAllAsync(".jobs-search-results__list-item", ct: ct);
             var count = 0;
+            var list = new List<JobListing>();
             foreach (var n in nodes)
             {
                 if (count++ >= limit) break;
                 try
                 {
-                    var id = await n.EvaluateAsync<string>("el => el.getAttribute('data-id') || ''", ct: ct);
-                    var title = await n.EvaluateAsync<string>("el => el.querySelector('.job-card-list__title')?.innerText || ''", ct: ct);
-                    var company = await n.EvaluateAsync<string>("el => el.querySelector('.job-card-container__company-name')?.innerText || ''", ct: ct);
-                    var locationText = await n.EvaluateAsync<string>("el => el.querySelector('.job-card-container__metadata-item')?.innerText || ''", ct: ct);
-                    yield return new JobListing { Id = id ?? Guid.NewGuid().ToString(), Title = title ?? string.Empty, Company = company ?? string.Empty, Location = locationText };
+                    var id = await n.GetAttributeAsync("data-id", ct);
+                    var titleEl = await n.QuerySelectorAsync(".job-card-list__title", ct);
+                    var title = await titleEl?.GetTextContentAsync(ct) ?? string.Empty;
+                    var companyEl = await n.QuerySelectorAsync(".job-card-container__company-name", ct);
+                    var company = await companyEl?.GetTextContentAsync(ct) ?? string.Empty;
+                    var locationEl = await n.QuerySelectorAsync(".job-card-container__metadata-item", ct);
+                    var locationText = await locationEl?.GetTextContentAsync(ct) ?? string.Empty;
+                    list.Add(new JobListing { Id = id ?? Guid.NewGuid().ToString(), Title = title, Company = company, Location = locationText });
                 }
                 catch (Exception ex)
                 {
                     LinkedInLog.LogFailedToParseJobNode(_logger, ex);
                 }
+            }
+            
+            foreach (var job in list)
+            {
+                yield return job;
             }
         }
         finally

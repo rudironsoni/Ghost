@@ -1,6 +1,9 @@
-using System.Collections;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Ghostwright.Contracts;
 
 namespace Ghostwright.Hosting;
 
@@ -13,7 +16,7 @@ internal sealed class ExtensionLoader
     /// Validates the provided extensions for missing dependencies and cycles.
     /// </summary>
     /// <param name="extensions">List of extensions to validate.</param>
-    public void ValidateExtensions(IReadOnlyList<IExtension> extensions)
+    public static void ValidateExtensions(IReadOnlyList<IExtension> extensions)
     {
         if (extensions is null) ArgumentNullException.ThrowIfNull(extensions);
 
@@ -49,7 +52,7 @@ internal sealed class ExtensionLoader
     /// <param name="extensions">Extensions to load.</param>
     /// <param name="services">Service collection to register into.</param>
     /// <param name="configuration">Configuration instance.</param>
-    public void LoadExtensions(IReadOnlyList<IExtension> extensions, IServiceCollection services, IConfiguration configuration)
+    public static void LoadExtensions(IReadOnlyList<IExtension> extensions, IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(extensions);
         ArgumentNullException.ThrowIfNull(services);
@@ -64,7 +67,8 @@ internal sealed class ExtensionLoader
         {
             try
             {
-                ext.Register(services, configuration);
+                // Contract uses ConfigureServices as the registration entry point
+                ext.ConfigureServices(services, configuration);
             }
             catch (Exception ex)
             {
