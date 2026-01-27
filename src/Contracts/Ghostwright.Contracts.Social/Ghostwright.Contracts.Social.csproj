@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>Ghostwright.Contracts.Social</RootNamespace>
+    <Description>Ghostwright social platform contracts</Description>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,89 @@
+# Ghostwright .gitignore
+
+## Build results
+[Bb]in/
+[Oo]bj/
+artifacts/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+## JetBrains Rider
+.idea/
+*.sln.iml
+
+## VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+## NuGet
+*.nupkg
+*.snupkg
+.nuget/
+nuget.exe
+
+## Test results
+[Tt]est[Rr]esult*/
+*.trx
+coverage*/
+*.coverage
+*.coveragexml
+TestResults/
+
+## NCrunch
+_NCrunch_*
+.*crunch*.local.xml
+nCrunchTemp_*
+
+## Build
+*.cache
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+## macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+## Linux
+*~
+
+## Misc
+*.bak
+*.tmp
+*.log
+*.orig
+
+## Secrets - never commit these
+*.pfx
+*.key
+*.pem
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+secrets.json
+.env
+.env.*
+
+## Patchright/Playwright
+playwright-report/
+test-results/
+.playwright/
