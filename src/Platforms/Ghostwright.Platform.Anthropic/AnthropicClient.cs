@@ -18,7 +18,8 @@ public sealed partial class AnthropicClient : Ghostwright.Contracts.Inference.II
     /// </summary>
     public AnthropicClient(Ghostwright.IBrowserSession session, IOptions<AnthropicOptions> options, ILogger<AnthropicClient> logger)
     {
-        _session = session ?? throw new ArgumentNullException(nameof(session));
+        ArgumentNullException.ThrowIfNull(session);
+        _session = session;
         _options = options?.Value ?? new AnthropicOptions();
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<AnthropicClient>.Instance;
     }
@@ -61,7 +62,7 @@ public sealed partial class AnthropicClient : Ghostwright.Contracts.Inference.II
         var page = await _session.NewPageAsync(ct: ct);
         try
         {
-            _logger.LogDebug("Navigating to {Url}", _options.BaseUrl);
+            AnthropicLog.NavigatingTo(_logger, _options.BaseUrl);
             await page.NavigateAsync(_options.BaseUrl, ct: ct);
 
             // Very small, robust automation flow using simple selectors.
@@ -70,10 +71,10 @@ public sealed partial class AnthropicClient : Ghostwright.Contracts.Inference.II
             {
                 await page.WaitForSelectorAsync("textarea", options: null, ct: ct);
             }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Prompt textbox not found on Anthropic page");
-            }
+                catch (Exception ex)
+                {
+                    AnthropicLog.PromptTextboxNotFound(_logger, ex);
+                }
 
             // Type prompt
             var prompt = string.Join("\n", request.Messages.Select(m => m.Content));
@@ -121,4 +122,10 @@ internal static partial class AnthropicLog
 {
     [LoggerMessage(Level = LogLevel.Debug, Message = "Failed to evaluate page for response text")]
     public static partial void LogFailedToEvaluateAnthropic(ILogger logger, Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Navigating to {Url}")]
+    public static partial void NavigatingTo(ILogger logger, string url);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Prompt textbox not found on Anthropic page")]
+    public static partial void PromptTextboxNotFound(ILogger logger, Exception ex);
 }

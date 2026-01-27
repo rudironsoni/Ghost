@@ -15,7 +15,8 @@ public sealed partial class OpenAIClient : Ghostwright.Contracts.Inference.IInfe
 
     public OpenAIClient(Ghostwright.IBrowserSession session, IOptions<OpenAIOptions> options, ILogger<OpenAIClient> logger)
     {
-        _session = session ?? throw new ArgumentNullException(nameof(session));
+        ArgumentNullException.ThrowIfNull(session);
+        _session = session;
         _options = options?.Value ?? new OpenAIOptions();
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<OpenAIClient>.Instance;
     }
@@ -81,4 +82,10 @@ internal static partial class OpenAILog
 {
     [LoggerMessage(Level = LogLevel.Debug, Message = "Failed to evaluate chatgpt page")]
     public static partial void LogFailedToEvaluateOpenAI(ILogger logger, Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Navigating to {Url}")]
+    public static partial void NavigatingTo(ILogger logger, string url);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Response element not found")]
+    public static partial void ResponseNotFound(ILogger logger);
 }
