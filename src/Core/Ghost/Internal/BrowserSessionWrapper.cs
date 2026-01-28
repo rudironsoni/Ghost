@@ -97,4 +97,9 @@ internal sealed class BrowserSessionWrapper : IBrowserSession, IDisposable
         }
         _disposed = true;
     }
+
+    public async Task SaveStorageStateAsync(string path)
+    {
+        await _context.StorageStateAsync(new BrowserContextStorageStateOptions { Path = path });
+    }
 }
