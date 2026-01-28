@@ -37,7 +37,6 @@ public class ApiProxySource : IProxySource
             _http = http ?? throw new ArgumentNullException(nameof(http));
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            Console.WriteLine($"[DEBUG] ApiProxySource Options: Enabled={options.Value.Api.Enabled}, Url={options.Value.Api.Url}");
         }
 
         public async Task<IEnumerable<ProxyInfo>> FetchProxiesAsync(CancellationToken ct)
