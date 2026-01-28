@@ -19,10 +19,10 @@ public sealed class GuestJobSearch
     private readonly LinkedInOptions _options = new();
 
     private static readonly Action<ILogger, string, Exception?> s_logUsingProxy =
-        LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(GuestJobSearch)), "Using proxy: {Proxy}");
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(1, nameof(GuestJobSearch)), "Using proxy: {Proxy}");
 
     private static readonly Action<ILogger, string, Exception?> s_logNavigating =
-        LoggerMessage.Define<string>(LogLevel.Information, new EventId(2, nameof(GuestJobSearch)), "Navigating to: {Url}");
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(2, nameof(GuestJobSearch)), "Navigating to: {Url}");
 
     private static readonly Action<ILogger, Exception?> s_logGuestSearchFailed =
         LoggerMessage.Define(LogLevel.Warning, new EventId(3, nameof(GuestJobSearch)), "Guest search navigation/parsing failed");
