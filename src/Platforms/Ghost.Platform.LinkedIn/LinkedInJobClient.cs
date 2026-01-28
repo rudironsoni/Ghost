@@ -3,6 +3,7 @@ using Ghost.Extensions;
 using Ghost.Platform.LinkedIn.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Linq;
 
 namespace Ghost.Platform.LinkedIn;
 
@@ -27,8 +28,8 @@ public sealed class LinkedInJobClient : IJobClient
 
     // Back-compat constructor used by tests and callers that don't use DI for GuestJobSearch
     public LinkedInJobClient(Ghost.IBrowserSession session, IOptions<LinkedInOptions> options, ILogger<LinkedInJobClient> logger)
-        : this(session, options, logger, new Internal.GuestJobSearch(session, Microsoft.Extensions.Logging.Abstractions.NullLogger<Internal.GuestJobSearch>.Instance))
     {
+        throw new NotSupportedException("GuestJobSearch back-compat constructor removed. Provide GuestJobSearch via dependency injection.");
     }
 
     public string PlatformName => "LinkedIn";
@@ -48,6 +49,23 @@ public sealed class LinkedInJobClient : IJobClient
             }
             return (IReadOnlyList<JobListing>)list;
         }, ct);
+    }
+
+    /// <summary>
+    /// Search jobs with explicit strategy override (used by API query parameter).
+    /// </summary>
+    public async Task<List<JobListing>> SearchJobsAsync(
+        JobSearchCriteria criteria,
+        JobScrapingStrategy strategyOverride,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(criteria);
+        var list = new List<JobListing>();
+        await foreach (var job in SearchJobsWithStrategyAsync(criteria.Query ?? string.Empty, criteria.Location ?? "", criteria.MaxResults, strategyOverride, ct))
+        {
+            list.Add(job);
+        }
+        return list;
     }
 
     public async Task<JobListing> GetJobDetailsAsync(string jobId, CancellationToken ct = default)
@@ -190,7 +208,16 @@ public sealed class LinkedInJobClient : IJobClient
 
     public async IAsyncEnumerable<JobListing> SearchJobsAsync(string keywords, string location, int limit = 25, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
     {
-        if (_options.ScrapingStrategy == JobScrapingStrategy.GuestApi)
+        await foreach (var job in SearchJobsWithStrategyAsync(keywords, location, limit, _options.ScrapingStrategy, ct))
+        {
+            yield return job;
+        }
+    }
+
+    private async IAsyncEnumerable<JobListing> SearchJobsWithStrategyAsync(string keywords, string location, int limit, JobScrapingStrategy strategy, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+    {
+        // Strategy: processed according to configured scraping strategy
+        if (strategy == JobScrapingStrategy.GuestApi)
         {
             // Use guest API to search then fetch details (do work outside iterator yields)
             var criteria = new Ghost.Contracts.Jobs.JobSearchCriteria { Query = keywords, Location = location, MaxResults = limit };
@@ -227,11 +254,22 @@ public sealed class LinkedInJobClient : IJobClient
             yield break;
         }
 
-        if (_options.ScrapingStrategy == JobScrapingStrategy.Hybrid)
+        if (strategy == JobScrapingStrategy.Hybrid)
         {
             // Try guest API first (collect results before yielding)
             var criteria = new Ghost.Contracts.Jobs.JobSearchCriteria { Query = keywords, Location = location, MaxResults = limit };
-            var ids = await _guestSearch.SearchAsync(criteria, limit, ct);
+            List<string> ids = new List<string>();
+            try
+            {
+                var raw = await _guestSearch.SearchAsync(criteria, limit, ct);
+                ids = raw?.ToList() ?? new List<string>();
+            }
+            catch (Exception)
+            {
+                // Guest search failed - swallow and fallthrough to browser
+                ids = new List<string>();
+            }
+
             if (ids.Count > 0)
             {
                 var results = new List<JobListing>();
@@ -252,28 +290,60 @@ public sealed class LinkedInJobClient : IJobClient
                     }
                 }
 
+                var successfulYields = 0;
                 foreach (var job in results)
                 {
                     yield return job;
+                    successfulYields++;
                 }
 
-                yield break;
+                if (successfulYields > 0)
+                {
+                    yield break;
+                }
             }
 
             // else fallthrough to browser
+        }
+
+        // Add safety delay for Hybrid fallback to avoid rapid-fire detection
+        if (strategy == JobScrapingStrategy.Hybrid)
+        {
+            await Task.Delay(2000, ct);
         }
 
         var pageOpts = _options.GetPageOptions();
         var page = await _session.NewPageAsync(pageOpts, ct: ct);
         try
         {
+            // Clear cookies to ensure a fresh session (fixes Hybrid fallback issues)
+            // Use a client-side cookie clear since the IPage abstraction doesn't expose the
+            // underlying browser context in this layer.
+            try
+            {
+                await page.EvaluateAsync<object>("() => { document.cookie.split(';').forEach(function(c) { document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/'); }); }", ct: ct);
+            }
+            catch { }
+
             var q = System.Uri.EscapeDataString(keywords);
             var loc = System.Uri.EscapeDataString(location);
             var url = $"{_options.BaseUrl}/jobs/search?keywords={q}&location={loc}";
+            // Starting browser navigation
             await page.NavigateAsync(url, ct: ct);
             await page.WaitForLoadStateAsync(ct: ct);
 
-            var nodes = await page.QuerySelectorAllAsync(".jobs-search-results__list-item", ct: ct);
+            // Debugging: Check title to see if we hit auth wall
+            var pageTitle = await page.EvaluateAsync<string>("document.title", ct: ct);
+
+            // Robust selector strategy: Try multiple known patterns for public/private views
+            // 1. .jobs-search-results__list-item (Logged in / specific view)
+            // 2. .jobs-search__results-list li (Public guest view)
+            // 3. .base-card (Generic card)
+            var nodes = await page.QuerySelectorAllAsync(".jobs-search-results__list-item, .jobs-search__results-list li, .base-card", ct: ct);
+            // Nodes found via browser: count = nodes.Count
+
+            // If no nodes found, continue - no debug diagnostics are emitted in production
+
             var count = 0;
             var list = new List<JobListing>();
             foreach (var n in nodes)
@@ -281,19 +351,69 @@ public sealed class LinkedInJobClient : IJobClient
                 if (count++ >= limit) break;
                 try
                 {
-                    var idEl = await n.QuerySelectorAsync("[data-id]", ct);
-                    string id = idEl is not null ? await idEl.GetAttributeAsync("data-id", ct) ?? Guid.NewGuid().ToString() : Guid.NewGuid().ToString();
+                    // Selector hunting for inner details
+                    
+                    // ID
+                    string id = Guid.NewGuid().ToString();
+                    var idEl = await n.QuerySelectorAsync("[data-id], [data-entity-urn]", ct);
+                    if (idEl != null)
+                    {
+                        var dataId = await idEl.GetAttributeAsync("data-id", ct);
+                        var urn = await idEl.GetAttributeAsync("data-entity-urn", ct);
+                        // Extract numeric ID from urn if possible (urn:li:jobPosting:123)
+                        if (!string.IsNullOrEmpty(urn))
+                        {
+                            var m = System.Text.RegularExpressions.Regex.Match(urn, @"\d+");
+                            if (m.Success) id = m.Value;
+                        }
+                        else if (!string.IsNullOrEmpty(dataId))
+                        {
+                            id = dataId;
+                        }
+                    }
 
-                    var titleEl = await n.QuerySelectorAsync(".job-card-list__title", ct);
-                    string title = titleEl is not null ? await titleEl.GetTextContentAsync(ct) ?? string.Empty : string.Empty;
+                    // Title: .job-card-list__title, .base-search-card__title
+                    var titleEl = await n.QuerySelectorAsync(".job-card-list__title, .base-search-card__title", ct);
+                    string title = titleEl is not null ? (await titleEl.GetTextContentAsync(ct))?.Trim() ?? string.Empty : string.Empty;
 
-                    var companyEl = await n.QuerySelectorAsync(".job-card-container__company-name", ct);
-                    string company = companyEl is not null ? await companyEl.GetTextContentAsync(ct) ?? string.Empty : string.Empty;
+                    // Company: .job-card-container__company-name, .base-search-card__subtitle
+                    var companyEl = await n.QuerySelectorAsync(".job-card-container__company-name, .base-search-card__subtitle", ct);
+                    string company = companyEl is not null ? (await companyEl.GetTextContentAsync(ct))?.Trim() ?? string.Empty : string.Empty;
 
-                    var locationEl = await n.QuerySelectorAsync(".job-card-container__metadata-item", ct);
-                    string locationText = locationEl is not null ? await locationEl.GetTextContentAsync(ct) ?? string.Empty : string.Empty;
+                    // Location: .job-card-container__metadata-item, .job-search-card__location
+                    var locationEl = await n.QuerySelectorAsync(".job-card-container__metadata-item, .job-search-card__location", ct);
+                    string locationText = locationEl is not null ? (await locationEl.GetTextContentAsync(ct))?.Trim() ?? string.Empty : string.Empty;
 
-                    list.Add(new JobListing { Id = id, Title = title, Company = company, Location = locationText });
+                    // Link: a.base-card__full-link, .job-card-list__title
+                    string? jobUrl = null;
+                    var linkEl = await n.QuerySelectorAsync("a.base-card__full-link, a.job-card-list__title", ct);
+                    if (linkEl != null)
+                    {
+                        jobUrl = await linkEl.GetAttributeAsync("href", ct);
+                        
+                        // If ID is still a GUID, try to extract from URL (e.g., /jobs/view/title-at-company-123456)
+                        if (Guid.TryParse(id, out _) && !string.IsNullOrEmpty(jobUrl))
+                        {
+                            // LinkedIn job URLs end with the numeric ID before any query params
+                            var urlIdMatch = System.Text.RegularExpressions.Regex.Match(jobUrl, @"-(\d{6,})(?:\?|$)");
+                            if (urlIdMatch.Success && urlIdMatch.Groups[1].Success)
+                            {
+                                id = urlIdMatch.Groups[1].Value;
+                            }
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(title))
+                    {
+                        list.Add(new JobListing 
+                        { 
+                            Id = id, 
+                            Title = title, 
+                            Company = company, 
+                            Location = locationText,
+                            Url = jobUrl 
+                        });
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -301,7 +421,10 @@ public sealed class LinkedInJobClient : IJobClient
                 }
             }
             
-            foreach (var job in list)
+            // Deduplicate by job ID (same card can match multiple selectors)
+            var uniqueJobs = list.GroupBy(j => j.Id).Select(g => g.First()).ToList();
+
+            foreach (var job in uniqueJobs)
             {
                 yield return job;
             }

@@ -16,11 +16,14 @@ public sealed class LinkedInExtension : IExtension
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<LinkedInOptions>(configuration.GetSection("LinkedIn"));
+        // Bind from nested path: Ghost:Extensions:LinkedIn in appsettings.json
+        services.Configure<LinkedInOptions>(configuration.GetSection("Ghost:Extensions:LinkedIn"));
         // Authenticator used by LinkedInSocialClient for logging in / cookie handling
         services.AddTransient<Internal.LinkedInAuthenticator>();
         // GuestJobSearch implements guest API scraping logic
         services.AddScoped<Internal.GuestJobSearch>();
+        // Ensure required GhostKernel and IProxyProvider are available for GuestJobSearch
+        // GhostKernel is registered by AddGhost and IProxyProvider is registered by host when available
         services.AddScoped<Ghost.Contracts.Social.ISocialClient, LinkedInSocialClient>();
         services.AddScoped<Ghost.Contracts.Jobs.IJobClient, LinkedInJobClient>();
         services.AddScoped<Ghost.Contracts.News.INewsClient, LinkedInNewsClient>();

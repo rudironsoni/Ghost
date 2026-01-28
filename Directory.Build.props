@@ -85,7 +85,7 @@
   <ItemGroup>
     <!-- Use MSBuildThisFileDirectory to reference repo root README from any project.
          Force forward-slash separators for cross-platform compatibility. -->
-    <None Include="$([System.String]::Replace('$(MSBuildThisFileDirectory)','\\','/'))README.md" Pack="true" PackagePath="/" />
+    <None Include="$(MSBuildThisFileDirectory.Replace('\', '/'))README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 
 </Project>

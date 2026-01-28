@@ -7,6 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+// Register HTTP client and proxy provider required by Ghost
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<Ghost.Abstractions.IProxyProvider, Ghost.Services.FreeProxyProvider>();
 
 // Configure Ghost
 builder.Services.AddGhost(builder.Configuration, gw =>

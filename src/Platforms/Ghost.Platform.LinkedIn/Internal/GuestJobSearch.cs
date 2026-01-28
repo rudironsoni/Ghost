@@ -4,29 +4,63 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
+using Ghost.Core;
+using Ghost.Abstractions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Ghost.Platform.LinkedIn.Internal;
 
 public sealed class GuestJobSearch
 {
-    private readonly Ghost.IBrowserSession _session;
+    private readonly GhostKernel _kernel;
+    private readonly IProxyProvider _proxyProvider;
     private readonly ILogger<GuestJobSearch> _logger;
     private readonly LinkedInOptions _options = new();
 
-    public GuestJobSearch(Ghost.IBrowserSession session, ILogger<GuestJobSearch> logger)
+    private static readonly Action<ILogger, string, Exception?> s_logUsingProxy =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(GuestJobSearch)), "Using proxy: {Proxy}");
+
+    private static readonly Action<ILogger, string, Exception?> s_logNavigating =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(2, nameof(GuestJobSearch)), "Navigating to: {Url}");
+
+    private static readonly Action<ILogger, Exception?> s_logGuestSearchFailed =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(3, nameof(GuestJobSearch)), "Guest search navigation/parsing failed");
+
+    public GuestJobSearch(
+        GhostKernel kernel,
+        IProxyProvider proxyProvider,
+        IOptions<LinkedInOptions> options,
+        ILogger<GuestJobSearch> logger)
     {
-        ArgumentNullException.ThrowIfNull(session);
-        _session = session;
+        ArgumentNullException.ThrowIfNull(kernel);
+        ArgumentNullException.ThrowIfNull(proxyProvider);
+        _kernel = kernel;
+        _proxyProvider = proxyProvider;
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GuestJobSearch>.Instance;
+        if (options?.Value is not null)
+        {
+            _options = options.Value;
+        }
     }
 
-    public async Task<IReadOnlyList<string>> SearchAsync(JobSearchCriteria criteria, int limit, CancellationToken ct)
-    {
+        public async Task<IReadOnlyList<string>> SearchAsync(JobSearchCriteria criteria, int limit, CancellationToken ct)
+        {
         ArgumentNullException.ThrowIfNull(criteria);
 
         var ids = new List<string>();
-        var page = await _session.NewPageAsync(ct: ct);
+        // Create a fresh proxied session for the search to isolate from other work
+         var proxy = _proxyProvider is not null ? await _proxyProvider.GetProxyAsync("US", ct) : null;
+         // log the proxy being used for this search
+         s_logUsingProxy(_logger, proxy?.Server ?? "None", null);
+         var options = new SessionOptions();
+        if (proxy is not null)
+        {
+            options.Proxy = new SessionOptions.ProxySettings(proxy.Server, proxy.Username, proxy.Password);
+        }
+
+        var session = await _kernel.NewSessionAsync(options, ct);
+        var page = await session.NewPageAsync(ct: ct);
         try
         {
             var q = Uri.EscapeDataString(criteria.Query ?? string.Empty);
@@ -38,6 +72,7 @@ public sealed class GuestJobSearch
                 var url = $"{_options.BaseUrl}/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={q}&location={loc}&start={offset}";
             try
             {
+                s_logNavigating(_logger, url, null);
                 await page.NavigateAsync(url, ct: ct);
                 // no full load expected - just get content
                 var html = await page.GetContentAsync(ct);
@@ -64,6 +99,8 @@ public sealed class GuestJobSearch
                 catch (OperationCanceledException) { throw; }
                 catch (Exception ex)
                 {
+                    // log exception details for diagnosis
+                    s_logGuestSearchFailed(_logger, ex);
                     LinkedInLog.LogFailedToParseSearchNode(_logger, ex);
                     break;
                 }
@@ -74,6 +111,10 @@ public sealed class GuestJobSearch
         finally
         {
             try { await page.DisposeAsync(); } catch { }
+            if (session is not null)
+            {
+                try { await session.DisposeAsync(); } catch { }
+            }
         }
     }
 
@@ -81,7 +122,16 @@ public sealed class GuestJobSearch
     {
         ArgumentNullException.ThrowIfNull(jobId);
 
-        var page = await _session.NewPageAsync(ct: ct);
+        // create a fresh proxied session for fetching job details
+        var proxy = _proxyProvider is not null ? await _proxyProvider.GetProxyAsync("US", ct) : null;
+        var options = new SessionOptions();
+        if (proxy is not null)
+        {
+            options.Proxy = new SessionOptions.ProxySettings(proxy.Server, proxy.Username, proxy.Password);
+        }
+
+        var session = await _kernel.NewSessionAsync(options, ct);
+        var page = await session.NewPageAsync(ct: ct);
         try
         {
             var url = $"{_options.BaseUrl}/jobs-guest/jobs/api/jobPosting/{jobId}";
@@ -110,6 +160,10 @@ public sealed class GuestJobSearch
         finally
         {
             try { await page.DisposeAsync(); } catch { }
+            if (session is not null)
+            {
+                try { await session.DisposeAsync(); } catch { }
+            }
         }
     }
 
