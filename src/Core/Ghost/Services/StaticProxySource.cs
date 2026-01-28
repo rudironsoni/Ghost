@@ -13,7 +13,7 @@ namespace Ghost.Services;
 
     public class StaticProxySource : IProxySource
     {
-        private readonly IOptions<ProxyOptions> _options;
+        private readonly ProxySourceConfig _config;
         private readonly ILogger<StaticProxySource> _logger;
 
         private static readonly Action<ILogger, int, Exception?> s_logLoaded =
@@ -34,39 +34,29 @@ namespace Ghost.Services;
         private static readonly Action<ILogger, string, Exception?> s_logParsed =
             LoggerMessage.Define<string>(LogLevel.Debug, new EventId(6, nameof(StaticProxySource)), "[DEBUG] Parsed: Server='{Server}'");
 
-        public StaticProxySource(IOptions<ProxyOptions> options, ILogger<StaticProxySource> logger)
+        public StaticProxySource(ProxySourceConfig config, ILogger<StaticProxySource> logger)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _config = config ?? throw new ArgumentNullException(nameof(config));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public Task<IEnumerable<ProxyInfo>> FetchProxiesAsync(CancellationToken ct)
         {
-            var cfg = _options.Value.Static;
-            if (cfg == null || !cfg.Enabled || cfg.Items == null || cfg.Items.Count == 0)
+            var cfg = _config;
+            if (cfg == null || !cfg.Enabled || cfg.Hosts == null || cfg.Hosts.Count == 0)
                 return Task.FromResult(Enumerable.Empty<ProxyInfo>());
 
             var list = new List<ProxyInfo>();
-            foreach (var item in cfg.Items)
+            foreach (var item in cfg.Hosts)
             {
                 if (string.IsNullOrWhiteSpace(item))
                     continue;
 
                 var trimmed = item.Trim();
                 var parsed = ParseProxyString(trimmed);
-                if (parsed is null && cfg.Port.HasValue)
+                if (parsed is null)
                 {
-                    // If the item is a bare host (no scheme, no port), construct the server with the global port
-                    // and include a default scheme so callers can see it (e.g. http://host:port).
-                    if (!trimmed.Contains("://") && !trimmed.Contains(':'))
-                    {
-                        parsed = new ProxyInfo($"http://{trimmed}:{cfg.Port}", null, null);
-                    }
-                    else
-                    {
-                        var fallback = trimmed.Contains("://") ? $"{trimmed}:{cfg.Port}" : $"http://{trimmed}:{cfg.Port}";
-                        parsed = ParseProxyString(fallback);
-                    }
+                    // If the item is a bare host (no scheme and no port), parsing will return null and we'll ignore
                 }
 
                 if (parsed is null)
