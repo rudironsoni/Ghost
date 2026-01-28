@@ -30,9 +30,40 @@ internal sealed class ElementWrapper : IElement, Ghost.IElementHandle
     public Task TypeAsync(string text, TypeOptions? options = null, CancellationToken ct = default)
     {
         var o = options ?? new TypeOptions();
-        // ElementHandle.TypeAsync is deprecated in Playwright; use PressSequentiallyAsync when available
-        // Microsoft.Playwright 1.49.0 provides ElementHandle.PressSequentiallyAsync which supports delay
-        return _handle.PressSequentiallyAsync(text, new Microsoft.Playwright.ElementHandlePressSequentiallyOptions { Delay = o.Delay });
+        // Prefer calling PressSequentiallyAsync if available on the runtime Playwright implementation.
+        // Use reflection so this compiles against multiple Playwright versions without directly
+        // referencing possibly-missing types. If not available, fall back to FillAsync (ignores delay).
+        var handleType = _handle.GetType();
+        var method = handleType.GetMethod("PressSequentiallyAsync");
+        if (method != null)
+        {
+            var parameters = method.GetParameters();
+            try
+            {
+                if (parameters.Length == 2)
+                {
+                    var optionsType = parameters[1].ParameterType;
+                    var optionsInstance = Activator.CreateInstance(optionsType);
+                    var delayProp = optionsType.GetProperty("Delay");
+                    delayProp?.SetValue(optionsInstance, o.Delay);
+                    var result = method.Invoke(_handle, new object?[] { text, optionsInstance });
+                    return (Task)result!;
+                }
+
+                if (parameters.Length == 1)
+                {
+                    var result = method.Invoke(_handle, new object?[] { text });
+                    return (Task)result!;
+                }
+            }
+            catch
+            {
+                // If reflection invocation fails for any reason, fall back to FillAsync below
+            }
+        }
+
+        // Fallback: Fill the element with the text (does not support per-character delay)
+        return _handle.FillAsync(text);
     }
 
     public Task FillAsync(string value, TypeOptions? options = null, CancellationToken ct = default) => _handle.FillAsync(value);
