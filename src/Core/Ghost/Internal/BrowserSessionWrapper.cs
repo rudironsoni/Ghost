@@ -11,8 +11,9 @@ namespace Ghost.Internal;
 internal sealed class BrowserSessionWrapper : IBrowserSession, IDisposable
 {
     private readonly IBrowserContext _context;
-    private List<IPage> _pages { get; } = new();
-    private readonly string _sessionId;
+    private readonly List<IPage> _pages = new();
+    // SessionId property replaces backing field to satisfy IDE0032
+    public string SessionId { get; }
     private readonly Action? _onDispose;
     private bool _disposed;
 
@@ -20,11 +21,9 @@ internal sealed class BrowserSessionWrapper : IBrowserSession, IDisposable
     {
         ArgumentNullException.ThrowIfNull(context);
         _context = context;
-        _sessionId = sessionId ?? Guid.NewGuid().ToString();
+        SessionId = sessionId ?? Guid.NewGuid().ToString();
         _onDispose = onDispose;
     }
-
-    public string SessionId => _sessionId;
     public bool IsConnected => !_disposed;
     public IReadOnlyList<IPage> Pages => _pages.AsReadOnly();
 
