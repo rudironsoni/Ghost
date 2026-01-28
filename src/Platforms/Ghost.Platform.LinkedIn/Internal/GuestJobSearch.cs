@@ -9,6 +9,7 @@ using Ghost.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
+using System.Linq;
 
 namespace Ghost.Platform.LinkedIn.Internal;
 
@@ -47,6 +48,8 @@ public sealed class GuestJobSearch
     private static readonly Action<ILogger, string, Exception?> s_logAllProxyFailed =
         LoggerMessage.Define<string>(LogLevel.Error, new EventId(9, nameof(GuestJobSearch)), "All proxy attempts failed for {Url}");
 
+    private static readonly char[] s_newlines = { '\n', '\r' };
+
     public GuestJobSearch(
         GhostKernel kernel,
         IProxyProvider proxyProvider,
@@ -63,8 +66,8 @@ public sealed class GuestJobSearch
         _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
-        public async Task<IReadOnlyList<string>> SearchAsync(JobSearchCriteria criteria, int limit, CancellationToken ct)
-        {
+    public async Task<IReadOnlyList<string>> SearchAsync(JobSearchCriteria criteria, int limit, CancellationToken ct)
+    {
         ArgumentNullException.ThrowIfNull(criteria);
 
         var ids = new List<string>();
@@ -290,7 +293,9 @@ public sealed class GuestJobSearch
 
                     await page.NavigateAsync(url, ct: ct);
                     try { await LinkedInRateLimitDetector.CheckAsync(page); } catch { }
+                    Console.WriteLine($"[DEBUG] Fetching content for {jobId}...");
                     var html = await page.GetContentAsync(ct);
+                    try { Console.WriteLine($"[DEBUG] HTML for {jobId} (len={html?.Length ?? 0}): {html?.Substring(0, Math.Min(html?.Length ?? 0, 2000))}"); } catch { }
                     if (string.IsNullOrEmpty(html)) return null;
 
                     if (html.Contains("429", StringComparison.OrdinalIgnoreCase) || html.Contains("too many requests", StringComparison.OrdinalIgnoreCase))
@@ -301,9 +306,14 @@ public sealed class GuestJobSearch
 
                     var parsed = JsonLdParser.Parse(html, jobId, url);
 
-                    // If JSON-LD parsing failed to extract a description, fall back to DOM scraping
-                    if (parsed is null || string.IsNullOrEmpty(parsed.Description))
+                    // If JSON-LD parsing failed to extract critical fields, fall back to DOM scraping
+                    // We check Description, Company, or Location as primary signals of a good parse
+                    if (parsed is null || 
+                        string.IsNullOrEmpty(parsed.Description) || 
+                        string.IsNullOrEmpty(parsed.Company) ||
+                        string.IsNullOrEmpty(parsed.Location))
                     {
+                        try { Console.WriteLine($"[DEBUG] Entered fallback for {jobId}"); } catch { }
                         // Helper to scrape first non-empty selector text
                         static async Task<string?> ScrapeFirstAsync(IPage p, string[] selectors, CancellationToken ct)
                         {
@@ -322,15 +332,76 @@ public sealed class GuestJobSearch
                             return null;
                         }
 
-                        var descSelectors = new[] { ".show-more-less-html__markup", ".description__text", "#job-details" };
-                        var titleSelectors = new[] { ".top-card-layout__title", "h1" };
-                        var companySelectors = new[] { ".top-card-layout__first-subline .topcard__org-name-link" };
-                        var locationSelectors = new[] { ".top-card-layout__first-subline .topcard__flavor--bullet" };
+                        // Robust selectors for guest view (updated 2026)
+                        var descSelectors = new[] { 
+                            ".show-more-less-html__markup", 
+                            ".description__text", 
+                            "#job-details",
+                            ".job-description",
+                            ".core-section-container__content"
+                        };
+                        
+                        var titleSelectors = new[] { 
+                            ".top-card-layout__title", 
+                            ".top-card-layout__entity-info h1",
+                            "h1" 
+                        };
+                        
+                        var companySelectors = new[] { 
+                            ".top-card-layout__first-subline .topcard__org-name-link",
+                            ".top-card-layout__company-url",
+                            "a[data-tracking-control-name='public_jobs_topcard-org-name']",
+                            ".job-details-jobs-unified-top-card__company-name",
+                            ".topcard__org-name-link"
+                        };
+                        
+                        var locationSelectors = new[] { 
+                            ".top-card-layout__first-subline .topcard__flavor:not(.topcard__org-name-link)",
+                            ".top-card-layout__first-subline .topcard__flavor--bullet",
+                            ".job-details-jobs-unified-top-card__bullet",
+                            ".job-search-card__location",
+                            ".topcard__flavor--bullet"
+                        };
 
                         var scrapedDescription = await ScrapeFirstAsync(page, descSelectors, ct);
                         var scrapedTitle = await ScrapeFirstAsync(page, titleSelectors, ct);
                         var scrapedCompany = await ScrapeFirstAsync(page, companySelectors, ct);
                         var scrapedLocation = await ScrapeFirstAsync(page, locationSelectors, ct);
+
+                        // Try to scrape criteria for JobType/Experience
+                        string? scrapedJobType = null;
+                        string? scrapedExperience = null;
+                        
+                        var criteriaList = await page.QuerySelectorAllAsync(".description__job-criteria-list li", ct);
+                        foreach (var item in criteriaList)
+                        {
+                            try {
+                                var text = await item.GetTextContentAsync(ct);
+                                if (!string.IsNullOrEmpty(text))
+                                {
+                                    var parts = text.Split(s_newlines, StringSplitOptions.RemoveEmptyEntries);
+                                    if (parts.Length >= 2)
+                                    {
+                                        var header = parts[0].Trim();
+                                        var value = parts[1].Trim();
+                                        if (header.Contains("Employment type", StringComparison.OrdinalIgnoreCase)) scrapedJobType = value;
+                                        else if (header.Contains("Seniority level", StringComparison.OrdinalIgnoreCase)) scrapedExperience = value;
+                                    }
+                                }
+                            } catch {}
+                        }
+
+                        // Regex fallback if selectors failed
+                        if (string.IsNullOrWhiteSpace(scrapedCompany))
+                        {
+                            var m = Regex.Match(html, "class=\"[^\"]*topcard__org-name-link[^\"]*\">\\s*([^<]+)\\s*<", RegexOptions.IgnoreCase);
+                            if (m.Success) scrapedCompany = m.Groups[1].Value.Trim();
+                        }
+                        if (string.IsNullOrWhiteSpace(scrapedLocation))
+                        {
+                            var m = Regex.Match(html, "class=\"[^\"]*topcard__flavor--bullet[^\"]*\">\\s*([^<]+)\\s*<", RegexOptions.IgnoreCase);
+                            if (m.Success) scrapedLocation = m.Groups[1].Value.Trim();
+                        }
 
                         if (parsed is null)
                         {
@@ -340,16 +411,21 @@ public sealed class GuestJobSearch
                                 Description = scrapedDescription,
                                 Title = scrapedTitle ?? string.Empty,
                                 Company = scrapedCompany ?? string.Empty,
-                                Location = scrapedLocation
+                                Location = scrapedLocation,
+                                Url = url,
+                                JobType = ParseJobType(scrapedJobType),
+                                ExperienceLevel = ParseExperienceLevel(scrapedExperience),
+                                PostedAt = DateTimeOffset.UtcNow
                             };
                         }
                         else
                         {
-                            // prefer parsed values, but fill missing fields from scraped values
                             var desc = string.IsNullOrWhiteSpace(parsed.Description) ? scrapedDescription : parsed.Description;
                             var title = string.IsNullOrWhiteSpace(parsed.Title) ? (scrapedTitle ?? parsed.Title) : parsed.Title;
                             var company = string.IsNullOrWhiteSpace(parsed.Company) ? (scrapedCompany ?? parsed.Company) : parsed.Company;
                             var location = string.IsNullOrWhiteSpace(parsed.Location) ? scrapedLocation : parsed.Location;
+                            var jType = parsed.JobType == JobType.Unknown ? ParseJobType(scrapedJobType) : parsed.JobType;
+                            var exp = parsed.ExperienceLevel == ExperienceLevel.Unknown ? ParseExperienceLevel(scrapedExperience) : parsed.ExperienceLevel;
 
                             parsed = parsed with
                             {
@@ -357,21 +433,23 @@ public sealed class GuestJobSearch
                                 Description = desc,
                                 Title = title,
                                 Company = company,
-                                Location = location
+                                Location = location,
+                                JobType = jType,
+                                ExperienceLevel = exp
                             };
                         }
                     }
+
+                    try { Console.WriteLine($"[DEBUG] Result for {jobId}: Title='{parsed?.Title}', Company='{parsed?.Company}', Loc='{parsed?.Location}', JobType='{parsed?.JobType}', Exp='{parsed?.ExperienceLevel}'"); } catch { }
 
                     return parsed;
                 }
                 catch (OperationCanceledException) { throw; }
                 catch (PlaywrightException pex)
                 {
-                    // Treat Playwright errors as proxy/session failures and retry with a new proxy/session
                     s_logProxyFailed(_logger, attemptProxy, attempt, pex.Message, null);
                     try { await page.DisposeAsync(); } catch { }
                     try { await session.DisposeAsync(); } catch { }
-                    // continue to next attempt
                     continue;
                 }
                 catch (Exception ex)
@@ -390,9 +468,44 @@ public sealed class GuestJobSearch
             }
         }
 
-        // If we get here all attempts failed
         s_logAllProxyFailed(_logger, url, null);
         return null;
+    }
+
+    private static JobType ParseJobType(string? type)
+    {
+        if (string.IsNullOrEmpty(type)) return JobType.Unknown;
+        var normalized = type.ToUpperInvariant().Replace("_", "").Replace("-", "").Replace(" ", "");
+        // Simple containment checks often work better for messy scraped text
+        if (normalized.Contains("FULLTIME")) return JobType.FullTime;
+        if (normalized.Contains("PARTTIME")) return JobType.PartTime;
+        if (normalized.Contains("CONTRACT")) return JobType.Contract;
+        if (normalized.Contains("TEMPORARY")) return JobType.Contract;
+        if (normalized.Contains("INTERN")) return JobType.Internship;
+
+        return normalized switch
+        {
+            "FULLTIME" => JobType.FullTime,
+            "PARTTIME" => JobType.PartTime,
+            "CONTRACT" => JobType.Contract,
+            "TEMPORARY" => JobType.Contract,
+            "INTERN" => JobType.Internship,
+            "INTERNSHIP" => JobType.Internship,
+            _ => JobType.Unknown
+        };
+    }
+
+    private static ExperienceLevel ParseExperienceLevel(string? level)
+    {
+        if (string.IsNullOrEmpty(level)) return ExperienceLevel.Unknown;
+        var n = level.Trim().ToLowerInvariant();
+        if (n.Contains("intern")) return ExperienceLevel.EntryLevel; // map internship to entry level
+        if (n.Contains("entry")) return ExperienceLevel.EntryLevel;
+        if (n.Contains("associate")) return ExperienceLevel.MidLevel;
+        if (n.Contains("mid")) return ExperienceLevel.MidLevel;
+        if (n.Contains("senior")) return ExperienceLevel.Senior;
+        if (n.Contains("director") || n.Contains("manager") || n.Contains("executive")) return ExperienceLevel.Manager;
+        return ExperienceLevel.Unknown;
     }
 
     private static List<string> ExtractIdsFromSearchHtml(string html)
