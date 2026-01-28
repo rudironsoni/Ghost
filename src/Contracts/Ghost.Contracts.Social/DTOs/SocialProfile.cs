@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Ghost.Contracts.Social;
 
@@ -40,4 +41,14 @@ public sealed record SocialProfile
     /// When the profile was created.
     /// </summary>
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
+
+    /// <summary>
+    /// Work experience entries for the profile.
+    /// </summary>
+    public List<SocialExperience> Experience { get; init; } = new();
+
+    /// <summary>
+    /// Education entries for the profile.
+    /// </summary>
+    public List<SocialEducation> Education { get; init; } = new();
 }

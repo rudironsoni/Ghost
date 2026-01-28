@@ -7,7 +7,7 @@ using Microsoft.Playwright;
 
 namespace Ghost.Internal;
 
-internal sealed class ElementWrapper : IElement
+internal sealed class ElementWrapper : IElement, Ghost.IElementHandle
 {
     private readonly Microsoft.Playwright.IElementHandle _handle;
     private bool _disposed;
@@ -100,6 +100,24 @@ internal sealed class ElementWrapper : IElement
         var handles = await _handle.QuerySelectorAllAsync(selector);
         return handles.Select(h => (IElement)new ElementWrapper(h)).ToList();
     }
+
+    // Explicit IElementHandle implementation to avoid conflicting signatures with IElement methods
+    async Task<Ghost.IElementHandle?> Ghost.IElementHandle.QuerySelectorAsync(string selector, CancellationToken ct)
+    {
+        var child = await _handle.QuerySelectorAsync(selector);
+        return child is null ? null : new ElementWrapper(child);
+    }
+
+    async Task<IReadOnlyList<Ghost.IElementHandle>> Ghost.IElementHandle.QuerySelectorAllAsync(string selector, CancellationToken ct)
+    {
+        var handles = await _handle.QuerySelectorAllAsync(selector);
+        return handles.Select(h => (Ghost.IElementHandle)new ElementWrapper(h)).ToList();
+    }
+
+    Task<string?> Ghost.IElementHandle.TextContentAsync(CancellationToken ct)
+        => _handle.TextContentAsync();
+
+    
 
     public async ValueTask DisposeAsync()
     {
