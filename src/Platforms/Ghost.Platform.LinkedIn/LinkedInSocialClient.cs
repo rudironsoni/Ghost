@@ -58,6 +58,9 @@ public sealed class LinkedInSocialClient : ISocialClient
                 _logger.LogLoginVerificationFailed(ex);
             }
 
+            // Expand "About" section if "see more" exists
+            await ExpandSeeMoreAsync(page, null, ct);
+
             var name = await page.EvaluateAsync<string>("() => document.querySelector('.text-heading-xlarge')?.innerText || ''", ct: ct);
             var bio = await page.EvaluateAsync<string>("() => document.querySelector('.text-body-medium')?.innerText || ''", ct: ct);
             var about = await page.EvaluateAsync<string>("() => document.querySelector('.pv-about__summary-text')?.innerText || ''", ct: ct);
@@ -99,6 +102,33 @@ public sealed class LinkedInSocialClient : ISocialClient
         }
     }
 
+    private static async Task ExpandSeeMoreAsync(Ghost.IPage page, Ghost.IElement? container, CancellationToken ct)
+    {
+        try
+        {
+            // Selectors for "see more" buttons. 
+            // container scope if provided, otherwise page scope.
+            var selector = ".inline-show-more-text__button, button[aria-label*='see more']";
+            IReadOnlyList<IElement> buttons;
+            
+            if (container != null)
+                buttons = await container.QuerySelectorAllAsync(selector, ct);
+            else
+                buttons = await page.QuerySelectorAllAsync(selector, ct);
+
+            foreach (var btn in buttons)
+            {
+                try
+                {
+                    // Check if visible (HumanClick handles some checks, but we should be sure it's interacting)
+                    await btn.HumanClickAsync(ct);
+                }
+                catch { /* ignore click failures, it might be hidden or covered */ }
+            }
+        }
+        catch { }
+    }
+
     private async Task<List<SocialExperience>> ParseExperienceAsync(Ghost.IPage page, CancellationToken ct)
     {
         var list = new List<SocialExperience>();
@@ -129,6 +159,9 @@ public sealed class LinkedInSocialClient : ISocialClient
         {
             try
             {
+                // Expand "see more" within this item
+                await ExpandSeeMoreAsync(page, item, ct);
+
                 var texts = await Internal.TextExtractor.ExtractAllUniqueTextsAsync(item, ct).ConfigureAwait(false);
                 if (texts == null || texts.Count == 0) continue;
 
@@ -205,6 +238,9 @@ public sealed class LinkedInSocialClient : ISocialClient
         {
             try
             {
+                // Expand "see more" within this item
+                await ExpandSeeMoreAsync(page, item, ct);
+
                 var texts = await Internal.TextExtractor.ExtractAllUniqueTextsAsync(item, ct).ConfigureAwait(false);
                 if (texts == null || texts.Count == 0) continue;
 
