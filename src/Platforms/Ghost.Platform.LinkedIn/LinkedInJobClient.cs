@@ -122,13 +122,132 @@ namespace Ghost.Platform.LinkedIn;
             // attempt to parse JSON-LD from page content
             var html = await page.GetContentAsync(ct);
             var parsed = Internal.JsonLdParser.Parse(html ?? string.Empty, jobId, url);
-            
-            if (parsed != null)
+
+            // If parsed is missing or missing a title or description, attempt DOM scraping to fill missing fields.
+            if (parsed == null || string.IsNullOrEmpty(parsed.Title) || string.IsNullOrEmpty(parsed.Description))
             {
-                return parsed with { IsEasyApply = isEasyApply };
+                try
+                {
+                    // Title
+                    string? title = parsed?.Title;
+                    if (string.IsNullOrEmpty(title))
+                    {
+                        var titleEl = await page.QuerySelectorAsync(".top-card-layout__title, .job-details-jobs-unified-top-card__job-title, h1", ct);
+                        if (titleEl != null)
+                        {
+                            var ttxt = await titleEl.GetTextContentAsync(ct);
+                            title = ttxt?.Trim();
+                        }
+                    }
+
+                    // Company
+                    string? company = parsed?.Company;
+                    if (string.IsNullOrEmpty(company))
+                    {
+                        var compEl = await page.QuerySelectorAsync(".top-card-layout__first-subline .topcard__org-name-link, .job-details-jobs-unified-top-card__company-name", ct);
+                        if (compEl != null)
+                        {
+                            var ctxt = await compEl.GetTextContentAsync(ct);
+                            company = ctxt?.Trim();
+                        }
+                    }
+
+                    // Location
+                    string? locationText = parsed?.Location;
+                    if (string.IsNullOrEmpty(locationText))
+                    {
+                        var locEl = await page.QuerySelectorAsync(".top-card-layout__first-subline .topcard__flavor--bullet", ct);
+                        if (locEl != null)
+                        {
+                            var ltxt = await locEl.GetTextContentAsync(ct);
+                            locationText = ltxt?.Trim();
+                        }
+                    }
+
+                    // Description
+                    string? description = parsed?.Description;
+                    if (string.IsNullOrEmpty(description))
+                    {
+                        var descEl = await page.QuerySelectorAsync(".show-more-less-html__markup, #job-details", ct);
+                        if (descEl != null)
+                        {
+                            var dtxt = await descEl.GetTextContentAsync(ct);
+                            description = dtxt?.Trim();
+                        }
+                    }
+
+                    // PostedAt - try to find a time element with datetime attribute, otherwise fallback to UtcNow
+                    DateTimeOffset postedAt = parsed?.PostedAt ?? DateTimeOffset.MinValue;
+                    if (postedAt == DateTimeOffset.MinValue)
+                    {
+                        try
+                        {
+                            var timeEl = await page.QuerySelectorAsync("time[datetime]", ct);
+                            string? datetimeAttr = null;
+                            if (timeEl != null)
+                            {
+                                datetimeAttr = await timeEl.GetAttributeAsync("datetime", ct);
+                            }
+                            if (!string.IsNullOrEmpty(datetimeAttr) && DateTimeOffset.TryParse(datetimeAttr, out var dt))
+                            {
+                                postedAt = dt;
+                            }
+                            else
+                            {
+                                postedAt = DateTimeOffset.UtcNow;
+                            }
+                        }
+                        catch
+                        {
+                            postedAt = DateTimeOffset.UtcNow;
+                        }
+                    }
+
+                    // Merge with parsed when available - prefer parsed values per instructions
+                    if (parsed != null)
+                    {
+                        var merged = parsed with
+                        {
+                            Title = string.IsNullOrEmpty(parsed.Title) ? (title ?? string.Empty) : parsed.Title,
+                            Company = string.IsNullOrEmpty(parsed.Company) ? (company ?? string.Empty) : parsed.Company,
+                            Location = string.IsNullOrEmpty(parsed.Location) ? (locationText ?? string.Empty) : parsed.Location,
+                            Description = string.IsNullOrEmpty(parsed.Description) ? (description ?? string.Empty) : parsed.Description,
+                            PostedAt = parsed.PostedAt == DateTimeOffset.MinValue ? postedAt : parsed.PostedAt,
+                            Url = string.IsNullOrEmpty(parsed.Url) ? url : parsed.Url,
+                            Id = string.IsNullOrEmpty(parsed.Id) ? jobId : parsed.Id,
+                            IsEasyApply = isEasyApply
+                        };
+
+                        return merged;
+                    }
+
+                    // Construct new JobListing from scraped values
+                    return new JobListing
+                    {
+                        Id = jobId,
+                        Url = url,
+                        Title = title ?? string.Empty,
+                        Company = company ?? string.Empty,
+                        Location = locationText ?? string.Empty,
+                        Description = description ?? string.Empty,
+                        PostedAt = postedAt == DateTimeOffset.MinValue ? DateTimeOffset.UtcNow : postedAt,
+                        IsEasyApply = isEasyApply
+                    };
+                }
+                catch (Exception ex)
+                {
+                    LinkedInLog.LogFailedToParseJobNode(_logger, ex);
+                    // Fall back to parsed result if available, else minimal listing
+                    if (parsed != null)
+                    {
+                        return parsed with { IsEasyApply = isEasyApply };
+                    }
+                    return new JobListing { Id = jobId, Url = url, IsEasyApply = isEasyApply };
+                }
             }
 
-            return new JobListing { Id = jobId, Url = url, IsEasyApply = isEasyApply };
+            // If parsed had a title, prefer it; but ensure IsEasyApply is set
+            return parsed with { IsEasyApply = isEasyApply };
         }
         finally
         {
