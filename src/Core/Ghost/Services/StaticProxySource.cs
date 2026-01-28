@@ -22,6 +22,18 @@ namespace Ghost.Services;
         private static readonly Action<ILogger, string, Exception?> s_logIgnored =
             LoggerMessage.Define<string>(LogLevel.Warning, new EventId(2, nameof(StaticProxySource)), "Ignoring static proxy entry: {Entry}");
 
+        private static readonly Action<ILogger, string, Exception?> s_logParsing =
+            LoggerMessage.Define<string>(LogLevel.Debug, new EventId(3, nameof(StaticProxySource)), "[DEBUG] Parsing: '{Input}'");
+
+        private static readonly Action<ILogger, string, string, Exception?> s_logRegexMatch =
+            LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(4, nameof(StaticProxySource)), "[DEBUG] Regex Match: Host='{Host}', Port='{Port}'");
+
+        private static readonly Action<ILogger, string, Exception?> s_logSimpleMatch =
+            LoggerMessage.Define<string>(LogLevel.Debug, new EventId(5, nameof(StaticProxySource)), "[DEBUG] Simple Match: '{Input}'");
+
+        private static readonly Action<ILogger, string, Exception?> s_logParsed =
+            LoggerMessage.Define<string>(LogLevel.Debug, new EventId(6, nameof(StaticProxySource)), "[DEBUG] Parsed: Server='{Server}'");
+
         public StaticProxySource(IOptions<ProxyOptions> options, ILogger<StaticProxySource> logger)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -43,13 +55,34 @@ namespace Ghost.Services;
                 var trimmed = item.Trim();
                 var parsed = ParseProxyString(trimmed);
                 if (parsed is null && cfg.Port.HasValue)
-                    parsed = ParseProxyString($"{trimmed}:{cfg.Port}");
+                {
+                    // If the item is a bare host (no scheme, no port), construct the server with the global port
+                    // and include a default scheme so callers can see it (e.g. http://host:port).
+                    if (!trimmed.Contains("://") && !trimmed.Contains(':'))
+                    {
+                        parsed = new ProxyInfo($"http://{trimmed}:{cfg.Port}", null, null);
+                    }
+                    else
+                    {
+                        var fallback = trimmed.Contains("://") ? $"{trimmed}:{cfg.Port}" : $"http://{trimmed}:{cfg.Port}";
+                        parsed = ParseProxyString(fallback);
+                    }
+                }
 
                 if (parsed is null)
                 {
                     s_logIgnored(_logger, item, null);
                     continue;
                 }
+
+                // If original item was a bare host (no scheme and no port) but we applied a global port,
+                // ensure the resulting server includes the scheme so callers can see it (e.g. http://host:port).
+                if (!trimmed.Contains("://") && !trimmed.Contains(':') && !parsed.Server.Contains("://"))
+                {
+                    parsed = new ProxyInfo($"http://{parsed.Server}", parsed.Username, parsed.Password);
+                }
+
+                s_logParsed(_logger, parsed.Server, null);
 
                 ProxyInfo toAdd;
                 if (string.IsNullOrEmpty(parsed.Username) && !string.IsNullOrEmpty(cfg.Username))
@@ -72,41 +105,46 @@ namespace Ghost.Services;
         // scheme://user:pass@host:port
         // scheme://host:port
         // host:port
-    private static ProxyInfo? ParseProxyString(string input)
-    {
-            // Try full URI parse first
-            if (Uri.TryCreate(input, UriKind.Absolute, out var uri))
-            {
-                var userInfo = uri.UserInfo; // "user:pass" or empty
-                string? user = null;
-                string? pass = null;
-                if (!string.IsNullOrEmpty(userInfo))
-                {
-                    var parts = userInfo.Split(':', 2);
-                    user = parts.Length > 0 ? parts[0] : null;
-                    pass = parts.Length > 1 ? parts[1] : null;
-                }
+        private ProxyInfo? ParseProxyString(string input)
+        {
+            s_logParsing(_logger, input, null);
 
-                var hostPort = uri.IsDefaultPort ? uri.Host : $"{uri.Host}:{uri.Port}";
-                return new ProxyInfo(hostPort, user, pass);
+            // If no scheme and no port (no colon), return null to allow fallback to global port
+            if (!input.Contains("://") && !input.Contains(':'))
+                return null;
+
+            // 1. Ensure scheme for parsing
+            var hadScheme = input.Contains("://");
+            var parsingInput = hadScheme ? input : $"http://{input}";
+
+            if (!Uri.TryCreate(parsingInput, UriKind.Absolute, out var uri))
+                return null;
+
+            // 2. Extract User/Pass
+            string? user = null;
+            string? pass = null;
+            if (!string.IsNullOrEmpty(uri.UserInfo))
+            {
+                var parts = uri.UserInfo.Split(':', 2);
+                user = parts.Length > 0 ? parts[0] : null;
+                if (parts.Length > 1) pass = parts[1];
             }
 
-            // Fallback: host:port or host
-            var m = Regex.Match(input, "^(?:([^:@]+):([^@]+)@)?([^:]+):(\\d+)$");
-            if (m.Success)
-            {
-                var user = string.IsNullOrEmpty(m.Groups[1].Value) ? null : m.Groups[1].Value;
-                var pass = string.IsNullOrEmpty(m.Groups[2].Value) ? null : m.Groups[2].Value;
-                var host = m.Groups[3].Value;
-                var port = m.Groups[4].Value;
-                return new ProxyInfo($"{host}:{port}", user, pass);
-            }
+            // 3. Construct server string
+            // Use HostAndPort to preserve IPv6 bracket notation when needed and only include port if present/explicit
+            var hostAndPort = uri.GetComponents(UriComponents.HostAndPort, UriFormat.Unescaped);
 
-            // As last resort, if it looks like host:port
-            var simple = input.Split(':');
-            if (simple.Length == 2 && int.TryParse(simple[1], out _))
-                return new ProxyInfo(input, null, null);
+            string serverUrl;
+            if (hadScheme)
+                serverUrl = $"{uri.Scheme}://{hostAndPort}";
+            else if (input.Contains(':'))
+                // If the input included an explicit port but no scheme, preserve a default scheme
+                serverUrl = $"http://{hostAndPort}";
+            else
+                serverUrl = hostAndPort;
 
-            return null;
-    }
+            s_logRegexMatch(_logger, uri.Host, uri.Port.ToString(System.Globalization.CultureInfo.InvariantCulture), null);
+
+            return new ProxyInfo(serverUrl, user, pass);
+        }
 }
