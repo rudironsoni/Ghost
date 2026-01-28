@@ -9,7 +9,7 @@ namespace Ghost.Platform.LinkedIn;
 /// </summary>
     public sealed class LinkedInSocialClient : ISocialClient
     {
-        private static readonly char[] _digitChars = "0123456789".ToCharArray();
+        private static readonly System.Buffers.SearchValues<char> _digitChars = System.Buffers.SearchValues.Create("0123456789");
     private readonly Ghost.IBrowserSession _session;
     private readonly LinkedInOptions _options;
     private readonly ILogger<LinkedInSocialClient> _logger;
@@ -47,12 +47,12 @@ namespace Ghost.Platform.LinkedIn;
                 var logged = await _authenticator.IsLoggedInAsync(page, ct).ConfigureAwait(false);
                 if (!logged)
                 {
-                    _logger.LogWarning("LinkedInSocialClient.GetProfileAsync: not logged in - scraping may be limited");
+                    _logger.LogNotLoggedIn();
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Failed to verify LinkedIn login state");
+                _logger.LogLoginVerificationFailed(ex);
             }
 
             var name = await page.EvaluateAsync<string>("() => document.querySelector('.text-heading-xlarge')?.innerText || ''", ct: ct);
@@ -72,7 +72,7 @@ namespace Ghost.Platform.LinkedIn;
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Failed to parse experience section");
+                _logger.LogExperienceParseFailed(ex);
             }
 
             try
@@ -85,7 +85,7 @@ namespace Ghost.Platform.LinkedIn;
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Failed to parse education section");
+                _logger.LogEducationParseFailed(ex);
             }
 
             return profile;
@@ -138,7 +138,7 @@ namespace Ghost.Platform.LinkedIn;
                 else
                 {
                     // attempt to find a text that looks like a date range
-                    var maybe = texts.FirstOrDefault(t => t.IndexOfAny(_digitChars) >= 0);
+                    var maybe = texts.FirstOrDefault(t => t.AsSpan().IndexOfAny(_digitChars) >= 0);
                     if (!string.IsNullOrWhiteSpace(maybe)) dateString = maybe;
                 }
 
@@ -165,7 +165,7 @@ namespace Ghost.Platform.LinkedIn;
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Failed to parse an experience item");
+                _logger.LogExperienceItemParseFailed(ex);
             }
         }
 
@@ -214,7 +214,7 @@ namespace Ghost.Platform.LinkedIn;
                 if (texts.Count >= 3) dateString = texts.Last();
                 else
                 {
-                    var maybe = texts.FirstOrDefault(t => t.IndexOfAny(_digitChars) >= 0);
+                    var maybe = texts.FirstOrDefault(t => t.AsSpan().IndexOfAny(_digitChars) >= 0);
                     if (!string.IsNullOrWhiteSpace(maybe)) dateString = maybe;
                 }
 
@@ -228,7 +228,7 @@ namespace Ghost.Platform.LinkedIn;
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Failed to parse an education item");
+                _logger.LogEducationItemParseFailed(ex);
             }
         }
 

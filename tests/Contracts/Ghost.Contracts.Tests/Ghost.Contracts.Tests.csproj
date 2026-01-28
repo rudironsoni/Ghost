@@ -8,6 +8,8 @@
     <ProjectReference Include="..\..\..\src\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
   </ItemGroup>
   <PropertyGroup>
+    <!-- Analyzer suppressions removed from this test project. Keep warnings enabled but do not escalate to errors here to avoid blocking unrelated analyzer issues in the solution. -->
+    <!-- Inherit TreatWarningsAsErrors from Directory.Build.props -->
     <NoWarn>$(NoWarn);CA1707</NoWarn>
   </PropertyGroup>
   <ItemGroup>
