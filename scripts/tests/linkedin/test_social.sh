@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configuration
-API_URL="http://localhost:5000"
+API_URL="${API_URL:-http://localhost:5000}"
 PROFILE_ID="williamhgates" # Example public profile
 
 echo "Testing Social API at $API_URL"

@@ -1,13 +1,18 @@
 #!/bin/bash
 
 # Configuration
-API_URL="http://localhost:5000"
+API_URL="${API_URL:-http://localhost:5000}"
 echo "Testing Jobs API at $API_URL"
 
 # 1. Search Jobs
 echo "----------------------------------------"
 echo "Searching for 'Software Engineer' in 'Remote'..."
-SEARCH_RESPONSE=$(curl -s -X POST "$API_URL/api/linkedin/jobs/search" \
+URL="$API_URL/api/linkedin/jobs/search"
+if [ ! -z "$STRATEGY" ]; then
+  URL="$URL?strategy=$STRATEGY"
+fi
+
+SEARCH_RESPONSE=$(curl -s -X POST "$URL" \
   -H "Content-Type: application/json" \
   -d '{ "query": "Software Engineer", "location": "Remote", "maxResults": 3 }')
 
