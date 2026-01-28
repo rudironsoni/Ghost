@@ -33,6 +33,12 @@ jobs:
         with:
           useConfigFile: true
 
+      - name: Install Playwright CLI
+        run: dotnet tool install --global Microsoft.Playwright.CLI
+
+      - name: Install Playwright Browsers
+        run: playwright install --with-deps
+
       - name: Restore dependencies
         run: dotnet restore Ghost.sln
 
