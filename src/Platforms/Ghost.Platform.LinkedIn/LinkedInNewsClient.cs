@@ -1,4 +1,6 @@
 using Ghost.Contracts.News;
+using Ghost.Extensions;
+using Ghost.Platform.LinkedIn.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -68,9 +70,51 @@ public sealed class LinkedInNewsClient : INewsClient
         throw new NotImplementedException();
     }
 
-    public Task<IReadOnlyList<NewsArticle>> SearchAsync(string query, Ghost.Contracts.News.NewsSearchOptions? options = null, CancellationToken ct = default)
+    public async Task<IReadOnlyList<NewsArticle>> SearchAsync(string query, Ghost.Contracts.News.NewsSearchOptions? options = null, CancellationToken ct = default)
     {
-        // LinkedIn does not provide open article search; reuse feed scraping as fallback.
-        return GetArticlesAsync(new Ghost.Contracts.News.NewsFilter { MaxResults = options?.MaxResults ?? 20 }, ct: ct);
+        var pageOpts = _options.GetPageOptions();
+        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        try
+        {
+            var q = System.Uri.EscapeDataString(query);
+            await page.NavigateAsync($"{_options.BaseUrl}/search/results/content/?keywords={q}", ct: ct);
+            await page.WaitForLoadStateAsync(ct: ct);
+
+            // Search results for content usually appear as update cards
+            // Selectors: .search-results-container .search-update-card, or reusing feed classes
+            var nodes = await page.QuerySelectorAllAsync(".search-update-card, .feed-shared-update-v2", ct: ct);
+            var list = new List<NewsArticle>();
+            foreach (var n in nodes.Take(options?.MaxResults ?? 20))
+            {
+                try
+                {
+                    // Title usually in the update text or a shared article title
+                    // .update-components-text is common for the post text
+                    // article titles often in .update-components-article__title
+                    var titleEl = await n.QuerySelectorAsync(".update-components-article__title, .update-components-text span[dir='ltr']", ct);
+                    string title = titleEl is not null 
+                        ? await titleEl.GetTextContentAsync(ct) ?? string.Empty 
+                        : string.Empty;
+
+                    // Link
+                    var aEl = await n.QuerySelectorAsync("a.app-aware-link", ct);
+                    string url = aEl is not null 
+                        ? await aEl.GetAttributeAsync("href", ct) ?? string.Empty 
+                        : string.Empty;
+
+                    if (!string.IsNullOrWhiteSpace(title) || !string.IsNullOrWhiteSpace(url))
+                    {
+                        list.Add(new NewsArticle { Id = Guid.NewGuid().ToString(), Title = title.Trim(), Url = url });
+                    }
+                }
+                catch { }
+            }
+
+            return list;
+        }
+        finally
+        {
+            try { await page.DisposeAsync(); } catch { }
+        }
     }
 }
