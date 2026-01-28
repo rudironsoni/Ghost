@@ -1,6 +1,7 @@
 using FastEndpoints;
 using FastEndpoints.Swagger;
 using Ghost.Hosting;
+using Ghost.WebApi.Features.LinkedIn;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -79,5 +80,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 app.UseFastEndpoints();
 app.UseSwaggerGen(); // Default UI at /swagger
+
+app.MapLinkedInEndpoints();
 
 app.Run();
