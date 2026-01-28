@@ -79,6 +79,7 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
                     Height = options?.ViewportHeight ?? profile?.ViewportHeight ?? 720
                 },
                 UserAgent = options?.UserAgent ?? profile?.UserAgent,
+                StorageStatePath = options?.StorageStatePath,
                 TimezoneId = options?.TimezoneId ?? profile?.TimeZone ?? "UTC",
                 Locale = options?.Locale ?? "en-US"
             };
