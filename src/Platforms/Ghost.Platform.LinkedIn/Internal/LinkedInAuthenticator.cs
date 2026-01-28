@@ -1,6 +1,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
+using Ghost.Core;
+using Ghost;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -14,8 +17,10 @@ public sealed class LinkedInAuthenticator
 
     public LinkedInAuthenticator(Ghost.IBrowserSession session, IOptions<LinkedInOptions> options, ILogger<LinkedInAuthenticator> logger)
     {
-        _session = session ?? throw new ArgumentNullException(nameof(session));
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(options);
+        _session = session;
+        _options = options.Value;
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<LinkedInAuthenticator>.Instance;
     }
 
@@ -44,23 +49,38 @@ public sealed class LinkedInAuthenticator
         }
     }
 
-    public async Task WarmUpAsync(CancellationToken ct = default)
+    public async Task WarmUpAsync(IPage page, CancellationToken ct = default)
     {
-        var pageOpts = _options.GetPageOptions();
-        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        ArgumentNullException.ThrowIfNull(page);
+
+        // safe urls to warm up the browser/page
+        var safe = new[]
+        {
+            "https://www.google.com",
+            "https://github.com",
+            "https://stackoverflow.com",
+            "https://www.bing.com"
+        };
+
         try
         {
-            await page.NavigateAsync("https://www.google.com", ct: ct);
-            await page.NavigateAsync("https://github.com", ct: ct);
+            // pick 2 random urls
+            var pick = safe.OrderBy(_ => Random.Shared.Next()).Take(2);
+            foreach (var url in pick)
+            {
+                ct.ThrowIfCancellationRequested();
+                await page.NavigateAsync(url, new NavigationOptions { WaitUntil = WaitUntil.DomContentLoaded }, ct: ct);
+                // wait a short random delay to simulate browsing
+                var delay = Random.Shared.Next(1500, 3001);
+                await Task.Delay(delay, ct);
+                // scroll a bit
+                try { await page.EvaluateAsync<object>("window.scrollBy(0,500);", ct: ct); } catch { }
+            }
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
             _logger.WarmUpFailed(ex);
-        }
-        finally
-        {
-            try { await page.DisposeAsync(); } catch { }
         }
     }
 
