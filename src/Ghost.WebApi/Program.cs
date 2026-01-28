@@ -12,6 +12,9 @@ builder.Services.AddHttpClient();
 // Bind ProxyOptions from configuration
 builder.Services.Configure<Ghost.Core.ProxyOptions>(builder.Configuration.GetSection("Ghost:Proxy"));
 builder.Services.AddSingleton<Ghost.Abstractions.IProxyProvider, Ghost.Services.RotatingProxyProvider>();
+// Register available proxy sources
+builder.Services.AddSingleton<Ghost.Abstractions.IProxySource, Ghost.Services.StaticProxySource>();
+builder.Services.AddSingleton<Ghost.Abstractions.IProxySource, Ghost.Services.ApiProxySource>();
 
 // Configure Ghost
 builder.Services.AddGhost(builder.Configuration, gw =>
