@@ -19,6 +19,9 @@ namespace Ghost.Services;
         private static readonly Action<ILogger, int, Exception?> s_logLoaded =
             LoggerMessage.Define<int>(LogLevel.Information, new EventId(1, nameof(StaticProxySource)), "Loaded {Count} static proxies from configuration.");
 
+        private static readonly Action<ILogger, string, Exception?> s_logIgnored =
+            LoggerMessage.Define<string>(LogLevel.Warning, new EventId(2, nameof(StaticProxySource)), "Ignoring static proxy entry: {Entry}");
+
         public StaticProxySource(IOptions<ProxyOptions> options, ILogger<StaticProxySource> logger)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -37,9 +40,28 @@ namespace Ghost.Services;
                 if (string.IsNullOrWhiteSpace(item))
                     continue;
 
-                var parsed = ParseProxyString(item.Trim());
-                if (parsed is not null)
-                    list.Add(parsed);
+                var trimmed = item.Trim();
+                var parsed = ParseProxyString(trimmed);
+                if (parsed is null && cfg.Port.HasValue)
+                    parsed = ParseProxyString($"{trimmed}:{cfg.Port}");
+
+                if (parsed is null)
+                {
+                    s_logIgnored(_logger, item, null);
+                    continue;
+                }
+
+                ProxyInfo toAdd;
+                if (string.IsNullOrEmpty(parsed.Username) && !string.IsNullOrEmpty(cfg.Username))
+                {
+                    toAdd = new ProxyInfo(parsed.Server, cfg.Username, cfg.Password);
+                }
+                else
+                {
+                    toAdd = parsed;
+                }
+
+                list.Add(toAdd);
             }
 
             s_logLoaded(_logger, list.Count, null);
