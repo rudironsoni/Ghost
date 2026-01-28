@@ -34,7 +34,7 @@ jobs:
           useConfigFile: true
 
       - name: Install Playwright CLI
-        run: dotnet tool install --global Microsoft.Playwright.CLI
+        run: dotnet tool install --global Microsoft.Playwright.CLI --version 1.49.0
 
       - name: Install Playwright Browsers
         run: playwright install --with-deps
