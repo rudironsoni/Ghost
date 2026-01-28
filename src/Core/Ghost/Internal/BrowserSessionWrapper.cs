@@ -12,17 +12,19 @@ internal sealed class BrowserSessionWrapper : IBrowserSession, IDisposable
 {
     private readonly IBrowserContext _context;
     private readonly List<IPage> _pages = new();
+    private readonly IAsyncDisposable? _bridge;
     // SessionId property replaces backing field to satisfy IDE0032
     public string SessionId { get; }
     private readonly Action? _onDispose;
     private bool _disposed;
 
-    public BrowserSessionWrapper(IBrowserContext context, string sessionId, Action? onDispose = null)
+    public BrowserSessionWrapper(IBrowserContext context, string sessionId, Action? onDispose = null, IAsyncDisposable? bridge = null)
     {
         ArgumentNullException.ThrowIfNull(context);
         _context = context;
         SessionId = sessionId ?? Guid.NewGuid().ToString();
         _onDispose = onDispose;
+        _bridge = bridge;
     }
     public bool IsConnected => !_disposed;
     public IReadOnlyList<IPage> Pages => _pages.AsReadOnly();
@@ -30,7 +32,7 @@ internal sealed class BrowserSessionWrapper : IBrowserSession, IDisposable
     public async Task<IPage> NewPageAsync(PageOptions? options = null, CancellationToken ct = default)
     {
         var page = await _context.NewPageAsync();
-        
+
         // Apply PageOptions overrides via InitScripts if provided
         if (options is not null)
         {
@@ -69,6 +71,10 @@ internal sealed class BrowserSessionWrapper : IBrowserSession, IDisposable
         foreach (var p in _pages.Cast<PageWrapper>())
         {
             await p.DisposeAsync();
+        }
+        if (_bridge is not null)
+        {
+            await _bridge.DisposeAsync();
         }
         await _context.DisposeAsync();
         _onDispose?.Invoke();
