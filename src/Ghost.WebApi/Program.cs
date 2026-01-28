@@ -19,14 +19,15 @@ builder.Services.AddGhost(builder.Configuration, gw =>
 
     // Explicitly register LinkedIn extension when referenced directly
     var linkedInSection = builder.Configuration.GetSection("Ghost:Extensions:LinkedIn");
-    if (linkedInSection.Exists() && linkedInSection.GetValue<bool>("Enabled"))
+    var isEnabled = linkedInSection.GetValue<bool>("Enabled");
+    
+    if (linkedInSection.Exists() && isEnabled)
     {
         try
-        {
-            // Use the directly referenced extension type so its DI registrations run
-            gw.UseExtension(new Ghost.Platform.LinkedIn.LinkedInExtension());
-            Console.WriteLine("[Info] Registered LinkedIn extension via direct reference.");
-        }
+            {
+                // Use the directly referenced extension type so its DI registrations run
+                gw.UseExtension(new Ghost.Platform.LinkedIn.LinkedInExtension());
+            }
         catch (Exception ex)
         {
             Console.WriteLine($"[Error] Failed to register LinkedIn extension directly: {ex.Message}");
@@ -103,6 +104,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapLinkedInEndpoints();
+// Only map LinkedIn endpoints if the extension is enabled
+var linkedInEnabled = builder.Configuration.GetSection("Ghost:Extensions:LinkedIn").GetValue<bool>("Enabled");
+if (linkedInEnabled)
+{
+    app.MapLinkedInEndpoints();
+}
 
 app.Run();
