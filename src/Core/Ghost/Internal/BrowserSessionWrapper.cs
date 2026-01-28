@@ -30,6 +30,21 @@ internal sealed class BrowserSessionWrapper : IBrowserSession, IDisposable
     public async Task<IPage> NewPageAsync(PageOptions? options = null, CancellationToken ct = default)
     {
         var page = await _context.NewPageAsync();
+        
+        // Apply PageOptions overrides via InitScripts if provided
+        if (options is not null)
+        {
+            if (!string.IsNullOrEmpty(options.TimezoneId))
+            {
+                await page.AddInitScriptAsync(Ghost.Stealth.StealthScripts.GetTimezoneOverrideScript(options.TimezoneId));
+            }
+
+            if (!string.IsNullOrEmpty(options.Locale))
+            {
+                await page.AddInitScriptAsync(Ghost.Stealth.StealthScripts.GetLocaleOverrideScript(options.Locale));
+            }
+        }
+
         var wrapper = new PageWrapper(page);
         _pages.Add(wrapper);
         return wrapper;

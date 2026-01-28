@@ -1,6 +1,7 @@
 using Ghost.Contracts.Social;
 using Microsoft.Extensions.Logging;
 using Ghost.Platform.LinkedIn.Internal;
+using Ghost.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace Ghost.Platform.LinkedIn;
@@ -35,7 +36,8 @@ public sealed class LinkedInSocialClient : ISocialClient
 
     public async Task<SocialProfile> GetProfileAsync(string profileId, CancellationToken ct = default)
     {
-        var page = await _session.NewPageAsync(ct: ct);
+        var pageOpts = _options.GetPageOptions();
+        var page = await _session.NewPageAsync(pageOpts, ct: ct);
         try
         {
             var url = $"{_options.BaseUrl}/in/{profileId}";
@@ -238,7 +240,8 @@ public sealed class LinkedInSocialClient : ISocialClient
 
     public async Task<IReadOnlyList<SocialProfile>> SearchProfilesAsync(Ghost.Contracts.Social.ProfileSearchCriteria criteria, CancellationToken ct = default)
     {
-        var page = await _session.NewPageAsync(ct: ct);
+        var pageOpts = _options.GetPageOptions();
+        var page = await _session.NewPageAsync(pageOpts, ct: ct);
         try
         {
             var q = System.Uri.EscapeDataString(criteria.Query ?? string.Empty);
@@ -275,14 +278,19 @@ public sealed class LinkedInSocialClient : ISocialClient
 
     public async Task<SocialPost> CreatePostAsync(Ghost.Contracts.Social.CreatePostRequest request, CancellationToken ct = default)
     {
-        var page = await _session.NewPageAsync(ct: ct);
+        var pageOpts = _options.GetPageOptions();
+        var page = await _session.NewPageAsync(pageOpts, ct: ct);
         try
         {
             await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct);
-            await page.WaitForSelectorAsync("button[data-control-name='sharebox-trigger']", ct: ct);
-            await page.ClickAsync("button[data-control-name='sharebox-trigger']", ct: ct);
+            var btn = await page.WaitForSelectorAsync("button[data-control-name='sharebox-trigger']", ct: ct);
+            if (btn != null) await btn.HumanClickAsync(ct: ct);
+            
             await page.TypeAsync("div.ql-editor", request.Content, ct: ct);
-            await page.ClickAsync("button[data-control-name='submit_post']", ct: ct);
+            
+            var submitBtn = await page.QuerySelectorAsync("button[data-control-name='submit_post']", ct: ct);
+            if (submitBtn != null) await submitBtn.HumanClickAsync(ct: ct);
+            
             await page.WaitForNavigationAsync(ct: ct);
 
             return new SocialPost { Id = Guid.NewGuid().ToString(), Content = request.Content };
@@ -295,7 +303,8 @@ public sealed class LinkedInSocialClient : ISocialClient
 
     public async Task<IReadOnlyList<SocialPost>> GetFeedAsync(Ghost.Contracts.Social.FeedOptions? options = null, CancellationToken ct = default)
     {
-        var page = await _session.NewPageAsync(ct: ct);
+        var pageOpts = _options.GetPageOptions();
+        var page = await _session.NewPageAsync(pageOpts, ct: ct);
         try
         {
             await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct);
@@ -323,7 +332,8 @@ public sealed class LinkedInSocialClient : ISocialClient
 
     public async Task SendMessageAsync(string recipientId, string message, CancellationToken ct = default)
     {
-        var page = await _session.NewPageAsync(ct: ct);
+        var pageOpts = _options.GetPageOptions();
+        var page = await _session.NewPageAsync(pageOpts, ct: ct);
         try
         {
             await page.NavigateAsync($"{_options.BaseUrl}/messaging/thread/{recipientId}", ct: ct);
@@ -339,7 +349,8 @@ public sealed class LinkedInSocialClient : ISocialClient
 
     public async Task<IReadOnlyList<Ghost.Contracts.Social.SocialConnection>> GetConnectionsAsync(Ghost.Contracts.Social.ConnectionsOptions? options = null, CancellationToken ct = default)
     {
-        var page = await _session.NewPageAsync(ct: ct);
+        var pageOpts = _options.GetPageOptions();
+        var page = await _session.NewPageAsync(pageOpts, ct: ct);
         try
         {
             await page.NavigateAsync($"{_options.BaseUrl}/mynetwork/invite-connect/connections/", ct: ct);
@@ -370,17 +381,20 @@ public sealed class LinkedInSocialClient : ISocialClient
 
     public async Task SendConnectionRequestAsync(string profileId, string? message = null, CancellationToken ct = default)
     {
-        var page = await _session.NewPageAsync(ct: ct);
+        var pageOpts = _options.GetPageOptions();
+        var page = await _session.NewPageAsync(pageOpts, ct: ct);
         try
         {
             await page.NavigateAsync($"{_options.BaseUrl}/in/{profileId}", ct: ct);
-            await page.WaitForSelectorAsync("button[data-control-name='connect']", ct: ct);
-            await page.ClickAsync("button[data-control-name='connect']", ct: ct);
+            var connectBtn = await page.WaitForSelectorAsync("button[data-control-name='connect']", ct: ct);
+            if (connectBtn != null) await connectBtn.HumanClickAsync(ct: ct);
+            
             if (!string.IsNullOrEmpty(message))
             {
                 await page.TypeAsync("textarea[name='message']", message, ct: ct);
             }
-            await page.ClickAsync("button[data-control-name='send_invite']", ct: ct);
+            var sendBtn = await page.QuerySelectorAsync("button[data-control-name='send_invite']", ct: ct);
+            if (sendBtn != null) await sendBtn.HumanClickAsync(ct: ct);
         }
         finally
         {

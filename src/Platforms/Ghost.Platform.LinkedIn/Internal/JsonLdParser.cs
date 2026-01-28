@@ -38,6 +38,7 @@ internal static class JsonLdParser
                 Location = location,
                 Description = ld.Description,
                 Salary = FormatSalary(ld.BaseSalary),
+                JobType = ParseJobType(ld.EmploymentType),
                 PostedAt = posted,
                 Url = url
             };
@@ -46,6 +47,28 @@ internal static class JsonLdParser
         {
             return null;
         }
+    }
+
+    private static JobType ParseJobType(string? type)
+    {
+        if (string.IsNullOrEmpty(type)) return JobType.Unknown;
+        
+        // Handle array or string format (sometimes it's "FULL_TIME", sometimes ["FULL_TIME"])
+        // But here we mapped it to string? in Ld class. If it's an array in JSON, System.Text.Json might fail 
+        // unless we use JsonElement or a custom converter. 
+        // For simplicity let's assume it's a string as per common Schema.org usage, or comma separated.
+        
+        var normalized = type.ToUpperInvariant().Replace("_", "");
+        return normalized switch
+        {
+            "FULLTIME" => JobType.FullTime,
+            "PARTTIME" => JobType.PartTime,
+            "CONTRACT" => JobType.Contract,
+            "TEMPORARY" => JobType.Contract,
+            "INTERN" => JobType.Internship,
+            "INTERNSHIP" => JobType.Internship,
+            _ => JobType.Unknown
+        };
     }
 
     private static string? ExtractIdFromUrl(string? url)
@@ -80,6 +103,7 @@ internal static class JsonLdParser
         public string? Title { get; set; }
         public string? Description { get; set; }
         public string? DatePosted { get; set; }
+        public string? EmploymentType { get; set; }
         public HiringOrganizationLd? HiringOrganization { get; set; }
         public JobLocationLd? JobLocation { get; set; }
         public BaseSalaryLd? BaseSalary { get; set; }

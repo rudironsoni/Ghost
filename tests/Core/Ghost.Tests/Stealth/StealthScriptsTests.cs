@@ -23,4 +23,14 @@ public class StealthScriptsTests
         script.Should().Contain("Object.defineProperty(navigator,'hardwareConcurrency'");
         script.Should().Contain("WebGLRenderingContext.prototype.getParameter");
     }
+
+    [Fact]
+    public void GetCanvasNoiseScript_ContainsExpectedOverrides()
+    {
+        var script = StealthScripts.GetCanvasNoiseScript();
+
+        script.Should().Contain("CanvasRenderingContext2D.prototype.getImageData");
+        script.Should().Contain("HTMLCanvasElement.prototype.toDataURL");
+        script.Should().Contain("noise"); // Check for the noise logic variable or comment
+    }
 }
