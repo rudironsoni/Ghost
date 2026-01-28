@@ -16,6 +16,9 @@ namespace Ghost.Services;
         private readonly IOptions<ProxyOptions> _options;
         private readonly ILogger<StaticProxySource> _logger;
 
+        private static readonly Action<ILogger, int, Exception?> s_logLoaded =
+            LoggerMessage.Define<int>(LogLevel.Information, new EventId(1, nameof(StaticProxySource)), "Loaded {Count} static proxies from configuration.");
+
         public StaticProxySource(IOptions<ProxyOptions> options, ILogger<StaticProxySource> logger)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -38,10 +41,6 @@ namespace Ghost.Services;
                 if (parsed is not null)
                     list.Add(parsed);
             }
-
-            // Use LoggerMessage pattern for performance
-            static readonly Action<ILogger, int, Exception?> s_logLoaded =
-                LoggerMessage.Define<int>(LogLevel.Information, new EventId(1, nameof(StaticProxySource)), "Loaded {Count} static proxies from configuration.");
 
             s_logLoaded(_logger, list.Count, null);
             return Task.FromResult<IEnumerable<ProxyInfo>>(list);

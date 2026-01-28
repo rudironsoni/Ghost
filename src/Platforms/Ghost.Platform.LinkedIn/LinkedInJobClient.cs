@@ -216,6 +216,7 @@ namespace Ghost.Platform.LinkedIn;
 
     private async IAsyncEnumerable<JobListing> SearchJobsWithStrategyAsync(string keywords, string location, int limit, JobScrapingStrategy strategy, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
     {
+        _logger.LogInformation("Executing Job Search. Strategy: {Strategy}, Query: {Query}", strategy, keywords);
         // Strategy: processed according to configured scraping strategy
         if (strategy == JobScrapingStrategy.GuestApi)
         {
@@ -272,6 +273,7 @@ namespace Ghost.Platform.LinkedIn;
 
             if (ids.Count > 0)
             {
+                // guest returned results
                 var results = new List<JobListing>();
                 var returned = 0;
                 foreach (var id in ids)
@@ -299,11 +301,13 @@ namespace Ghost.Platform.LinkedIn;
 
                 if (successfulYields > 0)
                 {
+                    _logger.LogInformation("Job Search Completed. Found {Count} jobs.", successfulYields);
                     yield break;
                 }
             }
 
-            // else fallthrough to browser
+            // Guest API returned no results - log hybrid fallback and fallthrough to browser
+            _logger.LogInformation("Hybrid Strategy: Guest API returned no results. Falling back to Browser.");
         }
 
         // Add safety delay for Hybrid fallback to avoid rapid-fire detection
