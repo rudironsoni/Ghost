@@ -27,6 +27,18 @@ public sealed class LinkedInOptions
     /// Default is true.
     /// </summary>
     public bool ProxyEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Path to persist storage state (cookies/localStorage) for sessions.
+    /// If set, sessions will load/save storage state from/to this path.
+    /// </summary>
+    public string? StorageStatePath { get; set; }
+
+    /// <summary>
+    /// When true, perform a lightweight warm-up of pages before actions to reduce first-load anomalies.
+    /// Default is true.
+    /// </summary>
+    public bool WarmUpEnabled { get; set; } = true;
 }
 
 public enum JobScrapingStrategy

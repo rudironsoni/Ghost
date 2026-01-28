@@ -16,7 +16,8 @@ public sealed class GuestJobSearch
     private readonly GhostKernel _kernel;
     private readonly IProxyProvider _proxyProvider;
     private readonly ILogger<GuestJobSearch> _logger;
-    private readonly LinkedInOptions _options = new();
+    private readonly IOptions<LinkedInOptions> _options;
+    private readonly LinkedInAuthenticator _authenticator;
 
     private static readonly Action<ILogger, string, Exception?> s_logUsingProxy =
         LoggerMessage.Define<string>(LogLevel.Debug, new EventId(1, nameof(GuestJobSearch)), "Using proxy: {Proxy}");
@@ -34,17 +35,16 @@ public sealed class GuestJobSearch
         GhostKernel kernel,
         IProxyProvider proxyProvider,
         IOptions<LinkedInOptions> options,
+        LinkedInAuthenticator authenticator,
         ILogger<GuestJobSearch> logger)
     {
         ArgumentNullException.ThrowIfNull(kernel);
         ArgumentNullException.ThrowIfNull(proxyProvider);
         _kernel = kernel;
         _proxyProvider = proxyProvider;
+        _authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GuestJobSearch>.Instance;
-        if (options?.Value is not null)
-        {
-            _options = options.Value;
-        }
+        _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
         public async Task<IReadOnlyList<string>> SearchAsync(JobSearchCriteria criteria, int limit, CancellationToken ct)
@@ -54,12 +54,13 @@ public sealed class GuestJobSearch
         var ids = new List<string>();
         // Create a fresh session for the search to isolate from other work
         SessionOptions options;
-        if (!_options.ProxyEnabled)
+        // Preserve storage state path from options so sessions can reuse cookies if configured
+        if (!_options.Value.ProxyEnabled)
         {
             // When proxy usage is disabled by configuration, do not fetch a proxy
             // and create session options without proxy settings.
             s_logProxyDisabled(_logger, null);
-            options = new SessionOptions { Proxy = null };
+            options = new SessionOptions { Proxy = null, StorageStatePath = _options.Value.StorageStatePath };
         }
         else
         {
@@ -67,7 +68,7 @@ public sealed class GuestJobSearch
             var proxy = _proxyProvider is not null ? await _proxyProvider.GetProxyAsync("US", ct) : null;
             // log the proxy being used for this search
             s_logUsingProxy(_logger, proxy?.Server ?? "None", null);
-            options = new SessionOptions();
+            options = new SessionOptions { StorageStatePath = _options.Value.StorageStatePath };
             if (proxy is not null)
             {
                 options.Proxy = new SessionOptions.ProxySettings(proxy.Server, proxy.Username, proxy.Password);
@@ -84,11 +85,19 @@ public sealed class GuestJobSearch
             for (var offset = 0; ids.Count < limit; offset += 25)
             {
                 ct.ThrowIfCancellationRequested();
-                var url = $"{_options.BaseUrl}/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={q}&location={loc}&start={offset}";
+                var url = $"{_options.Value.BaseUrl}/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={q}&location={loc}&start={offset}";
             try
             {
                 s_logNavigating(_logger, url, null);
+                // warm-up page/browser if enabled in options
+                    if (_options.Value.WarmUpEnabled)
+                    {
+                        try { await _authenticator.WarmUpAsync(page, ct); } catch { /* warm-up must not break search */ }
+                    }
+
                 await page.NavigateAsync(url, ct: ct);
+                // detect rate-limits or blocks from LinkedIn
+                try { await LinkedInRateLimitDetector.CheckAsync(page); } catch { }
                 // no full load expected - just get content
                 var html = await page.GetContentAsync(ct);
                     if (string.IsNullOrEmpty(html)) break;
@@ -102,6 +111,12 @@ public sealed class GuestJobSearch
 
                     var found = ExtractIdsFromSearchHtml(html);
                     if (found.Count == 0) break;
+
+                    // Persist storage state after successful scraping so cookies/auth can be reused
+                    if (found.Count > 0 && !string.IsNullOrEmpty(_options.Value.StorageStatePath))
+                    {
+                        try { await session.SaveStorageStateAsync(_options.Value.StorageStatePath); } catch { }
+                    }
 
                     foreach (var id in found)
                     {
@@ -137,22 +152,31 @@ public sealed class GuestJobSearch
     {
         ArgumentNullException.ThrowIfNull(jobId);
 
-        // create a fresh proxied session for fetching job details
-        var proxy = _proxyProvider is not null ? await _proxyProvider.GetProxyAsync("US", ct) : null;
-        var options = new SessionOptions();
-        if (proxy is not null)
+        // create a fresh session for fetching job details (reuse storage state if configured)
+        SessionOptions options;
+        if (!_options.Value.ProxyEnabled)
         {
-            options.Proxy = new SessionOptions.ProxySettings(proxy.Server, proxy.Username, proxy.Password);
+            options = new SessionOptions { Proxy = null, StorageStatePath = _options.Value.StorageStatePath };
+        }
+        else
+        {
+            var proxy = _proxyProvider is not null ? await _proxyProvider.GetProxyAsync("US", ct) : null;
+            options = new SessionOptions { StorageStatePath = _options.Value.StorageStatePath };
+            if (proxy is not null)
+            {
+                options.Proxy = new SessionOptions.ProxySettings(proxy.Server, proxy.Username, proxy.Password);
+            }
         }
 
         var session = await _kernel.NewSessionAsync(options, ct);
         var page = await session.NewPageAsync(ct: ct);
         try
         {
-            var url = $"{_options.BaseUrl}/jobs-guest/jobs/api/jobPosting/{jobId}";
+            var url = $"{_options.Value.BaseUrl}/jobs-guest/jobs/api/jobPosting/{jobId}";
             try
             {
                 await page.NavigateAsync(url, ct: ct);
+                try { await LinkedInRateLimitDetector.CheckAsync(page); } catch { }
                 var html = await page.GetContentAsync(ct);
                 if (string.IsNullOrEmpty(html)) return null;
 

@@ -1,0 +1,56 @@
+using System;
+using System.Threading.Tasks;
+
+namespace Ghost.Platform.LinkedIn.Internal;
+
+internal sealed class LinkedInRateLimitException : Exception
+{
+    public LinkedInRateLimitException() { }
+    public LinkedInRateLimitException(string message) : base(message) { }
+    public LinkedInRateLimitException(string message, Exception inner) : base(message, inner) { }
+}
+
+internal static class LinkedInRateLimitDetector
+{
+    public static async Task CheckAsync(Ghost.IPage page)
+    {
+        if (page == null) return;
+
+        try
+        {
+            var url = page.Url ?? string.Empty;
+            if (!string.IsNullOrEmpty(url))
+            {
+                if (url.Contains("/check/challenge", StringComparison.OrdinalIgnoreCase) || url.Contains("/checkpoint/", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new LinkedInRateLimitException($"LinkedIn rate limit / checkpoint detected via URL: {url}");
+                }
+            }
+
+            // Try to get full content; fall back gracefully if not available
+            string html = string.Empty;
+            try
+            {
+                html = await page.GetContentAsync();
+            }
+            catch { }
+
+            if (!string.IsNullOrEmpty(html))
+            {
+                var lower = html.ToLowerInvariant();
+                if (lower.Contains("security check") || lower.Contains("too many requests"))
+                {
+                    throw new LinkedInRateLimitException("LinkedIn rate limit or security check detected in page content.");
+                }
+            }
+        }
+        catch (LinkedInRateLimitException)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            // Non-fatal: detection should not throw other exceptions
+        }
+    }
+}
