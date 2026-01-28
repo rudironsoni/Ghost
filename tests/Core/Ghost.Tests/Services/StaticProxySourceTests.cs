@@ -35,7 +35,7 @@ public class StaticProxySourceTests
             var res = (await sut.FetchProxiesAsync(CancellationToken.None)).ToList();
 
             res.Should().HaveCount(1);
-            res[0].Server.Should().Be("bare.host:1080");
+            res[0].Server.Should().Be("http://bare.host:1080");
             res[0].Username.Should().Be("u");
             res[0].Password.Should().Be("p");
         }
@@ -62,7 +62,7 @@ public class StaticProxySourceTests
             var res = (await sut.FetchProxiesAsync(CancellationToken.None)).ToList();
 
             res.Should().HaveCount(1);
-            res[0].Server.Should().Be("host:9999");
+            res[0].Server.Should().Be("socks5://host:9999");
             res[0].Username.Should().Be("custom");
             res[0].Password.Should().Be("pass");
         }
