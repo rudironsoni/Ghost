@@ -1,0 +1,58 @@
+name: build-and-test
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+    DOTNET_NOLOGO: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v1
+        with:
+          versionSpec: '6.x'
+
+      - name: Determine Version
+        uses: gittools/actions/gitversion/execute@v1
+        with:
+          useConfigFile: true
+
+      - name: Restore dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Build
+        run: dotnet build Ghost.sln --configuration Release --no-restore
+
+      - name: Test
+        run: |
+          dotnet test Ghost.sln \
+            --configuration Release \
+            --no-build \
+            --verbosity normal \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage
+
+      # Enforce 80% Code Coverage (using ReportGenerator to verify or specific tool)
+      # For now, we just upload reports. Fail logic can be added if using a coverage gate tool.
+      
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          directory: ./coverage
+          fail_ci_if_error: false

@@ -38,7 +38,7 @@ public class ServiceCollectionExtensionsTests
     {
         var services = new ServiceCollection();
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Ghostwriter:Headless"] = "true" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Ghost:Headless"] = "true" })
             .Build();
         var result = services.AddGhost(config, _ => { });
         result.Should().BeSameAs(services);

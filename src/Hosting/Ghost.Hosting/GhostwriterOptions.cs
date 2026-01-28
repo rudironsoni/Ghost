@@ -5,9 +5,9 @@ using Ghost.Core; // for KernelOptions
 namespace Ghost.Hosting;
 
 /// <summary>
-/// Options for Ghostwriter hosting.
+/// Options for Ghost hosting.
 /// </summary>
-public sealed class GhostwriterOptions
+public sealed class GhostOptions
 {
     /// <summary>
     /// Kernel options used when creating the underlying browser kernel.

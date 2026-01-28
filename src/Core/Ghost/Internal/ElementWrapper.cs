@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Patchright;
+using Microsoft.Playwright;
 
 namespace Ghost.Internal;
 
 internal sealed class ElementWrapper : IElement
 {
-    private readonly Patchright.IElementHandle _handle;
+    private readonly Microsoft.Playwright.IElementHandle _handle;
     private bool _disposed;
 
-    public ElementWrapper(Patchright.IElementHandle handle)
+    public ElementWrapper(Microsoft.Playwright.IElementHandle handle)
     {
         ArgumentNullException.ThrowIfNull(handle);
         _handle = handle;
@@ -24,44 +24,80 @@ internal sealed class ElementWrapper : IElement
     public Task ClickAsync(ClickOptions? options = null, CancellationToken ct = default)
     {
         var o = options ?? new ClickOptions();
-        return _handle.ClickAsync(new Patchright.ClickOptions { Button = o.Button, ClickCount = o.ClickCount, Delay = o.Delay, Modifiers = o.Modifiers.ToArray() }, ct);
+        return _handle.ClickAsync(new Microsoft.Playwright.ElementHandleClickOptions { Button = ParseButton(o.Button), ClickCount = o.ClickCount, Delay = o.Delay, Modifiers = o.Modifiers.Select(ParseModifier).ToArray() });
     }
 
     public Task TypeAsync(string text, TypeOptions? options = null, CancellationToken ct = default)
     {
         var o = options ?? new TypeOptions();
-        return _handle.TypeAsync(text, new Patchright.TypeOptions { Delay = o.Delay }, ct);
+#pragma warning disable CS0612
+        var task = _handle.TypeAsync(text, new Microsoft.Playwright.ElementHandleTypeOptions { Delay = o.Delay });
+#pragma warning restore CS0612
+        return task;
     }
 
-    public Task FillAsync(string value, TypeOptions? options = null, CancellationToken ct = default) => _handle.FillAsync(value, ct);
+    public Task FillAsync(string value, TypeOptions? options = null, CancellationToken ct = default) => _handle.FillAsync(value);
 
-    public Task<string?> GetAttributeAsync(string name, CancellationToken ct = default) => _handle.GetAttributeAsync(name, ct);
-    public Task<string?> GetTextContentAsync(CancellationToken ct = default) => _handle.TextContentAsync(ct);
-    public Task<string?> GetInnerHtmlAsync(CancellationToken ct = default) => _handle.InnerHtmlAsync(ct);
+    public Task<string?> GetAttributeAsync(string name, CancellationToken ct = default) => _handle.GetAttributeAsync(name);
+    public async Task<string?> GetTextContentAsync(CancellationToken ct = default)
+    {
+        var res = await _handle.TextContentAsync();
+        return res;
+    }
 
-    public Task<bool> IsVisibleAsync(CancellationToken ct = default) => _handle.IsVisibleAsync(ct);
-    public Task<bool> IsEnabledAsync(CancellationToken ct = default) => _handle.IsEnabledAsync(ct);
-    public Task<bool> IsCheckedAsync(CancellationToken ct = default) => _handle.IsCheckedAsync(ct);
+    public async Task<string?> GetInnerHtmlAsync(CancellationToken ct = default)
+    {
+        var res = await _handle.InnerHTMLAsync();
+        return res;
+    }
 
-    public Task HoverAsync(CancellationToken ct = default) => _handle.HoverAsync(ct);
-    public Task FocusAsync(CancellationToken ct = default) => _handle.FocusAsync(ct);
-    public Task ScrollIntoViewAsync(CancellationToken ct = default) => _handle.ScrollIntoViewAsync(ct);
+    public Task<bool> IsVisibleAsync(CancellationToken ct = default) => _handle.IsVisibleAsync();
+    public Task<bool> IsEnabledAsync(CancellationToken ct = default) => _handle.IsEnabledAsync();
+    public Task<bool> IsCheckedAsync(CancellationToken ct = default) => _handle.IsCheckedAsync();
+
+    public Task HoverAsync(CancellationToken ct = default) => _handle.HoverAsync();
+    public Task FocusAsync(CancellationToken ct = default) => _handle.FocusAsync();
+    public Task ScrollIntoViewAsync(CancellationToken ct = default) => _handle.ScrollIntoViewIfNeededAsync();
 
     public Task<byte[]> ScreenshotAsync(ScreenshotOptions? options = null, CancellationToken ct = default)
     {
         var o = options ?? new ScreenshotOptions();
-        return _handle.ScreenshotAsync(new Patchright.ScreenshotOptions { Type = o.Type, Quality = o.Quality, FullPage = o.FullPage }, ct);
+        return _handle.ScreenshotAsync(new Microsoft.Playwright.ElementHandleScreenshotOptions { Type = ParseScreenshotType(o.Type), Quality = o.Quality });
     }
+
+    private static Microsoft.Playwright.MouseButton? ParseButton(string? btn) => btn?.ToLowerInvariant() switch
+    {
+        "left" => Microsoft.Playwright.MouseButton.Left,
+        "right" => Microsoft.Playwright.MouseButton.Right,
+        "middle" => Microsoft.Playwright.MouseButton.Middle,
+        _ => Microsoft.Playwright.MouseButton.Left
+    };
+
+    private static Microsoft.Playwright.KeyboardModifier ParseModifier(string m) => m.ToLowerInvariant() switch
+    {
+        "alt" => Microsoft.Playwright.KeyboardModifier.Alt,
+        "control" => Microsoft.Playwright.KeyboardModifier.Control,
+        "meta" => Microsoft.Playwright.KeyboardModifier.Meta,
+        "shift" => Microsoft.Playwright.KeyboardModifier.Shift,
+        _ => Microsoft.Playwright.KeyboardModifier.Alt
+    };
+
+    private static Microsoft.Playwright.ScreenshotType? ParseScreenshotType(string? t) => t?.ToLowerInvariant() switch
+    {
+        "png" => Microsoft.Playwright.ScreenshotType.Png,
+        "jpeg" => Microsoft.Playwright.ScreenshotType.Jpeg,
+        _ => Microsoft.Playwright.ScreenshotType.Png
+    };
 
     public async Task<IElement?> QuerySelectorAsync(string selector, CancellationToken ct = default)
     {
-        var child = await _handle.QuerySelectorAsync(selector, ct);
+        var child = await _handle.QuerySelectorAsync(selector);
         return child is null ? null : new ElementWrapper(child);
     }
 
     public async Task<IReadOnlyList<IElement>> QuerySelectorAllAsync(string selector, CancellationToken ct = default)
     {
-        var handles = await _handle.QuerySelectorAllAsync(selector, ct);
+        var handles = await _handle.QuerySelectorAllAsync(selector);
         return handles.Select(h => (IElement)new ElementWrapper(h)).ToList();
     }
 

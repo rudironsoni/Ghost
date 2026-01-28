@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Ghost.Hosting.Tests;
 
-public class GhostwriterBuilderTests
+public class GhostBuilderTests
 {
     [Fact]
     public void AddGhost_ConfigureKernel_AppliesOptions()

@@ -17,7 +17,7 @@ public static class ServiceCollectionExtensions
     /// <returns>The original service collection.</returns>
     public static IServiceCollection AddGhost(
         this IServiceCollection services,
-        Action<GhostwriterBuilder> configure)
+        Action<GhostBuilder> configure)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configure);
@@ -50,13 +50,13 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddGhost(
         this IServiceCollection services,
         IConfiguration configuration,
-        Action<GhostwriterBuilder> configure)
+        Action<GhostBuilder> configure)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(configure);
 
-        var builder = new GhostwriterBuilder(services, configuration);
+        var builder = new GhostBuilder(services, configuration);
         configure(builder);
         builder.Build();
 

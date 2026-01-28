@@ -15,7 +15,7 @@ public static class WebApplicationBuilderExtensions
     /// <returns>The same builder instance.</returns>
     public static WebApplicationBuilder AddGhost(
         this WebApplicationBuilder builder,
-        Action<GhostwriterBuilder> configure)
+        Action<GhostBuilder> configure)
     {
         builder.Services.AddGhost(builder.Configuration, configure);
         return builder;
