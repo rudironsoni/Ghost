@@ -32,12 +32,7 @@
   <!-- ASP.NET Core -->
   <ItemGroup Label="AspNetCore">
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
-  </ItemGroup>
-
-  <!-- FastEndpoints -->
-  <ItemGroup Label="FastEndpoints">
-    <PackageVersion Include="FastEndpoints" Version="5.33.0" />
-    <PackageVersion Include="FastEndpoints.Swagger" Version="5.33.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.2.0" />
   </ItemGroup>
 
   <!-- Testing -->
