@@ -8,25 +8,25 @@ namespace Ghost.Hosting;
 /// <summary>
 /// Builder used to configure Ghost hosting and extensions.
 /// </summary>
-public sealed class GhostwriterBuilder
+public sealed class GhostBuilder
 {
     private readonly IServiceCollection _services;
     private readonly IConfiguration _configuration;
     private readonly List<IExtension> _extensions = new();
     private Action<KernelOptions>? _kernelConfigure;
 
-    internal GhostwriterBuilder(IServiceCollection services, IConfiguration configuration)
+    internal GhostBuilder(IServiceCollection services, IConfiguration configuration)
     {
         _services = services ?? throw new ArgumentNullException(nameof(services));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
     /// <summary>
-    /// Configure kernel options used to create the <see cref="GhostwriterKernel"/>.
+    /// Configure kernel options used to create the <see cref="GhostKernel"/>.
     /// </summary>
     /// <param name="configure">Configure action for <see cref="KernelOptions"/>.</param>
     /// <returns>The builder for chaining.</returns>
-    public GhostwriterBuilder ConfigureKernel(Action<KernelOptions> configure)
+    public GhostBuilder ConfigureKernel(Action<KernelOptions> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
         _kernelConfigure = configure;
@@ -39,7 +39,7 @@ public sealed class GhostwriterBuilder
     /// </summary>
     /// <typeparam name="TExtension">Extension type (must have parameterless constructor).</typeparam>
     /// <returns>The builder for chaining.</returns>
-    public GhostwriterBuilder UseExtension<TExtension>() where TExtension : IExtension, new()
+    public GhostBuilder UseExtension<TExtension>() where TExtension : IExtension, new()
     {
         return UseExtension(new TExtension());
     }
@@ -49,7 +49,7 @@ public sealed class GhostwriterBuilder
     /// </summary>
     /// <param name="extension">Extension instance to add.</param>
     /// <returns>The builder for chaining.</returns>
-    public GhostwriterBuilder UseExtension(IExtension extension)
+    public GhostBuilder UseExtension(IExtension extension)
     {
         ArgumentNullException.ThrowIfNull(extension);
         _extensions.Add(extension);
@@ -59,23 +59,23 @@ public sealed class GhostwriterBuilder
     internal void Build()
     {
         // Register default options
-        _services.Configure<GhostwriterOptions>(opts => { });
+        _services.Configure<GhostOptions>(opts => { });
 
         // Ensure KernelOptions is available (caller may have configured via ConfigureKernel already)
         _services.Configure<KernelOptions>(opts => { });
 
-        // Register GhostwriterKernel as singleton created from KernelOptions
+        // Register GhostKernel as singleton created from KernelOptions
         _services.AddSingleton(provider =>
         {
             var opts = provider.GetRequiredService<IOptions<KernelOptions>>().Value;
             // Create synchronously since DI registration is not async
-            return GhostwriterKernel.CreateAsync(opts).GetAwaiter().GetResult();
+            return GhostKernel.CreateAsync(opts).GetAwaiter().GetResult();
         });
 
         // Register IBrowserSession as a factory from the kernel
         _services.AddScoped<IBrowserSession>(provider =>
         {
-            var kernel = provider.GetRequiredService<GhostwriterKernel>();
+            var kernel = provider.GetRequiredService<GhostKernel>();
             return kernel.NewSessionAsync().AsTask().GetAwaiter().GetResult();
         });
 
@@ -83,7 +83,7 @@ public sealed class GhostwriterBuilder
             var loader = new ExtensionLoader();
             if (_extensions.Count > 0)
             {
-            if (_services.Any(sd => sd.ServiceType == typeof(GhostwriterOptions)))
+            if (_services.Any(sd => sd.ServiceType == typeof(GhostOptions)))
             {
                 // nothing special
             }

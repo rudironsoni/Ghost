@@ -10,14 +10,14 @@ namespace Ghost.Hosting.WebApi;
 public static class EndpointRouteBuilderExtensions
 {
     /// <summary>
-    /// Map a simple health check endpoint used to indicate Ghostwriter readiness.
+    /// Map a simple health check endpoint used to indicate Ghost readiness.
     /// </summary>
     /// <param name="endpoints">Endpoint route builder.</param>
     /// <param name="pattern">Route pattern for the health check.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapGhostwriterHealthCheck(
+    public static IEndpointRouteBuilder MapGhostHealthCheck(
         this IEndpointRouteBuilder endpoints,
-        string pattern = "/health/ghostwriter")
+        string pattern = "/health/ghost")
     {
         ArgumentNullException.ThrowIfNull(endpoints);
 
@@ -25,7 +25,7 @@ public static class EndpointRouteBuilderExtensions
         {
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync("{\"status\":\"ok\"}");
-        }).WithName("GhostwriterHealth");
+        }).WithName("GhostHealth");
 
         return endpoints;
     }

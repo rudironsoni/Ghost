@@ -3,11 +3,11 @@
   
   <PropertyGroup>
     <!-- Lockstep versioning - all packages share same version -->
-    <GhostwriterVersion>1.0.0</GhostwriterVersion>
-    <Version>$(GhostwriterVersion)</Version>
-    <AssemblyVersion>$(GhostwriterVersion)</AssemblyVersion>
-    <FileVersion>$(GhostwriterVersion)</FileVersion>
-    <InformationalVersion>$(GhostwriterVersion)</InformationalVersion>
+    <GhostVersion>1.0.0</GhostVersion>
+    <Version>$(GhostVersion)</Version>
+    <AssemblyVersion>$(GhostVersion)</AssemblyVersion>
+    <FileVersion>$(GhostVersion)</FileVersion>
+    <InformationalVersion>$(GhostVersion)</InformationalVersion>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -42,42 +42,42 @@
 
   <!-- Layer detection -->
   <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Core'))">
-    <GhostwriterLayer>Kernel</GhostwriterLayer>
+    <GhostLayer>Kernel</GhostLayer>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Contracts'))">
-    <GhostwriterLayer>Contracts</GhostwriterLayer>
+    <GhostLayer>Contracts</GhostLayer>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Platforms'))">
-    <GhostwriterLayer>Platforms</GhostwriterLayer>
+    <GhostLayer>Platforms</GhostLayer>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Hosting'))">
-    <GhostwriterLayer>Hosting</GhostwriterLayer>
+    <GhostLayer>Hosting</GhostLayer>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Sdk'))">
-    <GhostwriterLayer>Sdk</GhostwriterLayer>
+    <GhostLayer>Sdk</GhostLayer>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('tests'))">
-    <GhostwriterLayer>Tests</GhostwriterLayer>
+    <GhostLayer>Tests</GhostLayer>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('samples'))">
-    <GhostwriterLayer>Samples</GhostwriterLayer>
+    <GhostLayer>Samples</GhostLayer>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('tools'))">
-    <GhostwriterLayer>Tools</GhostwriterLayer>
+    <GhostLayer>Tools</GhostLayer>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
