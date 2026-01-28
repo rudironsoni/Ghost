@@ -23,4 +23,10 @@ public sealed class KernelOptions
     /// Useful for debugging.
     /// </summary>
     public bool DisableDefaultStealthArgs { get; set; }
+
+    /// <summary>
+    /// The browser engine to use. Valid values: "Chromium", "Firefox", "WebKit".
+    /// Defaults to "Chromium".
+    /// </summary>
+    public string Browser { get; set; } = "Chromium";
 }

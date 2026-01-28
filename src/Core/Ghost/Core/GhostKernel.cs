@@ -28,7 +28,7 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
     public static async Task<GhostKernel> CreateAsync(KernelOptions? options = null, CancellationToken ct = default)
     {
         var opts = options ?? new KernelOptions();
-        
+
         var launchArgs = new List<string>(opts.Args ?? []);
         if (opts.EnableStealth && !opts.DisableDefaultStealthArgs)
         {
@@ -40,8 +40,8 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
 
         // Create Playwright instance and keep it alive
         var playwright = await Microsoft.Playwright.Playwright.CreateAsync();
-        
-        try 
+
+        try
         {
             var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
@@ -114,7 +114,7 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
                     Longitude = (float)options.Geolocation.Longitude,
                     Accuracy = (float)options.Geolocation.Accuracy
                 };
-                
+
                 var perms = ctxOptions.Permissions?.ToList() ?? new List<string>();
                 if (!perms.Contains("geolocation")) perms.Add("geolocation");
                 ctxOptions.Permissions = perms;
@@ -127,7 +127,7 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
                     Longitude = (float)profile.Longitude,
                     Accuracy = 50
                 };
-                
+
                 var perms = ctxOptions.Permissions?.ToList() ?? new List<string>();
                 if (!perms.Contains("geolocation")) perms.Add("geolocation");
                 ctxOptions.Permissions = perms;
