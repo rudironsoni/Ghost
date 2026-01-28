@@ -106,5 +106,6 @@ public class RotatingProxyProvider : IProxyProvider
     public void Dispose()
     {
         _initLock?.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
