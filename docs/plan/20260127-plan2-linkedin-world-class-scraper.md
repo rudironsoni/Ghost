@@ -1,4 +1,4 @@
-# Plan: World-Class LinkedIn Scraper Upgrade
+# Plan 2: World-Class LinkedIn Scraper Upgrade
 
 **Date:** 2026-01-27
 **Status:** Implemented

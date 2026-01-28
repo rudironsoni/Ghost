@@ -1,4 +1,4 @@
-# Plan: Ghost Server (Modular API Gateway)
+# Plan 3: Ghost Server (Modular API Gateway)
 
 **Date:** 2026-01-27
 **Status:** Planned
