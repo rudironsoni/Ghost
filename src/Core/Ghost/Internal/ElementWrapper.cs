@@ -30,10 +30,9 @@ internal sealed class ElementWrapper : IElement, Ghost.IElementHandle
     public Task TypeAsync(string text, TypeOptions? options = null, CancellationToken ct = default)
     {
         var o = options ?? new TypeOptions();
-#pragma warning disable CS0612
-        var task = _handle.TypeAsync(text, new Microsoft.Playwright.ElementHandleTypeOptions { Delay = o.Delay });
-#pragma warning restore CS0612
-        return task;
+        // ElementHandle.TypeAsync is deprecated in Playwright; use PressSequentiallyAsync when available
+        // Microsoft.Playwright 1.49.0 provides ElementHandle.PressSequentiallyAsync which supports delay
+        return _handle.PressSequentiallyAsync(text, new Microsoft.Playwright.ElementHandlePressSequentiallyOptions { Delay = o.Delay });
     }
 
     public Task FillAsync(string value, TypeOptions? options = null, CancellationToken ct = default) => _handle.FillAsync(value);
