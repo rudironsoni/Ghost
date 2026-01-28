@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Ghost.Platform.LinkedIn.Internal;
 
@@ -12,7 +13,7 @@ internal sealed class LinkedInRateLimitException : Exception
 
 internal static class LinkedInRateLimitDetector
 {
-    public static async Task CheckAsync(Ghost.IPage page)
+    public static async Task CheckAsync(Ghost.IPage page, Microsoft.Extensions.Logging.ILogger? logger = null)
     {
         if (page == null) return;
 
@@ -41,6 +42,10 @@ internal static class LinkedInRateLimitDetector
                 if (lower.Contains("security check") || lower.Contains("too many requests"))
                 {
                     throw new LinkedInRateLimitException("LinkedIn rate limit or security check detected in page content.");
+                }
+                else
+                {
+                    try { logger?.LogInformation("No rate limit indicators found."); } catch { }
                 }
             }
         }
