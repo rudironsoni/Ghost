@@ -36,6 +36,7 @@ public class RotatingProxyProvider : IProxyProvider
     {
         _sources = sources ?? throw new ArgumentNullException(nameof(sources));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        Console.WriteLine($"[DEBUG] RotatingProxyProvider: Found {_sources.Count()} sources.");
     }
 
     public async Task<ProxyInfo?> GetProxyAsync(string countryCode, CancellationToken token = default)
