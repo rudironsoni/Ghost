@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>Ghost.Contracts.Inference</RootNamespace>
+    <Description>Ghost inference contracts</Description>
+  </PropertyGroup>
+</Project>

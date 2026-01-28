@@ -1,5 +1,5 @@
 <Project>
-  <!-- Ghostwright Monorepo - Global Build Properties -->
+  <!-- Ghost Monorepo - Global Build Properties -->
   
   <PropertyGroup>
     <!-- Lockstep versioning - all packages share same version -->
@@ -23,10 +23,10 @@
 
   <PropertyGroup>
     <!-- Package metadata -->
-    <Authors>Ghostwright Team</Authors>
-    <Company>Ghostwright</Company>
-    <Product>Ghostwright</Product>
-    <Copyright>Copyright (c) 2026 Ghostwright</Copyright>
+    <Authors>Ghost Team</Authors>
+    <Company>Ghost</Company>
+    <Product>Ghost</Product>
+    <Copyright>Copyright (c) 2026 Ghost</Copyright>
     <RepositoryUrl>https://github.com/rudironsoni/Ghost</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

@@ -1,4 +1,4 @@
-# Ghostwright Monorepo Unification Plan
+# Ghost Monorepo Unification Plan
 
 **Date:** 2026-01-27  
 **Author:** Principal .NET Engineer  
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Unify 8+ separate Ghostwright repositories into a single monorepo with a sophisticated architecture where the Ghostwright stealth browser is an isolated kernel module, and all other components (AI platforms, social platforms) are pluggable extensions.
+Unify 8+ separate Ghost repositories into a single monorepo with a sophisticated architecture where the Ghost stealth browser is an isolated kernel module, and all other components (AI platforms, social platforms) are pluggable extensions.
 
 ---
 
@@ -18,16 +18,16 @@ Unify 8+ separate Ghostwright repositories into a single monorepo with a sophist
 
 | Repository | Purpose | Dependencies |
 |------------|---------|--------------|
-| `Ghostwright` | Core stealth browser (Patchright) | Standalone |
-| `Ghostwright.Abstractions.Inference` | `IInferenceClient` contract | None |
-| `Ghostwright.Abstractions.Social` | `ISocialClient` contract | None |
-| `Ghostwright.Abstractions.Jobs` | `IJobClient` contract | None |
-| `Ghostwright.Abstractions.News` | `INewsClient` contract | None |
-| `Ghostwright.Abstractions.WebApi` | Web API contracts | None |
-| `Ghostwright.Anthropic` | Anthropic/Claude integration | Ghostwright, Abstractions.Inference |
-| `Ghostwright.OpenAI` | OpenAI/ChatGPT integration | Ghostwright, Abstractions.Inference |
-| `Ghostwright.Google` | Google/Gemini integration | Ghostwright, Abstractions.Inference |
-| `Ghostwright.LinkedIn` | LinkedIn automation | Ghostwright, Abstractions.* |
+| `Ghost` | Core stealth browser (Patchright) | Standalone |
+| `Ghost.Abstractions.Inference` | `IInferenceClient` contract | None |
+| `Ghost.Abstractions.Social` | `ISocialClient` contract | None |
+| `Ghost.Abstractions.Jobs` | `IJobClient` contract | None |
+| `Ghost.Abstractions.News` | `INewsClient` contract | None |
+| `Ghost.Abstractions.WebApi` | Web API contracts | None |
+| `Ghost.Anthropic` | Anthropic/Claude integration | Ghost, Abstractions.Inference |
+| `Ghost.OpenAI` | OpenAI/ChatGPT integration | Ghost, Abstractions.Inference |
+| `Ghost.Google` | Google/Gemini integration | Ghost, Abstractions.Inference |
+| `Ghost.LinkedIn` | LinkedIn automation | Ghost, Abstractions.* |
 
 ### Problems with Current Structure
 
@@ -101,8 +101,8 @@ Ghost/
 │
 ├── src/
 │   ├── Core/                          # LAYER 0 - ISOLATED KERNEL
-│   │   └── Ghostwright/
-│   │       ├── Ghostwright.csproj
+│   │   └── Ghost/
+│   │       ├── Ghost.csproj
 │   │       ├── Abstractions/          # Public interfaces
 │   │       │   ├── IBrowserSession.cs
 │   │       │   ├── IPage.cs
@@ -118,81 +118,81 @@ Ghost/
 │   │       └── Extensions/
 │   │
 │   ├── Contracts/                     # LAYER 1 - PURE INTERFACES
-│   │   ├── Ghostwright.Contracts/
+│   │   ├── Ghost.Contracts/
 │   │   │   └── (re-exports kernel abstractions)
-│   │   ├── Ghostwright.Contracts.Inference/
+│   │   ├── Ghost.Contracts.Inference/
 │   │   │   ├── IInferenceClient.cs
 │   │   │   ├── InferenceRequest.cs
 │   │   │   ├── InferenceResponse.cs
 │   │   │   └── InferenceMessage.cs
-│   │   ├── Ghostwright.Contracts.Social/
+│   │   ├── Ghost.Contracts.Social/
 │   │   │   ├── ISocialClient.cs
 │   │   │   ├── SocialProfile.cs
 │   │   │   └── SocialPost.cs
-│   │   ├── Ghostwright.Contracts.Jobs/
+│   │   ├── Ghost.Contracts.Jobs/
 │   │   │   ├── IJobClient.cs
 │   │   │   ├── JobListing.cs
 │   │   │   └── JobApplication.cs
-│   │   └── Ghostwright.Contracts.News/
+│   │   └── Ghost.Contracts.News/
 │   │       ├── INewsClient.cs
 │   │       └── NewsArticle.cs
 │   │
 │   ├── Platforms/                     # LAYER 2 - IMPLEMENTATIONS (FLAT)
-│   │   ├── Ghostwright.Platform.Anthropic/
+│   │   ├── Ghost.Platform.Anthropic/
 │   │   │   ├── AnthropicExtension.cs
 │   │   │   ├── AnthropicClient.cs
 │   │   │   └── AnthropicOptions.cs
-│   │   ├── Ghostwright.Platform.Google/
+│   │   ├── Ghost.Platform.Google/
 │   │   │   ├── GoogleExtension.cs
 │   │   │   ├── GoogleClient.cs
 │   │   │   └── GoogleOptions.cs
-│   │   ├── Ghostwright.Platform.LinkedIn/
+│   │   ├── Ghost.Platform.LinkedIn/
 │   │   │   ├── LinkedInExtension.cs
 │   │   │   ├── LinkedInSocialClient.cs
 │   │   │   ├── LinkedInJobClient.cs
 │   │   │   └── LinkedInNewsClient.cs
-│   │   └── Ghostwright.Platform.OpenAI/
+│   │   └── Ghost.Platform.OpenAI/
 │   │       ├── OpenAIExtension.cs
 │   │       ├── OpenAIClient.cs
 │   │       └── OpenAIOptions.cs
 │   │
 │   ├── Hosting/                       # LAYER 3 - COMPOSITION
-│   │   ├── Ghostwright.Hosting/
+│   │   ├── Ghost.Hosting/
 │   │   │   ├── IExtension.cs
 │   │   │   ├── GhostwriterBuilder.cs
 │   │   │   ├── GhostwriterOptions.cs
 │   │   │   └── ServiceCollectionExtensions.cs
-│   │   └── Ghostwright.Hosting.WebApi/
+│   │   └── Ghost.Hosting.WebApi/
 │   │       └── WebApiServiceCollectionExtensions.cs
 │   │
 │   └── Sdk/                           # LAYER 4 - META-PACKAGE
-│       └── Ghostwright.Sdk/
-│           └── Ghostwright.Sdk.csproj
+│       └── Ghost.Sdk/
+│           └── Ghost.Sdk.csproj
 │
 ├── tests/                             # MIRRORS src/
 │   ├── Core/
-│   │   └── Ghostwright.Tests/
+│   │   └── Ghost.Tests/
 │   ├── Contracts/
-│   │   ├── Ghostwright.Contracts.Tests/
-│   │   └── Ghostwright.Contracts.Inference.Tests/
+│   │   ├── Ghost.Contracts.Tests/
+│   │   └── Ghost.Contracts.Inference.Tests/
 │   ├── Platforms/
-│   │   ├── Ghostwright.Platform.Anthropic.Tests/
-│   │   ├── Ghostwright.Platform.Google.Tests/
-│   │   ├── Ghostwright.Platform.LinkedIn.Tests/
-│   │   └── Ghostwright.Platform.OpenAI.Tests/
+│   │   ├── Ghost.Platform.Anthropic.Tests/
+│   │   ├── Ghost.Platform.Google.Tests/
+│   │   ├── Ghost.Platform.LinkedIn.Tests/
+│   │   └── Ghost.Platform.OpenAI.Tests/
 │   ├── Hosting/
-│   │   └── Ghostwright.Hosting.Tests/
+│   │   └── Ghost.Hosting.Tests/
 │   └── Integration/
-│       └── Ghostwright.Integration.Tests/
+│       └── Ghost.Integration.Tests/
 │
 ├── samples/
-│   ├── Ghostwright.Sample.Console/
-│   ├── Ghostwright.Sample.WebApi/
-│   └── Ghostwright.Sample.LinkedInBot/
+│   ├── Ghost.Sample.Console/
+│   ├── Ghost.Sample.WebApi/
+│   └── Ghost.Sample.LinkedInBot/
 │
 ├── tools/
-│   ├── Ghostwright.Analyzers/
-│   └── Ghostwright.SourceGenerators/
+│   ├── Ghost.Analyzers/
+│   └── Ghost.SourceGenerators/
 │
 └── build/
     ├── Layers.props
@@ -204,12 +204,12 @@ Ghost/
 ```
                     ┌──────────────────────────────────────┐
                     │              HOST                    │
-                    │   services.AddGhostwright(...)       │
+                    │   services.AddGhost(...)       │
                     └───────────────┬──────────────────────┘
                                     │
                     ┌───────────────▼───────────────┐
                     │      LAYER 3: HOSTING         │
-                    │  Ghostwright.Hosting          │
+                    │  Ghost.Hosting          │
                     └───────────────┬───────────────┘
                                     │
     ┌───────────────────────────────┼───────────────────────────────┐
@@ -224,13 +224,13 @@ Ghost/
                                     │
                     ┌───────────────▼───────────────┐
                     │      LAYER 1: CONTRACTS       │
-                    │  Ghostwright.Contracts.*      │
+                    │  Ghost.Contracts.*      │
                     │  (IInferenceClient, etc.)     │
                     └───────────────┬───────────────┘
                                     │
                     ╔═══════════════╧═══════════════╗
                     ║      LAYER 0: KERNEL          ║
-                    ║        Ghostwright            ║
+                    ║        Ghost            ║
                     ║  ───────────────────────────  ║
                     ║  IBrowserSession, IPage       ║
                     ║  Patchright (internal only)   ║
@@ -243,19 +243,19 @@ Ghost/
 
 | Package | Layer | Purpose |
 |---------|-------|---------|
-| `Ghostwright` | Kernel | Core stealth browser engine |
-| `Ghostwright.Contracts` | Contracts | Core browser interfaces |
-| `Ghostwright.Contracts.Inference` | Contracts | `IInferenceClient` and DTOs |
-| `Ghostwright.Contracts.Social` | Contracts | `ISocialClient` and DTOs |
-| `Ghostwright.Contracts.Jobs` | Contracts | `IJobClient` and DTOs |
-| `Ghostwright.Contracts.News` | Contracts | `INewsClient` and DTOs |
-| `Ghostwright.Platform.Anthropic` | Platform | Claude via claude.ai |
-| `Ghostwright.Platform.OpenAI` | Platform | ChatGPT via chatgpt.com |
-| `Ghostwright.Platform.Google` | Platform | Gemini via gemini.google.com |
-| `Ghostwright.Platform.LinkedIn` | Platform | LinkedIn automation |
-| `Ghostwright.Hosting` | Hosting | DI and configuration |
-| `Ghostwright.Hosting.WebApi` | Hosting | ASP.NET Core integration |
-| `Ghostwright.Sdk` | SDK | Meta-package for quick start |
+| `Ghost` | Kernel | Core stealth browser engine |
+| `Ghost.Contracts` | Contracts | Core browser interfaces |
+| `Ghost.Contracts.Inference` | Contracts | `IInferenceClient` and DTOs |
+| `Ghost.Contracts.Social` | Contracts | `ISocialClient` and DTOs |
+| `Ghost.Contracts.Jobs` | Contracts | `IJobClient` and DTOs |
+| `Ghost.Contracts.News` | Contracts | `INewsClient` and DTOs |
+| `Ghost.Platform.Anthropic` | Platform | Claude via claude.ai |
+| `Ghost.Platform.OpenAI` | Platform | ChatGPT via chatgpt.com |
+| `Ghost.Platform.Google` | Platform | Gemini via gemini.google.com |
+| `Ghost.Platform.LinkedIn` | Platform | LinkedIn automation |
+| `Ghost.Hosting` | Hosting | DI and configuration |
+| `Ghost.Hosting.WebApi` | Hosting | ASP.NET Core integration |
+| `Ghost.Sdk` | SDK | Meta-package for quick start |
 
 ---
 
@@ -275,7 +275,7 @@ Ghost/
 
 ### Phase 2: Kernel Abstraction
 
-1. Extract public interfaces from Ghostwright core:
+1. Extract public interfaces from Ghost core:
    - `IBrowserSession`
    - `IPage`
    - `IElement`
@@ -284,7 +284,7 @@ Ghost/
    - `PageWrapper` (wraps Patchright page)
    - `ElementWrapper` (wraps Patchright element handle)
 3. Rename namespaces:
-   - `Ghostwright.Abstractions.*` → `Ghostwright.Contracts.*`
+   - `Ghost.Abstractions.*` → `Ghost.Contracts.*`
 
 ### Phase 3: Extension System
 
@@ -302,9 +302,9 @@ Ghost/
 
 2. Implement extensions for all platforms
 
-3. Create `Ghostwright.Hosting`:
+3. Create `Ghost.Hosting`:
    ```csharp
-   services.AddGhostwright(ghost =>
+   services.AddGhost(ghost =>
    {
        ghost.ConfigureKernel(k => k.Headless = true);
        ghost.UseExtension<AnthropicExtension>();
@@ -327,9 +327,9 @@ Ghost/
 ### Phase 5: Samples & Documentation
 
 1. Create sample projects:
-   - `Ghostwright.Sample.Console` - basic usage
-   - `Ghostwright.Sample.WebApi` - ASP.NET Core integration
-   - `Ghostwright.Sample.LinkedInBot` - real-world automation
+   - `Ghost.Sample.Console` - basic usage
+   - `Ghost.Sample.WebApi` - ASP.NET Core integration
+   - `Ghost.Sample.LinkedInBot` - real-world automation
 
 2. Write documentation:
    - README.md with quick start
@@ -412,7 +412,7 @@ Ghost/
 ### IExtension
 
 ```csharp
-namespace Ghostwright.Hosting;
+namespace Ghost.Hosting;
 
 public interface IExtension
 {
@@ -427,7 +427,7 @@ public interface IExtension
 ### IBrowserSession
 
 ```csharp
-namespace Ghostwright;
+namespace Ghost;
 
 public interface IBrowserSession : IAsyncDisposable
 {
@@ -440,7 +440,7 @@ public interface IBrowserSession : IAsyncDisposable
 ### IPage
 
 ```csharp
-namespace Ghostwright;
+namespace Ghost;
 
 public interface IPage : IAsyncDisposable
 {
@@ -459,7 +459,7 @@ public interface IPage : IAsyncDisposable
 ### IInferenceClient
 
 ```csharp
-namespace Ghostwright.Contracts.Inference;
+namespace Ghost.Contracts.Inference;
 
 public interface IInferenceClient
 {

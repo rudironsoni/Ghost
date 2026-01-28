@@ -1,20 +1,20 @@
-# Ghostwright
+# Ghost
 
 A sophisticated stealth browser automation framework with a pluggable extension architecture.
 
 ## Architecture
 
-Ghostwright is organized as a monorepo with strict layering:
+Ghost is organized as a monorepo with strict layering:
 
 ```
 ┌─────────────────────────────────────────┐
 │              LAYER 4: SDK               │
-│         Ghostwright.Sdk (meta-pkg)      │
+│         Ghost.Sdk (meta-pkg)      │
 └─────────────────────┬───────────────────┘
                       │
 ┌─────────────────────▼───────────────────┐
 │           LAYER 3: HOSTING              │
-│     Ghostwright.Hosting.{*,WebApi}      │
+│     Ghost.Hosting.{*,WebApi}      │
 └─────────────────────┬───────────────────┘
                       │
 ┌─────────────────────▼───────────────────┐
@@ -24,12 +24,12 @@ Ghostwright is organized as a monorepo with strict layering:
                       │
 ┌─────────────────────▼───────────────────┐
 │          LAYER 1: CONTRACTS             │
-│      Ghostwright.Contracts.*            │
+│      Ghost.Contracts.*            │
 └─────────────────────┬───────────────────┘
                       │
 ╔═════════════════════╧═══════════════════╗
 ║          LAYER 0: KERNEL                ║
-║            Ghostwright                  ║
+║            Ghost                  ║
 ║  (Stealth browser - fully isolated)     ║
 ╚═════════════════════════════════════════╝
 ```
@@ -38,18 +38,18 @@ Ghostwright is organized as a monorepo with strict layering:
 
 ```bash
 # Install the SDK package (includes everything)
-dotnet add package Ghostwright.Sdk
+dotnet add package Ghost.Sdk
 ```
 
 ```csharp
-using Ghostwright.Hosting;
-using Ghostwright.Platform.Anthropic;
-using Ghostwright.Platform.LinkedIn;
+using Ghost.Hosting;
+using Ghost.Platform.Anthropic;
+using Ghost.Platform.LinkedIn;
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((ctx, services) =>
     {
-        services.AddGhostwright(ghost =>
+        services.AddGhost(ghost =>
         {
             ghost.ConfigureKernel(k => k.Headless = true);
             ghost.UseExtension<AnthropicExtension>();
@@ -67,19 +67,19 @@ var jobs = host.Services.GetRequiredService<IJobClient>();
 
 | Package | Description |
 |---------|-------------|
-| `Ghostwright` | Core stealth browser engine |
-| `Ghostwright.Contracts` | Core interfaces (IBrowserSession, IPage) |
-| `Ghostwright.Contracts.Inference` | IInferenceClient contract |
-| `Ghostwright.Contracts.Social` | ISocialClient contract |
-| `Ghostwright.Contracts.Jobs` | IJobClient contract |
-| `Ghostwright.Contracts.News` | INewsClient contract |
-| `Ghostwright.Platform.Anthropic` | Claude via claude.ai |
-| `Ghostwright.Platform.OpenAI` | ChatGPT via chatgpt.com |
-| `Ghostwright.Platform.Google` | Gemini via gemini.google.com |
-| `Ghostwright.Platform.LinkedIn` | LinkedIn automation |
-| `Ghostwright.Hosting` | DI and configuration |
-| `Ghostwright.Hosting.WebApi` | ASP.NET Core integration |
-| `Ghostwright.Sdk` | Meta-package for quick start |
+| `Ghost` | Core stealth browser engine |
+| `Ghost.Contracts` | Core interfaces (IBrowserSession, IPage) |
+| `Ghost.Contracts.Inference` | IInferenceClient contract |
+| `Ghost.Contracts.Social` | ISocialClient contract |
+| `Ghost.Contracts.Jobs` | IJobClient contract |
+| `Ghost.Contracts.News` | INewsClient contract |
+| `Ghost.Platform.Anthropic` | Claude via claude.ai |
+| `Ghost.Platform.OpenAI` | ChatGPT via chatgpt.com |
+| `Ghost.Platform.Google` | Gemini via gemini.google.com |
+| `Ghost.Platform.LinkedIn` | LinkedIn automation |
+| `Ghost.Hosting` | DI and configuration |
+| `Ghost.Hosting.WebApi` | ASP.NET Core integration |
+| `Ghost.Sdk` | Meta-package for quick start |
 
 ## Building
 

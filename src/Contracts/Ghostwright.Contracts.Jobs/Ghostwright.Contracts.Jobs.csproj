@@ -1,7 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <RootNamespace>Ghostwright.Contracts.Jobs</RootNamespace>
-    <Description>Ghostwright jobs platform contracts</Description>
-  </PropertyGroup>
-</Project>

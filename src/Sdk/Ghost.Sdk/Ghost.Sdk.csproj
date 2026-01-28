@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>Ghost.Sdk</RootNamespace>
+    <Description>Ghost SDK - Meta-package for quick setup</Description>
+  </PropertyGroup>
+
+  <!-- Include all main packages -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\Ghost\Ghost.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Inference\Ghost.Contracts.Inference.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Social\Ghost.Contracts.Social.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghost.Contracts.News\Ghost.Contracts.News.csproj" />
+    <ProjectReference Include="..\..\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
+  </ItemGroup>
+</Project>

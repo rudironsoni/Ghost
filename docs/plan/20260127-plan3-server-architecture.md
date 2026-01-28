@@ -1,8 +1,8 @@
-# Plan: Ghostwright Server (Modular API Gateway)
+# Plan: Ghost Server (Modular API Gateway)
 
 **Date:** 2026-01-27
 **Status:** Planned
-**Objective:** Create a sophisticated, production-ready WebAPI (`Ghostwright.Server`) that acts as a configurable gateway for all Ghostwright capabilities, supporting dynamic feature flags and robust concurrency management.
+**Objective:** Create a sophisticated, production-ready WebAPI (`Ghost.WebApi`) that acts as a configurable gateway for all Ghost capabilities, supporting dynamic feature flags and robust concurrency management.
 
 ---
 
@@ -10,7 +10,7 @@
 
 We will replace the "Sample" project with a production-grade **Server** architecture.
 
--   **Project**: `src/Ghostwright.Server` (New project).
+-   **Project**: `src/Ghost.WebApi` (New project).
 -   **Pattern**: **REPR** (Request-Endpoint-Response) using **FastEndpoints**. This replaces traditional Controllers with "Vertical Slices" (Feature Folders), ensuring better maintainability and testability.
 -   **Deployment**: Single Docker container, behavior controlled entirely by Environment Variables.
 
@@ -20,7 +20,7 @@ The Server references *all* known Platform extensions but only activates them if
 **Configuration (`appsettings.json`):**
 ```json
 {
-  "Ghostwright": {
+  "Ghost": {
     "Kernel": {
       "Headless": true,
       "MaxConcurrentSessions": 5  // <--- The Pool Limit (Semaphore)
@@ -58,9 +58,9 @@ This guarantees that even if you get 1000 simultaneous API requests, only `N` br
 - [ ] Implement `SemaphoreSlim` logic in `GhostwriterKernel`.
 - [ ] Ensure `DisposeAsync` reliably releases the semaphore.
 
-### Phase 2: Ghostwright.Server Setup
-- [ ] Delete `samples/Ghostwright.Sample.WebApi`.
-- [ ] Create `src/Ghostwright.Server` (ASP.NET Core WebAPI).
+### Phase 2: Ghost.Server Setup
+- [ ] Delete `samples/Ghost.Sample.WebApi`.
+- [ ] Create `src/Ghost.WebApi` (ASP.NET Core WebAPI).
 - [ ] Add `FastEndpoints` and `FastEndpoints.Swagger` to `Directory.Packages.props`.
 - [ ] Implement `Program.cs` with dynamic extension loading logic (iterating through config to find enabled extensions).
 
