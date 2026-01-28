@@ -6,13 +6,12 @@ using System.Threading.Tasks;
 using Microsoft.Playwright;
 using Ghost;
 
-#pragma warning disable IDE0032
 namespace Ghost.Internal;
 
 internal sealed class BrowserSessionWrapper : IBrowserSession, IDisposable
 {
     private readonly IBrowserContext _context;
-    private List<IPage> _pages { get; } = new List<IPage>();
+    private List<IPage> _pages { get; } = new();
     private readonly string _sessionId;
     private readonly Action? _onDispose;
     private bool _disposed;

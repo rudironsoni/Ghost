@@ -34,7 +34,7 @@ public sealed class LinkedInAuthenticator
                 var logged = await IsLoggedInAsync(page, ct).ConfigureAwait(false);
                 if (!logged)
                 {
-                    _logger.LogDebug("LoginWithCookieAsync: cookie set but not logged in");
+                    _logger.LoginCookieSetNotLoggedIn();
                 }
             }
         finally
@@ -54,7 +54,7 @@ public sealed class LinkedInAuthenticator
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "WarmUp failed");
+            _logger.WarmUpFailed(ex);
         }
         finally
         {
@@ -79,7 +79,7 @@ public sealed class LinkedInAuthenticator
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "IsLoggedInAsync check failed");
+            _logger.IsLoggedInCheckFailed(ex);
             return false;
         }
     }
