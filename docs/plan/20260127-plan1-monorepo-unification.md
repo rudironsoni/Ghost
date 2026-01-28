@@ -1,7 +1,7 @@
-# Ghost Monorepo Unification Plan
+# Plan 1: Ghost Monorepo Unification Plan
 
-**Date:** 2026-01-27  
-**Author:** Principal .NET Engineer  
+**Date:** 2026-01-27
+**Author:** Principal .NET Engineer
 **Status:** Approved for Implementation
 
 ---
@@ -16,18 +16,18 @@ Unify 8+ separate Ghost repositories into a single monorepo with a sophisticated
 
 ### Existing Repositories
 
-| Repository | Purpose | Dependencies |
-|------------|---------|--------------|
-| `Ghost` | Core stealth browser (Patchright) | Standalone |
-| `Ghost.Abstractions.Inference` | `IInferenceClient` contract | None |
-| `Ghost.Abstractions.Social` | `ISocialClient` contract | None |
-| `Ghost.Abstractions.Jobs` | `IJobClient` contract | None |
-| `Ghost.Abstractions.News` | `INewsClient` contract | None |
-| `Ghost.Abstractions.WebApi` | Web API contracts | None |
-| `Ghost.Anthropic` | Anthropic/Claude integration | Ghost, Abstractions.Inference |
-| `Ghost.OpenAI` | OpenAI/ChatGPT integration | Ghost, Abstractions.Inference |
-| `Ghost.Google` | Google/Gemini integration | Ghost, Abstractions.Inference |
-| `Ghost.LinkedIn` | LinkedIn automation | Ghost, Abstractions.* |
+| Repository                     | Purpose                           | Dependencies                  |
+| ------------------------------ | --------------------------------- | ----------------------------- |
+| `Ghost`                        | Core stealth browser (Patchright) | Standalone                    |
+| `Ghost.Abstractions.Inference` | `IInferenceClient` contract       | None                          |
+| `Ghost.Abstractions.Social`    | `ISocialClient` contract          | None                          |
+| `Ghost.Abstractions.Jobs`      | `IJobClient` contract             | None                          |
+| `Ghost.Abstractions.News`      | `INewsClient` contract            | None                          |
+| `Ghost.Abstractions.WebApi`    | Web API contracts                 | None                          |
+| `Ghost.Anthropic`              | Anthropic/Claude integration      | Ghost, Abstractions.Inference |
+| `Ghost.OpenAI`                 | OpenAI/ChatGPT integration        | Ghost, Abstractions.Inference |
+| `Ghost.Google`                 | Google/Gemini integration         | Ghost, Abstractions.Inference |
+| `Ghost.LinkedIn`               | LinkedIn automation               | Ghost, Abstractions.*         |
 
 ### Problems with Current Structure
 
@@ -42,7 +42,7 @@ Unify 8+ separate Ghost repositories into a single monorepo with a sophisticated
 ## Architecture Decisions
 
 ### Decision 1: Extension Coupling
-**Choice:** Strict isolation  
+**Choice:** Strict isolation
 **Rationale:** Extensions communicate only via contracts and DI. No extension can directly reference another extension. This enables:
 - Independent testing
 - Swappable implementations
@@ -50,7 +50,7 @@ Unify 8+ separate Ghost repositories into a single monorepo with a sophisticated
 - Parallel development
 
 ### Decision 2: Versioning Strategy
-**Choice:** Lockstep versioning  
+**Choice:** Lockstep versioning
 **Rationale:** All packages share the same version number. This:
 - Simplifies compatibility matrix
 - Reduces "which versions work together" confusion
@@ -58,7 +58,7 @@ Unify 8+ separate Ghost repositories into a single monorepo with a sophisticated
 - Matches modern monorepo patterns (Nx, Turborepo)
 
 ### Decision 3: Patchright Exposure
-**Choice:** Full abstraction  
+**Choice:** Full abstraction
 **Rationale:** Patchright/Playwright types are internal implementation details. Public API exposes `IPage`, `IElement`, `IBrowserSession`. This:
 - Allows swapping browser engine later
 - Prevents tight coupling to Playwright API
@@ -66,15 +66,15 @@ Unify 8+ separate Ghost repositories into a single monorepo with a sophisticated
 - Provides stable API surface
 
 ### Decision 4: Platform Organization
-**Choice:** Flat Platforms folder  
+**Choice:** Flat Platforms folder
 **Rationale:** All browser-based integrations are "Platforms" (including AI providers that use browser automation). Domain grouping adds complexity without value - contracts define capabilities, not folders.
 
 ### Decision 5: Git History
-**Choice:** Fresh start  
+**Choice:** Fresh start
 **Rationale:** Clean slate without history migration complexity. Old repos will be archived for reference.
 
 ### Decision 6: Test Structure
-**Choice:** Mirror src/ in tests/  
+**Choice:** Mirror src/ in tests/
 **Rationale:** Parallel structure makes navigation intuitive. `src/Platforms/X` → `tests/Platforms/X.Tests`
 
 ---
@@ -241,21 +241,21 @@ Ghost/
 
 ## NuGet Packages
 
-| Package | Layer | Purpose |
-|---------|-------|---------|
-| `Ghost` | Kernel | Core stealth browser engine |
-| `Ghost.Contracts` | Contracts | Core browser interfaces |
-| `Ghost.Contracts.Inference` | Contracts | `IInferenceClient` and DTOs |
-| `Ghost.Contracts.Social` | Contracts | `ISocialClient` and DTOs |
-| `Ghost.Contracts.Jobs` | Contracts | `IJobClient` and DTOs |
-| `Ghost.Contracts.News` | Contracts | `INewsClient` and DTOs |
-| `Ghost.Platform.Anthropic` | Platform | Claude via claude.ai |
-| `Ghost.Platform.OpenAI` | Platform | ChatGPT via chatgpt.com |
-| `Ghost.Platform.Google` | Platform | Gemini via gemini.google.com |
-| `Ghost.Platform.LinkedIn` | Platform | LinkedIn automation |
-| `Ghost.Hosting` | Hosting | DI and configuration |
-| `Ghost.Hosting.WebApi` | Hosting | ASP.NET Core integration |
-| `Ghost.Sdk` | SDK | Meta-package for quick start |
+| Package                     | Layer     | Purpose                      |
+| --------------------------- | --------- | ---------------------------- |
+| `Ghost`                     | Kernel    | Core stealth browser engine  |
+| `Ghost.Contracts`           | Contracts | Core browser interfaces      |
+| `Ghost.Contracts.Inference` | Contracts | `IInferenceClient` and DTOs  |
+| `Ghost.Contracts.Social`    | Contracts | `ISocialClient` and DTOs     |
+| `Ghost.Contracts.Jobs`      | Contracts | `IJobClient` and DTOs        |
+| `Ghost.Contracts.News`      | Contracts | `INewsClient` and DTOs       |
+| `Ghost.Platform.Anthropic`  | Platform  | Claude via claude.ai         |
+| `Ghost.Platform.OpenAI`     | Platform  | ChatGPT via chatgpt.com      |
+| `Ghost.Platform.Google`     | Platform  | Gemini via gemini.google.com |
+| `Ghost.Platform.LinkedIn`   | Platform  | LinkedIn automation          |
+| `Ghost.Hosting`             | Hosting   | DI and configuration         |
+| `Ghost.Hosting.WebApi`      | Hosting   | ASP.NET Core integration     |
+| `Ghost.Sdk`                 | SDK       | Meta-package for quick start |
 
 ---
 
@@ -387,12 +387,12 @@ Ghost/
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|------|------------|
-| Breaking changes | Comprehensive test suite, phased rollout |
-| Build complexity | Central Package Management, unified props |
-| Developer confusion | Clear folder structure, documentation |
-| CI/CD migration | Parallel pipelines during transition |
+| Risk                | Mitigation                                |
+| ------------------- | ----------------------------------------- |
+| Breaking changes    | Comprehensive test suite, phased rollout  |
+| Build complexity    | Central Package Management, unified props |
+| Developer confusion | Clear folder structure, documentation     |
+| CI/CD migration     | Parallel pipelines during transition      |
 
 ---
 
