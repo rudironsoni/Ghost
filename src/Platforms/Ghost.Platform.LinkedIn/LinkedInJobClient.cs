@@ -10,12 +10,12 @@ namespace Ghost.Platform.LinkedIn;
 /// <summary>
 /// Job search client for LinkedIn.
 /// </summary>
-public sealed class LinkedInJobClient : IJobClient
-{
-    private readonly Ghost.IBrowserSession _session;
-    private readonly LinkedInOptions _options;
-    private readonly ILogger<LinkedInJobClient> _logger;
-    private readonly Internal.GuestJobSearch _guestSearch;
+    public sealed class LinkedInJobClient : IJobClient
+    {
+        private readonly Ghost.IBrowserSession _session;
+        private readonly LinkedInOptions _options;
+        private readonly ILogger<LinkedInJobClient> _logger;
+        private readonly Internal.GuestJobSearch _guestSearch;
 
     public LinkedInJobClient(Ghost.IBrowserSession session, IOptions<LinkedInOptions> options, ILogger<LinkedInJobClient> logger, Internal.GuestJobSearch guestSearch)
     {
