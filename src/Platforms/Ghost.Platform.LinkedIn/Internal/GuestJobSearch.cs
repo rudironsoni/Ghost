@@ -202,7 +202,7 @@ public sealed class GuestJobSearch
                     success = true;
                 }
                 catch (OperationCanceledException) { throw; }
-                catch (PlaywrightException pex) when (pex.Message?.Contains("ERR_TUNNEL_CONNECTION_FAILED", StringComparison.OrdinalIgnoreCase) == true || pex.Message?.Contains("ERR_CONNECTION_TIMED_OUT", StringComparison.OrdinalIgnoreCase) == true)
+                catch (PlaywrightException pex) when (pex.Message?.Contains("ERR_TUNNEL_CONNECTION_FAILED", StringComparison.OrdinalIgnoreCase) == true || pex.Message?.Contains("ERR_CONNECTION_TIMED_OUT", StringComparison.OrdinalIgnoreCase) == true || pex.Message?.Contains("ERR_EMPTY_RESPONSE", StringComparison.OrdinalIgnoreCase) == true)
                 {
                     s_logProxyFailed(_logger, attemptProxy, attempt, pex.Message, null);
                     try { await page.DisposeAsync(); } catch { }
