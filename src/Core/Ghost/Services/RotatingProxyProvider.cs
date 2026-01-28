@@ -32,6 +32,12 @@ public class RotatingProxyProvider : IProxyProvider
     private static readonly Action<ILogger, int, Exception?> s_logInitialized =
         LoggerMessage.Define<int>(LogLevel.Information, new EventId(3, nameof(RotatingProxyProvider)), "Initialized {Count} proxies");
 
+    private static readonly Action<ILogger, string, int, int, Exception?> s_logReturningProxy =
+        LoggerMessage.Define<string, int, int>(LogLevel.Information, new EventId(4, nameof(RotatingProxyProvider)), "Returning proxy {Proxy} (Pool size: {Count}, Index: {Index})");
+
+    private static readonly Action<ILogger, int, Exception?> s_logPoolInitialized =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(5, nameof(RotatingProxyProvider)), "Proxy Pool Initialized. Total Proxies: {Count}");
+
     public RotatingProxyProvider(IEnumerable<IProxySource> sources, ILogger<RotatingProxyProvider> logger)
     {
         _sources = sources ?? throw new ArgumentNullException(nameof(sources));
@@ -55,7 +61,9 @@ public class RotatingProxyProvider : IProxyProvider
         // Round-robin selection using atomic increment
         var idx = (int)(Interlocked.Increment(ref _index) % snapshot.Length);
         if (idx < 0) idx = 0;
-        return snapshot[idx];
+        var proxy = snapshot[idx];
+        s_logReturningProxy(_logger, proxy?.ToString() ?? string.Empty, snapshot.Length, idx, null);
+        return proxy;
     }
 
     private async Task EnsureInitializedAsync(CancellationToken token)
@@ -96,6 +104,8 @@ public class RotatingProxyProvider : IProxyProvider
             // Remove duplicates and store snapshot
             _proxies = list.Distinct().ToArray();
             s_logInitialized(_logger, _proxies.Length, null);
+            // Additional informational logging for initialization
+            s_logPoolInitialized(_logger, _proxies.Length, null);
         }
         finally
         {

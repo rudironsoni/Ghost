@@ -69,6 +69,7 @@ public sealed class LinkedInAuthenticator
             foreach (var url in pick)
             {
                 ct.ThrowIfCancellationRequested();
+                _logger.LogInformation("Warm-up: Visiting {Url}...", url);
                 await page.NavigateAsync(url, new NavigationOptions { WaitUntil = WaitUntil.DomContentLoaded }, ct: ct);
                 // wait a short random delay to simulate browsing
                 var delay = Random.Shared.Next(1500, 3001);
@@ -76,6 +77,7 @@ public sealed class LinkedInAuthenticator
                 // scroll a bit
                 try { await page.EvaluateAsync<object>("window.scrollBy(0,500);", ct: ct); } catch { }
             }
+            _logger.LogInformation("Warm-up sequence completed.");
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)

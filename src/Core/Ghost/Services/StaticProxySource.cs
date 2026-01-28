@@ -6,17 +6,20 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Abstractions;
 using Ghost.Core;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Ghost.Services;
 
-public class StaticProxySource : IProxySource
-{
+    public class StaticProxySource : IProxySource
+    {
         private readonly IOptions<ProxyOptions> _options;
+        private readonly ILogger<StaticProxySource> _logger;
 
-        public StaticProxySource(IOptions<ProxyOptions> options)
+        public StaticProxySource(IOptions<ProxyOptions> options, ILogger<StaticProxySource> logger)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public Task<IEnumerable<ProxyInfo>> FetchProxiesAsync(CancellationToken ct)
@@ -36,6 +39,11 @@ public class StaticProxySource : IProxySource
                     list.Add(parsed);
             }
 
+            // Use LoggerMessage pattern for performance
+            static readonly Action<ILogger, int, Exception?> s_logLoaded =
+                LoggerMessage.Define<int>(LogLevel.Information, new EventId(1, nameof(StaticProxySource)), "Loaded {Count} static proxies from configuration.");
+
+            s_logLoaded(_logger, list.Count, null);
             return Task.FromResult<IEnumerable<ProxyInfo>>(list);
         }
 

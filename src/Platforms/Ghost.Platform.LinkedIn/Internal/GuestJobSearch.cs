@@ -54,6 +54,7 @@ public sealed class GuestJobSearch
         var ids = new List<string>();
         // Create a fresh session for the search to isolate from other work
         SessionOptions options;
+        string proxyUsed = "None";
         // Preserve storage state path from options so sessions can reuse cookies if configured
         if (!_options.Value.ProxyEnabled)
         {
@@ -61,6 +62,7 @@ public sealed class GuestJobSearch
             // and create session options without proxy settings.
             s_logProxyDisabled(_logger, null);
             options = new SessionOptions { Proxy = null, StorageStatePath = _options.Value.StorageStatePath };
+            proxyUsed = "Disabled";
         }
         else
         {
@@ -72,9 +74,15 @@ public sealed class GuestJobSearch
             if (proxy is not null)
             {
                 options.Proxy = new SessionOptions.ProxySettings(proxy.Server, proxy.Username, proxy.Password);
+                proxyUsed = proxy.Server ?? "None";
+            }
+            else
+            {
+                proxyUsed = "None";
             }
         }
 
+        _logger.LogInformation("Creating isolated session. Proxy: {Proxy}, Warm-up: {WarmUp}", proxyUsed, _options.Value.WarmUpEnabled);
         var session = await _kernel.NewSessionAsync(options, ct);
         var page = await session.NewPageAsync(ct: ct);
         try
@@ -86,10 +94,10 @@ public sealed class GuestJobSearch
             {
                 ct.ThrowIfCancellationRequested();
                 var url = $"{_options.Value.BaseUrl}/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={q}&location={loc}&start={offset}";
-            try
-            {
-                s_logNavigating(_logger, url, null);
-                // warm-up page/browser if enabled in options
+                try
+                {
+                    s_logNavigating(_logger, url, null);
+                    // warm-up page/browser if enabled in options
                     if (_options.Value.WarmUpEnabled)
                     {
                         try { await _authenticator.WarmUpAsync(page, ct); } catch { /* warm-up must not break search */ }
@@ -97,7 +105,12 @@ public sealed class GuestJobSearch
 
                 await page.NavigateAsync(url, ct: ct);
                 // detect rate-limits or blocks from LinkedIn
-                try { await LinkedInRateLimitDetector.CheckAsync(page); } catch { }
+                try
+                {
+                    await LinkedInRateLimitDetector.CheckAsync(page);
+                    _logger.LogInformation("Rate limit check passed for {Url}", url);
+                }
+                catch { }
                 // no full load expected - just get content
                 var html = await page.GetContentAsync(ct);
                     if (string.IsNullOrEmpty(html)) break;
@@ -115,7 +128,10 @@ public sealed class GuestJobSearch
                     // Persist storage state after successful scraping so cookies/auth can be reused
                     if (found.Count > 0 && !string.IsNullOrEmpty(_options.Value.StorageStatePath))
                     {
-                        try { await session.SaveStorageStateAsync(_options.Value.StorageStatePath); } catch { }
+                        try {
+                            _logger.LogInformation("Saving session state to {Path}", _options.Value.StorageStatePath);
+                            await session.SaveStorageStateAsync(_options.Value.StorageStatePath);
+                        } catch { }
                     }
 
                     foreach (var id in found)
