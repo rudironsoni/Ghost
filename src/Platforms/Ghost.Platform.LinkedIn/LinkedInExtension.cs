@@ -17,6 +17,8 @@ public sealed class LinkedInExtension : IExtension
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<LinkedInOptions>(configuration.GetSection("LinkedIn"));
+        // Authenticator used by LinkedInSocialClient for logging in / cookie handling
+        services.AddTransient<Internal.LinkedInAuthenticator>();
         // GuestJobSearch implements guest API scraping logic
         services.AddScoped<Internal.GuestJobSearch>();
         services.AddScoped<Ghost.Contracts.Social.ISocialClient, LinkedInSocialClient>();

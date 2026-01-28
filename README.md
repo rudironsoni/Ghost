@@ -9,12 +9,12 @@ Ghost is organized as a monorepo with strict layering:
 ```
 ┌─────────────────────────────────────────┐
 │              LAYER 4: SDK               │
-│         Ghost.Sdk (meta-pkg)      │
+│         Ghost.Sdk (meta-pkg)            │
 └─────────────────────┬───────────────────┘
                       │
 ┌─────────────────────▼───────────────────┐
 │           LAYER 3: HOSTING              │
-│     Ghost.Hosting.{*,WebApi}      │
+│     Ghost.Hosting.{*,WebApi}            │
 └─────────────────────┬───────────────────┘
                       │
 ┌─────────────────────▼───────────────────┐
@@ -24,12 +24,12 @@ Ghost is organized as a monorepo with strict layering:
                       │
 ┌─────────────────────▼───────────────────┐
 │          LAYER 1: CONTRACTS             │
-│      Ghost.Contracts.*            │
+│      Ghost.Contracts.*                  │
 └─────────────────────┬───────────────────┘
                       │
 ╔═════════════════════╧═══════════════════╗
 ║          LAYER 0: KERNEL                ║
-║            Ghost                  ║
+║            Ghost                        ║
 ║  (Stealth browser - fully isolated)     ║
 ╚═════════════════════════════════════════╝
 ```
@@ -65,21 +65,21 @@ var jobs = host.Services.GetRequiredService<IJobClient>();
 
 ## Packages
 
-| Package | Description |
-|---------|-------------|
-| `Ghost` | Core stealth browser engine |
-| `Ghost.Contracts` | Core interfaces (IBrowserSession, IPage) |
-| `Ghost.Contracts.Inference` | IInferenceClient contract |
-| `Ghost.Contracts.Social` | ISocialClient contract |
-| `Ghost.Contracts.Jobs` | IJobClient contract |
-| `Ghost.Contracts.News` | INewsClient contract |
-| `Ghost.Platform.Anthropic` | Claude via claude.ai |
-| `Ghost.Platform.OpenAI` | ChatGPT via chatgpt.com |
-| `Ghost.Platform.Google` | Gemini via gemini.google.com |
-| `Ghost.Platform.LinkedIn` | LinkedIn automation |
-| `Ghost.Hosting` | DI and configuration |
-| `Ghost.Hosting.WebApi` | ASP.NET Core integration |
-| `Ghost.Sdk` | Meta-package for quick start |
+| Package                     | Description                              |
+| --------------------------- | ---------------------------------------- |
+| `Ghost`                     | Core stealth browser engine              |
+| `Ghost.Contracts`           | Core interfaces (IBrowserSession, IPage) |
+| `Ghost.Contracts.Inference` | IInferenceClient contract                |
+| `Ghost.Contracts.Social`    | ISocialClient contract                   |
+| `Ghost.Contracts.Jobs`      | IJobClient contract                      |
+| `Ghost.Contracts.News`      | INewsClient contract                     |
+| `Ghost.Platform.Anthropic`  | Claude via claude.ai                     |
+| `Ghost.Platform.OpenAI`     | ChatGPT via chatgpt.com                  |
+| `Ghost.Platform.Google`     | Gemini via gemini.google.com             |
+| `Ghost.Platform.LinkedIn`   | LinkedIn automation                      |
+| `Ghost.Hosting`             | DI and configuration                     |
+| `Ghost.Hosting.WebApi`      | ASP.NET Core integration                 |
+| `Ghost.Sdk`                 | Meta-package for quick start             |
 
 ## Building
 
