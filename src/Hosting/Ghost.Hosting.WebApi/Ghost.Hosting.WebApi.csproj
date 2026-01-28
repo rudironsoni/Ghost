@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>Ghost.Hosting.WebApi</RootNamespace>
+    <Description>Ghost ASP.NET Core integration</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ghost.Hosting\Ghost.Hosting.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+</Project>

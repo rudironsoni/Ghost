@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Platforms\Ghost.Platform.Google\Ghost.Platform.Google.csproj" />
+    <ProjectReference Include="..\..\..\src\Core\Ghost\Ghost.csproj" />
+  </ItemGroup>
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CA1707;CA2012;IDE0161</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+  </ItemGroup>
+</Project>

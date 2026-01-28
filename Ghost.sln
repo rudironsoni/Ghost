@@ -7,61 +7,63 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{8D626EA8-CB54-BC41-363A-217881BEBA6E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright", "src\Core\Ghostwright\Ghostwright.csproj", "{7A961BEF-49A4-4907-A536-A4D01926CDB8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost", "src\Core\Ghost\Ghost.csproj", "{7A961BEF-49A4-4907-A536-A4D01926CDB8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Contracts", "Contracts", "{FFBE31B8-50B9-B415-22BC-2F92C97CADA3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Contracts", "src\Contracts\Ghostwright.Contracts\Ghostwright.Contracts.csproj", "{66F10EEC-D02F-46FD-8441-272AE7B4BC12}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Contracts", "src\Contracts\Ghost.Contracts\Ghost.Contracts.csproj", "{66F10EEC-D02F-46FD-8441-272AE7B4BC12}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Contracts.Inference", "src\Contracts\Ghostwright.Contracts.Inference\Ghostwright.Contracts.Inference.csproj", "{C5DCBE9A-72BD-4288-BA8D-B35E66EB8EFA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Contracts.Inference", "src\Contracts\Ghost.Contracts.Inference\Ghost.Contracts.Inference.csproj", "{C5DCBE9A-72BD-4288-BA8D-B35E66EB8EFA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Platforms", "Platforms", "{82099983-647E-F067-E69A-CD800643A918}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Platform.Anthropic", "src\Platforms\Ghostwright.Platform.Anthropic\Ghostwright.Platform.Anthropic.csproj", "{EB99B5A8-1713-4093-B8DB-980BEC1090BE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Anthropic", "src\Platforms\Ghost.Platform.Anthropic\Ghost.Platform.Anthropic.csproj", "{EB99B5A8-1713-4093-B8DB-980BEC1090BE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Platform.OpenAI", "src\Platforms\Ghostwright.Platform.OpenAI\Ghostwright.Platform.OpenAI.csproj", "{723796C5-B8A9-4315-A86C-803378318A21}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.OpenAI", "src\Platforms\Ghost.Platform.OpenAI\Ghost.Platform.OpenAI.csproj", "{723796C5-B8A9-4315-A86C-803378318A21}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Platform.Google", "src\Platforms\Ghostwright.Platform.Google\Ghostwright.Platform.Google.csproj", "{8C040123-E92F-46CE-A24F-673A72484362}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Google", "src\Platforms\Ghost.Platform.Google\Ghost.Platform.Google.csproj", "{8C040123-E92F-46CE-A24F-673A72484362}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Platform.LinkedIn", "src\Platforms\Ghostwright.Platform.LinkedIn\Ghostwright.Platform.LinkedIn.csproj", "{99D9901F-20C8-49A3-A9D6-42BD2BB4FFC5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.LinkedIn", "src\Platforms\Ghost.Platform.LinkedIn\Ghost.Platform.LinkedIn.csproj", "{99D9901F-20C8-49A3-A9D6-42BD2BB4FFC5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hosting", "Hosting", "{F489E2D5-C65D-9AA9-2B96-C7DF79630172}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Hosting", "src\Hosting\Ghostwright.Hosting\Ghostwright.Hosting.csproj", "{3C0D5277-502A-473B-B3C8-498C13721E2D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Hosting", "src\Hosting\Ghost.Hosting\Ghost.Hosting.csproj", "{3C0D5277-502A-473B-B3C8-498C13721E2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Hosting.WebApi", "src\Hosting\Ghostwright.Hosting.WebApi\Ghostwright.Hosting.WebApi.csproj", "{43EF203C-41AC-4DEB-A003-F5D0E32378B1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Hosting.WebApi", "src\Hosting\Ghost.Hosting.WebApi\Ghost.Hosting.WebApi.csproj", "{43EF203C-41AC-4DEB-A003-F5D0E32378B1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sdk", "Sdk", "{51B637F8-9C04-5803-F48E-8CB9352021B0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Sdk", "src\Sdk\Ghostwright.Sdk\Ghostwright.Sdk.csproj", "{1E8DEE01-AEED-457C-9556-1A653DC4126E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Sdk", "src\Sdk\Ghost.Sdk\Ghost.Sdk.csproj", "{1E8DEE01-AEED-457C-9556-1A653DC4126E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Sample.Console", "samples\Ghostwright.Sample.Console\Ghostwright.Sample.Console.csproj", "{AFA88618-CA86-44CE-9EDC-DDCABFCC27D4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Sample.Console", "samples\Ghost.Sample.Console\Ghost.Sample.Console.csproj", "{AFA88618-CA86-44CE-9EDC-DDCABFCC27D4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{5C35D9BE-388A-8745-CD5F-BB8E361A8720}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Tests", "tests\Core\Ghostwright.Tests\Ghostwright.Tests.csproj", "{8F2E2929-4E65-4A0A-B8ED-58A7229F5536}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Tests", "tests\Core\Ghost.Tests\Ghost.Tests.csproj", "{8F2E2929-4E65-4A0A-B8ED-58A7229F5536}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Contracts", "Contracts", "{EDF2BF46-81E2-A5E6-BE76-B883454BFB8E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Contracts.Tests", "tests\Contracts\Ghostwright.Contracts.Tests\Ghostwright.Contracts.Tests.csproj", "{2CA0E00D-A925-496D-9683-C08D8073FFF9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Contracts.Tests", "tests\Contracts\Ghost.Contracts.Tests\Ghost.Contracts.Tests.csproj", "{2CA0E00D-A925-496D-9683-C08D8073FFF9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Contracts.Inference.Tests", "tests\Contracts\Ghostwright.Contracts.Inference.Tests\Ghostwright.Contracts.Inference.Tests.csproj", "{DB995D58-F81A-48FF-A28B-C02F903768BA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Contracts.Inference.Tests", "tests\Contracts\Ghost.Contracts.Inference.Tests\Ghost.Contracts.Inference.Tests.csproj", "{DB995D58-F81A-48FF-A28B-C02F903768BA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hosting", "Hosting", "{2A5903AA-195D-83FB-6F94-018C32AA5AC8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Hosting.Tests", "tests\Hosting\Ghostwright.Hosting.Tests\Ghostwright.Hosting.Tests.csproj", "{75DE254C-2B44-4E31-9B9F-6C3DD8F5A3F0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Hosting.Tests", "tests\Hosting\Ghost.Hosting.Tests\Ghost.Hosting.Tests.csproj", "{75DE254C-2B44-4E31-9B9F-6C3DD8F5A3F0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Platforms", "Platforms", "{3074E563-20D1-8CCA-24EE-526153D49D6A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Platform.OpenAI.Tests", "tests\Platforms\Ghostwright.Platform.OpenAI.Tests\Ghostwright.Platform.OpenAI.Tests.csproj", "{C11DE628-19A2-4614-AF64-0057A2047B10}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.OpenAI.Tests", "tests\Platforms\Ghost.Platform.OpenAI.Tests\Ghost.Platform.OpenAI.Tests.csproj", "{C11DE628-19A2-4614-AF64-0057A2047B10}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Platform.Google.Tests", "tests\Platforms\Ghostwright.Platform.Google.Tests\Ghostwright.Platform.Google.Tests.csproj", "{BF17D4E2-E9EB-4C06-80F8-84FF9C8C26E4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Google.Tests", "tests\Platforms\Ghost.Platform.Google.Tests\Ghost.Platform.Google.Tests.csproj", "{BF17D4E2-E9EB-4C06-80F8-84FF9C8C26E4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Platform.LinkedIn.Tests", "tests\Platforms\Ghostwright.Platform.LinkedIn.Tests\Ghostwright.Platform.LinkedIn.Tests.csproj", "{7BC91500-683F-4DA9-BE99-2CE172F30473}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.LinkedIn.Tests", "tests\Platforms\Ghost.Platform.LinkedIn.Tests\Ghost.Platform.LinkedIn.Tests.csproj", "{7BC91500-683F-4DA9-BE99-2CE172F30473}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghostwright.Platform.Anthropic.Tests", "tests\Platforms\Ghostwright.Platform.Anthropic.Tests\Ghostwright.Platform.Anthropic.Tests.csproj", "{3634E1F1-D45B-459B-B1AA-6297CBC7C9DE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Anthropic.Tests", "tests\Platforms\Ghost.Platform.Anthropic.Tests\Ghost.Platform.Anthropic.Tests.csproj", "{3634E1F1-D45B-459B-B1AA-6297CBC7C9DE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.WebApi", "src\Ghost.WebApi\Ghost.WebApi.csproj", "{7D613B3F-FE61-4A88-8984-A01247C2185C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -301,6 +303,18 @@ Global
 		{3634E1F1-D45B-459B-B1AA-6297CBC7C9DE}.Release|x64.Build.0 = Release|Any CPU
 		{3634E1F1-D45B-459B-B1AA-6297CBC7C9DE}.Release|x86.ActiveCfg = Release|Any CPU
 		{3634E1F1-D45B-459B-B1AA-6297CBC7C9DE}.Release|x86.Build.0 = Release|Any CPU
+		{7D613B3F-FE61-4A88-8984-A01247C2185C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D613B3F-FE61-4A88-8984-A01247C2185C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D613B3F-FE61-4A88-8984-A01247C2185C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7D613B3F-FE61-4A88-8984-A01247C2185C}.Debug|x64.Build.0 = Debug|Any CPU
+		{7D613B3F-FE61-4A88-8984-A01247C2185C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7D613B3F-FE61-4A88-8984-A01247C2185C}.Debug|x86.Build.0 = Debug|Any CPU
+		{7D613B3F-FE61-4A88-8984-A01247C2185C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D613B3F-FE61-4A88-8984-A01247C2185C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D613B3F-FE61-4A88-8984-A01247C2185C}.Release|x64.ActiveCfg = Release|Any CPU
+		{7D613B3F-FE61-4A88-8984-A01247C2185C}.Release|x64.Build.0 = Release|Any CPU
+		{7D613B3F-FE61-4A88-8984-A01247C2185C}.Release|x86.ActiveCfg = Release|Any CPU
+		{7D613B3F-FE61-4A88-8984-A01247C2185C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -334,5 +348,6 @@ Global
 		{BF17D4E2-E9EB-4C06-80F8-84FF9C8C26E4} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
 		{7BC91500-683F-4DA9-BE99-2CE172F30473} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
 		{3634E1F1-D45B-459B-B1AA-6297CBC7C9DE} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
+		{7D613B3F-FE61-4A88-8984-A01247C2185C} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

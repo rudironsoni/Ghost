@@ -1,4 +1,4 @@
-# Ghostwright - Lockstep Versioning Configuration
+# Ghost - Lockstep Versioning Configuration
 mode: Mainline
 assembly-versioning-scheme: MajorMinorPatch
 assembly-file-versioning-scheme: MajorMinorPatch

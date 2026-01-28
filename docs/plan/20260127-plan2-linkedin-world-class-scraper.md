@@ -2,14 +2,14 @@
 
 **Date:** 2026-01-27
 **Status:** Implemented
-**Objective:** Upgrade `Ghostwright.Platform.LinkedIn` to parity with the legacy SDK and beyond, implementing Guest API strategies, JSON-LD parsing, and stealth enhancements.
+**Objective:** Upgrade `Ghost.Platform.LinkedIn` to parity with the legacy SDK and beyond, implementing Guest API strategies, JSON-LD parsing, and stealth enhancements.
 
 ---
 
 ## 1. Gap Analysis & Requirements
 
 ### Missing Features (Critical)
-| Feature      | Legacy SDK (`Ghostwright.LinkedIn`)                               | Current Platform (`Ghostwright.Platform.LinkedIn`)       | Impact                  |
+| Feature      | Legacy SDK (`Ghost.LinkedIn`)                               | Current Platform (`Ghost.Platform.LinkedIn`)       | Impact                  |
 | ------------ | --------------------------------------------------------------- | ------------------------------------------------------ | ----------------------- |
 | **Guest API**    | ✅ Uses `jobs-guest` endpoints for high-speed, auth-free scraping | ❌ Browser-only scraping (slow, prone to detection)    | **Critical**: Speed & Scale |
 | **Data Quality** | ✅ `JsonLdParser` extracts precise salary, dates, and schema data | ❌ CSS Selectors only (brittle, missing hidden fields) | **High**: Data richness     |
@@ -21,7 +21,7 @@
 ## 2. Technical Architecture Changes
 
 ### Phase 1: Core Kernel Upgrades (Prerequisite)
-The `Ghostwright` kernel must support network stealth features to enable the platform upgrades.
+The `Ghost` kernel must support network stealth features to enable the platform upgrades.
 
 **Tasks:**
 1.  **Update `SessionOptions`**: Add properties for `Proxy` (server, auth) and `Geolocation` (lat, long, accuracy).
@@ -32,7 +32,7 @@ The `Ghostwright` kernel must support network stealth features to enable the pla
 Port the robust parsing logic to the new platform.
 
 **Tasks:**
-1.  **Port `JsonLdParser`**: Create `src/Platforms/Ghostwright.Platform.LinkedIn/Internal/JsonLdParser.cs`.
+1.  **Port `JsonLdParser`**: Create `src/Platforms/Ghost.Platform.LinkedIn/Internal/JsonLdParser.cs`.
     *   Use Regex to extract `<script type="application/ld+json">`.
     *   Deserialize to internal DTOs.
     *   Map to `JobListing` contract.
@@ -62,8 +62,8 @@ Improve the fallback browser strategy for when the API is blocked.
 ## 3. Implementation Steps
 
 ### Step 1: Core Kernel
-- [x] Modify `src/Core/Ghostwright/Core/SessionOptions.cs`
-- [x] Modify `src/Core/Ghostwright/Internal/BrowserSessionWrapper.cs` (or creation logic in Kernel)
+- [x] Modify `src/Core/Ghost/Core/SessionOptions.cs`
+- [x] Modify `src/Core/Ghost/Internal/BrowserSessionWrapper.cs` (or creation logic in Kernel)
 
 ### Step 2: LinkedIn Platform Internals
 - [x] Create `Internal/JsonLdParser.cs`
