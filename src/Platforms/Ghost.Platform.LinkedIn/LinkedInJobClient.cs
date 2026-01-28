@@ -21,6 +21,40 @@ namespace Ghost.Platform.LinkedIn;
         private static readonly Action<ILogger, int, Exception?> s_logJobSearchCompleted =
             LoggerMessage.Define<int>(LogLevel.Information, new EventId(3, nameof(SearchJobsWithStrategyAsync)), "Job Search Completed. Found {Count} jobs.");
 
+        // Common selector sets used by DOM scraping - defined as static readonly to satisfy CA1861
+        private static readonly string[] s_titleSelectors = new[] { ".top-card-layout__title", ".job-details-jobs-unified-top-card__job-title", "h1", ".job-card-list__title" };
+        private static readonly string[] s_companySelectors = new[] { ".top-card-layout__first-subline .topcard__org-name-link", ".job-details-jobs-unified-top-card__company-name", ".topcard__org-name-link", ".job-card-container__company-name", ".top-card-layout__company-url", "a[data-tracking-control-name='public_jobs_topcard-org-name']" };
+        private static readonly string[] s_locationSelectors = new[] { ".top-card-layout__first-subline .topcard__flavor--bullet", ".job-details-jobs-unified-top-card__bullet", ".topcard__flavor--bullet", ".job-search-card__location", ".job-card-container__metadata-item" };
+        private static readonly string[] s_descriptionSelectors = new[] { ".show-more-less-html__markup", "#job-details", ".description__text", ".job-description", ".core-section-container__content" };
+        private static readonly char[] s_labelValueSplit = new[] { '\n', ':' };
+
+    private static JobType ParseJobType(string? type)
+    {
+        if (string.IsNullOrEmpty(type)) return JobType.Unknown;
+        var normalized = type.ToUpperInvariant().Replace("_", "").Replace("-", "").Replace(" ", "");
+        if (normalized.Contains("FULLTIME")) return JobType.FullTime;
+        if (normalized.Contains("PARTTIME")) return JobType.PartTime;
+        if (normalized.Contains("CONTRACT")) return JobType.Contract;
+        if (normalized.Contains("TEMPORARY")) return JobType.Contract;
+        if (normalized.Contains("INTERN")) return JobType.Internship;
+        // No Volunteer enum in this project - map to Unknown
+        return JobType.Unknown;
+    }
+
+    private static ExperienceLevel ParseExperienceLevel(string? level)
+    {
+        if (string.IsNullOrEmpty(level)) return ExperienceLevel.Unknown;
+        var n = level.Trim().ToLowerInvariant();
+        if (n.Contains("intern")) return ExperienceLevel.EntryLevel;
+        if (n.Contains("entry")) return ExperienceLevel.EntryLevel;
+        if (n.Contains("associate")) return ExperienceLevel.MidLevel;
+        if (n.Contains("mid")) return ExperienceLevel.MidLevel;
+        if (n.Contains("senior")) return ExperienceLevel.Senior;
+        if (n.Contains("director")) return ExperienceLevel.Manager;
+        if (n.Contains("executive")) return ExperienceLevel.Manager;
+        return ExperienceLevel.Unknown;
+    }
+
         private readonly Ghost.IBrowserSession _session;
         private readonly LinkedInOptions _options;
         private readonly ILogger<LinkedInJobClient> _logger;
@@ -123,58 +157,111 @@ namespace Ghost.Platform.LinkedIn;
             var html = await page.GetContentAsync(ct);
             var parsed = Internal.JsonLdParser.Parse(html ?? string.Empty, jobId, url);
 
-            // If parsed is missing or missing a title or description, attempt DOM scraping to fill missing fields.
-            if (parsed == null || string.IsNullOrEmpty(parsed.Title) || string.IsNullOrEmpty(parsed.Description))
+            // If parsed is missing or missing a title or description (or company), attempt DOM scraping to fill missing fields.
+            if (parsed == null || string.IsNullOrEmpty(parsed.Title) || string.IsNullOrEmpty(parsed.Description) || string.IsNullOrEmpty(parsed.Company))
             {
                 try
                 {
-                    // Title
-                    string? title = parsed?.Title;
-                    if (string.IsNullOrEmpty(title))
+                // Local helper for robust scraping
+                async Task<string?> ScrapeFirstAsync(string[] selectors)
+                {
+                    foreach (var sel in selectors)
                     {
-                        var titleEl = await page.QuerySelectorAsync(".top-card-layout__title, .job-details-jobs-unified-top-card__job-title, h1", ct);
-                        if (titleEl != null)
+                        try
                         {
-                            var ttxt = await titleEl.GetTextContentAsync(ct);
-                            title = ttxt?.Trim();
+                            var el = await page.QuerySelectorAsync(sel, ct);
+                            if (el != null)
+                            {
+                                var txt = await el.GetTextContentAsync(ct);
+                                if (!string.IsNullOrWhiteSpace(txt)) return txt.Trim();
+                            }
                         }
+                        catch { }
                     }
+                    return null;
+                }
 
-                    // Company
-                    string? company = parsed?.Company;
-                    if (string.IsNullOrEmpty(company))
-                    {
-                        var compEl = await page.QuerySelectorAsync(".top-card-layout__first-subline .topcard__org-name-link, .job-details-jobs-unified-top-card__company-name", ct);
-                        if (compEl != null)
-                        {
-                            var ctxt = await compEl.GetTextContentAsync(ct);
-                            company = ctxt?.Trim();
-                        }
-                    }
+                // Title
+                string? title = parsed?.Title;
+                if (string.IsNullOrEmpty(title))
+                {
+                    title = await ScrapeFirstAsync(s_titleSelectors);
+                }
 
-                    // Location
-                    string? locationText = parsed?.Location;
-                    if (string.IsNullOrEmpty(locationText))
+                // Company
+                string? company = parsed?.Company;
+                if (string.IsNullOrEmpty(company))
+                {
+                    company = await ScrapeFirstAsync(s_companySelectors);
+                    
+                    // Regex fallback for Company
+                    if (string.IsNullOrEmpty(company) && html != null)
                     {
-                        var locEl = await page.QuerySelectorAsync(".top-card-layout__first-subline .topcard__flavor--bullet", ct);
-                        if (locEl != null)
-                        {
-                            var ltxt = await locEl.GetTextContentAsync(ct);
-                            locationText = ltxt?.Trim();
-                        }
+                        var m = System.Text.RegularExpressions.Regex.Match(html, "class=\"[^\"]*topcard__org-name-link[^\"]*\">\\s*([^<]+)\\s*<", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (m.Success) company = m.Groups[1].Value.Trim();
                     }
+                }
 
-                    // Description
-                    string? description = parsed?.Description;
-                    if (string.IsNullOrEmpty(description))
+                // Location
+                string? locationText = parsed?.Location;
+                if (string.IsNullOrEmpty(locationText))
+                {
+                    locationText = await ScrapeFirstAsync(s_locationSelectors);
+
+                    // Regex fallback for Location
+                    if (string.IsNullOrEmpty(locationText) && html != null)
                     {
-                        var descEl = await page.QuerySelectorAsync(".show-more-less-html__markup, #job-details", ct);
-                        if (descEl != null)
+                        var m = System.Text.RegularExpressions.Regex.Match(html, "class=\"[^\"]*topcard__flavor--bullet[^\"]*\">\\s*([^<]+)\\s*<", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (m.Success) locationText = m.Groups[1].Value.Trim();
+                    }
+                }
+
+                // Description
+                string? description = parsed?.Description;
+                if (string.IsNullOrEmpty(description))
+                {
+                    description = await ScrapeFirstAsync(s_descriptionSelectors);
+                }
+
+                    // Scrape criteria list for Employment type and Seniority level
+                    JobType scrapedJobType = JobType.Unknown;
+                    ExperienceLevel scrapedExperienceLevel = ExperienceLevel.Unknown;
+                    try
+                    {
+                        var critNodes = await page.QuerySelectorAllAsync(".description__job-criteria-list li, .job-details-jobs-unified-top-card__job-insight", ct);
+                        foreach (var c in critNodes)
                         {
-                            var dtxt = await descEl.GetTextContentAsync(ct);
-                            description = dtxt?.Trim();
+                            try
+                            {
+                                var txt = (await c.GetTextContentAsync(ct))?.Trim() ?? string.Empty;
+                                if (string.IsNullOrEmpty(txt)) continue;
+
+                                // Normalize lines and split label/value pairs
+                                var parts = txt.Split(s_labelValueSplit, 2);
+                                var label = parts.Length > 0 ? parts[0].Trim() : string.Empty;
+                                var value = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                                if (string.IsNullOrEmpty(value))
+                                {
+                                    var lines = txt.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(l => l.Trim()).ToArray();
+                                    if (lines.Length >= 2) value = lines[1];
+                                }
+
+                                if (label.Contains("Employment", StringComparison.OrdinalIgnoreCase) || txt.Contains("Employment type", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    var jt = ParseJobType(value);
+                                    if (jt != JobType.Unknown) scrapedJobType = jt;
+                                }
+
+                                if (label.Contains("Seniority", StringComparison.OrdinalIgnoreCase) || txt.Contains("Seniority level", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    var el = ParseExperienceLevel(value);
+                                    if (el != ExperienceLevel.Unknown) scrapedExperienceLevel = el;
+                                }
+                            }
+                            catch { }
                         }
                     }
+                    catch { }
 
                     // PostedAt - try to find a time element with datetime attribute, otherwise fallback to UtcNow
                     DateTimeOffset postedAt = parsed?.PostedAt ?? DateTimeOffset.MinValue;
@@ -215,7 +302,9 @@ namespace Ghost.Platform.LinkedIn;
                             PostedAt = parsed.PostedAt == DateTimeOffset.MinValue ? postedAt : parsed.PostedAt,
                             Url = string.IsNullOrEmpty(parsed.Url) ? url : parsed.Url,
                             Id = string.IsNullOrEmpty(parsed.Id) ? jobId : parsed.Id,
-                            IsEasyApply = isEasyApply
+                            IsEasyApply = isEasyApply,
+                            JobType = parsed.JobType == JobType.Unknown ? scrapedJobType : parsed.JobType,
+                            ExperienceLevel = parsed.ExperienceLevel == ExperienceLevel.Unknown ? scrapedExperienceLevel : parsed.ExperienceLevel
                         };
 
                         return merged;
@@ -231,7 +320,9 @@ namespace Ghost.Platform.LinkedIn;
                         Location = locationText ?? string.Empty,
                         Description = description ?? string.Empty,
                         PostedAt = postedAt == DateTimeOffset.MinValue ? DateTimeOffset.UtcNow : postedAt,
-                        IsEasyApply = isEasyApply
+                        IsEasyApply = isEasyApply,
+                        JobType = scrapedJobType,
+                        ExperienceLevel = scrapedExperienceLevel
                     };
                 }
                 catch (Exception ex)
