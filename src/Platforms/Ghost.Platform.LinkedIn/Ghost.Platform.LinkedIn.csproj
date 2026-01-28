@@ -7,9 +7,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup>
-    <!-- For test build, relax analyzer strictness for this project -->
-    <NoWarn>$(NoWarn);CA1861;CA1848;CA1870</NoWarn>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Analyzer suppressions removed; rely on solution-wide strict settings -->
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Ghost\Ghost.csproj" />
