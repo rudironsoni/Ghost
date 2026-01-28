@@ -1,5 +1,13 @@
 namespace Ghost.Contracts.Jobs;
 
+public enum TimePosted
+{
+    Any,
+    Past24Hours,
+    PastWeek,
+    PastMonth
+}
+
 /// <summary>
 /// Criteria used to search for jobs.
 /// </summary>
@@ -29,6 +37,11 @@ public sealed record JobSearchCriteria
     /// Only remote roles when true.
     /// </summary>
     public bool RemoteOnly { get; init; }
+
+    /// <summary>
+    /// Filter by how recently the job was posted.
+    /// </summary>
+    public TimePosted PostedDate { get; init; } = TimePosted.Any;
 
     /// <summary>
     /// Maximum number of results to return.
