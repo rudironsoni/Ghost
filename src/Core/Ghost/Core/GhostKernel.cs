@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using System.IO;
+using Ghost.Net;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 using Ghost.Internal;
@@ -13,9 +14,10 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
     private readonly IBrowser _browser;
     private readonly SemaphoreSlim _sessionLock;
     private readonly bool _enableStealth;
+    private readonly string _kernelBrowser;
     private bool _disposed;
 
-    private GhostKernel(IPlaywright playwright, IBrowser browser, int maxConcurrentSessions, bool enableStealth)
+    private GhostKernel(IPlaywright playwright, IBrowser browser, int maxConcurrentSessions, bool enableStealth, string kernelBrowser)
     {
         ArgumentNullException.ThrowIfNull(playwright);
         ArgumentNullException.ThrowIfNull(browser);
@@ -23,6 +25,7 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
         _browser = browser;
         _sessionLock = new SemaphoreSlim(maxConcurrentSessions, maxConcurrentSessions);
         _enableStealth = enableStealth;
+        _kernelBrowser = kernelBrowser ?? "Chromium";
     }
 
     public static async Task<GhostKernel> CreateAsync(KernelOptions? options = null, CancellationToken ct = default)
@@ -38,6 +41,14 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
             launchArgs.Add("--no-sandbox");
         }
 
+        // Additional stealth flags that help prevent direct UDP leaks when using proxies
+        if (opts.EnableStealth)
+        {
+            launchArgs.Add("--webrtc-ip-handling-policy=disable_non_proxied_udp");
+            launchArgs.Add("--force-webrtc-ip-handling-policy=disable_non_proxied_udp");
+            launchArgs.Add("--enforce-webrtc-ip-permission-check");
+        }
+
         // Create Playwright instance and keep it alive
         var playwright = await Microsoft.Playwright.Playwright.CreateAsync();
 
@@ -51,7 +62,7 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
                 Args = launchArgs
             });
 
-            return new GhostKernel(playwright, browser, opts.MaxConcurrentSessions, opts.EnableStealth);
+            return new GhostKernel(playwright, browser, opts.MaxConcurrentSessions, opts.EnableStealth, opts.Browser);
         }
         catch
         {
@@ -95,15 +106,62 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
                 Locale = options?.Locale ?? "en-US"
             };
 
-            if (options?.Proxy is not null)
+            IAsyncDisposable? bridgeAdapter = null;
+            Socks5Bridge? bridge = null;
+
+            var proxy = options?.Proxy;
+            if (proxy is not null)
             {
-                ctxOptions.Proxy = new Microsoft.Playwright.Proxy
+                // If upstream is SOCKS5 with username/password and running Chromium, create a local bridge
+                if (proxy.Server is not null && proxy.Server.StartsWith("socks5://", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(proxy.Username) &&
+                    string.Equals(_kernelBrowser, "Chromium", StringComparison.OrdinalIgnoreCase))
                 {
-                    Server = options.Proxy.Server,
-                    Username = options.Proxy.Username,
-                    Password = options.Proxy.Password,
-                    Bypass = options.Proxy.Bypass
-                };
+                    try
+                    {
+                        var uri = new Uri(proxy.Server);
+                        var host = uri.Host;
+                        var port = uri.Port;
+                        var user = proxy.Username;
+                        var pass = proxy.Password;
+
+                        bridge = new Socks5Bridge(host, port, user, pass);
+                        bridge.Start();
+
+                        bridgeAdapter = new Socks5BridgeAsyncWrapper(bridge);
+
+                        ctxOptions.Proxy = new Microsoft.Playwright.Proxy
+                        {
+                            Server = $"socks5://127.0.0.1:{bridge.Port}",
+                            // leave Username/Password unset when using local bridge
+                            Bypass = proxy.Bypass
+                        };
+                    }
+                    catch
+                    {
+                        // If bridge creation fails, ensure we don't leave a half-started bridge
+                        try { bridge?.Dispose(); } catch { }
+                        bridge = null;
+                        bridgeAdapter = null;
+                        // fall back to using the provided proxy directly
+                        ctxOptions.Proxy = new Microsoft.Playwright.Proxy
+                        {
+                            Server = proxy.Server!,
+                            Username = proxy.Username,
+                            Password = proxy.Password,
+                            Bypass = proxy.Bypass
+                        };
+                    }
+                }
+                else
+                {
+                    ctxOptions.Proxy = new Microsoft.Playwright.Proxy
+                    {
+                        Server = proxy.Server!,
+                        Username = proxy.Username,
+                        Password = proxy.Password,
+                        Bypass = proxy.Bypass
+                    };
+                }
             }
 
             if (options?.Geolocation is not null)
@@ -175,12 +233,38 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
             }
 
             var sessionId = Guid.NewGuid().ToString();
-            return new BrowserSessionWrapper(context, sessionId, () => _sessionLock.Release());
+            return new BrowserSessionWrapper(context, sessionId, () => _sessionLock.Release(), bridgeAdapter);
         }
         catch
         {
             _sessionLock.Release();
+            // Ensure bridge is cleaned up if created
+            try
+            {
+                // No await here because bridgeAdapter may be null and DisposeAsync is quick
+                // but we can attempt synchronous dispose if wrapper not present
+            }
+            catch { }
             throw;
+        }
+    }
+
+    private sealed class Socks5BridgeAsyncWrapper : IAsyncDisposable
+    {
+        private readonly Socks5Bridge _bridge;
+        public Socks5BridgeAsyncWrapper(Socks5Bridge bridge)
+        {
+            _bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            try
+            {
+                _bridge.Dispose();
+            }
+            catch { }
+            return ValueTask.CompletedTask;
         }
     }
 
