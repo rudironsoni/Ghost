@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Ghost.Abstractions;
 using Ghost.Core;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Ghost.Services;
 
@@ -29,19 +28,19 @@ public class ApiProxySource : IProxySource
             LoggerMessage.Define(LogLevel.Error, new EventId(4, nameof(ApiProxySource)), "Failed to fetch proxies from API");
 
         private readonly HttpClient _http;
-        private readonly IOptions<ProxyOptions> _options;
+        private readonly ProxySourceConfig _config;
         private readonly ILogger<ApiProxySource> _logger;
 
-        public ApiProxySource(HttpClient http, IOptions<ProxyOptions> options, ILogger<ApiProxySource> logger)
+        public ApiProxySource(HttpClient http, ProxySourceConfig config, ILogger<ApiProxySource> logger)
         {
             _http = http ?? throw new ArgumentNullException(nameof(http));
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _config = config ?? throw new ArgumentNullException(nameof(config));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task<IEnumerable<ProxyInfo>> FetchProxiesAsync(CancellationToken ct)
         {
-            var cfg = _options.Value.Api;
+            var cfg = _config;
             if (cfg == null || !cfg.Enabled || string.IsNullOrWhiteSpace(cfg.Url))
                 return Enumerable.Empty<ProxyInfo>();
 

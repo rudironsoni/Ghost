@@ -12,9 +12,39 @@ builder.Services.AddHttpClient();
 // Bind ProxyOptions from configuration
 builder.Services.Configure<Ghost.Core.ProxyOptions>(builder.Configuration.GetSection("Ghost:Proxy"));
 builder.Services.AddSingleton<Ghost.Abstractions.IProxyProvider, Ghost.Services.RotatingProxyProvider>();
-// Register available proxy sources
-builder.Services.AddSingleton<Ghost.Abstractions.IProxySource, Ghost.Services.StaticProxySource>();
-builder.Services.AddSingleton<Ghost.Abstractions.IProxySource, Ghost.Services.ApiProxySource>();
+
+// Register available proxy sources using configuration sections
+// Dynamic Proxy Source Registration
+var proxySection = builder.Configuration.GetSection("Ghost:Proxy");
+foreach (var child in proxySection.GetChildren())
+{
+    if (child.Key.Equals("Strategy", StringComparison.OrdinalIgnoreCase)) continue;
+
+    var config = new Ghost.Core.ProxySourceConfig();
+    child.Bind(config);
+
+    if (!config.Enabled) continue;
+
+    if (!string.IsNullOrEmpty(config.Url))
+    {
+        // Register API Source
+        builder.Services.AddSingleton<Ghost.Abstractions.IProxySource>(sp =>
+            new Ghost.Services.ApiProxySource(
+                sp.GetRequiredService<IHttpClientFactory>().CreateClient(),
+                config,
+                sp.GetRequiredService<ILogger<Ghost.Services.ApiProxySource>>()
+            ));
+    }
+    else if (config.Hosts != null && config.Hosts.Count > 0)
+    {
+        // Register Static Source
+        builder.Services.AddSingleton<Ghost.Abstractions.IProxySource>(sp =>
+            new Ghost.Services.StaticProxySource(
+                config,
+                sp.GetRequiredService<ILogger<Ghost.Services.StaticProxySource>>()
+            ));
+    }
+}
 
 // Configure Ghost
 builder.Services.AddGhost(builder.Configuration, gw =>
