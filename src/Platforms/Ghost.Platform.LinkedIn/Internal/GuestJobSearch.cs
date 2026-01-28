@@ -25,6 +25,15 @@ public sealed class GuestJobSearch
     private static readonly Action<ILogger, string, Exception?> s_logNavigating =
         LoggerMessage.Define<string>(LogLevel.Debug, new EventId(2, nameof(GuestJobSearch)), "Navigating to: {Url}");
 
+    private static readonly Action<ILogger, string, bool, Exception?> s_logSessionCreating =
+        LoggerMessage.Define<string, bool>(LogLevel.Information, new EventId(5, nameof(SearchAsync)), "Creating isolated session. Proxy: {Proxy}, Warm-up: {WarmUp}");
+
+    private static readonly Action<ILogger, string, Exception?> s_logRateLimitPassed =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(6, nameof(SearchAsync)), "Rate limit check passed for {Url}");
+
+    private static readonly Action<ILogger, string, Exception?> s_logSavingSession =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(7, nameof(SearchAsync)), "Saving session state to {Path}");
+
     private static readonly Action<ILogger, Exception?> s_logGuestSearchFailed =
         LoggerMessage.Define(LogLevel.Warning, new EventId(3, nameof(GuestJobSearch)), "Guest search navigation/parsing failed");
 
@@ -82,7 +91,7 @@ public sealed class GuestJobSearch
             }
         }
 
-        _logger.LogInformation("Creating isolated session. Proxy: {Proxy}, Warm-up: {WarmUp}", proxyUsed, _options.Value.WarmUpEnabled);
+        s_logSessionCreating(_logger, proxyUsed, _options.Value.WarmUpEnabled, null);
         var session = await _kernel.NewSessionAsync(options, ct);
         var page = await session.NewPageAsync(ct: ct);
         try
@@ -105,12 +114,12 @@ public sealed class GuestJobSearch
 
                 await page.NavigateAsync(url, ct: ct);
                 // detect rate-limits or blocks from LinkedIn
-                try
-                {
-                    await LinkedInRateLimitDetector.CheckAsync(page);
-                    _logger.LogInformation("Rate limit check passed for {Url}", url);
-                }
-                catch { }
+                    try
+                    {
+                        await LinkedInRateLimitDetector.CheckAsync(page);
+                        s_logRateLimitPassed(_logger, url, null);
+                    }
+                    catch { }
                 // no full load expected - just get content
                 var html = await page.GetContentAsync(ct);
                     if (string.IsNullOrEmpty(html)) break;
@@ -128,10 +137,10 @@ public sealed class GuestJobSearch
                     // Persist storage state after successful scraping so cookies/auth can be reused
                     if (found.Count > 0 && !string.IsNullOrEmpty(_options.Value.StorageStatePath))
                     {
-                        try {
-                            _logger.LogInformation("Saving session state to {Path}", _options.Value.StorageStatePath);
-                            await session.SaveStorageStateAsync(_options.Value.StorageStatePath);
-                        } catch { }
+                            try {
+                                s_logSavingSession(_logger, _options.Value.StorageStatePath, null);
+                                await session.SaveStorageStateAsync(_options.Value.StorageStatePath);
+                            } catch { }
                     }
 
                     foreach (var id in found)

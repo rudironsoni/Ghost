@@ -11,6 +11,12 @@ namespace Ghost.Platform.LinkedIn.Internal;
 
 public sealed class LinkedInAuthenticator
 {
+    private static readonly Action<ILogger, string, Exception?> s_logWarmUpVisit =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(WarmUpAsync)), "Warm-up: Visiting {Url}...");
+
+    private static readonly Action<ILogger, Exception?> s_logWarmUpComplete =
+        LoggerMessage.Define(LogLevel.Information, new EventId(2, nameof(WarmUpAsync)), "Warm-up sequence completed.");
+
     private readonly Ghost.IBrowserSession _session;
     private readonly LinkedInOptions _options;
     private readonly ILogger<LinkedInAuthenticator> _logger;
@@ -69,7 +75,7 @@ public sealed class LinkedInAuthenticator
             foreach (var url in pick)
             {
                 ct.ThrowIfCancellationRequested();
-                _logger.LogInformation("Warm-up: Visiting {Url}...", url);
+                s_logWarmUpVisit(_logger, url, null);
                 await page.NavigateAsync(url, new NavigationOptions { WaitUntil = WaitUntil.DomContentLoaded }, ct: ct);
                 // wait a short random delay to simulate browsing
                 var delay = Random.Shared.Next(1500, 3001);
@@ -77,7 +83,7 @@ public sealed class LinkedInAuthenticator
                 // scroll a bit
                 try { await page.EvaluateAsync<object>("window.scrollBy(0,500);", ct: ct); } catch { }
             }
-            _logger.LogInformation("Warm-up sequence completed.");
+            s_logWarmUpComplete(_logger, null);
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
