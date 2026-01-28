@@ -42,7 +42,14 @@ jobs:
         run: dotnet build Ghost.sln --configuration Release --no-restore
 
       - name: Install Playwright Browsers
-        run: pwsh ./artifacts/bin/Ghost/Release/net9.0/playwright.ps1 install --with-deps
+        run: pwsh ./artifacts/bin/Ghost.Tests/Release/net9.0/playwright.ps1 install --with-deps
+
+      - name: Debug Playwright Install
+        run: |
+          echo "Listing artifacts directory:"
+          ls -R artifacts || true
+          echo "Listing Playwright cache:"
+          ls -R ~/.cache/ms-playwright || true
 
       - name: Test
         run: |
