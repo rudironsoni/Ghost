@@ -202,8 +202,9 @@ public sealed class GuestJobSearch
                     success = true;
                 }
                 catch (OperationCanceledException) { throw; }
-                catch (PlaywrightException pex) when (pex.Message?.Contains("ERR_TUNNEL_CONNECTION_FAILED", StringComparison.OrdinalIgnoreCase) == true || pex.Message?.Contains("ERR_CONNECTION_TIMED_OUT", StringComparison.OrdinalIgnoreCase) == true || pex.Message?.Contains("ERR_EMPTY_RESPONSE", StringComparison.OrdinalIgnoreCase) == true)
+                catch (PlaywrightException pex)
                 {
+                    // Any Playwright error during navigation/setup should trigger a proxy retry.
                     s_logProxyFailed(_logger, attemptProxy, attempt, pex.Message, null);
                     try { await page.DisposeAsync(); } catch { }
                     try { await session.DisposeAsync(); } catch { }
@@ -245,59 +246,153 @@ public sealed class GuestJobSearch
     public async Task<JobListing?> FetchJobDetailsAsync(string jobId, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(jobId);
+        // Try up to 3 attempts, recreating session on Playwright failures (proxy tunnel issues etc.)
+        var url = $"{_options.Value.BaseUrl}/jobs-guest/jobs/api/jobPosting/{jobId}";
+        for (var attempt = 1; attempt <= 3; attempt++)
+        {
+            SessionOptions attemptOptions;
+            string attemptProxy = "None";
 
-        // create a fresh session for fetching job details (reuse storage state if configured)
-        SessionOptions options;
-        if (!_options.Value.ProxyEnabled)
-        {
-            options = new SessionOptions { Proxy = null, StorageStatePath = _options.Value.StorageStatePath };
-        }
-        else
-        {
-            var proxy = _proxyProvider is not null ? await _proxyProvider.GetProxyAsync("US", ct) : null;
-            options = new SessionOptions { StorageStatePath = _options.Value.StorageStatePath };
-            if (proxy is not null)
+            if (!_options.Value.ProxyEnabled)
             {
-                options.Proxy = new SessionOptions.ProxySettings(proxy.Server, proxy.Username, proxy.Password);
+                s_logProxyDisabled(_logger, null);
+                attemptOptions = new SessionOptions { Proxy = null, StorageStatePath = _options.Value.StorageStatePath };
+                attemptProxy = "Disabled";
             }
-        }
+            else
+            {
+                var proxy = _proxyProvider is not null ? await _proxyProvider.GetProxyAsync("US", ct) : null;
+                s_logUsingProxy(_logger, proxy?.Server ?? "None", null);
+                attemptOptions = new SessionOptions { StorageStatePath = _options.Value.StorageStatePath };
+                if (proxy is not null)
+                {
+                    attemptOptions.Proxy = new SessionOptions.ProxySettings(proxy.Server, proxy.Username, proxy.Password);
+                    attemptProxy = proxy.Server ?? "None";
+                }
+                else
+                {
+                    attemptProxy = "None";
+                }
+            }
 
-        var session = await _kernel.NewSessionAsync(options, ct);
-        var page = await session.NewPageAsync(ct: ct);
-        try
-        {
-            var url = $"{_options.Value.BaseUrl}/jobs-guest/jobs/api/jobPosting/{jobId}";
+            s_logSessionCreating(_logger, attemptProxy, _options.Value.WarmUpEnabled, null);
+            var session = await _kernel.NewSessionAsync(attemptOptions, ct);
+            var page = await session.NewPageAsync(ct: ct);
             try
             {
-                await page.NavigateAsync(url, ct: ct);
-                try { await LinkedInRateLimitDetector.CheckAsync(page); } catch { }
-                var html = await page.GetContentAsync(ct);
-                if (string.IsNullOrEmpty(html)) return null;
-
-                if (html.Contains("429", StringComparison.OrdinalIgnoreCase) || html.Contains("too many requests", StringComparison.OrdinalIgnoreCase))
+                try
                 {
-                    LinkedInLogGuest.LogGuestJobEndpointThrottled(_logger, jobId);
+                    s_logNavigating(_logger, url, null);
+                    if (_options.Value.WarmUpEnabled)
+                    {
+                        try { await _authenticator.WarmUpAsync(page, ct); } catch { }
+                    }
+
+                    await page.NavigateAsync(url, ct: ct);
+                    try { await LinkedInRateLimitDetector.CheckAsync(page); } catch { }
+                    var html = await page.GetContentAsync(ct);
+                    if (string.IsNullOrEmpty(html)) return null;
+
+                    if (html.Contains("429", StringComparison.OrdinalIgnoreCase) || html.Contains("too many requests", StringComparison.OrdinalIgnoreCase))
+                    {
+                        LinkedInLogGuest.LogGuestJobEndpointThrottled(_logger, jobId);
+                        return null;
+                    }
+
+                    var parsed = JsonLdParser.Parse(html, jobId, url);
+
+                    // If JSON-LD parsing failed to extract a description, fall back to DOM scraping
+                    if (parsed is null || string.IsNullOrEmpty(parsed.Description))
+                    {
+                        // Helper to scrape first non-empty selector text
+                        static async Task<string?> ScrapeFirstAsync(IPage p, string[] selectors, CancellationToken ct)
+                        {
+                            foreach (var sel in selectors)
+                            {
+                                ct.ThrowIfCancellationRequested();
+                                try
+                                {
+                                    var handle = await p.QuerySelectorAsync(sel, ct);
+                                    if (handle is null) continue;
+                                    var txt = await handle.GetTextContentAsync(ct);
+                                    if (!string.IsNullOrWhiteSpace(txt)) return txt?.Trim();
+                                }
+                                catch { }
+                            }
+                            return null;
+                        }
+
+                        var descSelectors = new[] { ".show-more-less-html__markup", ".description__text", "#job-details" };
+                        var titleSelectors = new[] { ".top-card-layout__title", "h1" };
+                        var companySelectors = new[] { ".top-card-layout__first-subline .topcard__org-name-link" };
+                        var locationSelectors = new[] { ".top-card-layout__first-subline .topcard__flavor--bullet" };
+
+                        var scrapedDescription = await ScrapeFirstAsync(page, descSelectors, ct);
+                        var scrapedTitle = await ScrapeFirstAsync(page, titleSelectors, ct);
+                        var scrapedCompany = await ScrapeFirstAsync(page, companySelectors, ct);
+                        var scrapedLocation = await ScrapeFirstAsync(page, locationSelectors, ct);
+
+                        if (parsed is null)
+                        {
+                            parsed = new JobListing
+                            {
+                                Id = jobId,
+                                Description = scrapedDescription,
+                                Title = scrapedTitle ?? string.Empty,
+                                Company = scrapedCompany ?? string.Empty,
+                                Location = scrapedLocation
+                            };
+                        }
+                        else
+                        {
+                            // prefer parsed values, but fill missing fields from scraped values
+                            var desc = string.IsNullOrWhiteSpace(parsed.Description) ? scrapedDescription : parsed.Description;
+                            var title = string.IsNullOrWhiteSpace(parsed.Title) ? (scrapedTitle ?? parsed.Title) : parsed.Title;
+                            var company = string.IsNullOrWhiteSpace(parsed.Company) ? (scrapedCompany ?? parsed.Company) : parsed.Company;
+                            var location = string.IsNullOrWhiteSpace(parsed.Location) ? scrapedLocation : parsed.Location;
+
+                            parsed = parsed with
+                            {
+                                Id = jobId,
+                                Description = desc,
+                                Title = title,
+                                Company = company,
+                                Location = location
+                            };
+                        }
+                    }
+
+                    return parsed;
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (PlaywrightException pex)
+                {
+                    // Treat Playwright errors as proxy/session failures and retry with a new proxy/session
+                    s_logProxyFailed(_logger, attemptProxy, attempt, pex.Message, null);
+                    try { await page.DisposeAsync(); } catch { }
+                    try { await session.DisposeAsync(); } catch { }
+                    // continue to next attempt
+                    continue;
+                }
+                catch (Exception ex)
+                {
+                    LinkedInLog.LogFailedToParseJobNode(_logger, ex);
                     return null;
                 }
+            }
+            finally
+            {
+                try { await page.DisposeAsync(); } catch { }
+                if (session is not null)
+                {
+                    try { await session.DisposeAsync(); } catch { }
+                }
+            }
+        }
 
-                var parsed = JsonLdParser.Parse(html, jobId, url);
-                return parsed;
-            }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception ex)
-            {
-                LinkedInLog.LogFailedToParseJobNode(_logger, ex);
-                return null;
-            }
-        }
-        finally
-        {
-            try { await page.DisposeAsync(); } catch { }
-            if (session is not null)
-            {
-                try { await session.DisposeAsync(); } catch { }
-            }
-        }
+        // If we get here all attempts failed
+        s_logAllProxyFailed(_logger, url, null);
+        return null;
     }
 
     private static List<string> ExtractIdsFromSearchHtml(string html)
