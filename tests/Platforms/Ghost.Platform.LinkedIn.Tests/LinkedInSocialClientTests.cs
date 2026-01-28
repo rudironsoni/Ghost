@@ -19,7 +19,7 @@ public class LinkedInSocialClientTests
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();
         mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(ValueTask.FromResult(mockPage));
+            .Returns(Task.FromResult(mockPage));
         mockPage.QuerySelectorAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IElement?>(null));
 
@@ -35,7 +35,7 @@ public class LinkedInSocialClientTests
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();
         mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(ValueTask.FromResult(mockPage));
+            .Returns(Task.FromResult(mockPage));
         mockPage.QuerySelectorAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IElement?>(null));
 

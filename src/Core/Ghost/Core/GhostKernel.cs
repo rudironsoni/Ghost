@@ -59,7 +59,7 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
         }
     }
 
-    public async ValueTask<IBrowserSession> NewSessionAsync(SessionOptions? options = null, CancellationToken ct = default)
+    public async Task<IBrowserSession> NewSessionAsync(SessionOptions? options = null, CancellationToken ct = default)
     {
         await _sessionLock.WaitAsync(ct);
 

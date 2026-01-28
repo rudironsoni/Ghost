@@ -17,7 +17,7 @@ public class OpenAIClientTests
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();
         mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(ValueTask.FromResult(mockPage));
+            .Returns(Task.FromResult(mockPage));
 
         mockPage.EvaluateAsync<string>(Arg.Any<string>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult("response text"));
@@ -34,7 +34,7 @@ public class OpenAIClientTests
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();
         mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(ValueTask.FromResult(mockPage));
+            .Returns(Task.FromResult(mockPage));
 
         mockPage.EvaluateAsync<string>(Arg.Any<string>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult("stream chunk"));
