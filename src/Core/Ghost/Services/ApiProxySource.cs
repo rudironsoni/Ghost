@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Abstractions;
 using Ghost.Core;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Ghost.Services;
@@ -15,13 +16,27 @@ public class ApiProxySource : IProxySource
 {
         private static readonly char[] s_lineSeparators = new[] { '\r', '\n' };
 
+        private static readonly Action<ILogger, string, Exception?> s_logFetching =
+            LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(ApiProxySource)), "Fetching proxies from {Url}");
+
+        private static readonly Action<ILogger, int, Exception?> s_logFetchedCount =
+            LoggerMessage.Define<int>(LogLevel.Information, new EventId(2, nameof(ApiProxySource)), "Fetched {Count} proxies from API");
+
+        private static readonly Action<ILogger, int, Exception?> s_logFetchFailedStatus =
+            LoggerMessage.Define<int>(LogLevel.Error, new EventId(3, nameof(ApiProxySource)), "Failed to fetch proxies from API, status code: {StatusCode}");
+
+        private static readonly Action<ILogger, Exception?> s_logFetchFailed =
+            LoggerMessage.Define(LogLevel.Error, new EventId(4, nameof(ApiProxySource)), "Failed to fetch proxies from API");
+
         private readonly HttpClient _http;
         private readonly IOptions<ProxyOptions> _options;
+        private readonly ILogger<ApiProxySource> _logger;
 
-        public ApiProxySource(HttpClient http, IOptions<ProxyOptions> options)
+        public ApiProxySource(HttpClient http, IOptions<ProxyOptions> options, ILogger<ApiProxySource> logger)
         {
             _http = http ?? throw new ArgumentNullException(nameof(http));
             _options = options ?? throw new ArgumentNullException(nameof(options));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task<IEnumerable<ProxyInfo>> FetchProxiesAsync(CancellationToken ct)
@@ -32,9 +47,14 @@ public class ApiProxySource : IProxySource
 
             try
             {
+                s_logFetching(_logger, cfg.Url!, null);
+
                 using var resp = await _http.GetAsync(cfg.Url!, ct).ConfigureAwait(false);
                 if (!resp.IsSuccessStatusCode)
+                {
+                    s_logFetchFailedStatus(_logger, (int)resp.StatusCode, null);
                     return Enumerable.Empty<ProxyInfo>();
+                }
 
                 var body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
                 if (string.IsNullOrWhiteSpace(body))
@@ -52,14 +72,17 @@ public class ApiProxySource : IProxySource
                         res.Add(p);
                 }
 
+                s_logFetchedCount(_logger, res.Count, null);
                 return res;
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
                 throw;
             }
-            catch
+            catch (Exception ex)
             {
+                // log and swallow, but preserve cancellation behavior above
+                s_logFetchFailed(_logger, ex);
                 return Enumerable.Empty<ProxyInfo>();
             }
         }
