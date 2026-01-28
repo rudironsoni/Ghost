@@ -42,4 +42,60 @@ public class LinkedInJobClientTests
         var result = await client.ApplyAsync("job:1", new ApplicationDetails { ApplicantName = "Test", ApplicantEmail = "a@b.com" }, CancellationToken.None);
         result.Should().BeNull();
     }
+
+    [Fact]
+    public async Task GetJobDetailsBrowserAsync_SetsProxyTimezone_WhenConfigured()
+    {
+        // Arrange
+        var mockSession = Substitute.For<IBrowserSession>();
+        var mockPage = Substitute.For<IPage>();
+        
+        mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(mockPage));
+
+        var opts = new LinkedInOptions 
+        { 
+            TimezoneId = "Europe/Madrid", 
+            Locale = "es-ES",
+            ScrapingStrategy = JobScrapingStrategy.BrowserPage 
+        };
+        
+        var client = new LinkedInJobClient(mockSession, Options.Create(opts), null!);
+
+        // Act
+        await client.GetJobDetailsAsync("123");
+
+        // Assert
+        await mockSession.Received().NewPageAsync(Arg.Is<PageOptions>(p => 
+            p.TimezoneId == "Europe/Madrid" && 
+            p.Locale == "es-ES"
+        ), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetJobDetailsBrowserAsync_DetectsEasyApply()
+    {
+        // Arrange
+        var mockSession = Substitute.For<IBrowserSession>();
+        var mockPage = Substitute.For<IPage>();
+        
+        mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(mockPage));
+
+        var mockBtn = Substitute.For<IElement>();
+        mockBtn.GetTextContentAsync(Arg.Any<CancellationToken>()).Returns("Easy Apply");
+        
+        // Mock query selector to return the button
+        mockPage.QuerySelectorAsync(Arg.Is<string>(s => s.Contains("jobs-apply-button") || s.Contains("jobs-s-apply")), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IElement?>(mockBtn));
+
+        var client = new LinkedInJobClient(mockSession, Options.Create(new LinkedInOptions()), null!);
+
+        // Act
+        var result = await client.GetJobDetailsAsync("123");
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsEasyApply.Should().BeTrue();
+    }
 }

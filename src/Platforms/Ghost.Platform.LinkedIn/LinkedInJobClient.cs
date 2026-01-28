@@ -1,4 +1,6 @@
 using Ghost.Contracts.Jobs;
+using Ghost.Extensions;
+using Ghost.Platform.LinkedIn.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -65,17 +67,41 @@ public sealed class LinkedInJobClient : IJobClient
 
     private async Task<JobListing> GetJobDetailsBrowserAsync(string jobId, CancellationToken ct = default)
     {
-        var page = await _session.NewPageAsync(ct: ct);
+        var pageOpts = _options.GetPageOptions();
+        var page = await _session.NewPageAsync(pageOpts, ct: ct);
         try
         {
             var url = $"{_options.BaseUrl}/jobs/view/{jobId}";
             await page.NavigateAsync(url, ct: ct);
             await page.WaitForLoadStateAsync(ct: ct);
 
+            // Check for Easy Apply button
+            bool isEasyApply = false;
+            try
+            {
+                // Common selectors for Easy Apply
+                var easyApplyBtn = await page.QuerySelectorAsync(".jobs-apply-button--top-card button, .jobs-s-apply button", ct);
+                if (easyApplyBtn != null)
+                {
+                    var txt = await easyApplyBtn.GetTextContentAsync(ct) ?? "";
+                    if (txt.Contains("Easy Apply", StringComparison.OrdinalIgnoreCase))
+                    {
+                        isEasyApply = true;
+                    }
+                }
+            }
+            catch { }
+
             // attempt to parse JSON-LD from page content
             var html = await page.GetContentAsync(ct);
             var parsed = Internal.JsonLdParser.Parse(html ?? string.Empty, jobId, url);
-            return parsed ?? new JobListing { Id = jobId, Url = url };
+            
+            if (parsed != null)
+            {
+                return parsed with { IsEasyApply = isEasyApply };
+            }
+
+            return new JobListing { Id = jobId, Url = url, IsEasyApply = isEasyApply };
         }
         finally
         {
@@ -93,7 +119,8 @@ public sealed class LinkedInJobClient : IJobClient
 
     private async Task<JobApplication> ApplyInternalAsync(string jobId, ApplicationDetails details, CancellationToken ct)
     {
-        var page = await _session.NewPageAsync(ct: ct);
+        var pageOpts = _options.GetPageOptions();
+        var page = await _session.NewPageAsync(pageOpts, ct: ct);
         try
         {
             var url = $"{_options.BaseUrl}/jobs/view/{jobId}";
@@ -126,7 +153,7 @@ public sealed class LinkedInJobClient : IJobClient
                 return null!; // per spec: return null when button not found
             }
 
-            await applyBtn.ClickAsync(ct: ct);
+            await applyBtn.HumanClickAsync(ct: ct);
             // Wait a short moment for any potential modal or navigation
             try { await page.WaitForLoadStateAsync(ct: ct); } catch { }
 
@@ -236,7 +263,8 @@ public sealed class LinkedInJobClient : IJobClient
             // else fallthrough to browser
         }
 
-        var page = await _session.NewPageAsync(ct: ct);
+        var pageOpts = _options.GetPageOptions();
+        var page = await _session.NewPageAsync(pageOpts, ct: ct);
         try
         {
             var q = System.Uri.EscapeDataString(keywords);

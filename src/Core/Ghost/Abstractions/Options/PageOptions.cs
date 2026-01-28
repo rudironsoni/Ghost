@@ -6,4 +6,6 @@ public sealed class PageOptions
     public int Height { get; set; } = 720;
     public string? UserAgent { get; set; }
     public bool JavaScriptEnabled { get; set; } = true;
+    public string? TimezoneId { get; set; }
+    public string? Locale { get; set; }
 }

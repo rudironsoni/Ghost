@@ -148,6 +148,74 @@ public static class StealthScripts
                 navigator.geolocation.watchPosition      = cb => (cb(position),1);
 
             })();
+            """ + GetCanvasNoiseScript();
+    }
+
+    public static string GetTimezoneOverrideScript(string timezoneId)
+    {
+        return $$"""
+            (() => {
+                try {
+                    const origDTF = Intl.DateTimeFormat;
+                    Intl.DateTimeFormat = function(...a){
+                        const dtf = new origDTF(...a);
+                        const ro  = dtf.resolvedOptions();
+                        Object.defineProperty(ro,'timeZone',{get:()=>'{{timezoneId}}'});
+                        dtf.resolvedOptions = () => ro;
+                        return dtf;
+                    };
+                } catch(e) {}
+            })();
+            """;
+    }
+
+    public static string GetLocaleOverrideScript(string locale)
+    {
+        return $$"""
+            (() => {
+                Object.defineProperty(navigator, 'language', {
+                    get: () => '{{locale}}'
+                });
+                Object.defineProperty(navigator, 'languages', {
+                    get: () => ['{{locale}}']
+                });
+            })();
+            """;
+    }
+
+    public static string GetCanvasNoiseScript()
+    {
+        return """
+            (() => {
+                const getImageData = CanvasRenderingContext2D.prototype.getImageData;
+                const toDataURL = HTMLCanvasElement.prototype.toDataURL;
+                
+                CanvasRenderingContext2D.prototype.getImageData = function(...args) {
+                    const imageData = getImageData.apply(this, args);
+                    for (let i = 0; i < imageData.data.length; i += 4) {
+                        const noise = Math.floor(Math.random() * 2); // 0 or 1
+                        if (noise === 1) {
+                             // subtle noise
+                             imageData.data[i] = Math.max(0, Math.min(255, imageData.data[i] + (Math.random() > 0.5 ? 1 : -1)));
+                        }
+                    }
+                    return imageData;
+                };
+
+                HTMLCanvasElement.prototype.toDataURL = function(...args) {
+                    // Force a read-back to apply noise if needed, but for toDataURL 
+                    // on many implementations it might bypass getImageData. 
+                    // A simple string perturbation is safer for performance/stability 
+                    // if we just want to break hash checks.
+                    const res = toDataURL.apply(this, args);
+                    // We don't modify base64 string directly as it corrupts image.
+                    // Ideally we rely on the fact that toDataURL calls the renderer 
+                    // which *might* be hooked if we went deeper (WebGL).
+                    // For now, getImageData protection is the primary defense against 
+                    // detailed fingerprinting scripts.
+                    return res;
+                };
+            })();
             """;
     }
 }

@@ -42,4 +42,30 @@ public class ParsingTests
         start.Should().BeNull();
         end.Should().BeNull();
     }
+
+    [Theory]
+    [InlineData("FULL_TIME", Ghost.Contracts.Jobs.JobType.FullTime)]
+    [InlineData("PART_TIME", Ghost.Contracts.Jobs.JobType.PartTime)]
+    [InlineData("CONTRACT", Ghost.Contracts.Jobs.JobType.Contract)]
+    [InlineData("INTERNSHIP", Ghost.Contracts.Jobs.JobType.Internship)]
+    [InlineData("Unknown", Ghost.Contracts.Jobs.JobType.Unknown)]
+    [InlineData(null, Ghost.Contracts.Jobs.JobType.Unknown)]
+    public void ParseJobType_MapsCorrectly(string? input, Ghost.Contracts.Jobs.JobType expected)
+    {
+        // Wrap JSON in script tag as the Parser expects HTML
+        var json = $$"""
+        <script type="application/ld+json">
+        {
+            "@context": "http://schema.org",
+            "@type": "JobPosting",
+            "employmentType": "{{input}}"
+        }
+        </script>
+        """;
+
+        var result = Ghost.Platform.LinkedIn.Internal.JsonLdParser.Parse(json, "123", "http://url");
+        
+        result.Should().NotBeNull();
+        result!.JobType.Should().Be(expected);
+    }
 }

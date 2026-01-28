@@ -61,4 +61,9 @@ public sealed record JobListing
     /// Application url.
     /// </summary>
     public string? Url { get; init; }
+
+    /// <summary>
+    /// Whether the job has an 'Easy Apply' option.
+    /// </summary>
+    public bool IsEasyApply { get; init; }
 }

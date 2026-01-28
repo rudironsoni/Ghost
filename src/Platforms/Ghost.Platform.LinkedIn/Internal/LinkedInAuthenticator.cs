@@ -23,7 +23,8 @@ public sealed class LinkedInAuthenticator
     {
         if (string.IsNullOrEmpty(liAt)) throw new ArgumentNullException(nameof(liAt));
 
-        var page = await _session.NewPageAsync(ct: ct);
+        var pageOpts = _options.GetPageOptions();
+        var page = await _session.NewPageAsync(pageOpts, ct: ct);
             try
             {
                 await page.NavigateAsync(_options.BaseUrl, ct: ct);
@@ -45,7 +46,8 @@ public sealed class LinkedInAuthenticator
 
     public async Task WarmUpAsync(CancellationToken ct = default)
     {
-        var page = await _session.NewPageAsync(ct: ct);
+        var pageOpts = _options.GetPageOptions();
+        var page = await _session.NewPageAsync(pageOpts, ct: ct);
         try
         {
             await page.NavigateAsync("https://www.google.com", ct: ct);
