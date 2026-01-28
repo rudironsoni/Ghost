@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging.Abstractions;
+using System.IO;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 using Ghost.Internal;
@@ -71,6 +72,16 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
                 profile = FingerprintGenerator.Generate();
             }
 
+            // Only set StorageStatePath when provided and the file actually exists.
+            // If a path was provided but the file is missing, ignore it so Playwright
+            // doesn't crash with a "file does not exist" error.
+            string? storageStatePath = options?.StorageStatePath;
+            if (!string.IsNullOrEmpty(storageStatePath) && !File.Exists(storageStatePath))
+            {
+                // Provided path doesn't exist - ignore and start a fresh session.
+                storageStatePath = null;
+            }
+
             var ctxOptions = new BrowserNewContextOptions
             {
                 ViewportSize = new ViewportSize
@@ -79,7 +90,7 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
                     Height = options?.ViewportHeight ?? profile?.ViewportHeight ?? 720
                 },
                 UserAgent = options?.UserAgent ?? profile?.UserAgent,
-                StorageStatePath = options?.StorageStatePath,
+                StorageStatePath = storageStatePath,
                 TimezoneId = options?.TimezoneId ?? profile?.TimeZone ?? "UTC",
                 Locale = options?.Locale ?? "en-US"
             };
