@@ -20,6 +20,13 @@ public sealed class LinkedInOptions
     /// Explicitly set the Locale (e.g. "es-ES") to match the proxy.
     /// </summary>
     public string? Locale { get; set; }
+
+    /// <summary>
+    /// Enable or disable proxy usage for LinkedIn sessions. When false, sessions
+    /// will be created without proxy settings and a direct connection will be used.
+    /// Default is true.
+    /// </summary>
+    public bool ProxyEnabled { get; set; } = true;
 }
 
 public enum JobScrapingStrategy

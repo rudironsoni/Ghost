@@ -27,6 +27,9 @@ public sealed class GuestJobSearch
     private static readonly Action<ILogger, Exception?> s_logGuestSearchFailed =
         LoggerMessage.Define(LogLevel.Warning, new EventId(3, nameof(GuestJobSearch)), "Guest search navigation/parsing failed");
 
+    private static readonly Action<ILogger, Exception?> s_logProxyDisabled =
+        LoggerMessage.Define(LogLevel.Information, new EventId(4, nameof(GuestJobSearch)), "Proxy disabled by configuration. Using direct connection.");
+
     public GuestJobSearch(
         GhostKernel kernel,
         IProxyProvider proxyProvider,
@@ -49,14 +52,26 @@ public sealed class GuestJobSearch
         ArgumentNullException.ThrowIfNull(criteria);
 
         var ids = new List<string>();
-        // Create a fresh proxied session for the search to isolate from other work
-         var proxy = _proxyProvider is not null ? await _proxyProvider.GetProxyAsync("US", ct) : null;
-         // log the proxy being used for this search
-         s_logUsingProxy(_logger, proxy?.Server ?? "None", null);
-         var options = new SessionOptions();
-        if (proxy is not null)
+        // Create a fresh session for the search to isolate from other work
+        SessionOptions options;
+        if (!_options.ProxyEnabled)
         {
-            options.Proxy = new SessionOptions.ProxySettings(proxy.Server, proxy.Username, proxy.Password);
+            // When proxy usage is disabled by configuration, do not fetch a proxy
+            // and create session options without proxy settings.
+            s_logProxyDisabled(_logger, null);
+            options = new SessionOptions { Proxy = null };
+        }
+        else
+        {
+            // Keep existing behavior: fetch a proxy and apply settings to the session
+            var proxy = _proxyProvider is not null ? await _proxyProvider.GetProxyAsync("US", ct) : null;
+            // log the proxy being used for this search
+            s_logUsingProxy(_logger, proxy?.Server ?? "None", null);
+            options = new SessionOptions();
+            if (proxy is not null)
+            {
+                options.Proxy = new SessionOptions.ProxySettings(proxy.Server, proxy.Username, proxy.Password);
+            }
         }
 
         var session = await _kernel.NewSessionAsync(options, ct);
