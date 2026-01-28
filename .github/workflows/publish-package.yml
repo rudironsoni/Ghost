@@ -48,5 +48,7 @@ jobs:
 
       - name: Publish to NuGet (GitHub)
         run: |
-          dotnet nuget add source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --name github --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text
-          dotnet nuget push "./artifacts/packages/*.nupkg" --source github --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
+          # Add GitHub Packages source (ignore failure if it already exists)
+          dotnet nuget add source --username "${{ github.actor }}" --password "${{ secrets.GITHUB_TOKEN }}" --store-password-in-clear-text --name github "https://nuget.pkg.github.com/${{ toLower(github.repository_owner) }}/index.json" || true
+          # Push packages using GITHUB_TOKEN as the API key (quoted to avoid whitespace issues)
+          dotnet nuget push "./artifacts/packages/*.nupkg" --source github --api-key "${{ secrets.GITHUB_TOKEN }}" --skip-duplicate
