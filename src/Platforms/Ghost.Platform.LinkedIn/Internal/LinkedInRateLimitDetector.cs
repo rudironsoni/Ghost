@@ -13,6 +13,9 @@ internal sealed class LinkedInRateLimitException : Exception
 
 internal static class LinkedInRateLimitDetector
 {
+    private static readonly Action<ILogger, Exception?> s_logNoRateLimit =
+        LoggerMessage.Define(LogLevel.Information, new EventId(1, nameof(CheckAsync)), "No rate limit indicators found.");
+
     public static async Task CheckAsync(Ghost.IPage page, Microsoft.Extensions.Logging.ILogger? logger = null)
     {
         if (page == null) return;
@@ -45,7 +48,7 @@ internal static class LinkedInRateLimitDetector
                 }
                 else
                 {
-                    try { logger?.LogInformation("No rate limit indicators found."); } catch { }
+                    try { if (logger is not null) s_logNoRateLimit(logger, null); } catch { }
                 }
             }
         }

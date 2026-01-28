@@ -12,6 +12,15 @@ namespace Ghost.Platform.LinkedIn;
 /// </summary>
     public sealed class LinkedInJobClient : IJobClient
     {
+        private static readonly Action<ILogger, JobScrapingStrategy, string, Exception?> s_logJobSearchStarting =
+            LoggerMessage.Define<JobScrapingStrategy, string>(LogLevel.Information, new EventId(1, nameof(SearchJobsWithStrategyAsync)), "Executing Job Search. Strategy: {Strategy}, Query: {Query}");
+
+        private static readonly Action<ILogger, Exception?> s_logHybridFallback =
+            LoggerMessage.Define(LogLevel.Information, new EventId(2, nameof(SearchJobsWithStrategyAsync)), "Hybrid Strategy: Guest API returned no results. Falling back to Browser.");
+
+        private static readonly Action<ILogger, int, Exception?> s_logJobSearchCompleted =
+            LoggerMessage.Define<int>(LogLevel.Information, new EventId(3, nameof(SearchJobsWithStrategyAsync)), "Job Search Completed. Found {Count} jobs.");
+
         private readonly Ghost.IBrowserSession _session;
         private readonly LinkedInOptions _options;
         private readonly ILogger<LinkedInJobClient> _logger;
@@ -216,7 +225,7 @@ namespace Ghost.Platform.LinkedIn;
 
     private async IAsyncEnumerable<JobListing> SearchJobsWithStrategyAsync(string keywords, string location, int limit, JobScrapingStrategy strategy, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
     {
-        _logger.LogInformation("Executing Job Search. Strategy: {Strategy}, Query: {Query}", strategy, keywords);
+        s_logJobSearchStarting(_logger, strategy, keywords, null);
         // Strategy: processed according to configured scraping strategy
         if (strategy == JobScrapingStrategy.GuestApi)
         {
@@ -299,15 +308,15 @@ namespace Ghost.Platform.LinkedIn;
                     successfulYields++;
                 }
 
-                if (successfulYields > 0)
-                {
-                    _logger.LogInformation("Job Search Completed. Found {Count} jobs.", successfulYields);
-                    yield break;
-                }
+                    if (successfulYields > 0)
+                    {
+                        s_logJobSearchCompleted(_logger, successfulYields, null);
+                        yield break;
+                    }
             }
 
             // Guest API returned no results - log hybrid fallback and fallthrough to browser
-            _logger.LogInformation("Hybrid Strategy: Guest API returned no results. Falling back to Browser.");
+            s_logHybridFallback(_logger, null);
         }
 
         // Add safety delay for Hybrid fallback to avoid rapid-fire detection
