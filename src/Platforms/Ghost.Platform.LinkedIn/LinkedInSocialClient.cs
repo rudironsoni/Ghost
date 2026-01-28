@@ -1,5 +1,6 @@
 using Ghost.Contracts.Social;
 using Microsoft.Extensions.Logging;
+using Ghost.Platform.LinkedIn.Internal;
 using Microsoft.Extensions.Options;
 
 namespace Ghost.Platform.LinkedIn;
@@ -7,9 +8,9 @@ namespace Ghost.Platform.LinkedIn;
 /// <summary>
 /// Social client for LinkedIn interactions.
 /// </summary>
-    public sealed class LinkedInSocialClient : ISocialClient
-    {
-        private static readonly System.Buffers.SearchValues<char> _digitChars = System.Buffers.SearchValues.Create("0123456789");
+public sealed class LinkedInSocialClient : ISocialClient
+{
+    private static readonly System.Buffers.SearchValues<char> _digitChars = System.Buffers.SearchValues.Create("0123456789");
     private readonly Ghost.IBrowserSession _session;
     private readonly LinkedInOptions _options;
     private readonly ILogger<LinkedInSocialClient> _logger;
@@ -369,7 +370,7 @@ namespace Ghost.Platform.LinkedIn;
 
     public async Task SendConnectionRequestAsync(string profileId, string? message = null, CancellationToken ct = default)
     {
-            var page = await _session.NewPageAsync(ct: ct);
+        var page = await _session.NewPageAsync(ct: ct);
         try
         {
             await page.NavigateAsync($"{_options.BaseUrl}/in/{profileId}", ct: ct);

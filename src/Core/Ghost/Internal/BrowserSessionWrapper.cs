@@ -27,7 +27,7 @@ internal sealed class BrowserSessionWrapper : IBrowserSession, IDisposable
     public bool IsConnected => !_disposed;
     public IReadOnlyList<IPage> Pages => _pages.AsReadOnly();
 
-    public async ValueTask<IPage> NewPageAsync(PageOptions? options = null, CancellationToken ct = default)
+    public async Task<IPage> NewPageAsync(PageOptions? options = null, CancellationToken ct = default)
     {
         var page = await _context.NewPageAsync();
         var wrapper = new PageWrapper(page);
@@ -35,13 +35,13 @@ internal sealed class BrowserSessionWrapper : IBrowserSession, IDisposable
         return wrapper;
     }
 
-    public ValueTask<IPage?> GetPageAsync(string pageId, CancellationToken ct = default)
+    public Task<IPage?> GetPageAsync(string pageId, CancellationToken ct = default)
     {
         var page = _pages.OfType<PageWrapper>().FirstOrDefault(p => p.PageId == pageId);
-        return new ValueTask<IPage?>(page);
+        return Task.FromResult<IPage?>(page);
     }
 
-    public async ValueTask CloseAsync(CancellationToken ct = default)
+    public async Task CloseAsync(CancellationToken ct = default)
     {
         if (_disposed) return;
         await _context.CloseAsync();

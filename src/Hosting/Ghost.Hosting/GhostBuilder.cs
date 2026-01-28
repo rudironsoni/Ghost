@@ -73,11 +73,11 @@ public sealed class GhostBuilder
         });
 
         // Register IBrowserSession as a factory from the kernel
-        _services.AddScoped<IBrowserSession>(provider =>
-        {
-            var kernel = provider.GetRequiredService<GhostKernel>();
-            return kernel.NewSessionAsync().AsTask().GetAwaiter().GetResult();
-        });
+            _services.AddScoped<IBrowserSession>(provider =>
+            {
+                var kernel = provider.GetRequiredService<GhostKernel>();
+                return kernel.NewSessionAsync().GetAwaiter().GetResult();
+            });
 
         // Load extensions via loader (validates and registers)
             var loader = new ExtensionLoader();

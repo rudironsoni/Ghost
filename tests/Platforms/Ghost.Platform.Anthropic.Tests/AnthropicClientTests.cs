@@ -15,7 +15,7 @@ public class AnthropicClientTests
             var mockSession = Substitute.For<IBrowserSession>();
             var mockPage = Substitute.For<IPage>();
             mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-                .Returns(ValueTask.FromResult(mockPage));
+                .Returns(Task.FromResult(mockPage));
 
             // simulate a page evaluation returning a string completion
             mockPage.EvaluateAsync<string>(Arg.Any<string>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
@@ -35,7 +35,7 @@ public class AnthropicClientTests
             var mockSession = Substitute.For<IBrowserSession>();
             var mockPage = Substitute.For<IPage>();
             mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-                .Returns(ValueTask.FromResult(mockPage));
+                .Returns(Task.FromResult(mockPage));
 
             // simulate streaming by returning incremental content when EvaluateAsync<string> is called
             mockPage.EvaluateAsync<string>(Arg.Any<string>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
