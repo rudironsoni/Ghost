@@ -2,6 +2,7 @@ using Ghost.Contracts.Jobs;
 using Ghost.Contracts.News;
 using Ghost.Contracts.Social;
 using Microsoft.AspNetCore.Mvc;
+using Ghost.Platform.LinkedIn;
 
 namespace Ghost.WebApi.Features.LinkedIn;
 
@@ -54,16 +55,29 @@ public static class LinkedInEndpoints
 
     private static async Task<IResult> SearchJobs(
         [FromBody] JobSearchCriteria criteria,
+        [FromQuery] string? strategy,
         [FromServices] IJobClient jobClient,
         CancellationToken ct)
     {
-        if (jobClient.PlatformName != "LinkedIn")
+        try
         {
-            // validation logic
-        }
+            // Check for strategy override via query parameter
+            if (jobClient is LinkedInJobClient linkedInClient &&
+                !string.IsNullOrEmpty(strategy) &&
+                Enum.TryParse<JobScrapingStrategy>(strategy, ignoreCase: true, out var strategyOverride))
+            {
+                var results = await linkedInClient.SearchJobsAsync(criteria, strategyOverride, ct);
+                return Results.Ok(results);
+            }
 
-        var results = await jobClient.SearchJobsAsync(criteria, ct);
-        return Results.Ok(results);
+            // Default: use configured strategy
+            var defaultResults = await jobClient.SearchJobsAsync(criteria, ct);
+            return Results.Ok(defaultResults);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(detail: ex.Message);
+        }
     }
 
     private static async Task<IResult> GetProfile(
