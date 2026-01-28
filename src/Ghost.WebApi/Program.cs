@@ -1,5 +1,3 @@
-using FastEndpoints;
-using FastEndpoints.Swagger;
 using Ghost.Hosting;
 using Ghost.WebApi.Features.LinkedIn;
 using System.Reflection;
@@ -7,8 +5,8 @@ using System.Reflection;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddFastEndpoints();
-builder.Services.SwaggerDocument();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 // Configure Ghost
 builder.Services.AddGhost(builder.Configuration, gw =>
@@ -19,13 +17,34 @@ builder.Services.AddGhost(builder.Configuration, gw =>
         builder.Configuration.GetSection("Ghost:Kernel").Bind(options);
     });
 
-    // Dynamic Extension Loading
-    var extensionsSection = builder.Configuration.GetSection("Ghost:Extensions");
-    foreach (var section in extensionsSection.GetChildren())
+    // Explicitly register LinkedIn extension when referenced directly
+    var linkedInSection = builder.Configuration.GetSection("Ghost:Extensions:LinkedIn");
+    if (linkedInSection.Exists() && linkedInSection.GetValue<bool>("Enabled"))
     {
-        var platformName = section.Key;
-        // Check if explicitly enabled
-        var enabled = section.GetValue<bool>("Enabled");
+        try
+        {
+            // Use the directly referenced extension type so its DI registrations run
+            gw.UseExtension(new Ghost.Platform.LinkedIn.LinkedInExtension());
+            Console.WriteLine("[Info] Registered LinkedIn extension via direct reference.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Error] Failed to register LinkedIn extension directly: {ex.Message}");
+        }
+    }
+
+        // Dynamic Extension Loading
+        var extensionsSection = builder.Configuration.GetSection("Ghost:Extensions");
+        foreach (var section in extensionsSection.GetChildren())
+        {
+            var platformName = section.Key;
+            // Skip LinkedIn here because it's explicitly registered above when enabled
+            if (string.Equals(platformName, "LinkedIn", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+            // Check if explicitly enabled
+            var enabled = section.GetValue<bool>("Enabled");
 
         if (enabled)
         {
@@ -78,8 +97,11 @@ builder.Services.AddGhost(builder.Configuration, gw =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-app.UseFastEndpoints();
-app.UseSwaggerGen(); // Default UI at /swagger
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.MapLinkedInEndpoints();
 
