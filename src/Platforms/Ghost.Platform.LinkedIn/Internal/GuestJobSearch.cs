@@ -8,6 +8,7 @@ using Ghost.Core;
 using Ghost.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Playwright;
 
 namespace Ghost.Platform.LinkedIn.Internal;
 
@@ -39,6 +40,12 @@ public sealed class GuestJobSearch
 
     private static readonly Action<ILogger, Exception?> s_logProxyDisabled =
         LoggerMessage.Define(LogLevel.Information, new EventId(4, nameof(GuestJobSearch)), "Proxy disabled by configuration. Using direct connection.");
+
+    private static readonly Action<ILogger, string, int, string, Exception?> s_logProxyFailed =
+        LoggerMessage.Define<string, int, string>(LogLevel.Warning, new EventId(8, nameof(GuestJobSearch)), "Proxy {Proxy} failed (Attempt {Attempt}/3). Error: {Message}");
+
+    private static readonly Action<ILogger, string, Exception?> s_logAllProxyFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(9, nameof(GuestJobSearch)), "All proxy attempts failed for {Url}");
 
     public GuestJobSearch(
         GhostKernel kernel,
@@ -91,56 +98,99 @@ public sealed class GuestJobSearch
             }
         }
 
-        s_logSessionCreating(_logger, proxyUsed, _options.Value.WarmUpEnabled, null);
-        var session = await _kernel.NewSessionAsync(options, ct);
-        var page = await session.NewPageAsync(ct: ct);
-        try
-        {
-            var q = Uri.EscapeDataString(criteria.Query ?? string.Empty);
-            var loc = Uri.EscapeDataString(criteria.Location ?? string.Empty);
+        var q = Uri.EscapeDataString(criteria.Query ?? string.Empty);
+        var loc = Uri.EscapeDataString(criteria.Location ?? string.Empty);
 
-            for (var offset = 0; ids.Count < limit; offset += 25)
+        for (var offset = 0; ids.Count < limit; offset += 25)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            // Build base URL and append time filter if present
+            var baseUrl = $"{_options.Value.BaseUrl}/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={q}&location={loc}&start={offset}";
+            string? tpr = criteria.PostedDate switch
             {
-                ct.ThrowIfCancellationRequested();
-                var url = $"{_options.Value.BaseUrl}/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={q}&location={loc}&start={offset}";
+                TimePosted.Past24Hours => "r86400",
+                TimePosted.PastWeek => "r604800",
+                TimePosted.PastMonth => "r2592000",
+                _ => null
+            };
+            var url = tpr is not null ? baseUrl + $"&f_TPR={tpr}" : baseUrl;
+
+            List<string>? found = null;
+            var success = false;
+
+            // Try up to 3 attempts, fetching a fresh proxy/session each time
+            for (var attempt = 1; attempt <= 3 && !success; attempt++)
+            {
+                SessionOptions attemptOptions;
+                string attemptProxy = "None";
+
+                if (!_options.Value.ProxyEnabled)
+                {
+                    s_logProxyDisabled(_logger, null);
+                    attemptOptions = new SessionOptions { Proxy = null, StorageStatePath = _options.Value.StorageStatePath };
+                    attemptProxy = "Disabled";
+                }
+                else
+                {
+                    var proxy = _proxyProvider is not null ? await _proxyProvider.GetProxyAsync("US", ct) : null;
+                    s_logUsingProxy(_logger, proxy?.Server ?? "None", null);
+                    attemptOptions = new SessionOptions { StorageStatePath = _options.Value.StorageStatePath };
+                    if (proxy is not null)
+                    {
+                        attemptOptions.Proxy = new SessionOptions.ProxySettings(proxy.Server, proxy.Username, proxy.Password);
+                        attemptProxy = proxy.Server ?? "None";
+                    }
+                    else
+                    {
+                        attemptProxy = "None";
+                    }
+                }
+
+                s_logSessionCreating(_logger, attemptProxy, _options.Value.WarmUpEnabled, null);
+                var session = await _kernel.NewSessionAsync(attemptOptions, ct);
+                var page = await session.NewPageAsync(ct: ct);
                 try
                 {
                     s_logNavigating(_logger, url, null);
-                    // warm-up page/browser if enabled in options
                     if (_options.Value.WarmUpEnabled)
                     {
-                        try { await _authenticator.WarmUpAsync(page, ct); } catch { /* warm-up must not break search */ }
+                        try { await _authenticator.WarmUpAsync(page, ct); } catch { }
                     }
 
-                await page.NavigateAsync(url, ct: ct);
-                // detect rate-limits or blocks from LinkedIn
+                    await page.NavigateAsync(url, ct: ct);
+
                     try
                     {
                         await LinkedInRateLimitDetector.CheckAsync(page);
                         s_logRateLimitPassed(_logger, url, null);
                     }
                     catch { }
-                // no full load expected - just get content
-                var html = await page.GetContentAsync(ct);
-                    if (string.IsNullOrEmpty(html)) break;
 
-                    // 429 handling: LinkedIn sometimes returns a 429 message in the HTML
-                    if (html.Contains("429 Too Many Requests", StringComparison.OrdinalIgnoreCase) || html.Contains("too many requests", StringComparison.OrdinalIgnoreCase))
+                    var html = await page.GetContentAsync(ct);
+                    if (string.IsNullOrEmpty(html))
                     {
-                        LinkedInLogGuest.LogGuestApiThrottled(_logger);
+                        success = true;
                         break;
                     }
 
-                    var found = ExtractIdsFromSearchHtml(html);
-                    if (found.Count == 0) break;
+                    if (html.Contains("429 Too Many Requests", StringComparison.OrdinalIgnoreCase) || html.Contains("too many requests", StringComparison.OrdinalIgnoreCase))
+                    {
+                        LinkedInLogGuest.LogGuestApiThrottled(_logger);
+                        success = true;
+                        break;
+                    }
 
-                    // Persist storage state after successful scraping so cookies/auth can be reused
+                    found = ExtractIdsFromSearchHtml(html);
+                    if (found.Count == 0)
+                    {
+                        success = true;
+                        break;
+                    }
+
                     if (found.Count > 0 && !string.IsNullOrEmpty(_options.Value.StorageStatePath))
                     {
-                            try {
-                                s_logSavingSession(_logger, _options.Value.StorageStatePath, null);
-                                await session.SaveStorageStateAsync(_options.Value.StorageStatePath);
-                            } catch { }
+                        try { s_logSavingSession(_logger, _options.Value.StorageStatePath, null); await session.SaveStorageStateAsync(_options.Value.StorageStatePath); } catch { }
                     }
 
                     foreach (var id in found)
@@ -148,29 +198,48 @@ public sealed class GuestJobSearch
                         if (ids.Count >= limit) break;
                         if (!ids.Contains(id)) ids.Add(id);
                     }
-                    // if fewer than page size returned, stop
-                    if (found.Count < 25) break;
+
+                    success = true;
                 }
                 catch (OperationCanceledException) { throw; }
+                catch (PlaywrightException pex) when (pex.Message?.Contains("ERR_TUNNEL_CONNECTION_FAILED", StringComparison.OrdinalIgnoreCase) == true || pex.Message?.Contains("ERR_CONNECTION_TIMED_OUT", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    s_logProxyFailed(_logger, attemptProxy, attempt, pex.Message, null);
+                    try { await page.DisposeAsync(); } catch { }
+                    try { await session.DisposeAsync(); } catch { }
+                    // continue to next attempt which will fetch a new proxy
+                    continue;
+                }
                 catch (Exception ex)
                 {
-                    // log exception details for diagnosis
                     s_logGuestSearchFailed(_logger, ex);
                     LinkedInLog.LogFailedToParseSearchNode(_logger, ex);
+                    // do not retry other exceptions
+                    success = true;
                     break;
+                }
+                finally
+                {
+                    try { await page.DisposeAsync(); } catch { }
+                    if (session is not null)
+                    {
+                        try { await session.DisposeAsync(); } catch { }
+                    }
                 }
             }
 
-            return ids;
-        }
-        finally
-        {
-            try { await page.DisposeAsync(); } catch { }
-            if (session is not null)
+            if (!success)
             {
-                try { await session.DisposeAsync(); } catch { }
+                s_logAllProxyFailed(_logger, url, null);
+                return ids;
             }
+
+            if (found is null || found.Count == 0) break;
+
+            if (found.Count < 25) break;
         }
+
+        return ids;
     }
 
     public async Task<JobListing?> FetchJobDetailsAsync(string jobId, CancellationToken ct)
