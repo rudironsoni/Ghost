@@ -6,6 +6,10 @@ on:
     paths-ignore:
       - 'tests/**'
       - '.github/**'
+ 
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   publish:
