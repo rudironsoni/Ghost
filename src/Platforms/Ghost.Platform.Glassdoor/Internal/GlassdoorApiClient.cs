@@ -18,9 +18,14 @@ public sealed class GlassdoorApiClient
     {
         try
         {
-            var res = await _http.GetAsync("https://www.glassdoor.com", ct);
+            var request = new HttpRequestMessage(HttpMethod.Get, "https://www.glassdoor.com");
+            foreach (var header in GlassdoorConstants.CsrfHeaders)
+            {
+                request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+            var res = await _http.SendAsync(request, ct);
             var html = await res.Content.ReadAsStringAsync(ct);
-            // look for "token": "..." pattern
             var m = Regex.Match(html, "\"token\"\\s*:\\s*\"(?<t>[^\"]+)\"");
             if (m.Success)
             {
@@ -35,8 +40,6 @@ public sealed class GlassdoorApiClient
     {
         var token = csrfToken ?? await GetCsrfTokenAsync(ct);
 
-        using var payloadDoc = new JsonDocumentBuilder();
-        // Construct a small Graph array payload: operationName and variables are enough for many guest endpoints
         var payload = JsonSerializer.Serialize(new[]
         {
             new
@@ -46,14 +49,22 @@ public sealed class GlassdoorApiClient
             }
         });
 
-        using var content = new StringContent(payload, Encoding.UTF8, "application/json");
-        if (!string.IsNullOrEmpty(token)) content.Headers.Add("gd-csrf-token", token);
-        foreach (var h in GlassdoorConstants.Headers)
+        var request = new HttpRequestMessage(HttpMethod.Post, GlassdoorConstants.ApiUrl)
         {
-            content.Headers.Add(h.Name, h.Value);
+            Content = new StringContent(payload, Encoding.UTF8, "application/json")
+        };
+
+        foreach (var header in GlassdoorConstants.GraphHeaders)
+        {
+            request.Headers.TryAddWithoutValidation(header.Key, header.Value);
         }
 
-        var res = await _http.PostAsync(GlassdoorConstants.ApiUrl, content, ct);
+        if (!string.IsNullOrEmpty(token))
+        {
+            request.Headers.TryAddWithoutValidation("gd-csrf-token", token);
+        }
+
+        var res = await _http.SendAsync(request, ct);
         if (!res.IsSuccessStatusCode) return null;
         return await res.Content.ReadAsStringAsync(ct);
     }

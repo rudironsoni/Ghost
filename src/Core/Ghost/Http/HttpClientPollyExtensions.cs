@@ -1,0 +1,39 @@
+using Polly;
+using Polly.Retry;
+using System.Net;
+using System.Net.Http;
+
+namespace Ghost.Http;
+
+public static class HttpClientPollyExtensions
+{
+    private static readonly Random _random = new Random();
+
+    public static IAsyncPolicy<HttpResponseMessage> CreateRetryPolicy(int retries = 3, double backoffFactor = 2.0)
+    {
+        return Policy<HttpResponseMessage>
+            .HandleResult(r => (int)r.StatusCode == 429 ||
+                              r.StatusCode == HttpStatusCode.InternalServerError ||
+                              r.StatusCode == HttpStatusCode.BadGateway ||
+                              r.StatusCode == HttpStatusCode.ServiceUnavailable ||
+                              r.StatusCode == HttpStatusCode.GatewayTimeout)
+            .WaitAndRetryAsync(retries, retryAttempt => TimeSpan.FromSeconds(Math.Pow(backoffFactor, retryAttempt)));
+    }
+
+    public static IAsyncPolicy<HttpResponseMessage> CreateRetryPolicyWithJitter(int retries = 3, double backoffFactor = 2.0, int minDelayMs = 250, int maxDelayMs = 1500)
+    {
+        return Policy<HttpResponseMessage>
+            .HandleResult(r => (int)r.StatusCode == 429 ||
+                              r.StatusCode == HttpStatusCode.InternalServerError ||
+                              r.StatusCode == HttpStatusCode.BadGateway ||
+                              r.StatusCode == HttpStatusCode.ServiceUnavailable ||
+                              r.StatusCode == HttpStatusCode.GatewayTimeout)
+            .WaitAndRetryAsync(retries,
+                retryAttempt =>
+                {
+                    var backoffDelay = TimeSpan.FromSeconds(Math.Pow(backoffFactor, retryAttempt));
+                    var jitterDelay = TimeSpan.FromMilliseconds(_random.Next(minDelayMs, maxDelayMs));
+                    return backoffDelay + jitterDelay;
+                });
+    }
+}

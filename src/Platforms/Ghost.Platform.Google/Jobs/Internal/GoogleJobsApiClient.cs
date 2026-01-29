@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
@@ -25,6 +26,9 @@ public sealed class GoogleJobsApiClient
     private static readonly Action<ILogger, int, Exception?> LogReceivedAsyncBody =
         LoggerMessage.Define<int>(LogLevel.Information, new EventId(5, nameof(LogReceivedAsyncBody)), "Received async body: {Length} bytes");
 
+    private static readonly Action<ILogger, string, Exception?> LogSendingAsyncRequest =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(6, nameof(LogSendingAsyncRequest)), "Sending async pagination request: {Url}");
+
 
     public GoogleJobsApiClient(HttpClient http, ILogger<GoogleJobsApiClient> logger)
     {
@@ -36,40 +40,47 @@ public sealed class GoogleJobsApiClient
     {
         var q = System.Uri.EscapeDataString(query);
         var loc = System.Uri.EscapeDataString(location);
-        // Use the 'ibp=htl;jobs' parameter which targets the Google Jobs (Jobs widget) view
-        // falling back to a plain search URL if needed.
         var url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs";
 
         LogFetchingJobs(_logger, url, null);
 
         var req = new HttpRequestMessage(HttpMethod.Get, url);
-        req.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+        foreach (var header in GoogleJobsConstants.SearchHeaders)
+        {
+            req.Headers.TryAddWithoutValidation(header.Key, header.Value);
+        }
 
         var res = await _http.SendAsync(req).ConfigureAwait(false);
         var html = await res.Content.ReadAsStringAsync().ConfigureAwait(false);
         if (string.IsNullOrEmpty(html))
         {
             LogReceivedEmptyHtml(_logger, url, null);
-        }
-        else
-        {
-            LogReceivedHtml(_logger, html.Length, null);
+            return Array.Empty<JobListing>();
         }
 
-        // Extract cursor
-        var m = Regex.Match(html, GoogleJobsConstants.DataAsyncFcRegex);
-        var cursor = m.Success ? m.Groups["cursor"].Value : null;
+        LogReceivedHtml(_logger, html.Length, null);
+
+        var cursorMatch = Regex.Match(html, GoogleJobsConstants.DataAsyncFcRegex);
+        var cursor = cursorMatch.Success ? cursorMatch.Groups["cursor"].Value : null;
 
         var results = new List<JobListing>();
         results.AddRange(GoogleJobsParser.ParseFromHtml(html, _logger));
 
-        // simple pagination loop - call async callback with cursor while available
         int rounds = 0;
         while (!string.IsNullOrEmpty(cursor) && rounds++ < 5)
         {
-            var asyncUrl = $"https://www.google.com/async/callback:550?{GoogleJobsConstants.AsyncParam}={System.Uri.EscapeDataString(cursor)}";
-            var r2 = await _http.GetAsync(asyncUrl).ConfigureAwait(false);
-            var body = await r2.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var asyncUrl = $"https://www.google.com/async/callback:550?fc={Uri.EscapeDataString(cursor)}&fcv=3&async={Uri.EscapeDataString(GoogleJobsConstants.AsyncBootstrapString)}";
+            LogSendingAsyncRequest(_logger, asyncUrl, null);
+
+            var asyncReq = new HttpRequestMessage(HttpMethod.Get, asyncUrl);
+            foreach (var header in GoogleJobsConstants.AsyncHeaders)
+            {
+                asyncReq.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+            var asyncRes = await _http.SendAsync(asyncReq).ConfigureAwait(false);
+            var body = await asyncRes.Content.ReadAsStringAsync().ConfigureAwait(false);
+
             if (string.IsNullOrEmpty(body))
             {
                 LogReceivedEmptyAsyncBody(_logger, asyncUrl, null);
@@ -79,10 +90,11 @@ public sealed class GoogleJobsApiClient
                 LogReceivedAsyncBody(_logger, body.Length, null);
             }
 
-            // Parse for new jobs and cursor
             results.AddRange(GoogleJobsParser.ParseFromHtml(body, _logger));
-            var m2 = Regex.Match(body, GoogleJobsConstants.DataAsyncFcRegex);
-            cursor = m2.Success ? m2.Groups["cursor"].Value : null;
+
+            var nextCursorMatch = Regex.Match(body, GoogleJobsConstants.DataAsyncFcRegex);
+            cursor = nextCursorMatch.Success ? nextCursorMatch.Groups["cursor"].Value : null;
+
             await Task.Delay(300).ConfigureAwait(false);
         }
 
