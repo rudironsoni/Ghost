@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Ghost.Contracts.Jobs;
 
 namespace Ghost.Platform.Google.Jobs.Internal;
@@ -8,9 +10,15 @@ namespace Ghost.Platform.Google.Jobs.Internal;
 internal static class GoogleJobsParser
 {
     // Parse job listings from an HTML payload by locating embedded JSON arrays
-    public static IReadOnlyList<JobListing> ParseFromHtml(string html)
+    public static IReadOnlyList<JobListing> ParseFromHtml(string html, ILogger? logger = null)
     {
-        if (string.IsNullOrEmpty(html)) return Array.Empty<JobListing>();
+        logger ??= NullLogger.Instance;
+        if (string.IsNullOrEmpty(html))
+        {
+            logger.LogWarning("ParseFromHtml called with empty or null HTML");
+            return Array.Empty<JobListing>();
+        }
+        logger.LogDebug("Starting parse of {Length} bytes", html.Length);
 
         // The Jobs widget contains embedded JSON arrays; attempt several heuristics to locate them.
         // First try the known widget key marker. If not found, try to find common JSON prefixes
@@ -20,6 +28,7 @@ internal static class GoogleJobsParser
         int start = -1;
         if (idx >= 0)
         {
+            logger.LogDebug("Found widget key at index {Index}", idx);
             start = html.LastIndexOf('[', idx);
         }
 
@@ -27,7 +36,15 @@ internal static class GoogleJobsParser
         if (start < 0)
         {
             var altIdx = html.IndexOf("htl;jobs", StringComparison.OrdinalIgnoreCase);
-            if (altIdx < 0) altIdx = html.IndexOf("jobs" , StringComparison.OrdinalIgnoreCase);
+            if (altIdx >= 0)
+            {
+                logger.LogDebug("Found 'htl;jobs' at index {Index}", altIdx);
+            }
+            else
+            {
+                altIdx = html.IndexOf("jobs", StringComparison.OrdinalIgnoreCase);
+                if (altIdx >= 0) logger.LogDebug("Found 'jobs' at index {Index}", altIdx);
+            }
             if (altIdx >= 0) start = html.LastIndexOf('[', altIdx);
         }
 
@@ -35,12 +52,14 @@ internal static class GoogleJobsParser
         if (start < 0)
         {
             start = html.IndexOf('[', StringComparison.Ordinal);
+            logger.LogDebug(start >= 0 ? $"Fallback JSON start found at {start}" : "No JSON start bracket found");
         }
 
         if (start < 0) return Array.Empty<JobListing>();
 
         var maxLen = Math.Min(html.Length - start, 400000); // increase scan length for larger payloads
         var snippet = html.Substring(start, maxLen);
+        logger.LogDebug("JSON candidate extraction length: {Length}", snippet.Length);
 
         var jobs = new List<JobListing>();
 
@@ -67,7 +86,11 @@ internal static class GoogleJobsParser
             try
             {
                 using var doc = JsonDocument.Parse(content);
-                if (doc.RootElement.ValueKind != JsonValueKind.Array) continue;
+                if (doc.RootElement.ValueKind != JsonValueKind.Array)
+                {
+                    logger.LogDebug("Skipped JSON candidate at position {Pos}: root is {Kind}", i, doc.RootElement.ValueKind);
+                    continue;
+                }
 
                     foreach (var item in doc.RootElement.EnumerateArray())
                     {
@@ -119,7 +142,11 @@ internal static class GoogleJobsParser
                         });
                     }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "JSON parsing failure for candidate at position {Pos}", i);
+                continue;
+            }
         }
 
         return jobs;

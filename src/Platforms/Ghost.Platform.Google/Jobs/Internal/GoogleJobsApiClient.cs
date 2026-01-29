@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 using Ghost.Contracts.Jobs;
 
 namespace Ghost.Platform.Google.Jobs.Internal;
@@ -7,10 +8,12 @@ namespace Ghost.Platform.Google.Jobs.Internal;
 public sealed class GoogleJobsApiClient
 {
     private readonly HttpClient _http;
+    private readonly ILogger<GoogleJobsApiClient> _logger;
 
-    public GoogleJobsApiClient(HttpClient http)
+    public GoogleJobsApiClient(HttpClient http, ILogger<GoogleJobsApiClient> logger)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
         public async Task<IReadOnlyList<JobListing>> SearchAsync(string query, string location)
@@ -21,18 +24,28 @@ public sealed class GoogleJobsApiClient
         // falling back to a plain search URL if needed.
         var url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs";
 
+        _logger.LogInformation("Fetching Google Jobs from: {Url}", url);
+
         var req = new HttpRequestMessage(HttpMethod.Get, url);
         req.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
 
         var res = await _http.SendAsync(req).ConfigureAwait(false);
         var html = await res.Content.ReadAsStringAsync().ConfigureAwait(false);
+        if (string.IsNullOrEmpty(html))
+        {
+            _logger.LogWarning("Received empty HTML content from Google for url {Url}", url);
+        }
+        else
+        {
+            _logger.LogInformation("Received HTML content: {Length} bytes", html.Length);
+        }
 
         // Extract cursor
         var m = Regex.Match(html, GoogleJobsConstants.DataAsyncFcRegex);
         var cursor = m.Success ? m.Groups["cursor"].Value : null;
 
         var results = new List<JobListing>();
-        results.AddRange(GoogleJobsParser.ParseFromHtml(html));
+        results.AddRange(GoogleJobsParser.ParseFromHtml(html, _logger));
 
         // simple pagination loop - call async callback with cursor while available
         int rounds = 0;
@@ -41,9 +54,17 @@ public sealed class GoogleJobsApiClient
             var asyncUrl = $"https://www.google.com/async/callback:550?{GoogleJobsConstants.AsyncParam}={System.Uri.EscapeDataString(cursor)}";
             var r2 = await _http.GetAsync(asyncUrl).ConfigureAwait(false);
             var body = await r2.Content.ReadAsStringAsync().ConfigureAwait(false);
+            if (string.IsNullOrEmpty(body))
+            {
+                _logger.LogWarning("Received empty async body from {AsyncUrl}", asyncUrl);
+            }
+            else
+            {
+                _logger.LogInformation("Received async body: {Length} bytes", body.Length);
+            }
 
             // Parse for new jobs and cursor
-            results.AddRange(GoogleJobsParser.ParseFromHtml(body));
+            results.AddRange(GoogleJobsParser.ParseFromHtml(body, _logger));
             var m2 = Regex.Match(body, GoogleJobsConstants.DataAsyncFcRegex);
             cursor = m2.Success ? m2.Groups["cursor"].Value : null;
             await Task.Delay(300).ConfigureAwait(false);

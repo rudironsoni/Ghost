@@ -17,11 +17,23 @@ public sealed class GoogleExtension : Ghost.Hosting.IExtension
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
+        // diagnostic logging to help determine whether extension is applied and options bound
+        try
+        {
+            Console.WriteLine("Configuring GoogleExtension...");
+        }
+        catch { }
+
         // bind using configuration section
         services.Configure<GoogleOptions>(configuration.GetSection("Google"));
 
         var rootOpts = new GoogleOptions();
         configuration.GetSection("Google").Bind(rootOpts);
+        try
+        {
+            Console.WriteLine($"Google options: Jobs.Enabled = {rootOpts.Jobs?.Enabled}");
+        }
+        catch { }
 
         // Gemini
         if (rootOpts.Gemini == null || rootOpts.Gemini.Enabled)
@@ -33,9 +45,10 @@ public sealed class GoogleExtension : Ghost.Hosting.IExtension
         // Google Jobs
         if (rootOpts.Jobs == null || rootOpts.Jobs.Enabled)
         {
+            try { Console.WriteLine("Registering GoogleJobClient..."); } catch { }
             services.Configure<Jobs.GoogleJobsOptions>(configuration.GetSection("Google:Jobs"));
-            services.AddHttpClient();
-            services.AddScoped<Jobs.Internal.GoogleJobsApiClient>();
+            // Register GoogleJobsApiClient as a typed HttpClient so its HttpClient ctor param is provided
+            services.AddHttpClient<Jobs.Internal.GoogleJobsApiClient>();
             services.AddScoped<Ghost.Abstractions.IJobScraper, Jobs.GoogleJobClient>();
             services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => (Ghost.Contracts.Jobs.IJobClient)sp.GetRequiredService<Jobs.GoogleJobClient>());
         }

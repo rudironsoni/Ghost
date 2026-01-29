@@ -9,7 +9,7 @@ namespace Ghost.Platform.Glassdoor;
         /// When true, the Glassdoor HTTP client will attempt to use the configured proxy provider.
         /// When false, the client will use a direct connection.
         /// </summary>
-        public bool ProxyEnabled { get; set; } = false;
+        public bool ProxyEnabled { get; set; }
         public CountryCode Country { get; set; } = CountryCode.US;
     /// <summary>
     /// Minimum delay between requests in milliseconds.
