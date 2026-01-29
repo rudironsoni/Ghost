@@ -27,11 +27,14 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
 
         public async Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
         {
+        // ensure we have a non-null criteria to pass to scrapers
+        var criteriaNonNull = criteria ?? new JobSearchCriteria();
+
         // determine which scrapers to run based on criteria.Sources
         IEnumerable<IJobScraper> scrapersToRun;
-        if (criteria?.Sources != null && criteria.Sources.Any())
+        if (criteriaNonNull.Sources != null && criteriaNonNull.Sources.Count > 0)
         {
-            var lower = new HashSet<string>(criteria.Sources.Select(s => s?.ToLowerInvariant() ?? string.Empty));
+            var lower = new HashSet<string>(criteriaNonNull.Sources.Select(s => s?.ToLowerInvariant() ?? string.Empty));
             scrapersToRun = _scrapers.Where(s => lower.Contains(s.PlatformName?.ToLowerInvariant() ?? string.Empty));
         }
         else
@@ -41,10 +44,10 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
 
         var tasks = scrapersToRun.Select(s => Task.Run(async () =>
         {
-            try
-            {
-                return await s.SearchJobsAsync(criteria, ct).ConfigureAwait(false);
-            }
+                try
+                {
+                    return await s.SearchJobsAsync(criteriaNonNull, ct).ConfigureAwait(false);
+                }
             catch (OperationCanceledException) { throw; }
                 catch (Exception ex)
                 {
