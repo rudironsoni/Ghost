@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 
 namespace Ghost.Platform.Glassdoor;
 
-public sealed class GlassdoorJobClient : IJobClient
+public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
 {
     private readonly Internal.GlassdoorApiClient _api;
     private readonly GlassdoorOptions _options;

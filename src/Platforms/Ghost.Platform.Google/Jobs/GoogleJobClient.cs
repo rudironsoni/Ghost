@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace Ghost.Platform.Google.Jobs;
 
-public sealed class GoogleJobClient : IJobClient
+public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
 {
     private readonly Internal.GoogleJobsApiClient _api;
     private readonly GoogleJobsOptions _options;

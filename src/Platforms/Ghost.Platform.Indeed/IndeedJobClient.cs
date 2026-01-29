@@ -7,7 +7,7 @@ using Ghost.Platform.Indeed.Internal;
 
 namespace Ghost.Platform.Indeed;
 
-public class IndeedJobClient : IJobClient
+public class IndeedJobClient : Ghost.Abstractions.IJobScraper
 {
     private readonly IndeedApiClient _api;
 

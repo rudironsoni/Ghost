@@ -30,7 +30,8 @@ public sealed class LinkedInExtension : IExtension
         // Ensure required GhostKernel and IProxyProvider are available for GuestJobSearch
         // GhostKernel is registered by AddGhost and IProxyProvider is registered by host when available
         services.AddScoped<Ghost.Contracts.Social.ISocialClient, LinkedInSocialClient>();
-        services.AddScoped<Ghost.Contracts.Jobs.IJobClient, LinkedInJobClient>();
+        services.AddScoped<Ghost.Abstractions.IJobScraper, LinkedInJobClient>();
+        services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => sp.GetRequiredService<LinkedInJobClient>());
         services.AddScoped<Ghost.Contracts.News.INewsClient, LinkedInNewsClient>();
     }
 }

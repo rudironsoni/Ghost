@@ -28,6 +28,8 @@ public sealed class GlassdoorExtension : IExtension
                     };
                 });
 
-            services.AddScoped<Ghost.Contracts.Jobs.IJobClient, GlassdoorJobClient>();
+            // register as IJobScraper and IJobClient
+            services.AddScoped<Ghost.Abstractions.IJobScraper, GlassdoorJobClient>();
+            services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => sp.GetRequiredService<Ghost.Abstractions.IJobScraper>() as Ghost.Contracts.Jobs.IJobClient ?? sp.GetRequiredService<GlassdoorJobClient>());
         }
 }
