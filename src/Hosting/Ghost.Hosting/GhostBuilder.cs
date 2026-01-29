@@ -72,6 +72,9 @@ public sealed class GhostBuilder
             return GhostKernel.CreateAsync(opts).GetAwaiter().GetResult();
         });
 
+        // Register Hosted Service to manage Kernel lifecycle (shutdown)
+        _services.AddHostedService<GhostKernelHostedService>();
+
         // Register IBrowserSession as a factory from the kernel
             _services.AddScoped<IBrowserSession>(provider =>
             {

@@ -11,6 +11,11 @@ namespace Ghost.Core.Tests;
 
 public class GhostKernelTests
 {
+    private static GhostKernel CreateKernel(IPlaywright playwright, IBrowser browser, bool useStealth = false)
+    {
+        var ctor = typeof(GhostKernel).GetConstructor(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic, null, new[] { typeof(IPlaywright), typeof(IBrowser), typeof(int), typeof(bool), typeof(string) }, null)!;
+        return (GhostKernel)ctor.Invoke(new object[] { playwright, browser, 1, useStealth, "Chromium" });
+    }
     [Fact]
     public async Task NewSessionAsync_UsesOptions_ToCreateContext()
     {
@@ -22,8 +27,7 @@ public class GhostKernelTests
             .Returns(Task.FromResult(context));
 
         // create private instance via non-public ctor
-        var ctor = typeof(GhostKernel).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(IPlaywright), typeof(IBrowser), typeof(int), typeof(bool) }, null)!;
-        var kernel = (GhostKernel)ctor.Invoke(new object[] { playwright, browser, 10, false }); // Disable stealth for this test
+        var kernel = CreateKernel(playwright, browser); // Disable stealth for this test
 
         var session = await kernel.NewSessionAsync(new SessionOptions { ViewportWidth = 500, ViewportHeight = 600, UserAgent = "ua" });
         session.Should().NotBeNull();
@@ -39,8 +43,8 @@ public class GhostKernelTests
     public void Constructor_NullBrowser_ThrowsArgumentNullException()
     {
         var playwright = Substitute.For<IPlaywright>();
-        var ctor = typeof(GhostKernel).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(IPlaywright), typeof(IBrowser), typeof(int), typeof(bool) }, null)!;
-        Action act = () => ctor.Invoke(new object?[] { playwright, null, 10, true });
+        var ctor = typeof(GhostKernel).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(IPlaywright), typeof(IBrowser), typeof(int), typeof(bool), typeof(string) }, null)!;
+        Action act = () => ctor.Invoke(new object?[] { playwright, null, 10, true, "Chromium" });
         act.Should().Throw<TargetInvocationException>().WithInnerException<ArgumentNullException>();
     }
 
@@ -54,8 +58,7 @@ public class GhostKernelTests
             .Returns(Task.FromResult(context));
 
         // Create kernel with max 1 concurrent session
-        var ctor = typeof(GhostKernel).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(IPlaywright), typeof(IBrowser), typeof(int), typeof(bool) }, null)!;
-        var kernel = (GhostKernel)ctor.Invoke(new object[] { playwright, browser, 1, false });
+        var kernel = CreateKernel(playwright, browser);
 
         // 1. Start first session (should succeed)
         var session1 = await kernel.NewSessionAsync();
@@ -87,8 +90,7 @@ public class GhostKernelTests
             .Returns(Task.FromResult(context));
 
         // Create kernel with stealth enabled
-        var ctor = typeof(GhostKernel).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(IPlaywright), typeof(IBrowser), typeof(int), typeof(bool) }, null)!;
-        var kernel = (GhostKernel)ctor.Invoke(new object[] { playwright, browser, 10, true });
+        var kernel = CreateKernel(playwright, browser, useStealth: true);
 
         var session = await kernel.NewSessionAsync();
         session.Should().NotBeNull();

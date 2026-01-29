@@ -21,7 +21,7 @@ public sealed class LinkedInExtension : IExtension
         // Authenticator used by LinkedInSocialClient for logging in / cookie handling
         services.AddTransient<Internal.LinkedInAuthenticator>();
         // GuestJobSearch implements guest API scraping logic
-        services.AddScoped<Internal.GuestJobSearch>();
+        services.AddScoped<Internal.IGuestJobSearch, Internal.GuestJobSearch>();
         // Ensure required GhostKernel and IProxyProvider are available for GuestJobSearch
         // GhostKernel is registered by AddGhost and IProxyProvider is registered by host when available
         services.AddScoped<Ghost.Contracts.Social.ISocialClient, LinkedInSocialClient>();
