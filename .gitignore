@@ -80,9 +80,10 @@ appsettings.*.json
 !appsettings.json
 !appsettings.Development.json
 secrets.json
-!.env.example
 .env
 .env.*
+!.env.example
+
 
 ## Patchright/Playwright
 playwright-report/
