@@ -101,8 +101,10 @@ public class ApiProxySource : IProxySource
                     pass = parts.Length > 1 ? parts[1] : null;
                 }
 
-                var hostPort = uri.IsDefaultPort ? uri.Host : $"{uri.Host}:{uri.Port}";
-                return new ProxyInfo(hostPort, user, pass);
+                // Preserve scheme when present. Use HostAndPort to keep IPv6 bracket notation when needed.
+                var hostAndPort = uri.GetComponents(UriComponents.HostAndPort, UriFormat.Unescaped);
+                var server = uri.IsAbsoluteUri ? $"{uri.Scheme}://{hostAndPort}" : hostAndPort;
+                return new ProxyInfo(server, user, pass);
             }
 
             var m = Regex.Match(line, "^(?:([^:@]+):([^@]+)@)?([^:]+):(\\d+)$");
@@ -112,12 +114,14 @@ public class ApiProxySource : IProxySource
                 var pass = string.IsNullOrEmpty(m.Groups[2].Value) ? null : m.Groups[2].Value;
                 var host = m.Groups[3].Value;
                 var port = m.Groups[4].Value;
-                return new ProxyInfo($"{host}:{port}", user, pass);
+                // No scheme present in this branch; default to http://
+                return new ProxyInfo($"http://{host}:{port}", user, pass);
             }
 
             var simple = line.Split(':');
             if (simple.Length == 2 && int.TryParse(simple[1], out _))
-                return new ProxyInfo(line, null, null);
+                // No scheme provided -> default to http://
+                return new ProxyInfo($"http://{line}", null, null);
 
             return null;
     }
