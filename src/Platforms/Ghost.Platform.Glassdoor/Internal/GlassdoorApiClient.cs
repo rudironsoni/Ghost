@@ -21,7 +21,7 @@ internal sealed class GlassdoorApiClient
             var res = await _http.GetAsync("https://www.glassdoor.com", ct);
             var html = await res.Content.ReadAsStringAsync(ct);
             // look for "token": "..." pattern
-            var m = Regex.Match(html, "\"token\"\s*:\s*\"(?<t>[^\"]+)\"");
+            var m = Regex.Match(html, "\"token\"\\s*:\\s*\"(?<t>[^\"]+)\"");
             if (m.Success)
             {
                 return m.Groups["t"].Value;
