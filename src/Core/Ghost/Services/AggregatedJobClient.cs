@@ -8,11 +8,13 @@ using Microsoft.Extensions.Logging;
 
 namespace Ghost.Core.Services;
 
-public class AggregatedJobClient : IJobClient
+public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
 {
     private readonly IEnumerable<IJobScraper> _scrapers;
     private readonly IDeduplicationService _dedupe;
     private readonly ILogger<AggregatedJobClient>? _logger;
+    private static readonly Action<ILogger, string, Exception?> s_logScraperFailed =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(1, nameof(AggregatedJobClient)), "Scraper {Platform} failed");
 
     public AggregatedJobClient(IEnumerable<IJobScraper> scrapers, IDeduplicationService dedupe, ILogger<AggregatedJobClient>? logger = null)
     {
@@ -32,11 +34,11 @@ public class AggregatedJobClient : IJobClient
                 return await s.SearchJobsAsync(criteria, ct).ConfigureAwait(false);
             }
             catch (OperationCanceledException) { throw; }
-            catch (Exception ex)
-            {
-                _logger?.LogWarning(ex, "Scraper {Platform} failed", s.PlatformName);
-                return (IReadOnlyList<JobListing>)new List<JobListing>();
-            }
+                catch (Exception ex)
+                {
+                    if (_logger != null) s_logScraperFailed(_logger, s.PlatformName, ex);
+                    return (IReadOnlyList<JobListing>)new List<JobListing>();
+                }
         }, ct)).ToArray();
 
         await Task.WhenAll(tasks);

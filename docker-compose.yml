@@ -8,6 +8,10 @@ services:
       - Ghost__Kernel__Headless=true
       - Ghost__Kernel__MaxConcurrentSessions=5
       - Ghost__Extensions__LinkedIn__Enabled=true
+      - Ghost__Extensions__Indeed__Enabled=true
+      - Ghost__Extensions__Indeed__Country=ES
+      - Ghost__Extensions__Glassdoor__Enabled=true
+      - Ghost__Extensions__Glassdoor__Country=ES
       - Ghost__Extensions__Google__Enabled=false
       - Ghost__Extensions__OpenAI__Enabled=false
     ports:
