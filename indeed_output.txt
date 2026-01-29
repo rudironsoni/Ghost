@@ -1,0 +1,5 @@
+Searching Indeed for 'Software Engineer' in Barcelona (MaxResults 5) against http://localhost:5000/api/jobs/search
+Response (summary):
+...
+Found 0 jobs from Indeed.
+⚠️ WARNING: returned 0 jobs.

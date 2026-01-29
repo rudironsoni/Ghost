@@ -1,0 +1,148 @@
++ trap cleanup EXIT INT
++ export Ghost__Extensions__Indeed__Enabled=true
++ Ghost__Extensions__Indeed__Enabled=true
++ export Ghost__Extensions__Indeed__Country=ES
++ Ghost__Extensions__Indeed__Country=ES
++ export Ghost__Extensions__Glassdoor__Enabled=true
++ Ghost__Extensions__Glassdoor__Enabled=true
++ export Ghost__Extensions__Glassdoor__Country=ES
++ Ghost__Extensions__Glassdoor__Country=ES
++ export Ghost__Extensions__Google__GoogleJobs__Enabled=true
++ Ghost__Extensions__Google__GoogleJobs__Enabled=true
++ export Ghost__Extensions__Google__GoogleJobs__Country=ES
++ Ghost__Extensions__Google__GoogleJobs__Country=ES
++ export Ghost__Extensions__LinkedIn__Enabled=true
++ Ghost__Extensions__LinkedIn__Enabled=true
++ export Ghost__Extensions__LinkedIn__Country=ES
++ Ghost__Extensions__LinkedIn__Country=ES
++ export ASPNETCORE_ENVIRONMENT=Development
++ ASPNETCORE_ENVIRONMENT=Development
++ echo 'Starting Ghost.WebApi...'
+Starting Ghost.WebApi...
++ PID=2144097
++ echo 'Waiting for API to be ready...'
+Waiting for API to be ready...
++ MAX_RETRIES=30
++ COUNT=0
++ curl -s http://localhost:5000/health
++ dotnet run --project src/Ghost.WebApi
++ sleep 2
++ COUNT=1
++ '[' 1 -ge 30 ']'
++ ps -p 2144097
++ curl -s http://localhost:5000/health
++ sleep 2
++ COUNT=2
++ '[' 2 -ge 30 ']'
++ ps -p 2144097
++ curl -s http://localhost:5000/health
++ sleep 2
++ COUNT=3
++ '[' 3 -ge 30 ']'
++ ps -p 2144097
++ curl -s http://localhost:5000/health
++ sleep 2
++ COUNT=4
++ '[' 4 -ge 30 ']'
++ ps -p 2144097
++ curl -s http://localhost:5000/health
++ sleep 2
++ COUNT=5
++ '[' 5 -ge 30 ']'
++ ps -p 2144097
++ curl -s http://localhost:5000/health
++ sleep 2
++ COUNT=6
++ '[' 6 -ge 30 ']'
++ ps -p 2144097
++ curl -s http://localhost:5000/health
++ sleep 2
++ COUNT=7
++ '[' 7 -ge 30 ']'
++ ps -p 2144097
++ curl -s http://localhost:5000/health
++ sleep 2
++ COUNT=8
++ '[' 8 -ge 30 ']'
++ ps -p 2144097
++ curl -s http://localhost:5000/health
++ echo 'API is ready!'
+API is ready!
++ echo 'Running Search Scripts...'
+Running Search Scripts...
++ echo '>>> LINKEDIN <<<'
+>>> LINKEDIN <<<
++ ./tools/scripts/search_linkedin.sh
+Searching LinkedIn for 'Backend Engineer' in Madrid (MaxResults 5) against http://localhost:5000/api/jobs/search
+=== Testing Strategy: GuestApi ===
+Response (summary):
+[LinkedIn] Backend Developer @ BBVA Technology en Europa - Madrid y alrededores (N/A)
+[LinkedIn] Backend Developer @ Nabu Casa - Madrid (N/A)
+[LinkedIn] Junior FullStack Developer @ Fibonad - Madrid (N/A)
+[LinkedIn] Backend Software Engineer @ Cabify - Madrid (N/A)
+[LinkedIn] Beca Backend Developer- Madrid @ Slashmobility - Madrid (N/A)
+...
+Found 5 jobs from LinkedIn.
+✅ SUCCESS: returned results.
+=== Testing Strategy: BrowserPage ===
+Response (summary):
+[Unknown] Backend Developer @ BBVA Technology en Europa - Greater Madrid Metropolitan Area (N/A)
+[Unknown] Backend Developer @ Nabu Casa - Madrid, Community of Madrid, Spain (N/A)
+[Unknown] Junior FullStack Developer @ Fibonad - Madrid, Community of Madrid, Spain (N/A)
+...
+Found 3 jobs from LinkedIn.
+✅ SUCCESS: returned results.
+=== Testing Strategy: Hybrid ===
+Response (summary):
+[LinkedIn] Backend Developer @ BBVA Technology en Europa - Madrid y alrededores (N/A)
+[LinkedIn] Backend Developer @ Nabu Casa - Madrid (N/A)
+[LinkedIn] Junior FullStack Developer @ Fibonad - Madrid (N/A)
+[LinkedIn] Backend Software Engineer @ Cabify - Madrid (N/A)
+[LinkedIn] Beca Backend Developer- Madrid @ Slashmobility - Madrid (N/A)
+...
+Found 5 jobs from LinkedIn.
+✅ SUCCESS: returned results.
++ echo '>>> INDEED <<<'
+>>> INDEED <<<
++ ./tools/scripts/search_indeed.sh
+Searching Indeed for 'Software Engineer' in Barcelona (MaxResults 5) against http://localhost:5000/api/jobs/search
+Response (summary):
+...
+Found 0 jobs from Indeed.
+⚠️ WARNING: returned 0 jobs.
++ echo '>>> GOOGLE <<<'
+>>> GOOGLE <<<
++ ./tools/scripts/search_google.sh
+Searching Google for 'DevOps' in Spain (MaxResults 5) against http://localhost:5000/api/jobs/search
+Response (summary):
+...
+Found 0 jobs from Google.
+⚠️ WARNING: returned 0 jobs.
++ echo '>>> GLASSDOOR <<<'
+>>> GLASSDOOR <<<
++ ./tools/scripts/search_glassdoor.sh
+Searching Glassdoor for 'Data Engineer' (Remote) (MaxResults 5) against http://localhost:5000/api/jobs/search
+Response (summary):
+...
+Found 0 jobs from Glassdoor.
+⚠️ WARNING: returned 0 jobs.
++ echo '>>> AGGREGATED (ALL) <<<'
+>>> AGGREGATED (ALL) <<<
++ ./tools/scripts/search_all.sh
+Searching all sources for '.NET Developer' in Madrid, Spain (MaxResults 5) against http://localhost:5000/api/jobs/search
+Response (summary):
+[LinkedIn] .NET Developer - Spain @ Movilges - Madrid (N/A)
+[LinkedIn] .NET Developer @ Plexus Tech - Madrid (N/A)
+[LinkedIn] Desarrollador/a .NET @ Pasiona - Madrid (N/A)
+[LinkedIn] 💻 Desarrollador/a .NET Core @ Kuik! Software, IT & IA - Madrid (N/A)
+[LinkedIn] Programador .NET @ Second Window - Madrid y alrededores (N/A)
+...
+Found 5 jobs.
+✅ SUCCESS: returned results.
++ echo 'Tests complete.'
+Tests complete.
++ cleanup
++ echo 'Stopping WebApi...'
+Stopping WebApi...
++ '[' '!' -z 2144097 ']'
++ kill 2144097

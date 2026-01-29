@@ -15,12 +15,12 @@ internal static class IndeedConstants
     {
         var locale = country switch
         {
-            CountryCode.US => "en_US",
-            CountryCode.UK => "en_GB",
-            CountryCode.ES => "es_ES",
-            CountryCode.DE => "de_DE",
-            CountryCode.FR => "fr_FR",
-            _ => "en_US"
+            CountryCode.US => "en-US",
+            CountryCode.UK => "en-GB",
+            CountryCode.ES => "es-ES",
+            CountryCode.DE => "de-DE",
+            CountryCode.FR => "fr-FR",
+            _ => "en-US"
         };
 
         var domain = country switch
@@ -34,12 +34,15 @@ internal static class IndeedConstants
             _ => "indeed.com"
         };
 
+        // indeed-co expects an ISO country code (e.g. "US", "ES", "GB")
+        var indeedCo = country == CountryCode.UK ? "GB" : country.ToString().ToUpperInvariant();
+
         return new Dictionary<string,string>
         {
             ["Host"] = "apis.indeed.com",
             ["Api-Key"] = ApiKey,
             ["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-            ["indeed-co"] = domain,
+            ["indeed-co"] = indeedCo,
             ["indeed-locale"] = locale
         };
     }
