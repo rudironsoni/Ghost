@@ -23,7 +23,22 @@ public sealed class RotatingWebProxy : IWebProxy
         if (proxy is null)
             return destination; // direct connection
 
-        return new Uri(proxy.Server);
+        // Build the proxy Uri. If credentials are provided separately on the proxy
+        // object, attach them to the URI using UriBuilder so that schemes like
+        // socks5://username:password@host:port are produced. URL-encode the
+        // username/password to ensure special characters are handled safely.
+        var serverUri = new Uri(proxy.Server);
+        var uriBuilder = new UriBuilder(serverUri);
+
+        if (!string.IsNullOrEmpty(proxy.Username))
+        {
+            // UriBuilder will include the UserName/Password parts when creating the Uri.
+            // Escape username/password to be safe with special characters.
+            uriBuilder.UserName = Uri.EscapeDataString(proxy.Username);
+            uriBuilder.Password = Uri.EscapeDataString(proxy.Password ?? string.Empty);
+        }
+
+        return uriBuilder.Uri;
     }
 
     public bool IsBypassed(Uri host)

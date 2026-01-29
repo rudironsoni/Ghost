@@ -3,7 +3,8 @@ using Ghost.Abstractions;
 using Ghost.Utilities;
 using Ghost.WebApi.Features.LinkedIn;
 using Ghost.WebApi.Features.Jobs;
-using System.Reflection;
+// Removed unused reflection/disk/culture usings after replacing dynamic loader with
+// compile-time referenced extensions.
 
 // Load environment variables from .env early in startup (after using directives)
 // Requires DotNetEnv package
@@ -65,81 +66,32 @@ builder.Services.AddGhost(builder.Configuration, gw =>
         builder.Configuration.GetSection("Ghost:Kernel").Bind(options);
     });
 
-    // Explicitly register LinkedIn extension when referenced directly
-    var linkedInSection = builder.Configuration.GetSection("Ghost:Extensions:LinkedIn");
-    var isEnabled = linkedInSection.GetValue<bool>("Enabled");
-    
-    if (linkedInSection.Exists() && isEnabled)
+    // Explicit extension registration using compile-time referenced extensions.
+    // This avoids dynamic assembly loading and ensures DI registrations from
+    // referenced projects run at startup.
+
+    // LinkedIn
+    if (builder.Configuration.GetValue("Ghost:Extensions:LinkedIn:Enabled", false))
     {
-        try
-            {
-                // Use the directly referenced extension type so its DI registrations run
-                gw.UseExtension(new Ghost.Platform.LinkedIn.LinkedInExtension());
-            }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[Error] Failed to register LinkedIn extension directly: {ex.Message}");
-        }
+        gw.UseExtension(new Ghost.Platform.LinkedIn.LinkedInExtension());
     }
 
-        // Dynamic Extension Loading
-        var extensionsSection = builder.Configuration.GetSection("Ghost:Extensions");
-        foreach (var section in extensionsSection.GetChildren())
-        {
-            var platformName = section.Key;
-            // Skip LinkedIn here because it's explicitly registered above when enabled
-            if (string.Equals(platformName, "LinkedIn", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-            // Check if explicitly enabled
-            var enabled = section.GetValue<bool>("Enabled");
+    // Indeed
+    if (builder.Configuration.GetValue("Ghost:Extensions:Indeed:Enabled", false))
+    {
+        gw.UseExtension(new Ghost.Platform.Indeed.IndeedExtension());
+    }
 
-        if (enabled)
-        {
-            try
-            {
-                var assemblyName = $"Ghost.Platform.{platformName}";
-                var typeName = $"{assemblyName}.{platformName}Extension";
+    // Glassdoor
+    if (builder.Configuration.GetValue("Ghost:Extensions:Glassdoor:Enabled", false))
+    {
+        gw.UseExtension(new Ghost.Platform.Glassdoor.GlassdoorExtension());
+    }
 
-                // 1. Try to find the assembly if already loaded
-                var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                    .FirstOrDefault(a => a.GetName().Name == assemblyName);
-
-                // 2. If not found, try to load it
-                if (assembly == null)
-                {
-                    try
-                    {
-                        assembly = Assembly.Load(assemblyName);
-                    }
-                    catch (FileNotFoundException)
-                    {
-                        Console.WriteLine($"[Warning] Extension assembly '{assemblyName}' not found.");
-                        continue;
-                    }
-                }
-
-                // 3. Find and instantiate the extension type
-                if (assembly != null)
-                {
-                    var type = assembly.GetType(typeName);
-                    if (type != null && Activator.CreateInstance(type) is IExtension extInstance)
-                    {
-                        gw.UseExtension(extInstance);
-                        Console.WriteLine($"[Info] Loaded extension: {platformName}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"[Warning] Could not find extension type '{typeName}' in assembly '{assemblyName}'.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[Error] Failed to load extension '{platformName}': {ex.Message}");
-            }
-        }
+    // Google
+    if (builder.Configuration.GetValue("Ghost:Extensions:Google:Enabled", false))
+    {
+        gw.UseExtension(new Ghost.Platform.Google.GoogleExtension());
     }
 });
 // Ensure IDeduplicationService is registered before AggregatedJobClient which depends on it.

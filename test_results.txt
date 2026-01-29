@@ -1,0 +1,60 @@
+Starting Ghost.WebApi...
+Waiting for API to be ready...
+API is ready!
+Running Search Scripts...
+>>> LINKEDIN <<<
+Searching LinkedIn for 'Backend Engineer' in Madrid (MaxResults 5) against http://localhost:5000/api/jobs/search
+=== Testing Strategy: GuestApi ===
+Response (summary):
+[LinkedIn] Backend Developer @ BBVA Technology en Europa - Madrid y alrededores (N/A)
+[LinkedIn] Backend Developer @ Nabu Casa - Madrid (N/A)
+[LinkedIn] Junior FullStack Developer @ Fibonad - Madrid (N/A)
+[LinkedIn] Beca Backend Developer- Madrid @ Slashmobility - Madrid (N/A)
+...
+Found 4 jobs from LinkedIn.
+✅ SUCCESS: returned results.
+=== Testing Strategy: BrowserPage ===
+Response (summary):
+[Unknown] Backend Developer @ BBVA Technology en Europa - Greater Madrid Metropolitan Area (N/A)
+[Unknown] Backend Developer @ Nabu Casa - Madrid, Community of Madrid, Spain (N/A)
+[Unknown] Backend Software Engineer @ Cabify - Madrid, Community of Madrid, Spain (N/A)
+...
+Found 3 jobs from LinkedIn.
+✅ SUCCESS: returned results.
+=== Testing Strategy: Hybrid ===
+Response (summary):
+[LinkedIn] Backend Developer @ BBVA Technology en Europa - Madrid y alrededores (N/A)
+[LinkedIn] Backend Developer @ Nabu Casa - Madrid (N/A)
+[LinkedIn] Junior FullStack Developer @ Fibonad - Madrid (N/A)
+...
+Found 3 jobs from LinkedIn.
+✅ SUCCESS: returned results.
+>>> INDEED <<<
+Searching Indeed for 'Software Engineer' in Barcelona (MaxResults 5) against http://localhost:5000/api/jobs/search
+Response (summary):
+...
+Found 0 jobs from Indeed.
+⚠️ WARNING: returned 0 jobs.
+>>> GOOGLE <<<
+Searching Google for 'DevOps' in Spain (MaxResults 5) against http://localhost:5000/api/jobs/search
+Response (summary):
+...
+Found 0 jobs from Google.
+⚠️ WARNING: returned 0 jobs.
+>>> GLASSDOOR <<<
+Searching Glassdoor for 'Data Engineer' (Remote) (MaxResults 5) against http://localhost:5000/api/jobs/search
+Response (summary):
+...
+Found 0 jobs from Glassdoor.
+⚠️ WARNING: returned 0 jobs.
+>>> AGGREGATED (ALL) <<<
+Searching all sources for '.NET Developer' in Madrid, Spain (MaxResults 5) against http://localhost:5000/api/jobs/search
+Response (summary):
+[LinkedIn] .NET Developer - Spain @ Movilges - Madrid (N/A)
+[LinkedIn] .NET Developer @ Plexus Tech - Madrid (N/A)
+[LinkedIn] Desarrollador/a .NET @ Pasiona - Madrid (N/A)
+...
+Found 3 jobs.
+✅ SUCCESS: returned results.
+Tests complete.
+Stopping WebApi...
