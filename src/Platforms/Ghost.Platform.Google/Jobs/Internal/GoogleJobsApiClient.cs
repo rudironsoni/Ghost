@@ -19,14 +19,11 @@ public sealed class GoogleJobsApiClient
     private static readonly Action<ILogger, int, Exception?> LogReceivedHtml =
         LoggerMessage.Define<int>(LogLevel.Information, new EventId(3, nameof(LogReceivedHtml)), "Received HTML content: {Length} bytes");
 
-    private static readonly Action<ILogger, string, Exception?> LogHtmlDumped =
-        LoggerMessage.Define<string>(LogLevel.Information, new EventId(4, nameof(LogHtmlDumped)), "HTML dumped to: {DumpPath}");
-
     private static readonly Action<ILogger, string, Exception?> LogReceivedEmptyAsyncBody =
-        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(5, nameof(LogReceivedEmptyAsyncBody)), "Received empty async body from {AsyncUrl}");
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(4, nameof(LogReceivedEmptyAsyncBody)), "Received empty async body from {AsyncUrl}");
 
     private static readonly Action<ILogger, int, Exception?> LogReceivedAsyncBody =
-        LoggerMessage.Define<int>(LogLevel.Information, new EventId(6, nameof(LogReceivedAsyncBody)), "Received async body: {Length} bytes");
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(5, nameof(LogReceivedAsyncBody)), "Received async body: {Length} bytes");
 
 
     public GoogleJobsApiClient(HttpClient http, ILogger<GoogleJobsApiClient> logger)
@@ -57,10 +54,6 @@ public sealed class GoogleJobsApiClient
         else
         {
             LogReceivedHtml(_logger, html.Length, null);
-            // Dump HTML to file for debugging
-            var dumpPath = Path.Combine(Environment.CurrentDirectory, "google_dump.html");
-            await File.WriteAllTextAsync(dumpPath, html).ConfigureAwait(false);
-            LogHtmlDumped(_logger, dumpPath, null);
         }
 
         // Extract cursor
