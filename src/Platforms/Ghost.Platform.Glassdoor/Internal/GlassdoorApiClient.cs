@@ -26,6 +26,10 @@ public sealed class GlassdoorApiClient
 
             var res = await _http.SendAsync(request, ct);
             var html = await res.Content.ReadAsStringAsync(ct);
+
+            // DEBUG: Write raw HTML to file
+            try { System.IO.File.WriteAllText("logs/glassdoor_csrf.html", html); } catch { }
+
             var m = Regex.Match(html, "\"token\"\\s*:\\s*\"(?<t>[^\"]+)\"");
             if (m.Success)
             {
@@ -66,7 +70,12 @@ public sealed class GlassdoorApiClient
 
         var res = await _http.SendAsync(request, ct);
         if (!res.IsSuccessStatusCode) return null;
-        return await res.Content.ReadAsStringAsync(ct);
+        var json = await res.Content.ReadAsStringAsync(ct);
+
+        // DEBUG: Write raw JSON to file
+        try { System.IO.File.WriteAllText("logs/glassdoor_search.json", json); } catch { }
+
+        return json;
     }
 }
 
