@@ -1,21 +1,17 @@
 using Microsoft.Extensions.DependencyInjection;
+using Ghost.Abstractions;
+using Ghost.Core.Services;
+using Ghost.Contracts.Jobs;
 
-namespace Ghost.Extensions;
+namespace Ghost.Core.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddGhostKernel(this IServiceCollection services, Action<Ghost.Core.KernelOptions>? configure = null)
+    public static IServiceCollection AddGhostAggregator(this IServiceCollection services)
     {
-        var options = new Ghost.Core.KernelOptions();
-        configure?.Invoke(options);
-        services.AddSingleton(options);
-        services.AddSingleton<Ghost.Core.GhostKernel>(sp =>
-        {
-            var opts = sp.GetRequiredService<Ghost.Core.KernelOptions>();
-            return Ghost.Core.GhostKernel.CreateAsync(opts).GetAwaiter().GetResult();
-        });
-
-        services.AddSingleton<Microsoft.Extensions.Logging.ILoggerFactory, Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory>();
+        services.AddScoped<AggregatedJobClient>();
+        services.AddScoped<IJobClient>(sp => sp.GetRequiredService<AggregatedJobClient>());
+        services.AddScoped<IJobScraper>(sp => sp.GetRequiredService<AggregatedJobClient>());
         return services;
     }
 }

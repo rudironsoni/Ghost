@@ -34,7 +34,8 @@ public sealed class GoogleExtension : Ghost.Contracts.IExtension
             services.Configure<Jobs.GoogleJobsOptions>(configuration.GetSection("Google:Jobs"));
             services.AddHttpClient();
             services.AddScoped<Jobs.Internal.GoogleJobsApiClient>();
-            services.AddScoped<Ghost.Contracts.Jobs.IJobClient, Jobs.GoogleJobClient>();
+            services.AddScoped<Ghost.Abstractions.IJobScraper, Jobs.GoogleJobClient>();
+            services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => (Ghost.Contracts.Jobs.IJobClient)sp.GetRequiredService<Jobs.GoogleJobClient>());
         }
     }
 }

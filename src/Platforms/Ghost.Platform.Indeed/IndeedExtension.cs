@@ -33,7 +33,9 @@ public static class IndeedExtension
                 });
 
             services.AddSingleton<IndeedJobClient>();
-            services.AddSingleton<IJobClient>(sp => sp.GetRequiredService<IndeedJobClient>());
+            // register as both IJobScraper and IJobClient for backward compatibility
+            services.AddSingleton<Ghost.Abstractions.IJobScraper>(sp => sp.GetRequiredService<IndeedJobClient>());
+            services.AddSingleton<Ghost.Contracts.Jobs.IJobClient>(sp => sp.GetRequiredService<IndeedJobClient>());
 
             return services;
         }
