@@ -11,6 +11,7 @@
     <ProjectReference Include="..\..\Core\Ghost\Ghost.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
+    <ProjectReference Include="..\..\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
   </ItemGroup>
 
   <ItemGroup>
