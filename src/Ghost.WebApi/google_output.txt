@@ -1,5 +1,0 @@
-Searching Google for 'DevOps' in Spain (MaxResults 5) against http://localhost:5000/api/jobs/search
-Response (summary):
-...
-Found 0 jobs from Google.
-⚠️ WARNING: returned 0 jobs.

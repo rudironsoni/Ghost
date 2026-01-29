@@ -1,5 +1,0 @@
-Searching Glassdoor for 'Data Engineer' (Remote) (MaxResults 5) against http://localhost:5000/api/jobs/search
-Response (summary):
-...
-Found 0 jobs from Glassdoor.
-⚠️ WARNING: returned 0 jobs.
