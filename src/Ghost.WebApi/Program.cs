@@ -15,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 try {
+    Console.WriteLine($"[DEBUG] Environment: {builder.Environment.EnvironmentName}");
     Console.WriteLine($"[DEBUG] Ghost:Extensions:Google:Enabled = {builder.Configuration.GetValue<bool?>("Ghost:Extensions:Google:Enabled")}");
     Console.WriteLine($"[DEBUG] Indeed:Country = {builder.Configuration.GetValue<string>("Indeed:Country")}");
 } catch {}
