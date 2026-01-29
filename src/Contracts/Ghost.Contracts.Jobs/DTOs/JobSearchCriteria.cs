@@ -47,4 +47,10 @@ public sealed record JobSearchCriteria
     /// Maximum number of results to return.
     /// </summary>
     public int MaxResults { get; init; } = 25;
+
+    /// <summary>
+    /// Optional list of scraper platform names to restrict the search to. Case-insensitive.
+    /// When null or empty, all scrapers are used.
+    /// </summary>
+    public List<string>? Sources { get; init; }
 }
