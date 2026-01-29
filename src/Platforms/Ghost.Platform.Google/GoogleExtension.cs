@@ -1,12 +1,14 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+using Ghost.Hosting;
+
 namespace Ghost.Platform.Google;
 
 /// <summary>
 /// Registers the Google/Gemini extension.
 /// </summary>
-public sealed class GoogleExtension : Ghost.Contracts.IExtension
+public sealed class GoogleExtension : Ghost.Hosting.IExtension
 {
     public string Name => "Google";
     public Version Version => new(1, 0, 0);

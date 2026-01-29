@@ -3,6 +3,7 @@ using Ghost.Models;
 using Microsoft.Extensions.Configuration;
 using Ghost.Platform.Indeed.Internal;
 using Ghost.Contracts;
+using Ghost.Hosting;
 using Ghost.Contracts.Jobs;
 using Ghost.Abstractions;
 using Ghost.Http;
@@ -10,7 +11,7 @@ using System.Net.Http;
 
 namespace Ghost.Platform.Indeed;
 
-public class IndeedExtension : Ghost.Contracts.IExtension
+public class IndeedExtension : Ghost.Hosting.IExtension
 {
     public string Name => "Indeed";
     public Version Version => new(1, 0, 0);
