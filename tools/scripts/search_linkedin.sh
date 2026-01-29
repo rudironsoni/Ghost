@@ -24,7 +24,7 @@ for STRATEGY in "${STRATEGIES[@]}"; do
 
   echo "Response (summary):"
   if [ "$HAS_JQ" -eq 1 ]; then
-    echo "$RESPONSE" | jq . || echo "$RESPONSE" | head -c 500
+    echo "$RESPONSE" | jq -r '.[] | "[\(.source // \"Unknown\")] \(.title) @ \(.company) - \(.location) (\(.salaryRaw // \"N/A\"))"' || echo "$RESPONSE" | head -c 500
   else
     echo "$RESPONSE" | head -c 500
   fi
