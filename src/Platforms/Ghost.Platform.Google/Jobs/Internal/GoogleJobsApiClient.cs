@@ -10,21 +10,37 @@ public sealed class GoogleJobsApiClient
     private readonly HttpClient _http;
     private readonly ILogger<GoogleJobsApiClient> _logger;
 
+    private static readonly Action<ILogger, string, Exception?> LogFetchingJobs =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(LogFetchingJobs)), "Fetching Google Jobs from: {Url}");
+
+    private static readonly Action<ILogger, string, Exception?> LogReceivedEmptyHtml =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(2, nameof(LogReceivedEmptyHtml)), "Received empty HTML content from Google for url {Url}");
+
+    private static readonly Action<ILogger, int, Exception?> LogReceivedHtml =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(3, nameof(LogReceivedHtml)), "Received HTML content: {Length} bytes");
+
+    private static readonly Action<ILogger, string, Exception?> LogReceivedEmptyAsyncBody =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(4, nameof(LogReceivedEmptyAsyncBody)), "Received empty async body from {AsyncUrl}");
+
+    private static readonly Action<ILogger, int, Exception?> LogReceivedAsyncBody =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(5, nameof(LogReceivedAsyncBody)), "Received async body: {Length} bytes");
+
+
     public GoogleJobsApiClient(HttpClient http, ILogger<GoogleJobsApiClient> logger)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-        public async Task<IReadOnlyList<JobListing>> SearchAsync(string query, string location)
-        {
-            var q = System.Uri.EscapeDataString(query);
-            var loc = System.Uri.EscapeDataString(location);
+    public async Task<IReadOnlyList<JobListing>> SearchAsync(string query, string location)
+    {
+        var q = System.Uri.EscapeDataString(query);
+        var loc = System.Uri.EscapeDataString(location);
         // Use the 'ibp=htl;jobs' parameter which targets the Google Jobs (Jobs widget) view
         // falling back to a plain search URL if needed.
         var url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs";
 
-        _logger.LogInformation("Fetching Google Jobs from: {Url}", url);
+        LogFetchingJobs(_logger, url, null);
 
         var req = new HttpRequestMessage(HttpMethod.Get, url);
         req.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
@@ -33,11 +49,11 @@ public sealed class GoogleJobsApiClient
         var html = await res.Content.ReadAsStringAsync().ConfigureAwait(false);
         if (string.IsNullOrEmpty(html))
         {
-            _logger.LogWarning("Received empty HTML content from Google for url {Url}", url);
+            LogReceivedEmptyHtml(_logger, url, null);
         }
         else
         {
-            _logger.LogInformation("Received HTML content: {Length} bytes", html.Length);
+            LogReceivedHtml(_logger, html.Length, null);
         }
 
         // Extract cursor
@@ -56,11 +72,11 @@ public sealed class GoogleJobsApiClient
             var body = await r2.Content.ReadAsStringAsync().ConfigureAwait(false);
             if (string.IsNullOrEmpty(body))
             {
-                _logger.LogWarning("Received empty async body from {AsyncUrl}", asyncUrl);
+                LogReceivedEmptyAsyncBody(_logger, asyncUrl, null);
             }
             else
             {
-                _logger.LogInformation("Received async body: {Length} bytes", body.Length);
+                LogReceivedAsyncBody(_logger, body.Length, null);
             }
 
             // Parse for new jobs and cursor
