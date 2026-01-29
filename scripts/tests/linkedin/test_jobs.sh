@@ -19,18 +19,18 @@ fi
 for STRATEGY in "${STRATEGIES[@]}"; do
   echo "========================================"
   echo "Testing strategy: $STRATEGY"
-  echo "Searching for 'Software Engineer' in 'Madrid'..."
+  echo "Searching for '.NET Engineer' in 'Madrid'..."
 
   # We use maxResults=3 to speed up the test and reduce rate limiting
   URL="$API_URL/api/linkedin/jobs/search?strategy=$STRATEGY"
 
   SEARCH_RESPONSE=$(curl -s -X POST "$URL" \
     -H "Content-Type: application/json" \
-    -d '{ "query": "Software Engineer", "location": "Madrid", "maxResults": 3 }')
+    -d '{ "query": ".NET Engineer", "location": "Madrid", "maxResults": 3 }')
 
   echo "Response (Summary):"
   # Show only the first 500 chars to verify we got content without spamming logs
-  echo "$SEARCH_RESPONSE" | head -c 500
+  echo "$SEARCH_RESPONSE" | jq .
   echo "..."
   echo ""
 
@@ -38,7 +38,7 @@ for STRATEGY in "${STRATEGIES[@]}"; do
   if echo "$SEARCH_RESPONSE" | grep -q "\["; then
       COUNT=$(echo "$SEARCH_RESPONSE" | grep -o "\"id\"" | wc -l)
       echo "Found $COUNT jobs via $STRATEGY."
-      
+
       # Basic validation check
       if [ "$COUNT" -eq 0 ]; then
          echo "⚠️ WARNING: $STRATEGY returned 0 jobs."
