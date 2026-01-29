@@ -2,12 +2,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ghost.Contracts;
 using Ghost.Abstractions;
+using Ghost.Hosting;
 using Ghost.Http;
 using System.Net.Http;
 
 namespace Ghost.Platform.Glassdoor;
 
-public sealed class GlassdoorExtension : Ghost.Contracts.IExtension
+public sealed class GlassdoorExtension : IExtension
 {
     public string Name => "Glassdoor";
     public Version Version => new(1,0,0);
