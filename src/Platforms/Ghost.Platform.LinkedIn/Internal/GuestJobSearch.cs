@@ -447,7 +447,8 @@ public sealed class GuestJobSearch : IGuestJobSearch
                                 JobType = ParseJobType(scrapedJobType),
                                 ExperienceLevel = ParseExperienceLevel(scrapedExperience),
                                 PostedAt = DateTimeOffset.UtcNow,
-                                Salary = scrapedSalary
+                                Salary = scrapedSalary,
+                                Source = "LinkedIn"
                             };
                         }
                         else

@@ -63,6 +63,11 @@ public sealed record JobListing
     public string? Url { get; init; }
 
     /// <summary>
+    /// Source platform where the job was scraped from (e.g. Indeed, Glassdoor).
+    /// </summary>
+    public string? Source { get; init; }
+
+    /// <summary>
     /// Whether the job has an 'Easy Apply' option.
     /// </summary>
     public bool IsEasyApply { get; init; }

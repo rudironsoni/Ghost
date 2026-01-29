@@ -402,7 +402,7 @@ namespace Ghost.Platform.LinkedIn;
                     {
                         return parsed with { IsEasyApply = isEasyApply };
                     }
-                    return new JobListing { Id = jobId, Url = url, IsEasyApply = isEasyApply };
+                    return new JobListing { Id = jobId, Url = url, IsEasyApply = isEasyApply, Source = "LinkedIn" };
                 }
             }
 
@@ -700,17 +700,18 @@ namespace Ghost.Platform.LinkedIn;
                         }
                     }
 
-                    if (!string.IsNullOrEmpty(title))
-                    {
-                        list.Add(new JobListing 
-                        { 
-                            Id = id, 
-                            Title = title, 
-                            Company = company, 
-                            Location = locationText,
-                            Url = jobUrl 
-                        });
-                    }
+                            if (!string.IsNullOrEmpty(title))
+                            {
+                                list.Add(new JobListing 
+                                { 
+                                    Id = id, 
+                                    Title = title, 
+                                    Company = company, 
+                                    Location = locationText,
+                                    Url = jobUrl,
+                                    Source = "LinkedIn"
+                                });
+                            }
                 }
                 catch (Exception ex)
                 {

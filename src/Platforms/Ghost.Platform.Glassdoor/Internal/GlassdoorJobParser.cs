@@ -88,6 +88,8 @@ internal static class GlassdoorJobParser
                 Company = company,
                 Location = location,
                 Salary = salary
+                ,
+                Source = "Glassdoor"
             };
         }
         catch { return null; }

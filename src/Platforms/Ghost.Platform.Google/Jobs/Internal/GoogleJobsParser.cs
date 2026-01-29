@@ -67,6 +67,8 @@ internal static class GoogleJobsParser
                         Company = company,
                         Location = location,
                         Description = description
+                        ,
+                        Source = "Google"
                     });
                 }
             }
