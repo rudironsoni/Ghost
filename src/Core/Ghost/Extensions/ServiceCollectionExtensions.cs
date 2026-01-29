@@ -1,4 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
+using Ghost.Abstractions;
+using Ghost.Utilities;
 
 namespace Ghost.Extensions;
 
@@ -16,6 +18,8 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddSingleton<Microsoft.Extensions.Logging.ILoggerFactory, Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory>();
+        // Core services
+        services.AddSingleton<IDeduplicationService, DeduplicationService>();
         return services;
     }
 }
