@@ -18,11 +18,11 @@ PAYLOAD='{"Query": ".NET Developer", "Location": "Madrid, Spain", "MaxResults": 
 RESPONSE=$(curl -s -X POST "$URL" -H "Content-Type: application/json" -d "$PAYLOAD")
 
 echo "Response (summary):"
-if [ "$HAS_JQ" -eq 1 ]; then
-  echo "$RESPONSE" | jq . || echo "$RESPONSE" | head -c 500
-else
-  echo "$RESPONSE" | head -c 500
-fi
+  if [ "$HAS_JQ" -eq 1 ]; then
+    echo "$RESPONSE" | jq -r '.[] | "[\(.source // \"Unknown\")] \(.title) @ \(.company) - \(.location) (\(.salaryRaw // \"N/A\"))"' || echo "$RESPONSE" | head -c 500
+  else
+    echo "$RESPONSE" | head -c 500
+  fi
 echo "..."
 
 # Validate JSON looks like an array
