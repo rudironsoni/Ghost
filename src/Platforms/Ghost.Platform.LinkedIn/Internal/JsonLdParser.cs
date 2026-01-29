@@ -40,7 +40,8 @@ internal sealed class JsonLdParser
                 Salary = FormatSalary(ld.BaseSalary),
                 JobType = ParseJobType(ld.EmploymentType),
                 PostedAt = posted,
-                Url = url
+                Url = url,
+                Source = "LinkedIn"
             };
         }
         catch

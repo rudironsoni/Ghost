@@ -23,7 +23,7 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
         return Internal.GlassdoorJobParser.ParseSearchResponse(payload);
     }
 
-    public Task<JobListing> GetJobDetailsAsync(string jobId, CancellationToken ct = default) => Task.FromResult(new JobListing { Id = jobId });
+    public Task<JobListing> GetJobDetailsAsync(string jobId, CancellationToken ct = default) => Task.FromResult(new JobListing { Id = jobId, Source = "Glassdoor" });
     public Task<JobApplication> ApplyAsync(string jobId, ApplicationDetails details, CancellationToken ct = default) => Task.FromException<JobApplication>(new NotImplementedException());
     public Task<IReadOnlyList<JobApplication>> GetApplicationsAsync(ApplicationsFilter? filter = null, CancellationToken ct = default) => Task.FromResult((IReadOnlyList<JobApplication>)Array.Empty<JobApplication>());
     public Task SaveJobAsync(string jobId, CancellationToken ct = default) => Task.CompletedTask;

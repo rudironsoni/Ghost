@@ -5,6 +5,11 @@ using Ghost.WebApi.Features.LinkedIn;
 using Ghost.WebApi.Features.Jobs;
 using System.Reflection;
 
+// Load environment variables from .env early in startup (after using directives)
+// Requires DotNetEnv package
+// Use TraversePath() so .env can be discovered in parent directories (works better in Docker/VS/CLI)
+DotNetEnv.Env.TraversePath().Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

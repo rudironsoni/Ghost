@@ -29,7 +29,7 @@ public class IndeedJobClient : Ghost.Abstractions.IJobScraper
     }
 
     public Task<JobListing> GetJobDetailsAsync(string jobId, CancellationToken ct = default) =>
-        Task.FromResult(new JobListing { Id = jobId });
+        Task.FromResult(new JobListing { Id = jobId, Source = "Indeed" });
 
     public Task<JobApplication> ApplyAsync(string jobId, ApplicationDetails details, CancellationToken ct = default) =>
         Task.FromResult(new JobApplication());

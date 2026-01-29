@@ -41,7 +41,8 @@ public static class IndeedJobParser
                 Location = location,
                 Description = description,
                 Salary = salary,
-                Url = url
+                Url = url,
+                Source = "Indeed"
             };
         }
     }
