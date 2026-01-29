@@ -42,14 +42,17 @@ public class DateParser : IDateParser
         if (parts.Length == 1)
         {
             var single = ParseDate(parts[0]);
-            return (single, single);
+            // Single-date ranges should have no end (ongoing/single point -> End = null)
+            return (single, null);
         }
 
         var start = ParseDate(parts[0]);
         var right = parts[1];
-        if (string.Equals(right, "Present", StringComparison.OrdinalIgnoreCase) || string.Equals(right, "Today", StringComparison.OrdinalIgnoreCase))
+        // Treat "Present", "Now", "Current", "Today" (and variants) as ongoing/no end date
+        var cleanedRight = System.Text.RegularExpressions.Regex.Replace(right ?? string.Empty, "[^A-Za-z]", "").ToLowerInvariant();
+        if (cleanedRight == "present" || cleanedRight == "now" || cleanedRight == "current" || cleanedRight == "today")
         {
-            return (start, DateOnly.FromDateTime(DateTime.UtcNow));
+            return (start, null);
         }
 
         var end = ParseDate(right);
