@@ -26,6 +26,8 @@ namespace Ghost.Platform.Indeed.Internal;
             LoggerMessage.Define<string>(LogLevel.Information, new EventId(2004, "ResponseContent"), "Response Content: {Content}");
         private static readonly Action<ILogger, string, Exception?> LogRequestPayload =
             LoggerMessage.Define<string>(LogLevel.Information, new EventId(2005, "RequestPayload"), "Request Payload: {Content}");
+        private static readonly Action<ILogger, string, string, Exception?> LogRequestHeader =
+            LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(2006, nameof(LogRequestHeader)), "Header: {Key} = {Value}");
 
     public IndeedApiClient(Ghost.Abstractions.IProxyProvider proxyProvider, IndeedOptions options, ILogger<IndeedApiClient> logger)
     {
@@ -43,15 +45,9 @@ namespace Ghost.Platform.Indeed.Internal;
 
         do
         {
-            var variables = new Dictionary<string, object?>
-            {
-                ["what"] = query,
-                ["where"] = location,
-                ["pageSize"] = Math.Min(25, remaining),
-                ["cursor"] = cursor
-            };
-
-            var payload = new { query = IndeedConstants.JobSearchQuery, variables };
+            // Format the GraphQL query to match JobSpy-style query (no variables object)
+            var formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, IndeedConstants.JobSearchQuery, query, location, Math.Min(25, remaining));
+            var payload = new { query = formattedQuery };
             var json = JsonSerializer.Serialize(payload);
             LogRequestPayload(_logger, json, null);
 
@@ -66,8 +62,8 @@ namespace Ghost.Platform.Indeed.Internal;
             // can verify presence of headers like `indeed-api-key`.
             foreach (var header in req.Headers)
             {
-                var value = string.Join(", ", header.Value);
-                _logger.LogInformation("Header: {Key} = {Value}", header.Key, value);
+                var value = string.Join(",", header.Value);
+                LogRequestHeader(_logger, header.Key, value, null);
             }
 
             // get a proxy for this request/session
@@ -91,6 +87,19 @@ namespace Ghost.Platform.Indeed.Internal;
             foreach (var kv in IndeedConstants.GetHeaders(_country))
             {
                 client.DefaultRequestHeaders.TryAddWithoutValidation(kv.Key, kv.Value);
+            }
+
+            // Log default request headers from the HttpClient so we can confirm
+            // presence of headers like `indeed-api-key` before sending.
+            foreach (var header in client.DefaultRequestHeaders)
+            {
+                LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
+            }
+
+            // Also log headers on the HttpRequestMessage (if any) just before send.
+            foreach (var header in req.Headers)
+            {
+                LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
             }
 
             var resp = await client.SendAsync(req);

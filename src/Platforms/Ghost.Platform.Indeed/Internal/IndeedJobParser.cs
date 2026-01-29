@@ -15,14 +15,17 @@ public static class IndeedJobParser
 
         foreach (var item in results.EnumerateArray())
         {
-            var id = item.GetProperty("id").GetString() ?? string.Empty;
-            var title = item.TryGetProperty("title", out var t) ? t.GetString() ?? string.Empty : string.Empty;
-            var company = item.TryGetProperty("employer", out var e) && e.TryGetProperty("name", out var en) ? en.GetString() ?? string.Empty : string.Empty;
-            var location = item.TryGetProperty("location", out var l) && l.TryGetProperty("formatted", out var f) && f.TryGetProperty("long", out var lon) ? lon.GetString() ?? string.Empty : string.Empty;
-            var description = item.TryGetProperty("description", out var d) && d.TryGetProperty("html", out var dh) ? dh.GetString() ?? string.Empty : string.Empty;
+            // New structure: each result item contains a `job` object
+            if (!item.TryGetProperty("job", out var job)) continue;
+
+            var id = job.TryGetProperty("key", out var keyEl) ? keyEl.GetString() ?? string.Empty : string.Empty;
+            var title = job.TryGetProperty("title", out var t) ? t.GetString() ?? string.Empty : string.Empty;
+            var company = job.TryGetProperty("employer", out var e) && e.TryGetProperty("name", out var en) ? en.GetString() ?? string.Empty : string.Empty;
+            var location = job.TryGetProperty("location", out var l) && l.TryGetProperty("formatted", out var f) && f.TryGetProperty("long", out var lon) ? lon.GetString() ?? string.Empty : string.Empty;
+            var description = job.TryGetProperty("description", out var d) && d.TryGetProperty("html", out var dh) ? dh.GetString() ?? string.Empty : string.Empty;
 
             string salary = string.Empty;
-            if (item.TryGetProperty("compensation", out var comp) && comp.TryGetProperty("baseSalary", out var baseS) && baseS.TryGetProperty("range", out var range))
+            if (job.TryGetProperty("compensation", out var comp) && comp.TryGetProperty("baseSalary", out var baseS) && baseS.TryGetProperty("range", out var range))
             {
                 var min = range.TryGetProperty("min", out var minEl) ? minEl.GetDecimal() : 0;
                 var max = range.TryGetProperty("max", out var maxEl) ? maxEl.GetDecimal() : 0;
