@@ -12,7 +12,7 @@ public class ParsingTests
     [InlineData("May 2022", 2022, 5, false, 0)]
     public void DateParserParse_ValidInputs(string input, int expStartYear, int expStartMonth, bool hasEnd, int expEndYear)
     {
-        var (start, end) = Ghost.Platform.LinkedIn.Internal.DateParser.Parse(input);
+        var (start, end) = new Ghost.Utilities.DateParser().ParseDateRange(input);
 
         start.Should().NotBeNull();
         start!.Value.Year.Should().Be(expStartYear);
@@ -36,7 +36,7 @@ public class ParsingTests
     [InlineData("Foo - Bar")]
     public void DateParserParse_InvalidInputs_ShouldReturnNulls(string input)
     {
-        var (start, end) = Ghost.Platform.LinkedIn.Internal.DateParser.Parse(input);
+        var (start, end) = new Ghost.Utilities.DateParser().ParseDateRange(input);
 
         // As per spec, parser returns result with Start/End null for invalids
         start.Should().BeNull();
@@ -63,7 +63,9 @@ public class ParsingTests
         </script>
         """;
 
-        var result = Ghost.Platform.LinkedIn.Internal.JsonLdParser.Parse(json, "123", "http://url");
+        var extractor = new Ghost.Utilities.JsonLdExtractor();
+        var parser = new Ghost.Platform.LinkedIn.Internal.JsonLdParser(extractor);
+        var result = parser.Parse(json, "123", "http://url");
         
         result.Should().NotBeNull();
         result!.JobType.Should().Be(expected);

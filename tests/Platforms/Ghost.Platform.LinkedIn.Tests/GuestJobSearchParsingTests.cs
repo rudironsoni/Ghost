@@ -13,7 +13,9 @@ public class GuestJobSearchParsingTests
     public void JsonLdParser_FormatSalary_HandleNull()
     {
         var html = "";
-        var parsed = JsonLdParser.Parse(html, "123", "https://www.linkedin.com/jobs/view/123");
+        var extractor = new Ghost.Utilities.JsonLdExtractor();
+        var parser = new Ghost.Platform.LinkedIn.Internal.JsonLdParser(extractor);
+        var parsed = parser.Parse(html, "123", "https://www.linkedin.com/jobs/view/123");
         parsed.Should().BeNull();
     }
 

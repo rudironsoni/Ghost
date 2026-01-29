@@ -24,6 +24,9 @@ namespace Ghost.Platform.LinkedIn;
         private static readonly Action<ILogger, string, Exception?> s_logDeepFetchFailed =
             LoggerMessage.Define<string>(LogLevel.Warning, new EventId(4, nameof(SearchJobsWithStrategyAsync)), "Failed to deep fetch details for job {Id}. Returning shallow.");
 
+        private static readonly Action<ILogger, string, Exception?> s_logZeroJobsFound =
+            LoggerMessage.Define<string>(LogLevel.Warning, new EventId(5, nameof(SearchJobsWithStrategyAsync)), "Browser search found 0 jobs. Page Title: {Title}");
+
         // Common selector sets used by DOM scraping - defined as static readonly to satisfy CA1861
         private static readonly string[] s_titleSelectors = new[] { ".top-card-layout__title", ".job-details-jobs-unified-top-card__job-title", "h1", ".job-card-list__title" };
         private static readonly string[] s_companySelectors = new[] { ".top-card-layout__first-subline .topcard__org-name-link", ".job-details-jobs-unified-top-card__company-name", ".topcard__org-name-link", ".job-card-container__company-name", ".top-card-layout__company-url", "a[data-tracking-control-name='public_jobs_topcard-org-name']" };
@@ -172,7 +175,9 @@ namespace Ghost.Platform.LinkedIn;
 
             // NOTE: debug artifacts removed - do not write files during parsing
 
-            var parsed = Internal.JsonLdParser.Parse(html ?? string.Empty, jobId, url);
+            var extractor = new Ghost.Utilities.JsonLdExtractor();
+            var parser = new Internal.JsonLdParser(extractor);
+            var parsed = parser.Parse(html ?? string.Empty, jobId, url);
 
             // If parsed is missing or missing a title or description (or company), attempt DOM scraping to fill missing fields.
             if (parsed == null || string.IsNullOrEmpty(parsed.Title) || string.IsNullOrEmpty(parsed.Description) || string.IsNullOrEmpty(parsed.Company))
@@ -621,7 +626,11 @@ namespace Ghost.Platform.LinkedIn;
             var nodes = await page.QuerySelectorAllAsync(".jobs-search-results__list-item, .jobs-search__results-list li, .base-card", ct: ct);
             // Nodes found via browser: count = nodes.Count
 
-            // If no nodes found, continue - no debug diagnostics are emitted in production
+            // If no nodes found, emit a warning with the page title to help diagnose auth walls
+            if (nodes.Count == 0)
+            {
+                s_logZeroJobsFound(_logger, pageTitle ?? "Unknown", null);
+            }
 
             var count = 0;
             foreach (var n in nodes)

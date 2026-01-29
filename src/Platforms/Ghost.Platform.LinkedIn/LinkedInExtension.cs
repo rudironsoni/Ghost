@@ -20,6 +20,11 @@ public sealed class LinkedInExtension : IExtension
         services.Configure<LinkedInOptions>(configuration.GetSection("Ghost:Extensions:LinkedIn"));
         // Authenticator used by LinkedInSocialClient for logging in / cookie handling
         services.AddTransient<Internal.LinkedInAuthenticator>();
+        // Register platform-specific implementations for core abstractions
+        services.AddScoped<Ghost.Abstractions.ITextExtractor, Internal.LinkedInTextExtractor>();
+        services.AddScoped<Ghost.Abstractions.ICountryDomainProvider, Internal.LinkedInCountryProvider>();
+        // Ensure JsonLdExtractor from Core utilities is available to this platform
+        services.AddScoped<Ghost.Abstractions.IJsonLdExtractor, Ghost.Utilities.JsonLdExtractor>();
         // GuestJobSearch implements guest API scraping logic
         services.AddScoped<Internal.IGuestJobSearch, Internal.GuestJobSearch>();
         // Ensure required GhostKernel and IProxyProvider are available for GuestJobSearch

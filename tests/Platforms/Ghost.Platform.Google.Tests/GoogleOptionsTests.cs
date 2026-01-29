@@ -9,17 +9,23 @@ public class GoogleOptionsTests
     public void Defaults_AreReasonable()
     {
         var opts = new GoogleOptions();
-        opts.BaseUrl.Should().NotBeNull();
-        opts.ResponseTimeout.Should().BeGreaterOrEqualTo(System.TimeSpan.Zero);
-        opts.DefaultModel.Should().NotBeNullOrEmpty();
+        // Ensure sub-options are present
+        opts.Gemini.Should().NotBeNull();
+        opts.Jobs.Should().NotBeNull();
+
+        opts.Gemini!.BaseUrl.Should().NotBeNull();
+        opts.Gemini.ResponseTimeout.Should().BeGreaterOrEqualTo(System.TimeSpan.Zero);
+        opts.Gemini.DefaultModel.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
     public void PropertySetters_Work()
     {
-        var opts = new GoogleOptions { BaseUrl = "https://api.google.com", ResponseTimeout = System.TimeSpan.FromSeconds(7), DefaultModel = "gemini-test" };
-        opts.BaseUrl.Should().Be("https://api.google.com");
-        opts.ResponseTimeout.Should().Be(System.TimeSpan.FromSeconds(7));
-        opts.DefaultModel.Should().Be("gemini-test");
+        var g = new Ghost.Platform.Google.Gemini.GeminiOptions { BaseUrl = "https://api.google.com", ResponseTimeout = System.TimeSpan.FromSeconds(7), DefaultModel = "gemini-test" };
+        var opts = new GoogleOptions { Gemini = g };
+        opts.Gemini.Should().NotBeNull();
+        opts.Gemini!.BaseUrl.Should().Be("https://api.google.com");
+        opts.Gemini.ResponseTimeout.Should().Be(System.TimeSpan.FromSeconds(7));
+        opts.Gemini.DefaultModel.Should().Be("gemini-test");
     }
 }

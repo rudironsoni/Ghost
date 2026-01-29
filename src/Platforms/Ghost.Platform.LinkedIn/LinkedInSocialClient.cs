@@ -162,7 +162,7 @@ public sealed class LinkedInSocialClient : ISocialClient
                 // Expand "see more" within this item
                 await ExpandSeeMoreAsync(page, item, ct);
 
-                var texts = await Internal.TextExtractor.ExtractAllUniqueTextsAsync(item, ct).ConfigureAwait(false);
+                var texts = new List<string> { await item.GetTextContentAsync(ct) ?? string.Empty };
                 if (texts == null || texts.Count == 0) continue;
 
                 var exp = new SocialExperience();
@@ -183,8 +183,8 @@ public sealed class LinkedInSocialClient : ISocialClient
                     // dateString may contain duration after a middle dot
                     var parts = dateString.Split('·');
                     var range = parts.Length > 0 ? parts[0].Trim() : dateString.Trim();
-                    var (s, e) = Internal.DateParser.Parse(range);
-                    exp = exp with { StartDate = s, EndDate = e, IsCurrent = e == null };
+                    var (s, e) = new Ghost.Utilities.DateParser().ParseDateRange(range);
+                    exp = exp with { StartDate = s is null ? null : new DateTime?(s.Value.ToDateTime(TimeOnly.MinValue)), EndDate = e is null ? null : new DateTime?(e.Value.ToDateTime(TimeOnly.MinValue)), IsCurrent = e == null };
                     if (parts.Length > 1)
                     {
                         exp = exp with { Duration = parts[1].Trim() };
@@ -241,7 +241,7 @@ public sealed class LinkedInSocialClient : ISocialClient
                 // Expand "see more" within this item
                 await ExpandSeeMoreAsync(page, item, ct);
 
-                var texts = await Internal.TextExtractor.ExtractAllUniqueTextsAsync(item, ct).ConfigureAwait(false);
+                var texts = new List<string> { await item.GetTextContentAsync(ct) ?? string.Empty };
                 if (texts == null || texts.Count == 0) continue;
 
                 var edu = new SocialEducation();
@@ -259,8 +259,8 @@ public sealed class LinkedInSocialClient : ISocialClient
 
                 if (!string.IsNullOrWhiteSpace(dateString))
                 {
-                    var (s, e) = Internal.DateParser.Parse(dateString);
-                    edu = edu with { StartDate = s, EndDate = e };
+                    var (s, e) = new Ghost.Utilities.DateParser().ParseDateRange(dateString);
+                    edu = edu with { StartDate = s is null ? null : new DateTime?(s.Value.ToDateTime(TimeOnly.MinValue)), EndDate = e is null ? null : new DateTime?(e.Value.ToDateTime(TimeOnly.MinValue)) };
                 }
 
                 list.Add(edu);
