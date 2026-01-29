@@ -87,3 +87,5 @@ secrets.json
 playwright-report/
 test-results/
 .playwright/
+
+src/Ghost.WebApi/linkedin_guest_session.json
