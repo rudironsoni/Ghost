@@ -19,7 +19,7 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GoogleJobClient>.Instance;
     }
 
-    public string PlatformName => "GoogleJobs";
+    public string PlatformName => "Google";
 
     public Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
     {

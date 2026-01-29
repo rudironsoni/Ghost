@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -8,19 +9,21 @@ using Microsoft.Extensions.Logging;
 
 namespace Ghost.Core.Services;
 
+#pragma warning disable CA1848 // Use LoggerMessage delegates for high-performance logging
+
 public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
 {
     private readonly IEnumerable<IJobScraper> _scrapers;
     private readonly IDeduplicationService _dedupe;
-    private readonly ILogger<AggregatedJobClient>? _logger;
+    private readonly ILogger<AggregatedJobClient> _logger;
     private static readonly Action<ILogger, string, Exception?> s_logScraperFailed =
         LoggerMessage.Define<string>(LogLevel.Warning, new EventId(1, nameof(AggregatedJobClient)), "Scraper {Platform} failed");
 
-    public AggregatedJobClient(IEnumerable<IJobScraper> scrapers, IDeduplicationService dedupe, ILogger<AggregatedJobClient>? logger = null)
+    public AggregatedJobClient(IEnumerable<IJobScraper> scrapers, IDeduplicationService dedupe, ILogger<AggregatedJobClient> logger)
     {
         _scrapers = scrapers ?? Enumerable.Empty<IJobScraper>();
         _dedupe = dedupe;
-        _logger = logger;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public string PlatformName => "Aggregated";
@@ -30,19 +33,40 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         // ensure we have a non-null criteria to pass to scrapers
         var criteriaNonNull = criteria ?? new JobSearchCriteria();
 
+        // log how many scrapers were injected
+        try
+        {
+            _logger.LogInformation("Injected scrapers count: {Count}", _scrapers?.Count() ?? 0);
+        }
+        catch { /* swallow any logging errors */ }
+
         // determine which scrapers to run based on criteria.Sources
-        IEnumerable<IJobScraper> scrapersToRun;
+        IEnumerable<IJobScraper> scrapersToRun = Enumerable.Empty<IJobScraper>();
         if (criteriaNonNull.Sources != null && criteriaNonNull.Sources.Count > 0)
         {
-            var lower = new HashSet<string>(criteriaNonNull.Sources.Select(s => s?.ToLowerInvariant() ?? string.Empty));
-            scrapersToRun = _scrapers.Where(s => lower.Contains(s.PlatformName?.ToLowerInvariant() ?? string.Empty));
+            // log provided sources
+            try
+            {
+                _logger.LogInformation("Search criteria sources: {Sources}", string.Join(", ", criteriaNonNull.Sources));
+            }
+            catch { }
+            var lower = new HashSet<string>((criteriaNonNull.Sources ?? new List<string>()).Select(s => s?.ToLowerInvariant() ?? string.Empty));
+            scrapersToRun = (_scrapers ?? Enumerable.Empty<IJobScraper>())
+                .Where(s => lower.Contains(s.PlatformName?.ToLowerInvariant() ?? string.Empty));
         }
         else
         {
-            scrapersToRun = _scrapers;
+            scrapersToRun = _scrapers ?? Enumerable.Empty<IJobScraper>();
         }
 
-        var tasks = scrapersToRun.Select(s => Task.Run(async () =>
+        // log selected scrapers after filtering
+            try
+            {
+                _logger.LogInformation("Selected scrapers: {Scrapers}", string.Join(", ", (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => s.PlatformName)));
+            }
+            catch { }
+
+        var tasks = (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => Task.Run(async () =>
         {
                 try
                 {
