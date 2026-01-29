@@ -8,8 +8,31 @@ internal static class IndeedConstants
     public const string ApiUrl = "https://apis.indeed.com/graphql";
     public const string ApiKey = "161092c2017b5bbab13edb12461a62d5a833871e7cad6d9d475304573de67ac8";
 
-    // Simplified: copy the JobSearch query placeholder (should be replaced with full query if available)
-    public const string JobSearchQuery = @"query JobSearch($what: String!, $where: String, $pageSize: Int, $cursor: String) {\n  jobSearch(what: $what, where: $where, pageSize: $pageSize, cursor: $cursor) {\n    results {\n      id\n      title\n      employer { name }\n      location { formatted { long } }\n      description { html }\n      compensation { baseSalary { range { min max currency } } }\n    }\n    pageInfo { nextCursor }\n  }\n}";
+    public const string JobSearchQuery = """
+        query GetJobData {{
+            jobSearch(
+                what: "{0}",
+                location: "location: {{where: \"{1}\", radius: 50, radiusUnit: MILES}}",
+                limit: {2},
+                sort: RELEVANCE
+            ) {{
+                pageInfo {{
+                    nextCursor
+                }}
+                results {{
+                    job {{
+                        key
+                        title
+                        employer {{ name }}
+                        location {{ formatted {{ long }} }}
+                        description {{ html }}
+                        compensation {{ baseSalary {{ range {{ min max currency }} }} }}
+                        datePublished
+                    }}
+                }}
+            }}
+        }}
+    """;
 
     public static Dictionary<string,string> GetHeaders(CountryCode country)
     {
@@ -40,10 +63,18 @@ internal static class IndeedConstants
         return new Dictionary<string,string>
         {
             ["Host"] = "apis.indeed.com",
-            ["Api-Key"] = ApiKey,
-            ["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            ["indeed-api-key"] = ApiKey,
+            // Match JobSpy iPhone User-Agent exactly
+            ["User-Agent"] = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Indeed App 193.1",
             ["indeed-co"] = indeedCo,
-            ["indeed-locale"] = locale
+            ["indeed-locale"] = locale,
+            // Add indeed-app-info expected by the API
+            ["indeed-app-info"] = "appv=193.1; appid=com.indeed.jobsearch; osv=16.6.1; os=ios; dtype=phone",
+            // Ensure JSON content negotiation headers match curl
+            ["accept"] = "application/json",
+            ["content-type"] = "application/json",
+            // Use recommended Accept-Language (can be adapted for locale if desired)
+            ["accept-language"] = "en-US,en;q=0.9"
         };
     }
 }
