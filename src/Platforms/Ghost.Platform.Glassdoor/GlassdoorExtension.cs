@@ -1,13 +1,13 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Ghost.Hosting;
+using Ghost.Contracts;
 using Ghost.Abstractions;
 using Ghost.Http;
 using System.Net.Http;
 
 namespace Ghost.Platform.Glassdoor;
 
-public sealed class GlassdoorExtension : IExtension
+public sealed class GlassdoorExtension : Ghost.Contracts.IExtension
 {
     public string Name => "Glassdoor";
     public Version Version => new(1,0,0);
@@ -17,6 +17,7 @@ public sealed class GlassdoorExtension : IExtension
         public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<GlassdoorOptions>(configuration.GetSection("Ghost:Extensions:Glassdoor"));
+            // AddHttpClient extension lives in Microsoft.Extensions.Http package - ensure callers include it.
             services.AddHttpClient<Internal.GlassdoorApiClient>()
                 .ConfigurePrimaryHttpMessageHandler(sp =>
                 {

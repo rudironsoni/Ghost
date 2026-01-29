@@ -18,7 +18,8 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
 
     public async Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
     {
-        var payload = await _api.SearchAsync(criteria.Keywords ?? string.Empty, criteria.Location, null, ct);
+        // JobSearchCriteria uses 'Query' for the free-text search field
+        var payload = await _api.SearchAsync(criteria.Query ?? string.Empty, criteria.Location, null, ct);
         return Internal.GlassdoorJobParser.ParseSearchResponse(payload);
     }
 
