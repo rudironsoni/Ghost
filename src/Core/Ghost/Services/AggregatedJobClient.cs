@@ -25,9 +25,21 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
 
     public string PlatformName => "Aggregated";
 
-    public async Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
-    {
-        var tasks = _scrapers.Select(s => Task.Run(async () =>
+        public async Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
+        {
+        // determine which scrapers to run based on criteria.Sources
+        IEnumerable<IJobScraper> scrapersToRun;
+        if (criteria?.Sources != null && criteria.Sources.Any())
+        {
+            var lower = new HashSet<string>(criteria.Sources.Select(s => s?.ToLowerInvariant() ?? string.Empty));
+            scrapersToRun = _scrapers.Where(s => lower.Contains(s.PlatformName?.ToLowerInvariant() ?? string.Empty));
+        }
+        else
+        {
+            scrapersToRun = _scrapers;
+        }
+
+        var tasks = scrapersToRun.Select(s => Task.Run(async () =>
         {
             try
             {
