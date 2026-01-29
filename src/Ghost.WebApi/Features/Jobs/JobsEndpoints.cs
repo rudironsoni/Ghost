@@ -13,7 +13,7 @@ public static class JobsEndpoints
         app.MapGroup("/api/jobs").MapPost("/search", SearchJobs);
     }
 
-    static async Task<IResult> SearchJobs([FromBody] JobSearchCriteria criteria, IJobClient client, CancellationToken ct)
+    private static async Task<IResult> SearchJobs([FromBody] JobSearchCriteria criteria, IJobClient client, CancellationToken ct)
     {
         var result = await client.SearchJobsAsync(criteria, ct);
         return Results.Ok(result);
