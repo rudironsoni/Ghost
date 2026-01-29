@@ -40,7 +40,7 @@ public sealed class GoogleJobsApiClient
     {
         var q = System.Uri.EscapeDataString(query);
         var loc = System.Uri.EscapeDataString(location);
-        var url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs";
+        var url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs&udm=8&gl=us&hl=en";
 
         LogFetchingJobs(_logger, url, null);
 
@@ -52,6 +52,10 @@ public sealed class GoogleJobsApiClient
 
         var res = await _http.SendAsync(req).ConfigureAwait(false);
         var html = await res.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        // DEBUG: Write raw HTML to file
+        try { System.IO.File.WriteAllText("logs/google_jobs_search.html", html); } catch { }
+
         if (string.IsNullOrEmpty(html))
         {
             LogReceivedEmptyHtml(_logger, url, null);

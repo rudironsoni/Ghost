@@ -157,6 +157,9 @@ namespace Ghost.Platform.Indeed.Internal;
             var content = await resp.Content.ReadAsStringAsync();
             LogResponseContent(_logger, content, null);
 
+            // DEBUG: Write raw JSON to file
+            try { System.IO.File.WriteAllText("logs/indeed_jobs_search.json", content); } catch { }
+
             resp.EnsureSuccessStatusCode();
 
             using var doc = JsonDocument.Parse(content);
