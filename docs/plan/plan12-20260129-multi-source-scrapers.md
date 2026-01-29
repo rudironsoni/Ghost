@@ -1,6 +1,6 @@
 # Plan 12: Multi-Source Job Scraper Implementation
 **Date:** 2026-01-29
-**Status:** Approved
+**Status:** Completed
 **Goal:** Implement a robust, multi-source job scraper (Indeed, Glassdoor, Google Jobs) within the .NET ecosystem, refactoring shared utilities into Ghost.Core.
 
 ## 1. Architecture & Strategy
@@ -94,3 +94,8 @@ src/
 *   **Unit Tests:** xUnit tests for all parsers, extractors, and API clients (mocking Http).
 *   **Integration:** Verify DI container resolution in `Ghost.WebApi`.
 *   **Coverage:** Minimum 80% coverage on new code.
+
+## 4. Next Steps (Cleanup)
+1.  **Plan Status:** Update @docs/plan/plan12-20260129-multi-source-scrapers.md to mark it as Completed. (Done)
+2.  **Google Platform Consolidation:** Currently, GoogleClient.cs (the Gemini implementation) sits in the root Google folder, while a redundant wrapper GeminiClient.cs exists in the Gemini/ subfolder.
+    *   **Action:** Delete the wrapper, move GoogleClient.cs to Gemini/GeminiClient.cs, and update the registration. This creates a clean Gemini/ subplatform matching Jobs/.
