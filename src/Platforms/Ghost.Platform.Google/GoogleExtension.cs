@@ -21,6 +21,7 @@ public sealed class GoogleExtension : Ghost.Hosting.IExtension
         try
         {
             Console.WriteLine("Configuring GoogleExtension...");
+            Console.Out.Flush();
         }
         catch { }
 

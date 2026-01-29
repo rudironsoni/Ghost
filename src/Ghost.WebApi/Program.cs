@@ -14,6 +14,10 @@ DotNetEnv.Env.TraversePath().Load();
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+Console.WriteLine($"[DEBUG] Ghost:Extensions:Google:Enabled = {builder.Configuration.GetValue<bool?>("Ghost:Extensions:Google:Enabled")}");
+Console.WriteLine($"[DEBUG] Indeed:Country = {builder.Configuration.GetValue<string>("Indeed:Country")}");
+Console.Out.Flush();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 // Health checks
