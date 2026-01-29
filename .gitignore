@@ -90,4 +90,6 @@ playwright-report/
 test-results/
 .playwright/
 
+**/linkedin_guest_session.json
 src/Ghost.WebApi/linkedin_guest_session.json
+
