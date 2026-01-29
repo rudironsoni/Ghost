@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text;
 using System.Threading.Tasks;
 using Ghost.Models;
 using Ghost.Abstractions;
@@ -29,6 +30,8 @@ namespace Ghost.Platform.Indeed.Internal;
         private static readonly Action<ILogger, string, string, Exception?> LogRequestHeader =
             LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(2006, nameof(LogRequestHeader)), "Header: {Key} = {Value}");
 
+        private static readonly CompositeFormat JobSearchQueryFormat = CompositeFormat.Parse(IndeedConstants.JobSearchQuery);
+
     public IndeedApiClient(Ghost.Abstractions.IProxyProvider proxyProvider, IndeedOptions options, ILogger<IndeedApiClient> logger)
     {
         _proxyProvider = proxyProvider;
@@ -46,7 +49,7 @@ namespace Ghost.Platform.Indeed.Internal;
         do
         {
             // Format the GraphQL query to match JobSpy-style query (no variables object)
-            var formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, IndeedConstants.JobSearchQuery, query, location, Math.Min(25, remaining));
+            var formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, remaining));
             var payload = new { query = formattedQuery };
             var json = JsonSerializer.Serialize(payload);
             LogRequestPayload(_logger, json, null);
