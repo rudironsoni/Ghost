@@ -53,4 +53,11 @@ public sealed record JobSearchCriteria
     /// When null or empty, all scrapers are used.
     /// </summary>
     public List<string>? Sources { get; init; }
+
+    /// <summary>
+    /// Optional scraping strategy override. When provided, the platform client may
+    /// attempt to parse this value into a JobScrapingStrategy enum to control
+    /// how results are retrieved (e.g. GuestApi, BrowserPage, Hybrid).
+    /// </summary>
+    public string? Strategy { get; init; }
 }
