@@ -12,7 +12,7 @@ internal static class IndeedConstants
         query GetJobData {{
             jobSearch(
                 what: "{0}",
-                location: "location: {{where: \"{1}\", radius: 50, radiusUnit: MILES}}",
+                location: {{where: "{1}", radius: 50, radiusUnit: MILES}},
                 limit: {2},
                 sort: RELEVANCE
             ) {{
@@ -26,7 +26,16 @@ internal static class IndeedConstants
                         employer {{ name }}
                         location {{ formatted {{ long }} }}
                         description {{ html }}
-                        compensation {{ baseSalary {{ range {{ min max currency }} }} }}
+                        compensation {{
+                            baseSalary {{
+                                range {{
+                                    ... on Range {{
+                                        min
+                                        max
+                                    }}
+                                }}
+                            }}
+                        }}
                         datePublished
                     }}
                 }}
@@ -60,6 +69,10 @@ internal static class IndeedConstants
         // indeed-co expects an ISO country code (e.g. "US", "ES", "GB")
         var indeedCo = country == CountryCode.UK ? "GB" : country.ToString().ToUpperInvariant();
 
+        // Build an Accept-Language header from the locale (eg "es-ES" -> "es-ES,es;q=0.9")
+        var language = locale.Split('-')[0];
+        var acceptLanguage = $"{locale},{language};q=0.9";
+
         return new Dictionary<string,string>
         {
             ["Host"] = "apis.indeed.com",
@@ -73,8 +86,8 @@ internal static class IndeedConstants
             // Ensure JSON content negotiation headers match curl
             ["accept"] = "application/json",
             ["content-type"] = "application/json",
-            // Use recommended Accept-Language (can be adapted for locale if desired)
-            ["accept-language"] = "en-US,en;q=0.9"
+            // Use locale-derived Accept-Language to better match user locale
+            ["accept-language"] = acceptLanguage
         };
     }
 }
