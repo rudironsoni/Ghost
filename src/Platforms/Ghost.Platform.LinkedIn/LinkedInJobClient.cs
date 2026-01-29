@@ -21,37 +21,50 @@ namespace Ghost.Platform.LinkedIn;
         private static readonly Action<ILogger, int, Exception?> s_logJobSearchCompleted =
             LoggerMessage.Define<int>(LogLevel.Information, new EventId(3, nameof(SearchJobsWithStrategyAsync)), "Job Search Completed. Found {Count} jobs.");
 
+        private static readonly Action<ILogger, string, Exception?> s_logDeepFetchFailed =
+            LoggerMessage.Define<string>(LogLevel.Warning, new EventId(4, nameof(SearchJobsWithStrategyAsync)), "Failed to deep fetch details for job {Id}. Returning shallow.");
+
         // Common selector sets used by DOM scraping - defined as static readonly to satisfy CA1861
         private static readonly string[] s_titleSelectors = new[] { ".top-card-layout__title", ".job-details-jobs-unified-top-card__job-title", "h1", ".job-card-list__title" };
         private static readonly string[] s_companySelectors = new[] { ".top-card-layout__first-subline .topcard__org-name-link", ".job-details-jobs-unified-top-card__company-name", ".topcard__org-name-link", ".job-card-container__company-name", ".top-card-layout__company-url", "a[data-tracking-control-name='public_jobs_topcard-org-name']" };
         private static readonly string[] s_locationSelectors = new[] { ".top-card-layout__first-subline .topcard__flavor--bullet", ".job-details-jobs-unified-top-card__bullet", ".topcard__flavor--bullet", ".job-search-card__location", ".job-card-container__metadata-item" };
         private static readonly string[] s_descriptionSelectors = new[] { ".show-more-less-html__markup", "#job-details", ".description__text", ".job-description", ".core-section-container__content" };
         private static readonly char[] s_labelValueSplit = new[] { '\n', ':' };
+        private static readonly char[] s_newlines = new[] { '\n', '\r' };
 
     private static JobType ParseJobType(string? type)
     {
         if (string.IsNullOrEmpty(type)) return JobType.Unknown;
         var normalized = type.ToUpperInvariant().Replace("_", "").Replace("-", "").Replace(" ", "");
+        // Simple containment checks often work better for messy scraped text
         if (normalized.Contains("FULLTIME")) return JobType.FullTime;
         if (normalized.Contains("PARTTIME")) return JobType.PartTime;
         if (normalized.Contains("CONTRACT")) return JobType.Contract;
         if (normalized.Contains("TEMPORARY")) return JobType.Contract;
         if (normalized.Contains("INTERN")) return JobType.Internship;
-        // No Volunteer enum in this project - map to Unknown
-        return JobType.Unknown;
+
+        return normalized switch
+        {
+            "FULLTIME" => JobType.FullTime,
+            "PARTTIME" => JobType.PartTime,
+            "CONTRACT" => JobType.Contract,
+            "TEMPORARY" => JobType.Contract,
+            "INTERN" => JobType.Internship,
+            "INTERNSHIP" => JobType.Internship,
+            _ => JobType.Unknown
+        };
     }
 
     private static ExperienceLevel ParseExperienceLevel(string? level)
     {
         if (string.IsNullOrEmpty(level)) return ExperienceLevel.Unknown;
         var n = level.Trim().ToLowerInvariant();
-        if (n.Contains("intern")) return ExperienceLevel.EntryLevel;
+        if (n.Contains("intern")) return ExperienceLevel.EntryLevel; // map internship to entry level
         if (n.Contains("entry")) return ExperienceLevel.EntryLevel;
         if (n.Contains("associate")) return ExperienceLevel.MidLevel;
         if (n.Contains("mid")) return ExperienceLevel.MidLevel;
         if (n.Contains("senior")) return ExperienceLevel.Senior;
-        if (n.Contains("director")) return ExperienceLevel.Manager;
-        if (n.Contains("executive")) return ExperienceLevel.Manager;
+        if (n.Contains("director") || n.Contains("manager") || n.Contains("executive")) return ExperienceLevel.Manager;
         return ExperienceLevel.Unknown;
     }
 
@@ -129,6 +142,7 @@ namespace Ghost.Platform.LinkedIn;
     private async Task<JobListing> GetJobDetailsBrowserAsync(string jobId, CancellationToken ct = default)
     {
         var pageOpts = _options.GetPageOptions();
+        var list = new List<JobListing>();
         var page = await _session.NewPageAsync(pageOpts, ct: ct);
         try
         {
@@ -229,6 +243,7 @@ namespace Ghost.Platform.LinkedIn;
                     // Scrape criteria list for Employment type and Seniority level
                     JobType scrapedJobType = JobType.Unknown;
                     ExperienceLevel scrapedExperienceLevel = ExperienceLevel.Unknown;
+                    string? scrapedSalary = null;
                     try
                     {
                         var critNodes = await page.QuerySelectorAllAsync(".description__job-criteria-list .description__job-criteria-item, .description__job-criteria-list li, .job-details-jobs-unified-top-card__job-insight", ct);
@@ -239,14 +254,21 @@ namespace Ghost.Platform.LinkedIn;
                                 var txt = (await c.GetTextContentAsync(ct))?.Trim() ?? string.Empty;
                                 if (string.IsNullOrEmpty(txt)) continue;
 
-                                // Normalize lines and split label/value pairs
-                                var parts = txt.Split(s_labelValueSplit, 2);
-                                var label = parts.Length > 0 ? parts[0].Trim() : string.Empty;
-                                var value = parts.Length > 1 ? parts[1].Trim() : string.Empty;
-                                if (string.IsNullOrEmpty(value))
+                                // Normalize and split by newline-first (handles layouts that use lines instead of colons)
+                                var lines = txt.Split(s_newlines, StringSplitOptions.RemoveEmptyEntries).Select(l => l.Trim()).Where(l => l.Length > 0).ToArray();
+                                string label = string.Empty;
+                                string value = string.Empty;
+                                if (lines.Length >= 2)
                                 {
-                                    var lines = txt.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(l => l.Trim()).ToArray();
-                                    if (lines.Length >= 2) value = lines[1];
+                                    label = lines[0];
+                                    value = lines[1];
+                                }
+                                else
+                                {
+                                    // Fallback to split on first ':' as legacy behavior
+                                    var parts = txt.Split(s_newlines, 2);
+                                    label = parts.Length > 0 ? parts[0].Trim() : string.Empty;
+                                    value = parts.Length > 1 ? parts[1].Trim() : string.Empty;
                                 }
 
                                 if (label.Contains("Employment", StringComparison.OrdinalIgnoreCase) || txt.Contains("Employment type", StringComparison.OrdinalIgnoreCase))
@@ -271,6 +293,25 @@ namespace Ghost.Platform.LinkedIn;
                             }
                             catch { }
                         }
+
+                        // Salary: attempt to find salary block in page
+                        try
+                        {
+                            var salEl = await page.QuerySelectorAsync(".main-job-card__salary-info, .main-job-card__salary-info", ct);
+                            if (salEl != null)
+                            {
+                                var raw = await salEl.GetTextContentAsync(ct);
+                                if (!string.IsNullOrWhiteSpace(raw))
+                                {
+                                    // collapse whitespace and newlines into single spaces
+                                    var cleaned = System.Text.RegularExpressions.Regex.Replace(raw, "\\s+", " ").Trim();
+                                    // normalize hyphen spacing
+                                    cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, "\\s*-\\s*", " - ");
+                                    scrapedSalary = cleaned;
+                                }
+                            }
+                        }
+                        catch { }
                     }
                     catch { }
 
@@ -315,7 +356,8 @@ namespace Ghost.Platform.LinkedIn;
                             Id = string.IsNullOrEmpty(parsed.Id) ? jobId : parsed.Id,
                             IsEasyApply = isEasyApply,
                             JobType = parsed.JobType == JobType.Unknown ? scrapedJobType : parsed.JobType,
-                            ExperienceLevel = parsed.ExperienceLevel == ExperienceLevel.Unknown ? scrapedExperienceLevel : parsed.ExperienceLevel
+                            ExperienceLevel = parsed.ExperienceLevel == ExperienceLevel.Unknown ? scrapedExperienceLevel : parsed.ExperienceLevel,
+                            Salary = string.IsNullOrWhiteSpace(parsed.Salary) ? scrapedSalary : parsed.Salary
                         };
 
                         return merged;
@@ -333,7 +375,8 @@ namespace Ghost.Platform.LinkedIn;
                         PostedAt = postedAt == DateTimeOffset.MinValue ? DateTimeOffset.UtcNow : postedAt,
                         IsEasyApply = isEasyApply,
                         JobType = scrapedJobType,
-                        ExperienceLevel = scrapedExperienceLevel
+                        ExperienceLevel = scrapedExperienceLevel,
+                        Salary = scrapedSalary
                     };
                 }
                 catch (Exception ex)
@@ -368,6 +411,7 @@ namespace Ghost.Platform.LinkedIn;
     private async Task<JobApplication> ApplyInternalAsync(string jobId, ApplicationDetails details, CancellationToken ct)
     {
         var pageOpts = _options.GetPageOptions();
+        var list = new List<JobListing>();
         var page = await _session.NewPageAsync(pageOpts, ct: ct);
         try
         {
@@ -547,6 +591,7 @@ namespace Ghost.Platform.LinkedIn;
         }
 
         var pageOpts = _options.GetPageOptions();
+        var list = new List<JobListing>();
         var page = await _session.NewPageAsync(pageOpts, ct: ct);
         try
         {
@@ -579,7 +624,6 @@ namespace Ghost.Platform.LinkedIn;
             // If no nodes found, continue - no debug diagnostics are emitted in production
 
             var count = 0;
-            var list = new List<JobListing>();
             foreach (var n in nodes)
             {
                 if (count++ >= limit) break;
@@ -655,17 +699,31 @@ namespace Ghost.Platform.LinkedIn;
                 }
             }
             
-            // Deduplicate by job ID (same card can match multiple selectors)
-            var uniqueJobs = list.GroupBy(j => j.Id).Select(g => g.First()).ToList();
-
-            foreach (var job in uniqueJobs)
-            {
-                yield return job;
-            }
+            // Note: do not yield shallow results here. We close the page and then
+            // deep-fetch details for each job to produce parity with GuestApi.
         }
         finally
         {
             try { await page.DisposeAsync(); } catch { }
+        }
+
+        // After page is disposed, attempt deep-fetching details for each unique job.
+        var uniqueJobs = list.GroupBy(j => j.Id).Select(g => g.First()).ToList();
+        foreach (var shallow in uniqueJobs)
+        {
+            ct.ThrowIfCancellationRequested();
+            JobListing? deepJob = null;
+            try
+            {
+                deepJob = await GetJobDetailsBrowserAsync(shallow.Id, ct);
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex)
+            {
+                s_logDeepFetchFailed(_logger, shallow.Id, ex);
+            }
+
+            yield return deepJob ?? shallow;
         }
     }
 }
