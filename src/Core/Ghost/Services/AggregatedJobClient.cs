@@ -13,7 +13,7 @@ namespace Ghost.Core.Services;
 
 public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
 {
-    private readonly IEnumerable<IJobScraper> _scrapers;
+    private readonly List<IJobScraper> _scrapers;
     private readonly IDeduplicationService _dedupe;
     private readonly ILogger<AggregatedJobClient> _logger;
     private static readonly Action<ILogger, string, Exception?> s_logScraperFailed =
@@ -21,9 +21,17 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
 
     public AggregatedJobClient(IEnumerable<IJobScraper> scrapers, IDeduplicationService dedupe, ILogger<AggregatedJobClient> logger)
     {
-        _scrapers = scrapers ?? Enumerable.Empty<IJobScraper>();
-        _dedupe = dedupe;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        // materialize the incoming enumerable so we can inspect it reliably at runtime
+        _scrapers = (scrapers ?? Enumerable.Empty<IJobScraper>()).ToList();
+        _dedupe = dedupe;
+
+        // log exactly what was injected so we can diagnose missing scrapers
+        try
+        {
+            _logger.LogWarning("AggregatedJobClient constructed with {Count} scrapers: {Names}", _scrapers.Count, string.Join(", ", _scrapers.Select(s => s.GetType().Name)));
+        }
+        catch { /* swallow logging errors */ }
     }
 
     public string PlatformName => "Aggregated";
@@ -37,6 +45,15 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         try
         {
             _logger.LogInformation("Injected scrapers count: {Count}", _scrapers?.Count() ?? 0);
+            // log each injected scraper name and type for debugging
+            try
+            {
+                foreach (var s in _scrapers ?? Enumerable.Empty<IJobScraper>())
+                {
+                    _logger.LogInformation("Available scraper: '{Name}' (Type: {Type})", s.PlatformName, s.GetType().Name);
+                }
+            }
+            catch { }
         }
         catch { /* swallow any logging errors */ }
 
@@ -51,6 +68,12 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             }
             catch { }
             var lower = new HashSet<string>((criteriaNonNull.Sources ?? new List<string>()).Select(s => s?.ToLowerInvariant() ?? string.Empty));
+            // log normalized requested sources for debugging
+            try
+            {
+                _logger.LogInformation("Requested sources (normalized): {Sources}", string.Join(", ", lower));
+            }
+            catch { }
             scrapersToRun = (_scrapers ?? Enumerable.Empty<IJobScraper>())
                 .Where(s => lower.Contains(s.PlatformName?.ToLowerInvariant() ?? string.Empty));
         }

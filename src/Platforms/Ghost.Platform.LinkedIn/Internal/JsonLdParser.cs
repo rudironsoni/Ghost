@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Ghost.Contracts.Jobs;
 using Ghost.Abstractions;
@@ -53,25 +54,17 @@ internal sealed class JsonLdParser
     private static JobType ParseJobType(string? type)
     {
         if (string.IsNullOrEmpty(type)) return JobType.Unknown;
+        // Normalize into an uppercase token string and be resilient to arrays or JSON shaped strings
         var s = type.ToUpperInvariant();
 
-        // If it's an array or some JSON-looking structure, try to pull the first token
-        if (s.Contains('['))
+        // If it's an array or contains JSON quoting, extract the first token of letters/underscores
+        if (s.Contains('[') || s.Contains('"') || s.Contains(','))
         {
-            var m = System.Text.RegularExpressions.Regex.Match(s, "[A-Z_]+/");
-            // fallback - extract letters/underscores
-            if (!m.Success)
-            {
-                var m2 = System.Text.RegularExpressions.Regex.Match(s, "[A-Z_]+\\b");
-                if (m2.Success) s = m2.Value;
-            }
-            else
-            {
-                s = m.Value;
-            }
+            var m = System.Text.RegularExpressions.Regex.Match(s, "[A-Z_]+\\b");
+            if (m.Success) s = m.Value;
         }
 
-        // Simplify by removing non-letter characters
+        // Allow values like FULL_TIME, FULL-TIME, Full time, etc.
         var cleaned = System.Text.RegularExpressions.Regex.Replace(s, "[^A-Z]", "");
 
         if (cleaned.Contains("FULL") && cleaned.Contains("TIME")) return JobType.FullTime;
@@ -102,15 +95,77 @@ internal sealed class JsonLdParser
 
     private static string? FormatSalary(BaseSalaryLd? salary)
     {
-        if (salary?.Value == null) return null;
+        if (salary is null) return null;
 
-        var val = salary.Value;
-        if (val.Value != null) return $"{val.Value} {salary.Currency}";
-        if (val.MinValue != null && val.MaxValue != null) return $"{val.MinValue}-{val.MaxValue} {salary.Currency}";
-        if (val.MinValue != null) return $"> {val.MinValue} {salary.Currency}";
-        if (val.MaxValue != null) return $"< {val.MaxValue} {salary.Currency}";
+        // Currency may be present at top-level or inside the value object
+        string? currency = salary.Currency;
+
+        // Value is represented as a JsonElement because LinkedIn sometimes returns a simple
+        // number or a complex QuantitativeValue object. Inspect and extract min/max/value.
+        if (salary.Value.HasValue)
+        {
+            var el = salary.Value.Value;
+            try
+            {
+                if (el.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    if (el.TryGetDouble(out var single))
+                    {
+                        return FormatAmount(single, currency);
+                    }
+                }
+                else if (el.ValueKind == System.Text.Json.JsonValueKind.Object)
+                {
+                    // Try common property names
+                    double? min = TryGetDouble(el, "minValue") ?? TryGetDouble(el, "minimumValue") ?? TryGetDoubleFromNested(el, "minValue");
+                    double? max = TryGetDouble(el, "maxValue") ?? TryGetDouble(el, "maximumValue") ?? TryGetDoubleFromNested(el, "maxValue");
+                    double? exact = TryGetDouble(el, "value") ?? TryGetDoubleFromNested(el, "value");
+
+                    // currency might live inside the object as well
+                    if (string.IsNullOrEmpty(currency) && el.TryGetProperty("currency", out var curEl) && curEl.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        currency = curEl.GetString();
+                    }
+
+                    if (exact.HasValue) return FormatAmount(exact.Value, currency);
+                    if (min.HasValue && max.HasValue) return $"{min.Value}-{max.Value} {currency}".Trim();
+                    if (min.HasValue) return $"> {min.Value} {currency}".Trim();
+                    if (max.HasValue) return $"< {max.Value} {currency}".Trim();
+                }
+                else if (el.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    var s = el.GetString();
+                    if (!string.IsNullOrWhiteSpace(s)) return s;
+                }
+            }
+            catch { }
+        }
 
         return null;
+
+            static string? FormatAmount(double amount, string? cur)
+            {
+                if (string.IsNullOrWhiteSpace(cur)) return amount.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                return $"{amount.ToString(System.Globalization.CultureInfo.InvariantCulture)} {cur}";
+            }
+
+        static double? TryGetDouble(System.Text.Json.JsonElement obj, string prop)
+        {
+            if (obj.TryGetProperty(prop, out var p))
+            {
+                if (p.ValueKind == System.Text.Json.JsonValueKind.Number && p.TryGetDouble(out var d)) return d;
+                if (p.ValueKind == System.Text.Json.JsonValueKind.String && double.TryParse(p.GetString(), out var d2)) return d2;
+            }
+            return null;
+        }
+
+        // Some LinkedIn payloads nest the quantitative value under an inner "value" object
+        static double? TryGetDoubleFromNested(System.Text.Json.JsonElement obj, string prop)
+        {
+            if (obj.TryGetProperty("value", out var inner) && inner.ValueKind == System.Text.Json.JsonValueKind.Object)
+                return TryGetDouble(inner, prop);
+            return null;
+        }
     }
 
     private sealed class LinkedInJobPostingLd
@@ -150,14 +205,9 @@ internal sealed class JsonLdParser
     private sealed class BaseSalaryLd
     {
         public string? Currency { get; set; }
-        public SalaryValueLd? Value { get; set; }
-    }
 
-    private sealed class SalaryValueLd
-    {
+        // The JSON-LD 'value' property can be a simple number or an object; capture raw JsonElement
         [JsonPropertyName("value")]
-        public double? Value { get; set; }
-        public double? MinValue { get; set; }
-        public double? MaxValue { get; set; }
+        public JsonElement? Value { get; set; }
     }
 }

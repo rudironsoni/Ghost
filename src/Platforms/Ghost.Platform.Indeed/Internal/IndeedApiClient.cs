@@ -30,6 +30,15 @@ namespace Ghost.Platform.Indeed.Internal;
         private static readonly Action<ILogger, string, string, Exception?> LogRequestHeader =
             LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(2006, nameof(LogRequestHeader)), "Header: {Key} = {Value}");
 
+        private static readonly Action<ILogger, CountryCode, Exception?> LogConstructedWithCountry =
+            LoggerMessage.Define<CountryCode>(LogLevel.Information, new EventId(2007, "ConstructedWithCountry"), "IndeedApiClient constructed with Country={Country}");
+
+        private static readonly Action<ILogger, CountryCode, Exception?> LogGetHeadersReturnedNull =
+            LoggerMessage.Define<CountryCode>(LogLevel.Warning, new EventId(2008, "GetHeadersReturnedNull"), "IndeedConstants.GetHeaders returned null for country {Country}");
+
+        private static readonly Action<ILogger, CountryCode, Exception?> LogUsingCountryForRequest =
+            LoggerMessage.Define<CountryCode>(LogLevel.Information, new EventId(2009, "UsingCountryForRequest"), "IndeedApiClient: using country {Country} when sending request");
+
         private static readonly CompositeFormat JobSearchQueryFormat = CompositeFormat.Parse(IndeedConstants.JobSearchQuery);
 
     public IndeedApiClient(Ghost.Abstractions.IProxyProvider proxyProvider, IndeedOptions options, ILogger<IndeedApiClient> logger)
@@ -37,6 +46,11 @@ namespace Ghost.Platform.Indeed.Internal;
         _proxyProvider = proxyProvider;
         _country = options.Country;
         _logger = logger;
+        try
+        {
+            LogConstructedWithCountry(_logger, _country, null);
+        }
+        catch { }
     }
 
     public async IAsyncEnumerable<JsonElement> SearchAsync(string query, string location, int limit = 50)
@@ -90,7 +104,7 @@ namespace Ghost.Platform.Indeed.Internal;
             var headers = IndeedConstants.GetHeaders(_country);
             if (headers == null)
             {
-                _logger.LogWarning("IndeedConstants.GetHeaders returned null for country {Country}", _country);
+                LogGetHeadersReturnedNull(_logger, _country, null);
                 headers = IndeedConstants.GetHeaders(CountryCode.US);
             }
             foreach (var kv in headers)
@@ -114,7 +128,7 @@ namespace Ghost.Platform.Indeed.Internal;
             // Log the resolved country being used for this request for debugging
             try
             {
-                _logger.LogInformation("IndeedApiClient: using country {Country} when sending request", _country);
+                LogUsingCountryForRequest(_logger, _country, null);
             }
             catch { }
 

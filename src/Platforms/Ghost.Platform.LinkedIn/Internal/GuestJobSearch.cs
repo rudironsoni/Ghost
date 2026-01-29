@@ -402,22 +402,92 @@ public sealed class GuestJobSearch : IGuestJobSearch
                             } catch {}
                         }
 
-                        // Salary: attempt to find salary block in guest view
+                        // Salary: attempt to find salary block in guest view using multiple selectors
                         string? scrapedSalary = null;
                         try
                         {
-                            var salEl = await page.QuerySelectorAsync(".main-job-card__salary-info, .main-job-card__salary-info", ct);
-                            if (salEl != null)
+                            var salarySelectors = new[] {
+                                ".main-job-card__salary-info",
+                                ".job-details-jobs-unified-top-card__salary",
+                                ".job-details-jobs-unified-top-card__salary-info",
+                                ".description__job-criteria-item--salary",
+                                ".description__job-criteria-item:has(span:contains('Salary'))",
+                                ".salary-range",
+                                ".salary",
+                                ".job-criteria__item--salary"
+                            };
+
+                            // Try each selector until we find a non-empty text
+                            foreach (var sel in salarySelectors)
                             {
-                                var raw = await salEl.GetTextContentAsync(ct);
-                                if (!string.IsNullOrWhiteSpace(raw))
+                                try
                                 {
-                                    // collapse whitespace and newlines into single spaces
+                                    var el = await page.QuerySelectorAsync(sel, ct);
+                                    if (el is null) continue;
+                                    var raw = await el.GetTextContentAsync(ct);
+                                    if (string.IsNullOrWhiteSpace(raw)) continue;
                                     var cleaned = System.Text.RegularExpressions.Regex.Replace(raw, "\\s+", " ").Trim();
-                                    // normalize hyphen spacing
                                     cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, "\\s*-\\s*", " - ");
                                     scrapedSalary = cleaned;
+                                    break;
                                 }
+                                catch { }
+                            }
+                        }
+                        catch { }
+
+                        // PostedAt: try to parse an explicit datetime or relative 'X days ago' text
+                        DateTimeOffset? scrapedPostedAt = null;
+                        try
+                        {
+                            var postedSelectors = new[] {
+                                "time[datetime]",
+                                "time",
+                                ".posted-time-ago__text",
+                                ".topcard__flavor--metadata time",
+                                ".job-details-jobs-unified-top-card__posted-date",
+                                "span.posted-time-ago__text"
+                            };
+
+                            foreach (var sel in postedSelectors)
+                            {
+                                try
+                                {
+                                    var el = await page.QuerySelectorAsync(sel, ct);
+                                    if (el is null) continue;
+                                    var dtAttr = await el.GetAttributeAsync("datetime", ct);
+                                    if (!string.IsNullOrWhiteSpace(dtAttr) && DateTimeOffset.TryParse(dtAttr, out var dto))
+                                    {
+                                        scrapedPostedAt = dto;
+                                        break;
+                                    }
+
+                                    var txt = await el.GetTextContentAsync(ct);
+                                    if (string.IsNullOrWhiteSpace(txt)) continue;
+
+                                    // Try absolute parse first
+                                    if (DateTimeOffset.TryParse(txt, out var dtParsed))
+                                    {
+                                        scrapedPostedAt = dtParsed;
+                                        break;
+                                    }
+
+                                    // Try relative times like '3 days ago' or 'Posted 4 hours ago'
+                                    var m = Regex.Match(txt, "(?<n>\\d+)\\s*(minute|minutes|hour|hours|day|days|week|weeks|month|months|year|years)\\s*ago", RegexOptions.IgnoreCase);
+                                    if (m.Success && int.TryParse(m.Groups["n"].Value, out var n))
+                                    {
+                                        var unit = m.Groups[2].Value.ToLowerInvariant();
+                                        TimeSpan delta = unit.StartsWith("minute", StringComparison.OrdinalIgnoreCase) ? TimeSpan.FromMinutes(n)
+                                            : unit.StartsWith("hour", StringComparison.OrdinalIgnoreCase) ? TimeSpan.FromHours(n)
+                                            : unit.StartsWith("day", StringComparison.OrdinalIgnoreCase) ? TimeSpan.FromDays(n)
+                                            : unit.StartsWith("week", StringComparison.OrdinalIgnoreCase) ? TimeSpan.FromDays(7 * n)
+                                            : unit.StartsWith("month", StringComparison.OrdinalIgnoreCase) ? TimeSpan.FromDays(30 * n)
+                                            : TimeSpan.FromDays(365 * n);
+                                        scrapedPostedAt = DateTimeOffset.UtcNow - delta;
+                                        break;
+                                    }
+                                }
+                                catch { }
                             }
                         }
                         catch { }
@@ -446,7 +516,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
                                 Url = url,
                                 JobType = ParseJobType(scrapedJobType),
                                 ExperienceLevel = ParseExperienceLevel(scrapedExperience),
-                                PostedAt = DateTimeOffset.UtcNow,
+                                PostedAt = scrapedPostedAt ?? DateTimeOffset.UtcNow,
                                 Salary = scrapedSalary,
                                 Source = "LinkedIn"
                             };
@@ -469,6 +539,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
                                 Location = location,
                                 JobType = jType,
                                 ExperienceLevel = exp,
+                                PostedAt = scrapedPostedAt ?? parsed.PostedAt,
                                 Salary = string.IsNullOrWhiteSpace(parsed.Salary) ? scrapedSalary : parsed.Salary // preserve existing salary if any
                             };
                         }
