@@ -2,6 +2,7 @@ using Ghost.Hosting;
 using Ghost.Abstractions;
 using Ghost.Utilities;
 using Ghost.WebApi.Features.LinkedIn;
+using Ghost.WebApi.Features.Jobs;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+// Health checks
+builder.Services.AddHealthChecks();
 // Register HTTP client and proxy provider required by Ghost
 builder.Services.AddHttpClient();
 // Bind ProxyOptions from configuration
@@ -159,5 +162,9 @@ if (linkedInEnabled)
 {
     app.MapLinkedInEndpoints();
 }
+
+// Map job endpoints and health checks
+app.MapJobsEndpoints();
+app.MapHealthChecks("/health");
 
 app.Run();
