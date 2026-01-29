@@ -1,7 +1,6 @@
 # Plan 13: Integration & Aggregation
 **Date:** 2026-01-29
-**Status:** Proposed
-**Goal:** Integrate the newly created scraper platforms (Indeed, Glassdoor, Google) into the main `Ghost.WebApi` application and implement the Aggregator pattern.
+**Status:** Completed
 
 ## 1. Context
 Plan 12 delivered the *capabilities* (libraries), but they are not yet wired into the application.
