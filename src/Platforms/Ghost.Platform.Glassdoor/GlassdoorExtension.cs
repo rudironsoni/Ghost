@@ -2,7 +2,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ghost.Contracts;
 using Ghost.Abstractions;
-using Ghost.Hosting;
 using Ghost.Http;
 using System.Net.Http;
 
