@@ -52,17 +52,32 @@ internal sealed class JsonLdParser
     private static JobType ParseJobType(string? type)
     {
         if (string.IsNullOrEmpty(type)) return JobType.Unknown;
+        var s = type.ToUpperInvariant();
 
-        // Normalize by removing non-alphanumeric characters and upper-casing
-        var cleaned = System.Text.RegularExpressions.Regex.Replace(type, "[^A-Za-z0-9]", "").ToUpperInvariant();
+        // If it's an array or some JSON-looking structure, try to pull the first token
+        if (s.Contains('['))
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(s, "[A-Z_]+/");
+            // fallback - extract letters/underscores
+            if (!m.Success)
+            {
+                var m2 = System.Text.RegularExpressions.Regex.Match(s, "[A-Z_]+\\b");
+                if (m2.Success) s = m2.Value;
+            }
+            else
+            {
+                s = m.Value;
+            }
+        }
 
-        // Handle common JSON-LD values and URIs that may contain the type
-        if (cleaned.Contains("FULLTIME")) return JobType.FullTime;
-        if (cleaned.Contains("PARTTIME")) return JobType.PartTime;
+        // Simplify by removing non-letter characters
+        var cleaned = System.Text.RegularExpressions.Regex.Replace(s, "[^A-Z]", "");
+
+        if (cleaned.Contains("FULL") && cleaned.Contains("TIME")) return JobType.FullTime;
+        if (cleaned.Contains("PART") && cleaned.Contains("TIME")) return JobType.PartTime;
         if (cleaned.Contains("CONTRACT")) return JobType.Contract;
-        // Temporary maps to Contract because there's no Temporary enum; map to Contract as fallback
-        if (cleaned.Contains("TEMPORARY")) return JobType.Contract;
-        if (cleaned.Contains("INTERN") || cleaned.Contains("INTERNSHIP")) return JobType.Internship;
+        if (cleaned.Contains("TEMP") || cleaned.Contains("TEMPORARY")) return JobType.Contract;
+        if (cleaned.Contains("INTERN")) return JobType.Internship;
 
         return JobType.Unknown;
     }
@@ -99,12 +114,19 @@ internal sealed class JsonLdParser
 
     private sealed class LinkedInJobPostingLd
     {
+        [JsonPropertyName("title")]
         public string? Title { get; set; }
+        [JsonPropertyName("description")]
         public string? Description { get; set; }
+        [JsonPropertyName("datePosted")]
         public string? DatePosted { get; set; }
+        [JsonPropertyName("employmentType")]
         public string? EmploymentType { get; set; }
+        [JsonPropertyName("hiringOrganization")]
         public HiringOrganizationLd? HiringOrganization { get; set; }
+        [JsonPropertyName("jobLocation")]
         public JobLocationLd? JobLocation { get; set; }
+        [JsonPropertyName("baseSalary")]
         public BaseSalaryLd? BaseSalary { get; set; }
     }
 
