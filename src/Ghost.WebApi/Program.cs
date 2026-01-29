@@ -1,4 +1,6 @@
 using Ghost.Hosting;
+using Ghost.Abstractions;
+using Ghost.Utilities;
 using Ghost.WebApi.Features.LinkedIn;
 using System.Reflection;
 
@@ -132,6 +134,11 @@ builder.Services.AddGhost(builder.Configuration, gw =>
         }
     }
 });
+// Ensure IDeduplicationService is registered before AggregatedJobClient which depends on it.
+// AddGhostKernel would register this, but to avoid duplicate kernel registrations register
+// the deduplication service explicitly here so DI is satisfied regardless of AddGhostKernel.
+builder.Services.AddSingleton<IDeduplicationService, DeduplicationService>();
+
 // Register aggregator after extensions have been loaded so it can compose available scrapers
 // If an AddGhostAggregator extension method exists it would be preferable to call that instead.
 // In its absence register the AggregatedJobClient implementation used as the IJobClient.
