@@ -53,17 +53,18 @@ internal sealed class JsonLdParser
     {
         if (string.IsNullOrEmpty(type)) return JobType.Unknown;
 
-        var normalized = type.ToUpperInvariant().Replace("_", "");
-        return normalized switch
-        {
-            "FULLTIME" => JobType.FullTime,
-            "PARTTIME" => JobType.PartTime,
-            "CONTRACT" => JobType.Contract,
-            "TEMPORARY" => JobType.Contract,
-            "INTERN" => JobType.Internship,
-            "INTERNSHIP" => JobType.Internship,
-            _ => JobType.Unknown
-        };
+        // Normalize by removing non-alphanumeric characters and upper-casing
+        var cleaned = System.Text.RegularExpressions.Regex.Replace(type, "[^A-Za-z0-9]", "").ToUpperInvariant();
+
+        // Handle common JSON-LD values and URIs that may contain the type
+        if (cleaned.Contains("FULLTIME")) return JobType.FullTime;
+        if (cleaned.Contains("PARTTIME")) return JobType.PartTime;
+        if (cleaned.Contains("CONTRACT")) return JobType.Contract;
+        // Temporary maps to Contract because there's no Temporary enum; map to Contract as fallback
+        if (cleaned.Contains("TEMPORARY")) return JobType.Contract;
+        if (cleaned.Contains("INTERN") || cleaned.Contains("INTERNSHIP")) return JobType.Internship;
+
+        return JobType.Unknown;
     }
 
     private static string? ExtractIdFromUrl(string? url)
