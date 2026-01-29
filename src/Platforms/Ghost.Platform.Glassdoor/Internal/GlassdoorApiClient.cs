@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace Ghost.Platform.Glassdoor.Internal;
 
-internal sealed class GlassdoorApiClient
+public sealed class GlassdoorApiClient
 {
     private readonly HttpClient _http;
 
