@@ -99,7 +99,17 @@ namespace Ghost.Platform.LinkedIn;
 
         var list = new List<JobListing>();
         // Reuse the async enumerable search implementation
-        var e = SearchJobsAsync(criteria.Query ?? string.Empty, criteria.Location ?? string.Empty, criteria.MaxResults, ct);
+        // Resolve strategy override from criteria if present; fall back to configured option
+        var strategy = _options.ScrapingStrategy;
+        if (!string.IsNullOrEmpty(criteria.Strategy))
+        {
+            if (Enum.TryParse<JobScrapingStrategy>(criteria.Strategy, ignoreCase: true, out var parsed))
+            {
+                strategy = parsed;
+            }
+        }
+
+        var e = SearchJobsWithStrategyAsync(criteria.Query ?? string.Empty, criteria.Location ?? string.Empty, criteria.MaxResults, strategy, ct);
         return Task.Run(async () =>
         {
             await foreach (var item in e.WithCancellation(ct))

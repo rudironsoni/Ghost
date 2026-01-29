@@ -13,34 +13,40 @@ else
   echo "Note: 'jq' not found, falling back to simple output parsing."
 fi
 
-PAYLOAD='{"Query": "Backend Engineer", "Location": "Madrid", "MaxResults": 5, "Sources": ["LinkedIn"]}'
+STRATEGIES=("GuestApi" "BrowserPage" "Hybrid")
 
-RESPONSE=$(curl -s -X POST "$URL" -H "Content-Type: application/json" -d "$PAYLOAD")
+for STRATEGY in "${STRATEGIES[@]}"; do
+  echo "=== Testing Strategy: $STRATEGY ==="
 
-echo "Response (summary):"
-if [ "$HAS_JQ" -eq 1 ]; then
-  echo "$RESPONSE" | jq . || echo "$RESPONSE" | head -c 500
-else
-  echo "$RESPONSE" | head -c 500
-fi
-echo "..."
+  PAYLOAD="{\"Query\": \"Backend Engineer\", \"Location\": \"Madrid\", \"MaxResults\": 5, \"Sources\": [\"LinkedIn\"], \"Strategy\": \"$STRATEGY\"}"
 
-# Validate JSON looks like an array
-if echo "$RESPONSE" | grep -q "\["; then
+  RESPONSE=$(curl -s -X POST "$URL" -H "Content-Type: application/json" -d "$PAYLOAD")
+
+  echo "Response (summary):"
   if [ "$HAS_JQ" -eq 1 ]; then
-    COUNT=$(echo "$RESPONSE" | jq 'length' 2>/dev/null || echo 0)
+    echo "$RESPONSE" | jq . || echo "$RESPONSE" | head -c 500
   else
-    COUNT=$(echo "$RESPONSE" | grep -o '"id"' | wc -l)
+    echo "$RESPONSE" | head -c 500
+  fi
+  echo "..."
+
+  # Validate JSON looks like an array
+  if echo "$RESPONSE" | grep -q "\["; then
+    if [ "$HAS_JQ" -eq 1 ]; then
+      COUNT=$(echo "$RESPONSE" | jq 'length' 2>/dev/null || echo 0)
+    else
+      COUNT=$(echo "$RESPONSE" | grep -o '"id"' | wc -l)
+    fi
+
+    echo "Found $COUNT jobs from LinkedIn."
+    if [ "$COUNT" -eq 0 ]; then
+      echo "⚠️ WARNING: returned 0 jobs."
+    else
+      echo "✅ SUCCESS: returned results."
+    fi
+  else
+    echo "❌ FAILURE: invalid or non-array response received."
   fi
 
-  echo "Found $COUNT jobs from LinkedIn."
-  if [ "$COUNT" -eq 0 ]; then
-    echo "⚠️ WARNING: returned 0 jobs."
-  else
-    echo "✅ SUCCESS: returned results."
-  fi
-else
-  echo "❌ FAILURE: invalid or non-array response received."
-fi
-
-sleep 1
+  sleep 2
+done
