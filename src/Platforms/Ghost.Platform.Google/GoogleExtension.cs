@@ -26,7 +26,6 @@ public sealed class GoogleExtension : Ghost.Contracts.IExtension
         {
             services.Configure<Gemini.GeminiOptions>(configuration.GetSection("Google:Gemini"));
             services.AddScoped<Ghost.Contracts.Inference.IInferenceClient, Gemini.GeminiClient>();
-            services.AddScoped<Gemini.GoogleClient>();
         }
 
         // Google Jobs
