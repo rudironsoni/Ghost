@@ -1,25 +1,25 @@
 using System;
-using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using Ghost.Contracts.Jobs;
+using Ghost.Abstractions;
 
 namespace Ghost.Platform.LinkedIn.Internal;
 
-internal static class JsonLdParser
+internal sealed class JsonLdParser
 {
-    private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+    private readonly IJsonLdExtractor _extractor;
 
-    public static JobListing? Parse(string html, string jobId, string url)
+    public JsonLdParser(IJsonLdExtractor extractor)
+    {
+        _extractor = extractor ?? throw new ArgumentNullException(nameof(extractor));
+    }
+
+    public JobListing? Parse(string html, string jobId, string url)
     {
         try
         {
-            var match = Regex.Match(html, "<script type=\"application/ld\\+json\">(.*?)</script>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-            if (!match.Success) return null;
-
-            var json = match.Groups[1].Value.Trim();
-
-            var ld = JsonSerializer.Deserialize<LinkedInJobPostingLd>(json, _jsonOptions);
+            var ldEnum = _extractor.Extract<LinkedInJobPostingLd>(html);
+            var ld = System.Linq.Enumerable.FirstOrDefault(ldEnum);
             if (ld == null) return null;
 
             var location = ld.JobLocation?.Address?.AddressLocality ?? ld.JobLocation?.Address?.AddressRegion;
@@ -52,12 +52,7 @@ internal static class JsonLdParser
     private static JobType ParseJobType(string? type)
     {
         if (string.IsNullOrEmpty(type)) return JobType.Unknown;
-        
-        // Handle array or string format (sometimes it's "FULL_TIME", sometimes ["FULL_TIME"])
-        // But here we mapped it to string? in Ld class. If it's an array in JSON, System.Text.Json might fail 
-        // unless we use JsonElement or a custom converter. 
-        // For simplicity let's assume it's a string as per common Schema.org usage, or comma separated.
-        
+
         var normalized = type.ToUpperInvariant().Replace("_", "");
         return normalized switch
         {
@@ -74,15 +69,18 @@ internal static class JsonLdParser
     private static string? ExtractIdFromUrl(string? url)
     {
         if (string.IsNullOrEmpty(url)) return null;
-        // try to find digits at end like /jobs/view/123456789
-        var m = Regex.Match(url, @"/jobs/(?:view|r)/(?<id>[0-9]+)", RegexOptions.IgnoreCase);
-        if (m.Success) return m.Groups["id"].Value;
-
-        // fallback: jobId query param
-        var q = new UriBuilder(url);
-        var query = System.Web.HttpUtility.ParseQueryString(q.Query);
-        var id = query["jobId"] ?? query["id"];
-        return id;
+        try
+        {
+            // fallback: jobId query param
+            var q = new UriBuilder(url);
+            var query = System.Web.HttpUtility.ParseQueryString(q.Query);
+            var id = query["jobId"] ?? query["id"];
+            return id;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static string? FormatSalary(BaseSalaryLd? salary)

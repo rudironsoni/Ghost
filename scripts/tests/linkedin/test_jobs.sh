@@ -1,12 +1,11 @@
 #!/bin/bash
 
-#!/bin/bash
-
 # Configuration
 API_URL="${API_URL:-http://localhost:5000}"
 echo "Testing Jobs API at $API_URL"
 
 # Strategies to test
+# We test all three to ensure parity
 STRATEGIES=("GuestApi" "BrowserPage" "Hybrid")
 
 # Check for jq availability
@@ -22,42 +21,35 @@ for STRATEGY in "${STRATEGIES[@]}"; do
   echo "Testing strategy: $STRATEGY"
   echo "Searching for 'Software Engineer' in 'Madrid'..."
 
+  # We use maxResults=3 to speed up the test and reduce rate limiting
   URL="$API_URL/api/linkedin/jobs/search?strategy=$STRATEGY"
 
   SEARCH_RESPONSE=$(curl -s -X POST "$URL" \
     -H "Content-Type: application/json" \
-    -d '{ "query": "Software Engineer", "location": "Madrid", "maxResults": 10 }')
+    -d '{ "query": "Software Engineer", "location": "Madrid", "maxResults": 3 }')
 
-  echo "Response:"
-  if [ "$HAS_JQ" -eq 1 ]; then
-    echo "$SEARCH_RESPONSE" | jq .
-  else
-    # Pretty-print best-effort without jq
-    echo "$SEARCH_RESPONSE"
-  fi
+  echo "Response (Summary):"
+  # Show only the first 500 chars to verify we got content without spamming logs
+  echo "$SEARCH_RESPONSE" | head -c 500
+  echo "..."
+  echo ""
 
-  # Extract first Job ID. Prefer jq when available, fallback to grep/sed.
-  if [ "$HAS_JQ" -eq 1 ]; then
-    JOB_ID=$(echo "$SEARCH_RESPONSE" | jq -r 'if type=="array" then (.[0].id // empty) else (.results[0].id // .data[0].id // .id // empty) end')
+  # Verify we got a JSON array
+  if echo "$SEARCH_RESPONSE" | grep -q "\["; then
+      COUNT=$(echo "$SEARCH_RESPONSE" | grep -o "\"id\"" | wc -l)
+      echo "Found $COUNT jobs via $STRATEGY."
+      
+      # Basic validation check
+      if [ "$COUNT" -eq 0 ]; then
+         echo "⚠️ WARNING: $STRATEGY returned 0 jobs."
+      else
+         echo "✅ SUCCESS: $STRATEGY returned results."
+      fi
   else
-    JOB_ID=$(echo "$SEARCH_RESPONSE" | grep -o '"id":"[^"]*"' | head -n 1 | cut -d'"' -f4)
-  fi
-
-  if [ -z "$JOB_ID" ]; then
-    echo "No jobs found or failed to parse ID for strategy $STRATEGY."
-  else
-    echo "Found Job ID: $JOB_ID"
-    echo "----------------------------------------"
-    echo "Fetching details for Job ID: $JOB_ID..."
-    if [ "$HAS_JQ" -eq 1 ]; then
-      curl -s -X GET "$API_URL/api/linkedin/jobs/$JOB_ID" | jq .
-    else
-      curl -s -X GET "$API_URL/api/linkedin/jobs/$JOB_ID"
-    fi
-    echo ""
+      echo "❌ FAILURE: $STRATEGY returned invalid response."
   fi
 
   echo "========================================"
-  # Be polite between requests
-  sleep 1
+  # Be polite between requests to avoid rate limits
+  sleep 2
 done

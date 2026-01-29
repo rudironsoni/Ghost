@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Ghost.Platform.Google;
+namespace Ghost.Platform.Google.Gemini;
 
 /// <summary>
 /// Browser-driven client for gemini.google.com using the Ghost kernel.
@@ -11,14 +11,14 @@ namespace Ghost.Platform.Google;
     public sealed partial class GoogleClient : Ghost.Contracts.Inference.IInferenceClient
     {
     private readonly Ghost.IBrowserSession _session;
-    private readonly GoogleOptions _options;
+    private readonly Gemini.GeminiOptions _options;
     private readonly ILogger<GoogleClient> _logger;
 
-    public GoogleClient(Ghost.IBrowserSession session, IOptions<GoogleOptions> options, ILogger<GoogleClient> logger)
+    public GoogleClient(Ghost.IBrowserSession session, IOptions<Gemini.GeminiOptions> options, ILogger<GoogleClient> logger)
     {
         ArgumentNullException.ThrowIfNull(session);
         _session = session;
-        _options = options?.Value ?? new GoogleOptions();
+        _options = options?.Value ?? new Gemini.GeminiOptions();
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GoogleClient>.Instance;
     }
 

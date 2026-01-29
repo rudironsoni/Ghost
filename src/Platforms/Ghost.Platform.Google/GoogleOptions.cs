@@ -5,7 +5,8 @@ namespace Ghost.Platform.Google;
 /// </summary>
 public sealed class GoogleOptions
 {
-    public string BaseUrl { get; set; } = "https://gemini.google.com";
-    public TimeSpan ResponseTimeout { get; set; } = TimeSpan.FromMinutes(2);
-    public string DefaultModel { get; set; } = "gemini-pro";
+    // Initialize sub-options with sensible defaults so tests and consumers
+    // don't need to manually new them up.
+    public Gemini.GeminiOptions Gemini { get; set; } = new Gemini.GeminiOptions();
+    public Jobs.GoogleJobsOptions Jobs { get; set; } = new Jobs.GoogleJobsOptions();
 }

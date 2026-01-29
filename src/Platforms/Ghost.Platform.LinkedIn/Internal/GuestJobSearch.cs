@@ -20,6 +20,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
     private readonly ILogger<GuestJobSearch> _logger;
     private readonly IOptions<LinkedInOptions> _options;
     private readonly LinkedInAuthenticator _authenticator;
+    private readonly ICountryDomainProvider _countryProvider;
 
     private static readonly Action<ILogger, string, Exception?> s_logUsingProxy =
         LoggerMessage.Define<string>(LogLevel.Debug, new EventId(1, nameof(GuestJobSearch)), "Using proxy: {Proxy}");
@@ -55,7 +56,8 @@ public sealed class GuestJobSearch : IGuestJobSearch
         IProxyProvider proxyProvider,
         IOptions<LinkedInOptions> options,
         LinkedInAuthenticator authenticator,
-        ILogger<GuestJobSearch> logger)
+        ILogger<GuestJobSearch> logger,
+        ICountryDomainProvider countryProvider)
     {
         ArgumentNullException.ThrowIfNull(kernel);
         ArgumentNullException.ThrowIfNull(proxyProvider);
@@ -64,6 +66,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
         _authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GuestJobSearch>.Instance;
         _options = options ?? throw new ArgumentNullException(nameof(options));
+        _countryProvider = countryProvider ?? throw new ArgumentNullException(nameof(countryProvider));
     }
 
     public async Task<IReadOnlyList<string>> SearchAsync(JobSearchCriteria criteria, int limit, CancellationToken ct)
@@ -109,7 +112,8 @@ public sealed class GuestJobSearch : IGuestJobSearch
             ct.ThrowIfCancellationRequested();
 
             // Build base URL and append time filter if present
-            var baseUrl = $"{_options.Value.BaseUrl}/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={q}&location={loc}&start={offset}";
+            var baseUrlDomain = _countryProvider.GetDomain(_options.Value.Country);
+            var baseUrl = $"{baseUrlDomain}/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={q}&location={loc}&start={offset}";
             string? tpr = criteria.PostedDate switch
             {
                 TimePosted.Past24Hours => "r86400",
@@ -250,7 +254,8 @@ public sealed class GuestJobSearch : IGuestJobSearch
     {
         ArgumentNullException.ThrowIfNull(jobId);
         // Try up to 3 attempts, recreating session on Playwright failures (proxy tunnel issues etc.)
-        var url = $"{_options.Value.BaseUrl}/jobs-guest/jobs/api/jobPosting/{jobId}";
+        var domain = _countryProvider.GetDomain(_options.Value.Country);
+        var url = $"{domain}/jobs-guest/jobs/api/jobPosting/{jobId}";
         for (var attempt = 1; attempt <= 3; attempt++)
         {
             SessionOptions attemptOptions;
@@ -305,7 +310,10 @@ public sealed class GuestJobSearch : IGuestJobSearch
                         return null;
                     }
 
-                    var parsed = JsonLdParser.Parse(html, jobId, url);
+                    // Use the JsonLdExtractor implementation from Ghost.Utilities via DI/Activator
+                    var extractor = (Ghost.Abstractions.IJsonLdExtractor?)Activator.CreateInstance(Type.GetType("Ghost.Utilities.JsonLdExtractor, Ghost.Core" ) ?? typeof(Ghost.Utilities.JsonLdExtractor));
+                    var parser = new JsonLdParser(extractor!);
+                    var parsed = parser.Parse(html, jobId, url);
 
                     // If JSON-LD parsing failed to extract critical fields, fall back to DOM scraping
                     // We check Description, Company, or Location as primary signals of a good parse

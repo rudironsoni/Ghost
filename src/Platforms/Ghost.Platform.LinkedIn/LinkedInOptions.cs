@@ -1,3 +1,5 @@
+using Ghost.Models;
+
 namespace Ghost.Platform.LinkedIn;
 
 /// <summary>
@@ -39,6 +41,11 @@ public sealed class LinkedInOptions
     /// Default is true.
     /// </summary>
     public bool WarmUpEnabled { get; set; } = true;
+    
+    /// <summary>
+    /// Country used to resolve platform domains (e.g. ES -> es.linkedin.com)
+    /// </summary>
+    public CountryCode Country { get; set; } = CountryCode.US;
 }
 
 public enum JobScrapingStrategy
