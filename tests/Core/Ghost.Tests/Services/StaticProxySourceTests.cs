@@ -67,7 +67,7 @@ public class StaticProxySourceTests
             var res = (await sut.FetchProxiesAsync(CancellationToken.None)).ToList();
 
             res.Should().HaveCount(1);
-            res[0].Server.Should().Be("host:1234");
+            res[0].Server.Should().Be("http://host:1234");
             res[0].Username.Should().Be("u");
             res[0].Password.Should().Be("p");
         }
