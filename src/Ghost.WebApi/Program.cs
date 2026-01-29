@@ -132,6 +132,10 @@ builder.Services.AddGhost(builder.Configuration, gw =>
         }
     }
 });
+// Register aggregator after extensions have been loaded so it can compose available scrapers
+// If an AddGhostAggregator extension method exists it would be preferable to call that instead.
+// In its absence register the AggregatedJobClient implementation used as the IJobClient.
+builder.Services.AddScoped<Ghost.Contracts.Jobs.IJobClient, Ghost.Core.Services.AggregatedJobClient>();
 
 var app = builder.Build();
 
