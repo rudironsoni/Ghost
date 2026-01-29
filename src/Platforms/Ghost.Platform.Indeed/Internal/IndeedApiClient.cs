@@ -6,8 +6,10 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text;
 using System.Threading.Tasks;
+using System.Security.Authentication;
 using Ghost.Models;
 using Ghost.Abstractions;
+using Ghost.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Ghost.Platform.Indeed.Internal;
@@ -16,6 +18,7 @@ namespace Ghost.Platform.Indeed.Internal;
     {
         private readonly IProxyProvider _proxyProvider;
         private readonly CountryCode _country;
+        private readonly string _apiKey;
         private readonly ILogger<IndeedApiClient> _logger;
         private static readonly Action<ILogger, string, string, Exception?> LogRequestStart =
             LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(2001, "FetchingIndeedJobs"), "Fetching Indeed jobs for query '{Query}' at {Location}...");
@@ -45,6 +48,7 @@ namespace Ghost.Platform.Indeed.Internal;
     {
         _proxyProvider = proxyProvider;
         _country = options.Country;
+        _apiKey = options.ApiKey;
         _logger = logger;
         try
         {
@@ -86,7 +90,15 @@ namespace Ghost.Platform.Indeed.Internal;
             // get a proxy for this request/session
             var proxy = await _proxyProvider.GetProxyAsync(_country.ToString());
 
-            var handler = new SocketsHttpHandler();
+            var handler = new SocketsHttpHandler
+            {
+                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+                {
+                    RemoteCertificateValidationCallback = HttpClientSecurityExtensions.CreateCertificateValidationCallback(),
+                    EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13
+                }
+            };
+
             if (proxy != null)
             {
                 var webProxy = new WebProxy(new Uri(proxy.Server));
@@ -100,12 +112,11 @@ namespace Ghost.Platform.Indeed.Internal;
 
             using var client = new HttpClient(handler);
 
-            // set default headers (User-Agent, etc.) - ensure we use the configured country
-            var headers = IndeedConstants.GetHeaders(_country);
+            var headers = IndeedConstants.GetHeaders(_country, _apiKey);
             if (headers == null)
             {
                 LogGetHeadersReturnedNull(_logger, _country, null);
-                headers = IndeedConstants.GetHeaders(CountryCode.US);
+                headers = IndeedConstants.GetHeaders(CountryCode.US, _apiKey);
             }
             foreach (var kv in headers)
             {

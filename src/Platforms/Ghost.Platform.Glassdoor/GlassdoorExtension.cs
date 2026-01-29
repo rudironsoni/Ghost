@@ -23,24 +23,12 @@ public sealed class GlassdoorExtension : Ghost.Hosting.IExtension
             services.AddHttpClient<Internal.GlassdoorApiClient>()
                 .ConfigurePrimaryHttpMessageHandler(sp =>
                 {
-                    // Respect configured option to enable/disable proxy usage
                     var opts = sp.GetRequiredService<IOptions<GlassdoorOptions>>().Value;
-                    if (!opts.ProxyEnabled)
-                    {
-                        // Use a default handler without proxy so direct connections work
-                        return new HttpClientHandler
-                        {
-                            UseProxy = false
-                        };
-                    }
+                    var handler = opts.ProxyEnabled
+                        ? new HttpClientHandler { Proxy = new RotatingWebProxy(sp.GetRequiredService<IProxyProvider>()), UseProxy = true }
+                        : new HttpClientHandler { UseProxy = false };
 
-                    // Proxy enabled in options - configure rotating proxy handler
-                    var provider = sp.GetRequiredService<IProxyProvider>();
-                    return new HttpClientHandler
-                    {
-                        Proxy = new RotatingWebProxy(provider),
-                        UseProxy = true
-                    };
+                    return HttpClientSecurityExtensions.ConfigureSecureHttpClientHandler(handler);
                 });
 
             // register as IJobScraper and IJobClient

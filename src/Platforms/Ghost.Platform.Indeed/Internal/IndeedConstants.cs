@@ -6,7 +6,7 @@ namespace Ghost.Platform.Indeed.Internal;
 internal static class IndeedConstants
 {
     public const string ApiUrl = "https://apis.indeed.com/graphql";
-    public const string ApiKey = "161092c2017b5bbab13edb12461a62d5a833871e7cad6d9d475304573de67ac8";
+
 
     public const string JobSearchQuery = """
         query GetJobData {{
@@ -43,7 +43,7 @@ internal static class IndeedConstants
         }}
     """;
 
-    public static Dictionary<string,string> GetHeaders(CountryCode country)
+    public static Dictionary<string,string> GetHeaders(CountryCode country, string apiKey)
     {
         var locale = country switch
         {
@@ -76,7 +76,7 @@ internal static class IndeedConstants
         return new Dictionary<string,string>
         {
             ["Host"] = "apis.indeed.com",
-            ["indeed-api-key"] = ApiKey,
+            ["indeed-api-key"] = apiKey,
             // Match JobSpy iPhone User-Agent exactly
             ["User-Agent"] = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Indeed App 193.1",
             ["indeed-co"] = indeedCo,
