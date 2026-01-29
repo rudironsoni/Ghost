@@ -1,0 +1,29 @@
+Searching LinkedIn for 'Backend Engineer' in Madrid (MaxResults 5) against http://localhost:5000/api/jobs/search
+=== Testing Strategy: GuestApi ===
+Response (summary):
+[LinkedIn] Backend Developer @ BBVA Technology en Europa - Madrid y alrededores (N/A)
+[LinkedIn] Backend Developer @ Nabu Casa - Madrid (N/A)
+[LinkedIn] Junior FullStack Developer @ Fibonad - Madrid (N/A)
+[LinkedIn] Backend Software Engineer @ Cabify - Madrid (N/A)
+[LinkedIn] Beca Backend Developer- Madrid @ Slashmobility - Madrid (N/A)
+...
+Found 5 jobs from LinkedIn.
+✅ SUCCESS: returned results.
+=== Testing Strategy: BrowserPage ===
+Response (summary):
+[Unknown] Backend Developer @ BBVA Technology en Europa - Greater Madrid Metropolitan Area (N/A)
+[Unknown] Backend Developer @ Nabu Casa - Madrid, Community of Madrid, Spain (N/A)
+[Unknown] Backend Software Engineer @ Cabify - Madrid, Community of Madrid, Spain (N/A)
+...
+Found 3 jobs from LinkedIn.
+✅ SUCCESS: returned results.
+=== Testing Strategy: Hybrid ===
+Response (summary):
+[LinkedIn] Backend Developer @ BBVA Technology en Europa - Madrid y alrededores (N/A)
+[LinkedIn] Backend Developer @ Nabu Casa - Madrid (N/A)
+[LinkedIn] Junior FullStack Developer @ Fibonad - Madrid (N/A)
+[LinkedIn] Backend Software Engineer @ Cabify - Madrid (N/A)
+[LinkedIn] Beca Backend Developer- Madrid @ Slashmobility - Madrid (N/A)
+...
+Found 5 jobs from LinkedIn.
+✅ SUCCESS: returned results.

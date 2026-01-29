@@ -13,11 +13,13 @@ public sealed class GoogleJobsApiClient
         _http = http ?? throw new ArgumentNullException(nameof(http));
     }
 
-    public async Task<IReadOnlyList<JobListing>> SearchAsync(string query, string location)
-    {
-        var q = System.Uri.EscapeDataString(query);
-        var loc = System.Uri.EscapeDataString(location);
-        var url = $"https://www.google.com/search?q={q}+{loc}&udm=8";
+        public async Task<IReadOnlyList<JobListing>> SearchAsync(string query, string location)
+        {
+            var q = System.Uri.EscapeDataString(query);
+            var loc = System.Uri.EscapeDataString(location);
+        // Use the 'ibp=htl;jobs' parameter which targets the Google Jobs (Jobs widget) view
+        // falling back to a plain search URL if needed.
+        var url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs";
 
         var req = new HttpRequestMessage(HttpMethod.Get, url);
         req.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");

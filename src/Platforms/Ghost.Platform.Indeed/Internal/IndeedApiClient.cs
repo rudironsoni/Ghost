@@ -86,8 +86,14 @@ namespace Ghost.Platform.Indeed.Internal;
 
             using var client = new HttpClient(handler);
 
-            // set default headers (User-Agent, etc.)
-            foreach (var kv in IndeedConstants.GetHeaders(_country))
+            // set default headers (User-Agent, etc.) - ensure we use the configured country
+            var headers = IndeedConstants.GetHeaders(_country);
+            if (headers == null)
+            {
+                _logger.LogWarning("IndeedConstants.GetHeaders returned null for country {Country}", _country);
+                headers = IndeedConstants.GetHeaders(CountryCode.US);
+            }
+            foreach (var kv in headers)
             {
                 client.DefaultRequestHeaders.TryAddWithoutValidation(kv.Key, kv.Value);
             }
@@ -104,6 +110,13 @@ namespace Ghost.Platform.Indeed.Internal;
             {
                 LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
             }
+
+            // Log the resolved country being used for this request for debugging
+            try
+            {
+                _logger.LogInformation("IndeedApiClient: using country {Country} when sending request", _country);
+            }
+            catch { }
 
             var resp = await client.SendAsync(req);
             if ((int)resp.StatusCode == 429)
