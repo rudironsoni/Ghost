@@ -44,7 +44,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         // log how many scrapers were injected
         try
         {
-            _logger.LogInformation("Injected scrapers count: {Count}", _scrapers?.Count() ?? 0);
+            _logger.LogInformation("Injected scrapers count: {Count}", _scrapers?.Count ?? 0);
             // log each injected scraper name and type for debugging
             try
             {
