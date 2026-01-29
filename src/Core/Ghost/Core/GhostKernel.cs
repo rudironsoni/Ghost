@@ -26,6 +26,9 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
         _sessionLock = new SemaphoreSlim(maxConcurrentSessions, maxConcurrentSessions);
         _enableStealth = enableStealth;
         _kernelBrowser = kernelBrowser ?? "Chromium";
+        
+        // Ensure cleanup on process exit
+        AppDomain.CurrentDomain.ProcessExit += (s, e) => Dispose();
     }
 
     public static async Task<GhostKernel> CreateAsync(KernelOptions? options = null, CancellationToken ct = default)
@@ -270,9 +273,29 @@ public sealed class GhostKernel : IAsyncDisposable, IDisposable
 
     private async ValueTask DisposeAsyncCore()
     {
-        await _browser.DisposeAsync();
-        _playwright.Dispose();
-        _sessionLock.Dispose();
+        try
+        {
+            await _browser.CloseAsync();
+        }
+        catch { }
+
+        try
+        {
+            await _browser.DisposeAsync();
+        }
+        catch { }
+
+        try
+        {
+            _playwright.Dispose();
+        }
+        catch { }
+
+        try
+        {
+            _sessionLock.Dispose();
+        }
+        catch { }
     }
 
     public async ValueTask DisposeAsync()

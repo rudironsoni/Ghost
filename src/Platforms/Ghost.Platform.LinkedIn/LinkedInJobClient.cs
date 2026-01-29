@@ -58,9 +58,9 @@ namespace Ghost.Platform.LinkedIn;
         private readonly Ghost.IBrowserSession _session;
         private readonly LinkedInOptions _options;
         private readonly ILogger<LinkedInJobClient> _logger;
-        private readonly Internal.GuestJobSearch _guestSearch;
+        private readonly Internal.IGuestJobSearch _guestSearch;
 
-    public LinkedInJobClient(Ghost.IBrowserSession session, IOptions<LinkedInOptions> options, ILogger<LinkedInJobClient> logger, Internal.GuestJobSearch guestSearch)
+    public LinkedInJobClient(Ghost.IBrowserSession session, IOptions<LinkedInOptions> options, ILogger<LinkedInJobClient> logger, Internal.IGuestJobSearch guestSearch)
     {
         ArgumentNullException.ThrowIfNull(session);
         _session = session;
@@ -155,6 +155,9 @@ namespace Ghost.Platform.LinkedIn;
 
             // attempt to parse JSON-LD from page content
             var html = await page.GetContentAsync(ct);
+
+            // NOTE: debug artifacts removed - do not write files during parsing
+
             var parsed = Internal.JsonLdParser.Parse(html ?? string.Empty, jobId, url);
 
             // If parsed is missing or missing a title or description (or company), attempt DOM scraping to fill missing fields.
@@ -228,7 +231,7 @@ namespace Ghost.Platform.LinkedIn;
                     ExperienceLevel scrapedExperienceLevel = ExperienceLevel.Unknown;
                     try
                     {
-                        var critNodes = await page.QuerySelectorAllAsync(".description__job-criteria-list li, .job-details-jobs-unified-top-card__job-insight", ct);
+                        var critNodes = await page.QuerySelectorAllAsync(".description__job-criteria-list .description__job-criteria-item, .description__job-criteria-list li, .job-details-jobs-unified-top-card__job-insight", ct);
                         foreach (var c in critNodes)
                         {
                             try
@@ -254,8 +257,16 @@ namespace Ghost.Platform.LinkedIn;
 
                                 if (label.Contains("Seniority", StringComparison.OrdinalIgnoreCase) || txt.Contains("Seniority level", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    var el = ParseExperienceLevel(value);
-                                    if (el != ExperienceLevel.Unknown) scrapedExperienceLevel = el;
+                                    // Handle Not Applicable explicitly
+                                    if (value?.Trim().Equals("Not Applicable", StringComparison.OrdinalIgnoreCase) == true)
+                                    {
+                                        scrapedExperienceLevel = ExperienceLevel.Unknown;
+                                    }
+                                    else
+                                    {
+                                        var el = ParseExperienceLevel(value);
+                                        if (el != ExperienceLevel.Unknown) scrapedExperienceLevel = el;
+                                    }
                                 }
                             }
                             catch { }

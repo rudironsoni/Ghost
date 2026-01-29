@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using NSubstitute;
+using System.Runtime.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -22,7 +23,10 @@ public class LinkedInJobClientTests
             .Returns(Task.FromResult<IElement?>(null));
 
         var logger = Substitute.For<ILogger<LinkedInJobClient>>();
-        var client = new LinkedInJobClient(mockSession, Options.Create(new LinkedInOptions()), logger);
+        // Create a simple fake IGuestJobSearch implementation for DI
+        var guest = new TestGuestJobSearch();
+        var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
+        var client = new LinkedInJobClient(mockSession, Options.Create(opts), logger, guest);
         var jobs = await client.SearchJobsAsync(new JobSearchCriteria { Query = "developer" }, CancellationToken.None);
         jobs.Should().BeAssignableTo<System.Collections.Generic.IEnumerable<JobListing>>();
     }
@@ -38,7 +42,9 @@ public class LinkedInJobClientTests
             .Returns(Task.FromResult<IElement?>(null));
 
         var logger = Substitute.For<ILogger<LinkedInJobClient>>();
-        var client = new LinkedInJobClient(mockSession, Options.Create(new LinkedInOptions()), logger);
+        var guest = new TestGuestJobSearch();
+        var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
+        var client = new LinkedInJobClient(mockSession, Options.Create(opts), logger, guest);
         var result = await client.ApplyAsync("job:1", new ApplicationDetails { ApplicantName = "Test", ApplicantEmail = "a@b.com" }, CancellationToken.None);
         result.Should().BeNull();
     }
@@ -60,7 +66,8 @@ public class LinkedInJobClientTests
             ScrapingStrategy = JobScrapingStrategy.BrowserPage 
         };
         
-        var client = new LinkedInJobClient(mockSession, Options.Create(opts), null!);
+        var guest = new TestGuestJobSearch();
+        var client = new LinkedInJobClient(mockSession, Options.Create(opts), null!, guest);
 
         // Act
         await client.GetJobDetailsAsync("123");
@@ -89,7 +96,9 @@ public class LinkedInJobClientTests
         mockPage.QuerySelectorAsync(Arg.Is<string>(s => s.Contains("jobs-apply-button") || s.Contains("jobs-s-apply")), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IElement?>(mockBtn));
 
-        var client = new LinkedInJobClient(mockSession, Options.Create(new LinkedInOptions()), null!);
+        var guest = new TestGuestJobSearch();
+        var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
+        var client = new LinkedInJobClient(mockSession, Options.Create(opts), null!, guest);
 
         // Act
         var result = await client.GetJobDetailsAsync("123");
@@ -99,3 +108,16 @@ public class LinkedInJobClientTests
         result.IsEasyApply.Should().BeTrue();
     }
 }
+
+    internal sealed class TestGuestJobSearch : Ghost.Platform.LinkedIn.Internal.IGuestJobSearch
+    {
+        public Task<IReadOnlyList<string>> SearchAsync(Ghost.Contracts.Jobs.JobSearchCriteria criteria, int limit, CancellationToken ct)
+        {
+            return Task.FromResult((IReadOnlyList<string>)new System.Collections.Generic.List<string>());
+        }
+
+        public Task<Ghost.Contracts.Jobs.JobListing?> FetchJobDetailsAsync(string jobId, CancellationToken ct)
+        {
+            return Task.FromResult<Ghost.Contracts.Jobs.JobListing?>(null);
+        }
+    }

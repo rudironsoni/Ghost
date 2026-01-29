@@ -13,7 +13,7 @@ using System.Linq;
 
 namespace Ghost.Platform.LinkedIn.Internal;
 
-public sealed class GuestJobSearch
+public sealed class GuestJobSearch : IGuestJobSearch
 {
     private readonly GhostKernel _kernel;
     private readonly IProxyProvider _proxyProvider;
@@ -170,7 +170,7 @@ public sealed class GuestJobSearch
                     }
                     catch { }
 
-                    var html = await page.GetContentAsync(ct);
+                        var html = await page.GetContentAsync(ct);
                     if (string.IsNullOrEmpty(html))
                     {
                         success = true;
@@ -295,7 +295,8 @@ public sealed class GuestJobSearch
                     try { await LinkedInRateLimitDetector.CheckAsync(page); } catch { }
                     Console.WriteLine($"[DEBUG] Fetching content for {jobId}...");
                     var html = await page.GetContentAsync(ct);
-                    try { Console.WriteLine($"[DEBUG] HTML for {jobId} (len={html?.Length ?? 0}): {html?.Substring(0, Math.Min(html?.Length ?? 0, 2000))}"); } catch { }
+                    
+                    // NOTE: debug artifacts removed - production code should not write files during parsing
                     if (string.IsNullOrEmpty(html)) return null;
 
                     if (html.Contains("429", StringComparison.OrdinalIgnoreCase) || html.Contains("too many requests", StringComparison.OrdinalIgnoreCase))
@@ -372,24 +373,46 @@ public sealed class GuestJobSearch
                         string? scrapedJobType = null;
                         string? scrapedExperience = null;
                         
-                        var criteriaList = await page.QuerySelectorAllAsync(".description__job-criteria-list li", ct);
+                        // Prefer the newer criteria item structure
+                        var criteriaList = await page.QuerySelectorAllAsync(".description__job-criteria-list .description__job-criteria-item, .description__job-criteria-list li, .job-details-jobs-unified-top-card__job-insight", ct);
                         foreach (var item in criteriaList)
                         {
                             try {
                                 var text = await item.GetTextContentAsync(ct);
                                 if (!string.IsNullOrEmpty(text))
                                 {
-                                    var parts = text.Split(s_newlines, StringSplitOptions.RemoveEmptyEntries);
+                                    // Normalize and split lines - header on first line, value on second
+                                    var parts = text.Split(s_newlines, StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).Where(p => p.Length > 0).ToArray();
                                     if (parts.Length >= 2)
                                     {
-                                        var header = parts[0].Trim();
-                                        var value = parts[1].Trim();
-                                        if (header.Contains("Employment type", StringComparison.OrdinalIgnoreCase)) scrapedJobType = value;
-                                        else if (header.Contains("Seniority level", StringComparison.OrdinalIgnoreCase)) scrapedExperience = value;
+                                        var header = parts[0];
+                                        var value = parts[1];
+                                        if (header.Contains("Employment", StringComparison.OrdinalIgnoreCase) || header.Contains("Employment type", StringComparison.OrdinalIgnoreCase)) scrapedJobType = value;
+                                        else if (header.Contains("Seniority", StringComparison.OrdinalIgnoreCase) || header.Contains("Seniority level", StringComparison.OrdinalIgnoreCase)) scrapedExperience = value;
                                     }
                                 }
                             } catch {}
                         }
+
+                        // Salary: attempt to find salary block in guest view
+                        string? scrapedSalary = null;
+                        try
+                        {
+                            var salEl = await page.QuerySelectorAsync(".main-job-card__salary-info, .main-job-card__salary-info", ct);
+                            if (salEl != null)
+                            {
+                                var raw = await salEl.GetTextContentAsync(ct);
+                                if (!string.IsNullOrWhiteSpace(raw))
+                                {
+                                    // collapse whitespace and newlines into single spaces
+                                    var cleaned = System.Text.RegularExpressions.Regex.Replace(raw, "\\s+", " ").Trim();
+                                    // normalize hyphen spacing
+                                    cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, "\\s*-\\s*", " - ");
+                                    scrapedSalary = cleaned;
+                                }
+                            }
+                        }
+                        catch { }
 
                         // Regex fallback if selectors failed
                         if (string.IsNullOrWhiteSpace(scrapedCompany))
@@ -415,7 +438,8 @@ public sealed class GuestJobSearch
                                 Url = url,
                                 JobType = ParseJobType(scrapedJobType),
                                 ExperienceLevel = ParseExperienceLevel(scrapedExperience),
-                                PostedAt = DateTimeOffset.UtcNow
+                                PostedAt = DateTimeOffset.UtcNow,
+                                Salary = scrapedSalary
                             };
                         }
                         else
@@ -435,7 +459,8 @@ public sealed class GuestJobSearch
                                 Company = company,
                                 Location = location,
                                 JobType = jType,
-                                ExperienceLevel = exp
+                                ExperienceLevel = exp,
+                                Salary = string.IsNullOrWhiteSpace(parsed.Salary) ? scrapedSalary : parsed.Salary // preserve existing salary if any
                             };
                         }
                     }
