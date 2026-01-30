@@ -306,6 +306,12 @@ All test results have been saved to:
 - Added Google-specific headers: X-Browser-Channel, X-Browser-Copyright, X-Browser-Year.
 - Updated User-Agent to Chrome 130 on macOS as JobSpy uses.
 
+- Updated Glassdoor GraphHeaders to include Apollo GraphQL headers and additional JobSpy-matching headers:
+  - apollographql-client-name: "job-search-next"
+  - apollographql-client-version: "4.65.5"
+  - authority/origin/referer and sec-ch-ua values matching JobSpy
+  - User-Agent updated to Chrome 138 on macOS to match JobSpy's Glassdoor profile
+
 Result: Build for Ghost.Platform.Google succeeded after these changes. LSP diagnostics not available in the environment (csharp-ls missing), but dotnet build passed.
 
 Next actions:

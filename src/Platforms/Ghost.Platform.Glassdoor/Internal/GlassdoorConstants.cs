@@ -72,7 +72,7 @@ internal static class GlassdoorConstants
     /// </summary>
     public static readonly Dictionary<string, string> GraphHeaders = new()
     {
-        ["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+        ["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
         ["Accept"] = "*/*",
         ["Accept-Language"] = "en-US,en;q=0.9",
         ["Accept-Encoding"] = "gzip, deflate, br",
@@ -83,12 +83,20 @@ internal static class GlassdoorConstants
         ["Sec-Fetch-Dest"] = "empty",
         ["Sec-Fetch-Mode"] = "cors",
         ["Sec-Fetch-Site"] = "same-origin",
-        ["Sec-Ch-Ua"] = "\"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Google Chrome\";v=\"120\"",
+        ["Sec-Ch-Ua"] = "\"Chromium\";v=\"118\", \"Google Chrome\";v=\"118\", \"Not=A?Brand\";v=\"99\"",
         ["Sec-Ch-Ua-Mobile"] = "?0",
-        ["Sec-Ch-Ua-Platform"] = "\"Windows\"",
-        // Apollo GraphQL client identifiers (these are required by Glassdoor)
-        ["apollographql-client-name"] = "Glassdoor-Frontend",
-        ["apollographql-client-version"] = "1.0"
+        ["Sec-Ch-Ua-Platform"] = "\"macOS\"",
+        // Apollo GraphQL client identifiers (these are required by Glassdoor and JobSpy)
+        ["apollographql-client-name"] = "job-search-next",
+        ["apollographql-client-version"] = "4.65.5",
+        // Additional origin/authority style headers used by JobSpy
+        ["authority"] = "www.glassdoor.com",
+        ["origin"] = "https://www.glassdoor.com",
+        ["referer"] = "https://www.glassdoor.com/",
+        ["sec-ch-ua-platform"] = "\"macOS\"",
+        ["sec-fetch-dest"] = "empty",
+        ["sec-fetch-mode"] = "cors",
+        ["sec-fetch-site"] = "same-origin"
     };
 
     /// <summary>
