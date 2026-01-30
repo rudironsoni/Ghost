@@ -12,7 +12,7 @@ public static class TecnoempleoExtension
 {
     public static IServiceCollection AddTecnoempleo(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<TecnoempleoOptions>(configuration.GetSection("Tecnoempleo"));
+        services.Configure<TecnoempleoOptions>(configuration.GetSection("Ghost:Extensions:Tecnoempleo"));
         
         services.AddHttpClient<TecnoempleoApiClient>();
         

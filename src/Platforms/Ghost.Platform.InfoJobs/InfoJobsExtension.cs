@@ -13,7 +13,7 @@ public sealed class InfoJobsExtension : Ghost.Hosting.IExtension
     public string Name => "InfoJobs";
     public Version Version => new(1, 0, 0);
     public IReadOnlyList<Type> ProvidedServices => new[] { typeof(Ghost.Contracts.Jobs.IJobClient) };
-    public IReadOnlyList<Type> RequiredServices => new[] { typeof(Ghost.IBrowserSession) };
+    public IReadOnlyList<Type> RequiredServices => Array.Empty<Type>();
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
@@ -26,10 +26,10 @@ public sealed class InfoJobsExtension : Ghost.Hosting.IExtension
         catch { }
 
         // bind using configuration section
-        services.Configure<Jobs.InfoJobsOptions>(configuration.GetSection("InfoJobs"));
+        services.Configure<Jobs.InfoJobsOptions>(configuration.GetSection("Ghost:Extensions:InfoJobs"));
 
         var rootOpts = new Jobs.InfoJobsOptions();
-        configuration.GetSection("InfoJobs").Bind(rootOpts);
+        configuration.GetSection("Ghost:Extensions:InfoJobs").Bind(rootOpts);
         try
         {
             Console.WriteLine($"InfoJobs options: Enabled = {rootOpts.Enabled}");

@@ -12,7 +12,7 @@ public sealed class TecnoempleoHostingExtension : Ghost.Hosting.IExtension
     public string Name => "Tecnoempleo";
     public Version Version => new(1, 0, 0);
     public IReadOnlyList<Type> ProvidedServices => new[] { typeof(Ghost.Contracts.Jobs.IJobClient) };
-    public IReadOnlyList<Type> RequiredServices => new[] { typeof(Ghost.IBrowserSession) };
+    public IReadOnlyList<Type> RequiredServices => Array.Empty<Type>();
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
@@ -25,10 +25,10 @@ public sealed class TecnoempleoHostingExtension : Ghost.Hosting.IExtension
         catch { }
 
         // bind using configuration section
-        services.Configure<Jobs.TecnoempleoOptions>(configuration.GetSection("Tecnoempleo"));
+        services.Configure<Jobs.TecnoempleoOptions>(configuration.GetSection("Ghost:Extensions:Tecnoempleo"));
 
         var rootOpts = new Jobs.TecnoempleoOptions();
-        configuration.GetSection("Tecnoempleo").Bind(rootOpts);
+        configuration.GetSection("Ghost:Extensions:Tecnoempleo").Bind(rootOpts);
         try
         {
             Console.WriteLine($"Tecnoempleo options: Enabled = {rootOpts.EnableRateLimiting}");

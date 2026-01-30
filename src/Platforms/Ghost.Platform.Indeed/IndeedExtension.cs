@@ -20,8 +20,8 @@ public class IndeedExtension : Ghost.Hosting.IExtension
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<IndeedOptions>(configuration.GetSection("Indeed"));
-        var opts = configuration.GetSection("Indeed").Get<IndeedOptions>() ?? new IndeedOptions();
+        services.Configure<IndeedOptions>(configuration.GetSection("Ghost:Extensions:Indeed"));
+        var opts = configuration.GetSection("Ghost:Extensions:Indeed").Get<IndeedOptions>() ?? new IndeedOptions();
         try { Console.WriteLine($"[DEBUG] IndeedExtension bound options: Country={opts.Country}"); } catch {}
 
         if (!opts.Enabled) return;

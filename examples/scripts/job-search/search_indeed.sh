@@ -3,7 +3,7 @@
 # Configuration
 API_URL="${API_URL:-http://localhost:5000}"
 URL="$API_URL/api/jobs/search"
-echo "Searching Indeed for 'Software Engineer' in Barcelona (MaxResults 5) against $URL"
+echo "Searching Indeed for 'Software Engineer' in Madrid (MaxResults 5) against $URL"
 
 # Check for jq availability
 if command -v jq >/dev/null 2>&1; then
@@ -13,13 +13,13 @@ else
   echo "Note: 'jq' not found, falling back to simple output parsing."
 fi
 
-PAYLOAD='{"Query": "Software Engineer", "Location": "Barcelona", "MaxResults": 5, "Sources": ["Indeed"]}'
+PAYLOAD='{"Query": "Software Engineer", "Location": "Madrid", "MaxResults": 5, "Sources": ["Indeed"]}'
 
 RESPONSE=$(curl -s -X POST "$URL" -H "Content-Type: application/json" -d "$PAYLOAD")
 
 echo "Response (summary):"
 if [ "$HAS_JQ" -eq 1 ]; then
-  echo "$RESPONSE" | jq -r '.[] | "[\(.source // "Unknown")] \(.title) @ \(.company) - \(.location) (\(.salaryRaw // "N/A"))"' || echo "$RESPONSE" | head -c 500
+  echo "$RESPONSE" | jq .
 else
   echo "$RESPONSE" | head -c 500
 fi
