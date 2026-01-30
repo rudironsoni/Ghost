@@ -75,7 +75,7 @@ Make all job search platforms return real job listings (>0 results) when using t
 ### Definition of Done
 - [ ] Run `./examples/scripts/job-search/search_infojobs.sh` and get >0 jobs
 - [ ] Run `./examples/scripts/job-search/tecnoempleo/test-tecnoempleo.sh` and get >0 jobs
-- [ ] Run `./examples/scripts/job-search/search_indeed.sh` and get >0 jobs
+- [x] Run `./examples/scripts/job-search/search_indeed.sh` and get >0 jobs
 - [ ] Run `./examples/scripts/job-search/search_glassdoor.sh` and get >0 jobs
 - [ ] Run `./examples/scripts/job-search/search_google.sh` and get >0 jobs
 - [ ] Run `./examples/scripts/job-search/search_all.sh` and get jobs from multiple sources
@@ -338,10 +338,10 @@ Parallel Speedup: ~30% faster than sequential
 - Options: `/home/rrj/src/github/rudironsoni/Ghost/src/Platforms/Ghost.Platform.Indeed/IndeedOptions.cs`
 
 **Acceptance Criteria**:
-- [ ] Indeed API key verified as valid or replaced
-- [ ] GraphQL query returns jobs > 0
-- [ ] Test: `./examples/scripts/job-search/search_indeed.sh` returns jobs
-- [ ] Evidence: JSON response saved to `logs/indeed_test_results.json`
+- [x] Indeed API key verified as valid or replaced
+- [x] GraphQL query returns jobs > 0
+- [x] Test: `./examples/scripts/job-search/search_indeed.sh` returns jobs
+- [x] Evidence: JSON response saved to `logs/indeed_test_results.json`
 
 **Commit**: YES
 - Message: `fix(indeed): verify API key and fix integration`
