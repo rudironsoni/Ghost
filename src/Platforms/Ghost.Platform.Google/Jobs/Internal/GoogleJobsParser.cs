@@ -7,7 +7,7 @@ using Ghost.Contracts.Jobs;
 
 namespace Ghost.Platform.Google.Jobs.Internal;
 
-internal static class GoogleJobsParser
+public static class GoogleJobsParser
 {
     private static readonly Action<ILogger, int, Exception?> LogStartingParse =
         LoggerMessage.Define<int>(LogLevel.Debug, new EventId(1, nameof(LogStartingParse)), "Starting parse of {Length} bytes");
@@ -39,57 +39,80 @@ internal static class GoogleJobsParser
     private static readonly Action<ILogger, Exception?> LogEmptyHtml =
         LoggerMessage.Define(LogLevel.Warning, new EventId(10, nameof(LogEmptyHtml)), "ParseFromHtml called with empty or null HTML");
 
+    private static readonly Action<ILogger, Exception?> LogDetectedConsentPage =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(11, nameof(LogDetectedConsentPage)), "Detected consent page - no job data available");
 
-    // Parse job listings from an HTML payload by locating embedded JSON arrays
-    public static IReadOnlyList<JobListing> ParseFromHtml(string html, ILogger? logger = null)
-    {
-        logger ??= NullLogger.Instance;
-        if (string.IsNullOrEmpty(html))
+
+        // Parse job listings from an HTML payload by locating embedded JSON arrays
+        public static IReadOnlyList<JobListing> ParseFromHtml(string html, ILogger? logger = null)
         {
-            LogEmptyHtml(logger, null);
-            return Array.Empty<JobListing>();
-        }
-        LogStartingParse(logger, html.Length, null);
-
-        // The Jobs widget contains embedded JSON arrays; attempt several heuristics to locate them.
-        // First try the known widget key marker. If not found, try to find common JSON prefixes
-        // used by Google Jobs ("[", "[[[" near 'jobs' markers) and also support async callback payloads.
-
-        int idx = html.IndexOf(GoogleJobsConstants.WidgetKey, StringComparison.Ordinal);
-        int start = -1;
-        if (idx >= 0)
-        {
-            LogFoundWidgetKey(logger, idx, null);
-            start = html.LastIndexOf('[', idx);
-        }
-
-        // Fallback: look for 'htl;jobs' marker or 'jobs' text and take the nearest '[' before it
-        if (start < 0)
-        {
-            var altIdx = html.IndexOf("htl;jobs", StringComparison.OrdinalIgnoreCase);
-            if (altIdx >= 0)
+            logger ??= NullLogger.Instance;
+            if (string.IsNullOrEmpty(html))
             {
-                LogFoundHtlJobs(logger, altIdx, null);
+                LogEmptyHtml(logger, null);
+                return Array.Empty<JobListing>();
             }
-            else
+            LogStartingParse(logger, html.Length, null);
+
+            // Check if this is a consent page - return empty if so
+            if (html.Contains("consent.google.com") || html.Contains("Before you continue to Google Search"))
             {
-                altIdx = html.IndexOf("jobs", StringComparison.OrdinalIgnoreCase);
-                if (altIdx >= 0) LogFoundJobsMarker(logger, altIdx, null);
+                LogDetectedConsentPage(logger, null);
+                return Array.Empty<JobListing>();
             }
-            if (altIdx >= 0) start = html.LastIndexOf('[', altIdx);
-        }
 
-        // Final fallback: find the first large JSON array in the document
-        if (start < 0)
-        {
-            start = html.IndexOf('[', StringComparison.Ordinal);
-            if (start >= 0)
-                LogFallbackJsonStart(logger, start, null);
-            else
-                LogNoJsonStart(logger, null);
-        }
+            // Handle XSSI prefix (Google's JSON security wrapper)
+            // Google often wraps JSON in )]}' or similar prefixes
+            string processedHtml = html;
+            if (html.StartsWith(")]}", StringComparison.Ordinal) || html.StartsWith(")]}'", StringComparison.Ordinal) || html.StartsWith("\n)]}", StringComparison.Ordinal) || html.StartsWith("\n)]}'", StringComparison.Ordinal))
+            {
+                // Remove XSSI prefix
+                var firstBracket = html.IndexOf('[', StringComparison.Ordinal);
+                if (firstBracket >= 0)
+                {
+                    processedHtml = html.Substring(firstBracket);
+                }
+            }
 
-        if (start < 0) return Array.Empty<JobListing>();
+            // The Jobs widget contains embedded JSON arrays; attempt several heuristics to locate them.
+            // First try the known widget key marker. If not found, try to find common JSON prefixes
+            // used by Google Jobs ("[", "[[[" near 'jobs' markers) and also support async callback payloads.
+
+            int idx = html.IndexOf(GoogleJobsConstants.WidgetKey, StringComparison.Ordinal);
+            int start = -1;
+            if (idx >= 0)
+            {
+                LogFoundWidgetKey(logger, idx, null);
+                start = html.LastIndexOf('[', idx);
+            }
+
+            // Fallback: look for 'htl;jobs' marker or 'jobs' text and take the nearest '[' before it
+            if (start < 0)
+            {
+                var altIdx = html.IndexOf("htl;jobs", StringComparison.OrdinalIgnoreCase);
+                if (altIdx >= 0)
+                {
+                    LogFoundHtlJobs(logger, altIdx, null);
+                }
+                else
+                {
+                    altIdx = html.IndexOf("jobs", StringComparison.OrdinalIgnoreCase);
+                    if (altIdx >= 0) LogFoundJobsMarker(logger, altIdx, null);
+                }
+                if (altIdx >= 0) start = html.LastIndexOf('[', altIdx);
+            }
+
+            // Final fallback: find the first large JSON array in the document
+            if (start < 0)
+            {
+                start = html.IndexOf('[', StringComparison.Ordinal);
+                if (start >= 0)
+                    LogFallbackJsonStart(logger, start, null);
+                else
+                    LogNoJsonStart(logger, null);
+            }
+
+            if (start < 0) return Array.Empty<JobListing>();
 
         var maxLen = Math.Min(html.Length - start, 400000); // increase scan length for larger payloads
         var snippet = html.Substring(start, maxLen);

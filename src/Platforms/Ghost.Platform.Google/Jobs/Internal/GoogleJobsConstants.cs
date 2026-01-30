@@ -1,19 +1,20 @@
 namespace Ghost.Platform.Google.Jobs.Internal;
 
-internal static class GoogleJobsConstants
+public static class GoogleJobsConstants
 {
     public static readonly Dictionary<string, string> SearchHeaders = new()
     {
-        ["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        ["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
         ["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
         ["Accept-Language"] = "en-US,en;q=0.9",
         ["Referer"] = "https://www.google.com/",
         ["Upgrade-Insecure-Requests"] = "1",
-        ["Sec-Ch-Ua"] = "\"Chromium\";v=\"130\", \"Google Chrome\";v=\"130\", \"Not?A_Brand\";v=\"99\"",
+        ["Sec-Ch-Ua"] = "\"Chromium\";v=\"133\", \"Google Chrome\";v=\"133\", \"Not?A_Brand\";v=\"99\"",
         ["Sec-Ch-Ua-Platform"] = "\"Windows\"",
         ["Sec-Fetch-Site"] = "same-origin",
         ["Sec-Fetch-Mode"] = "navigate",
-        ["Sec-Fetch-User"] = "?1"
+        ["Sec-Fetch-User"] = "?1",
+        ["Accept-Encoding"] = "gzip, deflate, br"
     };
 
     public static readonly Dictionary<string, string> AsyncHeaders = new()

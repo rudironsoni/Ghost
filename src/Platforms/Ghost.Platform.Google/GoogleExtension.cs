@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ghost.Hosting;
 using Ghost.Http;
+using System.Net;
 
 namespace Ghost.Platform.Google;
 
@@ -49,8 +50,23 @@ public sealed class GoogleExtension : Ghost.Hosting.IExtension
             try { Console.WriteLine("Registering GoogleJobClient..."); } catch { }
             services.Configure<Jobs.GoogleJobsOptions>(configuration.GetSection("Google:Jobs"));
             services.AddHttpClient<Jobs.Internal.GoogleJobsApiClient>()
+                .AddTypedClient((httpClient, sp) =>
+                {
+                    var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Jobs.GoogleJobsOptions>>().Value;
+                    var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.Internal.GoogleJobsApiClient>>();
+                    return new Jobs.Internal.GoogleJobsApiClient(httpClient, options, logger);
+                })
                 .ConfigurePrimaryHttpMessageHandler(() =>
-                    HttpClientSecurityExtensions.ConfigureSecureHttpClientHandler(new HttpClientHandler()));
+                {
+                    var handler = new HttpClientHandler
+                    {
+                        CookieContainer = new CookieContainer(),
+                        UseCookies = true,
+                        AllowAutoRedirect = true
+                    };
+                    return HttpClientSecurityExtensions.ConfigureSecureHttpClientHandler(handler);
+                });
+            services.AddScoped<Jobs.GoogleJobClient>();
             services.AddScoped<Ghost.Abstractions.IJobScraper, Jobs.GoogleJobClient>();
             services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => (Ghost.Contracts.Jobs.IJobClient)sp.GetRequiredService<Jobs.GoogleJobClient>());
         }

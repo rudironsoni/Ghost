@@ -45,8 +45,12 @@ internal static class IndeedConstants
 
     public static Dictionary<string,string> GetHeaders(CountryCode country, string apiKey)
     {
-        // Ignore the passed apiKey and use the hardcoded one if empty
-        var keyToUse = !string.IsNullOrEmpty(apiKey) ? apiKey : "161092c2017b5bbab13edb12461a62d5a833871e7cad6d9d475304573de67ac8";
+        // Use the provided API key or throw if empty
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            throw new ArgumentException("Indeed API key is required. Please provide a valid API key in configuration.", nameof(apiKey));
+        }
+        var keyToUse = apiKey;
 
         var locale = country switch
         {
