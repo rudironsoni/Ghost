@@ -14,7 +14,7 @@ public sealed class GoogleExtension : Ghost.Hosting.IExtension
     public string Name => "Google";
     public Version Version => new(1, 0, 0);
     public IReadOnlyList<Type> ProvidedServices => new[] { typeof(Ghost.Contracts.Inference.IInferenceClient), typeof(Ghost.Contracts.Jobs.IJobClient) };
-    public IReadOnlyList<Type> RequiredServices => new[] { typeof(Ghost.IBrowserSession) };
+    public IReadOnlyList<Type> RequiredServices => Array.Empty<Type>();
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
@@ -27,10 +27,10 @@ public sealed class GoogleExtension : Ghost.Hosting.IExtension
         catch { }
 
         // bind using configuration section
-        services.Configure<GoogleOptions>(configuration.GetSection("Google"));
+        services.Configure<GoogleOptions>(configuration.GetSection("Ghost:Extensions:Google"));
 
         var rootOpts = new GoogleOptions();
-        configuration.GetSection("Google").Bind(rootOpts);
+        configuration.GetSection("Ghost:Extensions:Google").Bind(rootOpts);
         try
         {
             Console.WriteLine($"Google options: Jobs.Enabled = {rootOpts.Jobs?.Enabled}");
@@ -40,7 +40,7 @@ public sealed class GoogleExtension : Ghost.Hosting.IExtension
         // Gemini
         if (rootOpts.Gemini == null || rootOpts.Gemini.Enabled)
         {
-            services.Configure<Gemini.GeminiOptions>(configuration.GetSection("Google:Gemini"));
+            services.Configure<Gemini.GeminiOptions>(configuration.GetSection("Ghost:Extensions:Google:Gemini"));
             services.AddScoped<Ghost.Contracts.Inference.IInferenceClient, Gemini.GeminiClient>();
         }
 
@@ -48,7 +48,7 @@ public sealed class GoogleExtension : Ghost.Hosting.IExtension
         if (rootOpts.Jobs == null || rootOpts.Jobs.Enabled)
         {
             try { Console.WriteLine("Registering GoogleJobClient..."); } catch { }
-            services.Configure<Jobs.GoogleJobsOptions>(configuration.GetSection("Google:Jobs"));
+            services.Configure<Jobs.GoogleJobsOptions>(configuration.GetSection("Ghost:Extensions:Google:Jobs"));
             services.AddHttpClient<Jobs.Internal.GoogleJobsApiClient>()
                 .AddTypedClient((httpClient, sp) =>
                 {
