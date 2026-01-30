@@ -2,6 +2,8 @@ using Ghost.Contracts.Jobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Globalization;
+using System.Text;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading;
 
@@ -136,7 +138,15 @@ public class TecnoempleoApiClient : IDisposable
             var queryString = string.Join("&", searchParams.Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value)}"));
             var url = $"/api/jobs/search?{queryString}";
 
-            var response = await _httpClient.GetAsync(url);
+            // Build request so we can attach Basic Auth when credentials are present
+            var req = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!string.IsNullOrEmpty(_options.ClientId) && !string.IsNullOrEmpty(_options.ClientSecret))
+            {
+                var auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));
+                req.Headers.Authorization = new AuthenticationHeaderValue("Basic", auth);
+            }
+
+            var response = await _httpClient.SendAsync(req);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
@@ -170,7 +180,16 @@ public class TecnoempleoApiClient : IDisposable
             }
 
             var url = $"/api/jobs/{jobId}";
-            var response = await _httpClient.GetAsync(url);
+
+            // Build request so we can attach Basic Auth when credentials are present
+            var req = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!string.IsNullOrEmpty(_options.ClientId) && !string.IsNullOrEmpty(_options.ClientSecret))
+            {
+                var auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));
+                req.Headers.Authorization = new AuthenticationHeaderValue("Basic", auth);
+            }
+
+            var response = await _httpClient.SendAsync(req);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
