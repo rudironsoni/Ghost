@@ -9,14 +9,14 @@ namespace Ghost.Platform.Glassdoor.Tests;
 public class GlassdoorExtensionTests
 {
     [Fact]
-    public void Name_ShouldContainGlassdoor()
+    public void NameShouldContainGlassdoor()
     {
         var ext = new Ghost.Platform.Glassdoor.GlassdoorExtension();
         ext.Name.ToLowerInvariant().Should().Contain("glassdoor");
     }
 
     [Fact]
-    public void ConfigureServices_DoesNotThrow()
+    public void ConfigureServicesDoesNotThrow()
     {
         var ext = new Ghost.Platform.Glassdoor.GlassdoorExtension();
         var services = new ServiceCollection();

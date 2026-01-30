@@ -4,7 +4,7 @@ using Ghost.Contracts.Jobs;
 
 namespace Ghost.Platform.Glassdoor.Internal;
 
-internal static class GlassdoorJobParser
+public static class GlassdoorJobParser
 {
     public static IReadOnlyList<JobListing> ParseSearchResponse(string? json)
     {
