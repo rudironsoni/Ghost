@@ -6,19 +6,15 @@ using System.Net;
 
 namespace Ghost.Platform.Google;
 
-/// <summary>
-/// Registers the Google/Gemini extension.
-/// </summary>
 public sealed class GoogleExtension : Ghost.Hosting.IExtension
 {
     public string Name => "Google";
     public Version Version => new(1, 0, 0);
     public IReadOnlyList<Type> ProvidedServices => new[] { typeof(Ghost.Contracts.Inference.IInferenceClient), typeof(Ghost.Contracts.Jobs.IJobClient) };
-    public IReadOnlyList<Type> RequiredServices => Array.Empty<Type>();
+    public IReadOnlyList<Type> RequiredServices => new[] { typeof(Ghost.Core.GhostKernel) };
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        // diagnostic logging to help determine whether extension is applied and options bound
         try
         {
             Console.WriteLine("Configuring GoogleExtension...");
@@ -26,7 +22,6 @@ public sealed class GoogleExtension : Ghost.Hosting.IExtension
         }
         catch { }
 
-        // bind using configuration section
         services.Configure<GoogleOptions>(configuration.GetSection("Ghost:Extensions:Google"));
 
         var rootOpts = new GoogleOptions();
@@ -37,35 +32,35 @@ public sealed class GoogleExtension : Ghost.Hosting.IExtension
         }
         catch { }
 
-        // Gemini
         if (rootOpts.Gemini == null || rootOpts.Gemini.Enabled)
         {
             services.Configure<Gemini.GeminiOptions>(configuration.GetSection("Ghost:Extensions:Google:Gemini"));
             services.AddScoped<Ghost.Contracts.Inference.IInferenceClient, Gemini.GeminiClient>();
         }
 
-        // Google Jobs
         if (rootOpts.Jobs == null || rootOpts.Jobs.Enabled)
         {
             try { Console.WriteLine("Registering GoogleJobClient..."); } catch { }
             services.Configure<Jobs.GoogleJobsOptions>(configuration.GetSection("Ghost:Extensions:Google:Jobs"));
             services.AddHttpClient<Jobs.Internal.GoogleJobsApiClient>()
-                .AddTypedClient((httpClient, sp) =>
+            .AddTypedClient((httpClient, sp) =>
+            {
+                var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Jobs.GoogleJobsOptions>>().Value;
+                var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.Internal.GoogleJobsApiClient>>();
+                return new Jobs.Internal.GoogleJobsApiClient(httpClient, options, logger);
+            })
+            .ConfigurePrimaryHttpMessageHandler(() =>
+            {
+                var handler = new HttpClientHandler
                 {
-                    var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Jobs.GoogleJobsOptions>>().Value;
-                    var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.Internal.GoogleJobsApiClient>>();
-                    return new Jobs.Internal.GoogleJobsApiClient(httpClient, options, logger);
-                })
-                .ConfigurePrimaryHttpMessageHandler(() =>
-                {
-                    var handler = new HttpClientHandler
-                    {
-                        CookieContainer = new CookieContainer(),
-                        UseCookies = true,
-                        AllowAutoRedirect = true
-                    };
-                    return HttpClientSecurityExtensions.ConfigureSecureHttpClientHandler(handler);
-                });
+                    CookieContainer = new CookieContainer(),
+                    UseCookies = true,
+                    AllowAutoRedirect = true
+                };
+                return HttpClientSecurityExtensions.ConfigureSecureHttpClientHandler(handler);
+            });
+
+            services.AddScoped<Jobs.Internal.GoogleJobsBrowserClient>();
             services.AddScoped<Jobs.GoogleJobClient>();
             services.AddScoped<Ghost.Abstractions.IJobScraper, Jobs.GoogleJobClient>();
             services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => (Ghost.Contracts.Jobs.IJobClient)sp.GetRequiredService<Jobs.GoogleJobClient>());
