@@ -1,0 +1,23 @@
+{
+  "Ghost": {
+    "Extensions": {
+      "InfoJobs": {
+        "Enabled": true,
+        "ApiKey": "test-infojobs-api-key",
+        "ApiSecret": "test-infojobs-api-secret"
+      },
+      "Tecnoempleo": {
+        "Enabled": true,
+        "Username": "test-tecnoempleo-username",
+        "Password": "test-tecnoempleo-password"
+      }
+    }
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
