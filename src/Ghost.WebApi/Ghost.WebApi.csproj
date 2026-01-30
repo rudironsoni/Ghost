@@ -22,6 +22,8 @@
     <ProjectReference Include="..\Platforms\Ghost.Platform.OpenAI\Ghost.Platform.OpenAI.csproj" />
     <ProjectReference Include="..\Platforms\Ghost.Platform.Indeed\Ghost.Platform.Indeed.csproj" />
     <ProjectReference Include="..\Platforms\Ghost.Platform.Glassdoor\Ghost.Platform.Glassdoor.csproj" />
+    <ProjectReference Include="..\Platforms\Ghost.Platform.InfoJobs\Ghost.Platform.InfoJobs.csproj" />
+    <ProjectReference Include="..\Platforms\Ghost.Platform.Tecnoempleo\Ghost.Platform.Tecnoempleo.csproj" />
   </ItemGroup>
 
 </Project>

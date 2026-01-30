@@ -3,6 +3,8 @@ using Ghost.Abstractions;
 using Ghost.Utilities;
 using Ghost.WebApi.Features.LinkedIn;
 using Ghost.WebApi.Features.Jobs;
+using Ghost.Platform.InfoJobs;
+using Ghost.Platform.Tecnoempleo;
 // Removed unused reflection/disk/culture usings after replacing dynamic loader with
 // compile-time referenced extensions.
 
@@ -98,6 +100,18 @@ builder.Services.AddGhost(builder.Configuration, gw =>
     if (builder.Configuration.GetValue("Ghost:Extensions:Google:Enabled", false))
     {
         gw.UseExtension(new Ghost.Platform.Google.GoogleExtension());
+    }
+
+    // InfoJobs
+    if (builder.Configuration.GetValue("Ghost:Extensions:InfoJobs:Enabled", false))
+    {
+        gw.UseExtension(new Ghost.Platform.InfoJobs.InfoJobsExtension());
+    }
+
+    // Tecnoempleo
+    if (builder.Configuration.GetValue("Ghost:Extensions:Tecnoempleo:Enabled", false))
+    {
+        gw.UseExtension(new Ghost.Platform.Tecnoempleo.TecnoempleoHostingExtension());
     }
 });
 // Ensure IDeduplicationService is registered before AggregatedJobClient which depends on it.
