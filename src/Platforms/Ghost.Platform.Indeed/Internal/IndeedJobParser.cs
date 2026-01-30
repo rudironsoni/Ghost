@@ -21,7 +21,7 @@ public static class IndeedJobParser
                 job = nestedJob;
             }
 
-            var id = job.TryGetProperty("key", out var keyEl) ? keyEl.GetString() ?? string.Empty : 
+            var id = job.TryGetProperty("key", out var keyEl) ? keyEl.GetString() ?? string.Empty :
                      job.TryGetProperty("id", out var idEl) ? idEl.GetString() ?? string.Empty : string.Empty;
             var title = job.TryGetProperty("title", out var t) ? t.GetString() ?? string.Empty : string.Empty;
             var company = job.TryGetProperty("employer", out var e) && e.TryGetProperty("name", out var en) ? en.GetString() ?? string.Empty : string.Empty;
@@ -49,8 +49,8 @@ public static class IndeedJobParser
 
     private static string ExtractSalary(JsonElement job)
     {
-        if (!job.TryGetProperty("compensation", out var comp) || 
-            !comp.TryGetProperty("baseSalary", out var baseS) || 
+        if (!job.TryGetProperty("compensation", out var comp) ||
+            !comp.TryGetProperty("baseSalary", out var baseS) ||
             baseS.ValueKind == JsonValueKind.Null)
             return string.Empty;
 
@@ -59,7 +59,7 @@ public static class IndeedJobParser
             var min = range.TryGetProperty("min", out var minEl) ? minEl.GetDecimal() : 0;
             var max = range.TryGetProperty("max", out var maxEl) ? maxEl.GetDecimal() : 0;
             var currency = range.TryGetProperty("currency", out var cur) ? cur.GetString() ?? string.Empty : string.Empty;
-            
+
             if (min > 0 && max > 0)
                 return $"${min} - ${max} {currency}".Trim();
             else if (min > 0)
