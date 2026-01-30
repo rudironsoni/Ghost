@@ -15,10 +15,15 @@ public static class IndeedJobParser
 
         foreach (var item in results.EnumerateArray())
         {
-            // New structure: each result item contains a `job` object
-            if (!item.TryGetProperty("job", out var job)) continue;
+            // Support both structures: direct properties or nested "job" object
+            var job = item;
+            if (item.TryGetProperty("job", out var nestedJob))
+            {
+                job = nestedJob;
+            }
 
-            var id = job.TryGetProperty("key", out var keyEl) ? keyEl.GetString() ?? string.Empty : string.Empty;
+            var id = job.TryGetProperty("key", out var keyEl) ? keyEl.GetString() ?? string.Empty : 
+                     job.TryGetProperty("id", out var idEl) ? idEl.GetString() ?? string.Empty : string.Empty;
             var title = job.TryGetProperty("title", out var t) ? t.GetString() ?? string.Empty : string.Empty;
             var company = job.TryGetProperty("employer", out var e) && e.TryGetProperty("name", out var en) ? en.GetString() ?? string.Empty : string.Empty;
             var location = job.TryGetProperty("location", out var l) && l.TryGetProperty("formatted", out var f) && f.TryGetProperty("long", out var lon) ? lon.GetString() ?? string.Empty : string.Empty;

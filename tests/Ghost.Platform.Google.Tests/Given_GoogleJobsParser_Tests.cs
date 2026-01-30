@@ -3,7 +3,7 @@ using Ghost.Platform.Google.Jobs.Internal;
 
 namespace Ghost.Platform.Google.Tests;
 
-public class Given_GoogleJobsParser_Tests
+public class GoogleJobsParserTests
 {
     [Fact]
     public void ParsesSampleHtml()

@@ -14,12 +14,16 @@ using Microsoft.Extensions.Logging;
 
 namespace Ghost.Platform.Indeed.Internal;
 
-    public class IndeedApiClient
-    {
-        private readonly IProxyProvider _proxyProvider;
-        private readonly CountryCode _country;
-        private readonly string _apiKey;
-        private readonly ILogger<IndeedApiClient> _logger;
+public class IndeedApiClient : IDisposable
+{
+    private readonly IProxyProvider _proxyProvider;
+    private readonly CountryCode _country;
+    private readonly string _apiKey;
+    private readonly ILogger<IndeedApiClient> _logger;
+    private readonly SemaphoreSlim _rateLimitSemaphore = new(1, 1);
+    private DateTime _lastRequestTime = DateTime.MinValue;
+    private readonly TimeSpan _rateLimitDelay = TimeSpan.FromSeconds(2); // Conservative rate limiting
+    private bool _disposed;
         private static readonly Action<ILogger, string, string, Exception?> LogRequestStart =
             LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(2001, "FetchingIndeedJobs"), "Fetching Indeed jobs for query '{Query}' at {Location}...");
         private static readonly Action<ILogger, string, Exception?> LogSendingRequest =
@@ -57,6 +61,29 @@ namespace Ghost.Platform.Indeed.Internal;
         catch { }
     }
 
+    /// <summary>
+    /// Apply rate limiting between requests to avoid hitting API limits
+    /// Based on JobSpy's conservative rate limiting patterns
+    /// </summary>
+    private async Task ApplyRateLimitAsync(CancellationToken ct)
+    {
+        await _rateLimitSemaphore.WaitAsync(ct);
+        try
+        {
+            var timeSinceLastRequest = DateTime.UtcNow - _lastRequestTime;
+            if (timeSinceLastRequest < _rateLimitDelay)
+            {
+                var waitTime = _rateLimitDelay - timeSinceLastRequest;
+                await Task.Delay(waitTime, ct);
+            }
+            _lastRequestTime = DateTime.UtcNow;
+        }
+        finally
+        {
+            _rateLimitSemaphore.Release();
+        }
+    }
+
     public async IAsyncEnumerable<JsonElement> SearchAsync(string query, string location, int limit = 50)
     {
         string? cursor = null;
@@ -66,6 +93,9 @@ namespace Ghost.Platform.Indeed.Internal;
 
         do
         {
+            // Apply rate limiting between requests
+            await ApplyRateLimitAsync(default);
+
             // Format the GraphQL query to match JobSpy-style query (no variables object)
             var formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, remaining));
             var payload = new { query = formattedQuery };
@@ -112,12 +142,25 @@ namespace Ghost.Platform.Indeed.Internal;
 
             using var client = new HttpClient(handler);
 
-            var headers = IndeedConstants.GetHeaders(_country, _apiKey);
-            if (headers == null)
+            Dictionary<string, string> headers;
+            try
             {
-                LogGetHeadersReturnedNull(_logger, _country, null);
-                headers = IndeedConstants.GetHeaders(CountryCode.US, _apiKey);
+                headers = IndeedConstants.GetHeaders(_country, _apiKey);
             }
+            catch (ArgumentException ex)
+            {
+                // Log the error and use US as fallback if possible
+                LogGetHeadersReturnedNull(_logger, _country, ex);
+                if (!string.IsNullOrEmpty(_apiKey))
+                {
+                    headers = IndeedConstants.GetHeaders(CountryCode.US, _apiKey);
+                }
+                else
+                {
+                    throw; // Re-throw if API key is truly empty
+                }
+            }
+            
             foreach (var kv in headers)
             {
                 client.DefaultRequestHeaders.TryAddWithoutValidation(kv.Key, kv.Value);
@@ -143,24 +186,71 @@ namespace Ghost.Platform.Indeed.Internal;
             }
             catch { }
 
-            var resp = await client.SendAsync(req);
-            if ((int)resp.StatusCode == 429)
+            HttpResponseMessage? resp = null;
+            string content = string.Empty;
+            
+            // Enhanced retry logic with exponential backoff
+            for (int attempt = 0; attempt < 3; attempt++)
             {
-                await Task.Delay(1000);
-                continue;
+                try
+                {
+                    resp = await client.SendAsync(req);
+                    
+                    if ((int)resp.StatusCode == 429)
+                    {
+                        // Rate limited - wait with exponential backoff
+                        await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt) * 1000));
+                        continue;
+                    }
+
+                    LogResponseStatus(_logger, resp.StatusCode.ToString(), null);
+
+                    // Read and log the response content before enforcing success status so
+                    // we can see error messages returned by Indeed when the status is non-success.
+                    content = await resp.Content.ReadAsStringAsync();
+                    LogResponseContent(_logger, content, null);
+
+                    // DEBUG: Write raw JSON to file
+                    try { System.IO.File.WriteAllText($"logs/indeed_jobs_search_{attempt}.json", content); } catch { }
+
+                    resp.EnsureSuccessStatusCode();
+                    
+                    // Check for blocking/consent indicators in successful responses
+                    if (IsBlockedOrConsentRequired(content))
+                    {
+                        if (attempt < 2)
+                        {
+                            // Blocked - wait longer and try different approach
+                            await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt) * 2000));
+                            continue;
+                        }
+                        else
+                        {
+                            // Final attempt still blocked
+                            break;
+                        }
+                    }
+                    
+                    break; // Success - break out of retry loop
+                }
+                catch (HttpRequestException) when (attempt < 2)
+                {
+                    // Network error - retry with exponential backoff
+                    await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt) * 1000));
+                    continue;
+                }
+                catch (Exception)
+                {
+                    // Other errors - rethrow
+                    throw;
+                }
             }
 
-            LogResponseStatus(_logger, resp.StatusCode.ToString(), null);
-
-            // Read and log the response content before enforcing success status so
-            // we can see error messages returned by Indeed when the status is non-success.
-            var content = await resp.Content.ReadAsStringAsync();
-            LogResponseContent(_logger, content, null);
-
-            // DEBUG: Write raw JSON to file
-            try { System.IO.File.WriteAllText("logs/indeed_jobs_search.json", content); } catch { }
-
-            resp.EnsureSuccessStatusCode();
+            if (resp == null || !resp.IsSuccessStatusCode || IsBlockedOrConsentRequired(content))
+            {
+                // All retries failed or response indicates blocking
+                break;
+            }
 
             using var doc = JsonDocument.Parse(content);
             if (doc is null) yield break;
@@ -178,5 +268,41 @@ namespace Ghost.Platform.Indeed.Internal;
             remaining -= 25;
         }
         while (remaining > 0);
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    private void Dispose(bool disposing)
+    {
+        if (!_disposed && disposing)
+        {
+            _rateLimitSemaphore?.Dispose();
+            _disposed = true;
+        }
+    }
+
+    /// <summary>
+    /// Check if the API response indicates blocking or consent requirements
+    /// Based on common API blocking patterns
+    /// </summary>
+    private static bool IsBlockedOrConsentRequired(string responseContent)
+    {
+        if (string.IsNullOrEmpty(responseContent))
+            return true;
+
+        // Check for common blocking indicators in API responses
+        return responseContent.Contains("access denied", StringComparison.OrdinalIgnoreCase) ||
+               responseContent.Contains("rate limit", StringComparison.OrdinalIgnoreCase) ||
+               responseContent.Contains("throttled", StringComparison.OrdinalIgnoreCase) ||
+               responseContent.Contains("unauthorized", StringComparison.OrdinalIgnoreCase) ||
+               responseContent.Contains("forbidden", StringComparison.OrdinalIgnoreCase) ||
+               responseContent.Contains("blocked", StringComparison.OrdinalIgnoreCase) ||
+               responseContent.Contains("captcha", StringComparison.OrdinalIgnoreCase) ||
+               responseContent.Contains("robot", StringComparison.OrdinalIgnoreCase) ||
+               responseContent.Contains("verify", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -4,25 +4,25 @@ using Ghost.Contracts.Jobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Ghost.Platform.Google.Jobs;
+namespace Ghost.Platform.InfoJobs.Jobs;
 
-public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
+public sealed class InfoJobClient : Ghost.Abstractions.IJobScraper
 {
-    private readonly Internal.GoogleJobsApiClient _api;
-    private readonly ILogger<GoogleJobClient> _logger;
+    private readonly Internal.InfoJobsApiClient _api;
+    private readonly ILogger<InfoJobClient> _logger;
 
-    public GoogleJobClient(Internal.GoogleJobsApiClient api, ILogger<GoogleJobClient> logger)
+    public InfoJobClient(Internal.InfoJobsApiClient api, ILogger<InfoJobClient> logger)
     {
         _api = api ?? throw new ArgumentNullException(nameof(api));
-        _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GoogleJobClient>.Instance;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public string PlatformName => "Google";
+    public string PlatformName => "InfoJobs";
 
     public Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(criteria);
-        return _api.SearchAsync(criteria.Query ?? string.Empty, criteria.Location ?? string.Empty);
+        return _api.SearchAsync(criteria.Query ?? string.Empty, criteria.Location ?? string.Empty, ct);
     }
 
     public Task<JobListing> GetJobDetailsAsync(string jobId, CancellationToken ct = default)

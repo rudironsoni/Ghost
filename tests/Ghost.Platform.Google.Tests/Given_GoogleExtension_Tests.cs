@@ -1,21 +1,26 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Xunit;
+using NSubstitute;
 
 namespace Ghost.Platform.Google.Tests;
 
-public class Given_GoogleExtension_Tests
+public class GoogleExtensionTests
 {
     [Fact]
-    public void RegistersServices_WhenEnabled()
+    public void RegistersServicesWhenEnabled()
     {
-        var inMemory = new Dictionary<string, string>
+        var inMemory = new Dictionary<string, string?>
         {
             { "Google:Gemini:Enabled", "true" },
             { "Google:Jobs:Enabled", "true" }
         };
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(inMemory).Build();
         var services = new ServiceCollection();
+        
+        // Mock required services
+        services.AddSingleton(Substitute.For<Ghost.IBrowserSession>());
+        
         var ext = new Ghost.Platform.Google.GoogleExtension();
         ext.ConfigureServices(services, configuration);
 
