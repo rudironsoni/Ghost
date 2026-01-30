@@ -15,10 +15,34 @@ public static class GlassdoorJobParser
             using var doc = JsonDocument.Parse(json);
             var jobs = new List<JobListing>();
 
-            // Attempt to find an array of job results somewhere in the document
-            foreach (var prop in doc.RootElement.EnumerateObject())
+            // Recursively search for job arrays in the JSON structure
+            FindJobArrays(doc.RootElement, jobs);
+
+            return jobs;
+        }
+        catch
+        {
+            return Array.Empty<JobListing>();
+        }
+    }
+
+    private static void FindJobArrays(JsonElement element, List<JobListing> jobs)
+    {
+        if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in element.EnumerateArray())
             {
-                if (prop.Value.ValueKind == JsonValueKind.Array)
+                var jl = ParseJobItem(item);
+                if (jl != null) jobs.Add(jl);
+            }
+        }
+        else if (element.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var prop in element.EnumerateObject())
+            {
+                // Check if this property contains job data
+                if (prop.Name.Contains("job", StringComparison.OrdinalIgnoreCase) && 
+                    prop.Value.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var item in prop.Value.EnumerateArray())
                     {
@@ -26,28 +50,12 @@ public static class GlassdoorJobParser
                         if (jl != null) jobs.Add(jl);
                     }
                 }
-                else if (prop.Value.ValueKind == JsonValueKind.Object)
+                else
                 {
-                    // Some payloads embed under data -> jobSearchResults etc.
-                    foreach (var inner in prop.Value.EnumerateObject())
-                    {
-                        if (inner.Value.ValueKind == JsonValueKind.Array)
-                        {
-                            foreach (var item in inner.Value.EnumerateArray())
-                            {
-                                var jl = ParseJobItem(item);
-                                if (jl != null) jobs.Add(jl);
-                            }
-                        }
-                    }
+                    // Recursively search nested objects
+                    FindJobArrays(prop.Value, jobs);
                 }
             }
-
-            return jobs;
-        }
-        catch
-        {
-            return Array.Empty<JobListing>();
         }
     }
 
