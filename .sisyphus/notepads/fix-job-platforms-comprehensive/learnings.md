@@ -317,3 +317,15 @@ Result: Build for Ghost.Platform.Google succeeded after these changes. LSP diagn
 Next actions:
 - Consider implementing JobSpy's async bootstrap string generation if Google continues to return consent pages for HTTP-only requests.
 - Add tests that assert the presence of required headers in outgoing HTTP requests for future regressions.
+
+### 2026-01-30 - Indeed Content-Type header fix
+
+- Added explicit Content-Type: application/json header on HttpRequestMessage.Content in IndeedApiClient to match JobSpy's expectations for GraphQL POST requests.
+- This avoids relying solely on DefaultRequestHeaders and ensures the request payload is treated as JSON by the server.
+- Verified by building Ghost.Platform.Indeed project: dotnet build succeeded.
+
+Note: lsp_diagnostics (csharp-ls) is not available in this environment; build passed but LSP diagnostics couldn't be executed. If required, run LSP diagnostics locally or in CI where csharp-ls is installed.
+
+Next verification steps:
+1. Run platform integration tests that exercise Indeed queries.
+2. Monitor logs for 401/400 errors that may indicate further header or payload mismatches.

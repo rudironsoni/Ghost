@@ -101,6 +101,9 @@ public class IndeedApiClient : IDisposable
                 Content = JsonContent.Create(payload)
             };
 
+            // Ensure Content-Type header is set on the request content. Some servers
+            // (including Indeed's GraphQL endpoint) require an explicit
+            // "application/json" content-type for GraphQL POST requests.
             if (req.Content != null && !req.Content.Headers.Contains("Content-Type"))
             {
                 req.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
@@ -155,7 +158,7 @@ public class IndeedApiClient : IDisposable
                     throw;
                 }
             }
-            
+
             foreach (var kv in headers)
             {
                 client.DefaultRequestHeaders.TryAddWithoutValidation(kv.Key, kv.Value);
@@ -179,13 +182,13 @@ public class IndeedApiClient : IDisposable
 
             HttpResponseMessage? resp = null;
             string content = string.Empty;
-            
+
             for (int attempt = 0; attempt < 3; attempt++)
             {
                 try
                 {
                     resp = await client.SendAsync(req);
-                    
+
                     if ((int)resp.StatusCode == 429)
                     {
                         await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000));
@@ -200,7 +203,7 @@ public class IndeedApiClient : IDisposable
                     try { System.IO.File.WriteAllText($"logs/indeed_jobs_search_{attempt}.json", content); } catch { }
 
                     resp.EnsureSuccessStatusCode();
-                    
+
                     if (IsBlockedOrConsentRequired(content))
                     {
                         if (attempt < 2)
@@ -210,7 +213,7 @@ public class IndeedApiClient : IDisposable
                         }
                         break;
                     }
-                    
+
                     break;
                 }
                 catch (HttpRequestException) when (attempt < 2)
