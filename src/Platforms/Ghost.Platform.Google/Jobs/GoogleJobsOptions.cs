@@ -6,6 +6,7 @@ public sealed class GoogleJobsOptions
     public string Country { get; set; } = "US";
     public int MinDelayMs { get; set; } = 200;
     public int MaxDelayMs { get; set; } = 800;
+    public bool UseBrowserFallback { get; set; } = true;
     
     /// <summary>
     /// Async bootstrap string for Google Jobs pagination calls.
