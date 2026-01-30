@@ -134,7 +134,7 @@ public class SalaryParsingTests
     [InlineData("Director Comercial", false)]
     [InlineData("Asistente Administrativo", false)]
     [InlineData("", false)]
-    [InlineData(null, false)]
+    [InlineData("   ", false)]
     public void IsTechnologyJobValidatesCorrectly(string jobTitle, bool expectedResult)
     {
         var result = TecnoempleoConstants.IsTechnologyJob(jobTitle);

@@ -5,6 +5,7 @@
     <Description>Ghost Tecnoempleo platform integration</Description>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <NoWarn>CA1848</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../Core/Ghost/Ghost.csproj" />

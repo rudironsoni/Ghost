@@ -11,4 +11,6 @@ public class TecnoempleoOptions
     public int MaxRetries { get; set; } = 3;
     public TimeSpan RetryDelay { get; set; } = TimeSpan.FromSeconds(1);
     public bool EnableRateLimiting { get; set; } = true;
+    public int MaxRequestsPerMinute { get; set; } = 30;
+    public int MaxRequestsPerHour { get; set; } = 1000;
 }
