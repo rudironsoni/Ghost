@@ -3,13 +3,13 @@
 ## TL;DR
 
 > **Quick Summary**: Integrate JobSpy's proven scraping patterns to fix Ghost's broken Glassdoor, Google Jobs, and Indeed implementations while adding European job platform support, focusing on Spanish markets.
-> 
-> **Deliverables**: 
+>
+> **Deliverables**:
 > - Robust session management with proxy rotation and TLS fingerprinting
 > - Fixed implementations for Glassdoor, Google Jobs, and Indeed
 > - Support for tech-focused European platforms (InfoJobs, Tecnoempleo)
 > - Comprehensive test coverage with mocked HTTP tests
-> 
+>
 > **Estimated Effort**: Large
 > **Parallel Execution**: YES - 3 waves (Foundation → Platform Fixes → EU Expansion)
 > **Critical Path**: Session Patterns → Glassdoor Fix → Indeed Fix → Google Fix → EU Platforms
@@ -149,24 +149,24 @@ Critical Path: Task 1 → Task 3 → Task 4 → Task 5 → Task 6
 
 ### Dependency Matrix
 
-| Task | Depends On | Blocks | Can Parallelize With |
-|------|------------|--------|---------------------|
-| 1 | None | 3, 4, 5 | 2 |
-| 2 | None | 3, 4, 5 | 1 |
-| 3 | 1, 2 | 6, 7 | 4, 5 |
-| 4 | 1, 2 | 6, 7 | 3, 5 |
-| 5 | 1, 2 | 6, 7 | 3, 4 |
-| 6 | 3, 4, 5 | 8 | 7 |
-| 7 | 3, 4, 5 | 8 | 6 |
-| 8 | 6, 7 | None | None |
+| Task | Depends On | Blocks  | Can Parallelize With |
+| ---- | ---------- | ------- | -------------------- |
+| 1    | None       | 3, 4, 5 | 2                    |
+| 2    | None       | 3, 4, 5 | 1                    |
+| 3    | 1, 2       | 6, 7    | 4, 5                 |
+| 4    | 1, 2       | 6, 7    | 3, 5                 |
+| 5    | 1, 2       | 6, 7    | 3, 4                 |
+| 6    | 3, 4, 5    | 8       | 7                    |
+| 7    | 3, 4, 5    | 8       | 6                    |
+| 8    | 6, 7       | None    | None                 |
 
 ### Agent Dispatch Summary
 
-| Wave | Tasks | Recommended Agents |
-|------|-------|-------------------|
-| 1 | 1, 2 | delegate_task(category="ultrabrain", load_skills=["git-master"], run_in_background=true) |
-| 2 | 3, 4, 5 | delegate_task(category="visual-engineering", load_skills=["frontend-ui-ux"], run_in_background=true) |
-| 3 | 6, 7, 8 | delegate_task(category="writing", load_skills=["dev-browser"], run_in_background=true) |
+| Wave | Tasks   | Recommended Agents                                                                                   |
+| ---- | ------- | ---------------------------------------------------------------------------------------------------- |
+| 1    | 1, 2    | delegate_task(category="ultrabrain", load_skills=["git-master"], run_in_background=true)             |
+| 2    | 3, 4, 5 | delegate_task(category="visual-engineering", load_skills=["frontend-ui-ux"], run_in_background=true) |
+| 3    | 6, 7, 8 | delegate_task(category="writing", load_skills=["dev-browser"], run_in_background=true)               |
 
 ---
 
@@ -604,16 +604,16 @@ Critical Path: Task 1 → Task 3 → Task 4 → Task 5 → Task 6
 
 ## Commit Strategy
 
-| After Task | Message | Files | Verification |
-|------------|---------|-------|--------------|
-| 1 | `feat(session): implement JobSpy session patterns with proxy rotation` | `src/Platforms/Ghost.Platform.Common/Session/` | `dotnet test tests/Platforms/Ghost.Platform.Common.Tests/` |
-| 2 | `test(infrastructure): add comprehensive HTTP mocking framework` | `tests/Platforms/Ghost.Platform.Common.Tests/` | `dotnet test tests/Platforms/Ghost.Platform.Common.Tests/` |
-| 3 | `fix(glassdoor): implement robust CSRF and GraphQL handling` | `src/Platforms/Ghost.Platform.Glassdoor/` | `dotnet test tests/Platforms/Ghost.Platform.Glassdoor.Tests/` |
-| 4 | `fix(indeed): implement proper pagination and API key security` | `src/Platforms/Ghost.Platform.Indeed/` | `dotnet test tests/Platforms/Ghost.Platform.Indeed.Tests/` |
-| 5 | `fix(google-jobs): implement robust JSON extraction and consent handling` | `src/Platforms/Ghost.Platform.Google/Jobs/` | `dotnet test tests/Platforms/Ghost.Platform.Google.Tests/` |
-| 6 | `feat(infojobs): add Spanish job platform support` | `src/Platforms/Ghost.Platform.InfoJobs/` | `dotnet test tests/Platforms/Ghost.Platform.InfoJobs.Tests/` |
-| 7 | `feat(tecnoempleo): add Spanish tech job platform support` | `src/Platforms/Ghost.Platform.Tecnoempleo/` | `dotnet test tests/Platforms/Ghost.Platform.Tecnoempleo.Tests/` |
-| 8 | `feat(monitoring): add platform performance monitoring` | `src/Platforms/Ghost.Platform.Common/Monitoring/` | `dotnet test tests/Performance/Ghost.Platform.Performance.Tests/` |
+| After Task | Message                                                                   | Files                                             | Verification                                                      |
+| ---------- | ------------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------- |
+| 1          | `feat(session): implement JobSpy session patterns with proxy rotation`    | `src/Platforms/Ghost.Platform.Common/Session/`    | `dotnet test tests/Platforms/Ghost.Platform.Common.Tests/`        |
+| 2          | `test(infrastructure): add comprehensive HTTP mocking framework`          | `tests/Platforms/Ghost.Platform.Common.Tests/`    | `dotnet test tests/Platforms/Ghost.Platform.Common.Tests/`        |
+| 3          | `fix(glassdoor): implement robust CSRF and GraphQL handling`              | `src/Platforms/Ghost.Platform.Glassdoor/`         | `dotnet test tests/Platforms/Ghost.Platform.Glassdoor.Tests/`     |
+| 4          | `fix(indeed): implement proper pagination and API key security`           | `src/Platforms/Ghost.Platform.Indeed/`            | `dotnet test tests/Platforms/Ghost.Platform.Indeed.Tests/`        |
+| 5          | `fix(google-jobs): implement robust JSON extraction and consent handling` | `src/Platforms/Ghost.Platform.Google/Jobs/`       | `dotnet test tests/Platforms/Ghost.Platform.Google.Tests/`        |
+| 6          | `feat(infojobs): add Spanish job platform support`                        | `src/Platforms/Ghost.Platform.InfoJobs/`          | `dotnet test tests/Platforms/Ghost.Platform.InfoJobs.Tests/`      |
+| 7          | `feat(tecnoempleo): add Spanish tech job platform support`                | `src/Platforms/Ghost.Platform.Tecnoempleo/`       | `dotnet test tests/Platforms/Ghost.Platform.Tecnoempleo.Tests/`   |
+| 8          | `feat(monitoring): add platform performance monitoring`                   | `src/Platforms/Ghost.Platform.Common/Monitoring/` | `dotnet test tests/Performance/Ghost.Platform.Performance.Tests/` |
 
 ---
 
