@@ -93,9 +93,9 @@ public sealed class GhostBuilder
 
             if (_services is null) throw new InvalidOperationException("Services collection is missing");
 
-            // Tell the extension loader that IBrowserSession is provided by the kernel
-            var kernelProvidedServices = new HashSet<Type> { typeof(IBrowserSession) };
-            ExtensionLoader.LoadExtensions(_extensions, _services, _configuration, kernelProvidedServices);
+// Tell the extension loader that IBrowserSession and GhostKernel are provided by the kernel
+var kernelProvidedServices = new HashSet<Type> { typeof(IBrowserSession), typeof(Ghost.Core.GhostKernel) };
+ExtensionLoader.LoadExtensions(_extensions, _services, _configuration, kernelProvidedServices);
         }
     }
 }
