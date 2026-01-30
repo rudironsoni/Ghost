@@ -185,6 +185,16 @@ All major tasks have been completed successfully:
 2. Configure credentials in `.env` file
 3. Run test scripts to verify all platforms
 
+## Docs added: InfoJobs & Tecnoempleo credential guidance (2026-01-31)
+
+- Created `logs/credential_requirements.md` describing why both InfoJobs and Tecnoempleo require real API credentials, how to request them, and example .env placeholders.
+- Key points appended to notepad:
+  - Both clients use Basic Auth with ClientId/ClientSecret
+  - Placeholder creds cause HTTP 500 or empty responses
+  - No public/test credentials available on GitHub
+  - Tecnoempleo Basic Auth bug fixed; still requires valid creds
+
+
 ### Documentation
 - Plan: `.
 - Learnings: `.
@@ -329,3 +339,97 @@ Note: lsp_diagnostics (csharp-ls) is not available in this environment; build pa
 Next verification steps:
 1. Run platform integration tests that exercise Indeed queries.
 2. Monitor logs for 401/400 errors that may indicate further header or payload mismatches.
+
+---
+
+## JobSpy Headers Implementation - 2026-01-30 (Session 2)
+
+### Summary
+Implemented JobSpy headers for Google, Glassdoor, and Indeed platforms based on comprehensive analysis.
+
+### Changes Made
+
+#### Google Jobs
+- **File**: `src/Platforms/Ghost.Platform.Google/Jobs/Internal/GoogleJobsConstants.cs`
+- **Changes**:
+  - Added all sec-ch-ua headers (sec-ch-ua, sec-ch-ua-arch, sec-ch-ua-bitness, sec-ch-ua-form-factors, sec-ch-ua-full-version, sec-ch-ua-full-version-list, sec-ch-ua-mobile, sec-ch-ua-model, sec-ch-ua-platform, sec-ch-ua-platform-version, sec-ch-ua-wow64)
+  - Added Google-specific headers (x-browser-channel, x-browser-copyright, x-browser-year)
+  - Updated User-Agent to Chrome 130 on macOS
+  - Added missing headers (Priority, Sec-Ch-Prefers-Color-Scheme, Sec-Fetch-Dest)
+- **Build**: ✅ Success
+- **Test Result**: ❌ Still not working (consent pages blocking)
+
+#### Glassdoor
+- **File**: `src/Platforms/Ghost.Platform.Glassdoor/Internal/GlassdoorConstants.cs`
+- **Changes**:
+  - Added Apollo GraphQL headers (apollographql-client-name, apollographql-client-version)
+  - Added authority, origin, referer headers
+  - Updated sec-ch-ua headers to match JobSpy
+  - Updated User-Agent to Chrome 138 on macOS
+- **Build**: ✅ Success
+- **Test Result**: ❌ Still not working (consent pages blocking)
+
+#### Indeed
+- **Files**: 
+  - `src/Platforms/Ghost.Platform.Indeed/Internal/IndeedApiClient.cs`
+  - `src/Platforms/Ghost.Platform.Indeed/Internal/IndeedJobParser.cs`
+- **Changes**:
+  - Added Content-Type: application/json header to GraphQL requests
+  - Fixed parser bug to handle null baseSalary in compensation
+- **Build**: ✅ Success
+- **Test Result**: ✅ **NOW WORKING** - Returns 5 jobs successfully
+
+### Updated Platform Status
+
+| Platform | Status | Test Result | Notes |
+|----------|--------|-------------|-------|
+| LinkedIn | ✅ Working | ✅ Returns jobs | Fully functional |
+| Indeed | ✅ Working | ✅ Returns 5 jobs | **FIXED** - Content-Type + parser fix |
+| Google | ❌ Not Working | ❌ Returns 0 jobs | Consent pages blocking |
+| Glassdoor | ❌ Not Working | ❌ Returns 0 jobs | Consent pages blocking |
+| InfoJobs | ❌ Not Working | ❌ Returns 0 jobs | Needs real credentials |
+| Tecnoempleo | ❌ Not Working | ❌ Returns 0 jobs | Needs real credentials |
+
+### Success Rate
+**2 out of 6 platforms working (33%)** - Improved from 16.7%
+
+### Key Findings
+
+1. **Indeed Fixed**: The combination of Content-Type header and parser fix made Indeed work correctly
+2. **Headers Alone Not Sufficient**: Google and Glassdoor still blocked by consent pages despite header updates
+3. **Consent Page Challenge**: Modern consent pages are increasingly sophisticated and harder to bypass
+4. **Parser Bug**: Indeed had a critical bug where null baseSalary caused InvalidOperationException
+
+### Remaining Issues
+
+#### Consent Page Blocking (Google, Glassdoor)
+- **Problem**: Both HTTP and browser approaches blocked by consent pages
+- **Root Cause**: Sophisticated bot detection and consent mechanisms
+- **Potential Solutions**:
+  - Implement async parameter for Google (_basejs)
+  - Implement fallback token for Glassdoor
+  - Use CAPTCHA solving services
+  - More sophisticated consent page bypass
+
+#### Missing API Credentials (InfoJobs, Tecnoempleo)
+- **Problem**: Placeholder credentials in configuration files
+- **Root Cause**: No public API credentials available
+- **Impact**: Cannot work without real credentials
+- **Solution**: User must obtain real API credentials from platforms
+
+### Commits Made
+1. `chore(google): align headers with JobSpy (sec-ch-ua set, google x-browser headers, updated User-Agent)`
+2. `chore(glassdoor): align GraphQL headers with JobSpy (apollo client headers, sec-ch-ua, origin/referer, authority, User-Agent)`
+3. `fix(indeed): ensure Content-Type header set for GraphQL requests`
+4. `fix(indeed): handle null baseSalary in compensation parsing`
+
+### Documentation
+- JobSpy Analysis: `logs/jobspy_vs_ghost_analysis.md`
+- Session Summary: `.
+- Test Logs: `logs/test_indeed_fixed.log`, `logs/test_google_updated.log`, `logs/test_glassdoor_updated.log`
+
+### Next Steps
+1. Implement Google async parameter (_basejs)
+2. Implement Glassdoor fallback token mechanism
+3. Obtain real API credentials for InfoJobs and Tecnoempleo
+4. Test all platforms after additional fixes
