@@ -2,30 +2,52 @@ namespace Ghost.Platform.Google.Jobs.Internal;
 
 public static class GoogleJobsConstants
 {
+    // Updated to align with JobSpy headers (more extensive sec-ch-ua values and Google-specific x-browser-* headers)
     public static readonly Dictionary<string, string> SearchHeaders = new()
     {
-        ["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
-        ["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        // User-Agent intentionally matches JobSpy's Chrome 130 on macOS
+        ["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+        ["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         ["Accept-Language"] = "en-US,en;q=0.9",
+        ["Priority"] = "u=0, i",
         ["Referer"] = "https://www.google.com/",
-        ["Upgrade-Insecure-Requests"] = "1",
-        ["Sec-Ch-Ua"] = "\"Chromium\";v=\"133\", \"Google Chrome\";v=\"133\", \"Not?A_Brand\";v=\"99\"",
-        ["Sec-Ch-Ua-Platform"] = "\"Windows\"",
-        ["Sec-Fetch-Site"] = "same-origin",
+        ["Sec-Ch-Prefers-Color-Scheme"] = "dark",
+        ["Sec-Ch-Ua"] = "\"Chromium\";v=\"130\", \"Google Chrome\";v=\"130\", \"Not?A_Brand\";v=\"99\"",
+        ["Sec-Ch-Ua-Arch"] = "\"arm\"",
+        ["Sec-Ch-Ua-Bitness"] = "\"64\"",
+        ["Sec-Ch-Ua-Form-Factors"] = "\"Desktop\"",
+        ["Sec-Ch-Ua-Full-Version"] = "\"130.0.6723.58\"",
+        ["Sec-Ch-Ua-Full-Version-List"] = "\"Chromium\";v=\"130.0.6723.58\", \"Google Chrome\";v=\"130.0.6723.58\", \"Not?A_Brand\";v=\"99.0.0.0\"",
+        ["Sec-Ch-Ua-Mobile"] = "?0",
+        ["Sec-Ch-Ua-Model"] = "\"\"",
+        ["Sec-Ch-Ua-Platform"] = "\"macOS\"",
+        ["Sec-Ch-Ua-Platform-Version"] = "\"15.0.1\"",
+        ["Sec-Ch-Ua-Wow64"] = "?0",
+        ["Sec-Fetch-Dest"] = "document",
         ["Sec-Fetch-Mode"] = "navigate",
+        ["Sec-Fetch-Site"] = "same-origin",
         ["Sec-Fetch-User"] = "?1",
+        ["Upgrade-Insecure-Requests"] = "1",
+        ["X-Browser-Channel"] = "stable",
+        ["X-Browser-Copyright"] = "Copyright 2024 Google LLC. All rights reserved.",
+        ["X-Browser-Year"] = "2024",
         ["Accept-Encoding"] = "gzip, deflate, br"
     };
 
+    // Async headers used when fetching job data (async endpoints)
     public static readonly Dictionary<string, string> AsyncHeaders = new()
     {
-        ["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        ["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
         ["Accept"] = "*/*",
         ["Accept-Language"] = "en-US,en;q=0.9",
         ["Referer"] = "https://www.google.com/",
+        ["Priority"] = "u=0, i",
         ["Sec-Fetch-Dest"] = "empty",
         ["Sec-Fetch-Mode"] = "cors",
-        ["Sec-Fetch-Site"] = "same-origin"
+        ["Sec-Fetch-Site"] = "same-origin",
+        ["Sec-Ch-Ua"] = "\"Chromium\";v=\"130\", \"Google Chrome\";v=\"130\", \"Not?A_Brand\";v=\"99\"",
+        ["Sec-Ch-Ua-Mobile"] = "?0",
+        ["Sec-Ch-Ua-Platform"] = "\"macOS\"",
     };
 
     // Async bootstrap string from JobSpy - critical for Google Jobs async calls
