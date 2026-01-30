@@ -7,15 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../src/Platforms/Ghost.Platform.Glassdoor/Ghost.Platform.Glassdoor.csproj" />
-    <ProjectReference Include="../../src/Contracts/Ghost.Contracts.Jobs/Ghost.Contracts.Jobs.csproj" />
-    <ProjectReference Include="../../src/Core/Ghost/Ghost.csproj" />
+    <ProjectReference Include="../../../src/Platforms/Ghost.Platform.Glassdoor/Ghost.Platform.Glassdoor.csproj" />
+    <ProjectReference Include="../../../src/Contracts/Ghost.Contracts.Jobs/Ghost.Contracts.Jobs.csproj" />
+    <ProjectReference Include="../../../src/Core/Ghost/Ghost.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="xunit" Version="2.5.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
-    <PackageReference Include="FluentAssertions" Version="6.13.0" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>

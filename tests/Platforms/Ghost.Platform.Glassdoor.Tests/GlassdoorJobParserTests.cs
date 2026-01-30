@@ -7,20 +7,22 @@ namespace Ghost.Platform.Glassdoor.Tests;
 public class GlassdoorJobParserTests
 {
     [Fact]
-    public void ParsesSalaryRange_FromHeaderPayPeriodAdjustedPay()
+    public void ParsesSalaryRangeFromHeaderPayPeriodAdjustedPay()
     {
-        var json = @"{
-  ""results"": [
+        var json = """
+{
+  "results": [
     {
-      ""jobTitleText"": "Software Engineer",
-      ""employerNameFromSearch"": "Acme Corp",
-      ""jobId"": "123",
-      ""header"": {
-        ""payPeriodAdjustedPay"": { ""p10"": 50000, ""p90"": 80000, ""payCurrency"": "EUR" }
+      "jobTitleText": "Software Engineer",
+      "employerNameFromSearch": "Acme Corp",
+      "jobId": "123",
+      "header": {
+        "payPeriodAdjustedPay": { "p10": 50000, "p90": 80000, "payCurrency": "EUR" }
       }
     }
   ]
-}";
+}
+""";
 
         var list = GlassdoorJobParser.ParseSearchResponse(json);
         list.Should().HaveCount(1);
