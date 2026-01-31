@@ -40,11 +40,14 @@ public sealed class GoogleJobsApiClient
         _cookieContainer = new CookieContainer();
     }
 
-    public async Task<IReadOnlyList<JobListing>> SearchAsync(string query, string location)
-    {
-        var q = System.Uri.EscapeDataString(query);
-        var loc = System.Uri.EscapeDataString(location);
-        var url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs&udm=8&gl=us&hl=en&hl=en-US";
+        public async Task<IReadOnlyList<JobListing>> SearchAsync(string query, string location)
+        {
+            var q = System.Uri.EscapeDataString(query);
+            var loc = System.Uri.EscapeDataString(location);
+        // Append async bootstrap parameter to help bypass consent pages (JobSpy technique)
+        // Use AsyncBootstrapString from GoogleJobsConstants and ensure it's URL-encoded
+        var asyncParam = Uri.EscapeDataString(GoogleJobsConstants.AsyncBootstrapString);
+        var url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs&udm=8&gl=us&hl=en&hl=en-US&async={asyncParam}";
 
         LogFetchingJobs(_logger, url, null);
 
