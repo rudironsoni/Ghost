@@ -40,6 +40,48 @@ public sealed class GoogleJobsOptions
     public JobSearchStrategy Strategy { get; set; } = JobSearchStrategy.BrowserFirst;
 
     /// <summary>
+    /// Maximum number of retry attempts for failed requests.
+    /// Default is 3 attempts.
+    /// </summary>
+    public int MaxRetries { get; set; } = 3;
+
+    /// <summary>
+    /// Whether to enable exponential backoff with jitter for retries.
+    /// Default is true to prevent thundering herd effect.
+    /// </summary>
+    public bool EnableRetryWithJitter { get; set; } = true;
+
+    /// <summary>
+    /// Base delay in milliseconds for exponential backoff.
+    /// Default is 1000ms (1 second).
+    /// </summary>
+    public int RetryBaseDelayMs { get; set; } = 1000;
+
+    /// <summary>
+    /// Maximum delay in milliseconds for exponential backoff.
+    /// Default is 30000ms (30 seconds).
+    /// </summary>
+    public int RetryMaxDelayMs { get; set; } = 30000;
+
+    /// <summary>
+    /// Whether to enable debug mode which saves HTML responses to files.
+    /// Default is false for production use.
+    /// </summary>
+    public bool DebugMode { get; set; }
+
+    /// <summary>
+    /// Request timeout in milliseconds.
+    /// Default is 30000ms (30 seconds).
+    /// </summary>
+    public int RequestTimeoutMs { get; set; } = 30000;
+
+    /// <summary>
+    /// Whether to enable structured error reporting in API responses.
+    /// Default is true to provide better error information.
+    /// </summary>
+    public bool EnableStructuredErrors { get; set; } = true;
+
+    /// <summary>
     /// [OBSOLETE] Use Strategy property instead.
     /// This property is maintained for backward compatibility.
     /// </summary>

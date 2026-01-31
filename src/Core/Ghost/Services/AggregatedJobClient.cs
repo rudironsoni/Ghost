@@ -36,7 +36,112 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
 
     public string PlatformName => "Aggregated";
 
-        public async Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
+    /// <summary>
+    /// Searches for jobs with structured error reporting.
+    /// </summary>
+    /// <param name="criteria">Search criteria</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Job search result with jobs and error information</returns>
+    public async Task<JobSearchResult> SearchJobsWithErrorsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
+    {
+        var startTime = DateTime.UtcNow;
+        var criteriaNonNull = criteria ?? new JobSearchCriteria();
+
+        // Log how many scrapers were injected
+        try
+        {
+            _logger.LogInformation("Injected scrapers count: {Count}", _scrapers?.Count ?? 0);
+            foreach (var s in _scrapers ?? Enumerable.Empty<IJobScraper>())
+            {
+                _logger.LogInformation("Available scraper: '{Name}' (Type: {Type})", s.PlatformName, s.GetType().Name);
+            }
+        }
+        catch { /* swallow any logging errors */ }
+
+        // determine which scrapers to run based on criteria.Sources
+        IEnumerable<IJobScraper> scrapersToRun = Enumerable.Empty<IJobScraper>();
+        if (criteriaNonNull.Sources != null && criteriaNonNull.Sources.Count > 0)
+        {
+            try
+            {
+                _logger.LogInformation("Search criteria sources: {Sources}", string.Join(", ", criteriaNonNull.Sources));
+            }
+            catch { }
+            var lower = new HashSet<string>((criteriaNonNull.Sources ?? new List<string>()).Select(s => s?.ToLowerInvariant() ?? string.Empty));
+            try
+            {
+                _logger.LogInformation("Requested sources (normalized): {Sources}", string.Join(", ", lower));
+            }
+            catch { }
+            scrapersToRun = (_scrapers ?? Enumerable.Empty<IJobScraper>())
+                .Where(s => lower.Contains(s.PlatformName?.ToLowerInvariant() ?? string.Empty));
+        }
+        else
+        {
+            scrapersToRun = _scrapers ?? Enumerable.Empty<IJobScraper>();
+        }
+
+        try
+        {
+            _logger.LogInformation("Selected scrapers: {Scrapers}", string.Join(", ", (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => s.PlatformName)));
+        }
+        catch { }
+
+        var platformErrors = new List<PlatformError>();
+        var successfulPlatforms = 0;
+        var totalPlatforms = scrapersToRun?.Count() ?? 0;
+
+        var tasks = (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => Task.Run(async () =>
+        {
+            try
+            {
+                var result = await s.SearchJobsAsync(criteriaNonNull, ct).ConfigureAwait(false);
+                successfulPlatforms++;
+                return result;
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex)
+            {
+                var error = ErrorCategorizationService.CategorizeError(ex, s.PlatformName ?? "Unknown");
+                platformErrors.Add(error);
+                s_logScraperFailed(_logger, s.PlatformName ?? "Unknown", ex);
+                return (IReadOnlyList<JobListing>)new List<JobListing>();
+            }
+        }, ct)).ToArray();
+
+        await Task.WhenAll(tasks);
+
+        var all = tasks.SelectMany(t => t.Result ?? new List<JobListing>()).ToList();
+
+        // dedupe by generated id
+        var map = new Dictionary<string, JobListing>();
+        foreach (var job in all)
+        {
+            var id = _dedupe.GenerateId(job.Title ?? string.Empty, job.Company ?? string.Empty);
+            if (!map.ContainsKey(id)) map[id] = job;
+        }
+
+        var executionTime = DateTime.UtcNow - startTime;
+        var success = platformErrors.Count < totalPlatforms || all.Count > 0;
+
+        return new JobSearchResult
+        {
+            Jobs = map.Values.ToList(),
+            Success = success,
+            PlatformErrors = platformErrors,
+            ErrorMessage = !success ? "All platforms failed to return results" : null,
+            Metadata = new SearchMetadata
+            {
+                TotalPlatforms = totalPlatforms,
+                SuccessfulPlatforms = successfulPlatforms,
+                FailedPlatforms = platformErrors.Count,
+                ExecutionTimeMs = (long)executionTime.TotalMilliseconds,
+                Criteria = criteriaNonNull
+            }
+        };
+    }
+
+    public async Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
         {
         // ensure we have a non-null criteria to pass to scrapers
         var criteriaNonNull = criteria ?? new JobSearchCriteria();

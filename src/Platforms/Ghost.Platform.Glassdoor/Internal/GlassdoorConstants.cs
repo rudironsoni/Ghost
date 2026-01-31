@@ -1,6 +1,6 @@
 namespace Ghost.Platform.Glassdoor.Internal;
 
-internal static class GlassdoorConstants
+public static class GlassdoorConstants
 {
     public static string ApiUrl => "https://www.glassdoor.com/graph";
 
@@ -8,101 +8,33 @@ internal static class GlassdoorConstants
     public const string QueryTemplate = "JobSearchResultsQuery";
 
     /// <summary>
-    /// Full GraphQL query for job search based on JobSpy patterns and Glassdoor API requirements
-    /// This is the complete persisted query with all necessary fragments
+    /// Simplified GraphQL query for job search - focuses on essential fields only
+    /// This minimal query reduces complexity and improves reliability
     /// </summary>
     public const string JobSearchQuery = """
         query JobSearchResultsQuery(
-            $excludeJobListingIds: [Long!], 
             $keyword: String, 
             $locationId: Int, 
             $locationType: LocationTypeEnum, 
             $numJobsToShow: Int!, 
             $pageCursor: String, 
-            $pageNumber: Int, 
-            $filterParams: [FilterParams], 
-            $originalPageUrl: String, 
-            $seoFriendlyUrlInput: String, 
-            $parameterUrlInput: String, 
-            $seoUrl: Boolean
+            $pageNumber: Int
         ) {
             jobListings(
                 contextHolder: {
                     searchParams: {
-                        excludeJobListingIds: $excludeJobListingIds, 
                         keyword: $keyword, 
                         locationId: $locationId, 
                         locationType: $locationType, 
                         numPerPage: $numJobsToShow, 
                         pageCursor: $pageCursor, 
                         pageNumber: $pageNumber, 
-                        filterParams: $filterParams, 
-                        originalPageUrl: $originalPageUrl, 
-                        seoFriendlyUrlInput: $seoFriendlyUrlInput, 
-                        parameterUrlInput: $parameterUrlInput, 
-                        seoUrl: $seoUrl, 
                         searchType: SR
                     }
                 }
             ) {
-                companyFilterOptions {
-                    id
-                    shortName
-                    __typename
-                }
-                filterOptions
-                indeedCtk
                 jobListings {
-                    ...JobView
-                    __typename
-                }
-                jobListingSeoLinks {
-                    linkItems {
-                        position
-                        url
-                        __typename
-                    }
-                    __typename
-                }
-                jobSearchTrackingKey
-                jobsPageSeoData {
-                    pageMetaDescription
-                    pageTitle
-                    __typename
-                }
-                paginationCursors {
-                    cursor
-                    pageNumber
-                    __typename
-                }
-                indexablePageForSeo
-                searchResultsMetadata {
-                    searchCriteria {
-                        implicitLocation {
-                            id
-                            localizedDisplayName
-                            type
-                            __typename
-                        }
-                        keyword
-                        location {
-                            id
-                            shortName
-                            localizedShortName
-                            localizedDisplayName
-                            type
-                            __typename
-                        }
-                        __typename
-                    }
-                    helpCenterDomain
-                    helpCenterLocale
-                    jobSerpJobOutlook {
-                        occupation
-                        paragraph
-                        __typename
-                    }
-                    showMachineReadableJobs
+                    ...JobViewMinimal
                     __typename
                 }
                 totalJobsCount
@@ -110,71 +42,69 @@ internal static class GlassdoorConstants
             }
         }
 
-        fragment JobView on JobListingSearchResult {
+        fragment JobViewMinimal on JobListingSearchResult {
             jobview {
                 header {
-                    adOrderId
-                    advertiserType
-                    adOrderSponsorshipLevel
-                    ageInDays
-                    divisionEmployerName
-                    easyApply
-                    employer {
-                        id
-                        name
-                        shortName
-                        __typename
-                    }
-                    employerNameFromSearch
-                    goc
-                    gocConfidence
-                    gocId
-                    jobCountryId
-                    jobLink
-                    jobResultTrackingKey
                     jobTitleText
                     locationName
-                    locationType
-                    locId
-                    needsCommission
-                    payCurrency
-                    payPeriod
-                    payPeriodAdjustedPay {
-                        p10
-                        p50
-                        p90
+                    employer {
+                        name
                         __typename
                     }
-                    rating
-                    salarySource
-                    savedJobId
-                    sponsored
+                    jobLink
+                    easyApply
                     __typename
                 }
                 job {
                     description
-                    importConfigId
-                    jobTitleId
-                    jobTitleText
                     listingId
-                    __typename
-                }
-                jobListingAdminDetails {
-                    cpcVal
-                    importConfigId
-                    jobListingId
-                    jobSourceId
-                    userEligibleForAdminJobDetails
-                    __typename
-                }
-                overview {
-                    shortName
-                    squareLogoUrl
                     __typename
                 }
                 __typename
             }
             __typename
+        }
+    """;
+
+    /// <summary>
+    /// Alternative minimal query for testing - even simpler structure
+    /// </summary>
+    public const string JobSearchQueryMinimal = """
+        query JobSearchResultsQuery(
+            $keyword: String, 
+            $locationId: Int, 
+            $locationType: LocationTypeEnum, 
+            $numJobsToShow: Int!
+        ) {
+            jobListings(
+                contextHolder: {
+                    searchParams: {
+                        keyword: $keyword, 
+                        locationId: $locationId, 
+                        locationType: $locationType, 
+                        numPerPage: $numJobsToShow, 
+                        searchType: SR
+                    }
+                }
+            ) {
+                jobListings {
+                    jobview {
+                        header {
+                            jobTitleText
+                            locationName
+                            employer {
+                                name
+                            }
+                            jobLink
+                        }
+                        job {
+                            description
+                            listingId
+                        }
+                    }
+                }
+                totalJobsCount
+            }
         }
     """;
 
@@ -227,7 +157,7 @@ internal static class GlassdoorConstants
         ["Sec-Ch-Ua-Platform"] = "\"macOS\"",
         // Apollo GraphQL client identifiers (these are required by Glassdoor and JobSpy)
         ["apollographql-client-name"] = "job-search-next",
-        ["apollographql-client-version"] = "4.65.5",
+        ["apollographql-client-version"] = "4.75.0",
         // Additional origin/authority style headers used by JobSpy
         ["authority"] = "www.glassdoor.com",
         ["origin"] = "https://www.glassdoor.com",

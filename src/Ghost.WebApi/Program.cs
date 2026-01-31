@@ -3,6 +3,7 @@ using Ghost.Abstractions;
 using Ghost.Utilities;
 using Ghost.WebApi.Features.LinkedIn;
 using Ghost.WebApi.Features.Jobs;
+using Ghost.WebApi.Features.Health;
 using Ghost.Platform.InfoJobs;
 // Removed unused reflection/disk/culture usings after replacing dynamic loader with
 // compile-time referenced extensions.
@@ -136,6 +137,7 @@ if (linkedInEnabled)
 
 // Map job endpoints and health checks
 app.MapJobsEndpoints();
+app.MapHealthEndpoints();
 app.MapHealthChecks("/health");
 
 app.Run();

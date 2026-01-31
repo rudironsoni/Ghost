@@ -359,16 +359,16 @@ var (locationId, locationType) = await ResolveLocationAsync(location);
 ## Success Criteria
 
 ### Minimum Viable Fix
-- [ ] Google Jobs returns at least 3 jobs for "Software Engineer" in "Remote"
-- [ ] Glassdoor returns at least 3 jobs for "Data Engineer" in "Remote"
-- [ ] Both platforms log detailed diagnostics when run in debug mode
+- [x] Google Jobs returns at least 3 jobs for "Software Engineer" in "Remote"
+- [x] Glassdoor returns at least 3 jobs for "Data Engineer" in "Remote"
+- [x] Both platforms log detailed diagnostics when run in debug mode
 
 ### Full Implementation
-- [ ] Both platforms use browser-first strategy by default
-- [ ] Parsers handle multiple HTML/JSON structures
-- [ ] Location parameters are correctly passed and used
-- [ ] Health check endpoint reports platform status
-- [ ] Integration tests pass consistently
+- [x] Both platforms use browser-first strategy by default
+- [x] Parsers handle multiple HTML/JSON structures
+- [x] Location parameters are correctly passed and used
+- [x] Health check endpoint reports platform status
+- [x] Integration tests pass consistently
 
 ---
 
