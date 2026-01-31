@@ -15,3 +15,8 @@ Notes:
 Next steps / Observations:
 - May tune delays and mouse movement patterns based on real-world runs.
 - Consider integrating Playwright stealth plugins or more advanced JS fingerprint mitigation if needed.
+
+Operational log (append):
+- Date: 2026-01-31
+- Actions: Implemented randomized delays, simulated mousemove via page.evaluate, human-like scroll passes, enhanced consent handling with multiple strategies, and retry/backoff. Forwarded CancellationToken to EvaluateAsync calls to satisfy analyzers. Committed changes and built the Google platform project successfully.
+- Verification: dotnet build src/Platforms/Ghost.Platform.Google/ succeeded locally in CI run.
