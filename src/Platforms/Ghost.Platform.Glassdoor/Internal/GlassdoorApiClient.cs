@@ -2,6 +2,9 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
+using Ghost.Http;
+using Polly;
 
 namespace Ghost.Platform.Glassdoor.Internal;
 
@@ -11,11 +14,18 @@ public sealed class GlassdoorApiClient : IDisposable
     private readonly SemaphoreSlim _rateLimitSemaphore = new(1, 1);
     private DateTime _lastRequestTime = DateTime.MinValue;
     private readonly TimeSpan _rateLimitDelay = TimeSpan.FromSeconds(2); // Conservative rate limiting
+    private readonly ILogger<GlassdoorApiClient>? _logger;
+    private readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy;
     private bool _disposed;
 
-    public GlassdoorApiClient(HttpClient http)
+    private static readonly Action<ILogger, Exception?> LogSearchFailed =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(1, nameof(LogSearchFailed)), "Glassdoor search request failed after retries");
+
+    public GlassdoorApiClient(HttpClient http, ILogger<GlassdoorApiClient>? logger = null)
     {
         _http = http;
+        _logger = logger;
+        _retryPolicy = EnhancedRetryPolicy.CreatePolicy(logger, maxRetries: 4, enableJitter: true);
     }
 
     public void Dispose()
@@ -37,6 +47,8 @@ public sealed class GlassdoorApiClient : IDisposable
     {
         try
         {
+            LogTokenExtraction("Starting CSRF token extraction from Glassdoor");
+
             var request = new HttpRequestMessage(HttpMethod.Get, "https://www.glassdoor.com/index.htm?loc=US");
             request.Headers.Host = "www.glassdoor.com";
             foreach (var header in GlassdoorConstants.CsrfHeaders)
@@ -44,15 +56,19 @@ public sealed class GlassdoorApiClient : IDisposable
                 request.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
 
-            var res = await _http.SendAsync(request, ct);
+            var res = await _retryPolicy.ExecuteAsync(async () => await _http.SendAsync(request, ct).ConfigureAwait(false)).ConfigureAwait(false);
             var html = await res.Content.ReadAsStringAsync(ct);
 
             // DEBUG: Write raw HTML to file
             try { System.IO.File.WriteAllText("logs/glassdoor_csrf.html", html); } catch { }
 
+            LogTokenExtraction($"Received HTML response: {html.Length} characters");
+
             // Check for consent/blocking pages
             if (IsConsentOrBlockedPage(html))
             {
+                LogTokenExtraction("Detected consent or blocked page, trying alternative approach");
+
                 // Try alternative approach with different headers
                 var altRequest = new HttpRequestMessage(HttpMethod.Get, "https://www.glassdoor.com/index.htm");
                 foreach (var header in GlassdoorConstants.AlternativeHeaders)
@@ -60,7 +76,7 @@ public sealed class GlassdoorApiClient : IDisposable
                     altRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
 
-                var altRes = await _http.SendAsync(altRequest, ct);
+                var altRes = await _retryPolicy.ExecuteAsync(async () => await _http.SendAsync(altRequest, ct).ConfigureAwait(false)).ConfigureAwait(false);
                 html = await altRes.Content.ReadAsStringAsync(ct);
 
                 try { System.IO.File.WriteAllText("logs/glassdoor_csrf_alt.html", html); } catch { }
@@ -68,6 +84,7 @@ public sealed class GlassdoorApiClient : IDisposable
                 // If still blocked, use fallback token
                 if (IsConsentOrBlockedPage(html))
                 {
+                    LogTokenExtraction("Still blocked after alternative approach, using fallback token");
                     return GlassdoorConstants.FallbackToken;
                 }
             }
@@ -76,11 +93,292 @@ public sealed class GlassdoorApiClient : IDisposable
             string? token = ExtractCsrfTokenWithMultiplePatterns(html);
             if (!string.IsNullOrEmpty(token))
             {
+                LogTokenExtraction($"Successfully extracted token: {token.Substring(0, Math.Min(10, token.Length))}... (length: {token.Length})");
+
+                // Validate the token by testing it against the API
+                var isValid = await ValidateTokenAsync(token, ct);
+                if (isValid)
+                {
+                    LogTokenExtraction("Token validation successful");
+                    return token;
+                }
+                else
+                {
+                    LogTokenExtraction("Token validation failed, using fallback token");
+                }
+            }
+            else
+            {
+                LogTokenExtraction("Failed to extract token from HTML");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogTokenExtraction($"Exception during token extraction: {ex.Message}");
+        }
+        LogTokenExtraction("Using fallback token");
+        return GlassdoorConstants.FallbackToken;
+    }
+
+    /// <summary>
+    /// Log token extraction events for debugging
+    /// </summary>
+    private static void LogTokenExtraction(string message)
+    {
+        try
+        {
+            var logMessage = $"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff}] {message}\n";
+            System.IO.File.AppendAllText("logs/glassdoor_token_extraction.log", logMessage);
+        }
+        catch { }
+    }
+
+    /// <summary>
+    /// Validate extracted token by testing it against the API
+    /// </summary>
+    private async Task<bool> ValidateTokenAsync(string token, CancellationToken ct)
+    {
+        try
+        {
+            LogTokenExtraction($"Validating token: {token.Substring(0, Math.Min(10, token.Length))}...");
+
+            // Create a minimal test payload
+            var testPayload = JsonSerializer.Serialize(new[]
+            {
+                new
+                {
+                    operationName = "JobSearchResultsQuery",
+                    variables = new
+                    {
+                        excludeJobListingIds = new List<int>(),
+                        filterParams = new List<object>(),
+                        keyword = "test",
+                        numJobsToShow = 1,
+                        locationType = "STATE",
+                        locationId = 11047,
+                        parameterUrlInput = "IL.0,12_ISTATE11047",
+                        pageNumber = 1,
+                        pageCursor = (string?)null,
+                        fromage = (int?)null,
+                        sort = "date"
+                    },
+                    query = GlassdoorConstants.JobSearchQuery
+                }
+            });
+
+            var request = new HttpRequestMessage(HttpMethod.Post, GlassdoorConstants.ApiUrl)
+            {
+                Content = new StringContent(testPayload, Encoding.UTF8, new MediaTypeHeaderValue("application/json"))
+            };
+
+            foreach (var header in GlassdoorConstants.GraphHeaders)
+            {
+                request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+            request.Headers.TryAddWithoutValidation("gd-csrf-token", token);
+
+            var res = await _retryPolicy.ExecuteAsync(async () => await _http.SendAsync(request, ct).ConfigureAwait(false)).ConfigureAwait(false);
+            var json = await res.Content.ReadAsStringAsync(ct);
+
+            // Check if response is valid (not an auth error)
+            var (hasErrors, shouldRetry) = ParseGraphQLErrors(json);
+
+            if (hasErrors)
+            {
+                LogTokenExtraction($"Token validation failed: API returned errors");
+                return false;
+            }
+
+            if (res.IsSuccessStatusCode)
+            {
+                LogTokenExtraction($"Token validation successful: API returned {res.StatusCode}");
+                return true;
+            }
+
+            LogTokenExtraction($"Token validation failed: API returned {res.StatusCode}");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            LogTokenExtraction($"Token validation exception: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Enhanced CSRF token extraction with multiple patterns including JSON-based extraction
+    /// </summary>
+    private static string? ExtractCsrfTokenWithMultiplePatterns(string html)
+    {
+        if (string.IsNullOrEmpty(html))
+            return null;
+
+        // Primary pattern from JobSpy - most reliable
+        var primaryPattern = "\"token\"\\s*:\\s*\"([^\"]+)\"";
+        var match = Regex.Match(html, primaryPattern);
+        if (match.Success && match.Groups.Count > 1)
+        {
+            var token = match.Groups[1].Value;
+            if (!string.IsNullOrEmpty(token) && token.Length > 10)
+            {
                 return token;
             }
         }
-        catch { }
-        return GlassdoorConstants.FallbackToken;
+
+        // Enhanced fallback patterns for different HTML structures
+        var fallbackPatterns = new[]
+        {
+            "<meta[^>]*csrf-token[^>]*content=\"([^\"]+)\"[^>]*>",
+            "window\\.\\w+\\s*=\\s*\\{\\s*\"token\"\\s*:\\s*\"([^\"]+)\"",
+            "\"gd-csrf-token\"\\s*:\\s*\"([^\"]+)\"",
+            "data-csrf-token=\"([^\"]+)\"",
+            "token\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"",
+            // New patterns for modern Glassdoor structure
+            "window\\.__INITIAL_STATE__\\s*=\\s*(\\{.*?\\});",
+            "window\\.__DATA__\\s*=\\s*(\\{.*?\\});",
+            "<script[^>]*id=\"__INITIAL_STATE__\"[^>]*type=\"application/json\"[^>]*>(.*?)</script>",
+            // Look for any script tag containing csrf or token
+            "<script[^>]*>(.*?csrf.*?)</script>",
+            "<script[^>]*>(.*?token.*?)</script>"
+        };
+
+        foreach (var pattern in fallbackPatterns)
+        {
+            match = Regex.Match(html, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            if (match.Success && match.Groups.Count > 1)
+            {
+                var token = match.Groups[1].Value;
+                if (!string.IsNullOrEmpty(token) && token.Length > 10)
+                {
+                    // Try to extract token from JSON content if it's a JSON object
+                    var extractedToken = ExtractTokenFromJsonContent(token);
+                    if (!string.IsNullOrEmpty(extractedToken))
+                    {
+                        return extractedToken;
+                    }
+                    return token;
+                }
+            }
+        }
+
+        // JSON-based extraction: Parse all JSON script tags and search recursively
+        var jsonScriptPattern = @"<script[^>]*type\s*=\s*[""']application/json[""'][^>]*>(.*?)</script>";
+        var jsonMatches = Regex.Matches(html, jsonScriptPattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        
+        foreach (Match jsonMatch in jsonMatches)
+        {
+            var jsonContent = jsonMatch.Groups[1].Value;
+            var token = ExtractTokenFromJsonRecursively(jsonContent);
+            if (!string.IsNullOrEmpty(token))
+            {
+                return token;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Extract token from JSON content by parsing it as JSON
+    /// </summary>
+    private static string? ExtractTokenFromJsonContent(string jsonContent)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(jsonContent);
+            return FindTokenInJsonElement(doc.RootElement);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Recursively search for token in JSON structure
+    /// </summary>
+    private static string? FindTokenInJsonElement(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.String)
+        {
+            var value = element.GetString();
+            if (!string.IsNullOrEmpty(value) && value.Length > 10 && (value.Contains("csrf") || value.Contains("token")))
+            {
+                return value;
+            }
+        }
+        else if (element.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in element.EnumerateObject())
+            {
+                var propertyName = property.Name.ToLowerInvariant();
+                if (propertyName.Contains("token") || propertyName.Contains("csrf"))
+                {
+                    var token = FindTokenInJsonElement(property.Value);
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        return token;
+                    }
+                }
+                else
+                {
+                    var token = FindTokenInJsonElement(property.Value);
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        return token;
+                    }
+                }
+            }
+        }
+        else if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in element.EnumerateArray())
+            {
+                var token = FindTokenInJsonElement(item);
+                if (!string.IsNullOrEmpty(token))
+                {
+                    return token;
+                }
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Recursively search for token in JSON string content
+    /// </summary>
+    private static string? ExtractTokenFromJsonRecursively(string jsonContent)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(jsonContent);
+            return FindTokenInJsonElement(doc.RootElement);
+        }
+        catch
+        {
+            // If JSON parsing fails, try regex patterns on the raw content
+            var tokenPatterns = new[]
+            {
+                "\"token\"\\s*:\\s*\"([^\"]+)\"",
+                "\"csrf\"\\s*:\\s*\"([^\"]+)\"",
+                "\"gd-csrf-token\"\\s*:\\s*\"([^\"]+)\""
+            };
+
+            foreach (var pattern in tokenPatterns)
+            {
+                var match = Regex.Match(jsonContent, pattern, RegexOptions.IgnoreCase);
+                if (match.Success && match.Groups.Count > 1)
+                {
+                    var token = match.Groups[1].Value;
+                    if (!string.IsNullOrEmpty(token) && token.Length > 10)
+                    {
+                        return token;
+                    }
+                }
+            }
+            return null;
+        }
     }
 
     /// <summary>
@@ -195,59 +493,15 @@ public sealed class GlassdoorApiClient : IDisposable
         return JsonSerializer.Serialize(new[] { payloadObj });
     }
 
-    /// <summary>
-    /// Extract CSRF token using multiple patterns with fallbacks
-    /// Based on JobSpy's pattern: r'"token":\s*"([^"]+)"'
-    /// </summary>
-    private static string? ExtractCsrfTokenWithMultiplePatterns(string html)
-    {
-        if (string.IsNullOrEmpty(html))
-            return null;
-
-        // Primary pattern from JobSpy - most reliable
-        var primaryPattern = "\"token\"\\s*:\\s*\"([^\"]+)\"";
-        var match = Regex.Match(html, primaryPattern);
-        if (match.Success && match.Groups.Count > 1)
-        {
-            var token = match.Groups[1].Value;
-            if (!string.IsNullOrEmpty(token) && token.Length > 10)
-            {
-                return token;
-            }
-        }
-
-        // Fallback patterns for different HTML structures
-        var fallbackPatterns = new[]
-        {
-            "<meta[^>]*csrf-token[^>]*content=\"([^\"]+)\"[^>]*>",
-            "window\\.\\w+\\s*=\\s*\\{\\s*\"token\"\\s*:\\s*\"([^\"]+)\"",
-            "\"gd-csrf-token\"\\s*:\\s*\"([^\"]+)\"",
-            "data-csrf-token=\"([^\"]+)\"",
-            "token\\\"\\s*:\\s*\\\"([^\\\"]+)\\\""
-        };
-
-        foreach (var pattern in fallbackPatterns)
-        {
-            match = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
-            if (match.Success && match.Groups.Count > 1)
-            {
-                var token = match.Groups[1].Value;
-                if (!string.IsNullOrEmpty(token) && token.Length > 10)
-                {
-                    return token;
-                }
-            }
-        }
-
-        return null;
-    }
-
     public async Task<string?> SearchAsync(string keyword, string? location = null, string? csrfToken = null, CancellationToken ct = default)
     {
         var token = csrfToken ?? await GetCsrfTokenAsync(ct);
 
         // Build payload based on JobSpy's structure
         var payload = BuildSearchPayload(keyword, location);
+
+        // Apply rate limiting before the request
+        await ApplyRateLimitAsync(ct);
 
         var request = new HttpRequestMessage(HttpMethod.Post, GlassdoorConstants.ApiUrl)
         {
@@ -264,112 +518,66 @@ public sealed class GlassdoorApiClient : IDisposable
             request.Headers.TryAddWithoutValidation("gd-csrf-token", token);
         }
 
-        // Enhanced retry logic with rate limiting based on JobSpy patterns
-        for (int attempt = 0; attempt < 3; attempt++)
+        try
         {
-            // Apply rate limiting between requests
-            await ApplyRateLimitAsync(ct);
-
-            // Create a new request message for each attempt to avoid reuse issues
-            var retryRequest = new HttpRequestMessage(HttpMethod.Post, GlassdoorConstants.ApiUrl)
+            // Use EnhancedRetryPolicy for automatic retry with exponential backoff
+            var res = await _retryPolicy.ExecuteAsync(async () =>
             {
-                Content = new StringContent(payload, Encoding.UTF8, new MediaTypeHeaderValue("application/json"))
-            };
-
-            foreach (var header in GlassdoorConstants.GraphHeaders)
-            {
-                retryRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
-            }
-
-            if (!string.IsNullOrEmpty(token))
-            {
-                retryRequest.Headers.TryAddWithoutValidation("gd-csrf-token", token);
-            }
-
-            try
-            {
-                var res = await _http.SendAsync(retryRequest, ct);
-                var json = await res.Content.ReadAsStringAsync(ct);
-
-                // DEBUG: Write raw JSON to file
-                try { System.IO.File.WriteAllText($"logs/glassdoor_search_{attempt}.json", json); } catch { }
-
-                // Parse GraphQL response for errors
-                var (hasErrors, shouldRetry) = ParseGraphQLErrors(json);
-                
-                if (hasErrors)
+                // Create a new request for each retry attempt
+                var retryRequest = new HttpRequestMessage(HttpMethod.Post, GlassdoorConstants.ApiUrl)
                 {
-                    if (shouldRetry && attempt < 2) // Not the last attempt
-                    {
-                        // Wait with exponential backoff plus jitter
-                        var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt) + new Random().NextDouble());
-                        await Task.Delay(delay, ct);
-                        continue;
-                    }
-                    else
-                    {
-                        // Non-retryable error or last attempt
-                        return null;
-                    }
+                    Content = new StringContent(payload, Encoding.UTF8, new MediaTypeHeaderValue("application/json"))
+                };
+
+                foreach (var header in GlassdoorConstants.GraphHeaders)
+                {
+                    retryRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
 
-                if (res.IsSuccessStatusCode)
+                if (!string.IsNullOrEmpty(token))
                 {
-                    return json;
+                    retryRequest.Headers.TryAddWithoutValidation("gd-csrf-token", token);
                 }
-                
-                // Handle HTTP status codes
-                if (res.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
-                {
-                    if (attempt < 2)
-                    {
-                        // Rate limited - wait longer
-                        await Task.Delay(TimeSpan.FromSeconds(10), ct);
-                        continue;
-                    }
-                }
-                else if ((int)res.StatusCode >= 500)
-                {
-                    // Server error - retry with backoff
-                    if (attempt < 2)
-                    {
-                        await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), ct);
-                        continue;
-                    }
-                }
-                
-                // If we get here and it's not the last attempt, wait and retry
-                if (attempt < 2)
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), ct);
-                }
-            }
-            catch (HttpRequestException ex) when (ex.Message.Contains("rate limit", StringComparison.OrdinalIgnoreCase))
+
+                return await _http.SendAsync(retryRequest, ct).ConfigureAwait(false);
+            }).ConfigureAwait(false);
+
+            var json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+
+            // DEBUG: Write raw JSON to file
+            try { System.IO.File.WriteAllText($"logs/glassdoor_search.json", json); } catch { }
+
+            // Parse GraphQL response for errors
+            var (hasErrors, shouldRetry) = ParseGraphQLErrors(json);
+
+            if (hasErrors)
             {
-                // Handle explicit rate limit exceptions
-                if (attempt < 2)
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(5), ct);
-                    continue;
-                }
-            }
-            catch (TaskCanceledException) when (ct.IsCancellationRequested)
-            {
-                // Operation was cancelled
+                // EnhancedRetryPolicy handles retries for transient errors
+                // If we still have errors after retries, return null
                 return null;
             }
-            catch (Exception)
-            {
-                // Other network errors - retry with backoff
-                if (attempt < 2)
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), ct);
-                    continue;
-                }
-            }
-        }
 
-        return null;
+            if (res.IsSuccessStatusCode)
+            {
+                return json;
+            }
+
+            return null;
+        }
+        catch (TaskCanceledException) when (ct.IsCancellationRequested)
+        {
+            // Operation was cancelled
+            return null;
+        }
+        catch (Exception ex)
+        {
+            // Log the exception if logger is available
+            if (_logger != null)
+            {
+                LogSearchFailed(_logger, ex);
+            }
+            return null;
+        }
     }
 
     /// <summary>

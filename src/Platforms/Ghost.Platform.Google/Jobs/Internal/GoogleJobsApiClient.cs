@@ -3,6 +3,8 @@ using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Ghost.Contracts.Jobs;
+using Ghost.Http;
+using Polly;
 
 namespace Ghost.Platform.Google.Jobs.Internal;
 
@@ -12,6 +14,7 @@ public sealed class GoogleJobsApiClient
     private readonly GoogleJobsOptions _options;
     private readonly ILogger<GoogleJobsApiClient> _logger;
     private readonly CookieContainer _cookieContainer;
+    private readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy;
 
     private static readonly Action<ILogger, string, Exception?> LogFetchingJobs =
         LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(LogFetchingJobs)), "Fetching Google Jobs from: {Url}");
@@ -64,6 +67,7 @@ public sealed class GoogleJobsApiClient
         _options = options ?? new GoogleJobsOptions();
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _cookieContainer = new CookieContainer();
+        _retryPolicy = EnhancedRetryPolicy.CreatePolicy(logger, maxRetries: 3, enableJitter: true);
     }
 
         public async Task<IReadOnlyList<JobListing>> SearchAsync(string query, string location)
@@ -84,7 +88,7 @@ public sealed class GoogleJobsApiClient
             req.Headers.TryAddWithoutValidation(header.Key, header.Value);
         }
 
-        var res = await _http.SendAsync(req).ConfigureAwait(false);
+        var res = await _retryPolicy.ExecuteAsync(async () => await _http.SendAsync(req).ConfigureAwait(false)).ConfigureAwait(false);
         var html = await res.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         // DEBUG: Write raw HTML to file
@@ -129,7 +133,7 @@ public sealed class GoogleJobsApiClient
                 
                 try
                 {
-                    var retryRes = await _http.SendAsync(retryReq).ConfigureAwait(false);
+                    var retryRes = await _retryPolicy.ExecuteAsync(async () => await _http.SendAsync(retryReq).ConfigureAwait(false)).ConfigureAwait(false);
                     html = await retryRes.Content.ReadAsStringAsync().ConfigureAwait(false);
                     
                     try { System.IO.File.WriteAllText($"logs/google_jobs_search_retry_{DateTime.Now.Ticks}.html", html); } catch { }
@@ -208,7 +212,7 @@ public sealed class GoogleJobsApiClient
                 asyncReq.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
 
-            var asyncRes = await _http.SendAsync(asyncReq).ConfigureAwait(false);
+            var asyncRes = await _retryPolicy.ExecuteAsync(async () => await _http.SendAsync(asyncReq).ConfigureAwait(false)).ConfigureAwait(false);
             var body = await asyncRes.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             if (string.IsNullOrEmpty(body))
