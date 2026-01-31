@@ -449,6 +449,13 @@ Implemented JobSpy headers for Google, Glassdoor, and Indeed platforms based on 
 - This follows JobSpy's technique to include the _basejs/bootstrap string which can help bypass consent/async loading.
 - Build verified: `dotnet build src/Platforms/Ghost.Platform.Google/` succeeded after change.
 
+### Change: Added proxy rotation fallback (2026-01-31)
+
+- Implemented proxy rotation fallback in `GoogleJobsApiClient.SearchAsync` which attempts a list of public HTTP proxies when consent pages are detected.
+- Added helper `GoogleJobsApiClient.Proxy.cs` with `SendRequestUsingProxyAsync` to perform GET requests over a proxy.
+- Proxy list includes 9 public proxies (may be unreliable). Use of public proxies is a temporary mitigation; recommend replacing with a private/residential proxy provider for production.
+- Build verified: `dotnet build src/Platforms/Ghost.Platform.Google/` succeeded after change.
+
 ---
 
 ## Comprehensive Test Results - 2026-01-31 (Final)
@@ -522,4 +529,37 @@ All technically feasible fixes have been implemented and tested. The remaining b
 2. User Action: InfoJobs and Tecnoempleo credentials (require registration)
 
 Recommendation: Use LinkedIn and Indeed for immediate job searching.
+
+---
+
+## Proxy Rotation Implementation - 2026-01-31
+
+### Summary
+Implemented proxy rotation system for Google Jobs to bypass consent pages.
+
+### Implementation Details
+- Added 9 public HTTP proxies to rotation list
+- Created proxy helper class (GoogleJobsApiClient.Proxy.cs)
+- Integrated proxy rotation as final fallback after all other attempts fail
+- Uses 20-second timeout per proxy request
+- Logs proxy attempts and failures
+
+### Test Results
+**Status**: Proxy rotation working, but free proxies failing
+
+**Evidence**:
+```
+Trying proxy http://45.55.74.69:3128 for url https://www.google.com/search?q=DevOps+Spain...
+Proxy http://45.55.74.69:3128 failed for https://www.google.com/search?q=DevOps+Spain...
+```
+
+**Root Cause**: Free public proxies are unreliable and often already blocked by Google
+
+### Conclusion
+Proxy rotation system is implemented and functional, but requires reliable residential proxies to be effective. Free public proxies are not viable for production use.
+
+**Recommendation**: Replace free proxy list with paid residential proxy service (e.g., Bright Data, Oxylabs, or Smartproxy) for production use.
+
+**Cost**: ~$50-100/month for residential proxies
+**Effort**: Already implemented - just need to update proxy list
 
