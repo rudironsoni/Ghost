@@ -1,12 +1,64 @@
 namespace Ghost.Platform.Google.Jobs;
 
+/// <summary>
+/// Strategy for attempting job search methods.
+/// </summary>
+public enum JobSearchStrategy
+{
+    /// <summary>
+    /// Try HTTP API first, fall back to browser if no results.
+    /// </summary>
+    HttpFirst,
+
+    /// <summary>
+    /// Try browser first, fall back to HTTP API if browser fails.
+    /// </summary>
+    BrowserFirst,
+
+    /// <summary>
+    /// Only use HTTP API, never attempt browser.
+    /// </summary>
+    HttpOnly,
+
+    /// <summary>
+    /// Only use browser, never attempt HTTP API.
+    /// </summary>
+    BrowserOnly
+}
+
 public sealed class GoogleJobsOptions
 {
     public bool Enabled { get; set; } = true;
     public string Country { get; set; } = "US";
     public int MinDelayMs { get; set; } = 200;
     public int MaxDelayMs { get; set; } = 800;
-    public bool UseBrowserFallback { get; set; } = true;
+
+    /// <summary>
+    /// Strategy for attempting job search methods.
+    /// Default is BrowserFirst for better reliability.
+    /// </summary>
+    public JobSearchStrategy Strategy { get; set; } = JobSearchStrategy.BrowserFirst;
+
+    /// <summary>
+    /// [OBSOLETE] Use Strategy property instead.
+    /// This property is maintained for backward compatibility.
+    /// </summary>
+    [Obsolete("Use Strategy property instead. This property will be removed in a future version.")]
+    public bool UseBrowserFallback
+    {
+        get => Strategy != JobSearchStrategy.HttpOnly;
+        set
+        {
+            if (value && Strategy == JobSearchStrategy.HttpOnly)
+            {
+                Strategy = JobSearchStrategy.HttpFirst;
+            }
+            else if (!value)
+            {
+                Strategy = JobSearchStrategy.HttpOnly;
+            }
+        }
+    }
     
     /// <summary>
     /// Async bootstrap string for Google Jobs pagination calls.

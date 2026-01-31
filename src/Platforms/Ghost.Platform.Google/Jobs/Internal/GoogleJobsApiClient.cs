@@ -12,20 +12,6 @@ public sealed class GoogleJobsApiClient
     private readonly GoogleJobsOptions _options;
     private readonly ILogger<GoogleJobsApiClient> _logger;
     private readonly CookieContainer _cookieContainer;
-    // Free proxy list for rotation (public/free proxies - use at your own risk)
-    // At least 7 entries as requested. These are public proxies and may be unreliable.
-    private static readonly string[] ProxyList = new[]
-    {
-        "http://45.55.74.69:3128",
-        "http://134.209.29.120:8080",
-        "http://165.232.68.53:8080",
-        "http://178.63.37.29:3128",
-        "http://167.99.68.36:8080",
-        "http://209.97.150.167:8080",
-        "http://159.65.69.186:9300",
-        "http://167.172.183.100:8080",
-        "http://68.183.103.13:8080"
-    };
 
     private static readonly Action<ILogger, string, Exception?> LogFetchingJobs =
         LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(LogFetchingJobs)), "Fetching Google Jobs from: {Url}");
@@ -50,6 +36,26 @@ public sealed class GoogleJobsApiClient
 
     private static readonly Action<ILogger, string, string, Exception?> LogProxyFailed =
         LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(8, nameof(LogProxyFailed)), "Proxy {Proxy} failed for {Url}");
+
+    private static readonly Action<ILogger, string, Exception?> LogConsentPageDetected =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(9, nameof(LogConsentPageDetected)), "Consent page detected for query: {Query}");
+
+    private static readonly Action<ILogger, int, Exception?> LogJobsFound =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(10, nameof(LogJobsFound)), "Google Jobs search completed. Found {Count} jobs");
+
+    private static readonly Action<ILogger, string, Exception?> LogCursorExtracted =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(11, nameof(LogCursorExtracted)), "Extracted pagination cursor: {Cursor}");
+
+    private static readonly Action<ILogger, Exception?> LogCursorNotFound =
+        LoggerMessage.Define(LogLevel.Debug, new EventId(12, nameof(LogCursorNotFound)), "No pagination cursor found in response");
+
+    private static readonly Action<ILogger, string, Exception?> LogHtmlPreview =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(13, nameof(LogHtmlPreview)), "HTML Preview (first 500 chars): {Preview}");
+
+    private static readonly Action<ILogger, int, int, Exception?> LogParserResults =
+        LoggerMessage.Define<int, int>(LogLevel.Information, new EventId(14, nameof(LogParserResults)), "Parser iteration {Iteration}: Found {Count} jobs");
+
+    // Additional existing eventId gap avoided
 
 
     public GoogleJobsApiClient(HttpClient http, GoogleJobsOptions options, ILogger<GoogleJobsApiClient> logger)
@@ -96,6 +102,7 @@ public sealed class GoogleJobsApiClient
         
         if (isConsentPage)
         {
+            LogConsentPageDetected(_logger, query, null);
             LogFetchingJobs(_logger, "Detected consent page, trying alternative approaches...", null);
             
             var alternativeUrls = new[]
@@ -137,9 +144,12 @@ public sealed class GoogleJobsApiClient
                                    html.Contains("g-recaptcha") ||
                                    html.Contains("cf_chl_");
                     
-                    if (!isConsentPage)
-                    {
+                if (!isConsentPage)
+                {
                         LogFetchingJobs(_logger, $"Successfully bypassed consent page with alternative URL", null);
+                        // log a preview of the html for debugging
+                        var preview = html.Length > 500 ? html.Substring(0, 500) : html;
+                        LogHtmlPreview(_logger, preview, null);
                         break; // Success! Use this HTML
                     }
                 }
@@ -149,62 +159,11 @@ public sealed class GoogleJobsApiClient
                 }
             }
             
-            // If still consent page after all attempts, try proxy rotation
+            // If still consent page after all attempts, return empty results
             if (isConsentPage)
             {
-                LogFetchingJobs(_logger, "Alternative URL attempts failed, trying proxy rotation...", null);
-
-                // Try each proxy and each alternative URL (including original)
-                var urlCandidates = new[] { url }.Concat(alternativeUrls).ToArray();
-
-                foreach (var proxy in ProxyList)
-                {
-                    foreach (var candidate in urlCandidates)
-                    {
-                        LogTryingProxy(_logger, proxy, candidate, null);
-                        try
-                        {
-                            var proxyHtml = await GoogleJobsApiClientProxyHelpers.SendRequestUsingProxyAsync(candidate, proxy).ConfigureAwait(false);
-                            try { System.IO.File.WriteAllText($"logs/google_jobs_search_proxy_{DateTime.Now.Ticks}.html", proxyHtml ?? string.Empty); } catch { }
-
-                            if (string.IsNullOrEmpty(proxyHtml))
-                            {
-                                continue;
-                            }
-
-                            // Re-evaluate consent detection on response
-                            var proxyIsConsent = proxyHtml.Contains("consent.google.com") || 
-                                               proxyHtml.Contains("Before you continue to Google Search") ||
-                                               proxyHtml.Contains("We need to verify you're human") ||
-                                               proxyHtml.Contains("Checking if the site connection is secure") ||
-                                               proxyHtml.Contains("www.google.com/sorry/index") ||
-                                               proxyHtml.Contains("distil_r_captcha") ||
-                                               proxyHtml.Contains("g-recaptcha") ||
-                                               proxyHtml.Contains("cf_chl_");
-
-                            if (!proxyIsConsent)
-                            {
-                                LogFetchingJobs(_logger, $"Successfully bypassed consent page using proxy {proxy}", null);
-                                html = proxyHtml; // use this html and continue
-                                isConsentPage = false;
-                                break;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            LogProxyFailed(_logger, proxy, candidate, ex);
-                        }
-                    }
-
-                    if (!isConsentPage)
-                        break;
-                }
-
-                if (isConsentPage)
-                {
-                    LogFetchingJobs(_logger, "All consent bypass attempts failed (including proxy rotation), returning empty results", null);
-                    return Array.Empty<JobListing>();
-                }
+                LogFetchingJobs(_logger, "All consent bypass attempts failed, returning empty results", null);
+                return Array.Empty<JobListing>();
             }
         }
 
@@ -218,9 +177,24 @@ public sealed class GoogleJobsApiClient
 
         var cursorMatch = Regex.Match(html, GoogleJobsConstants.DataAsyncFcRegex);
         var cursor = cursorMatch.Success ? cursorMatch.Groups["cursor"].Value : null;
+        if (!string.IsNullOrEmpty(cursor))
+        {
+            LogCursorExtracted(_logger, cursor, null);
+        }
+        else
+        {
+            LogCursorNotFound(_logger, null);
+        }
 
         var results = new List<JobListing>();
-        results.AddRange(GoogleJobsParser.ParseFromHtml(html, _logger));
+        var initialParsed = GoogleJobsParser.ParseFromHtml(html, _logger);
+        LogParserResults(_logger, 1, initialParsed.Count, null);
+        if (initialParsed.Count == 0)
+        {
+            var preview = html.Length > 500 ? html.Substring(0, 500) : html;
+            LogHtmlPreview(_logger, preview, null);
+        }
+        results.AddRange(initialParsed);
 
         int rounds = 0;
         while (!string.IsNullOrEmpty(cursor) && rounds++ < 5)
@@ -246,7 +220,14 @@ public sealed class GoogleJobsApiClient
                 LogReceivedAsyncBody(_logger, body.Length, null);
             }
 
-            results.AddRange(GoogleJobsParser.ParseFromHtml(body, _logger));
+            var parsed = GoogleJobsParser.ParseFromHtml(body, _logger);
+            LogParserResults(_logger, rounds + 1, parsed.Count, null);
+            if (parsed.Count == 0)
+            {
+                var preview = body.Length > 500 ? body.Substring(0, 500) : body;
+                LogHtmlPreview(_logger, preview, null);
+            }
+            results.AddRange(parsed);
 
             var nextCursorMatch = Regex.Match(body, GoogleJobsConstants.DataAsyncFcRegex);
             cursor = nextCursorMatch.Success ? nextCursorMatch.Groups["cursor"].Value : null;
@@ -254,6 +235,7 @@ public sealed class GoogleJobsApiClient
             await Task.Delay(300).ConfigureAwait(false);
         }
 
+        LogJobsFound(_logger, results.Count, null);
         return results;
     }
 }
