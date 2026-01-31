@@ -13,6 +13,8 @@ public static class TecnoempleoExtension
     public static IServiceCollection AddTecnoempleo(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<TecnoempleoOptions>(configuration.GetSection("Ghost:Extensions:Tecnoempleo"));
+        // register options validator
+        services.AddSingleton<Microsoft.Extensions.Options.IValidateOptions<TecnoempleoOptions>, TecnoempleoOptionsValidator>();
         
         services.AddHttpClient<TecnoempleoApiClient>();
         
@@ -27,6 +29,8 @@ public static class TecnoempleoExtension
     public static IServiceCollection AddTecnoempleo(this IServiceCollection services, Action<TecnoempleoOptions> configureOptions)
     {
         services.Configure(configureOptions);
+        // register options validator
+        services.AddSingleton<Microsoft.Extensions.Options.IValidateOptions<TecnoempleoOptions>, TecnoempleoOptionsValidator>();
         
         services.AddHttpClient<TecnoempleoApiClient>();
         
