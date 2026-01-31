@@ -40,8 +40,9 @@ internal static class GlassdoorConstants
         }
     """;
 
-    // Fallback token used when CSRF cannot be obtained
-    public const string FallbackToken = "S...";
+    // Fallback token from JobSpy - used when CSRF cannot be obtained
+    // This token allows GraphQL requests to work even without a valid CSRF token
+    public const string FallbackToken = "Ft6oHEWlRZrxDww95Cpazw:0pGUrkb2y3TyOpAIqF2vbPmUXoXVkD3oEGDVkvfeCerceQ5-n8mBg3BovySUIjmCPHCaW0H2nQVdqzbtsYqf4Q:wcqRqeegRUa9MVLJGyujVXB7vWFPjdaS1CtrrzJq-ok";
 
     /// <summary>
     /// Comprehensive browser headers for CSRF token retrieval (GET request to Glassdoor homepage)
