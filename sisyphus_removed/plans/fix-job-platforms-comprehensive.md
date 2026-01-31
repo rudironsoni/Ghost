@@ -521,7 +521,7 @@ Parallel Speedup: ~30% faster than sequential
 - [x] All 6 test scripts executed
 - [ ] Each platform returns jobs > 0
 - [x] Results documented in `logs/final_test_results.md`
-- [ ] `.env.example` updated with credential format
+- [x] `.env.example` updated with credential format
 - [x] Summary report created
 
 **Commit**: YES
