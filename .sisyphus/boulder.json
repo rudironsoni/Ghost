@@ -1,17 +1,6 @@
 {
-  "active_plan": "/home/rrj/src/github/rudironsoni/Ghost/.sisyphus/plans/fix-job-platforms-comprehensive.md",
-  "started_at": "2026-01-30T16:01:34.723Z",
-  "session_ids": [
-    "ses_3f11818aeffe6H9Im01IEagLeF",
-    "ses_3f11818aeffe6H9Im01IEagLeF",
-    "ses_3f0aa2b17ffefRuF2GUv5qyKk5",
-    "ses_3ef31ab4dffei6CcerrX6oGBPC",
-    "ses_3ef1ab70fffeIuHItGk2yRsxOS",
-    "ses_3ef1a2e70ffeVB63kgr6lbFrqd",
-    "ses_3ef19ca88ffeUhvOiwOxNypmH6",
-    "ses_3ef191e2affeNdAEgz3zFCe6kV",
-    "ses_3ef188486ffevzrm3cdqeZ4ptf",
-    "ses_3ef101db5ffeF02rMfYpYEHBsH"
-  ],
-  "plan_name": "fix-job-platforms-comprehensive"
+  "active_plan": "/home/rrj/src/github/rudironsoni/Ghost/.sisyphus/plans/fix-configuration-structure-comprehensive.md",
+  "started_at": "2026-01-31T06:03:32.750Z",
+  "session_ids": ["ses_3ef101db5ffeF02rMfYpYEHBsH"],
+  "plan_name": "fix-configuration-structure-comprehensive"
 }
