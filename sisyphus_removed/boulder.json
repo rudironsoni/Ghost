@@ -1,6 +1,9 @@
 {
   "active_plan": "/home/rrj/src/github/rudironsoni/Ghost/.
-  "started_at": "2026-01-31T06:03:32.750Z",
-  "session_ids": ["ses_3ef101db5ffeF02rMfYpYEHBsH"],
-  "plan_name": "fix-configuration-structure-comprehensive"
+  "started_at": "2026-01-31T06:45:00.000Z",
+  "session_ids": ["ses_3ef101db5ffeF02rMfYpYEHBsH", "ses_3ecbcc114ffePi5CsBoFU6wKG1", "ses_3ecba632affennA5R3yfcU376B", "ses_3ecba3ba9ffeshbSkeSNUIhXw5"],
+  "plan_name": "jobspy-integration",
+  "status": "in_progress",
+  "current_wave": "Wave 2 - Platform Fixes",
+  "tasks_in_progress": ["Task 3 (Glassdoor)", "Task 4 (Indeed)", "Task 5 (Google Jobs)"]
 }

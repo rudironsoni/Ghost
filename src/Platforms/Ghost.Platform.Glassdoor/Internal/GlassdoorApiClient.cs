@@ -84,23 +84,75 @@ public sealed class GlassdoorApiClient : IDisposable
     }
 
     /// <summary>
+    /// Build GraphQL payload based on JobSpy's structure
+    /// </summary>
+    private static string BuildSearchPayload(string keyword, string? location)
+    {
+        // Default location ID for remote (from JobSpy)
+        var locationId = 11047;
+        var locationType = "STATE";
+
+        // Build filter params (empty for basic search)
+        var filterParams = new List<object>();
+
+        // Build payload matching JobSpy's structure
+        var payloadObj = new
+        {
+            operationName = "JobSearchResultsQuery",
+            variables = new
+            {
+                excludeJobListingIds = new List<int>(),
+                filterParams = filterParams,
+                keyword = keyword,
+                numJobsToShow = 30,
+                locationType = locationType,
+                locationId = locationId,
+                parameterUrlInput = $"IL.0,12_I{locationType}{locationId}",
+                pageNumber = 1,
+                pageCursor = (string?)null,
+                fromage = (int?)null,
+                sort = "date"
+            },
+            query = GlassdoorConstants.JobSearchQuery
+        };
+
+        return JsonSerializer.Serialize(new[] { payloadObj });
+    }
+
+    /// <summary>
     /// Extract CSRF token using multiple patterns with fallbacks
+    /// Based on JobSpy's pattern: r'"token":\s*"([^"]+)"'
     /// </summary>
     private static string? ExtractCsrfTokenWithMultiplePatterns(string html)
     {
-        // Multiple CSRF token extraction patterns based on JobSpy patterns
-        var patterns = new[]
+        if (string.IsNullOrEmpty(html))
+            return null;
+
+        // Primary pattern from JobSpy - most reliable
+        var primaryPattern = "\"token\"\\s*:\\s*\"([^\"]+)\"";
+        var match = Regex.Match(html, primaryPattern);
+        if (match.Success && match.Groups.Count > 1)
         {
-            "token\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"",
-            "<meta[^>]*csrf-token[^>]*content=\\\"([^\\\"]+)\\\"[^>]*>",
-            "window\\.\\w+\\s*=\\s*\\{\\s*\\\"token\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"",
-            "\\\"gd-csrf-token\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"",
-            "data-csrf-token=\\\"([^\\\"]+)\\\""
+            var token = match.Groups[1].Value;
+            if (!string.IsNullOrEmpty(token) && token.Length > 10)
+            {
+                return token;
+            }
+        }
+
+        // Fallback patterns for different HTML structures
+        var fallbackPatterns = new[]
+        {
+            "<meta[^>]*csrf-token[^>]*content=\"([^\"]+)\"[^>]*>",
+            "window\\.\\w+\\s*=\\s*\\{\\s*\"token\"\\s*:\\s*\"([^\"]+)\"",
+            "\"gd-csrf-token\"\\s*:\\s*\"([^\"]+)\"",
+            "data-csrf-token=\"([^\"]+)\"",
+            "token\\\"\\s*:\\s*\\\"([^\\\"]+)\\\""
         };
 
-        foreach (var pattern in patterns)
+        foreach (var pattern in fallbackPatterns)
         {
-            var match = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
+            match = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
             if (match.Success && match.Groups.Count > 1)
             {
                 var token = match.Groups[1].Value;
@@ -118,19 +170,12 @@ public sealed class GlassdoorApiClient : IDisposable
     {
         var token = csrfToken ?? await GetCsrfTokenAsync(ct);
 
-        var payload = JsonSerializer.Serialize(new[]
-        {
-            new
-            {
-                operationName = GlassdoorConstants.QueryTemplate,
-                query = GlassdoorConstants.JobSearchQuery,
-                variables = new { keywords = keyword, location = location }
-            }
-        });
+        // Build payload based on JobSpy's structure
+        var payload = BuildSearchPayload(keyword, location);
 
         var request = new HttpRequestMessage(HttpMethod.Post, GlassdoorConstants.ApiUrl)
         {
-            Content = new StringContent(payload, Encoding.UTF8, "application/json")
+            Content = new StringContent(payload, Encoding.UTF8, new MediaTypeHeaderValue("application/json"))
         };
 
         foreach (var header in GlassdoorConstants.GraphHeaders)
@@ -152,7 +197,7 @@ public sealed class GlassdoorApiClient : IDisposable
             // Create a new request message for each attempt to avoid reuse issues
             var retryRequest = new HttpRequestMessage(HttpMethod.Post, GlassdoorConstants.ApiUrl)
             {
-                Content = new StringContent(payload, Encoding.UTF8, "application/json")
+                Content = new StringContent(payload, Encoding.UTF8, new MediaTypeHeaderValue("application/json"))
             };
 
             foreach (var header in GlassdoorConstants.GraphHeaders)

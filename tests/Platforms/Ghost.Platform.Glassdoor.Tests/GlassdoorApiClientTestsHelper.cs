@@ -2,10 +2,17 @@ using System.Text.RegularExpressions;
 
 namespace Ghost.Platform.Glassdoor.Tests;
 
+/// <summary>
+/// Helper class for Glassdoor API client tests to expose internal extraction logic.
+/// </summary>
 public static class GlassdoorApiClientTestsHelper
 {
+    /// <summary>
+    /// Extracts CSRF token from HTML using the same patterns as GlassdoorApiClient.
+    /// </summary>
     public static string? ExtractCsrfTokenFromHtml(string html)
     {
+        // Multiple CSRF token extraction patterns
         var patterns = new[]
         {
             "token\"\\s*:\\s*\"([^\"]+)\"",
