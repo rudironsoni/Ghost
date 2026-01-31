@@ -15,7 +15,6 @@ public static class IndeedJobParser
 
         foreach (var item in results.EnumerateArray())
         {
-            // Support both structures: direct properties or nested "job" object
             var job = item;
             if (item.TryGetProperty("job", out var nestedJob))
             {
@@ -29,16 +28,9 @@ public static class IndeedJobParser
             var location = job.TryGetProperty("location", out var l) && l.TryGetProperty("formatted", out var f) && f.TryGetProperty("long", out var lon) ? lon.GetString() ?? string.Empty : string.Empty;
             var description = job.TryGetProperty("description", out var d) && d.TryGetProperty("html", out var dh) ? dh.GetString() ?? string.Empty : string.Empty;
 
-            string salary = string.Empty;
-            if (job.TryGetProperty("compensation", out var comp) && comp.TryGetProperty("baseSalary", out var baseS) && baseS.TryGetProperty("range", out var range))
-            {
-                var min = range.TryGetProperty("min", out var minEl) ? minEl.GetDecimal() : 0;
-                var max = range.TryGetProperty("max", out var maxEl) ? maxEl.GetDecimal() : 0;
-                var currency = range.TryGetProperty("currency", out var cur) ? cur.GetString() ?? string.Empty : string.Empty;
-                salary = $"${min} - ${max} {currency}".Trim();
-            }
+            string salary = ExtractSalary(job);
 
-            var domain = "indeed.com"; // default - more accurate mapping may be applied using headers
+            var domain = "indeed.com";
             var url = $"https://{domain}/viewjob?jk={id}";
 
             yield return new JobListing
@@ -53,5 +45,36 @@ public static class IndeedJobParser
                 Source = "Indeed"
             };
         }
+    }
+
+    private static string ExtractSalary(JsonElement job)
+    {
+        if (!job.TryGetProperty("compensation", out var comp) || 
+            !comp.TryGetProperty("baseSalary", out var baseS) || 
+            baseS.ValueKind == JsonValueKind.Null)
+            return string.Empty;
+
+        if (baseS.TryGetProperty("range", out var range))
+        {
+            var min = range.TryGetProperty("min", out var minEl) ? minEl.GetDecimal() : 0;
+            var max = range.TryGetProperty("max", out var maxEl) ? maxEl.GetDecimal() : 0;
+            var currency = range.TryGetProperty("currency", out var cur) ? cur.GetString() ?? string.Empty : string.Empty;
+            
+            if (min > 0 && max > 0)
+                return $"${min} - ${max} {currency}".Trim();
+            else if (min > 0)
+                return $"${min}+ {currency}".Trim();
+            else if (max > 0)
+                return $"Up to ${max} {currency}".Trim();
+        }
+        else if (baseS.TryGetProperty("value", out var valEl) && valEl.ValueKind == JsonValueKind.Number)
+        {
+            var value = valEl.GetDecimal();
+            var currency = baseS.TryGetProperty("currency", out var cur) ? cur.GetString() ?? string.Empty : string.Empty;
+            if (value > 0)
+                return $"${value} {currency}".Trim();
+        }
+
+        return string.Empty;
     }
 }
