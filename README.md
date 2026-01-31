@@ -63,6 +63,45 @@ var inference = host.Services.GetRequiredService<IInferenceClient>();
 var jobs = host.Services.GetRequiredService<IJobClient>();
 ```
 
+## Configuration
+
+All platform extensions are configured under the standardized `Ghost:Extensions` structure:
+
+### appsettings.json
+
+```json
+{
+  "Ghost": {
+    "Extensions": {
+      "LinkedIn": { "Enabled": true },
+      "Indeed": { "Enabled": true },
+      "Glassdoor": { "Enabled": true },
+      "Google": { "Enabled": true },
+      "InfoJobs": {
+        "Enabled": true,
+        "ClientId": "your_client_id",
+        "ClientSecret": "your_client_secret"
+      },
+      "Tecnoempleo": {
+        "Enabled": true,
+        "ClientId": "your_client_id",
+        "ClientSecret": "your_client_secret"
+      }
+    }
+  }
+}
+```
+
+### Environment Variables (.env)
+
+```bash
+GHOST__EXTENSIONS__LINKEDIN__ENABLED=true
+GHOST__EXTENSIONS__INDEED__ENABLED=true
+GHOST__EXTENSIONS__INFOJOBS__ENABLED=true
+GHOST__EXTENSIONS__INFOJOBS__CLIENTID=your_client_id
+GHOST__EXTENSIONS__INFOJOBS__CLIENTSECRET=your_client_secret
+```
+
 ## Packages
 
 | Package                     | Description                              |
