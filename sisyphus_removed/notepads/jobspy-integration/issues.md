@@ -59,3 +59,16 @@
 4. **Consent Page Variations**:
    - Google may change consent page patterns
    - Need to keep consent detection patterns updated
+
+## Task 3: Glassdoor Test Issues
+
+### 2026-01-31: Duplicate Helper Class
+**Issue**: `GlassdoorApiClientTestsHelper` defined in two places:
+1. `tests/Platforms/Ghost.Platform.Glassdoor.Tests/GlassdoorApiClientTests.cs` (lines 337-445)
+2. `tests/Platforms/Ghost.Platform.Glassdoor.Tests/GlassdoorApiClientTestsHelper.cs` (separate file)
+
+**Error**: CS0101 - The namespace already contains a definition
+
+**Fix**: Removed duplicate from GlassdoorApiClientTests.cs (truncated at line 335)
+
+**Status**: ✅ Resolved - Build succeeds
