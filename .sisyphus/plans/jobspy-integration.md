@@ -7,7 +7,7 @@
 > **Deliverables**:
 > - Robust session management with proxy rotation and TLS fingerprinting
 > - Fixed implementations for Glassdoor, Google Jobs, and Indeed
-> - Support for tech-focused European platforms (InfoJobs, Tecnoempleo)
+> - Support for tech-focused European platform (InfoJobs)
 > - Comprehensive test coverage with mocked HTTP tests
 >
 > **Estimated Effort**: Large
@@ -54,7 +54,7 @@ Transform Ghost's job scraping capabilities from brittle implementations to prod
 - Fixed Glassdoor GraphQL client with proper CSRF handling
 - Fixed Google Jobs scraper with robust JSON extraction
 - Fixed Indeed API client with working pagination
-- New tech-focused European platform implementations (InfoJobs, Tecnoempleo)
+- New tech-focused European platform implementation (InfoJobs)
 - Comprehensive test suite with mocked HTTP tests
 
 ### Definition of Done
@@ -141,8 +141,7 @@ Wave 2 (After Wave 1 - Platform Fixes):
 
 Wave 3 (After Wave 2 - EU Expansion):
 ├── Task 6: Add InfoJobs support
-├── Task 7: Add Tecnoempleo support
-└── Task 8: Performance optimization and monitoring
+└── Task 7: Performance optimization and monitoring
 
 Critical Path: Task 1 → Task 3 → Task 4 → Task 5 → Task 6
 ```
@@ -153,12 +152,11 @@ Critical Path: Task 1 → Task 3 → Task 4 → Task 5 → Task 6
 | ---- | ---------- | ------- | -------------------- |
 | 1    | None       | 3, 4, 5 | 2                    |
 | 2    | None       | 3, 4, 5 | 1                    |
-| 3    | 1, 2       | 6, 7    | 4, 5                 |
-| 4    | 1, 2       | 6, 7    | 3, 5                 |
-| 5    | 1, 2       | 6, 7    | 3, 4                 |
-| 6    | 3, 4, 5    | 8       | 7                    |
-| 7    | 3, 4, 5    | 8       | 6                    |
-| 8    | 6, 7       | None    | None                 |
+| 3    | 1, 2       | 6       | 4, 5                 |
+| 4    | 1, 2       | 6       | 3, 5                 |
+| 5    | 1, 2       | 6       | 3, 4                 |
+| 6    | 3, 4, 5    | 7       | None                 |
+| 7    | 6          | None    | None                 |
 
 ### Agent Dispatch Summary
 
@@ -166,7 +164,7 @@ Critical Path: Task 1 → Task 3 → Task 4 → Task 5 → Task 6
 | ---- | ------- | ---------------------------------------------------------------------------------------------------- |
 | 1    | 1, 2    | delegate_task(category="ultrabrain", load_skills=["git-master"], run_in_background=true)             |
 | 2    | 3, 4, 5 | delegate_task(category="visual-engineering", load_skills=["frontend-ui-ux"], run_in_background=true) |
-| 3    | 6, 7, 8 | delegate_task(category="writing", load_skills=["dev-browser"], run_in_background=true)               |
+| 3    | 6, 7    | delegate_task(category="writing", load_skills=["dev-browser"], run_in_background=true)               |
 
 ---
 
@@ -494,60 +492,7 @@ Critical Path: Task 1 → Task 3 → Task 4 → Task 5 → Task 6
   - Files: `src/Platforms/Ghost.Platform.InfoJobs/`
   - Pre-commit: `dotnet test tests/Platforms/Ghost.Platform.InfoJobs.Tests/`
 
-- [ ] 7. Add Tecnoempleo Support (Spain)
-
-  **What to do**:
-  - Research Tecnoempleo platform structure
-  - Implement technology-focused job scraping
-  - Add specialized parsing for tech job fields
-  - Create comprehensive test coverage
-
-  **Must NOT do**:
-  - Use generic scraping without tech field specialization
-  - Skip Spanish technology terminology handling
-  - Create implementation without proper error handling
-
-  **Recommended Agent Profile**:
-  - **Category**: `writing`
-    - Reason: Requires research of Spanish tech job market
-  - **Skills**: [`dev-browser`]
-    - `dev-browser`: For understanding Spanish tech platforms
-
-  **Parallelization**:
-  - **Can Run In Parallel**: YES
-  - **Parallel Group**: Wave 3 (with Task 6)
-  - **Blocks**: Task 8
-  - **Blocked By**: Tasks 3, 4, 5
-
-  **References**:
-  - **Pattern References**: JobSpy technology-focused platform patterns
-  - **API/Type References**: Tecnoempleo platform documentation (research required)
-  - **Test References**: Existing platform test patterns
-
-  **Acceptance Criteria**:
-  - [ ] Tecnoempleo scraper returns Spanish tech job listings
-  - [ ] Technology field parsing handles specialized terminology
-  - [ ] Success rate >90% for Spanish tech job searches
-  - [ ] Legal compliance verified
-
-  **Automated Verification**:
-  ```bash
-  # Agent executes:
-  dotnet test tests/Platforms/Ghost.Platform.Tecnoempleo.Tests/
-  # Assert: All Tecnoempleo tests pass
-  # Assert: Spanish tech job data is properly parsed
-  ```
-
-  **Evidence to Capture**:
-  - [ ] Test execution results
-  - [ ] Spanish tech job data validation
-
-  **Commit**: YES
-  - Message: `feat(tecnoempleo): add Spanish tech job platform support`
-  - Files: `src/Platforms/Ghost.Platform.Tecnoempleo/`
-  - Pre-commit: `dotnet test tests/Platforms/Ghost.Platform.Tecnoempleo.Tests/`
-
-- [ ] 8. Performance Optimization and Monitoring
+- [ ] 7. Performance Optimization and Monitoring
 
   **What to do**:
   - Implement performance metrics collection
@@ -612,8 +557,7 @@ Critical Path: Task 1 → Task 3 → Task 4 → Task 5 → Task 6
 | 4          | `fix(indeed): implement proper pagination and API key security`           | `src/Platforms/Ghost.Platform.Indeed/`            | `dotnet test tests/Platforms/Ghost.Platform.Indeed.Tests/`        |
 | 5          | `fix(google-jobs): implement robust JSON extraction and consent handling` | `src/Platforms/Ghost.Platform.Google/Jobs/`       | `dotnet test tests/Platforms/Ghost.Platform.Google.Tests/`        |
 | 6          | `feat(infojobs): add Spanish job platform support`                        | `src/Platforms/Ghost.Platform.InfoJobs/`          | `dotnet test tests/Platforms/Ghost.Platform.InfoJobs.Tests/`      |
-| 7          | `feat(tecnoempleo): add Spanish tech job platform support`                | `src/Platforms/Ghost.Platform.Tecnoempleo/`       | `dotnet test tests/Platforms/Ghost.Platform.Tecnoempleo.Tests/`   |
-| 8          | `feat(monitoring): add platform performance monitoring`                   | `src/Platforms/Ghost.Platform.Common/Monitoring/` | `dotnet test tests/Performance/Ghost.Platform.Performance.Tests/` |
+| 7          | `feat(monitoring): add platform performance monitoring`                   | `src/Platforms/Ghost.Platform.Common/Monitoring/` | `dotnet test tests/Performance/Ghost.Platform.Performance.Tests/` |
 
 ---
 

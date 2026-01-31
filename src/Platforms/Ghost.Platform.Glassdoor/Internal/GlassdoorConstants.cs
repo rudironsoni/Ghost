@@ -8,35 +8,173 @@ internal static class GlassdoorConstants
     public const string QueryTemplate = "JobSearchResultsQuery";
 
     /// <summary>
-    /// Actual GraphQL query for job search based on JobSpy patterns and Glassdoor API requirements
+    /// Full GraphQL query for job search based on JobSpy patterns and Glassdoor API requirements
+    /// This is the complete persisted query with all necessary fragments
     /// </summary>
     public const string JobSearchQuery = """
-        query JobSearchResultsQuery($keywords: String!, $location: String) {
-            jobSearchResults(
-                keywords: $keywords
-                location: $location
-                pageSize: 20
-                pageNumber: 1
-            ) {
-                jobs {
-                    id
-                    jobTitle
-                    company {
-                        name
-                        rating
+        query JobSearchResultsQuery(
+            $excludeJobListingIds: [Long!], 
+            $keyword: String, 
+            $locationId: Int, 
+            $locationType: LocationTypeEnum, 
+            $numJobsToShow: Int!, 
+            $pageCursor: String, 
+            $pageNumber: Int, 
+            $filterParams: [FilterParams], 
+            $originalPageUrl: String, 
+            $seoFriendlyUrlInput: String, 
+            $parameterUrlInput: String, 
+            $seoUrl: Boolean
+        ) {
+            jobListings(
+                contextHolder: {
+                    searchParams: {
+                        excludeJobListingIds: $excludeJobListingIds, 
+                        keyword: $keyword, 
+                        locationId: $locationId, 
+                        locationType: $locationType, 
+                        numPerPage: $numJobsToShow, 
+                        pageCursor: $pageCursor, 
+                        pageNumber: $pageNumber, 
+                        filterParams: $filterParams, 
+                        originalPageUrl: $originalPageUrl, 
+                        seoFriendlyUrlInput: $seoFriendlyUrlInput, 
+                        parameterUrlInput: $parameterUrlInput, 
+                        seoUrl: $seoUrl, 
+                        searchType: SR
                     }
-                    location
-                    salary
-                    jobDescription
-                    postedDate
-                    applyUrl
                 }
-                totalResults
-                pageInfo {
-                    hasNextPage
-                    endCursor
+            ) {
+                companyFilterOptions {
+                    id
+                    shortName
+                    __typename
                 }
+                filterOptions
+                indeedCtk
+                jobListings {
+                    ...JobView
+                    __typename
+                }
+                jobListingSeoLinks {
+                    linkItems {
+                        position
+                        url
+                        __typename
+                    }
+                    __typename
+                }
+                jobSearchTrackingKey
+                jobsPageSeoData {
+                    pageMetaDescription
+                    pageTitle
+                    __typename
+                }
+                paginationCursors {
+                    cursor
+                    pageNumber
+                    __typename
+                }
+                indexablePageForSeo
+                searchResultsMetadata {
+                    searchCriteria {
+                        implicitLocation {
+                            id
+                            localizedDisplayName
+                            type
+                            __typename
+                        }
+                        keyword
+                        location {
+                            id
+                            shortName
+                            localizedShortName
+                            localizedDisplayName
+                            type
+                            __typename
+                        }
+                        __typename
+                    }
+                    helpCenterDomain
+                    helpCenterLocale
+                    jobSerpJobOutlook {
+                        occupation
+                        paragraph
+                        __typename
+                    }
+                    showMachineReadableJobs
+                    __typename
+                }
+                totalJobsCount
+                __typename
             }
+        }
+
+        fragment JobView on JobListingSearchResult {
+            jobview {
+                header {
+                    adOrderId
+                    advertiserType
+                    adOrderSponsorshipLevel
+                    ageInDays
+                    divisionEmployerName
+                    easyApply
+                    employer {
+                        id
+                        name
+                        shortName
+                        __typename
+                    }
+                    employerNameFromSearch
+                    goc
+                    gocConfidence
+                    gocId
+                    jobCountryId
+                    jobLink
+                    jobResultTrackingKey
+                    jobTitleText
+                    locationName
+                    locationType
+                    locId
+                    needsCommission
+                    payCurrency
+                    payPeriod
+                    payPeriodAdjustedPay {
+                        p10
+                        p50
+                        p90
+                        __typename
+                    }
+                    rating
+                    salarySource
+                    savedJobId
+                    sponsored
+                    __typename
+                }
+                job {
+                    description
+                    importConfigId
+                    jobTitleId
+                    jobTitleText
+                    listingId
+                    __typename
+                }
+                jobListingAdminDetails {
+                    cpcVal
+                    importConfigId
+                    jobListingId
+                    jobSourceId
+                    userEligibleForAdminJobDetails
+                    __typename
+                }
+                overview {
+                    shortName
+                    squareLogoUrl
+                    __typename
+                }
+                __typename
+            }
+            __typename
         }
     """;
 
