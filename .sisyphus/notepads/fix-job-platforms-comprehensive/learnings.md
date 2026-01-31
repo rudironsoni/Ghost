@@ -185,6 +185,14 @@ All major tasks have been completed successfully:
 2. Configure credentials in `.env` file
 3. Run test scripts to verify all platforms
 
+### .env.example update (2026-01-31)
+
+- Added explicit INFOJOBS_CLIENT_ID / INFOJOBS_CLIENT_SECRET placeholders to `.env.example` alongside existing GHOST__EXTENSIONS__INFOJOBS__CLIENTID/CLIENTSECRET variables.
+- Added explicit TECNOEMPLEO_CLIENT_ID / TECNOEMPLEO_CLIENT_SECRET placeholders to assist tooling that expects flat env vars.
+- Included comments with registration URLs and guidance to obtain credentials and warning to never commit real credentials.
+
+These changes are documentation-only and do not affect runtime behavior unless the variables are populated in a runtime `.env` or environment. Build verified after edits: `dotnet build Ghost.sln` succeeded.
+
 ## Docs added: InfoJobs & Tecnoempleo credential guidance (2026-01-31)
 
 - Created `logs/credential_requirements.md` describing why both InfoJobs and Tecnoempleo require real API credentials, how to request them, and example .env placeholders.
@@ -433,3 +441,10 @@ Implemented JobSpy headers for Google, Glassdoor, and Indeed platforms based on 
 2. Implement Glassdoor fallback token mechanism
 3. Obtain real API credentials for InfoJobs and Tecnoempleo
 4. Test all platforms after additional fixes
+
+### Change: Added async parameter to HTTP search URL (2026-01-31)
+
+- Implemented appending of GoogleJobsConstants.AsyncBootstrapString as `&async={value}` to the initial search URL in `GoogleJobsApiClient.SearchAsync`.
+- The value is URL-encoded via `Uri.EscapeDataString` to ensure safe transmission.
+- This follows JobSpy's technique to include the _basejs/bootstrap string which can help bypass consent/async loading.
+- Build verified: `dotnet build src/Platforms/Ghost.Platform.Google/` succeeded after change.
