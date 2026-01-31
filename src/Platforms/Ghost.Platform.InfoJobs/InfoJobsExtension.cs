@@ -27,6 +27,8 @@ public sealed class InfoJobsExtension : Ghost.Hosting.IExtension
 
         // bind using configuration section
         services.Configure<Jobs.InfoJobsOptions>(configuration.GetSection("Ghost:Extensions:InfoJobs"));
+        // register options validator
+        services.AddSingleton<Microsoft.Extensions.Options.IValidateOptions<Jobs.InfoJobsOptions>, Jobs.InfoJobsOptionsValidator>();
 
         var rootOpts = new Jobs.InfoJobsOptions();
         configuration.GetSection("Ghost:Extensions:InfoJobs").Bind(rootOpts);
