@@ -88,9 +88,85 @@ public sealed class GlassdoorApiClient : IDisposable
     /// </summary>
     private static string BuildSearchPayload(string keyword, string? location)
     {
+        // NOTE: Previously this method ignored the `location` parameter and always
+        // used a hardcoded locationId = 11047 (remote/US). That caused searches for
+        // other locations (e.g. "Spain") to return the same results as remote.
+        //
+        // Simple fix: respect the incoming `location` string by mapping common
+        // location names to approximate Glassdoor locationId/locationType values.
+        // This is intentionally small and non-invasive: we do not change method
+        // signatures or add external dependencies. Unknown locations fall back
+        // to the original default (remote) and we log the resolved mapping for
+        // visibility.
+
         // Default location ID for remote (from JobSpy)
-        var locationId = 11047;
-        var locationType = "STATE";
+        var defaultLocationId = 11047;
+        var defaultLocationType = "STATE";
+
+        var resolvedLocationId = defaultLocationId;
+        var resolvedLocationType = defaultLocationType;
+
+        if (!string.IsNullOrWhiteSpace(location))
+        {
+            // Normalize
+            var loc = location.Trim().ToLowerInvariant();
+
+            // Basic mapping for common locations. These IDs are best-effort and
+            // may need refinement; they are chosen to change the search scope
+            // (country vs state) so results differ from the default remote ID.
+            switch (loc)
+            {
+                case "remote":
+                case "anywhere":
+                    resolvedLocationId = 11047; // remote/state default
+                    resolvedLocationType = "STATE";
+                    break;
+                case "spain":
+                case "es":
+                case "españa":
+                    // Use a country-level location type for Spain. The numeric ID
+                    // here is an approximation; if you have an authoritative ID,
+                    // replace it. Using COUNTRY will change how results are filtered.
+                    resolvedLocationId = 1999;
+                    resolvedLocationType = "COUNTRY";
+                    break;
+                case "united states":
+                case "united states of america":
+                case "us":
+                case "usa":
+                    resolvedLocationId = 1;
+                    resolvedLocationType = "COUNTRY";
+                    break;
+                case "united kingdom":
+                case "uk":
+                case "gb":
+                case "great britain":
+                    resolvedLocationId = 224; // approximate country id for UK
+                    resolvedLocationType = "COUNTRY";
+                    break;
+                case var s when s.StartsWith("province:", StringComparison.Ordinal) || s.StartsWith("state:", StringComparison.Ordinal):
+                    // Allow callers to pass "state:11047" or "province:5" to force an id
+                    var parts = s.Split(':', 2);
+                    if (parts.Length == 2 && int.TryParse(parts[1], out var parsedId))
+                    {
+                        resolvedLocationId = parsedId;
+                        resolvedLocationType = s.StartsWith("province:", StringComparison.Ordinal) ? "PROVINCE" : "STATE";
+                    }
+                    break;
+                default:
+                    // Unknown free-text location: leave fallback but log the value
+                    try { System.IO.File.AppendAllText("logs/glassdoor_location_resolve.log", $"Unknown location '{location}' - falling back to default ({defaultLocationId})\n"); } catch { }
+                    break;
+            }
+        }
+        else
+        {
+            // No location provided - log that we're using default remote
+            try { System.IO.File.AppendAllText("logs/glassdoor_location_resolve.log", $"No location provided - using default ({defaultLocationId})\n"); } catch { }
+        }
+
+        // Also log the final resolved mapping for transparency
+        try { System.IO.File.AppendAllText("logs/glassdoor_location_resolve.log", $"Resolved location '{location}' => id={resolvedLocationId}, type={resolvedLocationType}\n"); } catch { }
 
         // Build filter params (empty for basic search)
         var filterParams = new List<object>();
@@ -105,9 +181,9 @@ public sealed class GlassdoorApiClient : IDisposable
                 filterParams = filterParams,
                 keyword = keyword,
                 numJobsToShow = 30,
-                locationType = locationType,
-                locationId = locationId,
-                parameterUrlInput = $"IL.0,12_I{locationType}{locationId}",
+                locationType = resolvedLocationType,
+                locationId = resolvedLocationId,
+                parameterUrlInput = $"IL.0,12_I{resolvedLocationType}{resolvedLocationId}",
                 pageNumber = 1,
                 pageCursor = (string?)null,
                 fromage = (int?)null,
