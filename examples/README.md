@@ -55,21 +55,29 @@ chmod +x examples/scripts/*.sh
 
 ### Environment Variables (.env)
 
-Set your platform credentials in the `.env` file:
+Set your platform credentials in the `.env` file using the standardized `GHOST__EXTENSIONS__*` pattern:
 
 ```bash
-# InfoJobs Configuration
-INFOJOBS_API_KEY=your_infojobs_api_key
-INFOJOBS_API_SECRET=your_infojobs_api_secret
+# InfoJobs Configuration (get credentials at https://www.infojobs.net/empresas)
+GHOST__EXTENSIONS__INFOJOBS__ENABLED=true
+GHOST__EXTENSIONS__INFOJOBS__CLIENTID=your_infojobs_client_id
+GHOST__EXTENSIONS__INFOJOBS__CLIENTSECRET=your_infojobs_client_secret
 
-# Tecnoempleo Configuration  
-TECNOEMPLEO_USERNAME=your_tecnoempleo_username
-TECNOEMPLEO_PASSWORD=your_tecnoempleo_password
+# Tecnoempleo Configuration (contact https://www.tecnoempleo.com/ for access)
+GHOST__EXTENSIONS__TECNOEMPLEO__ENABLED=true
+GHOST__EXTENSIONS__TECNOEMPLEO__CLIENTID=your_tecnoempleo_client_id
+GHOST__EXTENSIONS__TECNOEMPLEO__CLIENTSECRET=your_tecnoempleo_client_secret
+
+# Other Platforms
+GHOST__EXTENSIONS__LINKEDIN__ENABLED=true
+GHOST__EXTENSIONS__INDEED__ENABLED=true
+GHOST__EXTENSIONS__GLASSDOOR__ENABLED=true
+GHOST__EXTENSIONS__GOOGLE__ENABLED=true
 ```
 
 ### AppSettings Configuration
 
-The `appsettings.json` file contains the complete configuration:
+The `appsettings.json` file contains the complete configuration under `Ghost:Extensions`:
 
 ```json
 {
@@ -77,14 +85,28 @@ The `appsettings.json` file contains the complete configuration:
     "Extensions": {
       "InfoJobs": {
         "Enabled": true,
-        "ApiKey": "${INFOJOBS_API_KEY}",
-        "ApiSecret": "${INFOJOBS_API_SECRET}"
+        "Country": "ES",
+        "Language": "es",
+        "ClientId": "YOUR_INFOJOBS_CLIENT_ID",
+        "ClientSecret": "YOUR_INFOJOBS_CLIENT_SECRET",
+        "ApiEndpoint": "https://api.infojobs.net/api/",
+        "BaseUrl": "https://www.infojobs.net/",
+        "MinDelayMs": 500,
+        "MaxDelayMs": 1500
       },
       "Tecnoempleo": {
         "Enabled": true,
-        "Username": "${TECNOEMPLEO_USERNAME}",
-        "Password": "${TECNOEMPLEO_PASSWORD}"
-      }
+        "BaseUrl": "https://www.tecnoempleo.com",
+        "ApiUrl": "https://api.tecnoempleo.com",
+        "ClientId": "YOUR_TECNOEMPLEO_CLIENT_ID",
+        "ClientSecret": "YOUR_TECNOEMPLEO_CLIENT_SECRET",
+        "MaxRetries": 3,
+        "EnableRateLimiting": true
+      },
+      "LinkedIn": { "Enabled": true },
+      "Indeed": { "Enabled": true },
+      "Glassdoor": { "Enabled": true },
+      "Google": { "Enabled": true }
     }
   }
 }
