@@ -47,7 +47,8 @@ public sealed class GoogleJobsApiClient
         // Append async bootstrap parameter to help bypass consent pages (JobSpy technique)
         // Use AsyncBootstrapString from GoogleJobsConstants and ensure it's URL-encoded
         var asyncParam = Uri.EscapeDataString(GoogleJobsConstants.AsyncBootstrapString);
-        var url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs&udm=8&gl=us&hl=en&hl=en-US&async={asyncParam}";
+        // Try using additional parameters to bypass consent: pws=0 (disable personalization), filter=0 (show all results)
+        var url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs&udm=8&gl=us&hl=en&hl=en-US&async={asyncParam}&pws=0&filter=0";
 
         LogFetchingJobs(_logger, url, null);
 
