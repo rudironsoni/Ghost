@@ -8,11 +8,13 @@ using Ghost.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
+using System.Text;
 
 namespace Ghost.Platform.Google.Jobs.Internal;
 
 public sealed class GoogleJobsBrowserClient
 {
+    private static readonly Random s_random = new Random();
     private readonly GhostKernel _kernel;
     private readonly ILogger<GoogleJobsBrowserClient> _logger;
     private readonly IOptions<GoogleJobsOptions> _options;
@@ -58,8 +60,8 @@ public sealed class GoogleJobsBrowserClient
         var session = await _kernel.NewSessionAsync(sessionOptions, ct);
         var page = await session.NewPageAsync(ct: ct);
 
-        try
-        {
+            try
+            {
             var q = Uri.EscapeDataString(query);
             var loc = string.IsNullOrEmpty(location) ? "" : Uri.EscapeDataString(location);
             var url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs&udm=8&gl=us&hl=en";
@@ -73,7 +75,8 @@ public sealed class GoogleJobsBrowserClient
             if (isConsentPage)
             {
                 s_logConsentDetected(_logger, url, null);
-                var handled = await HandleConsentPageAsync(page, ct);
+                // Try handling consent page with retries and human-like actions
+                var handled = await RetryAsync(async () => await HandleConsentPageAsync(page, ct), 4, ct);
                 if (!handled)
                 {
                     s_logError(_logger, "Failed to handle consent page", null);
@@ -81,7 +84,7 @@ public sealed class GoogleJobsBrowserClient
                 }
 
                 await page.WaitForLoadStateAsync(ct: ct);
-                await Task.Delay(2000, ct);
+                await RandomDelayAsync(800, 1800, ct);
             }
 
             await WaitForJobListingsAsync(page, ct);
@@ -139,44 +142,78 @@ public sealed class GoogleJobsBrowserClient
     {
         try
         {
-            var rejectButton = await page.QuerySelectorAsync(
-                "button:has-text(\"Reject all\"), " +
-                "button[aria-label*=\"Reject\"], " +
-                "div[role=\"button\"]:has-text(\"Reject all\"), " +
-                "button:has-text(\"Reject\"), " +
-                "[data-action=\"reject\"]", ct);
+            // Strategy 1: Try rejecting explicitly
+            await RandomDelayAsync(200, 600, ct);
+            await SimulateGlobalMouseMovementAsync(page, ct);
 
-            if (rejectButton != null)
+            var rejectSelectors = new[]
             {
-                await rejectButton.ClickAsync(ct: ct);
-                await Task.Delay(1000, ct);
-                return true;
-            }
+                "button:has-text(\"Reject all\")",
+                "button[aria-label*=\"Reject\"]",
+                "div[role=\\\"button\\\"]:has-text(\"Reject all\")",
+                "button:has-text(\"Reject\")",
+                "[data-action=\"reject\"]"
+            };
 
-            var customizeButton = await page.QuerySelectorAsync(
-                "button:has-text(\"Customize\"), " +
-                "div[role=\"button\"]:has-text(\"Customize\"), " +
-                "button:has-text(\"Manage options\")", ct);
-
-            if (customizeButton != null)
+            foreach (var sel in rejectSelectors)
             {
-                await customizeButton.ClickAsync(ct: ct);
-                await Task.Delay(1000, ct);
-
-                var confirmButton = await page.QuerySelectorAsync(
-                    "button:has-text(\"Confirm\"), " +
-                    "button:has-text(\"Done\"), " +
-                    "div[role=\"button\"]:has-text(\"Confirm\")", ct);
-
-                if (confirmButton != null)
+                try
                 {
-                    await confirmButton.ClickAsync(ct: ct);
-                    await Task.Delay(1000, ct);
-                    return true;
+                    var btn = await page.QuerySelectorAsync(sel, ct);
+                    if (btn != null)
+                    {
+                        await RandomDelayAsync(120, 450, ct);
+                        await SimulateGlobalMouseMovementAsync(page, ct);
+                        await btn.ClickAsync(ct: ct);
+                        await RandomDelayAsync(800, 1400, ct);
+                        return true;
+                    }
                 }
+                catch { }
             }
 
-            var buttons = await page.QuerySelectorAllAsync("button, div[role=\"button\"]", ct);
+            // Strategy 2: Customize -> Confirm
+            var customizeSelectors = new[]
+            {
+                "button:has-text(\"Customize\")",
+                "div[role=\\\"button\\\"]:has-text(\"Customize\")",
+                "button:has-text(\"Manage options\")"
+            };
+
+            foreach (var sel in customizeSelectors)
+            {
+                try
+                {
+                    var btn = await page.QuerySelectorAsync(sel, ct);
+                    if (btn != null)
+                    {
+                        await SimulateGlobalMouseMovementAsync(page, ct);
+                        await btn.ClickAsync(ct: ct);
+                        await RandomDelayAsync(600, 1200, ct);
+
+                        var confirmSelectors = new[] { "button:has-text(\"Confirm\")", "button:has-text(\"Done\")", "div[role=\\\"button\\\"]:has-text(\"Confirm\")" };
+                        foreach (var csel in confirmSelectors)
+                        {
+                            try
+                            {
+                                var cbtn = await page.QuerySelectorAsync(csel, ct);
+                                if (cbtn != null)
+                                {
+                                    await SimulateGlobalMouseMovementAsync(page, ct);
+                                    await cbtn.ClickAsync(ct: ct);
+                                    await RandomDelayAsync(800, 1300, ct);
+                                    return true;
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            // Strategy 3: Search for any negative/decline textual button
+            var buttons = await page.QuerySelectorAllAsync("button, div[role=\\\"button\\\"]", ct);
             foreach (var button in buttons)
             {
                 try
@@ -185,13 +222,12 @@ public sealed class GoogleJobsBrowserClient
                     if (!string.IsNullOrEmpty(text))
                     {
                         var lowerText = text.ToLowerInvariant();
-                        if (lowerText.Contains("reject") ||
-                            lowerText.Contains("decline") ||
-                            lowerText.Contains("no thanks") ||
-                            lowerText.Contains("dismiss"))
+                        if (lowerText.Contains("reject") || lowerText.Contains("decline") || lowerText.Contains("no thanks") || lowerText.Contains("dismiss"))
                         {
+                            await SimulateGlobalMouseMovementAsync(page, ct);
+                            await RandomDelayAsync(80, 300, ct);
                             await button.ClickAsync(ct: ct);
-                            await Task.Delay(1000, ct);
+                            await RandomDelayAsync(800, 1200, ct);
                             return true;
                         }
                     }
@@ -199,12 +235,125 @@ public sealed class GoogleJobsBrowserClient
                 catch { }
             }
 
+            // Strategy 4: Try keyboard navigation (tab -> enter)
+            // Strategy 4: Try focusing first actionable negative button via JS and click it
+            try
+            {
+                var script = @"() => {
+                    const texts = ['reject','decline','no thanks','dismiss','no, thanks','not now'];
+                    const buttons = Array.from(document.querySelectorAll('button, [role=""button""]'));
+                    for (const b of buttons) {
+                        try {
+                            const t = (b.innerText || b.textContent || '').toLowerCase();
+                            for (const s of texts) { if (t.includes(s)) { b.click(); return true; } }
+                        } catch(e){}
+                    }
+                    return false;
+                }";
+
+                var clicked = await page.EvaluateAsync<bool>(script, null, ct);
+                if (clicked) {
+                    await RandomDelayAsync(800, 1500, ct);
+                    var still = await IsConsentPageAsync(page, ct);
+                    if (!still) return true;
+                }
+            }
+            catch { }
+
+            // Strategy 5: Try setting a consent cookie (best-effort) and reload
+            try
+            {
+                await page.EvaluateAsync<string>("() => { document.cookie = 'CONSENT=YES+1; domain=.google.com; path=/'; return 'ok'; }", null, ct);
+                await RandomDelayAsync(400, 900, ct);
+                await page.ReloadAsync(ct: ct);
+                await RandomDelayAsync(1000, 2000, ct);
+
+                var still2 = await IsConsentPageAsync(page, ct);
+                if (!still2) return true;
+            }
+            catch { }
+
             return false;
         }
         catch
         {
             return false;
         }
+    }
+
+    private static async Task RandomDelayAsync(int minMs, int maxMs, CancellationToken ct)
+    {
+        try
+        {
+            var ms = s_random.Next(Math.Max(1, minMs), Math.Max(minMs + 1, maxMs + 1));
+            await Task.Delay(ms, ct);
+        }
+        catch (OperationCanceledException) { throw; }
+        catch { }
+    }
+
+    private static async Task SimulateGlobalMouseMovementAsync(IPage page, CancellationToken ct)
+    {
+        try
+        {
+            // Dispatch synthetic mousemove events via page.evaluate to mimic activity
+            var script = @"() => {
+                const steps = Math.floor(Math.random()*5)+3;
+                for (let i=0;i<steps;i++){
+                    const x = Math.floor(Math.random()*window.innerWidth);
+                    const y = Math.floor(Math.random()*window.innerHeight);
+                    const ev = new MouseEvent('mousemove', {clientX: x, clientY: y, bubbles: true});
+                    document.dispatchEvent(ev);
+                }
+                return true;
+            }";
+
+            await page.EvaluateAsync<string>(script, null, ct);
+            await RandomDelayAsync(40, 160, ct);
+        }
+        catch { }
+    }
+
+    private static async Task HumanLikeScrollAsync(IPage page, CancellationToken ct)
+    {
+        try
+        {
+            var height = await page.EvaluateAsync<int>("() => document.body.scrollHeight", null, ct);
+            var viewport = await page.EvaluateAsync<int>("() => window.innerHeight", null, ct);
+            var maxScroll = Math.Max(0, height - viewport);
+            if (maxScroll <= 0) return;
+
+            var passes = s_random.Next(2, 5);
+            for (var i = 0; i < passes; i++)
+            {
+                var pos = s_random.Next(0, maxScroll);
+                await page.EvaluateAsync<string>("(y) => window.scrollTo({top: y, behavior: 'smooth'})", pos, ct);
+                await RandomDelayAsync(300, 900, ct);
+            }
+        }
+        catch { }
+    }
+
+    private static async Task<bool> RetryAsync(Func<Task<bool>> action, int maxAttempts, CancellationToken ct)
+    {
+        var attempt = 0;
+        var backoff = 300;
+        while (attempt < maxAttempts)
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                var ok = await action();
+                if (ok) return true;
+            }
+            catch { }
+
+            attempt++;
+            var delay = backoff * (int)Math.Pow(2, attempt - 1);
+            try { await Task.Delay(delay + s_random.Next(0, 200), ct); } catch { }
+        }
+
+        return false;
     }
 
     private static async Task WaitForJobListingsAsync(IPage page, CancellationToken ct)
