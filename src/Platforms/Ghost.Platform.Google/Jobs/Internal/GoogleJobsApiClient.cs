@@ -78,13 +78,15 @@ public sealed class GoogleJobsApiClient
         {
             LogFetchingJobs(_logger, "Detected consent page, trying alternative approaches...", null);
             
-            // Try multiple alternative approaches
             var alternativeUrls = new[]
             {
-                $"https://www.google.com/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=us&hl=en&hl=en-US&tbs=qdr:d", // Add job posting date filter
-                $"https://www.google.com/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=us&hl=en&hl=en-US&tbs=qdr:w", // Week filter
-                $"https://www.google.com/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=us&hl=en&hl=en-US&tbs=qdr:m", // Month filter
-                $"https://www.google.com/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=us&hl=en&hl=en-US&source=hp", // Home page source
+                $"https://www.google.com/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=us&hl=en&hl=en-US&tbs=qdr:d",
+                $"https://www.google.com/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=us&hl=en&hl=en-US&tbs=qdr:w",
+                $"https://www.google.com/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=us&hl=en&hl=en-US&tbs=qdr:m",
+                $"https://www.google.com/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=us&hl=en&hl=en-US&source=hp",
+                $"https://www.google.co.uk/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=uk&hl=en",
+                $"https://www.google.ca/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=ca&hl=en",
+                $"https://www.google.com.au/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=au&hl=en",
             };
             
             foreach (var altUrl in alternativeUrls)
