@@ -11,9 +11,9 @@ public class InfoJobsExtensionTests
     {
         var inMemory = new Dictionary<string, string?>
         {
-            { "InfoJobs:Enabled", "true" },
-            { "InfoJobs:ClientId", "test-client-id" },
-            { "InfoJobs:ClientSecret", "test-client-secret" }
+            { "Ghost:Extensions:InfoJobs:Enabled", "true" },
+            { "Ghost:Extensions:InfoJobs:ClientId", "test-client-id" },
+            { "Ghost:Extensions:InfoJobs:ClientSecret", "test-client-secret" }
         };
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(inMemory).Build();
         var services = new ServiceCollection();
