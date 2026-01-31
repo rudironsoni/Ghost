@@ -11,7 +11,7 @@ public sealed class GoogleExtension : Ghost.Hosting.IExtension
     public string Name => "Google";
     public Version Version => new(1, 0, 0);
     public IReadOnlyList<Type> ProvidedServices => new[] { typeof(Ghost.Contracts.Inference.IInferenceClient), typeof(Ghost.Contracts.Jobs.IJobClient) };
-    public IReadOnlyList<Type> RequiredServices => new[] { typeof(Ghost.Core.GhostKernel) };
+    public IReadOnlyList<Type> RequiredServices => Array.Empty<Type>();
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
@@ -23,6 +23,7 @@ public sealed class GoogleExtension : Ghost.Hosting.IExtension
         catch { }
 
         services.Configure<GoogleOptions>(configuration.GetSection("Ghost:Extensions:Google"));
+        services.AddSingleton<Microsoft.Extensions.Options.IValidateOptions<GoogleOptions>, GoogleOptionsValidator>();
 
         var rootOpts = new GoogleOptions();
         configuration.GetSection("Ghost:Extensions:Google").Bind(rootOpts);
