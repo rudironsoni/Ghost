@@ -5,6 +5,7 @@ using Ghost.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace Ghost.WebApi.Features.Jobs;
 
@@ -16,10 +17,43 @@ public static class JobsEndpoints
         app.MapGroup("/api/jobs").MapPost("/search-with-errors", SearchJobsWithErrors);
     }
 
-    private static async Task<IResult> SearchJobs([FromBody] JobSearchCriteria criteria, [FromServices] IJobClient client, CancellationToken ct)
+    private static async Task<IResult> SearchJobs([FromBody] JobSearchCriteria criteria, [FromServices] IJobClient client, [FromServices] ILoggerFactory loggerFactory, CancellationToken ct)
     {
-        var result = await client.SearchJobsAsync(criteria, ct);
-        return Results.Ok(result);
+        var sw = Stopwatch.StartNew();
+        var status = "SUCCESS";
+        Exception? caughtEx = null;
+        try
+        {
+            var result = await client.SearchJobsAsync(criteria, ct);
+            return Results.Ok(result);
+        }
+        catch (Exception ex)
+        {
+            status = "FAILURE";
+            caughtEx = ex;
+            throw;
+        }
+        finally
+        {
+            sw.Stop();
+            try
+            {
+                var logger = loggerFactory?.CreateLogger("JobsEndpoints");
+                var platform = client?.PlatformName ?? "Unknown";
+                var timeMs = sw.ElapsedMilliseconds;
+                var query = criteria?.Query ?? string.Empty;
+                var message = $"[{platform}] [{status}] [{timeMs}] [{query}]";
+                if (caughtEx != null)
+                {
+                    logger?.LogInformation(caughtEx, message + " Exception: {Message}", caughtEx.Message);
+                }
+                else
+                {
+                    logger?.LogInformation(message);
+                }
+            }
+            catch { /* swallow logging errors to avoid interfering with response */ }
+        }
     }
 
     private static async Task<IResult> SearchJobsWithErrors([FromBody] JobSearchCriteria criteria, [FromServices] IJobClient client, CancellationToken ct)
