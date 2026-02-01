@@ -64,7 +64,10 @@ public sealed class GoogleJobsApiClient
     private static readonly Action<ILogger, string, Exception?> LogUserAgentRotation =
         LoggerMessage.Define<string>(LogLevel.Debug, new EventId(16, nameof(LogUserAgentRotation)), "Using user agent: {UserAgent}");
 
-    private int _requestCount = 0;
+    // Track request count if needed for session rotation logic. Suppress unused/analysis warnings for now.
+    #pragma warning disable CS0169, CS0414, CA1805
+    private int _requestCount;
+    #pragma warning restore CS0169, CS0414, CA1805
     private const int MaxRequestsPerSession = 5;
 
     // Additional existing eventId gap avoided
@@ -91,11 +94,22 @@ public sealed class GoogleJobsApiClient
 
         LogFetchingJobs(_logger, url, null);
 
+        LogCookieInjection(_logger, null);
+        var userAgent = GoogleJobsConstants.GetRandomUserAgent();
+        LogUserAgentRotation(_logger, userAgent, null);
+
         var req = new HttpRequestMessage(HttpMethod.Get, url);
         foreach (var header in GoogleJobsConstants.SearchHeaders)
         {
             req.Headers.TryAddWithoutValidation(header.Key, header.Value);
         }
+
+        // Override User-Agent with rotated value
+        req.Headers.TryAddWithoutValidation("User-Agent", userAgent);
+
+        // Add consent bypass cookies
+        var cookieValue = $"{GoogleJobsConstants.ConsentCookie}; {GoogleJobsConstants.SocsCookie}";
+        req.Headers.TryAddWithoutValidation("Cookie", cookieValue);
 
         var res = await _retryPolicy.ExecuteAsync(async () => await _http.SendAsync(req).ConfigureAwait(false)).ConfigureAwait(false);
         var html = await res.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -133,12 +147,18 @@ public sealed class GoogleJobsApiClient
             {
                 LogFetchingJobs(_logger, $"Trying alternative URL: {altUrl}", null);
                 await Task.Delay(2000); // Wait longer between retries
-                
+
+                var retryUserAgent = GoogleJobsConstants.GetRandomUserAgent();
+                LogUserAgentRotation(_logger, retryUserAgent, null);
+
                 var retryReq = new HttpRequestMessage(HttpMethod.Get, altUrl);
                 foreach (var header in GoogleJobsConstants.SearchHeaders)
                 {
                     retryReq.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
+
+                retryReq.Headers.TryAddWithoutValidation("User-Agent", retryUserAgent);
+                retryReq.Headers.TryAddWithoutValidation("Cookie", cookieValue);
                 
                 try
                 {
@@ -215,11 +235,17 @@ public sealed class GoogleJobsApiClient
                 var asyncUrl = $"https://www.google.com/async/callback:550?fc={Uri.EscapeDataString(cursor)}&fcv=3&async={Uri.EscapeDataString(_options.AsyncBootstrapString)}";
             LogSendingAsyncRequest(_logger, asyncUrl, null);
 
+            var asyncUserAgent = GoogleJobsConstants.GetRandomUserAgent();
+            LogUserAgentRotation(_logger, asyncUserAgent, null);
+
             var asyncReq = new HttpRequestMessage(HttpMethod.Get, asyncUrl);
             foreach (var header in GoogleJobsConstants.AsyncHeaders)
             {
                 asyncReq.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
+
+            asyncReq.Headers.TryAddWithoutValidation("User-Agent", asyncUserAgent);
+            asyncReq.Headers.TryAddWithoutValidation("Cookie", cookieValue);
 
             var asyncRes = await _retryPolicy.ExecuteAsync(async () => await _http.SendAsync(asyncReq).ConfigureAwait(false)).ConfigureAwait(false);
             var body = await asyncRes.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -249,6 +275,13 @@ public sealed class GoogleJobsApiClient
         }
 
         LogJobsFound(_logger, results.Count, null);
+
+        _requestCount++;
+        if (_requestCount >= MaxRequestsPerSession)
+        {
+            _requestCount = 0;
+        }
+
         return results;
     }
 }

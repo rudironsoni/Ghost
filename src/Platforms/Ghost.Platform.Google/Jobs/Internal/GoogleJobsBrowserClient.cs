@@ -40,7 +40,7 @@ public sealed class GoogleJobsBrowserClient
     private static readonly Action<ILogger, string, Exception?> s_logUserAgentRotation =
         LoggerMessage.Define<string>(LogLevel.Debug, new EventId(7, nameof(SearchAsync)), "Using user agent: {UserAgent}");
 
-    private int _sessionRequestCount = 0;
+    private int _sessionRequestCount;
     private const int MaxRequestsPerSession = 5;
 
     public GoogleJobsBrowserClient(
@@ -117,7 +117,7 @@ public sealed class GoogleJobsBrowserClient
                 // options where available. Best-effort only.
                 try
                 {
-                    await page.EvaluateAsync<string>("(ua) => { try { Object.defineProperty(navigator, 'userAgent', {get: () => ua}); return 'ok'; } catch(e) { return 'err'; } }", ua);
+                    await page.EvaluateAsync<string>("(ua) => { try { Object.defineProperty(navigator, 'userAgent', {get: () => ua}); return 'ok'; } catch(e) { return 'err'; } }", ua, ct);
                 }
                 catch { }
 
@@ -125,7 +125,7 @@ public sealed class GoogleJobsBrowserClient
                 try
                 {
                     // fallback: evaluate a basic userAgent override without cancellation token
-                    await page.EvaluateAsync<string>("() => { try { Object.defineProperty(navigator, 'userAgent', {get: () => '" + ua + "'}); return 'ok'; } catch(e) { return 'err'; } }", null);
+                    await page.EvaluateAsync<string>("() => { try { Object.defineProperty(navigator, 'userAgent', {get: () => '" + ua + "'}); return 'ok'; } catch(e) { return 'err'; } }", null, ct);
                 }
                 catch { }
             }
