@@ -3,7 +3,8 @@ namespace Ghost.Platform.Google.Jobs.Internal;
 public static class GoogleJobsConstants
 {
     // Cookie-based consent bypass constants
-    public const string ConsentCookie = "CONSENT=YES+1";
+    // Set CONSENT to YES (no +1) to align with common bypass pattern
+    public const string ConsentCookie = "CONSENT=YES";
     public const string SocsCookie = "SOCS=CAESE";
     public const string CookieDomain = ".google.com";
     public const string CookiePath = "/";
@@ -73,6 +74,13 @@ public static class GoogleJobsConstants
         ["X-Browser-Copyright"] = "Copyright 2024 Google LLC. All rights reserved.",
         ["X-Browser-Year"] = "2024",
         ["Accept-Encoding"] = "gzip, deflate, br"
+    };
+
+    // Cookies to inject for consent bypass (domain-scoped)
+    public static readonly Dictionary<string, string> ConsentCookies = new()
+    {
+        ["CONSENT"] = "YES",
+        ["SOCS"] = "CAESE"
     };
 
     // Async headers used when fetching job data (async endpoints)
