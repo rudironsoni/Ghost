@@ -49,9 +49,18 @@ export LOCATION="Remote"
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `API_URL` | `http://localhost:5000` | Ghost.WebAPI URL |
-| `QUERY` | "Software Engineer" | Job search query |
-| `LOCATION` | "San Francisco" | Job location |
+| `QUERY` | "Ingeniero de Software" | Job search query (Spanish) |
+| `LOCATION` | "Madrid" | Job location (configured for Spain) |
 | `MAX_RESULTS` | `5` | Maximum results per platform |
+
+**Regional Configuration**: The Ghost instance is configured for Spain (ES) region across all platforms:
+- **LinkedIn**: `GHOST__EXTENSIONS__LINKEDIN__COUNTRY=ES`, `LOCALE=es-ES`, `TIMEZONE=Europe/Madrid`
+- **Indeed**: `GHOST__EXTENSIONS__INDEED__COUNTRY=ES`
+- **InfoJobs**: `GHOST__EXTENSIONS__INFOJOBS__COUNTRY=ES` (Spanish-only platform)
+- **Google Jobs**: `GHOST__EXTENSIONS__GOOGLE__JOBS__COUNTRY=ES`
+- **Glassdoor**: `GHOST__EXTENSIONS__GLASSDOOR__COUNTRY=ES`
+
+To test with US locations, update the `.env` file with US configuration and change the script's `QUERY` and `LOCATION` variables.
 
 ## Output Format
 
@@ -63,7 +72,7 @@ Each platform test shows:
 - Number of jobs found
 - Job listings with: title, company, location, salary, source, URL
 
-Example output:
+ Example output:
 ```
 ========================================
 Testing Platform: LinkedIn
@@ -71,8 +80,8 @@ Testing Platform: LinkedIn
 
 Request:
   URL: http://localhost:5000/api/jobs/search
-  Query: Software Engineer
-  Location: San Francisco
+  Query: Ingeniero de Software
+  Location: Madrid
   MaxResults: 5
   Sources: [LinkedIn]
 
@@ -80,13 +89,13 @@ HTTP Status: 200
 
 Jobs Found: 5
 
-✅ SUCCESS: Successfully retrieved 5 jobs
+✅ Successfully retrieved 5 jobs
 
 Job Listings:
-Senior Software Engineer...
-  Company: TechCorp
-  Location: San Francisco, CA
-  Salary: $150,000 - $200,000
+Ingeniero de Software Senior...
+  Company: TechCorp España
+  Location: Madrid, España
+  Salary: €45.000 - €55.000
   Source: LinkedIn
   URL: https://linkedin.com/jobs/view/...
 ```
@@ -160,23 +169,35 @@ All Results:
 
 | Platform | Status | Notes |
 |----------|--------|-------|
-| **LinkedIn** | ✅ Working | Official API, most reliable (using BrowserPage strategy) |
-| **Indeed** | ⚠️  Config Issues | Official API, but configured for Spain (ES country) - won't find US jobs |
-| **InfoJobs** | ⚠️  Region Mismatch | Spanish platform, San Francisco search returns 0 results |
+| **LinkedIn** | ✅ Working | Browser page scraping, returns jobs in Madrid/España (Source: LinkedIn ✅) |
+| **Indeed** | ⚠️  Scraper Issue | Configured for ES, but scraper parsing fails (API call succeeds) |
+| **InfoJobs** | ⚠️  API Response | Credentials configured, returns 0 jobs from API |
 | **Google Jobs** | ⚠️  Scraping Issues | Anti-bot measures, cookie consent pages blocking access |
 | **Glassdoor** | ⚠️  Scraping Issues | Timeout issues, browser automation failing |
 
 ### Platform-Specific Limitations
 
+#### LinkedIn
+- **Status**: ✅ Working (BrowserPage strategy)
+- **Configuration**: ES country, es-ES locale, Europe/Madrid timezone
+- **Current Test**: Query "Ingeniero de Software", Location "Madrid" → Returns 3 jobs
+- **Details**: All job listings now show `Source: LinkedIn` (was previously "N/A"/"Unknown")
+
 #### Indeed
-- **Issue**: Configured for Spain (`GHOST__EXTENSIONS__INDEED__COUNTRY=ES`) but test searches San Francisco (US)
-- **Fix**: Either change test location to Spain or configure Indeed for US (`GHOST__EXTENSIONS__INDEED__COUNTRY=US`)
-- **Current**: Returns 0 jobs for San Francisco searches
+- **Issue**: Scraper parsing failure despite correct ES configuration
+- **Logs**: `Scraper Indeed failed` at `IndeedJobParser.ParseJobs`
+- **Configuration**: Correctly set to ES (`indeed-co = ES`, `indeed-locale = es-ES`)
+- **Root Cause**: GraphQL API response structure may have changed, breaking the parser
+- **Current**: API request succeeds (200), but returns 0 jobs due to parsing error
+- **Recommended**: Fix `src/Platforms/Ghost.Platform.Indeed/Internal/IndeedJobParser.cs` to handle new Indeed API response format
 
 #### InfoJobs
-- **Issue**: Spanish job board focused on Spain market
-- **Current**: Returns 0 jobs for non-Spanish locations
-- **Recommended**: Test with Spanish locations like `LOCATION="Madrid"`
+- **Issue**: Returns 0 jobs from API despite valid credentials
+- **Configuration**: Country ES configured
+- **Logs**: `Parsed 0 jobs from InfoJobs`
+- **Root Cause**: API may require different parameters or search query formatting
+- **Current**: API request succeeds (200), but returns empty results
+- **Recommended**: Debug InfoJobs-specific search formatting or check API documentation for required parameters
 
 #### Google Jobs
 - **Issue**: No public API, web scraping blocked by anti-bot measures
@@ -339,8 +360,8 @@ done
 **Request Body**:
 ```json
 {
-  "Query": "Software Engineer",
-  "Location": "San Francisco",
+  "Query": "Ingeniero de Software",
+  "Location": "Madrid",
   "MaxResults": 5,
   "Sources": ["LinkedIn"],
   "platforms": ["LinkedIn"]
@@ -351,18 +372,17 @@ done
 ```json
 [
   {
-    "id": "job-0001",
-    "title": "Senior Software Engineer",
-    "company": "TechCorp",
-    "location": "San Francisco, CA",
-    "description": "We are looking for...",
-    "salary": "$150,000 - $200,000",
-    "salaryRaw": "$150,000 - $200,000",
-    "jobType": "FullTime",
+    "id": "4255413340",
+    "title": "Junior Back and Front Developers",
+    "company": "Plexus Tech",
+    "location": "Madrid, Community of Madrid, Spain",
+    "description": "Buscamos desarrollador junior...",
+    "salary": "$60,000.00 - $150,000.00",
+    "jobType": 1,
     "remote": false,
-    "url": "https://linkedin.com/jobs/view/...",
+    "url": "https://www.linkedin.com/jobs/view/4255413340",
     "source": "LinkedIn",
-    "postedAt": "2026-01-15T10:30:00Z"
+    "postedAt": "2026-01-29T10:30:00Z"
   }
 ]
 ```
