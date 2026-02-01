@@ -34,6 +34,15 @@ public sealed class GoogleJobsBrowserClient
     private static readonly Action<ILogger, Exception?> s_logSessionCreating =
         LoggerMessage.Define(LogLevel.Debug, new EventId(5, nameof(SearchAsync)), "Creating browser session for Google Jobs");
 
+    private static readonly Action<ILogger, Exception?> s_logCookieInjection =
+        LoggerMessage.Define(LogLevel.Debug, new EventId(6, nameof(SearchAsync)), "Injecting consent bypass cookies");
+
+    private static readonly Action<ILogger, string, Exception?> s_logUserAgentRotation =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(7, nameof(SearchAsync)), "Using user agent: {UserAgent}");
+
+    private int _sessionRequestCount = 0;
+    private const int MaxRequestsPerSession = 5;
+
     public GoogleJobsBrowserClient(
         GhostKernel kernel,
         IOptions<GoogleJobsOptions> options,
@@ -42,6 +51,35 @@ public sealed class GoogleJobsBrowserClient
         _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GoogleJobsBrowserClient>.Instance;
+    }
+
+    private static string GetRandomUserAgent()
+    {
+        var agents = new[]
+        {
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0.0.0",
+            "Mozilla/5.0 (X11; Linux x86_64) Chrome/120.0.0.0"
+        };
+
+        return agents[s_random.Next(0, agents.Length)];
+    }
+
+    private static async Task InjectConsentCookiesAsync(IPage page, CancellationToken ct)
+    {
+        try
+        {
+            var script = $@"() => {{
+                document.cookie = '{GoogleJobsConstants.ConsentCookie}; domain={GoogleJobsConstants.CookieDomain}; path={GoogleJobsConstants.CookiePath}; Secure; SameSite=None';
+                document.cookie = '{GoogleJobsConstants.SocsCookie}; domain={GoogleJobsConstants.CookieDomain}; path={GoogleJobsConstants.CookiePath}; Secure; SameSite=None';
+                return 'ok';
+            }}";
+
+            await page.EvaluateAsync<string>(script, null, ct);
+        }
+        catch
+        {
+        }
     }
 
     public async Task<IReadOnlyList<JobListing>> SearchAsync(
@@ -62,14 +100,44 @@ public sealed class GoogleJobsBrowserClient
 
             try
             {
+            s_logCookieInjection(_logger, null);
+            await InjectConsentCookiesAsync(page, ct);
+
             var q = Uri.EscapeDataString(query);
             var loc = string.IsNullOrEmpty(location) ? "" : Uri.EscapeDataString(location);
-            var url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs&udm=8&gl=us&hl=en";
+            var url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs&udm=8&gl=us&hl=en&pws=0";
+
+            // rotate user agent per-request to appear more human-like
+            try
+            {
+                var ua = GetRandomUserAgent();
+                s_logUserAgentRotation(_logger, ua, null);
+                await page.SetExtraHTTPHeadersAsync(new System.Collections.Generic.Dictionary<string, string>
+                {
+                    ["User-Agent"] = ua
+                });
+
+                // also try to patch navigator.userAgent in-page (best-effort)
+                try
+                {
+                    var script = $"() => {{ Object.defineProperty(navigator, 'userAgent', {{get: () => '{Uri.EscapeDataString("<UA>" )}'}}); return true; }}";
+                    // fallback: evaluate a basic userAgent override without cancellation token
+                    await page.EvaluateAsync<string>("() => { try { Object.defineProperty(navigator, 'userAgent', {get: () => '" + ua + "'}); return 'ok'; } catch(e) { return 'err'; } }", null);
+                }
+                catch { }
+            }
+            catch { }
 
             s_logNavigating(_logger, url, null);
 
             await page.NavigateAsync(url, ct: ct);
             await page.WaitForLoadStateAsync(ct: ct);
+
+            _sessionRequestCount++;
+            if (_sessionRequestCount >= MaxRequestsPerSession)
+            {
+                _sessionRequestCount = 0;
+            }
 
             var isConsentPage = await IsConsentPageAsync(page, ct);
             if (isConsentPage)
