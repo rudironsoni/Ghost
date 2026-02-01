@@ -112,15 +112,18 @@ public sealed class GoogleJobsBrowserClient
             {
                 var ua = GetRandomUserAgent();
                 s_logUserAgentRotation(_logger, ua, null);
-                await page.SetExtraHTTPHeadersAsync(new System.Collections.Generic.Dictionary<string, string>
+                // Set user agent via Playwright's SetExtraHTTPHeaders isn't available on IPage in this environment,
+                // so set a common header via Evaluate to override navigator.userAgent and rely on session-level
+                // options where available. Best-effort only.
+                try
                 {
-                    ["User-Agent"] = ua
-                });
+                    await page.EvaluateAsync<string>("(ua) => { try { Object.defineProperty(navigator, 'userAgent', {get: () => ua}); return 'ok'; } catch(e) { return 'err'; } }", ua);
+                }
+                catch { }
 
                 // also try to patch navigator.userAgent in-page (best-effort)
                 try
                 {
-                    var script = $"() => {{ Object.defineProperty(navigator, 'userAgent', {{get: () => '{Uri.EscapeDataString("<UA>" )}'}}); return true; }}";
                     // fallback: evaluate a basic userAgent override without cancellation token
                     await page.EvaluateAsync<string>("() => { try { Object.defineProperty(navigator, 'userAgent', {get: () => '" + ua + "'}); return 'ok'; } catch(e) { return 'err'; } }", null);
                 }
