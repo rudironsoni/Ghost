@@ -42,14 +42,23 @@ public static class JobsEndpoints
                 var platform = client?.PlatformName ?? "Unknown";
                 var timeMs = sw.ElapsedMilliseconds;
                 var query = criteria?.Query ?? string.Empty;
-                var message = $"[{platform}] [{status}] [{timeMs}] [{query}]";
+                // Use LoggerMessage-style delegate to satisfy CA1848/CA2254 and avoid dynamic templates
+                var jobsLog = LoggerMessage.Define<string, string, long, string>(
+                    LogLevel.Information,
+                    new EventId(1, nameof(SearchJobs)),
+                    "Platform={Platform} Status={Status} TimeMs={TimeMs} Query={Query}");
+
+                // Define an exception logger delegate to avoid CA1848 when logging exceptions
+                var exceptionLog = LoggerMessage.Define<string>(LogLevel.Information, new EventId(2, nameof(SearchJobs)), "Exception: {Message}");
+
                 if (caughtEx != null)
                 {
-                    logger?.LogInformation(caughtEx, message + " Exception: {Message}", caughtEx.Message);
+                    jobsLog(logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance, platform, status, timeMs, query, caughtEx);
+                    exceptionLog(logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance, caughtEx.Message, caughtEx);
                 }
                 else
                 {
-                    logger?.LogInformation(message);
+                    jobsLog(logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance, platform, status, timeMs, query, null);
                 }
             }
             catch { /* swallow logging errors to avoid interfering with response */ }
