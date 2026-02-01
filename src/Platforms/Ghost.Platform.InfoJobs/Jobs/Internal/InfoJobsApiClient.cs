@@ -28,11 +28,23 @@ public sealed class InfoJobsApiClient
     private static readonly Action<ILogger, int, Exception?> LogParsedJobs =
         LoggerMessage.Define<int>(LogLevel.Information, new EventId(5, nameof(LogParsedJobs)), "Parsed {Count} jobs from InfoJobs");
 
+    private static readonly Action<ILogger, int, string, Exception?> LogHttpResponse =
+        LoggerMessage.Define<int, string>(LogLevel.Information, new EventId(6, nameof(LogHttpResponse)), "InfoJobs API response: StatusCode={StatusCode}, Body={Body}");
+
+    private static readonly Action<ILogger, Exception?> LogMissingCredentials =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(7, nameof(LogMissingCredentials)), "InfoJobs API credentials (ClientId/ClientSecret) are missing. API requires valid credentials. Add them to .env: GHOST__EXTENSIONS__INFOJOBS__CLIENTID and GHOST__EXTENSIONS__INFOJOBS__CLIENTSECRET");
+
     public InfoJobsApiClient(HttpClient http, InfoJobsOptions options, ILogger<InfoJobsApiClient> logger)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
         _options = options ?? new InfoJobsOptions();
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        // Log warning if credentials are missing
+        if (string.IsNullOrEmpty(_options.ClientId) || string.IsNullOrEmpty(_options.ClientSecret))
+        {
+            LogMissingCredentials(_logger, null);
+        }
     }
 
     public async Task<IReadOnlyList<JobListing>> SearchAsync(string query, string location, CancellationToken ct = default)
@@ -60,6 +72,11 @@ public sealed class InfoJobsApiClient
         {
             var res = await _http.SendAsync(req, ct).ConfigureAwait(false);
             var json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+
+            // Log HTTP status and response for debugging
+            var statusCode = (int)res.StatusCode;
+            var bodyPreview = json.Length > 500 ? json[..500] + "..." : json;
+            LogHttpResponse(_logger, statusCode, bodyPreview, null);
 
             if (string.IsNullOrEmpty(json))
             {
@@ -99,7 +116,7 @@ public sealed class InfoJobsApiClient
         parameters.Add("maxResults=50");
         
         var queryString = string.Join("&", parameters);
-        return $"{_options.ApiEndpoint}9/offer?{queryString}";
+        return $"{_options.ApiEndpoint}1/offer?{queryString}";
     }
 
     private IReadOnlyList<JobListing> ParseInfoJobsResponse(string json)
@@ -141,18 +158,63 @@ public sealed class InfoJobsApiClient
             if (string.IsNullOrWhiteSpace(title))
                 return null;
 
-            var company = offer.GetProperty("profile").GetProperty("name").GetString() ?? string.Empty;
-            var location = offer.GetProperty("province").GetProperty("value").GetString() ?? string.Empty;
+            // Parse company from author field (correct per InfoJobs API)
+            var company = offer.GetProperty("author").GetProperty("name").GetString() ?? string.Empty;
+            
+            // Parse location (optional city + mandatory province)
+            var location = string.Empty;
+            if (offer.TryGetProperty("city", out var city))
+            {
+                var cityValue = city.GetString() ?? string.Empty;
+                if (!string.IsNullOrEmpty(cityValue))
+                    location = cityValue;
+            }
+            
+            if (offer.TryGetProperty("province", out var province))
+            {
+                var provinceValue = province.GetProperty("value").GetString() ?? string.Empty;
+                if (!string.IsNullOrEmpty(provinceValue))
+                {
+                    if (!string.IsNullOrEmpty(location))
+                        location += $", {provinceValue}";
+                    else
+                        location = provinceValue;
+                }
+            }
+            
             var id = offer.GetProperty("id").GetString() ?? Guid.NewGuid().ToString();
             
-            // Parse salary information
-            string? salary = null;
-            if (offer.TryGetProperty("minPay", out var minPay) && minPay.ValueKind != JsonValueKind.Null)
+            // Parse URL (link field)
+            string? url = null;
+            if (offer.TryGetProperty("link", out var link))
             {
-                var amount = minPay.GetProperty("amountValue").GetString();
-                var period = minPay.GetProperty("periodValue").GetString();
-                if (!string.IsNullOrEmpty(amount) && !string.IsNullOrEmpty(period))
-                    salary = $"{amount} {period}";
+                url = link.GetString();
+            }
+            
+            // Parse salary information (salaryMin/salaryMax per InfoJobs API)
+            string? salary = null;
+            var hasSalaryMin = offer.TryGetProperty("salaryMin", out var salaryMin) && salaryMin.ValueKind != JsonValueKind.Null;
+            var hasSalaryMax = offer.TryGetProperty("salaryMax", out var salaryMax) && salaryMax.ValueKind != JsonValueKind.Null;
+            
+            if (hasSalaryMin)
+            {
+                var minAmount = salaryMin.GetProperty("value").GetString() ?? string.Empty;
+                if (!string.IsNullOrEmpty(minAmount))
+                {
+                    if (hasSalaryMax)
+                    {
+                        var maxAmount = salaryMax.GetProperty("value").GetString() ?? string.Empty;
+                        salary = $"{minAmount} - {maxAmount}";
+                    }
+                    else
+                    {
+                        salary = minAmount;
+                    }
+                }
+            }
+            else if (hasSalaryMax)
+            {
+                salary = salaryMax.GetProperty("value").GetString() ?? string.Empty;
             }
 
             // Parse job type from contract type
@@ -171,14 +233,18 @@ public sealed class InfoJobsApiClient
                 }
             }
 
-            // Parse description
-            var description = offer.GetProperty("description").GetString() ?? string.Empty;
-            
-            // Parse publication date
-            DateTimeOffset postedAt = DateTimeOffset.UtcNow;
-            if (offer.TryGetProperty("updateDate", out var updateDate))
+            // Parse description from requirementMin field (per InfoJobs API)
+            var description = string.Empty;
+            if (offer.TryGetProperty("requirementMin", out var requirementMin))
             {
-                var dateStr = updateDate.GetString();
+                description = requirementMin.GetString() ?? string.Empty;
+            }
+            
+            // Parse publication date (updated field per InfoJobs API)
+            DateTimeOffset postedAt = DateTimeOffset.UtcNow;
+            if (offer.TryGetProperty("updated", out var updated))
+            {
+                var dateStr = updated.GetString();
                 if (!string.IsNullOrEmpty(dateStr) && DateTimeOffset.TryParse(dateStr, out var dt))
                     postedAt = dt;
             }
@@ -190,9 +256,10 @@ public sealed class InfoJobsApiClient
                 Company = company,
                 Location = location,
                 Description = string.IsNullOrWhiteSpace(description) ? null : description,
-                Salary = salary,
+                Salary = string.IsNullOrWhiteSpace(salary) ? null : salary,
                 JobType = jobType,
                 PostedAt = postedAt,
+                Url = url,
                 Source = "InfoJobs"
             };
         }

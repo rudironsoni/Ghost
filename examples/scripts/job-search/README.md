@@ -192,12 +192,26 @@ All Results:
 - **Recommended**: Fix `src/Platforms/Ghost.Platform.Indeed/Internal/IndeedJobParser.cs` to handle new Indeed API response format
 
 #### InfoJobs
-- **Issue**: Returns 0 jobs from API despite valid credentials
-- **Configuration**: Country ES configured
-- **Logs**: `Parsed 0 jobs from InfoJobs`
-- **Root Cause**: API may require different parameters or search query formatting
-- **Current**: API request succeeds (200), but returns empty results
-- **Recommended**: Debug InfoJobs-specific search formatting or check API documentation for required parameters
+- **Status**: ⚠️  API Authentication Required
+- **Issue**: API returns HTTP 500 with error "103 - Client credentials are invalid"
+- **Root Cause**: Missing or invalid `ClientId` and `ClientSecret` in `.env`
+- **Fix Applied**:
+  - ✅ Fixed API endpoint: `/api/9/offer` → `/api/1/offer`
+  - ✅ Fixed JSON field mappings (author.name, salaryMin/salaryMax, updated, requirementMin)
+  - ✅ Added enhanced logging to show HTTP status and response body
+  - ✅ Added warning log when credentials are missing
+- **Required Configuration**:
+  ```bash
+  # Add to .env:
+  GHOST__EXTENSIONS__INFOJOBS__CLIENTID=your_client_id
+  GHOST__EXTENSIONS__INFOJOBS__CLIENTSECRET=your_client_secret
+  ```
+- **How to Get Credentials**:
+  1. Visit https://www.infojobs.net/api (InfoJobs Developer Portal)
+  2. Register as a developer
+  3. Create an application to get ClientId/ClientSecret
+  4. Add credentials to `.env` file
+- **Without Credentials**: API returns error 103 and 0 jobs
 
 #### Google Jobs
 - **Issue**: No public API, web scraping blocked by anti-bot measures
