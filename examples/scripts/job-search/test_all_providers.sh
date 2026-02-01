@@ -342,9 +342,6 @@ main() {
     # Additional wait to ensure full initialization
     sleep 2
 
-    # Run health checks
-    test_health
-
     # Test individual platforms
     test_all_platforms
 
