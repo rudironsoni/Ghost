@@ -18,6 +18,9 @@
 
   <ItemGroup>
     <ProjectReference Include="../../../src/Platforms/Ghost.Platform.Common/Ghost.Platform.Common.csproj" />
+    <ProjectReference Include="../../../src/Platforms/Ghost.Platform.Indeed/Ghost.Platform.Indeed.csproj" />
+    <ProjectReference Include="../../../src/Platforms/Ghost.Platform.Glassdoor/Ghost.Platform.Glassdoor.csproj" />
+    <ProjectReference Include="../../../src/Platforms/Ghost.Platform.Google/Ghost.Platform.Google.csproj" />
   </ItemGroup>
 
 </Project>
