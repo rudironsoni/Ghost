@@ -9,6 +9,92 @@ namespace Ghost.Platform.Glassdoor;
 
 public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
 {
+    // CookieContainer to store session cookies and CSRF token for Glassdoor
+    private readonly System.Net.CookieContainer _cookieContainer = new System.Net.CookieContainer();
+    private string? _csrfToken;
+
+    /// <summary>
+    /// RefreshSession clears existing cookies and fetches a new session from Glassdoor,
+    /// extracting the CSRF token and storing session cookies in the internal CookieContainer.
+    /// </summary>
+    public async Task RefreshSession(CancellationToken ct = default)
+    {
+        // Clear existing cookies
+        try
+        {
+            // CookieContainer has no Clear method; replace with a new instance by reflection workaround
+            // Simpler: create new CookieContainer and swap via local variable (this instance is readonly, so we use Add to clear)
+            // Remove cookies by enumerating domains and expiring them
+            // Best-effort: enumerate all cookies from known Glassdoor domains
+            var domains = new[] { 
+                ".glassdoor.com", "glassdoor.com", "www.glassdoor.com" 
+            };
+            foreach (var d in domains)
+            {
+                try
+                {
+                    var uri = new Uri($"https://{d}");
+                    var cookies = _cookieContainer.GetCookies(uri);
+                    foreach (System.Net.Cookie c in cookies)
+                    {
+                        c.Expired = true;
+                    }
+                }
+                catch { /* ignore */ }
+            }
+        }
+        catch { /* best-effort */ }
+
+        // Request a fresh session page to obtain cookies and CSRF token
+        try
+        {
+            using var handler = new System.Net.Http.HttpClientHandler { CookieContainer = _cookieContainer, AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate };
+            using var client = new System.Net.Http.HttpClient(handler);
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (compatible; GhostBot/1.0)");
+            var resp = await client.GetAsync("https://www.glassdoor.com/index.htm", ct);
+            resp.EnsureSuccessStatusCode();
+            var html = await resp.Content.ReadAsStringAsync(ct);
+
+            // Try extract CSRF token using common patterns
+            // Example patterns: "csrfToken":"..." or name="csrf-token" value="..."
+            string? token = null;
+            try
+            {
+                // simple search
+                var marker = "csrfToken\":\"";
+                var idx = html.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+                if (idx >= 0)
+                {
+                    idx += marker.Length;
+                    var end = html.IndexOf('"', idx);
+                    if (end > idx)
+                        token = html.Substring(idx, end - idx);
+                }
+
+                if (token == null)
+                {
+                    // fallback: meta tag
+                    marker = "name=\"csrf-token\" value=\"";
+                    idx = html.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+                    if (idx >= 0)
+                    {
+                        idx += marker.Length;
+                        var end = html.IndexOf('"', idx);
+                        if (end > idx)
+                            token = html.Substring(idx, end - idx);
+                    }
+                }
+            }
+            catch { /* ignore parsing errors */ }
+
+            _csrfToken = token;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to refresh Glassdoor session");
+            throw;
+        }
+    }
     private readonly Internal.GlassdoorApiClient _api;
     private readonly Internal.GlassdoorBrowserClient _browserClient;
     private readonly GlassdoorOptions _options;
