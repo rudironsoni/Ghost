@@ -226,11 +226,14 @@ EOF
 }
 
 test_all_platforms() {
-    print_header "Testing Working Platforms"
+    print_header "Testing All Platforms"
 
     echo "Testing platforms with 'Sources' parameter:"
     test_platform "LinkedIn" "Sources"
     test_platform "Indeed" "Sources"
+    test_platform "InfoJobs" "Sources"
+    test_platform "Google" "Sources"
+    test_platform "Glassdoor" "Sources"
 }
 
 test_aggregated_search() {
