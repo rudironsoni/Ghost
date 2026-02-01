@@ -58,6 +58,15 @@ public sealed class GoogleJobsApiClient
     private static readonly Action<ILogger, int, int, Exception?> LogParserResults =
         LoggerMessage.Define<int, int>(LogLevel.Information, new EventId(14, nameof(LogParserResults)), "Parser iteration {Iteration}: Found {Count} jobs");
 
+    private static readonly Action<ILogger, Exception?> LogCookieInjection =
+        LoggerMessage.Define(LogLevel.Debug, new EventId(15, nameof(LogCookieInjection)), "Injecting consent bypass cookies into HTTP request");
+
+    private static readonly Action<ILogger, string, Exception?> LogUserAgentRotation =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(16, nameof(LogUserAgentRotation)), "Using user agent: {UserAgent}");
+
+    private int _requestCount = 0;
+    private const int MaxRequestsPerSession = 5;
+
     // Additional existing eventId gap avoided
 
 

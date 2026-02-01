@@ -168,13 +168,50 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
 
     public async Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
     {
-        var payload = await _api.SearchAsync(criteria.Query ?? string.Empty, criteria.Location, null, ct);
+        // Primary attempt: try GraphQL API using current CSRF token
+        var currentToken = _csrfToken;
+        string? payload = await _api.SearchAsync(criteria.Query ?? string.Empty, criteria.Location, currentToken, ct);
         var jobs = Internal.GlassdoorJobParser.ParseSearchResponse(payload);
 
-        if (jobs.Count == 0 && _options.Enabled)
+        // If GraphQL returned a server error (or empty) try refreshing session and retrying up to 3 times
+        var attempts = 0;
+        const int maxRetries = 3;
+
+        while ((jobs.Count == 0 || payload == null) && _options.Enabled && attempts < maxRetries)
+        {
+            // If payload indicated a server error, refresh the session and try again with a new CSRF token
+            attempts++;
+            try
+            {
+                await RefreshSession(ct).ConfigureAwait(false);
+                currentToken = _csrfToken;
+            }
+            catch (Exception ex)
+            {
+                // Log and continue - we will fall back to browser if API keeps failing
+                s_logRefreshSessionFailed(_logger, ex);
+            }
+
+            payload = await _api.SearchAsync(criteria.Query ?? string.Empty, criteria.Location, currentToken, ct);
+            jobs = Internal.GlassdoorJobParser.ParseSearchResponse(payload);
+
+            if (jobs.Count > 0)
+                break;
+        }
+
+        // If API still produced no results, fallback to browser search when enabled
+        if ((jobs.Count == 0 || payload == null) && _options.Enabled)
         {
             s_logHttpFallback(_logger, null);
-            jobs = (List<JobListing>)await _browserClient.SearchAsync(criteria, criteria.MaxResults > 0 ? criteria.MaxResults : 20, ct);
+            try
+            {
+                jobs = (List<JobListing>)await _browserClient.SearchAsync(criteria, criteria.MaxResults > 0 ? criteria.MaxResults : 20, ct);
+            }
+            catch
+            {
+                // If browser fallback also fails, return empty list per requirement
+                return Array.Empty<JobListing>();
+            }
         }
 
         return jobs;
