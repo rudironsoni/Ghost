@@ -14,8 +14,8 @@ LOG_FILE="ghost_api.log"
 API_PID=""
 
 # Test parameters
-QUERY="Software Engineer"
-LOCATION="San Francisco"
+QUERY="Ingeniero de Software"
+LOCATION="Madrid"
 MAX_RESULTS=5
 
 # Colors for output
