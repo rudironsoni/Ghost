@@ -91,7 +91,7 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to refresh Glassdoor session");
+            s_logRefreshSessionFailed(_logger, ex);
             throw;
         }
     }
@@ -102,6 +102,10 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
 
     private static readonly Action<ILogger, Exception?> s_logHttpFallback =
         LoggerMessage.Define(LogLevel.Information, new EventId(1, nameof(GlassdoorJobClient)), "HTTP client returned no results, falling back to browser for Glassdoor");
+    private static readonly Action<ILogger, Exception?> s_logRefreshSessionFailed =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(2, "RefreshSession"), "Failed to refresh Glassdoor session");
+    private static readonly Action<ILogger, Exception?> s_logCsrfExtractFailed =
+        LoggerMessage.Define(LogLevel.Debug, new EventId(3, "ExtractCsrfToken"), "Failed extracting CSRF token from Glassdoor");
 
     public GlassdoorJobClient(
         Internal.GlassdoorApiClient api,
@@ -157,7 +161,7 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "Failed extracting CSRF token from Glassdoor");
+            s_logCsrfExtractFailed(_logger, ex);
             return null;
         }
     }
