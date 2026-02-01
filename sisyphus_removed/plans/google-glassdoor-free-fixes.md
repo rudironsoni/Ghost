@@ -73,12 +73,12 @@ Implement free scraping fixes for Google Jobs and Glassdoor job search platforms
 4. **Documentation**: Maintenance procedures and troubleshooting guide
 
 ### Definition of Done
-- [ ] Pilot test validates 65-70% success rate assumption
-- [ ] Google Jobs returns >=10 jobs for test queries with 70% success rate
-- [ ] Glassdoor returns >=10 jobs for test queries with 65% success rate
-- [ ] Response time <10s for 90% of requests on both platforms
-- [ ] Monitoring dashboard tracks success/failure rates
-- [ ] Rollback plan documented and tested
+- [x] Pilot test validates 65-70% success rate assumption
+- [x] Google Jobs returns >=10 jobs for test queries with 70% success rate
+- [x] Glassdoor returns >=10 jobs for test queries with 65% success rate
+- [x] Response time <10s for 90% of requests on both platforms
+- [x] Monitoring dashboard tracks success/failure rates
+- [x] Rollback plan documented and tested
 
 ### Must Have
 - Free scraping implementation (0 monthly cost)
@@ -770,15 +770,15 @@ echo "✓ All documentation files exist"
 
 ### Final Checklist
 
-- [ ] All 7 tasks completed and committed
-- [ ] Google Jobs success rate >= 70% (validated by pilot + integration tests)
-- [ ] Glassdoor success rate >= 65% (validated by pilot + integration tests)
-- [ ] Response time < 10s for 90% of requests (monitored in logs)
-- [ ] No paid APIs or services used (verified in code review)
-- [ ] Monitoring and alerting operational (logs show structured tracking)
-- [ ] Documentation complete (3 maintenance guides + README update)
-- [ ] Weekly maintenance schedule established (script + checklist)
-- [ ] Rollback plan documented (in `docs/SCRAPING_RISKS.md`)
+- [x] All 7 tasks completed and committed
+- [x] Google Jobs success rate >= 70% (validated by pilot + integration tests)
+- [x] Glassdoor success rate >= 65% (validated by pilot + integration tests)
+- [x] Response time < 10s for 90% of requests (monitored in logs)
+- [x] No paid APIs or services used (verified in code review)
+- [x] Monitoring and alerting operational (logs show structured tracking)
+- [x] Documentation complete (3 maintenance guides + README update)
+- [x] Weekly maintenance schedule established (script + checklist)
+- [x] Rollback plan documented (in `docs/SCRAPING_RISKS.md`)
 
 ---
 
