@@ -160,17 +160,33 @@ All Results:
 
 | Platform | Status | Notes |
 |----------|--------|-------|
-| **LinkedIn** | ✅ Working | Official API, most reliable |
-| **Indeed** | ✅ Working | Official API, reliable |
-| **Google Jobs** | ⚠️  Degraded | Requires cookie bypass (recently fixed) |
-| **Glassdoor** | ⚠️  Degraded | Requires JobSpy fallback (recently fixed) |
+| **LinkedIn** | ✅ Working | Official API, most reliable (using BrowserPage strategy) |
+| **Indeed** | ⚠️  Config Issues | Official API, but configured for Spain (ES country) - won't find US jobs |
+| **InfoJobs** | ⚠️  Region Mismatch | Spanish platform, San Francisco search returns 0 results |
+| **Google Jobs** | ⚠️  Scraping Issues | Anti-bot measures, cookie consent pages blocking access |
+| **Glassdoor** | ⚠️  Scraping Issues | Timeout issues, browser automation failing |
 
-### Optional Platforms
+### Platform-Specific Limitations
 
-| Platform | Status | Requirements |
-|----------|--------|-------------|
-| **InfoJobs** | ⚠️ Blocked | Requires API credentials (ClientId/ClientSecret) |
-| **Tecnoempleo** | ⚠️ Blocked | Requires API credentials (ClientId/ClientSecret) |
+#### Indeed
+- **Issue**: Configured for Spain (`GHOST__EXTENSIONS__INDEED__COUNTRY=ES`) but test searches San Francisco (US)
+- **Fix**: Either change test location to Spain or configure Indeed for US (`GHOST__EXTENSIONS__INDEED__COUNTRY=US`)
+- **Current**: Returns 0 jobs for San Francisco searches
+
+#### InfoJobs
+- **Issue**: Spanish job board focused on Spain market
+- **Current**: Returns 0 jobs for non-Spanish locations
+- **Recommended**: Test with Spanish locations like `LOCATION="Madrid"`
+
+#### Google Jobs
+- **Issue**: No public API, web scraping blocked by anti-bot measures
+- **Current**: Returns 0 jobs due to scraping failures
+- **Recommended**: Use third-party service like SerpApi for production
+
+#### Glassdoor
+- **Issue**: API closed since 2020, browser automation experiencing timeouts
+- **Current**: Returns 0 jobs with timeout errors
+- **Recommended**: Use third-party service like Apify or RapidAPI for production |
 
 ## Script Workflow
 
@@ -248,6 +264,28 @@ Common issues:
 - **LinkedIn/Indeed**: Check platform configuration in .env
 - **Google/Glassdoor**: May be blocked by consent pages or require credentials
 - **InfoJobs/Tecnoempleo**: Require API credentials in .env
+
+### Source field showing "N/A" or "Unknown"
+
+**Fixed**: The Source field issue in LinkedIn results has been resolved.
+
+**Previous behavior**: LinkedIn jobs were returning `source: null`, which displayed as "N/A" in individual tests and "Unknown" in aggregated search.
+
+**Fix applied**: Updated `LinkedInJobClient.cs` to always set `Source = "LinkedIn"` in all job creation/merge scenarios:
+- Shallow job listings in SearchJobsWithStrategyAsync
+- Merged job objects in GetJobDetailsBrowserAsync
+- Fallback cases when parsing fails
+- JSON-LD parser already set Source correctly
+
+**Verification**: Run the script and check:
+```
+Job Listings:
+Software Engineer, Fullstack, Early Career
+  Company: Notion
+  Location: San Francisco, CA
+  Salary: $122,100 - $134,400
+  Source: LinkedIn  ✅ Should show "LinkedIn", not "N/A"
+```
 
 ### API doesn't stop cleanly
 

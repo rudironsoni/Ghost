@@ -372,7 +372,8 @@ namespace Ghost.Platform.LinkedIn;
                             IsEasyApply = isEasyApply,
                             JobType = parsed.JobType == JobType.Unknown ? scrapedJobType : parsed.JobType,
                             ExperienceLevel = parsed.ExperienceLevel == ExperienceLevel.Unknown ? scrapedExperienceLevel : parsed.ExperienceLevel,
-                            Salary = string.IsNullOrWhiteSpace(parsed.Salary) ? scrapedSalary : parsed.Salary
+                            Salary = string.IsNullOrWhiteSpace(parsed.Salary) ? scrapedSalary : parsed.Salary,
+                            Source = "LinkedIn"
                         };
 
                         return merged;
@@ -391,7 +392,8 @@ namespace Ghost.Platform.LinkedIn;
                         IsEasyApply = isEasyApply,
                         JobType = scrapedJobType,
                         ExperienceLevel = scrapedExperienceLevel,
-                        Salary = scrapedSalary
+                        Salary = scrapedSalary,
+                        Source = "LinkedIn"
                     };
                 }
                 catch (Exception ex)
@@ -400,14 +402,14 @@ namespace Ghost.Platform.LinkedIn;
                     // Fall back to parsed result if available, else minimal listing
                     if (parsed != null)
                     {
-                        return parsed with { IsEasyApply = isEasyApply };
+                        return parsed with { IsEasyApply = isEasyApply, Source = "LinkedIn" };
                     }
                     return new JobListing { Id = jobId, Url = url, IsEasyApply = isEasyApply, Source = "LinkedIn" };
                 }
             }
 
             // If parsed had a title, prefer it; but ensure IsEasyApply is set
-            return parsed with { IsEasyApply = isEasyApply };
+            return parsed with { IsEasyApply = isEasyApply, Source = "LinkedIn" };
         }
         finally
         {
