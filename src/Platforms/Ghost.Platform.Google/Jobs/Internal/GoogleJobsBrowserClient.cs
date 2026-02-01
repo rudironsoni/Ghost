@@ -334,7 +334,9 @@ public sealed class GoogleJobsBrowserClient
             // Strategy 5: Try setting a consent cookie (best-effort) and reload
             try
             {
-                await page.EvaluateAsync<string>("() => { document.cookie = 'CONSENT=YES+1; domain=.google.com; path=/'; return 'ok'; }", null, ct);
+                // Use a null logger here since this method is static and instance logger isn't available
+                s_logCookieInjection(Microsoft.Extensions.Logging.Abstractions.NullLogger<GoogleJobsBrowserClient>.Instance, null);
+                await InjectConsentCookiesAsync(page, ct);
                 await RandomDelayAsync(400, 900, ct);
                 await page.ReloadAsync(ct: ct);
                 await RandomDelayAsync(1000, 2000, ct);
@@ -626,7 +628,7 @@ public sealed class GoogleJobsBrowserClient
                 Description = description,
                 Source = "Google",
                 PostedAt = DateTimeOffset.UtcNow,
-                Url = $"https://www.google.com/search?q={Uri.EscapeDataString(title)}+{Uri.EscapeDataString(company ?? "")}&ibp=htl;jobs&udm=8"
+                Url = $"https://www.google.com/search?q={Uri.EscapeDataString(title)}+{Uri.EscapeDataString(company ?? "")}&ibp=htl;jobs&udm=8&pws=0"
             };
         }
         catch
