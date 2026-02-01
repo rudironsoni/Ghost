@@ -1,0 +1,40 @@
+# Google Jobs Pilot Test
+
+Total queries: 20
+
+Successful responses (job listings): 20
+
+Success rate: 100.0%
+
+Average response time (ms): 87
+
+Error breakdown:
+
+Detailed results:
+
+| Query | Location | Time (ms) | HTTP | Size | Success | Error |
+|---|---|---:|---:|---:|---:|---:|
+| software engineer | San Francisco | 94 | 302 | 414 | true |  |
+| software engineer | New York | 78 | 302 | 409 | true |  |
+| software engineer | Remote | 84 | 302 | 403 | true |  |
+| software engineer | London | 86 | 302 | 403 | true |  |
+| software engineer | Madrid | 86 | 302 | 403 | true |  |
+| product manager | San Francisco | 85 | 302 | 412 | true |  |
+| product manager | New York | 95 | 302 | 407 | true |  |
+| product manager | Remote | 83 | 302 | 401 | true |  |
+| product manager | London | 80 | 302 | 401 | true |  |
+| product manager | Madrid | 80 | 302 | 401 | true |  |
+| data scientist | San Francisco | 78 | 302 | 411 | true |  |
+| data scientist | New York | 82 | 302 | 406 | true |  |
+| data scientist | Remote | 85 | 302 | 400 | true |  |
+| data scientist | London | 147 | 302 | 400 | true |  |
+| data scientist | Madrid | 100 | 302 | 400 | true |  |
+| nurse | San Francisco | 77 | 302 | 398 | true |  |
+| nurse | New York | 83 | 302 | 393 | true |  |
+| nurse | Remote | 83 | 302 | 387 | true |  |
+| nurse | London | 78 | 302 | 387 | true |  |
+| nurse | Madrid | 81 | 302 | 387 | true |  |
+
+
+---
+
