@@ -37,8 +37,8 @@ public static class HealthEndpoints
     }
 
     private static async Task<IResult> CheckJobsHealth(
-        IJobClient jobClient, 
-        ILogger logger,
+        [FromServices] IJobClient jobClient, 
+        [FromServices] ILoggerFactory loggerFactory,
         CancellationToken ct)
     {
         var healthStatus = new JobsHealthStatus
@@ -47,6 +47,9 @@ public static class HealthEndpoints
             OverallStatus = "healthy",
             Platforms = new Dictionary<string, PlatformHealthStatus>()
         };
+
+        // Create a logger from the injected factory so DI doesn't require ILogger directly
+        var logger = loggerFactory.CreateLogger("Health");
 
         // Test each platform with a simple search query
         var testCriteria = new JobSearchCriteria
@@ -67,7 +70,7 @@ public static class HealthEndpoints
                     "Google", 
                     testCriteria with { Sources = new List<string> { "Google" } }, 
                     jobClient, 
-                    logger, 
+                    loggerFactory, 
                     ct);
                 healthStatus.Platforms["Google"] = googleStatus;
             }
@@ -79,7 +82,7 @@ public static class HealthEndpoints
                     "Glassdoor", 
                     testCriteria with { Sources = new List<string> { "Glassdoor" } }, 
                     jobClient, 
-                    logger, 
+                    loggerFactory, 
                     ct);
                 healthStatus.Platforms["Glassdoor"] = glassdoorStatus;
             }
@@ -91,7 +94,7 @@ public static class HealthEndpoints
                     "LinkedIn", 
                     testCriteria with { Sources = new List<string> { "LinkedIn" } }, 
                     jobClient, 
-                    logger, 
+                    loggerFactory, 
                     ct);
                 healthStatus.Platforms["LinkedIn"] = linkedinStatus;
             }
@@ -103,7 +106,7 @@ public static class HealthEndpoints
                     "Indeed", 
                     testCriteria with { Sources = new List<string> { "Indeed" } }, 
                     jobClient, 
-                    logger, 
+                    loggerFactory, 
                     ct);
                 healthStatus.Platforms["Indeed"] = indeedStatus;
             }
@@ -127,8 +130,8 @@ public static class HealthEndpoints
     private static async Task<PlatformHealthStatus> TestPlatformHealthAsync(
         string platformName,
         JobSearchCriteria criteria,
-        IJobClient jobClient,
-        ILogger logger,
+        [FromServices] IJobClient jobClient,
+        [FromServices] ILoggerFactory loggerFactory,
         CancellationToken ct)
     {
         var status = new PlatformHealthStatus
@@ -137,6 +140,9 @@ public static class HealthEndpoints
             Status = "unknown",
             LastChecked = DateTime.UtcNow
         };
+
+        // Create a logger from the injected factory so DI doesn't require ILogger directly
+        var logger = loggerFactory.CreateLogger("Health");
 
         try
         {

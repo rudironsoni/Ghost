@@ -16,13 +16,13 @@ public static class JobsEndpoints
         app.MapGroup("/api/jobs").MapPost("/search-with-errors", SearchJobsWithErrors);
     }
 
-    private static async Task<IResult> SearchJobs([FromBody] JobSearchCriteria criteria, IJobClient client, CancellationToken ct)
+    private static async Task<IResult> SearchJobs([FromBody] JobSearchCriteria criteria, [FromServices] IJobClient client, CancellationToken ct)
     {
         var result = await client.SearchJobsAsync(criteria, ct);
         return Results.Ok(result);
     }
 
-    private static async Task<IResult> SearchJobsWithErrors([FromBody] JobSearchCriteria criteria, IJobClient client, CancellationToken ct)
+    private static async Task<IResult> SearchJobsWithErrors([FromBody] JobSearchCriteria criteria, [FromServices] IJobClient client, CancellationToken ct)
     {
         // Check if the client supports structured error reporting
         if (client is AggregatedJobClient aggregatedClient)
