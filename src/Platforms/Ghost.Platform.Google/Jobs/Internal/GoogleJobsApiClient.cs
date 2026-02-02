@@ -4,17 +4,21 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Ghost.Contracts.Jobs;
 using Ghost.Http;
+using Ghost.Platform.Common.Session;
 using Polly;
 
 namespace Ghost.Platform.Google.Jobs.Internal;
 
-public sealed class GoogleJobsApiClient
+public sealed class GoogleJobsApiClient : IDisposable
 {
-    private readonly HttpClient _http;
+    private readonly HttpClient? _http;
+    private readonly ISessionOrchestrator? _sessionOrchestrator;
     private readonly GoogleJobsOptions _options;
     private readonly ILogger<GoogleJobsApiClient> _logger;
     private readonly CookieContainer _cookieContainer;
     private readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy;
+    private bool _disposed;
+    private string? _currentSessionId;
 
     private static readonly Action<ILogger, string, Exception?> LogFetchingJobs =
         LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(LogFetchingJobs)), "Fetching Google Jobs from: {Url}");
@@ -64,6 +68,21 @@ public sealed class GoogleJobsApiClient
     private static readonly Action<ILogger, string, Exception?> LogUserAgentRotation =
         LoggerMessage.Define<string>(LogLevel.Debug, new EventId(16, nameof(LogUserAgentRotation)), "Using user agent: {UserAgent}");
 
+    private static readonly Action<ILogger, string, Exception?> LogSessionAllocated =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(17, "SessionAllocated"), "Allocated session {SessionId} for Google Jobs requests");
+
+    private static readonly Action<ILogger, string, Exception?> LogSessionRecycled =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(18, "SessionRecycled"), "Recycling unhealthy session {SessionId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogSessionGetFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(19, "SessionGetFailed"), "Failed to get HTTP session {SessionId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogSessionHealthCheckFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(20, "SessionHealthCheckFailed"), "Failed to check session health for {SessionId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogSessionCloseFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(21, "SessionCloseFailed"), "Failed to close session {SessionId} during disposal");
+
     // Track request count if needed for session rotation logic. Suppress unused/analysis warnings for now.
     #pragma warning disable CS0169, CS0414, CA1805
     private int _requestCount;
@@ -73,9 +92,26 @@ public sealed class GoogleJobsApiClient
     // Additional existing eventId gap avoided
 
 
+    /// <summary>
+    /// Legacy constructor for backward compatibility. Uses direct HttpClient.
+    /// </summary>
     public GoogleJobsApiClient(HttpClient http, GoogleJobsOptions options, ILogger<GoogleJobsApiClient> logger)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
+        _sessionOrchestrator = null;
+        _options = options ?? new GoogleJobsOptions();
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _cookieContainer = new CookieContainer();
+        _retryPolicy = EnhancedRetryPolicy.CreatePolicy(logger, maxRetries: 3, enableJitter: true);
+    }
+
+    /// <summary>
+    /// Modern constructor with SessionOrchestrator support for session continuity and health monitoring.
+    /// </summary>
+    public GoogleJobsApiClient(ISessionOrchestrator sessionOrchestrator, GoogleJobsOptions options, ILogger<GoogleJobsApiClient> logger)
+    {
+        _http = null;
+        _sessionOrchestrator = sessionOrchestrator ?? throw new ArgumentNullException(nameof(sessionOrchestrator));
         _options = options ?? new GoogleJobsOptions();
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _cookieContainer = new CookieContainer();
@@ -83,6 +119,69 @@ public sealed class GoogleJobsApiClient
     }
 
         public async Task<IReadOnlyList<JobListing>> SearchAsync(string query, string location)
+        {
+            if (_sessionOrchestrator != null)
+            {
+                return await SearchWithOrchestratorAsync(query, location);
+            }
+            else
+            {
+                return await SearchLegacyAsync(query, location);
+            }
+        }
+
+        private async Task<IReadOnlyList<JobListing>> SearchWithOrchestratorAsync(string query, string location)
+        {
+            var affinityKey = $"google_jobs_{query}_{location}_{Guid.NewGuid():N}";
+
+            try
+            {
+                var context = new SessionAllocationContext(
+                    PlatformName: "GoogleJobs",
+                    CountryCode: "US",
+                    SessionType: SessionType.Http,
+                    ComplexityScore: 40,
+                    Metadata: new Dictionary<string, string>
+                    {
+                        ["Query"] = query,
+                        ["Location"] = location
+                    }
+                );
+
+                var affinityOptions = new SessionAffinityOptions(
+                    AffinityKey: affinityKey,
+                    AffinityDuration: TimeSpan.FromMinutes(5),
+                    AllowFallback: true
+                );
+
+                _currentSessionId = await _sessionOrchestrator!.AllocateSessionWithAffinityAsync(context, affinityOptions, default);
+                LogSessionAllocated(_logger, _currentSessionId, null);
+
+                var httpSession = await _sessionOrchestrator.GetHttpSessionAsync(_currentSessionId, default);
+                if (httpSession == null)
+                {
+                    LogSessionGetFailed(_logger, _currentSessionId, null);
+                    return Array.Empty<JobListing>();
+                }
+
+                return await ExecuteSearchAsync(query, location, httpSession);
+            }
+            finally
+            {
+                if (_currentSessionId != null)
+                {
+                    await _sessionOrchestrator!.CloseSessionAsync(_currentSessionId, default);
+                    _currentSessionId = null;
+                }
+            }
+        }
+
+        private async Task<IReadOnlyList<JobListing>> SearchLegacyAsync(string query, string location)
+        {
+            return await ExecuteSearchAsync(query, location, null);
+        }
+
+        private async Task<IReadOnlyList<JobListing>> ExecuteSearchAsync(string query, string location, RotatingProxySession? httpSession)
         {
             var q = System.Uri.EscapeDataString(query);
             var loc = System.Uri.EscapeDataString(location);
@@ -111,7 +210,15 @@ public sealed class GoogleJobsApiClient
         var cookieValue = $"{GoogleJobsConstants.ConsentCookie}; {GoogleJobsConstants.SocsCookie}";
         req.Headers.TryAddWithoutValidation("Cookie", cookieValue);
 
-        var res = await _retryPolicy.ExecuteAsync(async () => await _http.SendAsync(req).ConfigureAwait(false)).ConfigureAwait(false);
+        HttpResponseMessage res;
+        if (httpSession != null)
+        {
+            res = await _retryPolicy.ExecuteAsync(async () => await httpSession.ExecuteAsync(() => req, default).ConfigureAwait(false)).ConfigureAwait(false);
+        }
+        else
+        {
+            res = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(req).ConfigureAwait(false)).ConfigureAwait(false);
+        }
         var html = await res.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         // DEBUG: Write raw HTML to file
@@ -162,7 +269,15 @@ public sealed class GoogleJobsApiClient
                 
                 try
                 {
-                    var retryRes = await _retryPolicy.ExecuteAsync(async () => await _http.SendAsync(retryReq).ConfigureAwait(false)).ConfigureAwait(false);
+                    HttpResponseMessage retryRes;
+                    if (httpSession != null)
+                    {
+                        retryRes = await _retryPolicy.ExecuteAsync(async () => await httpSession.ExecuteAsync(() => retryReq, default).ConfigureAwait(false)).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        retryRes = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(retryReq).ConfigureAwait(false)).ConfigureAwait(false);
+                    }
                     html = await retryRes.Content.ReadAsStringAsync().ConfigureAwait(false);
                     
                     try { System.IO.File.WriteAllText($"logs/google_jobs_search_retry_{DateTime.Now.Ticks}.html", html); } catch { }
@@ -247,7 +362,15 @@ public sealed class GoogleJobsApiClient
             asyncReq.Headers.TryAddWithoutValidation("User-Agent", asyncUserAgent);
             asyncReq.Headers.TryAddWithoutValidation("Cookie", cookieValue);
 
-            var asyncRes = await _retryPolicy.ExecuteAsync(async () => await _http.SendAsync(asyncReq).ConfigureAwait(false)).ConfigureAwait(false);
+            HttpResponseMessage asyncRes;
+            if (httpSession != null)
+            {
+                asyncRes = await _retryPolicy.ExecuteAsync(async () => await httpSession.ExecuteAsync(() => asyncReq, default).ConfigureAwait(false)).ConfigureAwait(false);
+            }
+            else
+            {
+                asyncRes = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(asyncReq).ConfigureAwait(false)).ConfigureAwait(false);
+            }
             var body = await asyncRes.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             if (string.IsNullOrEmpty(body))
@@ -283,5 +406,54 @@ public sealed class GoogleJobsApiClient
         }
 
         return results;
+    }
+
+    private async Task CheckAndRecycleSessionAsync()
+    {
+        if (_sessionOrchestrator == null || _currentSessionId == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var health = await _sessionOrchestrator.GetSessionHealthAsync(_currentSessionId, default);
+            if (health.Health == SessionHealth.Unhealthy)
+            {
+                LogSessionRecycled(_logger, _currentSessionId, null);
+                await _sessionOrchestrator.RecycleSessionAsync(_currentSessionId, default);
+                _currentSessionId = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            LogSessionHealthCheckFailed(_logger, _currentSessionId ?? "unknown", ex);
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    private void Dispose(bool disposing)
+    {
+        if (!_disposed && disposing)
+        {
+            if (_currentSessionId != null && _sessionOrchestrator != null)
+            {
+                try
+                {
+                    _sessionOrchestrator.CloseSessionAsync(_currentSessionId, default).GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    LogSessionCloseFailed(_logger, _currentSessionId, ex);
+                }
+            }
+
+            _disposed = true;
+        }
     }
 }

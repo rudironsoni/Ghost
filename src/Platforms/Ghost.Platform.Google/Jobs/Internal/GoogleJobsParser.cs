@@ -101,45 +101,138 @@ public static class GoogleJobsParser
     }
 
     /// <summary>
-    /// Strategy 1: Enhanced dynamic widget key pattern
+    /// Strategy 1: JobSpy-style widget key pattern (matches 520084652":[...])
+    /// This is the exact pattern JobSpy uses - finds the widget key followed by job arrays
     /// </summary>
-    private static List<JobListing>? TryStrategy1_DynamicWidgetKey(string html, ILogger logger)
+    private static List<JobListing>? TryStrategy1_JobspyWidgetKey(string html, ILogger logger)
     {
-        LogStrategyAttempt(logger, "DynamicWidgetKey", null);
+        LogStrategyAttempt(logger, "JobspyWidgetKey", null);
 
         try
         {
-            // Try to detect dynamic widget key
-            var widgetKey = DetectDynamicWidgetKey(html, logger) ?? GoogleJobsConstants.WidgetKey;
+            // Use JobSpy's exact pattern: widget key followed by job array structure
+            // Pattern: 520084652":([job arrays])}]]]]
+            var widgetKey = "520084652";
+            var pattern = widgetKey + "\":(" + @"\[.*?\]\s*])\s*}\s*]\s*]\s*]\s*]\s*]";
+            var matches = System.Text.RegularExpressions.Regex.Matches(html, pattern, System.Text.RegularExpressions.RegexOptions.Singleline);
 
-            int idx = html.IndexOf(widgetKey, StringComparison.Ordinal);
-            if (idx < 0)
+            var jobs = new List<JobListing>();
+
+            foreach (System.Text.RegularExpressions.Match match in matches)
             {
-                LogStrategyFailed(logger, "DynamicWidgetKey", null);
-                return null;
+                if (!match.Success) continue;
+
+                var jobJsonString = match.Groups[1].Value;
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(jobJsonString);
+
+                    if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    {
+                        foreach (var jobArray in doc.RootElement.EnumerateArray())
+                        {
+                            if (jobArray.ValueKind == System.Text.Json.JsonValueKind.Array)
+                            {
+                                var job = ExtractJobFromJobspyFormat(jobArray);
+                                if (job != null)
+                                {
+                                    jobs.Add(job);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    // Continue to next match
+                }
             }
 
-            int start = html.LastIndexOf('[', idx);
-            if (start < 0)
-            {
-                LogStrategyFailed(logger, "DynamicWidgetKey", null);
-                return null;
-            }
-
-            var jobs = ExtractJobsFromJsonArray(html, start, logger);
             if (jobs.Count > 0)
             {
-                LogStrategySuccess(logger, "DynamicWidgetKey", null);
+                LogStrategySuccess(logger, "JobspyWidgetKey", null);
                 LogJobsExtractedFromStrategy(logger, jobs.Count, null);
                 return jobs;
             }
 
-            LogStrategyFailed(logger, "DynamicWidgetKey", null);
+            LogStrategyFailed(logger, "JobspyWidgetKey", null);
             return null;
         }
         catch (Exception ex)
         {
-            LogStrategyFailed(logger, "DynamicWidgetKey", ex);
+            LogStrategyFailed(logger, "JobspyWidgetKey", ex);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Extract job from JobSpy format (nested array structure)
+    /// JobSpy format: [title, company, location, ..., url, ..., description]
+    /// </summary>
+    private static JobListing? ExtractJobFromJobspyFormat(System.Text.Json.JsonElement jobArray)
+    {
+        try
+        {
+            // JobSpy index mapping (from Python code):
+            // [0] title, [1] company, [2] location, [3] urls, [12] days ago, [19] description, [28] job id
+            string title = GetStringAt(jobArray, 0) ?? string.Empty;
+            string company = GetStringAt(jobArray, 1) ?? string.Empty;
+            string location = GetStringAt(jobArray, 2) ?? string.Empty;
+            string? url = null;
+            string? datePostedStr = GetStringAt(jobArray, 12);
+            string? description = GetStringAt(jobArray, 19);
+            string? id = GetStringAt(jobArray, 28);
+
+            if (string.IsNullOrWhiteSpace(title)) return null;
+
+            // Parse URL from nested array at index 3
+            if (jobArray.GetArrayLength() > 3)
+            {
+                var urlElement = jobArray[3];
+                if (urlElement.ValueKind == System.Text.Json.JsonValueKind.Array && urlElement.GetArrayLength() > 0)
+                {
+                    var urlArray = urlElement[0];
+                    if (urlArray.ValueKind == System.Text.Json.JsonValueKind.Array && urlArray.GetArrayLength() > 0)
+                    {
+                        url = GetStringAt(urlArray, 0);
+                    }
+                }
+            }
+
+            // Parse date posted (e.g., "3 days ago")
+            var postedAt = DateTimeOffset.UtcNow;
+            if (!string.IsNullOrWhiteSpace(datePostedStr))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(datePostedStr, @"(\d+)\s+(day|days|hour|hours|week|weeks|month|months)\s+ago");
+                if (match.Success)
+                {
+                    var num = int.TryParse(match.Groups[1].Value, out var n) ? n : 0;
+                    var unit = match.Groups[2].Value.ToLowerInvariant();
+                    postedAt = unit switch
+                    {
+                        "hour" or "hours" => DateTimeOffset.UtcNow.AddHours(-num),
+                        "day" or "days" => DateTimeOffset.UtcNow.AddDays(-num),
+                        "week" or "weeks" => DateTimeOffset.UtcNow.AddDays(-num * 7),
+                        "month" or "months" => DateTimeOffset.UtcNow.AddMonths(-num),
+                        _ => DateTimeOffset.UtcNow
+                    };
+                }
+            }
+
+            return new JobListing
+            {
+                Id = string.IsNullOrWhiteSpace(id) ? $"go-" + Guid.NewGuid().ToString("N") : $"go-{id}",
+                Title = title,
+                Company = string.IsNullOrWhiteSpace(company) ? "Unknown" : company,
+                Location = location,
+                Description = string.IsNullOrWhiteSpace(description) ? null : description,
+                Url = url ?? $"https://www.google.com/search?q={Uri.EscapeDataString(title)}",
+                PostedAt = postedAt,
+                Source = "Google"
+            };
+        }
+        catch
+        {
             return null;
         }
     }
@@ -637,10 +730,10 @@ public static class GoogleJobsParser
 
         List<JobListing>? jobs = null;
 
-        jobs = TryJsonLdParsing(processedHtml, logger);
+        jobs = TryStrategy1_JobspyWidgetKey(processedHtml, logger);
         if (jobs != null && jobs.Count > 0) return jobs;
 
-        jobs = TryStrategy1_DynamicWidgetKey(processedHtml, logger);
+        jobs = TryJsonLdParsing(processedHtml, logger);
         if (jobs != null && jobs.Count > 0) return jobs;
 
         jobs = TryStrategy2_ScriptTags(processedHtml, logger);

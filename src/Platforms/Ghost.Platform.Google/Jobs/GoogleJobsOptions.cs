@@ -34,6 +34,12 @@ public sealed class GoogleJobsOptions
     public int MaxDelayMs { get; set; } = 800;
 
     /// <summary>
+    /// When true, the Google Jobs HTTP client will attempt to use the configured proxy provider.
+    /// When false, the client will use a direct connection.
+    /// </summary>
+    public bool ProxyEnabled { get; set; }
+
+    /// <summary>
     /// Strategy for attempting job search methods.
     /// Default is BrowserFirst for better reliability.
     /// </summary>
