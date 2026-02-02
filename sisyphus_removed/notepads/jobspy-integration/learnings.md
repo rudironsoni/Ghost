@@ -125,3 +125,10 @@
 
 ### Recommendation
 Core functionality is complete. Task 7 is an optional enhancement that can be deferred or implemented based on user needs.
+
+## 2026-02-01: DotnetSpider Adapter Integration
+
+- Created Ghost.Platform.DotnetSpider integration project and adapter class to bridge DotnetSpider IDownloader with Ghost ISessionOrchestrator.
+- Custom downloader allocates HTTP sessions via SessionOrchestrator, executes requests through RotatingProxySession, and performs health checks/recycling on unhealthy sessions.
+- Added solution entry and centralized package versions for DotnetSpider dependencies to comply with repository central package management.
+- Added DotnetSpider-to-HttpRequestMessage conversion that preserves headers, content, and HTTP version; use global::DotnetSpider.Http type qualifiers inside Ghost.Platform.DotnetSpider to avoid namespace conflicts.
