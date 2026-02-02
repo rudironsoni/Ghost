@@ -8,7 +8,7 @@ using Ghost.Stealth;
 
 namespace Ghost.Core;
 
-public sealed class GhostKernel : IAsyncDisposable, IDisposable
+public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
 {
     private readonly IPlaywright _playwright;
     private readonly IBrowser _browser;

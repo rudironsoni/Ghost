@@ -22,7 +22,7 @@ public class IndeedJobParserTests
           ""compensation"": { ""baseSalary"": { ""range"": { ""min"": 50000, ""max"": 100000, ""currency"": ""USD"" } } }
         }
       ],
-      ""pageInfo"": { ""nextCursor"": null }
+      ""pageInfo"": { ""nextCursor"": null, ""hasNextPage"": false }
     }
   }
 }";

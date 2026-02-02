@@ -4,7 +4,10 @@ using Ghost.Utilities;
 using Ghost.WebApi.Features.LinkedIn;
 using Ghost.WebApi.Features.Jobs;
 using Ghost.WebApi.Features.Health;
-using Ghost.Platform.InfoJobs;
+using Ghost.WebApi.Features.Admin;
+using Ghost.Core;
+using Ghost.Monitoring;
+using Microsoft.Extensions.Logging.Abstractions;
 // Removed unused reflection/disk/culture usings after replacing dynamic loader with
 // compile-time referenced extensions.
 
@@ -24,11 +27,10 @@ try {
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-// Health checks
 builder.Services.AddHealthChecks();
-// Register HTTP client and proxy provider required by Ghost
+builder.Services.AddGhostResilience(builder.Configuration);
+builder.Services.AddGhostMonitoring(builder.Configuration);
 builder.Services.AddHttpClient();
-// Bind ProxyOptions from configuration
 builder.Services.Configure<Ghost.Core.ProxyOptions>(builder.Configuration.GetSection("Ghost:Proxy"));
 builder.Services.AddSingleton<Ghost.Abstractions.IProxyProvider, Ghost.Services.RotatingProxyProvider>();
 
@@ -41,6 +43,22 @@ foreach (var child in proxySection.GetChildren())
 
     var config = new Ghost.Core.ProxySourceConfig();
     child.Bind(config);
+
+    if (child.Key.Equals("NordVPN", StringComparison.OrdinalIgnoreCase))
+    {
+        var nordUser = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_USERNAME");
+        var nordPass = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_PASSWORD");
+
+        if (!string.IsNullOrWhiteSpace(nordUser))
+        {
+            config.Username = nordUser;
+        }
+
+        if (!string.IsNullOrWhiteSpace(nordPass))
+        {
+            config.Password = nordPass;
+        }
+    }
 
     if (!config.Enabled) continue;
 
@@ -138,6 +156,7 @@ if (linkedInEnabled)
 // Map job endpoints and health checks
 app.MapJobsEndpoints();
 app.MapHealthEndpoints();
+app.MapDetailedHealth();
 app.MapHealthChecks("/health");
 
 app.Run();

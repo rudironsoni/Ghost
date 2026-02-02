@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text;
 using System.Threading;
@@ -23,11 +25,28 @@ public class IndeedApiClient : IDisposable
     private readonly CountryCode _country;
     private readonly string _apiKey;
     private readonly ILogger<IndeedApiClient> _logger;
+    private readonly HttpClient _httpClient;
+    private readonly SocketsHttpHandler _handler;
+    private readonly IReadOnlyDictionary<string, string> _baseHeaders;
+    private readonly string? _contentTypeHeader;
+    private readonly object _metricsLock = new();
+    private readonly TimeProvider _timeProvider;
     private readonly SemaphoreSlim _rateLimitSemaphore = new(1, 1);
     private DateTime _lastRequestTime = DateTime.MinValue;
     private readonly TimeSpan _rateLimitDelay = TimeSpan.FromSeconds(2);
     private bool _disposed;
     private string? _currentSessionId;
+    private long _activeRequests;
+    private long _totalRequests;
+    private long _totalFailures;
+    private long _totalResponseTicks;
+    private long _windowStartTicks;
+    private long _windowRequestCount;
+    private static readonly HashSet<string> ContentHeaderNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "content-type"
+    };
+    private static readonly TimeSpan MetricsWindow = TimeSpan.FromSeconds(1);
         private static readonly Action<ILogger, string, string, Exception?> LogRequestStart =
             LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(2001, "FetchingIndeedJobs"), "Fetching Indeed jobs for query '{Query}' at {Location}...");
         private static readonly Action<ILogger, string, Exception?> LogSendingRequest =
@@ -71,29 +90,66 @@ public class IndeedApiClient : IDisposable
     /// Legacy constructor for backward compatibility. Uses direct proxy provider.
     /// </summary>
     public IndeedApiClient(Ghost.Abstractions.IProxyProvider proxyProvider, IndeedOptions options, ILogger<IndeedApiClient> logger)
+        : this(proxyProvider, null, options, logger, null, TimeProvider.System)
     {
-        _proxyProvider = proxyProvider ?? throw new ArgumentNullException(nameof(proxyProvider));
-        _sessionOrchestrator = null;
-        _country = options.Country;
-        _apiKey = options.ApiKey;
-        _logger = logger;
-        try
-        {
-            LogConstructedWithCountry(_logger, _country, null);
-        }
-        catch { }
+    }
+
+    /// <summary>
+    /// Legacy constructor for DI using proxy provider and session orchestrator when available.
+    /// </summary>
+    public IndeedApiClient(IProxyProvider proxyProvider, ISessionOrchestrator sessionOrchestrator, IndeedOptions options, ILogger<IndeedApiClient> logger)
+        : this(proxyProvider, sessionOrchestrator, options, logger, null, TimeProvider.System)
+    {
     }
 
     /// <summary>
     /// Modern constructor with SessionOrchestrator support for session continuity and health monitoring.
     /// </summary>
     public IndeedApiClient(ISessionOrchestrator sessionOrchestrator, IndeedOptions options, ILogger<IndeedApiClient> logger)
+        : this(null, sessionOrchestrator, options, logger, null, TimeProvider.System)
     {
-        _proxyProvider = null;
-        _sessionOrchestrator = sessionOrchestrator ?? throw new ArgumentNullException(nameof(sessionOrchestrator));
+    }
+
+    internal IndeedApiClient(
+        IProxyProvider? proxyProvider,
+        ISessionOrchestrator? sessionOrchestrator,
+        IndeedOptions options,
+        ILogger<IndeedApiClient> logger,
+        HttpMessageHandler? handler,
+        TimeProvider timeProvider)
+    {
+        _proxyProvider = proxyProvider;
+        _sessionOrchestrator = sessionOrchestrator;
         _country = options.Country;
         _apiKey = options.ApiKey;
-        _logger = logger;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _timeProvider = timeProvider ?? TimeProvider.System;
+
+        _baseHeaders = BuildBaseHeaders(_country, _apiKey, out var contentTypeHeader);
+        _contentTypeHeader = contentTypeHeader;
+
+        if (handler is SocketsHttpHandler socketsHandler)
+        {
+            _handler = socketsHandler;
+            _httpClient = CreateHttpClient(_handler);
+        }
+        else if (handler != null)
+        {
+            _handler = CreateSocketsHttpHandler();
+            _httpClient = new HttpClient(handler, disposeHandler: false)
+            {
+                Timeout = TimeSpan.FromSeconds(30),
+                DefaultRequestVersion = HttpVersion.Version20,
+                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
+            };
+            ApplyDefaultHeaders(_httpClient, _baseHeaders);
+        }
+        else
+        {
+            _handler = CreateSocketsHttpHandler();
+            _httpClient = CreateHttpClient(_handler);
+        }
+
         try
         {
             LogConstructedWithCountry(_logger, _country, null);
@@ -120,6 +176,186 @@ public class IndeedApiClient : IDisposable
         }
     }
 
+    public IndeedConnectionMetrics GetMetrics()
+    {
+        lock (_metricsLock)
+        {
+            var nowTicks = _timeProvider.GetUtcNow().Ticks;
+            var windowTicks = nowTicks - _windowStartTicks;
+            var elapsedSeconds = Math.Max(TimeSpan.FromTicks(windowTicks).TotalSeconds, 1d);
+            var requestsPerSecond = _windowRequestCount / elapsedSeconds;
+            var averageResponseMs = _totalRequests > 0
+                ? TimeSpan.FromTicks(_totalResponseTicks / _totalRequests).TotalMilliseconds
+                : 0d;
+
+            return new IndeedConnectionMetrics(
+                ActiveConnections: _activeRequests,
+                RequestsPerSecond: requestsPerSecond,
+                AverageResponseTimeMs: averageResponseMs,
+                TotalRequests: _totalRequests,
+                TotalFailures: _totalFailures);
+        }
+    }
+
+    private Dictionary<string, string> BuildBaseHeaders(CountryCode country, string apiKey, out string? contentTypeHeader)
+    {
+        Dictionary<string, string> headers;
+        try
+        {
+            headers = IndeedConstants.GetHeaders(country, apiKey);
+        }
+        catch (ArgumentException ex)
+        {
+            LogGetHeadersReturnedNull(_logger, country, ex);
+            if (!string.IsNullOrEmpty(apiKey))
+            {
+                headers = IndeedConstants.GetHeaders(CountryCode.US, apiKey);
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        contentTypeHeader = null;
+        foreach (var kv in headers)
+        {
+            if (ContentHeaderNames.Contains(kv.Key))
+            {
+                contentTypeHeader = kv.Value;
+                break;
+            }
+        }
+
+        return headers;
+    }
+
+    private SocketsHttpHandler CreateSocketsHttpHandler()
+    {
+        var handler = new SocketsHttpHandler
+        {
+            PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
+            MaxConnectionsPerServer = 100,
+            EnableMultipleHttp2Connections = true,
+            AutomaticDecompression = DecompressionMethods.All,
+            UseCookies = false,
+            UseProxy = _proxyProvider != null,
+            SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+            {
+                EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,
+                RemoteCertificateValidationCallback = HttpClientSecurityExtensions.CreateCertificateValidationCallback()
+            }
+        };
+
+        if (_proxyProvider != null)
+        {
+            handler.Proxy = new RotatingWebProxy(_proxyProvider);
+        }
+
+        return handler;
+    }
+
+    private HttpClient CreateHttpClient(SocketsHttpHandler handler)
+    {
+        var client = new HttpClient(handler, disposeHandler: false)
+        {
+            Timeout = TimeSpan.FromSeconds(30),
+            DefaultRequestVersion = HttpVersion.Version20,
+            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
+        };
+
+        ApplyDefaultHeaders(client, _baseHeaders);
+        return client;
+    }
+
+    private static void ApplyDefaultHeaders(HttpClient client, IReadOnlyDictionary<string, string> headers)
+    {
+        foreach (var kv in headers)
+        {
+            if (ContentHeaderNames.Contains(kv.Key))
+            {
+                continue;
+            }
+
+            client.DefaultRequestHeaders.TryAddWithoutValidation(kv.Key, kv.Value);
+        }
+    }
+
+    internal HttpRequestMessage CreateRequest(object payload)
+    {
+        var req = new HttpRequestMessage(HttpMethod.Post, IndeedConstants.ApiUrl)
+        {
+            Content = JsonContent.Create(payload)
+        };
+
+        if (req.Content != null)
+        {
+            if (!req.Content.Headers.Contains("Content-Type"))
+            {
+                if (!string.IsNullOrEmpty(_contentTypeHeader))
+                {
+                    req.Content.Headers.TryAddWithoutValidation("Content-Type", _contentTypeHeader);
+                }
+                else
+                {
+                    req.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                }
+            }
+        }
+
+        foreach (var kv in _baseHeaders)
+        {
+            if (ContentHeaderNames.Contains(kv.Key))
+            {
+                continue;
+            }
+
+            req.Headers.TryAddWithoutValidation(kv.Key, kv.Value);
+        }
+
+        return req;
+    }
+
+    private void StartRequestMetrics(out Stopwatch stopwatch)
+    {
+        lock (_metricsLock)
+        {
+            if (_windowStartTicks == 0)
+            {
+                _windowStartTicks = _timeProvider.GetUtcNow().Ticks;
+            }
+
+            var elapsed = _timeProvider.GetUtcNow().Ticks - _windowStartTicks;
+            if (elapsed > MetricsWindow.Ticks)
+            {
+                _windowStartTicks = _timeProvider.GetUtcNow().Ticks;
+                _windowRequestCount = 0;
+            }
+        }
+
+        Interlocked.Increment(ref _activeRequests);
+        stopwatch = Stopwatch.StartNew();
+    }
+
+    private void EndRequestMetrics(bool success, Stopwatch stopwatch)
+    {
+        stopwatch.Stop();
+        Interlocked.Decrement(ref _activeRequests);
+        lock (_metricsLock)
+        {
+            _totalRequests++;
+            if (!success)
+            {
+                _totalFailures++;
+            }
+
+            _totalResponseTicks += stopwatch.ElapsedTicks;
+
+            _windowRequestCount++;
+        }
+    }
+
     public async IAsyncEnumerable<JsonElement> SearchAsync(string query, string location, int limit = 50)
     {
         if (_sessionOrchestrator != null)
@@ -136,6 +372,16 @@ public class IndeedApiClient : IDisposable
                 yield return result;
             }
         }
+    }
+
+    public async Task<JsonElement> SearchPageAsync(string query, string location, int limit, string? cursor, CancellationToken ct)
+    {
+        if (_sessionOrchestrator != null)
+        {
+            return await SearchPageWithOrchestratorAsync(query, location, limit, cursor, ct).ConfigureAwait(false);
+        }
+
+        return await SearchPageLegacyAsync(query, location, limit, cursor, ct).ConfigureAwait(false);
     }
 
     private async IAsyncEnumerable<JsonElement> SearchWithOrchestratorAsync(string query, string location, int limit)
@@ -185,39 +431,11 @@ public class IndeedApiClient : IDisposable
                 var json = JsonSerializer.Serialize(payload);
                 LogRequestPayload(_logger, json, null);
 
-                using var req = new HttpRequestMessage(HttpMethod.Post, IndeedConstants.ApiUrl)
-                {
-                    Content = JsonContent.Create(payload)
-                };
-
-                if (req.Content != null && !req.Content.Headers.Contains("Content-Type"))
-                {
-                    req.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-                }
-
                 LogSendingRequest(_logger, IndeedConstants.ApiUrl, null);
 
-                Dictionary<string, string> headers;
-                try
+                foreach (var header in _httpClient.DefaultRequestHeaders)
                 {
-                    headers = IndeedConstants.GetHeaders(_country, _apiKey);
-                }
-                catch (ArgumentException ex)
-                {
-                    LogGetHeadersReturnedNull(_logger, _country, ex);
-                    if (!string.IsNullOrEmpty(_apiKey))
-                    {
-                        headers = IndeedConstants.GetHeaders(CountryCode.US, _apiKey);
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-
-                foreach (var kv in headers)
-                {
-                    req.Headers.TryAddWithoutValidation(kv.Key, kv.Value);
+                    LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
                 }
 
                 try
@@ -225,15 +443,28 @@ public class IndeedApiClient : IDisposable
                     LogUsingCountryForRequest(_logger, _country, null);
                 }
                 catch { }
-
                 HttpResponseMessage? resp = null;
                 string content = string.Empty;
                 bool success = false;
+                Stopwatch stopwatch;
+                StartRequestMetrics(out stopwatch);
 
                 for (int attempt = 0; attempt < 3; attempt++)
                 {
                     try
                     {
+                        using var req = CreateRequest(payload);
+                        foreach (var header in req.Headers)
+                        {
+                            LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
+                        }
+                        if (req.Content?.Headers != null)
+                        {
+                            foreach (var header in req.Content.Headers)
+                            {
+                                LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
+                            }
+                        }
                         resp = await httpSession.ExecuteAsync(() => req, default);
 
                         if ((int)resp.StatusCode == 429)
@@ -274,6 +505,8 @@ public class IndeedApiClient : IDisposable
                         throw;
                     }
                 }
+
+                EndRequestMetrics(success && resp != null && resp.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content), stopwatch);
 
                 if (!success || resp == null || !resp.IsSuccessStatusCode || IsBlockedOrConsentRequired(content))
                 {
@@ -323,113 +556,40 @@ public class IndeedApiClient : IDisposable
             var json = JsonSerializer.Serialize(payload);
             LogRequestPayload(_logger, json, null);
 
-            using var req = new HttpRequestMessage(HttpMethod.Post, IndeedConstants.ApiUrl)
-            {
-                Content = JsonContent.Create(payload)
-            };
+                LogSendingRequest(_logger, IndeedConstants.ApiUrl, null);
 
-            if (req.Content != null && !req.Content.Headers.Contains("Content-Type"))
-            {
-                req.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-            }
-
-            LogSendingRequest(_logger, IndeedConstants.ApiUrl, null);
-
-            foreach (var header in req.Headers)
-            {
-                var value = string.Join(",", header.Value);
-                LogRequestHeader(_logger, header.Key, value, null);
-            }
-
-            var proxy = await _proxyProvider!.GetProxyAsync(_country.ToString());
-
-            var handler = new SocketsHttpHandler
-            {
-                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+                foreach (var header in _httpClient.DefaultRequestHeaders)
                 {
-                    RemoteCertificateValidationCallback = HttpClientSecurityExtensions.CreateCertificateValidationCallback(),
-                    EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13
+                    LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
                 }
-            };
 
-            if (proxy != null)
-            {
-                var webProxy = new WebProxy(new Uri(proxy.Server));
-                if (!string.IsNullOrEmpty(proxy.Username))
+                try
                 {
-                    webProxy.Credentials = new NetworkCredential(proxy.Username, proxy.Password);
+                    LogUsingCountryForRequest(_logger, _country, null);
                 }
-                handler.Proxy = webProxy;
-                handler.UseProxy = true;
-            }
-
-            using var client = new HttpClient(handler);
-
-            Dictionary<string, string> headers;
-            try
-            {
-                headers = IndeedConstants.GetHeaders(_country, _apiKey);
-            }
-            catch (ArgumentException ex)
-            {
-                LogGetHeadersReturnedNull(_logger, _country, ex);
-                if (!string.IsNullOrEmpty(_apiKey))
-                {
-                    headers = IndeedConstants.GetHeaders(CountryCode.US, _apiKey);
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            foreach (var kv in headers)
-            {
-                client.DefaultRequestHeaders.TryAddWithoutValidation(kv.Key, kv.Value);
-            }
-
-            foreach (var header in client.DefaultRequestHeaders)
-            {
-                LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
-            }
-
-            foreach (var header in req.Headers)
-            {
-                LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
-            }
-
-            try
-            {
-                LogUsingCountryForRequest(_logger, _country, null);
-            }
-            catch { }
-
-            HttpResponseMessage? resp = null;
-            string content = string.Empty;
+                catch { }
+                HttpResponseMessage? resp = null;
+                string content = string.Empty;
+                Stopwatch stopwatch;
+                StartRequestMetrics(out stopwatch);
 
             for (int attempt = 0; attempt < 3; attempt++)
             {
-                try
-                {
-                    // Create a fresh request message for each attempt to avoid "already sent" error
-                    var attemptPayload = new { query = formattedQuery };
-                    var attemptReq = new HttpRequestMessage(HttpMethod.Post, IndeedConstants.ApiUrl)
+                    try
                     {
-                        Content = JsonContent.Create(attemptPayload)
-                    };
-                    
-                    if (attemptReq.Content != null && !attemptReq.Content.Headers.Contains("Content-Type"))
-                    {
-                        attemptReq.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-                    }
-                    
-                    // Add headers for each attempt
-                    foreach (var header in headers)
-                    {
-                        attemptReq.Headers.TryAddWithoutValidation(header.Key, header.Value);
-                    }
-                    
-                    resp = await client.SendAsync(attemptReq);
+                        using var attemptReq = CreateRequest(payload);
+                        foreach (var header in attemptReq.Headers)
+                        {
+                            LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
+                        }
+                        if (attemptReq.Content?.Headers != null)
+                        {
+                            foreach (var header in attemptReq.Content.Headers)
+                            {
+                                LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
+                            }
+                        }
+                        resp = await _httpClient.SendAsync(attemptReq);
 
                     if ((int)resp.StatusCode == 429)
                     {
@@ -463,11 +623,13 @@ public class IndeedApiClient : IDisposable
                     await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000));
                     continue;
                 }
-                catch (Exception)
-                {
-                    throw;
+                    catch (Exception)
+                    {
+                        throw;
+                    }
                 }
-            }
+
+                EndRequestMetrics(resp != null && resp.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content), stopwatch);
 
             if (resp == null || !resp.IsSuccessStatusCode || IsBlockedOrConsentRequired(content))
             {
@@ -526,6 +688,18 @@ public class IndeedApiClient : IDisposable
         {
             _rateLimitSemaphore?.Dispose();
 
+            try
+            {
+                _httpClient?.Dispose();
+            }
+            catch { }
+
+            try
+            {
+                _handler?.Dispose();
+            }
+            catch { }
+
             if (_currentSessionId != null && _sessionOrchestrator != null)
             {
                 try
@@ -572,4 +746,169 @@ public class IndeedApiClient : IDisposable
                responseContent.Contains("g-recaptcha", StringComparison.OrdinalIgnoreCase) ||
                responseContent.Contains("cf_chl_jschl", StringComparison.OrdinalIgnoreCase);
     }
+
+    private async Task<JsonElement> SearchPageWithOrchestratorAsync(string query, string location, int limit, string? cursor, CancellationToken ct)
+    {
+        await EnsureSessionAsync(query, location, ct).ConfigureAwait(false);
+        var httpSession = await _sessionOrchestrator!.GetHttpSessionAsync(_currentSessionId!, ct).ConfigureAwait(false);
+        if (httpSession is null)
+        {
+            LogSessionGetFailed(_logger, _currentSessionId ?? "unknown", null);
+            return default;
+        }
+
+        await ApplyRateLimitAsync(ct).ConfigureAwait(false);
+        var formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, limit));
+        if (!string.IsNullOrWhiteSpace(cursor))
+        {
+            formattedQuery += $" after: \"{cursor}\"";
+        }
+
+        var payload = new { query = formattedQuery };
+        string content = string.Empty;
+        bool success = false;
+        HttpResponseMessage? resp = null;
+        Stopwatch stopwatch;
+        StartRequestMetrics(out stopwatch);
+
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                using var req = CreateRequest(payload);
+                resp = await httpSession.ExecuteAsync(() => req, ct).ConfigureAwait(false);
+                if ((int)resp.StatusCode == 429)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000), ct).ConfigureAwait(false);
+                    continue;
+                }
+
+                content = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                if (IsBlockedOrConsentRequired(content))
+                {
+                    if (attempt < 2)
+                    {
+                        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 2000), ct).ConfigureAwait(false);
+                        continue;
+                    }
+                    break;
+                }
+
+                success = true;
+                break;
+            }
+            catch (HttpRequestException) when (attempt < 2)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000), ct).ConfigureAwait(false);
+            }
+        }
+
+        EndRequestMetrics(success && resp != null && resp.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content), stopwatch);
+        if (!success || resp == null || !resp.IsSuccessStatusCode || IsBlockedOrConsentRequired(content))
+        {
+            await CheckAndRecycleSessionAsync().ConfigureAwait(false);
+            return default;
+        }
+
+        using var doc = JsonDocument.Parse(content);
+        return doc.RootElement.Clone();
+    }
+
+    private async Task<JsonElement> SearchPageLegacyAsync(string query, string location, int limit, string? cursor, CancellationToken ct)
+    {
+        await ApplyRateLimitAsync(ct).ConfigureAwait(false);
+        var formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, limit));
+        if (!string.IsNullOrWhiteSpace(cursor))
+        {
+            formattedQuery += $" after: \"{cursor}\"";
+        }
+
+        var payload = new { query = formattedQuery };
+        string content = string.Empty;
+        HttpResponseMessage? resp = null;
+        Stopwatch stopwatch;
+        StartRequestMetrics(out stopwatch);
+
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                using var req = CreateRequest(payload);
+                resp = await _httpClient.SendAsync(req, ct).ConfigureAwait(false);
+                if ((int)resp.StatusCode == 429)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000), ct).ConfigureAwait(false);
+                    continue;
+                }
+
+                content = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                if (IsBlockedOrConsentRequired(content))
+                {
+                    if (attempt < 2)
+                    {
+                        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 2000), ct).ConfigureAwait(false);
+                        continue;
+                    }
+                    break;
+                }
+
+                break;
+            }
+            catch (HttpRequestException) when (attempt < 2)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000), ct).ConfigureAwait(false);
+            }
+        }
+
+        EndRequestMetrics(resp != null && resp.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content), stopwatch);
+        if (resp == null || !resp.IsSuccessStatusCode || IsBlockedOrConsentRequired(content))
+        {
+            return default;
+        }
+
+        using var doc = JsonDocument.Parse(content);
+        return doc.RootElement.Clone();
+    }
+
+    private async Task EnsureSessionAsync(string query, string location, CancellationToken ct)
+    {
+        if (_sessionOrchestrator == null)
+        {
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(_currentSessionId))
+        {
+            return;
+        }
+
+        var affinityKey = $"indeed_{query}_{location}_{Guid.NewGuid():N}";
+        var context = new SessionAllocationContext(
+            PlatformName: "Indeed",
+            CountryCode: _country.ToString(),
+            SessionType: SessionType.Http,
+            ComplexityScore: 30,
+            Metadata: new Dictionary<string, string>
+            {
+                ["Query"] = query,
+                ["Location"] = location
+            }
+        );
+
+        var affinityOptions = new SessionAffinityOptions(
+            AffinityKey: affinityKey,
+            AffinityDuration: TimeSpan.FromMinutes(5),
+            AllowFallback: true
+        );
+
+        _currentSessionId = await _sessionOrchestrator.AllocateSessionWithAffinityAsync(context, affinityOptions, ct).ConfigureAwait(false);
+        LogSessionAllocated(_logger, _currentSessionId, null);
+    }
 }
+
+public sealed record IndeedConnectionMetrics(
+    long ActiveConnections,
+    double RequestsPerSecond,
+    double AverageResponseTimeMs,
+    long TotalRequests,
+    long TotalFailures);

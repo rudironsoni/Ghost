@@ -18,6 +18,7 @@ internal static class IndeedConstants
             ) {{
                 pageInfo {{
                     nextCursor
+                    hasNextPage
                 }}
                 results {{
                     job {{

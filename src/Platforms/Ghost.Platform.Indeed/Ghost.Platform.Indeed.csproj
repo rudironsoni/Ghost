@@ -5,6 +5,7 @@
     <Description>Ghost Indeed platform integration</Description>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <InternalsVisibleTo>Ghost.Platform.Indeed.Tests</InternalsVisibleTo>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Ghost\Ghost.csproj" />

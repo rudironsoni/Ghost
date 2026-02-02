@@ -3,7 +3,9 @@ using Ghost.Extensions;
 using Ghost.Platform.LinkedIn.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Collections.Concurrent;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Ghost.Platform.LinkedIn;
 
@@ -505,6 +507,57 @@ namespace Ghost.Platform.LinkedIn;
         }
     }
 
+    /// <summary>
+    /// Searches jobs in parallel with bounded concurrency (max 3 requests).
+    /// </summary>
+    public async IAsyncEnumerable<JobListing> SearchJobsParallelAsync(
+        JobSearchCriteria criteria,
+        [EnumeratorCancellation] CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(criteria);
+        var limit = criteria.MaxResults > 0 ? criteria.MaxResults : 25;
+        var keywords = criteria.Query ?? string.Empty;
+        var location = criteria.Location ?? string.Empty;
+
+        var firstPage = await FetchGuestPageAsync(criteria, 0, ct).ConfigureAwait(false);
+        foreach (var job in firstPage.Jobs)
+        {
+            yield return job;
+        }
+
+        if (firstPage.TotalAvailable <= firstPage.PageSize || limit <= firstPage.PageSize)
+        {
+            yield break;
+        }
+
+        var total = Math.Min(firstPage.TotalAvailable, limit);
+        var totalPages = (int)Math.Ceiling(total / (double)firstPage.PageSize);
+        if (totalPages <= 1)
+        {
+            yield break;
+        }
+
+        var semaphore = new SemaphoreSlim(3, 3);
+        var tasks = new List<Task<GuestPageResult>>();
+        for (var pageIndex = 1; pageIndex < totalPages; pageIndex++)
+        {
+            var offset = pageIndex * firstPage.PageSize;
+            tasks.Add(FetchGuestPageAsync(criteria, offset, ct, semaphore));
+        }
+
+        var remaining = new HashSet<Task<GuestPageResult>>(tasks);
+        while (remaining.Count > 0)
+        {
+            var completed = await Task.WhenAny(remaining).ConfigureAwait(false);
+            remaining.Remove(completed);
+            var page = await completed.ConfigureAwait(false);
+            foreach (var job in page.Jobs)
+            {
+                yield return job;
+            }
+        }
+    }
+
     private async IAsyncEnumerable<JobListing> SearchJobsWithStrategyAsync(string keywords, string location, int limit, JobScrapingStrategy strategy, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
     {
         s_logJobSearchStarting(_logger, strategy, keywords, null);
@@ -748,4 +801,114 @@ namespace Ghost.Platform.LinkedIn;
             yield return deepJob ?? shallow;
         }
     }
+
+    private async Task<GuestPageResult> FetchGuestPageAsync(JobSearchCriteria criteria, int offset, CancellationToken ct, SemaphoreSlim? semaphore = null)
+    {
+        if (semaphore is not null)
+        {
+            await semaphore.WaitAsync(ct).ConfigureAwait(false);
+        }
+
+        try
+        {
+            var pageSize = 25;
+            var baseUrl = _options.BaseUrl;
+            var query = criteria.Query ?? string.Empty;
+            var location = criteria.Location ?? string.Empty;
+            var postedWithin = criteria.PostedDate switch
+            {
+                TimePosted.Past24Hours => TimeSpan.FromDays(1),
+                TimePosted.PastWeek => TimeSpan.FromDays(7),
+                TimePosted.PastMonth => TimeSpan.FromDays(30),
+                _ => (TimeSpan?)null
+            };
+
+            var pageOpts = _options.GetPageOptions();
+            var page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
+            try
+            {
+                var searchUrl = LinkedInQueryBuilder.BuildSearchUrl(query, location, offset, postedWithin);
+                if (!string.IsNullOrWhiteSpace(baseUrl) && !baseUrl.Equals("https://www.linkedin.com", StringComparison.OrdinalIgnoreCase))
+                {
+                    var relative = searchUrl.Replace("https://www.linkedin.com", string.Empty, StringComparison.OrdinalIgnoreCase);
+                    searchUrl = baseUrl.TrimEnd('/') + relative;
+                }
+
+                await page.NavigateAsync(searchUrl, ct: ct).ConfigureAwait(false);
+                await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
+                var html = await page.GetContentAsync(ct).ConfigureAwait(false) ?? string.Empty;
+                var ids = ParseGuestSearchIds(html);
+                var total = ParseGuestTotalCount(html, ids.Count);
+
+                var jobs = new ConcurrentBag<JobListing>();
+                foreach (var id in ids)
+                {
+                    if (ct.IsCancellationRequested) break;
+                    try
+                    {
+                        var job = await _guestSearch.FetchJobDetailsAsync(id, ct).ConfigureAwait(false);
+                        if (job != null)
+                        {
+                            jobs.Add(job);
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        LinkedInLog.LogFailedToParseJobNode(_logger, ex);
+                    }
+                }
+
+                return new GuestPageResult(jobs.ToList(), total, pageSize);
+            }
+            finally
+            {
+                try { await page.DisposeAsync(); } catch { }
+            }
+        }
+        finally
+        {
+            semaphore?.Release();
+        }
+    }
+
+    private static List<string> ParseGuestSearchIds(string html)
+    {
+        var ids = new List<string>();
+
+        foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(html, "data-entity-urn=\"urn:li:jobPosting:(?<id>[0-9]+)\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+        {
+            var id = m.Groups["id"].Value;
+            if (!string.IsNullOrEmpty(id)) ids.Add(id);
+        }
+
+        foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(html, "/jobs/(?:view|r)/(?<id>[0-9]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+        {
+            var id = m.Groups["id"].Value;
+            if (!string.IsNullOrEmpty(id) && !ids.Contains(id)) ids.Add(id);
+        }
+
+        return ids;
+    }
+
+    private static int ParseGuestTotalCount(string html, int fallback)
+    {
+        if (string.IsNullOrWhiteSpace(html))
+        {
+            return fallback;
+        }
+
+        var match = System.Text.RegularExpressions.Regex.Match(html, "results-context-header__job-count\"[^>]*>(?<count>[0-9,]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (match.Success && int.TryParse(match.Groups["count"].Value.Replace(",", string.Empty, StringComparison.Ordinal), out var total))
+        {
+            return total;
+        }
+
+        return fallback;
+    }
+
+    private sealed record GuestPageResult(IReadOnlyList<JobListing> Jobs, int TotalAvailable, int PageSize);
 }
