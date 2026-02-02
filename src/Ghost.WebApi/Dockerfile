@@ -1,13 +1,11 @@
-# Base image with Playwright dependencies and .NET Runtime
-# We use the official Playwright dotnet image which matches the Patchright version ideally, 
-# or a recent one. Assuming v1.56.0 exists or we use a recent stable tag.
-FROM mcr.microsoft.com/playwright/dotnet:v1.56.0-noble AS base
+# Base image with .NET 10.0 ASP.NET Runtime - will add Playwright later
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS base
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
 # SDK image for building
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY ["Directory.Packages.props", "."]
 # Copy project files
@@ -35,14 +33,18 @@ RUN dotnet build "Ghost.WebApi.csproj" -c Release -o /app/build
 FROM build AS publish
 RUN dotnet publish "Ghost.WebApi.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
+# Install Playwright browsers in build stage
+FROM build AS playwright
+RUN apt-get update && \
+    apt-get install -y ca-certificates fonts-liberation libasound2t64 libatk-bridge2.0-0 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgbm1 libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libnss3 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 libxkbcommon0 libxshmfence1 && \
+    rm -rf /var/lib/apt/lists/*
+RUN dotnet tool install --global Microsoft.Playwright.CLI && \
+    export PATH="$PATH:/root/.dotnet/tools" && \
+    playwright install chromium
+
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-
-# Ensure browsers are installed (Patchright might need its own install)
-# Attempt to run playwright install in case the base image doesn't match perfectly
-# or if Patchright needs to download its own modified browsers.
-# RUN pwsh playwright.ps1 install --with-deps
-# For now, we assume the base image provides necessary dependencies.
+COPY --from=playwright /root/.cache/ms-playwright /root/.cache/ms-playwright
 
 ENTRYPOINT ["dotnet", "Ghost.WebApi.dll"]
