@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Ghost.Contracts.News</RootNamespace>
     <Description>Ghost news contracts</Description>
   </PropertyGroup>
