@@ -24,7 +24,12 @@ public sealed record FingerprintProfile
     public required string VideoCardRenderer { get; init; }
     public required double BatteryLevel { get; init; }
 
-    // Network characteristics
+    public required int ScreenColorDepth { get; init; }
+    public required int DeviceMemoryGb { get; init; }
+    public required string OperatingSystem { get; init; }
+    public required string ConnectionType { get; init; }
+    public required string ScreenOrientation { get; init; }
+
     public double Rtt { get; init; }
     public double Downlink { get; init; }
 
@@ -46,6 +51,11 @@ public sealed record FingerprintProfile
         VideoCardRenderer = "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)",
         BatteryLevel = 0.95,
         Rtt = 50,
-        Downlink = 10
+        Downlink = 10,
+        ScreenColorDepth = 24,
+        DeviceMemoryGb = 8,
+        OperatingSystem = "Windows NT 10.0; Win64; x64",
+        ConnectionType = "wifi",
+        ScreenOrientation = "landscape-primary"
     };
 }

@@ -18,11 +18,11 @@ public class FingerprintProfileTests
     [Fact]
     public void InitProperties_CanBeAssigned_AndAreImmutable()
     {
-        var p = new FingerprintProfile 
-        { 
-            Name = "n", 
-            UserAgent = "u", 
-            ViewportWidth = 10, 
+        var p = new FingerprintProfile
+        {
+            Name = "n",
+            UserAgent = "u",
+            ViewportWidth = 10,
             ViewportHeight = 20,
             Cores = 4,
             MemoryGb = 8,
@@ -34,7 +34,12 @@ public class FingerprintProfileTests
             TimeZone = "tz",
             VideoCardVendor = "v",
             VideoCardRenderer = "r",
-            BatteryLevel = 1
+            BatteryLevel = 1,
+            ScreenColorDepth = 24,
+            DeviceMemoryGb = 8,
+            OperatingSystem = "Windows NT 10.0; Win64; x64",
+            ConnectionType = "wifi",
+            ScreenOrientation = "landscape-primary"
         };
         p.Name.Should().Be("n");
         p.UserAgent.Should().Be("u");
