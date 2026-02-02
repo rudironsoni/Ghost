@@ -4,26 +4,59 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Ghost.Http;
+using Ghost.Platform.Common.Session;
 using Polly;
 
 namespace Ghost.Platform.Glassdoor.Internal;
 
 public sealed class GlassdoorApiClient : IDisposable
 {
-    private readonly HttpClient _http;
+    private readonly HttpClient? _http;
+    private readonly ISessionOrchestrator? _sessionOrchestrator;
     private readonly SemaphoreSlim _rateLimitSemaphore = new(1, 1);
     private DateTime _lastRequestTime = DateTime.MinValue;
     private readonly TimeSpan _rateLimitDelay = TimeSpan.FromSeconds(2); // Conservative rate limiting
     private readonly ILogger<GlassdoorApiClient>? _logger;
     private readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy;
     private bool _disposed;
+    private string? _currentSessionId;
 
     private static readonly Action<ILogger, Exception?> LogSearchFailed =
         LoggerMessage.Define(LogLevel.Warning, new EventId(1, nameof(LogSearchFailed)), "Glassdoor search request failed after retries");
 
+    private static readonly Action<ILogger, string, Exception?> LogSessionAllocated =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(3001, "SessionAllocated"), "Allocated session {SessionId} for Glassdoor requests");
+
+    private static readonly Action<ILogger, string, Exception?> LogSessionRecycled =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(3002, "SessionRecycled"), "Recycling unhealthy session {SessionId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogSessionGetFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(3003, "SessionGetFailed"), "Failed to get HTTP session {SessionId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogSessionHealthCheckFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(3004, "SessionHealthCheckFailed"), "Failed to check session health for {SessionId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogSessionCloseFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(3005, "SessionCloseFailed"), "Failed to close session {SessionId} during disposal");
+
+    /// <summary>
+    /// Legacy constructor for backward compatibility. Uses direct HttpClient.
+    /// </summary>
     public GlassdoorApiClient(HttpClient http, ILogger<GlassdoorApiClient>? logger = null)
     {
-        _http = http;
+        _http = http ?? throw new ArgumentNullException(nameof(http));
+        _sessionOrchestrator = null;
+        _logger = logger;
+        _retryPolicy = EnhancedRetryPolicy.CreatePolicy(logger, maxRetries: 4, enableJitter: true);
+    }
+
+    /// <summary>
+    /// Modern constructor with SessionOrchestrator support for session continuity and health monitoring.
+    /// </summary>
+    public GlassdoorApiClient(ISessionOrchestrator sessionOrchestrator, ILogger<GlassdoorApiClient>? logger = null)
+    {
+        _http = null;
+        _sessionOrchestrator = sessionOrchestrator ?? throw new ArgumentNullException(nameof(sessionOrchestrator));
         _logger = logger;
         _retryPolicy = EnhancedRetryPolicy.CreatePolicy(logger, maxRetries: 4, enableJitter: true);
     }
@@ -39,11 +72,136 @@ public sealed class GlassdoorApiClient : IDisposable
         if (!_disposed && disposing)
         {
             _rateLimitSemaphore?.Dispose();
+
+            if (_currentSessionId != null && _sessionOrchestrator != null)
+            {
+                try
+                {
+                    _sessionOrchestrator.CloseSessionAsync(_currentSessionId, default).GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    if (_logger != null) LogSessionCloseFailed(_logger, _currentSessionId, ex);
+                }
+            }
+
             _disposed = true;
         }
     }
 
     public async Task<string?> GetCsrfTokenAsync(CancellationToken ct = default)
+    {
+        if (_sessionOrchestrator != null)
+        {
+            return await GetCsrfTokenWithOrchestratorAsync(ct);
+        }
+        else
+        {
+            return await GetCsrfTokenLegacyAsync(ct);
+        }
+    }
+
+    private async Task<string?> GetCsrfTokenWithOrchestratorAsync(CancellationToken ct)
+    {
+        try
+        {
+            LogTokenExtraction("Starting CSRF token extraction from Glassdoor with SessionOrchestrator");
+
+            var context = new SessionAllocationContext(
+                PlatformName: "Glassdoor",
+                CountryCode: "US",
+                SessionType: SessionType.Http,
+                ComplexityScore: 40,
+                Metadata: new Dictionary<string, string>
+                {
+                    ["Operation"] = "CsrfTokenExtraction"
+                }
+            );
+
+            var sessionId = await _sessionOrchestrator!.AllocateSessionAsync(context, ct);
+            
+            try
+            {
+                var httpSession = await _sessionOrchestrator.GetHttpSessionAsync(sessionId, ct);
+                if (httpSession == null)
+                {
+                    LogTokenExtraction($"Failed to get HTTP session {sessionId}");
+                    return GlassdoorConstants.FallbackToken;
+                }
+
+                var request = new HttpRequestMessage(HttpMethod.Get, "https://www.glassdoor.com/index.htm?loc=US");
+                request.Headers.Host = "www.glassdoor.com";
+                foreach (var header in GlassdoorConstants.CsrfHeaders)
+                {
+                    request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                }
+
+                var res = await _retryPolicy.ExecuteAsync(async () => 
+                    await httpSession.ExecuteAsync(() => request, ct).ConfigureAwait(false)).ConfigureAwait(false);
+                var html = await res.Content.ReadAsStringAsync(ct);
+
+                try { System.IO.File.WriteAllText("logs/glassdoor_csrf.html", html); } catch { }
+
+                LogTokenExtraction($"Received HTML response: {html.Length} characters");
+
+                if (IsConsentOrBlockedPage(html))
+                {
+                    LogTokenExtraction("Detected consent or blocked page, trying alternative approach");
+
+                    var altRequest = new HttpRequestMessage(HttpMethod.Get, "https://www.glassdoor.com/index.htm");
+                    foreach (var header in GlassdoorConstants.AlternativeHeaders)
+                    {
+                        altRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                    }
+
+                    var altRes = await _retryPolicy.ExecuteAsync(async () => 
+                        await httpSession.ExecuteAsync(() => altRequest, ct).ConfigureAwait(false)).ConfigureAwait(false);
+                    html = await altRes.Content.ReadAsStringAsync(ct);
+
+                    try { System.IO.File.WriteAllText("logs/glassdoor_csrf_alt.html", html); } catch { }
+
+                    if (IsConsentOrBlockedPage(html))
+                    {
+                        LogTokenExtraction("Still blocked after alternative approach, using fallback token");
+                        return GlassdoorConstants.FallbackToken;
+                    }
+                }
+
+                string? token = ExtractCsrfTokenWithMultiplePatterns(html);
+                if (!string.IsNullOrEmpty(token))
+                {
+                    LogTokenExtraction($"Successfully extracted token: {token.Substring(0, Math.Min(10, token.Length))}... (length: {token.Length})");
+
+                    var isValid = await ValidateTokenWithOrchestratorAsync(token, httpSession, ct);
+                    if (isValid)
+                    {
+                        LogTokenExtraction("Token validation successful");
+                        return token;
+                    }
+                    else
+                    {
+                        LogTokenExtraction("Token validation failed, using fallback token");
+                    }
+                }
+                else
+                {
+                    LogTokenExtraction("Failed to extract token from HTML");
+                }
+            }
+            finally
+            {
+                await _sessionOrchestrator.CloseSessionAsync(sessionId, ct);
+            }
+        }
+        catch (Exception ex)
+        {
+            LogTokenExtraction($"Exception during token extraction: {ex.Message}");
+        }
+        LogTokenExtraction("Using fallback token");
+        return GlassdoorConstants.FallbackToken;
+    }
+
+    private async Task<string?> GetCsrfTokenLegacyAsync(CancellationToken ct)
     {
         try
         {
@@ -56,7 +214,7 @@ public sealed class GlassdoorApiClient : IDisposable
                 request.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
 
-            var res = await _retryPolicy.ExecuteAsync(async () => await _http.SendAsync(request, ct).ConfigureAwait(false)).ConfigureAwait(false);
+            var res = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(request, ct).ConfigureAwait(false)).ConfigureAwait(false);
             var html = await res.Content.ReadAsStringAsync(ct);
 
             // DEBUG: Write raw HTML to file
@@ -76,7 +234,7 @@ public sealed class GlassdoorApiClient : IDisposable
                     altRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
 
-                var altRes = await _retryPolicy.ExecuteAsync(async () => await _http.SendAsync(altRequest, ct).ConfigureAwait(false)).ConfigureAwait(false);
+                var altRes = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(altRequest, ct).ConfigureAwait(false)).ConfigureAwait(false);
                 html = await altRes.Content.ReadAsStringAsync(ct);
 
                 try { System.IO.File.WriteAllText("logs/glassdoor_csrf_alt.html", html); } catch { }
@@ -136,6 +294,75 @@ public sealed class GlassdoorApiClient : IDisposable
     /// <summary>
     /// Validate extracted token by testing it against the API
     /// </summary>
+    private async Task<bool> ValidateTokenWithOrchestratorAsync(string token, RotatingProxySession httpSession, CancellationToken ct)
+    {
+        try
+        {
+            LogTokenExtraction($"Validating token: {token.Substring(0, Math.Min(10, token.Length))}...");
+
+            var testPayload = JsonSerializer.Serialize(new[]
+            {
+                new
+                {
+                    operationName = "JobSearchResultsQuery",
+                    variables = new
+                    {
+                        excludeJobListingIds = new List<int>(),
+                        filterParams = new List<object>(),
+                        keyword = "test",
+                        numJobsToShow = 1,
+                        locationType = "STATE",
+                        locationId = 11047,
+                        parameterUrlInput = "IL.0,12_ISTATE11047",
+                        pageNumber = 1,
+                        pageCursor = (string?)null,
+                        fromage = (int?)null,
+                        sort = "date"
+                    },
+                    query = GlassdoorConstants.JobSearchQuery
+                }
+            });
+
+            var request = new HttpRequestMessage(HttpMethod.Post, GlassdoorConstants.ApiUrl)
+            {
+                Content = new StringContent(testPayload, Encoding.UTF8, new MediaTypeHeaderValue("application/json"))
+            };
+
+            foreach (var header in GlassdoorConstants.GraphHeaders)
+            {
+                request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+            request.Headers.TryAddWithoutValidation("gd-csrf-token", token);
+
+            var res = await _retryPolicy.ExecuteAsync(async () => 
+                await httpSession.ExecuteAsync(() => request, ct).ConfigureAwait(false)).ConfigureAwait(false);
+            var json = await res.Content.ReadAsStringAsync(ct);
+
+            var (hasErrors, shouldRetry) = ParseGraphQLErrors(json);
+
+            if (hasErrors)
+            {
+                LogTokenExtraction($"Token validation failed: API returned errors");
+                return false;
+            }
+
+            if (res.IsSuccessStatusCode)
+            {
+                LogTokenExtraction($"Token validation successful: API returned {res.StatusCode}");
+                return true;
+            }
+
+            LogTokenExtraction($"Token validation failed: API returned {res.StatusCode}");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            LogTokenExtraction($"Token validation exception: {ex.Message}");
+            return false;
+        }
+    }
+
     private async Task<bool> ValidateTokenAsync(string token, CancellationToken ct)
     {
         try
@@ -178,7 +405,7 @@ public sealed class GlassdoorApiClient : IDisposable
 
             request.Headers.TryAddWithoutValidation("gd-csrf-token", token);
 
-            var res = await _retryPolicy.ExecuteAsync(async () => await _http.SendAsync(request, ct).ConfigureAwait(false)).ConfigureAwait(false);
+            var res = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(request, ct).ConfigureAwait(false)).ConfigureAwait(false);
             var json = await res.Content.ReadAsStringAsync(ct);
 
             // Check if response is valid (not an auth error)
@@ -495,6 +722,138 @@ public sealed class GlassdoorApiClient : IDisposable
 
     public async Task<string?> SearchAsync(string keyword, string? location = null, string? csrfToken = null, CancellationToken ct = default)
     {
+        if (_sessionOrchestrator != null)
+        {
+            return await SearchWithOrchestratorAsync(keyword, location, csrfToken, ct);
+        }
+        else
+        {
+            return await SearchLegacyAsync(keyword, location, csrfToken, ct);
+        }
+    }
+
+    private async Task<string?> SearchWithOrchestratorAsync(string keyword, string? location, string? csrfToken, CancellationToken ct)
+    {
+        var affinityKey = $"glassdoor_{keyword}_{location}_{Guid.NewGuid():N}";
+
+        try
+        {
+            var context = new SessionAllocationContext(
+                PlatformName: "Glassdoor",
+                CountryCode: "US",
+                SessionType: SessionType.Http,
+                ComplexityScore: 50,
+                Metadata: new Dictionary<string, string>
+                {
+                    ["Query"] = keyword,
+                    ["Location"] = location ?? "Remote"
+                }
+            );
+
+            var affinityOptions = new SessionAffinityOptions(
+                AffinityKey: affinityKey,
+                AffinityDuration: TimeSpan.FromMinutes(5),
+                AllowFallback: true
+            );
+
+            _currentSessionId = await _sessionOrchestrator!.AllocateSessionWithAffinityAsync(context, affinityOptions, ct);
+            if (_logger != null) LogSessionAllocated(_logger, _currentSessionId, null);
+
+            var httpSession = await _sessionOrchestrator.GetHttpSessionAsync(_currentSessionId, ct);
+            if (httpSession == null)
+            {
+                if (_logger != null) LogSessionGetFailed(_logger, _currentSessionId, null);
+                return null;
+            }
+
+            var token = csrfToken ?? await GetCsrfTokenWithOrchestratorAsync(ct);
+
+            var payload = BuildSearchPayload(keyword, location);
+
+            await ApplyRateLimitAsync(ct);
+
+            var request = new HttpRequestMessage(HttpMethod.Post, GlassdoorConstants.ApiUrl)
+            {
+                Content = new StringContent(payload, Encoding.UTF8, new MediaTypeHeaderValue("application/json"))
+            };
+
+            foreach (var header in GlassdoorConstants.GraphHeaders)
+            {
+                request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                request.Headers.TryAddWithoutValidation("gd-csrf-token", token);
+            }
+
+            try
+            {
+                var res = await _retryPolicy.ExecuteAsync(async () =>
+                {
+                    var retryRequest = new HttpRequestMessage(HttpMethod.Post, GlassdoorConstants.ApiUrl)
+                    {
+                        Content = new StringContent(payload, Encoding.UTF8, new MediaTypeHeaderValue("application/json"))
+                    };
+
+                    foreach (var header in GlassdoorConstants.GraphHeaders)
+                    {
+                        retryRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                    }
+
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        retryRequest.Headers.TryAddWithoutValidation("gd-csrf-token", token);
+                    }
+
+                    return await httpSession.ExecuteAsync(() => retryRequest, ct).ConfigureAwait(false);
+                }).ConfigureAwait(false);
+
+                var json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+
+                try { System.IO.File.WriteAllText($"logs/glassdoor_search.json", json); } catch { }
+
+                var (hasErrors, shouldRetry) = ParseGraphQLErrors(json);
+
+                if (hasErrors)
+                {
+                    await CheckAndRecycleSessionAsync();
+                    return null;
+                }
+
+                if (res.IsSuccessStatusCode)
+                {
+                    return json;
+                }
+
+                return null;
+            }
+            catch (TaskCanceledException) when (ct.IsCancellationRequested)
+            {
+                return null;
+            }
+            catch (Exception ex)
+            {
+                if (_logger != null)
+                {
+                    LogSearchFailed(_logger, ex);
+                }
+                await CheckAndRecycleSessionAsync();
+                return null;
+            }
+        }
+        finally
+        {
+            if (_currentSessionId != null)
+            {
+                await _sessionOrchestrator!.CloseSessionAsync(_currentSessionId, ct);
+                _currentSessionId = null;
+            }
+        }
+    }
+
+    private async Task<string?> SearchLegacyAsync(string keyword, string? location, string? csrfToken, CancellationToken ct)
+    {
         var token = csrfToken ?? await GetCsrfTokenAsync(ct);
 
         // Build payload based on JobSpy's structure
@@ -539,7 +898,7 @@ public sealed class GlassdoorApiClient : IDisposable
                     retryRequest.Headers.TryAddWithoutValidation("gd-csrf-token", token);
                 }
 
-                return await _http.SendAsync(retryRequest, ct).ConfigureAwait(false);
+                return await _http!.SendAsync(retryRequest, ct).ConfigureAwait(false);
             }).ConfigureAwait(false);
 
             var json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
@@ -645,6 +1004,12 @@ public sealed class GlassdoorApiClient : IDisposable
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
+            // Handle case where root is an array (not a GraphQL response)
+            if (root.ValueKind == JsonValueKind.Array)
+            {
+                return (false, false); // Assume success for array responses
+            }
+
             // Check for GraphQL errors array
             if (root.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Array)
             {
@@ -694,6 +1059,29 @@ public sealed class GlassdoorApiClient : IDisposable
         }
 
         return (true, false); // Default to error with no retry
+    }
+
+    private async Task CheckAndRecycleSessionAsync()
+    {
+        if (_sessionOrchestrator == null || _currentSessionId == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var health = await _sessionOrchestrator.GetSessionHealthAsync(_currentSessionId, default);
+            if (health.Health == SessionHealth.Unhealthy)
+            {
+                if (_logger != null) LogSessionRecycled(_logger, _currentSessionId, null);
+                await _sessionOrchestrator.RecycleSessionAsync(_currentSessionId, default);
+                _currentSessionId = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            if (_logger != null) LogSessionHealthCheckFailed(_logger, _currentSessionId ?? "unknown", ex);
+        }
     }
 }
 

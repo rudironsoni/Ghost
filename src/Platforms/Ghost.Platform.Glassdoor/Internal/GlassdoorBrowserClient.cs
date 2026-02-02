@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Ghost.Contracts.Jobs;
 using Ghost.Core;
 using Ghost.Abstractions;
+using Ghost.ConsentManagement;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -54,6 +55,8 @@ public sealed class GlassdoorBrowserClient : IDisposable
     private static readonly Action<ILogger, Exception?> s_logLoadMoreFailed =
         LoggerMessage.Define(LogLevel.Debug, new EventId(12, nameof(GlassdoorBrowserClient)), "Failed to load more results");
 
+    private readonly ConsentManagerService _consentService;
+
     public GlassdoorBrowserClient(
         GhostKernel kernel,
         IOptions<GlassdoorOptions> options,
@@ -64,6 +67,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GlassdoorBrowserClient>.Instance;
         _proxyProvider = proxyProvider;
+        _consentService = new ConsentManagerService(null);
     }
 
     public async Task<IReadOnlyList<JobListing>> SearchAsync(JobSearchCriteria criteria, int limit, CancellationToken ct = default)
@@ -105,7 +109,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                 if (IsConsentPage(html))
                 {
                     s_logConsentDetected(_logger, null);
-                    await HandleConsentPageAsync(page, ct);
+                    await _consentService.WaitAndHandleConsentAsync(page, maxWaitMs: 8000, checkIntervalMs: 500);
                     html = await page.GetContentAsync(ct);
                 }
 
