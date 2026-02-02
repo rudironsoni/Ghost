@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NoWarn>CA1707;CA1826;CA1001;CA1852</NoWarn>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Platforms/Ghost.Platform.Indeed/Ghost.Platform.Indeed.csproj" />
+    <ProjectReference Include="../../src/Platforms/Ghost.Platform.Glassdoor/Ghost.Platform.Glassdoor.csproj" />
+    <ProjectReference Include="../../src/Platforms/Ghost.Platform.Google/Ghost.Platform.Google.csproj" />
+    <ProjectReference Include="../../src/Core/Ghost.Scraper.DotnetSpider/Ghost.Scraper.DotnetSpider.csproj" />
+    <ProjectReference Include="../../src/Contracts/Ghost.Contracts.Jobs/Ghost.Contracts.Jobs.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+  </ItemGroup>
+
+</Project>
