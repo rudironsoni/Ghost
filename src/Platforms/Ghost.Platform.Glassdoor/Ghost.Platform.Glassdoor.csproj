@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Ghost.Platform.Glassdoor</RootNamespace>
     <Description>Ghost Glassdoor platform integration</Description>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -9,9 +9,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Ghost\Ghost.csproj" />
+    <ProjectReference Include="..\..\Core\Ghost.Scraper.DotnetSpider\Ghost.Scraper.DotnetSpider.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
     <ProjectReference Include="..\..\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
+    <ProjectReference Include="..\Ghost.Platform.Common\Ghost.Platform.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,5 +22,6 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="DotnetSpider" />
   </ItemGroup>
 </Project>
