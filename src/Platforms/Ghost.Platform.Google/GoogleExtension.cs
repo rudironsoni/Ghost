@@ -50,14 +50,12 @@ public sealed class GoogleExtension : Ghost.Hosting.IExtension
                 var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.Internal.GoogleJobsApiClient>>();
                 return new Jobs.Internal.GoogleJobsApiClient(httpClient, options, logger);
             })
-            .ConfigurePrimaryHttpMessageHandler(() =>
+            .ConfigurePrimaryHttpMessageHandler(sp =>
             {
-                var handler = new HttpClientHandler
-                {
-                    CookieContainer = new CookieContainer(),
-                    UseCookies = true,
-                    AllowAutoRedirect = true
-                };
+                var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Jobs.GoogleJobsOptions>>().Value;
+                var handler = opts.ProxyEnabled
+                    ? new HttpClientHandler { Proxy = new Ghost.Http.RotatingWebProxy(sp.GetRequiredService<Ghost.Abstractions.IProxyProvider>()), UseProxy = true, CookieContainer = new CookieContainer(), UseCookies = true, AllowAutoRedirect = true }
+                    : new HttpClientHandler { CookieContainer = new CookieContainer(), UseCookies = true, AllowAutoRedirect = true };
                 return HttpClientSecurityExtensions.ConfigureSecureHttpClientHandler(handler);
             });
 
