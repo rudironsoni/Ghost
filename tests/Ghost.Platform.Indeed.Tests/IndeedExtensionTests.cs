@@ -36,5 +36,8 @@ public class IndeedExtensionTests
         var sp = services.BuildServiceProvider();
         var jobClient = sp.GetService<Ghost.Contracts.Jobs.IJobClient>();
         Assert.NotNull(jobClient);
+
+        var apiClient = sp.GetService<IndeedApiClient>();
+        Assert.NotNull(apiClient);
     }
 }

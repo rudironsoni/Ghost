@@ -31,8 +31,30 @@ public class IndeedExtension : Ghost.Hosting.IExtension
         // register IndeedOptions for ApiClient constructor
         services.AddSingleton(opts);
 
-        // IndeedApiClient manages its own HttpClient per request to support dynamic proxy credentials.
-        services.AddScoped<IndeedApiClient>();
+        services.AddSingleton<IndeedApiClient>(sp =>
+        {
+            var proxyProvider = sp.GetService<IProxyProvider>();
+            var sessionOrchestrator = sp.GetService<Ghost.Platform.Common.Session.ISessionOrchestrator>();
+            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<IndeedApiClient>>();
+            var options = sp.GetRequiredService<IndeedOptions>();
+
+            if (proxyProvider != null && sessionOrchestrator != null)
+            {
+                return new IndeedApiClient(proxyProvider, sessionOrchestrator, options, logger);
+            }
+
+            if (sessionOrchestrator != null)
+            {
+                return new IndeedApiClient(sessionOrchestrator, options, logger);
+            }
+
+            if (proxyProvider != null)
+            {
+                return new IndeedApiClient(proxyProvider, options, logger);
+            }
+
+            throw new InvalidOperationException("IndeedApiClient requires IProxyProvider or ISessionOrchestrator to be registered.");
+        });
 
         services.AddScoped<IndeedJobClient>();
         // register as both IJobScraper and IJobClient for backward compatibility

@@ -1,9 +1,11 @@
+using System;
 using Ghost.Abstractions;
 
 namespace Ghost.Proxy;
 
 public sealed class StaticProxyProvider : IProxyProvider
 {
+    public static StaticProxyProvider Empty { get; } = new(Array.Empty<ProxyInfo>());
     private readonly List<ProxyInfo> _proxies;
     private int _index;
 

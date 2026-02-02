@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Ghost.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Ghost.Platform.LinkedIn;
 
@@ -18,8 +19,18 @@ public sealed class LinkedInExtension : IExtension
     {
         // Bind from nested path: Ghost:Extensions:LinkedIn in appsettings.json
         services.Configure<LinkedInOptions>(configuration.GetSection("Ghost:Extensions:LinkedIn"));
+        services.Configure<LinkedInSessionPoolOptions>(configuration.GetSection("Ghost:Extensions:LinkedIn:SessionPool"));
         // Authenticator used by LinkedInSocialClient for logging in / cookie handling
         services.AddTransient<Internal.LinkedInAuthenticator>();
+        services.AddSingleton<Internal.LinkedInSessionPool>(sp =>
+        {
+            var kernel = sp.GetRequiredService<Ghost.Core.GhostKernel>();
+            var poolOptions = sp.GetRequiredService<IOptions<LinkedInSessionPoolOptions>>().Value;
+            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Internal.LinkedInSessionPool>>();
+            var proxyProvider = sp.GetService<Ghost.Abstractions.IProxyProvider>() ?? Ghost.Proxy.StaticProxyProvider.Empty;
+            var linkedInOptions = sp.GetRequiredService<IOptions<LinkedInOptions>>().Value;
+            return new Internal.LinkedInSessionPool(kernel, poolOptions, logger, proxyProvider, linkedInOptions);
+        });
         // Register platform-specific implementations for core abstractions
         services.AddScoped<Ghost.Abstractions.ITextExtractor, Internal.LinkedInTextExtractor>();
         services.AddScoped<Ghost.Abstractions.ICountryDomainProvider, Internal.LinkedInCountryProvider>();

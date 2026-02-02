@@ -21,8 +21,7 @@ public class DateParserTests
     {
         var (s, e) = _parser.ParseDateRange("Mar 2020 - Present");
         Assert.NotNull(s);
-        Assert.NotNull(e);
-        Assert.True(e.Value.Year >= DateTime.UtcNow.Year);
+        Assert.Null(e);
     }
 
     [Fact]

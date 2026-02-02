@@ -1,35 +1,30 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Ghost.Contracts.Jobs;
-using Ghost.Core;
 using Ghost.Abstractions;
+using Ghost.Contracts.Jobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
-using System.Linq;
 
 namespace Ghost.Platform.LinkedIn.Internal;
 
 public sealed class GuestJobSearch : IGuestJobSearch
 {
-    private readonly GhostKernel _kernel;
-    private readonly IProxyProvider _proxyProvider;
     private readonly ILogger<GuestJobSearch> _logger;
     private readonly IOptions<LinkedInOptions> _options;
     private readonly LinkedInAuthenticator _authenticator;
     private readonly ICountryDomainProvider _countryProvider;
-
-    private static readonly Action<ILogger, string, Exception?> s_logUsingProxy =
-        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(1, nameof(GuestJobSearch)), "Using proxy: {Proxy}");
+    private readonly LinkedInSessionPool _sessionPool;
 
     private static readonly Action<ILogger, string, Exception?> s_logNavigating =
         LoggerMessage.Define<string>(LogLevel.Debug, new EventId(2, nameof(GuestJobSearch)), "Navigating to: {Url}");
 
-    private static readonly Action<ILogger, string, bool, Exception?> s_logSessionCreating =
-        LoggerMessage.Define<string, bool>(LogLevel.Information, new EventId(5, nameof(SearchAsync)), "Creating isolated session. Proxy: {Proxy}, Warm-up: {WarmUp}");
+    private static readonly Action<ILogger, bool, Exception?> s_logSessionCreating =
+        LoggerMessage.Define<bool>(LogLevel.Information, new EventId(5, nameof(SearchAsync)), "Creating pooled session. Warm-up: {WarmUp}");
 
     private static readonly Action<ILogger, string, Exception?> s_logRateLimitPassed =
         LoggerMessage.Define<string>(LogLevel.Information, new EventId(6, nameof(SearchAsync)), "Rate limit check passed for {Url}");
@@ -40,33 +35,26 @@ public sealed class GuestJobSearch : IGuestJobSearch
     private static readonly Action<ILogger, Exception?> s_logGuestSearchFailed =
         LoggerMessage.Define(LogLevel.Warning, new EventId(3, nameof(GuestJobSearch)), "Guest search navigation/parsing failed");
 
-    private static readonly Action<ILogger, Exception?> s_logProxyDisabled =
-        LoggerMessage.Define(LogLevel.Information, new EventId(4, nameof(GuestJobSearch)), "Proxy disabled by configuration. Using direct connection.");
+    private static readonly Action<ILogger, int, string, Exception?> s_logSessionFailed =
+        LoggerMessage.Define<int, string>(LogLevel.Warning, new EventId(8, nameof(GuestJobSearch)), "Session failed (Attempt {Attempt}/3). Error: {Message}");
 
-    private static readonly Action<ILogger, string, int, string, Exception?> s_logProxyFailed =
-        LoggerMessage.Define<string, int, string>(LogLevel.Warning, new EventId(8, nameof(GuestJobSearch)), "Proxy {Proxy} failed (Attempt {Attempt}/3). Error: {Message}");
-
-    private static readonly Action<ILogger, string, Exception?> s_logAllProxyFailed =
-        LoggerMessage.Define<string>(LogLevel.Error, new EventId(9, nameof(GuestJobSearch)), "All proxy attempts failed for {Url}");
+    private static readonly Action<ILogger, string, Exception?> s_logAllSessionAttemptsFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(9, nameof(GuestJobSearch)), "All session attempts failed for {Url}");
 
     private static readonly char[] s_newlines = { '\n', '\r' };
 
     public GuestJobSearch(
-        GhostKernel kernel,
-        IProxyProvider proxyProvider,
         IOptions<LinkedInOptions> options,
         LinkedInAuthenticator authenticator,
         ILogger<GuestJobSearch> logger,
-        ICountryDomainProvider countryProvider)
+        ICountryDomainProvider countryProvider,
+        LinkedInSessionPool sessionPool)
     {
-        ArgumentNullException.ThrowIfNull(kernel);
-        ArgumentNullException.ThrowIfNull(proxyProvider);
-        _kernel = kernel;
-        _proxyProvider = proxyProvider;
         _authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GuestJobSearch>.Instance;
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _countryProvider = countryProvider ?? throw new ArgumentNullException(nameof(countryProvider));
+        _sessionPool = sessionPool ?? throw new ArgumentNullException(nameof(sessionPool));
     }
 
     public async Task<IReadOnlyList<string>> SearchAsync(JobSearchCriteria criteria, int limit, CancellationToken ct)
@@ -74,35 +62,6 @@ public sealed class GuestJobSearch : IGuestJobSearch
         ArgumentNullException.ThrowIfNull(criteria);
 
         var ids = new List<string>();
-        // Create a fresh session for the search to isolate from other work
-        SessionOptions options;
-        string proxyUsed = "None";
-        // Preserve storage state path from options so sessions can reuse cookies if configured
-        if (!_options.Value.ProxyEnabled)
-        {
-            // When proxy usage is disabled by configuration, do not fetch a proxy
-            // and create session options without proxy settings.
-            s_logProxyDisabled(_logger, null);
-            options = new SessionOptions { Proxy = null, StorageStatePath = _options.Value.StorageStatePath };
-            proxyUsed = "Disabled";
-        }
-        else
-        {
-            // Keep existing behavior: fetch a proxy and apply settings to the session
-            var proxy = _proxyProvider is not null ? await _proxyProvider.GetProxyAsync("US", ct) : null;
-            // log the proxy being used for this search
-            s_logUsingProxy(_logger, proxy?.Server ?? "None", null);
-            options = new SessionOptions { StorageStatePath = _options.Value.StorageStatePath };
-            if (proxy is not null)
-            {
-                options.Proxy = new SessionOptions.ProxySettings(proxy.Server, proxy.Username, proxy.Password);
-                proxyUsed = proxy.Server ?? "None";
-            }
-            else
-            {
-                proxyUsed = "None";
-            }
-        }
 
         var q = Uri.EscapeDataString(criteria.Query ?? string.Empty);
         var loc = Uri.EscapeDataString(criteria.Location ?? string.Empty);
@@ -129,33 +88,8 @@ public sealed class GuestJobSearch : IGuestJobSearch
             // Try up to 3 attempts, fetching a fresh proxy/session each time
             for (var attempt = 1; attempt <= 3 && !success; attempt++)
             {
-                SessionOptions attemptOptions;
-                string attemptProxy = "None";
-
-                if (!_options.Value.ProxyEnabled)
-                {
-                    s_logProxyDisabled(_logger, null);
-                    attemptOptions = new SessionOptions { Proxy = null, StorageStatePath = _options.Value.StorageStatePath };
-                    attemptProxy = "Disabled";
-                }
-                else
-                {
-                    var proxy = _proxyProvider is not null ? await _proxyProvider.GetProxyAsync("US", ct) : null;
-                    s_logUsingProxy(_logger, proxy?.Server ?? "None", null);
-                    attemptOptions = new SessionOptions { StorageStatePath = _options.Value.StorageStatePath };
-                    if (proxy is not null)
-                    {
-                        attemptOptions.Proxy = new SessionOptions.ProxySettings(proxy.Server, proxy.Username, proxy.Password);
-                        attemptProxy = proxy.Server ?? "None";
-                    }
-                    else
-                    {
-                        attemptProxy = "None";
-                    }
-                }
-
-                s_logSessionCreating(_logger, attemptProxy, _options.Value.WarmUpEnabled, null);
-                var session = await _kernel.NewSessionAsync(attemptOptions, ct);
+                s_logSessionCreating(_logger, _options.Value.WarmUpEnabled, null);
+                var session = await _sessionPool.AcquireAsync(ct);
                 var page = await session.NewPageAsync(ct: ct);
                 try
                 {
@@ -212,9 +146,9 @@ public sealed class GuestJobSearch : IGuestJobSearch
                 catch (PlaywrightException pex)
                 {
                     // Any Playwright error during navigation/setup should trigger a proxy retry.
-                    s_logProxyFailed(_logger, attemptProxy, attempt, pex.Message, null);
+                    s_logSessionFailed(_logger, attempt, pex.Message, null);
                     try { await page.DisposeAsync(); } catch { }
-                    try { await session.DisposeAsync(); } catch { }
+                    _sessionPool.Release(session);
                     // continue to next attempt which will fetch a new proxy
                     continue;
                 }
@@ -231,14 +165,14 @@ public sealed class GuestJobSearch : IGuestJobSearch
                     try { await page.DisposeAsync(); } catch { }
                     if (session is not null)
                     {
-                        try { await session.DisposeAsync(); } catch { }
+                        _sessionPool.Release(session);
                     }
                 }
             }
 
             if (!success)
             {
-                s_logAllProxyFailed(_logger, url, null);
+                s_logAllSessionAttemptsFailed(_logger, url, null);
                 return ids;
             }
 
@@ -258,33 +192,8 @@ public sealed class GuestJobSearch : IGuestJobSearch
         var url = $"{domain}/jobs-guest/jobs/api/jobPosting/{jobId}";
         for (var attempt = 1; attempt <= 3; attempt++)
         {
-            SessionOptions attemptOptions;
-            string attemptProxy = "None";
-
-            if (!_options.Value.ProxyEnabled)
-            {
-                s_logProxyDisabled(_logger, null);
-                attemptOptions = new SessionOptions { Proxy = null, StorageStatePath = _options.Value.StorageStatePath };
-                attemptProxy = "Disabled";
-            }
-            else
-            {
-                var proxy = _proxyProvider is not null ? await _proxyProvider.GetProxyAsync("US", ct) : null;
-                s_logUsingProxy(_logger, proxy?.Server ?? "None", null);
-                attemptOptions = new SessionOptions { StorageStatePath = _options.Value.StorageStatePath };
-                if (proxy is not null)
-                {
-                    attemptOptions.Proxy = new SessionOptions.ProxySettings(proxy.Server, proxy.Username, proxy.Password);
-                    attemptProxy = proxy.Server ?? "None";
-                }
-                else
-                {
-                    attemptProxy = "None";
-                }
-            }
-
-            s_logSessionCreating(_logger, attemptProxy, _options.Value.WarmUpEnabled, null);
-            var session = await _kernel.NewSessionAsync(attemptOptions, ct);
+            s_logSessionCreating(_logger, _options.Value.WarmUpEnabled, null);
+            var session = await _sessionPool.AcquireAsync(ct);
             var page = await session.NewPageAsync(ct: ct);
             try
             {
@@ -552,9 +461,9 @@ public sealed class GuestJobSearch : IGuestJobSearch
                 catch (OperationCanceledException) { throw; }
                 catch (PlaywrightException pex)
                 {
-                    s_logProxyFailed(_logger, attemptProxy, attempt, pex.Message, null);
+                    s_logSessionFailed(_logger, attempt, pex.Message, null);
                     try { await page.DisposeAsync(); } catch { }
-                    try { await session.DisposeAsync(); } catch { }
+                    _sessionPool.Release(session);
                     continue;
                 }
                 catch (Exception ex)
@@ -568,12 +477,12 @@ public sealed class GuestJobSearch : IGuestJobSearch
                 try { await page.DisposeAsync(); } catch { }
                 if (session is not null)
                 {
-                    try { await session.DisposeAsync(); } catch { }
+                    _sessionPool.Release(session);
                 }
             }
         }
 
-        s_logAllProxyFailed(_logger, url, null);
+        s_logAllSessionAttemptsFailed(_logger, url, null);
         return null;
     }
 

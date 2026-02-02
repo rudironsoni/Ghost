@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Ghost.Contracts.Jobs;
 
 namespace Ghost.Platform.Indeed.Internal;
@@ -28,7 +26,7 @@ public static class IndeedJobParser
             var company = job.TryGetProperty("employer", out var e) && e.TryGetProperty("name", out var en) ? en.GetString() ?? string.Empty : string.Empty;
             var location = job.TryGetProperty("location", out var l) && l.TryGetProperty("formatted", out var f) && f.TryGetProperty("long", out var lon) ? lon.GetString() ?? string.Empty : string.Empty;
             var descriptionHtml = job.TryGetProperty("description", out var d) && d.TryGetProperty("html", out var dh) ? dh.GetString() ?? string.Empty : string.Empty;
-            var description = StripHtmlTags(descriptionHtml);
+            var description = HtmlSanitizer.StripHtmlTags(descriptionHtml);
 
             string salary = ExtractSalary(job);
 
@@ -47,32 +45,6 @@ public static class IndeedJobParser
                 Source = "Indeed"
             };
         }
-    }
-
-    private static string StripHtmlTags(string html)
-    {
-        if (string.IsNullOrWhiteSpace(html))
-            return string.Empty;
-
-        // Replace common block-level tags with newlines for better formatting
-        html = html.Replace("<br>", "\n").Replace("<br/>", "\n").Replace("<br />", "\n");
-        html = html.Replace("</p>", "\n\n").Replace("</div>", "\n");
-        html = html.Replace("</li>", "\n").Replace("</h1>", "\n\n").Replace("</h2>", "\n\n").Replace("</h3>", "\n\n");
-
-        // Remove all remaining HTML tags
-        html = Regex.Replace(html, "<[^>]+>", string.Empty);
-
-        // Decode common HTML entities
-        html = html.Replace("&nbsp;", " ").Replace("&amp;", "&").Replace("&lt;", "<").Replace("&gt;", ">");
-        html = html.Replace("&quot;", "\"").Replace("&#39;", "'").Replace("&rsquo;", "'").Replace("&lsquo;", "'");
-        html = html.Replace("&rdquo;", "\"").Replace("&ldquo;", "\"").Replace("&ndash;", "-").Replace("&mdash;", "—");
-        html = html.Replace("&hellip;", "...").Replace("&bull;", "•").Replace("&trade;", "™").Replace("&copy;", "©");
-        html = html.Replace("&reg;", "®").Replace("&euro;", "€").Replace("&pound;", "£").Replace("&yen;", "¥");
-
-        html = Regex.Replace(html, "[ \t]+", " ");
-        html = Regex.Replace(html, "\n{3,}", "\n\n");
-
-        return html.Trim();
     }
 
     private static string ExtractSalary(JsonElement job)

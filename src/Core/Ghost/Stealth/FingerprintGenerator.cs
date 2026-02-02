@@ -58,25 +58,7 @@ public static class FingerprintGenerator
 
         // Multi-language support for timezone (JobSpy pattern)
         (string tz, double minLat, double maxLat, double minLng, double maxLng)[] timezones = [
-            ("America/New_York", 40.5, 41.0, -74.25, -73.7),
-            ("America/Los_Angeles", 33.7, 34.3, -118.5, -117.9),
-            ("America/Chicago", 41.7, 42.0, -87.9, -87.5),
-            ("America/Denver", 39.5, 40.0, -105.0, -104.8),
-            ("America/Seattle", 47.4, 47.7, -122.4, -122.1),
-            ("Europe/London", 51.3, 51.7, -0.2, -0.1),
-            ("Europe/Paris", 48.7, 49.0, 2.2, 2.6),
-            ("Europe/Berlin", 52.3, 52.7, 13.2, 13.6),
-            ("Europe/Madrid", 40.3, 40.5, -3.8, -3.5),
-            ("Europe/Rome", 41.8, 42.0, 12.4, 12.6),
-            ("Europe/Amsterdam", 52.3, 52.4, 4.8, 5.1),
-            ("Asia/Tokyo", 35.5, 36.0, 139.5, 140.0),
-            ("Asia/Shanghai", 31.0, 31.5, 121.3, 121.8),
-            ("Asia/Singapore", 1.2, 1.5, 103.8, 104.1),
-            ("Asia/Seoul", 37.4, 37.7, 126.8, 127.2),
-            ("Pacific/Auckland", -36.8, -36.9, 174.5, 175.1),
-            ("Australia/Sydney", -33.5, -34.2, 151.0, 151.5),
-            ("Asia/Dubai", 24.9, 25.3, 55.1, 55.6),
-            ("America/Sao_Paulo", -23.5, -23.0, -46.5, -46.6)
+            ("America/New_York", 40.5, 41.0, -74.25, -73.7)
         ];
 
         // GPU vendor variations (JobSpy-style hardware diversity)
@@ -179,7 +161,7 @@ public static class FingerprintGenerator
             TimeZone = selectedTz.tz,
             VideoCardVendor = selectedGpu.vendor,
             VideoCardRenderer = selectedRenderer,
-            BatteryLevel = 0.40 + (rnd.NextDouble() * 0.60),
+            BatteryLevel = 0.70 + (rnd.NextDouble() * 0.30),
             Rtt = 15 + rnd.NextDouble() * 100,
             Downlink = 3 + rnd.Next(50),
             ConnectionType = connectionType,

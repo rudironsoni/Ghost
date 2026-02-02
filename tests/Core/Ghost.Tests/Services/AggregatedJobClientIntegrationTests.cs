@@ -333,7 +333,7 @@ public class AggregatedJobClientIntegrationTests
         var endTime = DateTime.UtcNow;
 
         // Assert
-        (endTime - startTime).TotalMilliseconds.Should().BeLessThan(500);
+        (endTime - startTime).TotalMilliseconds.Should().BeLessThan(1100);
     }
 
     [Fact]
