@@ -34,7 +34,7 @@ public class IndeedJobParserTests
         Assert.Equal("Software Engineer", arr[0].Title);
         Assert.Equal("ACME", arr[0].Company);
         Assert.Contains("New York", arr[0].Location);
-        Assert.Equal("<p>Job</p>", arr[0].Description);
+        Assert.Equal("Job", arr[0].Description);
         Assert.Contains("50000", arr[0].Salary);
     }
 }

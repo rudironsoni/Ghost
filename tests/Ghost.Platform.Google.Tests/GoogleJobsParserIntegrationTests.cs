@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
+using NSubstitute;
 using Xunit;
 using Ghost.Platform.Google.Jobs.Internal;
 using Ghost.Contracts.Jobs;
@@ -195,7 +196,7 @@ public class GoogleJobsParserIntegrationTests
         string? html = null;
 
         // Act
-        var result = GoogleJobsParser.ParseFromHtml(html!, _loggerMock.Object);
+            var result = GoogleJobsParser.ParseFromHtml(html!, _logger);
 
         // Assert
         result.Should().NotBeNull();
@@ -388,7 +389,7 @@ public class GoogleJobsParserIntegrationTests
                 """;
 
             // Act
-            var result = GoogleJobsParser.ParseFromHtml(html, _loggerMock.Object);
+            var result = GoogleJobsParser.ParseFromHtml(html, _logger);
 
             // Assert
             result.Should().HaveCount(1);
