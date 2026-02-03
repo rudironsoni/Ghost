@@ -1,5 +1,5 @@
 services:
-  ghostwright-webapi:
+  ghost-webapi:
     build:
       context: .
       dockerfile: src/Ghost.WebApi/Dockerfile
