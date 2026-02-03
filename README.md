@@ -340,6 +340,32 @@ Prioritize platforms with official APIs for better reliability:
 | `Ghost.Hosting.WebApi`      | ASP.NET Core integration                 |
 | `Ghost.Sdk`                 | Meta-package for quick start             |
 
+## Infrastructure
+
+Ghost Platform includes enterprise-grade infrastructure for production deployments.
+
+### Quick Deploy
+
+```bash
+# Development (k3s, $50/month)
+cd infrastructure/environments/development
+terraform init && terraform apply
+
+# Production (EKS HA, $500-800/month)
+cd infrastructure/environments/production
+terraform init && terraform apply
+```
+
+### Infrastructure Features
+
+- **Kubernetes Platform**: EKS/k3s with auto-scaling, HPA, PDB
+- **Security**: HashiCorp Vault, OPA Gatekeeper, Falco, Trivy scanning
+- **Observability**: Prometheus, Grafana (6 dashboards), Loki, alerting
+- **CI/CD**: GitHub Actions, Azure DevOps, ArgoCD GitOps
+- **Multi-Environment**: Development, staging, production
+
+See [infrastructure/README.md](infrastructure/README.md) for complete documentation.
+
 ## Building
 
 ```bash
