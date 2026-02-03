@@ -53,9 +53,10 @@ RUN apt-get update && \
     libxss1 libxtst6 libxkbcommon0 libxshmfence1 && \
     rm -rf /var/lib/apt/lists/*
 
-RUN dotnet tool install --global Microsoft.Playwright.CLI && \
-    export PATH="$PATH:/root/.dotnet/tools" && \
-    playwright install chromium
+# Install Playwright CLI and browsers
+RUN dotnet tool install --global Microsoft.Playwright.CLI
+ENV PATH="${PATH}:/root/.dotnet/tools"
+RUN playwright install chromium
 
 # Final stage
 FROM base AS final
