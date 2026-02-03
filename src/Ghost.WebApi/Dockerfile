@@ -39,7 +39,7 @@ RUN dotnet restore "src/Ghost.WebApi/Ghost.WebApi.csproj"
 RUN dotnet build "src/Ghost.WebApi/Ghost.WebApi.csproj" -c Release -o /app/build --no-restore
 
 FROM build AS publish
-RUN dotnet publish "src/Ghost.WebApi/Ghost.WebApi.csproj" -c Release -o /app/publish /p:UseAppHost=false --no-build
+RUN dotnet publish "src/Ghost.WebApi/Ghost.WebApi.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Install Playwright browsers
 FROM build AS playwright
