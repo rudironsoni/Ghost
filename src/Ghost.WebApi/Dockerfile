@@ -29,19 +29,17 @@ COPY ["src/Platforms/Ghost.Platform.Indeed/Ghost.Platform.Indeed.csproj", "src/P
 COPY ["src/Platforms/Ghost.Platform.Glassdoor/Ghost.Platform.Glassdoor.csproj", "src/Platforms/Ghost.Platform.Glassdoor/"]
 COPY ["src/Platforms/Ghost.Platform.InfoJobs/Ghost.Platform.InfoJobs.csproj", "src/Platforms/Ghost.Platform.InfoJobs/"]
 
-# Restore dependencies
-RUN dotnet restore "src/Ghost.WebApi/Ghost.WebApi.csproj"
-
 # Copy full source
 COPY . .
 
+# Restore dependencies
+RUN dotnet restore "src/Ghost.WebApi/Ghost.WebApi.csproj"
+
 # Build application
-WORKDIR "/src/src/Ghost.WebApi"
-RUN dotnet build "Ghost.WebApi.csproj" -c Release -o /app/build --no-restore
+RUN dotnet build "src/Ghost.WebApi/Ghost.WebApi.csproj" -c Release -o /app/build --no-restore
 
 FROM build AS publish
-WORKDIR "/src/src/Ghost.WebApi"
-RUN dotnet publish "Ghost.WebApi.csproj" -c Release -o /app/publish /p:UseAppHost=false --no-build
+RUN dotnet publish "src/Ghost.WebApi/Ghost.WebApi.csproj" -c Release -o /app/publish /p:UseAppHost=false --no-build
 
 # Install Playwright browsers
 FROM build AS playwright
