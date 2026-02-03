@@ -38,11 +38,12 @@ RUN dotnet restore "src/Ghost.WebApi/Ghost.WebApi.csproj"
 # Build application
 RUN dotnet build "src/Ghost.WebApi/Ghost.WebApi.csproj" -c Release -o /app/build --no-restore
 
+# Publish application
 FROM build AS publish
 RUN dotnet publish "src/Ghost.WebApi/Ghost.WebApi.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# Install Playwright browsers
-FROM build AS playwright
+# Install Playwright browsers (after publish so Microsoft.Playwright is built)
+FROM publish AS playwright
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     ca-certificates fonts-liberation libasound2t64 libatk-bridge2.0-0 \
@@ -53,7 +54,7 @@ RUN apt-get update && \
     libxss1 libxtst6 libxkbcommon0 libxshmfence1 && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Playwright CLI and browsers
+# Install Playwright CLI and browsers (project is now built with Microsoft.Playwright)
 RUN dotnet tool install --global Microsoft.Playwright.CLI
 ENV PATH="${PATH}:/root/.dotnet/tools"
 RUN playwright install chromium
