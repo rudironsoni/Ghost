@@ -1,12 +1,15 @@
 name: Release Docker Image
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       bump:
         description: Version bump (major, minor, patch)
         required: true
-        default: patch
+        default: minor
         type: choice
         options:
           - patch
@@ -33,7 +36,7 @@ jobs:
           latest=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "v0.0.0")
           version=${latest#v}
           IFS='.' read -r major minor patch <<< "$version"
-          bump="${{ inputs.bump }}"
+          bump="${{ github.event_name == 'workflow_dispatch' && inputs.bump || 'minor' }}"
           case "$bump" in
             major)
               major=$((major + 1))
