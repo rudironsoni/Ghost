@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Contracts", "src\Cont
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Contracts.Inference", "src\Contracts\Ghost.Contracts.Inference\Ghost.Contracts.Inference.csproj", "{C5DCBE9A-72BD-4288-BA8D-B35E66EB8EFA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Contracts.Simulation", "src\Contracts\Ghost.Contracts.Simulation\Ghost.Contracts.Simulation.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Platforms", "Platforms", "{82099983-647E-F067-E69A-CD800643A918}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Anthropic", "src\Platforms\Ghost.Platform.Anthropic\Ghost.Platform.Anthropic.csproj", "{EB99B5A8-1713-4093-B8DB-980BEC1090BE}"
@@ -24,6 +26,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Google", "src\Platforms\Ghost.Platform.Google\Ghost.Platform.Google.csproj", "{8C040123-E92F-46CE-A24F-673A72484362}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.LinkedIn", "src\Platforms\Ghost.Platform.LinkedIn\Ghost.Platform.LinkedIn.csproj", "{99D9901F-20C8-49A3-A9D6-42BD2BB4FFC5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.X", "src\Platforms\Ghost.Platform.X\Ghost.Platform.X.csproj", "{B2C3D4E5-F6A7-8901-BCDE-F23456789012}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hosting", "Hosting", "{F489E2D5-C65D-9AA9-2B96-C7DF79630172}"
 EndProject
@@ -60,6 +64,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.LinkedIn.Tests", "tests\Platforms\Ghost.Platform.LinkedIn.Tests\Ghost.Platform.LinkedIn.Tests.csproj", "{7BC91500-683F-4DA9-BE99-2CE172F30473}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Anthropic.Tests", "tests\Platforms\Ghost.Platform.Anthropic.Tests\Ghost.Platform.Anthropic.Tests.csproj", "{3634E1F1-D45B-459B-B1AA-6297CBC7C9DE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.X.E2E", "tests\Platforms\Ghost.Platform.X.E2E\Ghost.Platform.X.E2E.csproj", "{D4E5F6A7-B8C9-0123-DEF0-456789012345}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.WebApi", "src\Ghost.WebApi\Ghost.WebApi.csproj", "{7D613B3F-FE61-4A88-8984-A01247C2185C}"
 EndProject
@@ -351,9 +357,12 @@ Global
 		{BF17D4E2-E9EB-4C06-80F8-84FF9C8C26E4} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
 		{7BC91500-683F-4DA9-BE99-2CE172F30473} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
 		{3634E1F1-D45B-459B-B1AA-6297CBC7C9DE} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
+		{D4E5F6A7-B8C9-0123-DEF0-456789012345} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
 		{7D613B3F-FE61-4A88-8984-A01247C2185C} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{06EA4049-71F6-9CC1-7BD8-C18A2D82CDBA} = {8D626EA8-CB54-BC41-363A-217881BEBA6E}
 		{1C09856E-9BA3-696A-7EF7-3A3A651ACF2B} = {06EA4049-71F6-9CC1-7BD8-C18A2D82CDBA}
 		{914C32DF-3D94-4AF6-98E6-1C9B4AF5800A} = {8D626EA8-CB54-BC41-363A-217881BEBA6E}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890} = {FFBE31B8-50B9-B415-22BC-2F92C97CADA3}
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012} = {82099983-647E-F067-E69A-CD800643A918}
 	EndGlobalSection
 EndGlobal
