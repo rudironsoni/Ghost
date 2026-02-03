@@ -7,6 +7,7 @@ using Ghost.WebApi.Features.Health;
 using Ghost.WebApi.Features.Admin;
 using Ghost.Core;
 using Ghost.Monitoring;
+using Ghost.Resilience;
 using Microsoft.Extensions.Logging.Abstractions;
 // Removed unused reflection/disk/culture usings after replacing dynamic loader with
 // compile-time referenced extensions.
@@ -154,9 +155,12 @@ if (linkedInEnabled)
 }
 
 // Map job endpoints and health checks
-app.MapJobsEndpoints();
-app.MapHealthEndpoints();
-app.MapDetailedHealth();
-app.MapHealthChecks("/health");
+        app.MapJobsEndpoints();
+        app.MapHealthEndpoints();
+        app.MapDetailedHealth();
+        app.MapCircuitBreakerHealth();
+        app.MapDlqEndpoints();
+        app.MapMetricsEndpoints();
+        app.MapHealthChecks("/health");
 
 app.Run();

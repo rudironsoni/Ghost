@@ -4,8 +4,8 @@ using System.Text.Json;
 
 namespace Ghost.Core;
 
-#pragma warning disable CA1711 // Type names should not end in 'Queue'
-public interface IDeadLetterQueue
+#pragma warning disable CA1711
+public interface IGenericDeadLetterQueue
 {
     Task EnqueueAsync<T>(T item, string reason, Exception? exception = null, CancellationToken cancellationToken = default);
     Task<List<DeadLetterItem>> PeekAsync(int count = 10, CancellationToken cancellationToken = default);
@@ -26,7 +26,8 @@ public class DeadLetterItem
     public int RetryCount { get; init; }
 }
 
-public class InMemoryDeadLetterQueue : IDeadLetterQueue
+#pragma warning disable CA1711
+public class InMemoryDeadLetterQueue : IGenericDeadLetterQueue
 {
     private static readonly Action<ILogger, Guid, string, string, Exception?> _itemEnqueued = LoggerMessage.Define<Guid, string, string>(
         LogLevel.Warning,
