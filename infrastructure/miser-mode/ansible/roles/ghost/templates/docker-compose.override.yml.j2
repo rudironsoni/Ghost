@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  nginx:
+    environment:
+      - DOMAIN_NAME={{ domain_name | default(ansible_default_ipv4.address) }}
+{% if enable_ssl %}
+      - SSL_ENABLED=true
+{% endif %}

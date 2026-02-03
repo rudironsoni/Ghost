@@ -1,0 +1,212 @@
+---
+# Ghost role - Deploy the Ghost Platform application
+
+- name: Ensure Git is installed
+  apt:
+    name: git
+    state: present
+  tags:
+    - ghost
+    - git
+
+- name: Clone or update Ghost Platform repository
+  git:
+    repo: "https://github.com/rudironsoni/Ghost.git"
+    dest: "{{ ghost_install_dir }}/source"
+    version: main
+    force: yes
+  become_user: "{{ ghost_user }}"
+  tags:
+    - ghost
+    - git
+    - update
+
+- name: Create deployment directory structure
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ghost_user }}"
+    group: "{{ ghost_group }}"
+    mode: '0755'
+  loop:
+    - "{{ ghost_install_dir }}/deploy"
+    - "{{ ghost_install_dir }}/deploy/docker"
+    - "{{ ghost_install_dir }}/deploy/nginx"
+    - "{{ ghost_install_dir }}/deploy/monitoring"
+    - "{{ ghost_install_dir }}/deploy/rabbitmq"
+    - "{{ ghost_install_dir }}/deploy/logs"
+    - "{{ ghost_install_dir }}/deploy/backups"
+  tags:
+    - ghost
+    - directories
+
+- name: Copy Docker Compose files
+  synchronize:
+    src: "{{ ghost_install_dir }}/source/infrastructure/miser-mode/docker/"
+    dest: "{{ ghost_install_dir }}/deploy/docker/"
+    delete: no
+  delegate_to: "{{ inventory_hostname }}"
+  become_user: "{{ ghost_user }}"
+  tags:
+    - ghost
+    - docker
+    - update
+
+- name: Generate .env file
+  template:
+    src: env.j2
+    dest: "{{ ghost_install_dir }}/deploy/docker/.env"
+    owner: "{{ ghost_user }}"
+    group: "{{ ghost_group }}"
+    mode: '0600'
+  tags:
+    - ghost
+    - config
+
+- name: Generate docker-compose override for custom configuration
+  template:
+    src: docker-compose.override.yml.j2
+    dest: "{{ ghost_install_dir }}/deploy/docker/docker-compose.override.yml"
+    owner: "{{ ghost_user }}"
+    group: "{{ ghost_group }}"
+    mode: '0644'
+  when: enable_ssl or domain_name != ""
+  tags:
+    - ghost
+    - config
+
+- name: Create Nginx configuration
+  template:
+    src: nginx.conf.j2
+    dest: "{{ ghost_install_dir }}/deploy/docker/nginx/nginx.conf"
+    owner: "{{ ghost_user }}"
+    group: "{{ ghost_group }}"
+    mode: '0644'
+  tags:
+    - ghost
+    - nginx
+
+- name: Create SSL directory
+  file:
+    path: "{{ ghost_install_dir }}/deploy/docker/nginx/ssl"
+    state: directory
+    owner: "{{ ghost_user }}"
+    group: "{{ ghost_group }}"
+    mode: '0755'
+  when: enable_ssl
+  tags:
+    - ghost
+    - ssl
+
+- name: Generate self-signed SSL certificate (if SSL enabled and no cert provided)
+  command: >
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048
+    -keyout {{ ghost_install_dir }}/deploy/docker/nginx/ssl/key.pem
+    -out {{ ghost_install_dir }}/deploy/docker/nginx/ssl/cert.pem
+    -subj "/C=US/ST=State/L=City/O=Organization/CN={{ domain_name | default(ansible_default_ipv4.address) }}"
+  args:
+    creates: "{{ ghost_install_dir }}/deploy/docker/nginx/ssl/cert.pem"
+  when: enable_ssl
+  become_user: "{{ ghost_user }}"
+  tags:
+    - ghost
+    - ssl
+
+- name: Pull Docker images
+  community.docker.docker_compose:
+    project_src: "{{ ghost_install_dir }}/deploy/docker"
+    pull: yes
+  become_user: "{{ ghost_user }}"
+  tags:
+    - ghost
+    - docker
+    - update
+
+- name: Start Ghost Platform services
+  community.docker.docker_compose:
+    project_src: "{{ ghost_install_dir }}/deploy/docker"
+    state: present
+    restarted: yes
+  become_user: "{{ ghost_user }}"
+  register: compose_output
+  tags:
+    - ghost
+    - docker
+    - deploy
+
+- name: Display deployment output
+  debug:
+    var: compose_output
+  tags:
+    - ghost
+    - deploy
+
+- name: Wait for PostgreSQL to be ready
+  command: docker exec ghost-postgres pg_isready -U ghost
+  register: pg_ready
+  until: pg_ready.rc == 0
+  retries: 30
+  delay: 2
+  changed_when: false
+  tags:
+    - ghost
+    - verify
+
+- name: Wait for Redis to be ready
+  command: docker exec ghost-redis redis-cli ping
+  register: redis_ready
+  until: redis_ready.stdout == "PONG"
+  retries: 30
+  delay: 2
+  changed_when: false
+  tags:
+    - ghost
+    - verify
+
+- name: Wait for RabbitMQ to be ready
+  command: docker exec ghost-rabbitmq rabbitmqctl status
+  register: rabbit_ready
+  until: rabbit_ready.rc == 0
+  retries: 30
+  delay: 2
+  changed_when: false
+  tags:
+    - ghost
+    - verify
+
+- name: Create systemd service for Ghost Platform
+  template:
+    src: ghost-platform.service.j2
+    dest: /etc/systemd/system/ghost-platform.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - reload systemd
+    - enable ghost-platform
+  tags:
+    - ghost
+    - systemd
+
+- name: Create Ghost management script
+  template:
+    src: ghost-ctl.sh.j2
+    dest: /usr/local/bin/ghost-ctl
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - ghost
+    - scripts
+
+- name: Display connection information
+  debug:
+    msg:
+      - "Ghost Platform deployed successfully!"
+      - "API: http://{{ domain_name | default(ansible_default_ipv4.address) }}:8080"
+      - "RabbitMQ: http://{{ domain_name | default(ansible_default_ipv4.address) }}:15672"
+      - "Grafana: http://{{ domain_name | default(ansible_default_ipv4.address) }}:3000"
+      - "Prometheus: http://{{ domain_name | default(ansible_default_ipv4.address) }}:9090"
+  tags:
+    - ghost
+    - info

@@ -1,0 +1,18 @@
+# Hetzner Cloud API token - Get from https://console.hetzner.cloud/
+hcloud_token = "your-hetzner-api-token-here"
+
+# Server configuration
+server_name = "ghost-platform-miser"
+server_type = "cpx21"  # 4 vCPU, 8GB RAM, 160GB NVMe
+location    = "nbg1"   # Nuremberg, Germany
+image       = "ubuntu-22.04"
+
+# SSH keys - Add your SSH key IDs from Hetzner Cloud Console
+# ssh_keys = ["12345678"]
+
+# Labels for organization
+labels = {
+  environment = "miser-mode"
+  platform    = "ghost"
+  managed_by  = "terraform"
+}

@@ -1,0 +1,392 @@
+# Falco Helm Values
+# Runtime security and threat detection for Kubernetes
+
+# Falco Configuration
+falco:
+  # Use modern eBPF probe instead of kernel module
+  driver:
+    kind: ebpf
+    ebpf:
+      leastPrivileged: true
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  
+  # Falco rules files
+  rulesFiles:
+    - /etc/falco/falco_rules.yaml
+    - /etc/falco/falco_rules.local.yaml
+    - /etc/falco/k8s_audit_rules.yaml
+    - /etc/falco/rules.d
+  
+  # Load additional rules from ConfigMap
+  rulesFilesDir: /etc/falco/rules.d
+  
+  # Rule priorities to load
+  priority: DEBUG
+  
+  # Buffering
+  bufferedOutputs: true
+  
+  # Output channels
+  outputs:
+    rate: 1
+    maxBurst: 1000
+  
+  # System calls to monitor
+  syscallEventDrops:
+    actions:
+      - log
+      - alert
+    rate: 0.03333
+    maxBurst: 10
+  
+  # Metadata enrichment
+  metadata:
+    enabled: true
+
+# gRPC output for Falco Sidekick
+grpc:
+  enabled: true
+  bind_address: "0.0.0.0:5060"
+  threadiness: 8
+
+# HTTP output
+httpOutput:
+  enabled: true
+  url: "http://falco-sidekick:2801"
+
+# JSON output
+jsonOutput: true
+jsonIncludeOutputProperty: true
+jsonIncludeTagsProperty: true
+
+# Log output
+logStderr: true
+logSyslog: false
+logLevel: info
+
+# File output for audit trail
+fileOutput:
+  enabled: true
+  keepAlive: false
+  filename: /var/log/falco/events.log
+
+# Program output (for custom handling)
+programOutput:
+  enabled: false
+
+# Kubernetes Audit Events
+kubernetesAudit:
+  enabled: true
+  
+  # K8s API server audit webhook
+  webhook:
+    enabled: true
+    address: 0.0.0.0
+    port: 9765
+  
+  # Audit log file
+  auditLog:
+    enabled: true
+    path: /var/log/falco/k8s-audit.log
+    maxFileSize: 100
+    maxBackups: 10
+
+# Falco Sidekick (for routing alerts)
+falcosidekick:
+  enabled: true
+  
+  replicas: 2
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  
+  # Outputs configuration
+  config:
+    # Slack integration
+    slack:
+      webhookurl: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+      channel: "#ghost-security-alerts"
+      username: "Falco"
+      icon: ":shield:"
+      outputformat: "all"
+      minimumpriority: "warning"
+      messageformat: "A security event has been detected"
+    
+    # Microsoft Teams
+    teams:
+      webhookurl: ""
+      minimumpriority: "warning"
+    
+    # PagerDuty
+    pagerduty:
+      routingkey: ""
+      minimumpriority: "critical"
+    
+    # Datadog
+    datadog:
+      apikey: ""
+      minimumpriority: "warning"
+    
+    # Elasticsearch
+    elasticsearch:
+      hostport: "https://elasticsearch.ghost.internal:9200"
+      index: "falco-alerts"
+      type: "event"
+      minimumpriority: "info"
+      username: "falco"
+      password: ""
+    
+    # AWS Security Hub
+    aws:
+      securityhub:
+        accountid: "123456789012"
+        region: "us-east-1"
+        minimumpriority: "high"
+    
+    # Custom webhook
+    webhook:
+      address: "https://security.ghost.internal/webhook/falco"
+      minimumpriority: "warning"
+    
+    # CloudWatch Logs
+    cloudwatch:
+      loggroup: "/aws/falco/ghost"
+      logstream: "falco-events"
+      region: "us-east-1"
+      minimumpriority: "warning"
+  
+  # Web UI
+  webui:
+    enabled: true
+    replicas: 1
+    service:
+      type: ClusterIP
+      port: 2802
+    
+    # Redis for session storage
+    redis:
+      enabled: true
+      storageSize: 1Gi
+
+# Custom rules ConfigMap
+customRules:
+  ghost-rules.yaml: |-
+    # Custom Falco rules for Ghost application
+    # See falco-rules.yaml for detailed rules
+
+# Rule priority configuration
+ruleMatching: first
+
+# Performance tuning
+performance:
+  cpuPercentage: 50
+  throttlingRate: 1
+  dropFailedExit: false
+
+# DaemonSet configuration
+daemonset:
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  
+  # Annotations
+  annotations: {}
+  
+  # Pod priority
+  priorityClassName: system-node-critical
+  
+  # Node selector
+  nodeSelector:
+    kubernetes.io/os: linux
+  
+  # Tolerations
+  tolerations:
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/master
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/control-plane
+  
+  # Security context
+  securityContext:
+    privileged: true
+
+# Service Account
+serviceAccount:
+  create: true
+  name: falco
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::ACCOUNT_ID:role/falco"
+
+# RBAC
+rbac:
+  create: true
+
+# Pod Security Policy
+podSecurityPolicy:
+  create: false  # Using OPA Gatekeeper instead
+
+# Extra volumes for custom rules
+extraVolumes:
+  - name: custom-rules
+    configMap:
+      name: falco-custom-rules
+
+extraVolumeMounts:
+  - name: custom-rules
+    mountPath: /etc/falco/rules.d
+    readOnly: true
+
+# Metrics
+metrics:
+  enabled: true
+  interval: 30s
+  
+  # Prometheus exporter
+  serviceMonitor:
+    enabled: true
+    labels:
+      prometheus: kube-prometheus
+  
+  # Grafana dashboard
+  grafanaDashboard:
+    enabled: true
+    namespace: monitoring
+
+# eBPF probe configuration
+ebpf:
+  settings:
+    hostNetwork: true
+    mountEtcVolume: true
+
+# Container images
+image:
+  registry: docker.io
+  repository: falcosecurity/falco-no-driver
+  tag: "0.36.2"
+  pullPolicy: IfNotPresent
+
+falcoctl:
+  image:
+    registry: docker.io
+    repository: falcosecurity/falcoctl
+    tag: "0.7.0"
+
+# Init container for driver loader
+initContainer:
+  image:
+    registry: docker.io
+    repository: falcosecurity/falco-driver-loader
+    tag: "0.36.2"
+  
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Integration with Cloud SIEM
+siem:
+  # Splunk HEC
+  splunk:
+    enabled: false
+    url: ""
+    token: ""
+    index: "falco"
+  
+  # Sumo Logic
+  sumologic:
+    enabled: false
+    url: ""
+  
+  # Azure Sentinel
+  azure:
+    sentinel:
+      enabled: false
+      workspaceId: ""
+      sharedKey: ""
+
+# Timeouts
+timeouts:
+  # Falco startup timeout
+  startup: 60s
+  
+  # Driver loading timeout
+  driverLoading: 300s
+
+---
+# ConfigMap for additional configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falco-config
+  namespace: falco
+data:
+  # Alert priority mapping
+  priority-mapping.yaml: |
+    EMERGENCY: critical
+    ALERT: critical
+    CRITICAL: critical
+    ERROR: high
+    WARNING: medium
+    NOTICE: low
+    INFORMATIONAL: info
+    DEBUG: debug
+  
+  # Response playbooks
+  response-playbooks.yaml: |
+    # Automated response actions for Falco alerts
+    
+    critical:
+      - notify: security-team
+      - create: incident-ticket
+      - execute: isolation-script
+      - log: audit-trail
+    
+    high:
+      - notify: on-call-engineer
+      - create: investigation-task
+      - log: audit-trail
+    
+    medium:
+      - notify: team-channel
+      - log: audit-trail
+    
+    low:
+      - log: audit-trail
+  
+  # Suppression rules
+  suppressions.yaml: |
+    # Suppress false positives
+    
+    # Known behavior - Ghost content uploads
+    - rule: Write below binary dir
+      condition: >
+        and not (
+          container.image.repository = "ghost" and
+          fd.name startswith /var/lib/ghost/content/
+        )
+    
+    # Known behavior - Database backups
+    - rule: DB program spawned process
+      condition: >
+        and not (
+          proc.name = "mysqldump" and
+          container.image.repository = "mysql"
+        )

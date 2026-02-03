@@ -1,0 +1,170 @@
+---
+# Ghost Platform Ultra Miser Mode - Global Variables
+# 
+# These variables are applied to all hosts in the inventory
+# Override these in host_vars or at runtime with --extra-vars
+#
+# Example overrides:
+#   ansible-playbook setup.yml --extra-vars "domain_name=ghost.example.com"
+#   ansible-playbook deploy.yml --extra-vars "enable_ssl=true"
+
+# ============================================================================
+# SERVER CONFIGURATION
+# ============================================================================
+
+# Domain configuration
+domain_name: ""  # Leave empty for IP-based access
+enable_ssl: false
+admin_email: admin@example.com
+
+# Installation directories
+ghost_install_dir: /opt/ghost
+ghost_data_dir: /var/lib/ghost
+ghost_backup_dir: /var/backups/ghost
+ghost_log_dir: /var/log/ghost
+
+# System user for Ghost application
+ghost_user: ghost
+ghost_group: ghost
+ghost_uid: 1000
+ghost_gid: 1000
+
+# ============================================================================
+# DOCKER CONFIGURATION
+# ============================================================================
+
+docker_version: "latest"
+docker_compose_version: "2.24.0"
+docker_network_range: "172.20.0.0/16"
+docker_data_root: /var/lib/docker
+
+# Docker daemon configuration
+docker_log_max_size: "10m"
+docker_log_max_file: "3"
+docker_storage_driver: "overlay2"
+
+# ============================================================================
+# APPLICATION CONFIGURATION
+# ============================================================================
+
+ghost_version: "latest"
+
+# Database credentials
+db_password: "{{ lookup('password', '/tmp/ghost_db_password chars=ascii_letters,digits length=32') }}"
+
+# RabbitMQ credentials
+rabbitmq_user: ghost
+rabbitmq_password: "{{ lookup('password', '/tmp/ghost_rabbitmq_password chars=ascii_letters,digits length=32') }}"
+rabbitmq_cookie: "{{ lookup('password', '/tmp/ghost_rabbitmq_cookie chars=ascii_letters,digits length=64') }}"
+
+# Grafana credentials
+grafana_password: "{{ lookup('password', '/tmp/ghost_grafana_password chars=ascii_letters,digits length=32') }}"
+
+# Platform enablement
+linkedin_enabled: false
+linkedin_country: "US"
+indeed_enabled: false
+indeed_country: "US"
+glassdoor_enabled: false
+google_enabled: false
+infojobs_enabled: false
+
+# ============================================================================
+# BACKUP CONFIGURATION
+# ============================================================================
+
+# Local backup settings
+backup_retention_days: 30
+backup_schedule_hour: 2
+backup_schedule_minute: 0
+
+# S3 backup settings (optional)
+# backup_s3_bucket: "my-ghost-backups"
+# backup_s3_region: "us-east-1"
+# backup_s3_access_key: ""
+# backup_s3_secret_key: ""
+# backup_s3_endpoint: "s3.amazonaws.com"
+
+# Backup encryption (optional)
+# backup_encryption_enabled: false
+# backup_encryption_password: ""
+
+# ============================================================================
+# MONITORING CONFIGURATION
+# ============================================================================
+
+# Prometheus settings
+prometheus_retention_days: 15
+prometheus_scrape_interval: "15s"
+
+# Node exporter
+node_exporter_enabled: true
+node_exporter_version: "1.7.0"
+node_exporter_port: 9100
+
+# Alert manager (optional)
+alertmanager_enabled: false
+alertmanager_slack_webhook: ""
+alertmanager_email_to: ""
+
+# ============================================================================
+# SECURITY CONFIGURATION
+# ============================================================================
+
+# Firewall ports
+firewall_allowed_tcp_ports:
+  - 22    # SSH
+  - 80    # HTTP
+  - 443   # HTTPS
+
+# Firewall trusted IPs (leave empty to allow all)
+firewall_trusted_ips: []
+# Example:
+#   - "1.2.3.4/32"
+#   - "10.0.0.0/8"
+
+# SSH hardening
+ssh_port: 22
+ssh_permit_root_login: "no"
+ssh_password_authentication: "no"
+ssh_max_auth_tries: 3
+ssh_client_alive_interval: 300
+ssh_client_alive_count_max: 2
+
+# Fail2ban
+fail2ban_enabled: true
+fail2ban_bantime: 3600
+fail2ban_findtime: 600
+fail2ban_maxretry: 5
+
+# Automatic security updates
+unattended_upgrades_enabled: true
+unattended_upgrades_auto_reboot: true
+unattended_upgrades_auto_reboot_time: "03:00"
+
+# ============================================================================
+# PERFORMANCE TUNING
+# ============================================================================
+
+# System limits
+system_max_open_files: 65535
+system_max_user_processes: 4096
+
+# Swap configuration
+swap_file_size_mb: 2048
+swap_swappiness: 10
+swap_vfs_cache_pressure: 50
+
+# ============================================================================
+# TIMEZONE & LOCALE
+# ============================================================================
+
+timezone: "UTC"
+locale: "en_US.UTF-8"
+
+# ============================================================================
+# APT CONFIGURATION
+# ============================================================================
+
+apt_cache_valid_time: 3600
+apt_install_recommends: false

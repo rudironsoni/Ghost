@@ -1,0 +1,29 @@
+# Oracle Cloud Infrastructure credentials
+# Get these from: https://cloud.oracle.com/identity/domains/my-profile/api-keys
+tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+user_ocid        = "ocid1.user.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+fingerprint      = "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99"
+private_key_path = "~/.oci/oci_api_key.pem"
+
+# Region - us-ashburn-1 is recommended for free tier
+region = "us-ashburn-1"
+
+# Compartment (leave empty to use root compartment)
+# compartment_ocid = "ocid1.compartment.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Instance configuration
+instance_name            = "ghost-platform-miser"
+instance_shape           = "VM.Standard.A1.Flex"  # ARM-based Ampere (Free Tier eligible)
+instance_ocpus           = 4                       # Max 4 OCPUs for free tier
+instance_memory_in_gbs   = 24                      # Max 24GB for free tier
+boot_volume_size_in_gbs  = 200                     # Max 200GB for free tier
+
+# SSH configuration
+# Option 1: Provide public key directly
+# ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ..."
+
+# Option 2: Provide path to public key file (default: ~/.ssh/id_rsa.pub)
+ssh_public_key_path = "~/.ssh/id_rsa.pub"
+
+# Availability domain (leave empty to use first available)
+# availability_domain = "your-ad-here"

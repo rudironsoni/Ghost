@@ -1,0 +1,189 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: monitoring
+  labels:
+    prometheus: ghost-monitoring
+data:
+  ghost-recording-rules.yaml: |
+    groups:
+    - name: ghost_recording_rules
+      interval: 30s
+      rules:
+      # HTTP request rate by endpoint
+      - record: ghost:http_request_rate:5m
+        expr: rate(http_requests_total{job="ghost-app"}[5m])
+      
+      # HTTP request latency quantiles
+      - record: ghost:http_request_duration:p50
+        expr: histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job="ghost-app"}[5m]))
+      
+      - record: ghost:http_request_duration:p95
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="ghost-app"}[5m]))
+      
+      - record: ghost:http_request_duration:p99
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job="ghost-app"}[5m]))
+      
+      # Error rate
+      - record: ghost:http_error_rate:5m
+        expr: rate(http_requests_total{job="ghost-app",status=~"5.."}[5m])
+      
+      # Job processing metrics
+      - record: ghost:job_processing_rate:5m
+        expr: rate(jobs_processed_total{job="ghost-app"}[5m])
+      
+      - record: ghost:job_success_rate:5m
+        expr: rate(jobs_processed_total{job="ghost-app",status="success"}[5m]) / rate(jobs_processed_total{job="ghost-app"}[5m])
+      
+      - record: ghost:job_failure_rate:5m
+        expr: rate(jobs_processed_total{job="ghost-app",status="failure"}[5m])
+      
+      # Database connection pool
+      - record: ghost:db_connections_active:ratio
+        expr: db_connections_active / db_connections_max
+      
+      # Cache hit ratio
+      - record: ghost:cache_hit_ratio:5m
+        expr: rate(cache_hits_total[5m]) / (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m]))
+      
+      # Circuit breaker metrics
+      - record: ghost:circuit_breaker_open:count
+        expr: sum(circuit_breaker_state{state="open"}) by (service)
+      
+      # Queue depth by queue
+      - record: ghost:queue_depth:current
+        expr: queue_depth_messages{job="ghost-app"}
+      
+      # Memory usage percentage
+      - record: ghost:memory_usage:percent
+        expr: (process_resident_memory_bytes / node_memory_MemTotal_bytes) * 100
+
+    - name: infrastructure_recording_rules
+      interval: 30s
+      rules:
+      # Node CPU usage
+      - record: node:cpu_usage:percent
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+      
+      # Node memory usage
+      - record: node:memory_usage:percent
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+      
+      # Node disk usage
+      - record: node:disk_usage:percent
+        expr: (1 - (node_filesystem_avail_bytes{fstype=~"ext4|xfs"} / node_filesystem_size_bytes{fstype=~"ext4|xfs"})) * 100
+      
+      # Cluster resource usage
+      - record: cluster:cpu_usage:percent
+        expr: sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) / sum(machine_cpu_cores) * 100
+      
+      - record: cluster:memory_usage:percent
+        expr: sum(container_memory_working_set_bytes{container!=""}) / sum(machine_memory_bytes) * 100
+
+    - name: database_recording_rules
+      interval: 30s
+      rules:
+      # PostgreSQL connection count
+      - record: postgres:connections:active
+        expr: pg_stat_database_numbackends{datname="ghost"}
+      
+      # PostgreSQL transaction rate
+      - record: postgres:transactions_rate:5m
+        expr: rate(pg_stat_database_xact_commit{datname="ghost"}[5m]) + rate(pg_stat_database_xact_rollback{datname="ghost"}[5m])
+      
+      # PostgreSQL query duration
+      - record: postgres:query_duration:p95
+        expr: histogram_quantile(0.95, rate(pg_stat_statements_mean_exec_time_bucket[5m]))
+      
+      # PostgreSQL cache hit ratio
+      - record: postgres:cache_hit_ratio
+        expr: |
+          sum(pg_stat_database_blks_hit{datname="ghost"}) / 
+          (sum(pg_stat_database_blks_hit{datname="ghost"}) + sum(pg_stat_database_blks_read{datname="ghost"}))
+
+    - name: redis_recording_rules
+      interval: 30s
+      rules:
+      # Redis memory usage
+      - record: redis:memory_usage:percent
+        expr: (redis_memory_used_bytes / redis_memory_max_bytes) * 100
+      
+      # Redis command rate
+      - record: redis:commands_rate:5m
+        expr: rate(redis_commands_processed_total[5m])
+      
+      # Redis hit ratio
+      - record: redis:hit_ratio
+        expr: redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total)
+
+  ghost-alerting-rules.yaml: |
+    groups:
+    - name: ghost_application_alerts
+      interval: 30s
+      rules:
+      # High error rate
+      - alert: HighErrorRate
+        expr: ghost:http_error_rate:5m > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "High HTTP error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.instance }}"
+      
+      # High latency
+      - alert: HighLatency
+        expr: ghost:http_request_duration:p95 > 2
+        for: 5m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "High HTTP request latency"
+          description: "P95 latency is {{ $value }}s for {{ $labels.instance }}"
+      
+      # Job failure rate
+      - alert: HighJobFailureRate
+        expr: ghost:job_failure_rate:5m > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: jobs
+        annotations:
+          summary: "High job failure rate"
+          description: "Job failure rate is {{ $value | humanizePercentage }} for {{ $labels.job_type }}"
+      
+      # Circuit breaker open
+      - alert: CircuitBreakerOpen
+        expr: ghost:circuit_breaker_open:count > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "Circuit breaker is open"
+          description: "Circuit breaker for {{ $labels.service }} has been open for 5+ minutes"
+      
+      # High queue depth
+      - alert: HighQueueDepth
+        expr: ghost:queue_depth:current > 1000
+        for: 10m
+        labels:
+          severity: warning
+          component: messaging
+        annotations:
+          summary: "High queue depth detected"
+          description: "Queue {{ $labels.queue }} has {{ $value }} messages pending"
+      
+      # Application down
+      - alert: ApplicationDown
+        expr: up{job="ghost-app"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "Ghost application is down"
+          description: "Instance {{ $labels.instance }} has been down for 2+ minutes"

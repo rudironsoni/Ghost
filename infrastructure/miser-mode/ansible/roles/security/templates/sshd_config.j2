@@ -1,0 +1,47 @@
+# SSH Server Configuration - Ghost Platform Ultra Miser Mode
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+Port {{ ssh_port }}
+AddressFamily inet
+ListenAddress 0.0.0.0
+
+# Security
+Protocol 2
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+
+# Authentication
+PermitRootLogin {{ ssh_permit_root_login }}
+PubkeyAuthentication yes
+PasswordAuthentication {{ ssh_password_authentication }}
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+UsePAM yes
+MaxAuthTries {{ ssh_max_auth_tries }}
+
+# Connection settings
+ClientAliveInterval {{ ssh_client_alive_interval }}
+ClientAliveCountMax {{ ssh_client_alive_count_max }}
+TCPKeepAlive yes
+MaxStartups 10:30:60
+MaxSessions 10
+
+# Logging
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+# Disable dangerous features
+X11Forwarding no
+AllowAgentForwarding yes
+AllowTcpForwarding yes
+PermitTunnel no
+PrintMotd no
+PrintLastLog yes
+AcceptEnv LANG LC_*
+
+# Subsystem
+Subsystem sftp /usr/lib/openssh/sftp-server
+
+# Banner
+Banner /etc/ssh/banner

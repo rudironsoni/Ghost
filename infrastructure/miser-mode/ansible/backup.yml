@@ -1,0 +1,89 @@
+---
+# Backup playbook - Trigger backups on demand
+
+- name: Ghost Platform Backup
+  hosts: ghost_servers
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Display backup information
+      debug:
+        msg:
+          - "==================================================="
+          - "Ghost Platform Backup"
+          - "==================================================="
+          - "Backup directory: {{ ghost_backup_dir }}"
+          - "Retention: {{ backup_retention_days }} days"
+          - "S3 Bucket: {{ backup_s3_bucket | default('Not configured') }}"
+          - "==================================================="
+
+    - name: Run PostgreSQL backup
+      command: /usr/local/bin/ghost-backup/backup-postgres.sh
+      register: pg_backup
+      tags:
+        - postgres
+        - db
+
+    - name: Display PostgreSQL backup result
+      debug:
+        var: pg_backup.stdout_lines
+      tags:
+        - postgres
+        - db
+
+    - name: Run Redis backup
+      command: /usr/local/bin/ghost-backup/backup-redis.sh
+      register: redis_backup
+      tags:
+        - redis
+        - cache
+
+    - name: Display Redis backup result
+      debug:
+        var: redis_backup.stdout_lines
+      tags:
+        - redis
+        - cache
+
+    - name: Run full system backup
+      command: /usr/local/bin/ghost-backup/backup-full.sh
+      register: full_backup
+      tags:
+        - full
+
+    - name: Display full backup result
+      debug:
+        var: full_backup.stdout_lines
+      tags:
+        - full
+
+    - name: Sync to S3
+      command: /usr/local/bin/ghost-backup/backup-s3-sync.sh
+      register: s3_sync
+      when: backup_s3_bucket is defined
+      tags:
+        - s3
+
+    - name: Display S3 sync result
+      debug:
+        var: s3_sync.stdout_lines
+      when: backup_s3_bucket is defined
+      tags:
+        - s3
+
+    - name: List recent backups
+      find:
+        paths: "{{ ghost_backup_dir }}"
+        patterns: "*.gz"
+        recurse: yes
+        age: -7d
+      register: recent_backups
+      tags:
+        - list
+
+    - name: Display recent backups
+      debug:
+        msg: "{{ recent_backups.files | map(attribute='path') | list }}"
+      tags:
+        - list

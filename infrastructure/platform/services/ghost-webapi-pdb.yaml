@@ -1,0 +1,49 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ghost-webapi-pdb
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost-webapi
+    app.kubernetes.io/component: pdb
+    app.kubernetes.io/part-of: ghost-platform
+  annotations:
+    description: "Pod Disruption Budget to ensure high availability during voluntary disruptions"
+spec:
+  # Minimum number of pods that must be available during disruption
+  minAvailable: 2
+  
+  # Alternative: Maximum number of pods that can be unavailable
+  # maxUnavailable: 1
+  
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ghost-webapi
+      app.kubernetes.io/component: api
+  
+  # Unhealthy pod eviction policy (Kubernetes 1.26+)
+  unhealthyPodEvictionPolicy: IfHealthyBudget
+---
+# Additional PDB for critical periods (optional)
+# This can be used during maintenance windows or peak traffic
+# apiVersion: policy/v1
+# kind: PodDisruptionBudget
+# metadata:
+#   name: ghost-webapi-pdb-strict
+#   namespace: ghost
+#   labels:
+#     app.kubernetes.io/name: ghost-webapi
+#     app.kubernetes.io/component: pdb
+#     app.kubernetes.io/part-of: ghost-platform
+#     disruption-policy: strict
+#   annotations:
+#     description: "Strict PDB for critical periods with higher availability requirements"
+# spec:
+#   minAvailable: 3 # Require more pods to be available
+#   
+#   selector:
+#     matchLabels:
+#       app.kubernetes.io/name: ghost-webapi
+#       app.kubernetes.io/component: api
+#       disruption-policy: strict # Requires pods to have this label

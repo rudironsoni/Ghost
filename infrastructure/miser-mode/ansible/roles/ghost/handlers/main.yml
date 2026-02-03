@@ -1,0 +1,16 @@
+---
+# Ghost role handlers
+
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: enable ghost-platform
+  service:
+    name: ghost-platform
+    enabled: yes
+
+- name: restart ghost-platform
+  service:
+    name: ghost-platform
+    state: restarted

@@ -1,0 +1,11 @@
+# Ghost Platform Ultra Miser Mode - Ansible Inventory
+#
+# Single server deployment example using IP address
+
+[ghost_servers]
+ghost ansible_host=YOUR_SERVER_IP ansible_user=ubuntu
+
+[ghost_servers:vars]
+ansible_python_interpreter=/usr/bin/python3
+domain_name=ghost.example.com
+enable_ssl=true

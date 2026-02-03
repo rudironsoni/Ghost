@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RabbitMQ Configuration for Production -->
+<broker xmlns="http://www.rabbitmq.com/2011/extensions/config">
+  <!-- Connection limits -->
+  <connection_max>${max_connections}</connection_max>
+  
+  <!-- Memory and disk thresholds -->
+  <vm_memory_high_watermark>0.6</vm_memory_high_watermark>
+  <disk_free_limit>5GB</disk_free_limit>
+  
+  <!-- Cluster configuration -->
+  <cluster_partition_handling>autoheal</cluster_partition_handling>
+  
+  <!-- Queue configuration -->
+  <default_vhost>/</default_vhost>
+  <default_user>guest</default_user>
+  <default_pass>guest</default_pass>
+  
+  <!-- Performance tuning -->
+  <channel_max>2047</channel_max>
+  <heartbeat>60</heartbeat>
+  
+  <!-- Message persistence -->
+  <msg_store_file_size_limit>16777216</msg_store_file_size_limit>
+  
+  <!-- High availability -->
+  <ha_mode>all</ha_mode>
+  <ha_sync_mode>automatic</ha_sync_mode>
+  
+  <!-- Logging -->
+  <log_levels>
+    <connection>info</connection>
+    <channel>info</channel>
+    <queue>info</queue>
+    <mirroring>info</mirroring>
+    <federation>info</federation>
+  </log_levels>
+</broker>

@@ -1,0 +1,96 @@
+---
+# Utility playbook to check the health and status of Ghost Platform
+
+- name: Ghost Platform Health Check
+  hosts: ghost_servers
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Check system resources
+      debug:
+        msg:
+          - "CPU Cores: {{ ansible_processor_vcpus }}"
+          - "Total Memory: {{ ansible_memtotal_mb }} MB"
+          - "Free Memory: {{ ansible_memfree_mb }} MB"
+          - "Disk Usage: {{ ansible_mounts | selectattr('mount', 'equalto', '/') | map(attribute='size_available') | first | int / 1024 / 1024 / 1024 | round(2) }} GB available"
+
+    - name: Check Docker service
+      service_facts:
+      
+    - name: Verify Docker is running
+      assert:
+        that:
+          - ansible_facts.services['docker.service'].state == 'running'
+        fail_msg: "Docker service is not running"
+        success_msg: "Docker service is running"
+
+    - name: Check Docker containers
+      command: docker ps --format "table {% raw %}{{.Names}}\t{{.Status}}{% endraw %}"
+      register: docker_containers
+      changed_when: false
+
+    - name: Display container status
+      debug:
+        msg: "{{ docker_containers.stdout_lines }}"
+
+    - name: Check Ghost API health
+      uri:
+        url: "http://localhost:8080/health"
+        status_code: 200
+        timeout: 5
+      register: api_health
+      ignore_errors: yes
+
+    - name: Display API health status
+      debug:
+        msg: "Ghost API is {{ 'healthy' if api_health.status == 200 else 'unhealthy' }}"
+
+    - name: Check PostgreSQL health
+      command: docker exec ghost-postgres pg_isready -U ghost
+      register: pg_health
+      changed_when: false
+      ignore_errors: yes
+
+    - name: Display PostgreSQL status
+      debug:
+        msg: "PostgreSQL is {{ 'healthy' if pg_health.rc == 0 else 'unhealthy' }}"
+
+    - name: Check Redis health
+      command: docker exec ghost-redis redis-cli ping
+      register: redis_health
+      changed_when: false
+      ignore_errors: yes
+
+    - name: Display Redis status
+      debug:
+        msg: "Redis is {{ 'healthy' if redis_health.stdout == 'PONG' else 'unhealthy' }}"
+
+    - name: Check disk space
+      shell: df -h / | tail -1 | awk '{print $5}' | sed 's/%//'
+      register: disk_usage
+      changed_when: false
+
+    - name: Warn if disk usage is high
+      debug:
+        msg: "WARNING: Disk usage is {{ disk_usage.stdout }}% (threshold: 80%)"
+      when: disk_usage.stdout | int > 80
+
+    - name: Check last backup
+      stat:
+        path: "{{ ghost_backup_dir }}/postgres/latest.sql.gz"
+      register: last_backup
+
+    - name: Display last backup time
+      debug:
+        msg: "Last backup: {{ last_backup.stat.mtime | default('Never') | ansible.builtin.to_datetime }}"
+      when: last_backup.stat.exists
+
+    - name: Check UFW firewall status
+      command: ufw status
+      register: ufw_status
+      changed_when: false
+
+    - name: Display firewall status
+      debug:
+        msg: "{{ ufw_status.stdout_lines }}"

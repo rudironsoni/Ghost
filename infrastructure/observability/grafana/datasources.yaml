@@ -1,0 +1,138 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: monitoring
+  labels:
+    grafana_datasource: "1"
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    deleteDatasources:
+      - name: Prometheus
+        orgId: 1
+      - name: Loki
+        orgId: 1
+    
+    datasources:
+    # Primary Prometheus datasource
+    - name: Prometheus
+      type: prometheus
+      access: proxy
+      orgId: 1
+      uid: prometheus
+      url: http://ghost-prometheus.monitoring.svc.cluster.local:9090
+      isDefault: true
+      version: 1
+      editable: false
+      jsonData:
+        httpMethod: POST
+        timeInterval: 30s
+        queryTimeout: 300s
+        incrementalQuerying: true
+        incrementalQueryOverlapWindow: 10m
+        disableRecordingRules: false
+        exemplarTraceIdDestinations:
+          - name: traceID
+            datasourceUid: tempo
+    
+    # Loki for logs
+    - name: Loki
+      type: loki
+      access: proxy
+      orgId: 1
+      uid: loki
+      url: http://ghost-loki.monitoring.svc.cluster.local:3100
+      version: 1
+      editable: false
+      jsonData:
+        maxLines: 1000
+        timeout: 60
+        derivedFields:
+          - datasourceUid: tempo
+            matcherRegex: "traceID=(\\w+)"
+            name: TraceID
+            url: "$${__value.raw}"
+          - datasourceUid: loki
+            matcherRegex: "caller=([^\\s]+)"
+            name: Caller
+            url: ""
+    
+    # Tempo for distributed tracing (optional)
+    # - name: Tempo
+    #   type: tempo
+    #   access: proxy
+    #   orgId: 1
+    #   uid: tempo
+    #   url: http://ghost-tempo.monitoring.svc.cluster.local:3100
+    #   version: 1
+    #   editable: false
+    #   jsonData:
+    #     httpMethod: GET
+    #     tracesToLogs:
+    #       datasourceUid: loki
+    #       filterByTraceID: true
+    #       filterBySpanID: true
+    #       tags: ['job', 'instance', 'pod', 'namespace']
+    #       mappedTags: [{ key: 'service.name', value: 'service' }]
+    #       mapTagNamesEnabled: true
+    #       spanStartTimeShift: '-1h'
+    #       spanEndTimeShift: '1h'
+    #     serviceMap:
+    #       datasourceUid: prometheus
+    #     search:
+    #       hide: false
+    #     nodeGraph:
+    #       enabled: true
+    #     lokiSearch:
+    #       datasourceUid: loki
+    
+    # PostgreSQL for direct database queries
+    - name: PostgreSQL-Ghost
+      type: postgres
+      access: proxy
+      orgId: 1
+      uid: postgres-ghost
+      url: postgres.production.svc.cluster.local:5432
+      database: ghost
+      user: grafana_readonly
+      version: 1
+      editable: false
+      secureJsonData:
+        password: $__file{/etc/secrets/postgres-password}
+      jsonData:
+        sslmode: require
+        postgresVersion: 1400
+        timescaledb: false
+        maxOpenConns: 10
+        maxIdleConns: 10
+        connMaxLifetime: 14400
+    
+    # Redis datasource (if using redis-datasource plugin)
+    # - name: Redis
+    #   type: redis-datasource
+    #   access: proxy
+    #   orgId: 1
+    #   uid: redis
+    #   url: redis.production.svc.cluster.local:6379
+    #   version: 1
+    #   editable: false
+    #   jsonData:
+    #     client: standalone
+    #     poolSize: 5
+    #     timeout: 10
+    #     pingInterval: 0
+    #     pipelineWindow: 0
+    
+    # Alertmanager datasource
+    - name: Alertmanager
+      type: alertmanager
+      access: proxy
+      orgId: 1
+      uid: alertmanager
+      url: http://ghost-prometheus-alertmanager.monitoring.svc.cluster.local:9093
+      version: 1
+      editable: false
+      jsonData:
+        implementation: prometheus
+        handleGrafanaManagedAlerts: false

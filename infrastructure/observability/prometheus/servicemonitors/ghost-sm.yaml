@@ -1,0 +1,128 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ghost-app
+  namespace: monitoring
+  labels:
+    prometheus: ghost-monitoring
+    app: ghost
+spec:
+  selector:
+    matchLabels:
+      app: ghost
+      component: application
+  
+  # Namespace where the Ghost app is deployed
+  namespaceSelector:
+    matchNames:
+    - production
+    - ghost-production
+  
+  # Endpoints to scrape
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    
+    # Relabeling configs
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_name]
+      targetLabel: pod
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      targetLabel: node
+    - sourceLabels: [__meta_kubernetes_namespace]
+      targetLabel: namespace
+    - sourceLabels: [__meta_kubernetes_pod_label_version]
+      targetLabel: version
+    
+    # Metric relabeling
+    metricRelabelings:
+    - sourceLabels: [__name__]
+      regex: '(go_.*|process_.*|http_.*|jobs_.*|db_.*|cache_.*|queue_.*|circuit_breaker_.*)'
+      action: keep
+  
+  # Additional endpoints for health checks
+  - port: http
+    path: /health
+    interval: 30s
+    scrapeTimeout: 5s
+    
+    metricRelabelings:
+    - sourceLabels: [__name__]
+      targetLabel: __name__
+      replacement: ghost_health_check
+    - targetLabel: endpoint
+      replacement: health
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ghost-workers
+  namespace: monitoring
+  labels:
+    prometheus: ghost-monitoring
+    app: ghost
+spec:
+  selector:
+    matchLabels:
+      app: ghost
+      component: worker
+  
+  namespaceSelector:
+    matchNames:
+    - production
+    - ghost-production
+  
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_name]
+      targetLabel: pod
+    - sourceLabels: [__meta_kubernetes_pod_label_worker_type]
+      targetLabel: worker_type
+    
+    metricRelabelings:
+    - sourceLabels: [__name__]
+      regex: '(jobs_.*|queue_.*|worker_.*)'
+      action: keep
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ghost-api
+  namespace: monitoring
+  labels:
+    prometheus: ghost-monitoring
+    app: ghost
+spec:
+  selector:
+    matchLabels:
+      app: ghost
+      component: api
+  
+  namespaceSelector:
+    matchNames:
+    - production
+    - ghost-production
+  
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_name]
+      targetLabel: pod
+    - sourceLabels: [__meta_kubernetes_service_name]
+      targetLabel: service
+    
+    metricRelabelings:
+    - sourceLabels: [__name__]
+      regex: '(http_.*|api_.*|grpc_.*)'
+      action: keep

@@ -1,0 +1,106 @@
+---
+# Ghost Platform Ultra Miser Mode - Server Setup Playbook
+# 
+# This playbook configures a fresh Ubuntu 22.04 server for Ghost Platform deployment
+# It installs all dependencies and hardens the server for production use
+#
+# Usage:
+#   ansible-playbook -i inventory/hosts.yml setup.yml
+#   ansible-playbook -i inventory/hosts.yml setup.yml --tags docker
+#   ansible-playbook -i inventory/hosts.yml setup.yml --check (dry-run)
+#
+# Requirements:
+#   - Ubuntu 22.04 LTS
+#   - Minimum 4GB RAM, 2 CPU cores, 20GB disk
+#   - SSH access with sudo privileges
+#   - Python 3.8+ on target host
+
+- name: Ghost Platform Ultra Miser Mode - Server Setup
+  hosts: ghost_servers
+  become: true
+  gather_facts: true
+  
+  pre_tasks:
+    - name: Display setup information
+      debug:
+        msg:
+          - "==================================================="
+          - "Ghost Platform Ultra Miser Mode - Server Setup"
+          - "==================================================="
+          - "Target Host: {{ inventory_hostname }}"
+          - "Domain: {{ domain_name | default('Not configured') }}"
+          - "SSL Enabled: {{ enable_ssl | default(false) }}"
+          - "Backup to S3: {{ 'Yes' if backup_s3_bucket is defined else 'No' }}"
+          - "==================================================="
+      tags: always
+
+    - name: Check if running on Ubuntu 22.04
+      assert:
+        that:
+          - ansible_distribution == "Ubuntu"
+          - ansible_distribution_version is version('22.04', '>=')
+        fail_msg: "This playbook requires Ubuntu 22.04 or later"
+        success_msg: "Running on {{ ansible_distribution }} {{ ansible_distribution_version }}"
+      tags: always
+
+    - name: Check minimum system requirements
+      assert:
+        that:
+          - ansible_memtotal_mb >= 3800
+          - ansible_processor_vcpus >= 2
+        fail_msg: "System does not meet minimum requirements (4GB RAM, 2 CPUs)"
+        success_msg: "System meets minimum requirements"
+      tags: always
+
+  roles:
+    - role: common
+      tags:
+        - common
+        - base
+
+    - role: security
+      tags:
+        - security
+        - firewall
+
+    - role: docker
+      tags:
+        - docker
+        - containers
+
+    - role: monitoring
+      tags:
+        - monitoring
+        - metrics
+
+    - role: backup
+      tags:
+        - backup
+        - maintenance
+
+  post_tasks:
+    - name: Display setup completion message
+      debug:
+        msg:
+          - "==================================================="
+          - "Server Setup Complete!"
+          - "==================================================="
+          - "Next steps:"
+          - "1. Review configuration in {{ ghost_install_dir }}"
+          - "2. Run deployment playbook: ansible-playbook deploy.yml"
+          - "3. Access your Ghost instance at: http://{{ domain_name | default(ansible_default_ipv4.address) }}"
+          - "==================================================="
+      tags: always
+
+    - name: Save setup timestamp
+      copy:
+        content: |
+          Ghost Platform Ultra Miser Mode
+          Setup completed: {{ ansible_date_time.iso8601 }}
+          Ansible version: {{ ansible_version.full }}
+          Configured by: {{ ansible_user_id }}
+        dest: /etc/ghost-setup-info
+        owner: root
+        group: root
+        mode: '0644'
+      tags: always

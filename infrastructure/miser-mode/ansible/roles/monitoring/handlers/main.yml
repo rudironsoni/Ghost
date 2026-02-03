@@ -1,0 +1,16 @@
+---
+# Monitoring role handlers
+
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: restart node-exporter
+  service:
+    name: node-exporter
+    state: restarted
+
+- name: restart sysstat
+  service:
+    name: sysstat
+    state: restarted

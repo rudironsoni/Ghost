@@ -1,0 +1,170 @@
+---
+# Docker role - Install Docker and Docker Compose
+
+- name: Remove old Docker versions
+  apt:
+    name:
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
+      - runc
+    state: absent
+  tags:
+    - docker
+    - cleanup
+
+- name: Add Docker GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  tags:
+    - docker
+
+- name: Add Docker repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+    filename: docker
+  tags:
+    - docker
+
+- name: Install Docker
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: yes
+  tags:
+    - docker
+
+- name: Ensure Docker data directory exists
+  file:
+    path: "{{ docker_data_root }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0711'
+  tags:
+    - docker
+
+- name: Configure Docker daemon
+  template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart docker
+  tags:
+    - docker
+    - config
+
+- name: Create Docker systemd override directory
+  file:
+    path: /etc/systemd/system/docker.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - docker
+    - systemd
+
+- name: Configure Docker systemd override
+  template:
+    src: docker-override.conf.j2
+    dest: /etc/systemd/system/docker.service.d/override.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart docker
+  tags:
+    - docker
+    - systemd
+
+- name: Add ghost user to docker group
+  user:
+    name: "{{ ghost_user }}"
+    groups: docker
+    append: yes
+  tags:
+    - docker
+    - users
+
+- name: Start and enable Docker service
+  service:
+    name: docker
+    state: started
+    enabled: yes
+  tags:
+    - docker
+
+- name: Install Docker Python library
+  pip:
+    name:
+      - docker
+      - docker-compose
+    state: present
+    executable: pip3
+  tags:
+    - docker
+    - python
+
+- name: Create Docker network for Ghost
+  community.docker.docker_network:
+    name: ghost-network
+    driver: bridge
+    ipam_config:
+      - subnet: "{{ docker_network_range }}"
+    state: present
+  tags:
+    - docker
+    - network
+
+- name: Enable Docker log rotation
+  template:
+    src: docker-logrotate.j2
+    dest: /etc/logrotate.d/docker
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - docker
+    - logs
+
+- name: Verify Docker installation
+  command: docker --version
+  register: docker_version_output
+  changed_when: false
+  tags:
+    - docker
+    - verify
+
+- name: Display Docker version
+  debug:
+    msg: "Docker installed: {{ docker_version_output.stdout }}"
+  tags:
+    - docker
+    - verify
+
+- name: Verify Docker Compose installation
+  command: docker compose version
+  register: compose_version_output
+  changed_when: false
+  tags:
+    - docker
+    - verify
+
+- name: Display Docker Compose version
+  debug:
+    msg: "Docker Compose installed: {{ compose_version_output.stdout }}"
+  tags:
+    - docker
+    - verify

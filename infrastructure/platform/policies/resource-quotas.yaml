@@ -1,0 +1,311 @@
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: ghost-compute-quota
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: resource-quota
+    app.kubernetes.io/part-of: ghost-platform
+    quota-type: compute
+  annotations:
+    description: "Compute resource quota for Ghost namespace"
+spec:
+  hard:
+    # CPU Limits
+    requests.cpu: "20"
+    limits.cpu: "40"
+    
+    # Memory Limits
+    requests.memory: 40Gi
+    limits.memory: 80Gi
+    
+    # Ephemeral Storage
+    requests.ephemeral-storage: 50Gi
+    limits.ephemeral-storage: 100Gi
+  
+  # Scope selectors (optional)
+  scopeSelector:
+    matchExpressions:
+    - operator: In
+      scopeName: PriorityClass
+      values:
+      - high
+      - medium
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: ghost-object-quota
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: resource-quota
+    app.kubernetes.io/part-of: ghost-platform
+    quota-type: objects
+  annotations:
+    description: "Object count quota for Ghost namespace"
+spec:
+  hard:
+    # Pods
+    pods: "50"
+    
+    # Services
+    services: "20"
+    services.loadbalancers: "5"
+    services.nodeports: "5"
+    
+    # Storage
+    persistentvolumeclaims: "20"
+    requests.storage: 500Gi
+    
+    # Secrets and ConfigMaps
+    secrets: "50"
+    configmaps: "50"
+    
+    # ReplicationControllers and ReplicaSets
+    replicationcontrollers: "20"
+    
+    # Deployments
+    count/deployments.apps: "20"
+    
+    # StatefulSets
+    count/statefulsets.apps: "10"
+    
+    # Jobs
+    count/jobs.batch: "50"
+    count/cronjobs.batch: "10"
+    
+    # Ingresses
+    count/ingresses.networking.k8s.io: "10"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: ghost-storage-quota
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: resource-quota
+    app.kubernetes.io/part-of: ghost-platform
+    quota-type: storage
+  annotations:
+    description: "Storage quota for Ghost namespace by storage class"
+spec:
+  hard:
+    # Total storage across all classes
+    persistentvolumeclaims: "20"
+    requests.storage: 500Gi
+    
+    # SSD Storage Class
+    ghost-ssd.storageclass.storage.k8s.io/persistentvolumeclaims: "10"
+    ghost-ssd.storageclass.storage.k8s.io/requests.storage: 200Gi
+    
+    # Standard Storage Class
+    ghost-standard.storageclass.storage.k8s.io/persistentvolumeclaims: "15"
+    ghost-standard.storageclass.storage.k8s.io/requests.storage: 300Gi
+    
+    # Backup Storage Class
+    ghost-backup.storageclass.storage.k8s.io/persistentvolumeclaims: "5"
+    ghost-backup.storageclass.storage.k8s.io/requests.storage: 1Ti
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: ghost-limit-range
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: limit-range
+    app.kubernetes.io/part-of: ghost-platform
+  annotations:
+    description: "Default resource limits and requests for Ghost namespace"
+spec:
+  limits:
+  # Container-level limits
+  - type: Container
+    max:
+      cpu: "4"
+      memory: 8Gi
+      ephemeral-storage: 10Gi
+    min:
+      cpu: 100m
+      memory: 128Mi
+      ephemeral-storage: 1Gi
+    default:
+      cpu: 500m
+      memory: 512Mi
+      ephemeral-storage: 2Gi
+    defaultRequest:
+      cpu: 250m
+      memory: 256Mi
+      ephemeral-storage: 1Gi
+    maxLimitRequestRatio:
+      cpu: 4
+      memory: 4
+      ephemeral-storage: 2
+  
+  # Pod-level limits
+  - type: Pod
+    max:
+      cpu: "8"
+      memory: 16Gi
+      ephemeral-storage: 20Gi
+    min:
+      cpu: 100m
+      memory: 128Mi
+      ephemeral-storage: 1Gi
+  
+  # PersistentVolumeClaim limits
+  - type: PersistentVolumeClaim
+    max:
+      storage: 100Gi
+    min:
+      storage: 1Gi
+---
+# Priority Classes
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: ghost-critical
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: priority-class
+    app.kubernetes.io/part-of: ghost-platform
+value: 1000000
+globalDefault: false
+description: "Critical priority for essential Ghost services"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: ghost-high
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: priority-class
+    app.kubernetes.io/part-of: ghost-platform
+value: 100000
+globalDefault: false
+description: "High priority for important Ghost services"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: ghost-medium
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: priority-class
+    app.kubernetes.io/part-of: ghost-platform
+value: 10000
+globalDefault: true
+description: "Medium priority for standard Ghost services"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: ghost-low
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: priority-class
+    app.kubernetes.io/part-of: ghost-platform
+value: 1000
+globalDefault: false
+description: "Low priority for background Ghost jobs"
+---
+# Resource Quota per Priority Class
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: ghost-critical-quota
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: resource-quota
+    app.kubernetes.io/part-of: ghost-platform
+    quota-type: priority-critical
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    limits.cpu: "20"
+    limits.memory: 40Gi
+    pods: "10"
+  scopeSelector:
+    matchExpressions:
+    - operator: In
+      scopeName: PriorityClass
+      values:
+      - ghost-critical
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: ghost-high-quota
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: resource-quota
+    app.kubernetes.io/part-of: ghost-platform
+    quota-type: priority-high
+spec:
+  hard:
+    requests.cpu: "8"
+    requests.memory: 16Gi
+    limits.cpu: "16"
+    limits.memory: 32Gi
+    pods: "20"
+  scopeSelector:
+    matchExpressions:
+    - operator: In
+      scopeName: PriorityClass
+      values:
+      - ghost-high
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: ghost-medium-quota
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: resource-quota
+    app.kubernetes.io/part-of: ghost-platform
+    quota-type: priority-medium
+spec:
+  hard:
+    requests.cpu: "6"
+    requests.memory: 12Gi
+    limits.cpu: "12"
+    limits.memory: 24Gi
+    pods: "30"
+  scopeSelector:
+    matchExpressions:
+    - operator: In
+      scopeName: PriorityClass
+      values:
+      - ghost-medium
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: ghost-low-quota
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: resource-quota
+    app.kubernetes.io/part-of: ghost-platform
+    quota-type: priority-low
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: 4Gi
+    limits.cpu: "4"
+    limits.memory: 8Gi
+    pods: "10"
+  scopeSelector:
+    matchExpressions:
+    - operator: In
+      scopeName: PriorityClass
+      values:
+      - ghost-low

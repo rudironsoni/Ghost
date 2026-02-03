@@ -1,0 +1,100 @@
+---
+# Update playbook - Update Ghost Platform to latest version
+
+- name: Update Ghost Platform
+  hosts: ghost_servers
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Display update information
+      debug:
+        msg:
+          - "==================================================="
+          - "Ghost Platform Update"
+          - "==================================================="
+          - "Target: {{ inventory_hostname }}"
+          - "Current deployment: {{ ghost_install_dir }}"
+          - "==================================================="
+
+    - name: Create pre-update backup
+      command: /usr/local/bin/ghost-backup/backup-full.sh
+      register: backup_result
+      tags:
+        - backup
+
+    - name: Display backup result
+      debug:
+        msg: "Pre-update backup completed"
+      tags:
+        - backup
+
+  tasks:
+    - name: Pull latest code
+      git:
+        repo: "https://github.com/rudironsoni/Ghost.git"
+        dest: "{{ ghost_install_dir }}/source"
+        version: "{{ ghost_version | default('main') }}"
+        force: yes
+      become_user: "{{ ghost_user }}"
+      tags:
+        - git
+        - code
+
+    - name: Sync Docker Compose files
+      synchronize:
+        src: "{{ ghost_install_dir }}/source/infrastructure/miser-mode/docker/"
+        dest: "{{ ghost_install_dir }}/deploy/docker/"
+        delete: no
+      delegate_to: "{{ inventory_hostname }}"
+      become_user: "{{ ghost_user }}"
+      tags:
+        - sync
+
+    - name: Pull latest Docker images
+      community.docker.docker_compose:
+        project_src: "{{ ghost_install_dir }}/deploy/docker"
+        pull: yes
+      become_user: "{{ ghost_user }}"
+      tags:
+        - docker
+        - pull
+
+    - name: Recreate containers with new images
+      community.docker.docker_compose:
+        project_src: "{{ ghost_install_dir }}/deploy/docker"
+        state: present
+        restarted: yes
+      become_user: "{{ ghost_user }}"
+      tags:
+        - docker
+        - restart
+
+    - name: Wait for services to be healthy
+      pause:
+        seconds: 30
+      tags:
+        - wait
+
+    - name: Verify Ghost API is responding
+      uri:
+        url: "http://localhost:8080/health"
+        status_code: 200
+        timeout: 5
+      register: health_check
+      retries: 10
+      delay: 5
+      until: health_check.status == 200
+      tags:
+        - verify
+
+  post_tasks:
+    - name: Display update completion
+      debug:
+        msg:
+          - "==================================================="
+          - "Update Complete!"
+          - "==================================================="
+          - "Ghost Platform has been updated successfully"
+          - "API: http://{{ domain_name | default(ansible_default_ipv4.address) }}:8080"
+          - "==================================================="

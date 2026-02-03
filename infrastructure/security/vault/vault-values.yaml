@@ -1,0 +1,204 @@
+# Vault Helm Chart Values for Ghost Enterprise
+# Deploys HashiCorp Vault in HA mode with Raft storage
+
+global:
+  enabled: true
+  tlsDisable: false
+
+injector:
+  enabled: true
+  replicas: 2
+  
+  # Resource limits for the injector
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+  # Webhook configuration
+  agentImage:
+    repository: "hashicorp/vault"
+    tag: "1.15.4"
+
+  # Metrics
+  metrics:
+    enabled: true
+
+server:
+  enabled: true
+  
+  # Enterprise license (set via secret)
+  enterpriseLicense:
+    secretName: vault-license
+    secretKey: license
+
+  image:
+    repository: "hashicorp/vault-enterprise"
+    tag: "1.15.4-ent"
+    pullPolicy: IfNotPresent
+
+  # Run Vault in HA mode
+  ha:
+    enabled: true
+    replicas: 3
+    raft:
+      enabled: true
+      setNodeId: true
+      
+      config: |
+        ui = true
+        
+        listener "tcp" {
+          tls_disable = 0
+          address = "[::]:8200"
+          cluster_address = "[::]:8201"
+          tls_cert_file = "/vault/userconfig/vault-tls/tls.crt"
+          tls_key_file  = "/vault/userconfig/vault-tls/tls.key"
+          tls_client_ca_file = "/vault/userconfig/vault-tls/ca.crt"
+        }
+
+        storage "raft" {
+          path = "/vault/data"
+          
+          retry_join {
+            leader_api_addr = "https://vault-0.vault-internal:8200"
+            leader_ca_cert_file = "/vault/userconfig/vault-tls/ca.crt"
+            leader_client_cert_file = "/vault/userconfig/vault-tls/tls.crt"
+            leader_client_key_file = "/vault/userconfig/vault-tls/tls.key"
+          }
+          
+          retry_join {
+            leader_api_addr = "https://vault-1.vault-internal:8200"
+            leader_ca_cert_file = "/vault/userconfig/vault-tls/ca.crt"
+            leader_client_cert_file = "/vault/userconfig/vault-tls/tls.crt"
+            leader_client_key_file = "/vault/userconfig/vault-tls/tls.key"
+          }
+          
+          retry_join {
+            leader_api_addr = "https://vault-2.vault-internal:8200"
+            leader_ca_cert_file = "/vault/userconfig/vault-tls/ca.crt"
+            leader_client_cert_file = "/vault/userconfig/vault-tls/tls.crt"
+            leader_client_key_file = "/vault/userconfig/vault-tls/tls.key"
+          }
+        }
+
+        service_registration "kubernetes" {}
+
+        seal "awskms" {
+          region     = "us-east-1"
+          kms_key_id = "REPLACE_WITH_KMS_KEY_ID"
+        }
+
+        telemetry {
+          prometheus_retention_time = "30s"
+          disable_hostname = true
+        }
+
+  # Resource limits
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+
+  # Volumes for TLS certificates
+  volumes:
+    - name: vault-tls
+      secret:
+        secretName: vault-tls
+
+  volumeMounts:
+    - name: vault-tls
+      mountPath: /vault/userconfig/vault-tls
+      readOnly: true
+
+  # Readiness and liveness probes
+  readinessProbe:
+    enabled: true
+    path: "/v1/sys/health?standbyok=true&sealedcode=204&uninitcode=204"
+
+  livenessProbe:
+    enabled: true
+    path: "/v1/sys/health?standbyok=true"
+    initialDelaySeconds: 60
+
+  # Service configuration
+  service:
+    enabled: true
+    type: ClusterIP
+    port: 8200
+    targetPort: 8200
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+      service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+
+  # Ingress
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    hosts:
+      - host: vault.ghost.internal
+        paths:
+          - /
+    tls:
+      - secretName: vault-ingress-tls
+        hosts:
+          - vault.ghost.internal
+
+  # DataStorage for Raft backend
+  dataStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: gp3
+    accessMode: ReadWriteOnce
+
+  # Audit storage
+  auditStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: gp3
+    accessMode: ReadWriteOnce
+
+  # Affinity rules for HA
+  affinity: |
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+              app.kubernetes.io/instance: vault
+              component: server
+          topologyKey: kubernetes.io/hostname
+
+  # ServiceAccount
+  serviceAccount:
+    create: true
+    name: vault
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::ACCOUNT_ID:role/vault-kms-unseal"
+
+# UI Configuration
+ui:
+  enabled: true
+  serviceType: ClusterIP
+  externalPort: 8200
+
+# Server-side request forgery protection
+csi:
+  enabled: false
+
+# Prometheus metrics
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s

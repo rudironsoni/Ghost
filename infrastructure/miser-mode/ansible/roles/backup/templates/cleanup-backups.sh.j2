@@ -1,0 +1,33 @@
+#!/bin/bash
+# Ghost Platform - Backup Cleanup Script
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+set -euo pipefail
+
+BACKUP_DIR="{{ ghost_backup_dir }}"
+RETENTION_DAYS={{ backup_retention_days }}
+LOG_FILE="{{ ghost_log_dir }}/backup.log"
+
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+}
+
+log "Starting backup cleanup..."
+
+# Clean up old PostgreSQL backups
+DELETED_PG=$(find "${BACKUP_DIR}/postgres" -name "postgres_backup_*.sql.gz" -mtime +${RETENTION_DAYS} -delete -print | wc -l)
+log "Deleted ${DELETED_PG} old PostgreSQL backups"
+
+# Clean up old Redis backups
+DELETED_REDIS=$(find "${BACKUP_DIR}/redis" -name "redis_backup_*.rdb.gz" -mtime +${RETENTION_DAYS} -delete -print | wc -l)
+log "Deleted ${DELETED_REDIS} old Redis backups"
+
+# Clean up old full backups (keep for 7 days only)
+DELETED_FULL=$(find "${BACKUP_DIR}" -name "ghost_full_backup_*.tar.gz" -mtime +7 -delete -print | wc -l)
+log "Deleted ${DELETED_FULL} old full backups"
+
+# Report disk usage
+DISK_USAGE=$(du -sh "${BACKUP_DIR}" | cut -f1)
+log "Current backup directory size: ${DISK_USAGE}"
+
+log "Backup cleanup completed"

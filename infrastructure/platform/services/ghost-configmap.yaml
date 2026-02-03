@@ -1,0 +1,200 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ghost-config
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: ghost-platform
+  annotations:
+    description: "Ghost application configuration"
+data:
+  # Application Settings
+  application.name: "Ghost Platform"
+  application.version: "1.0.0"
+  application.environment: "production"
+  
+  # Server Configuration
+  server.port: "5000"
+  server.host: "0.0.0.0"
+  server.timeout: "30"
+  server.keepalive: "true"
+  
+  # Database Configuration
+  database.provider: "postgresql"
+  database.host: "ghost-postgres.database.svc.cluster.local"
+  database.port: "5432"
+  database.name: "ghostdb"
+  database.ssl: "true"
+  database.pool.min: "5"
+  database.pool.max: "20"
+  database.commandTimeout: "30"
+  database.connectionTimeout: "15"
+  
+  # Redis Configuration
+  redis.host: "ghost-redis.cache.svc.cluster.local"
+  redis.port: "6379"
+  redis.ssl: "true"
+  redis.database: "0"
+  redis.connectTimeout: "5000"
+  redis.syncTimeout: "5000"
+  redis.connectRetry: "3"
+  
+  # Cache Configuration
+  cache.enabled: "true"
+  cache.provider: "redis"
+  cache.defaultTTL: "3600"
+  cache.slidingExpiration: "true"
+  
+  # Logging Configuration
+  logging.level: "Information"
+  logging.console: "true"
+  logging.file: "false"
+  logging.structured: "true"
+  logging.includeScopes: "true"
+  
+  # Observability
+  observability.metrics.enabled: "true"
+  observability.metrics.port: "9090"
+  observability.tracing.enabled: "true"
+  observability.tracing.endpoint: "http://jaeger-collector.observability.svc.cluster.local:14268/api/traces"
+  observability.tracing.samplingRate: "0.1"
+  
+  # Feature Flags
+  features.authentication: "true"
+  features.authorization: "true"
+  features.rateLimiting: "true"
+  features.caching: "true"
+  features.compression: "true"
+  
+  # Security
+  security.cors.enabled: "true"
+  security.cors.origins: "https://ghost.example.com,https://www.ghost.example.com"
+  security.cors.methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+  security.cors.allowCredentials: "true"
+  security.headers.hsts: "true"
+  security.headers.contentTypeOptions: "true"
+  security.headers.frameOptions: "SAMEORIGIN"
+  security.headers.xssProtection: "true"
+  
+  # Rate Limiting
+  rateLimit.enabled: "true"
+  rateLimit.requests: "100"
+  rateLimit.period: "60"
+  rateLimit.byIpAddress: "true"
+  
+  # Health Checks
+  health.liveness.path: "/health/live"
+  health.readiness.path: "/health/ready"
+  health.startup.path: "/health/startup"
+  
+  # File Upload
+  upload.maxSize: "10485760" # 10MB
+  upload.allowedExtensions: ".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx"
+  upload.path: "/app/uploads"
+  
+  # Email Configuration
+  email.provider: "smtp"
+  email.host: "smtp.example.com"
+  email.port: "587"
+  email.enableSsl: "true"
+  email.from: "noreply@ghost.example.com"
+  email.fromName: "Ghost Platform"
+  
+  # Background Jobs
+  jobs.enabled: "true"
+  jobs.maxConcurrency: "10"
+  jobs.pollInterval: "5"
+  
+  # API Configuration
+  api.version: "v1"
+  api.basePath: "/api"
+  api.documentation: "true"
+  api.pagination.defaultPageSize: "50"
+  api.pagination.maxPageSize: "100"
+  
+  # Timezone
+  timezone: "UTC"
+  
+  # Culture
+  culture.default: "en-US"
+  culture.supported: "en-US,es-ES,fr-FR,de-DE"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ghost-nginx-config
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: nginx-config
+    app.kubernetes.io/part-of: ghost-platform
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes auto;
+    error_log /var/log/nginx/error.log warn;
+    pid /var/run/nginx.pid;
+    
+    events {
+        worker_connections 1024;
+        use epoll;
+        multi_accept on;
+    }
+    
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+        
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                        '$status $body_bytes_sent "$http_referer" '
+                        '"$http_user_agent" "$http_x_forwarded_for"';
+        
+        access_log /var/log/nginx/access.log main;
+        
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        types_hash_max_size 2048;
+        
+        gzip on;
+        gzip_vary on;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        gzip_types text/plain text/css text/xml text/javascript 
+                   application/json application/javascript application/xml+rss 
+                   application/rss+xml font/truetype font/opentype 
+                   application/vnd.ms-fontobject image/svg+xml;
+        
+        upstream backend {
+            least_conn;
+            server ghost-webapi:80 max_fails=3 fail_timeout=30s;
+            keepalive 32;
+        }
+        
+        server {
+            listen 80;
+            server_name _;
+            
+            location / {
+                proxy_pass http://backend;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+                proxy_set_header Host $host;
+                proxy_cache_bypass $http_upgrade;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+            
+            location /health {
+                access_log off;
+                return 200 "healthy\n";
+                add_header Content-Type text/plain;
+            }
+        }
+    }

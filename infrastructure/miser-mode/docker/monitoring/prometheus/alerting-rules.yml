@@ -1,0 +1,433 @@
+groups:
+  - name: infrastructure_alerts
+    interval: 30s
+    rules:
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: node:cpu_usage_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for more than 5 minutes. Current value: {{ $value }}%"
+
+      # Critical CPU usage
+      - alert: CriticalCPUUsage
+        expr: node:cpu_usage_percent > 95
+        for: 2m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Critical CPU usage detected"
+          description: "CPU usage is above 95% for more than 2 minutes. Current value: {{ $value }}%"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: node:memory_usage_percent > 90
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 90% for more than 5 minutes. Current value: {{ $value }}%"
+
+      # Critical memory usage
+      - alert: CriticalMemoryUsage
+        expr: node:memory_usage_percent > 95
+        for: 2m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Critical memory usage detected"
+          description: "Memory usage is above 95% for more than 2 minutes. Current value: {{ $value }}%"
+
+      # Disk space warning
+      - alert: DiskSpaceWarning
+        expr: node:disk_usage_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Disk space running low"
+          description: "Disk usage is above 85%. Current value: {{ $value }}%"
+
+      # Disk space critical
+      - alert: DiskSpaceCritical
+        expr: node:disk_usage_percent > 95
+        for: 1m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Disk space critically low"
+          description: "Disk usage is above 95%. Immediate action required! Current value: {{ $value }}%"
+
+      # Container high CPU
+      - alert: ContainerHighCPU
+        expr: container:cpu_usage_percent:rate1m > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Container {{ $labels.container_label_com_docker_compose_service }} high CPU usage"
+          description: "Container CPU usage is above 80% for 5 minutes. Current value: {{ $value }}%"
+
+      # Container high memory
+      - alert: ContainerHighMemory
+        expr: container:memory_usage_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Container {{ $labels.container_label_com_docker_compose_service }} high memory usage"
+          description: "Container memory usage is above 85% for 5 minutes. Current value: {{ $value }}%"
+
+      # Container OOM kill
+      - alert: ContainerOOMKilled
+        expr: increase(container_oom_events_total[5m]) > 0
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Container {{ $labels.container_label_com_docker_compose_service }} was OOM killed"
+          description: "Container was killed due to out of memory condition"
+
+  - name: service_health_alerts
+    interval: 30s
+    rules:
+      # Service down
+      - alert: ServiceDown
+        expr: up{job=~"ghost-.*|postgres-exporter|redis-exporter|rabbitmq-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} has been down for more than 1 minute"
+
+      # HTTP endpoint down
+      - alert: EndpointDown
+        expr: probe_success{job="blackbox-http"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "Endpoint {{ $labels.instance }} is down"
+          description: "HTTP endpoint {{ $labels.instance }} has been down for more than 1 minute"
+
+      # High error rate
+      - alert: HighErrorRate
+        expr: service:http_error_rate:1m > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "High error rate on {{ $labels.service }}"
+          description: "Error rate is above 5% for 5 minutes. Current rate: {{ $value | humanizePercentage }}"
+
+      # Critical error rate
+      - alert: CriticalErrorRate
+        expr: service:http_error_rate:1m > 0.10
+        for: 2m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "Critical error rate on {{ $labels.service }}"
+          description: "Error rate is above 10% for 2 minutes. Current rate: {{ $value | humanizePercentage }}"
+
+      # High request latency
+      - alert: HighRequestLatency
+        expr: service:http_request_duration_p95:1m > 2
+        for: 5m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "High request latency on {{ $labels.service }}"
+          description: "95th percentile request latency is above 2s. Current value: {{ $value }}s"
+
+  - name: database_alerts
+    interval: 30s
+    rules:
+      # High database connections
+      - alert: HighDatabaseConnections
+        expr: postgres:connection_usage_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "High database connection usage"
+          description: "Database connection usage is above 80%. Current value: {{ $value }}%"
+
+      # Critical database connections
+      - alert: CriticalDatabaseConnections
+        expr: postgres:connection_usage_percent > 90
+        for: 2m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Critical database connection usage"
+          description: "Database connection usage is above 90%. Current value: {{ $value }}%"
+
+      # Database down
+      - alert: DatabaseDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "PostgreSQL database has been unreachable for more than 1 minute"
+
+      # Too many idle connections
+      - alert: TooManyIdleConnections
+        expr: pg_stat_activity_count{state="idle"} > 50
+        for: 10m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Too many idle database connections"
+          description: "There are {{ $value }} idle connections. Consider connection pooling optimization."
+
+      # Long running queries
+      - alert: LongRunningQuery
+        expr: pg_stat_activity_max_tx_duration > 300
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Long running database query detected"
+          description: "Query has been running for more than 5 minutes. Duration: {{ $value }}s"
+
+      # Database replication lag
+      - alert: DatabaseReplicationLag
+        expr: pg_replication_lag > 300
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database replication lag detected"
+          description: "Replication lag is above 5 minutes. Current lag: {{ $value }}s"
+
+  - name: cache_alerts
+    interval: 30s
+    rules:
+      # Redis down
+      - alert: RedisDown
+        expr: up{job="redis-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Redis cache is down"
+          description: "Redis has been unreachable for more than 1 minute"
+
+      # High Redis memory usage
+      - alert: HighRedisMemoryUsage
+        expr: redis:memory_usage_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "High Redis memory usage"
+          description: "Redis memory usage is above 85%. Current value: {{ $value }}%"
+
+      # Critical Redis memory usage
+      - alert: CriticalRedisMemoryUsage
+        expr: redis:memory_usage_percent > 95
+        for: 2m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Critical Redis memory usage"
+          description: "Redis memory usage is above 95%. Current value: {{ $value }}%"
+
+      # Low cache hit rate
+      - alert: LowCacheHitRate
+        expr: redis:hit_rate:1m < 0.80
+        for: 10m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Low Redis cache hit rate"
+          description: "Cache hit rate is below 80% for 10 minutes. Current rate: {{ $value | humanizePercentage }}"
+
+      # Redis evicting keys
+      - alert: RedisEvictingKeys
+        expr: rate(redis_evicted_keys_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Redis is evicting keys"
+          description: "Redis is evicting more than 100 keys per second. Consider increasing memory limit."
+
+      # Redis rejected connections
+      - alert: RedisRejectedConnections
+        expr: rate(redis_rejected_connections_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Redis rejecting connections"
+          description: "Redis is rejecting connections. Check maxclients configuration."
+
+  - name: queue_alerts
+    interval: 30s
+    rules:
+      # RabbitMQ down
+      - alert: RabbitMQDown
+        expr: up{job="rabbitmq-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: queue
+        annotations:
+          summary: "RabbitMQ is down"
+          description: "RabbitMQ has been unreachable for more than 1 minute"
+
+      # High queue depth
+      - alert: HighQueueDepth
+        expr: rabbitmq:queue_messages_total > 1000
+        for: 10m
+        labels:
+          severity: warning
+          component: queue
+        annotations:
+          summary: "High message queue depth"
+          description: "Queue {{ $labels.queue }} has more than 1000 messages. Current depth: {{ $value }}"
+
+      # Critical queue depth
+      - alert: CriticalQueueDepth
+        expr: rabbitmq:queue_messages_total > 5000
+        for: 5m
+        labels:
+          severity: critical
+          component: queue
+        annotations:
+          summary: "Critical message queue depth"
+          description: "Queue {{ $labels.queue }} has more than 5000 messages. Current depth: {{ $value }}"
+
+      # No consumers
+      - alert: NoQueueConsumers
+        expr: rabbitmq_queue_consumers == 0 and rabbitmq_queue_messages > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: queue
+        annotations:
+          summary: "Queue {{ $labels.queue }} has no consumers"
+          description: "Queue has messages but no active consumers for more than 5 minutes"
+
+      # Low consumer utilization
+      - alert: LowConsumerUtilization
+        expr: rabbitmq:consumer_utilization < 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: queue
+        annotations:
+          summary: "Low consumer utilization on {{ $labels.queue }}"
+          description: "Consumer utilization is below 50%. Current value: {{ $value | humanizePercentage }}"
+
+      # RabbitMQ memory alarm
+      - alert: RabbitMQMemoryAlarm
+        expr: rabbitmq_node_mem_alarm > 0
+        labels:
+          severity: critical
+          component: queue
+        annotations:
+          summary: "RabbitMQ memory alarm triggered"
+          description: "RabbitMQ has triggered a memory alarm. Publishers will be blocked."
+
+      # RabbitMQ disk alarm
+      - alert: RabbitMQDiskAlarm
+        expr: rabbitmq_node_disk_free_alarm > 0
+        labels:
+          severity: critical
+          component: queue
+        annotations:
+          summary: "RabbitMQ disk alarm triggered"
+          description: "RabbitMQ has triggered a disk space alarm. Publishers will be blocked."
+
+  - name: business_logic_alerts
+    interval: 1m
+    rules:
+      # Circuit breaker open
+      - alert: CircuitBreakerOpen
+        expr: business:circuit_breaker_open > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "Circuit breaker {{ $labels.circuit }} is open on {{ $labels.service }}"
+          description: "Circuit breaker has been open for more than 5 minutes, blocking requests"
+
+      # Low scrape success rate
+      - alert: LowScrapeSuccessRate
+        expr: business:scrape_success_rate:1h < 0.80
+        for: 30m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "Low scrape success rate for {{ $labels.platform }}"
+          description: "Scrape success rate is below 80% for 30 minutes. Current rate: {{ $value | humanizePercentage }}"
+
+      # No scraping activity
+      - alert: NoScrapingActivity
+        expr: rate(jobs_scraped_total[10m]) == 0
+        for: 30m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "No scraping activity detected"
+          description: "No jobs have been scraped in the last 30 minutes for platform {{ $labels.platform }}"
+
+      # High scraping failure rate
+      - alert: HighScrapingFailureRate
+        expr: (business:scrape_success_rate:1h < 0.50) and (rate(jobs_scraped_total[1h]) > 0)
+        for: 15m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "High scraping failure rate for {{ $labels.platform }}"
+          description: "Scrape success rate is below 50%. Current rate: {{ $value | humanizePercentage }}"
+
+      # Stale data
+      - alert: StaleDataWarning
+        expr: time() - last_successful_scrape_timestamp > 7200
+        for: 5m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "Data is stale for {{ $labels.platform }}"
+          description: "No successful scrape in the last 2 hours"

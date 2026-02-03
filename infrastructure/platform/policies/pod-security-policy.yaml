@@ -1,0 +1,190 @@
+---
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: ghost-restricted
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: pod-security-policy
+    app.kubernetes.io/part-of: ghost-platform
+  annotations:
+    description: "Restricted Pod Security Policy for Ghost workloads"
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'runtime/default'
+    apparmor.security.beta.kubernetes.io/allowedProfileNames: 'runtime/default'
+    seccomp.security.alpha.kubernetes.io/defaultProfileName: 'runtime/default'
+    apparmor.security.beta.kubernetes.io/defaultProfileName: 'runtime/default'
+spec:
+  # Privilege and Access Controls
+  privileged: false
+  allowPrivilegeEscalation: false
+  
+  # Required to prevent escalations
+  requiredDropCapabilities:
+  - ALL
+  
+  # Allow specific capabilities if needed
+  allowedCapabilities: []
+  
+  # Volumes
+  volumes:
+  - 'configMap'
+  - 'emptyDir'
+  - 'projected'
+  - 'secret'
+  - 'downwardAPI'
+  - 'persistentVolumeClaim'
+  
+  # Host Namespaces
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  
+  # Host Ports
+  hostPorts:
+  - min: 0
+    max: 0 # No host ports allowed
+  
+  # SELinux
+  seLinux:
+    rule: RunAsAny
+  
+  # User and Group
+  runAsUser:
+    rule: MustRunAsNonRoot
+  
+  supplementalGroups:
+    rule: MustRunAs
+    ranges:
+    - min: 1000
+      max: 65535
+  
+  fsGroup:
+    rule: MustRunAs
+    ranges:
+    - min: 1000
+      max: 65535
+  
+  # Read-only root filesystem
+  readOnlyRootFilesystem: true
+  
+  # Proc Mount
+  allowedProcMountTypes:
+  - Default
+  
+  # Forbidden Sysctls
+  forbiddenSysctls:
+  - '*'
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ghost-psp-user
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: service-account
+    app.kubernetes.io/part-of: ghost-platform
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ghost-psp-role
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/part-of: ghost-platform
+rules:
+- apiGroups:
+  - policy
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+  resourceNames:
+  - ghost-restricted
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ghost-psp-rolebinding
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/part-of: ghost-platform
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ghost-psp-role
+subjects:
+- kind: ServiceAccount
+  name: ghost-psp-user
+  namespace: ghost
+- kind: ServiceAccount
+  name: ghost-webapi
+  namespace: ghost
+---
+# Pod Security Standards (PSS) - Kubernetes 1.23+
+# Replaces PodSecurityPolicy with built-in Pod Security Admission
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ghost-pss-example
+  labels:
+    # Enforce restricted security standard
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    
+    # Audit mode for restricted standard
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    
+    # Warn mode for restricted standard
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+---
+# Security Context Constraints (OpenShift)
+# apiVersion: security.openshift.io/v1
+# kind: SecurityContextConstraints
+# metadata:
+#   name: ghost-scc
+#   labels:
+#     app.kubernetes.io/name: ghost
+#     app.kubernetes.io/component: security-context-constraints
+#     app.kubernetes.io/part-of: ghost-platform
+# allowHostDirVolumePlugin: false
+# allowHostIPC: false
+# allowHostNetwork: false
+# allowHostPID: false
+# allowHostPorts: false
+# allowPrivilegedContainer: false
+# allowPrivilegeEscalation: false
+# allowedCapabilities: []
+# defaultAddCapabilities: []
+# fsGroup:
+#   type: MustRunAs
+#   ranges:
+#   - min: 1000
+#     max: 65535
+# readOnlyRootFilesystem: true
+# requiredDropCapabilities:
+# - ALL
+# runAsUser:
+#   type: MustRunAsNonRoot
+# seLinuxContext:
+#   type: RunAsAny
+# supplementalGroups:
+#   type: MustRunAs
+#   ranges:
+#   - min: 1000
+#     max: 65535
+# volumes:
+# - configMap
+# - emptyDir
+# - projected
+# - secret
+# - downwardAPI
+# - persistentVolumeClaim
+# users:
+# - system:serviceaccount:ghost:ghost-webapi

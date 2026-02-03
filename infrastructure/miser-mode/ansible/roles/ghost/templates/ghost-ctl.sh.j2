@@ -1,0 +1,64 @@
+#!/bin/bash
+# Ghost Platform Control Script
+# Usage: ghost-ctl {start|stop|restart|status|logs|update}
+
+set -e
+
+INSTALL_DIR="{{ ghost_install_dir }}/deploy/docker"
+COMPOSE_CMD="docker compose"
+
+cd "$INSTALL_DIR"
+
+case "$1" in
+    start)
+        echo "Starting Ghost Platform..."
+        $COMPOSE_CMD up -d
+        echo "Ghost Platform started"
+        ;;
+    stop)
+        echo "Stopping Ghost Platform..."
+        $COMPOSE_CMD down
+        echo "Ghost Platform stopped"
+        ;;
+    restart)
+        echo "Restarting Ghost Platform..."
+        $COMPOSE_CMD restart
+        echo "Ghost Platform restarted"
+        ;;
+    status)
+        $COMPOSE_CMD ps
+        ;;
+    logs)
+        $COMPOSE_CMD logs -f "${2:-}"
+        ;;
+    update)
+        echo "Updating Ghost Platform..."
+        git -C {{ ghost_install_dir }}/source pull
+        rsync -av {{ ghost_install_dir }}/source/infrastructure/miser-mode/docker/ $INSTALL_DIR/
+        $COMPOSE_CMD pull
+        $COMPOSE_CMD up -d
+        echo "Ghost Platform updated"
+        ;;
+    backup)
+        /usr/local/bin/ghost-backup/backup-full.sh
+        ;;
+    *)
+        echo "Usage: ghost-ctl {start|stop|restart|status|logs|update|backup}"
+        echo ""
+        echo "Commands:"
+        echo "  start   - Start all Ghost Platform services"
+        echo "  stop    - Stop all Ghost Platform services"
+        echo "  restart - Restart all Ghost Platform services"
+        echo "  status  - Show status of all services"
+        echo "  logs    - Show logs (optionally specify service name)"
+        echo "  update  - Update Ghost Platform to latest version"
+        echo "  backup  - Run full backup"
+        echo ""
+        echo "Examples:"
+        echo "  ghost-ctl logs ghost-webapi"
+        echo "  ghost-ctl status"
+        exit 1
+        ;;
+esac
+
+exit 0

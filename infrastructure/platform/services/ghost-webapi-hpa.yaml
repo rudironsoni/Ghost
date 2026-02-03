@@ -1,0 +1,127 @@
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ghost-webapi-hpa
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost-webapi
+    app.kubernetes.io/component: hpa
+    app.kubernetes.io/part-of: ghost-platform
+  annotations:
+    description: "Horizontal Pod Autoscaler for Ghost WebAPI based on CPU, memory, and custom metrics"
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ghost-webapi
+  
+  # Replica limits
+  minReplicas: 3
+  maxReplicas: 20
+  
+  # Scaling behavior
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300 # 5 minutes
+      policies:
+      - type: Percent
+        value: 50 # Scale down by 50% of current replicas
+        periodSeconds: 60
+      - type: Pods
+        value: 2 # Or scale down by 2 pods
+        periodSeconds: 60
+      selectPolicy: Min # Use the policy that scales down the least
+    scaleUp:
+      stabilizationWindowSeconds: 0 # Scale up immediately
+      policies:
+      - type: Percent
+        value: 100 # Scale up by 100% of current replicas
+        periodSeconds: 30
+      - type: Pods
+        value: 4 # Or scale up by 4 pods
+        periodSeconds: 30
+      selectPolicy: Max # Use the policy that scales up the most
+  
+  # Metrics
+  metrics:
+  # CPU-based scaling
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70 # Target 70% CPU utilization
+  
+  # Memory-based scaling
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80 # Target 80% memory utilization
+  
+  # Custom metric: Request rate (requires Prometheus adapter)
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: "1000" # 1000 requests per second per pod
+  
+  # Custom metric: Response time (requires Prometheus adapter)
+  - type: Pods
+    pods:
+      metric:
+        name: http_request_duration_seconds
+      target:
+        type: AverageValue
+        averageValue: "500m" # 500ms average response time
+  
+  # External metric: Queue depth (for message processing)
+  # - type: External
+  #   external:
+  #     metric:
+  #       name: sqs_queue_depth
+  #       selector:
+  #         matchLabels:
+  #           queue_name: ghost-processing-queue
+  #     target:
+  #       type: AverageValue
+  #       averageValue: "100" # 100 messages per pod
+---
+# Vertical Pod Autoscaler (optional - requires VPA installation)
+# Note: Do not use VPA and HPA together for CPU/memory metrics
+# apiVersion: autoscaling.k8s.io/v1
+# kind: VerticalPodAutoscaler
+# metadata:
+#   name: ghost-webapi-vpa
+#   namespace: ghost
+#   labels:
+#     app.kubernetes.io/name: ghost-webapi
+#     app.kubernetes.io/component: vpa
+#     app.kubernetes.io/part-of: ghost-platform
+# spec:
+#   targetRef:
+#     apiVersion: apps/v1
+#     kind: Deployment
+#     name: ghost-webapi
+#   
+#   # Update mode: Off, Initial, Recreate, Auto
+#   updatePolicy:
+#     updateMode: "Auto"
+#   
+#   # Resource policy
+#   resourcePolicy:
+#     containerPolicies:
+#     - containerName: ghost-webapi
+#       minAllowed:
+#         cpu: 250m
+#         memory: 512Mi
+#       maxAllowed:
+#         cpu: 2000m
+#         memory: 4Gi
+#       controlledResources:
+#       - cpu
+#       - memory

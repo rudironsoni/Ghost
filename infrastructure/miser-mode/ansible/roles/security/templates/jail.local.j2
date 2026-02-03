@@ -1,0 +1,36 @@
+[DEFAULT]
+bantime = {{ fail2ban_bantime }}
+findtime = {{ fail2ban_findtime }}
+maxretry = {{ fail2ban_maxretry }}
+destemail = {{ admin_email }}
+sendername = Fail2Ban
+action = %(action_mwl)s
+
+[sshd]
+enabled = true
+port = {{ ssh_port }}
+logpath = /var/log/auth.log
+maxretry = 5
+
+[nginx-http-auth]
+enabled = true
+port = http,https
+logpath = {{ ghost_log_dir }}/nginx/*.log
+
+[nginx-noscript]
+enabled = true
+port = http,https
+logpath = {{ ghost_log_dir }}/nginx/*.log
+
+[nginx-badbots]
+enabled = true
+port = http,https
+logpath = {{ ghost_log_dir }}/nginx/*.log
+
+[ghost-auth]
+enabled = true
+port = http,https
+logpath = {{ ghost_log_dir }}/*.log
+maxretry = 5
+findtime = 600
+bantime = 3600

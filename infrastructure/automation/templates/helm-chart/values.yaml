@@ -1,0 +1,402 @@
+# Ghost CMS Helm Chart - Default Values
+# This is a production-ready configuration template
+
+## Global settings
+global:
+  environment: production
+  region: us-east-1
+  domain: ghost.example.com
+
+## Ghost application configuration
+replicaCount: 3
+
+image:
+  repository: ghost
+  pullPolicy: IfNotPresent
+  tag: "5.87.0"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+## Deployment strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+## Service Account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+## Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "2368"
+  prometheus.io/path: "/ghost/api/v3/admin/site/"
+
+## Pod labels
+podLabels:
+  app: ghost
+  version: stable
+
+## Pod Security Context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+## Container Security Context
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 1000
+
+## Service configuration
+service:
+  type: ClusterIP
+  port: 2368
+  targetPort: 2368
+  annotations: {}
+
+## Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+  hosts:
+    - host: ghost.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: ghost-tls
+      hosts:
+        - ghost.example.com
+
+## Resource limits and requests
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+
+## Autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+## Liveness probe
+livenessProbe:
+  httpGet:
+    path: /ghost/api/v3/admin/site/
+    port: 2368
+  initialDelaySeconds: 120
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+## Readiness probe
+readinessProbe:
+  httpGet:
+    path: /ghost/api/v3/admin/site/
+    port: 2368
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+## Startup probe
+startupProbe:
+  httpGet:
+    path: /ghost/api/v3/admin/site/
+    port: 2368
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 30
+
+## Node selector
+nodeSelector: {}
+
+## Tolerations
+tolerations: []
+
+## Affinity rules
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - ghost
+          topologyKey: kubernetes.io/hostname
+
+## Persistence configuration
+persistence:
+  enabled: true
+  storageClass: "gp3-encrypted"
+  accessMode: ReadWriteOnce
+  size: 100Gi
+  annotations: {}
+
+## Ghost environment variables
+ghostConfig:
+  url: "https://ghost.example.com"
+  admin:
+    url: "https://ghost.example.com/ghost"
+  database:
+    client: "mysql"
+    connection:
+      host: "ghost-mysql"
+      port: 3306
+      user: "ghost"
+      database: "ghost_production"
+  mail:
+    transport: "SMTP"
+    from: "noreply@ghost.example.com"
+  logging:
+    level: "info"
+    transports:
+      - "stdout"
+  
+## Environment variables from secrets
+envFrom:
+  - secretRef:
+      name: ghost-secrets
+  - configMapRef:
+      name: ghost-config
+
+## Additional environment variables
+env:
+  - name: NODE_ENV
+    value: "production"
+  - name: database__client
+    value: "mysql"
+  - name: database__connection__host
+    value: "ghost-mysql"
+  - name: database__connection__port
+    value: "3306"
+  - name: database__connection__user
+    value: "ghost"
+  - name: database__connection__database
+    value: "ghost_production"
+
+## MySQL dependency configuration
+mysql:
+  enabled: true
+  auth:
+    rootPassword: ""  # Set via secret
+    database: "ghost_production"
+    username: "ghost"
+    password: ""  # Set via secret
+    existingSecret: "ghost-mysql-secret"
+  
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: "gp3-encrypted"
+    
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+    
+    configuration: |-
+      [mysqld]
+      max_connections=500
+      innodb_buffer_pool_size=2G
+      innodb_log_file_size=512M
+      innodb_flush_log_at_trx_commit=2
+      innodb_flush_method=O_DIRECT
+      slow_query_log=1
+      slow_query_log_file=/var/log/mysql/slow.log
+      long_query_time=2
+  
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+## Redis dependency configuration
+redis:
+  enabled: true
+  architecture: standalone
+  
+  auth:
+    enabled: true
+    existingSecret: "ghost-redis-secret"
+    existingSecretPasswordKey: "redis-password"
+  
+  master:
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: "gp3"
+    
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+  
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+## ConfigMap data
+configMap:
+  enabled: true
+  data:
+    NODE_ENV: "production"
+    GHOST_CONTENT: "/var/lib/ghost/content"
+
+## Monitoring configuration
+monitoring:
+  enabled: true
+  
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 10s
+    labels:
+      release: prometheus
+  
+  prometheusRule:
+    enabled: true
+    labels:
+      release: prometheus
+    rules:
+      - alert: GhostDown
+        expr: up{job="ghost"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ghost instance is down"
+          description: "Ghost instance {{ $labels.instance }} has been down for more than 5 minutes"
+      
+      - alert: GhostHighMemory
+        expr: container_memory_usage_bytes{pod=~"ghost-.*"} / container_spec_memory_limit_bytes{pod=~"ghost-.*"} > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ghost high memory usage"
+          description: "Ghost pod {{ $labels.pod }} is using more than 90% of its memory limit"
+      
+      - alert: GhostHighCPU
+        expr: rate(container_cpu_usage_seconds_total{pod=~"ghost-.*"}[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ghost high CPU usage"
+          description: "Ghost pod {{ $labels.pod }} CPU usage is above 80%"
+
+## Network Policy
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+  
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 2368
+  
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: mysql
+      ports:
+        - protocol: TCP
+          port: 3306
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+        - protocol: UDP
+          port: 53
+
+## Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+## Priority Class
+priorityClassName: ""
+
+## Init containers
+initContainers: []
+
+## Sidecar containers
+sidecars: []
+
+## Additional volumes
+volumes: []
+
+## Additional volume mounts
+volumeMounts: []
+
+## Lifecycle hooks
+lifecycle:
+  preStop:
+    exec:
+      command:
+        - /bin/sh
+        - -c
+        - sleep 15
+
+## Tests
+tests:
+  enabled: true

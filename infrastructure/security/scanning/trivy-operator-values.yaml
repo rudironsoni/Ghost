@@ -1,0 +1,330 @@
+# Trivy Operator Helm Values
+# Kubernetes-native security scanning for vulnerabilities and misconfigurations
+
+# Trivy Operator Configuration
+operator:
+  # Replicas for HA
+  replicas: 2
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  
+  # Metrics
+  metricsPort: 8080
+
+# Trivy Configuration
+trivy:
+  # Image repository
+  image:
+    repository: ghcr.io/aquasecurity/trivy
+    tag: "0.48.0"
+    pullPolicy: IfNotPresent
+  
+  # Trivy server mode for caching
+  serverEnabled: true
+  
+  # Storage for vulnerability database
+  storageSize: 5Gi
+  storageClassName: gp3
+  
+  # Resource limits for scan jobs
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  
+  # Severity levels to report
+  severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+  
+  # Vulnerability database
+  dbRepository: ghcr.io/aquasecurity/trivy-db
+  
+  # Java DB for JAR/WAR scanning
+  javaDbRepository: ghcr.io/aquasecurity/trivy-java-db
+  
+  # Timeout for scans
+  timeout: 5m0s
+  
+  # Ignore unfixed vulnerabilities
+  ignoreUnfixed: false
+  
+  # Offline scan mode (use cached DB)
+  offlineScan: false
+
+# Vulnerability Scanning
+vulnerabilityReports:
+  # Enable vulnerability scanning
+  enabled: true
+  
+  # Scan on schedule
+  scanJobsInSameNamespace: true
+  
+  # Scan job timeout
+  scanJobTimeout: 5m
+  
+  # Delete scan jobs after completion
+  deleteAfterCompletion: true
+  
+  # TTL for completed scan jobs
+  ttlSecondsAfterFinished: 3600
+  
+  # Concurrent scan limit
+  scanJobsConcurrentLimit: 3
+
+# Configuration Audit (k8s misconfigurations)
+configAuditReports:
+  enabled: true
+  
+  # Scan on schedule
+  schedule: "0 */6 * * *"  # Every 6 hours
+  
+  # Scan workloads
+  scanWorkloads: true
+
+# Exposed Secret Scanning
+exposedSecretReports:
+  enabled: true
+  
+  # Scan for exposed secrets in images
+  scanWorkloads: true
+
+# RBAC Assessment
+rbacAssessmentReports:
+  enabled: true
+  
+  # Scan RBAC resources
+  schedule: "0 0 * * *"  # Daily
+
+# Infrastructure Assessment (Node scanning)
+infraAssessmentReports:
+  enabled: true
+  
+  # Scan nodes for compliance
+  schedule: "0 2 * * 0"  # Weekly on Sunday at 2 AM
+
+# Compliance Reports
+complianceReports:
+  enabled: true
+  
+  # Compliance standards
+  standards:
+    - nsa
+    - cis
+    - pci-dss
+    - soc2
+
+# Cluster Compliance
+clusterComplianceReports:
+  enabled: true
+  
+  # Schedule for compliance scans
+  schedule: "0 3 * * 0"  # Weekly on Sunday at 3 AM
+
+# Scan targets
+targets:
+  # Target namespaces
+  namespaces: "ghost-production,ghost-staging"
+  
+  # Exclude namespaces
+  excludeNamespaces: "kube-system,kube-public,kube-node-lease"
+
+# Metrics and Monitoring
+metrics:
+  enabled: true
+  
+  # Service monitor for Prometheus
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    labels:
+      prometheus: kube-prometheus
+
+# Webhooks for notifications
+webhooks:
+  enabled: true
+  
+  # Webhook endpoints
+  endpoints:
+    # Slack notifications
+    - name: slack
+      url: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+      events:
+        - vulnerabilityreport
+        - configauditreport
+      severities:
+        - CRITICAL
+        - HIGH
+    
+    # Custom webhook for security team
+    - name: security-dashboard
+      url: "https://security.ghost.internal/webhook/trivy"
+      events:
+        - vulnerabilityreport
+        - exposedsecretsreport
+        - compliancereport
+      severities:
+        - CRITICAL
+        - HIGH
+        - MEDIUM
+
+# Policy enforcement
+policy:
+  # Block deployments with critical vulnerabilities
+  enforcementEnabled: false  # Start with false, enable after testing
+  
+  # Severity threshold for blocking
+  severityThreshold: CRITICAL
+  
+  # Maximum allowed vulnerabilities by severity
+  maxAllowedBySeverity:
+    CRITICAL: 0
+    HIGH: 5
+    MEDIUM: 20
+
+# Image scanning
+imageScanning:
+  # Automatic scanning on image push
+  enabled: true
+  
+  # Scan private registries
+  privateRegistries:
+    - name: ecr
+      url: "123456789012.dkr.ecr.us-east-1.amazonaws.com"
+      username: AWS
+      # Password pulled from secret
+      passwordSecret:
+        name: ecr-credentials
+        key: password
+    
+    - name: ghcr
+      url: "ghcr.io"
+      username: ghost
+      passwordSecret:
+        name: ghcr-credentials
+        key: token
+
+# Node agent for runtime scanning
+nodeAgent:
+  enabled: true
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Service Account
+serviceAccount:
+  create: true
+  name: trivy-operator
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::ACCOUNT_ID:role/trivy-operator"
+
+# Priority class
+priorityClassName: system-cluster-critical
+
+# Tolerations for node taints
+tolerations:
+  - key: "node-role.kubernetes.io/master"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+# Affinity rules
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: trivy-operator
+          topologyKey: kubernetes.io/hostname
+
+# Custom vulnerability exceptions
+exceptions:
+  # CVEs to ignore (with justification)
+  vulnerabilities:
+    - id: CVE-2023-12345
+      reason: "False positive - not exploitable in our configuration"
+      expiry: "2026-12-31"
+    
+    - id: CVE-2023-67890
+      reason: "Vendor patch not available, mitigation in place"
+      expiry: "2026-06-30"
+
+# Reporting
+reporting:
+  # Generate HTML reports
+  html:
+    enabled: true
+    
+  # Generate JSON reports
+  json:
+    enabled: true
+  
+  # Store reports in S3
+  storage:
+    s3:
+      enabled: true
+      bucket: ghost-security-reports
+      region: us-east-1
+      prefix: trivy-reports/
+
+---
+# ConfigMap for Trivy configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trivy-operator-config
+  namespace: trivy-system
+data:
+  # Severity mapping
+  severity.yaml: |
+    CRITICAL:
+      - Block deployment
+      - Immediate remediation required
+      - Security team notification
+    HIGH:
+      - Allow with approval
+      - Remediation within 7 days
+      - Team notification
+    MEDIUM:
+      - Allow deployment
+      - Remediation within 30 days
+      - Track in backlog
+    LOW:
+      - Allow deployment
+      - Remediation within 90 days
+      - Optional
+    UNKNOWN:
+      - Allow deployment
+      - Review manually
+  
+  # Scan policy
+  scan-policy.yaml: |
+    # Scan all workloads in production namespace
+    production:
+      schedule: "0 */6 * * *"  # Every 6 hours
+      severity: CRITICAL,HIGH,MEDIUM
+      
+    # Scan staging less frequently
+    staging:
+      schedule: "0 0 * * *"  # Daily
+      severity: CRITICAL,HIGH
+    
+    # Scan development on-demand
+    development:
+      schedule: manual
+      severity: CRITICAL

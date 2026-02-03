@@ -1,0 +1,23 @@
+{
+  "data-root": "{{ docker_data_root }}",
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "{{ docker_log_max_size }}",
+    "max-file": "{{ docker_log_max_file }}",
+    "compress": "true"
+  },
+  "storage-driver": "{{ docker_storage_driver }}",
+  "live-restore": true,
+  "userland-proxy": false,
+  "default-address-pools": [
+    {
+      "base": "{{ docker_network_range }}",
+      "size": 24
+    }
+  ],
+  "features": {
+    "buildkit": true
+  },
+  "metrics-addr": "127.0.0.1:9323",
+  "experimental": false
+}

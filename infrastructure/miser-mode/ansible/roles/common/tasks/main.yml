@@ -1,0 +1,232 @@
+---
+# Common role - System updates and basic configuration
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: "{{ apt_cache_valid_time }}"
+  tags:
+    - apt
+    - update
+
+- name: Upgrade all packages
+  apt:
+    upgrade: dist
+    autoremove: yes
+    autoclean: yes
+  register: apt_upgrade
+  tags:
+    - apt
+    - update
+
+- name: Install essential packages
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - software-properties-common
+      - python3
+      - python3-pip
+      - python3-setuptools
+      - git
+      - vim
+      - htop
+      - tmux
+      - wget
+      - unzip
+      - jq
+      - net-tools
+      - dnsutils
+      - telnet
+      - ncdu
+      - iotop
+      - sysstat
+      - tree
+    state: present
+    install_recommends: "{{ apt_install_recommends }}"
+  tags:
+    - packages
+    - essential
+
+- name: Set timezone
+  timezone:
+    name: "{{ timezone }}"
+  notify: restart cron
+  tags:
+    - timezone
+
+- name: Set locale
+  locale_gen:
+    name: "{{ locale }}"
+    state: present
+  tags:
+    - locale
+
+- name: Create Ghost system group
+  group:
+    name: "{{ ghost_group }}"
+    gid: "{{ ghost_gid }}"
+    state: present
+  tags:
+    - users
+
+- name: Create Ghost system user
+  user:
+    name: "{{ ghost_user }}"
+    uid: "{{ ghost_uid }}"
+    group: "{{ ghost_group }}"
+    shell: /bin/bash
+    home: "{{ ghost_install_dir }}"
+    create_home: yes
+    system: yes
+    comment: "Ghost Platform Service Account"
+  tags:
+    - users
+
+- name: Create Ghost directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ghost_user }}"
+    group: "{{ ghost_group }}"
+    mode: '0755'
+  loop:
+    - "{{ ghost_install_dir }}"
+    - "{{ ghost_data_dir }}"
+    - "{{ ghost_backup_dir }}"
+    - "{{ ghost_log_dir }}"
+  tags:
+    - directories
+
+- name: Configure system limits
+  pam_limits:
+    domain: "*"
+    limit_type: "{{ item.limit_type }}"
+    limit_item: "{{ item.limit_item }}"
+    value: "{{ item.value }}"
+  loop:
+    - { limit_type: 'soft', limit_item: 'nofile', value: "{{ system_max_open_files }}" }
+    - { limit_type: 'hard', limit_item: 'nofile', value: "{{ system_max_open_files }}" }
+    - { limit_type: 'soft', limit_item: 'nproc', value: "{{ system_max_user_processes }}" }
+    - { limit_type: 'hard', limit_item: 'nproc', value: "{{ system_max_user_processes }}" }
+  tags:
+    - limits
+    - tuning
+
+- name: Configure sysctl parameters
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  loop:
+    - { name: 'vm.swappiness', value: "{{ swap_swappiness }}" }
+    - { name: 'vm.vfs_cache_pressure', value: "{{ swap_vfs_cache_pressure }}" }
+    - { name: 'net.ipv4.tcp_keepalive_time', value: '600' }
+    - { name: 'net.ipv4.tcp_keepalive_intvl', value: '60' }
+    - { name: 'net.ipv4.tcp_keepalive_probes', value: '3' }
+    - { name: 'net.core.somaxconn', value: '4096' }
+    - { name: 'fs.file-max', value: "{{ system_max_open_files }}" }
+  tags:
+    - sysctl
+    - tuning
+
+- name: Check if swap file exists
+  stat:
+    path: /swapfile
+  register: swap_file_check
+  tags:
+    - swap
+
+- name: Create swap file
+  command: fallocate -l {{ swap_file_size_mb }}M /swapfile
+  when: not swap_file_check.stat.exists
+  tags:
+    - swap
+
+- name: Set swap file permissions
+  file:
+    path: /swapfile
+    owner: root
+    group: root
+    mode: '0600'
+  when: not swap_file_check.stat.exists
+  tags:
+    - swap
+
+- name: Make swap
+  command: mkswap /swapfile
+  when: not swap_file_check.stat.exists
+  tags:
+    - swap
+
+- name: Enable swap
+  command: swapon /swapfile
+  when: not swap_file_check.stat.exists
+  tags:
+    - swap
+
+- name: Add swap to fstab
+  mount:
+    name: none
+    src: /swapfile
+    fstype: swap
+    opts: sw
+    passno: '0'
+    dump: '0'
+    state: present
+  tags:
+    - swap
+
+- name: Configure unattended upgrades
+  apt:
+    name:
+      - unattended-upgrades
+      - apt-listchanges
+    state: present
+  when: unattended_upgrades_enabled
+  tags:
+    - security
+    - updates
+
+- name: Configure unattended upgrades settings
+  template:
+    src: 50unattended-upgrades.j2
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    owner: root
+    group: root
+    mode: '0644'
+  when: unattended_upgrades_enabled
+  tags:
+    - security
+    - updates
+
+- name: Enable unattended upgrades
+  template:
+    src: 20auto-upgrades.j2
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: '0644'
+  when: unattended_upgrades_enabled
+  tags:
+    - security
+    - updates
+
+- name: Install NTP for time synchronization
+  apt:
+    name: chrony
+    state: present
+  tags:
+    - ntp
+
+- name: Ensure chrony is running
+  service:
+    name: chronyd
+    state: started
+    enabled: yes
+  tags:
+    - ntp
