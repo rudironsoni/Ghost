@@ -8,7 +8,7 @@ namespace Ghost.Core.Configuration;
 public interface INordVpnCredentialProvider
 {
     NordVpnCredentials? GetCredentials();
-    bool ValidateCredentials(out string? error);
+    bool ValidateCredentials(out string? errorMessage);
 }
 
 public class NordVpnCredentials
@@ -81,35 +81,35 @@ public class ConfigurationNordVpnCredentialProvider : INordVpnCredentialProvider
         };
     }
 
-    public bool ValidateCredentials(out string? error)
+    public bool ValidateCredentials(out string? errorMessage)
     {
-        error = null;
+        errorMessage = null;
         var credentials = GetCredentials();
 
         if (credentials == null)
         {
-            error = "NordVPN credentials not configured";
+            errorMessage = "NordVPN credentials not configured";
             _logValidationError(_logger, null);
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(credentials.Username))
         {
-            error = "NordVPN username is required";
+            errorMessage = "NordVPN username is required";
             _logValidationError(_logger, null);
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(credentials.Password))
         {
-            error = "NordVPN password is required";
+            errorMessage = "NordVPN password is required";
             _logValidationError(_logger, null);
             return false;
         }
 
         if (credentials.Servers.Count == 0)
         {
-            error = "At least one NordVPN server must be configured";
+            errorMessage = "At least one NordVPN server must be configured";
             _logValidationError(_logger, null);
             return false;
         }
