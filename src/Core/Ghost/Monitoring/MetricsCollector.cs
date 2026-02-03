@@ -90,15 +90,17 @@ public class MetricsCollector : IMetricsCollector
     }
 }
 
+#pragma warning disable CA1051
 public class PlatformMetrics
 {
-    public long ScrapeAttempts { get; set; }
-    public long ScrapeSuccesses { get; set; }
-    public long ScrapeFailures { get; set; }
-    public long CacheHits { get; set; }
-    public long CacheMisses { get; set; }
-    public string CircuitBreakerState { get; set; } = "Closed";
+    public long ScrapeAttempts;
+    public long ScrapeSuccesses;
+    public long ScrapeFailures;
+    public long CacheHits;
+    public long CacheMisses;
+    public string CircuitBreakerState = "Closed";
 }
+#pragma warning restore CA1051
 
 public class MetricsSnapshot
 {
