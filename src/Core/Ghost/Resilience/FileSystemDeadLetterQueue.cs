@@ -1,5 +1,4 @@
 using System;
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -11,6 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Ghost.Core;
 
 namespace Ghost.Resilience;
 
@@ -39,7 +39,7 @@ public sealed class DeadLetterQueueOptions
 /// File-system based dead letter queue implementation using JSON storage.
 /// </summary>
 [SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "Dead letter queue naming aligns with domain terminology.")]
-public sealed class FileSystemDeadLetterQueue : IDeadLetterQueue
+public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
 {
     private static readonly Action<ILogger, string, Exception?> s_logReadFailed =
         LoggerMessage.Define<string>(LogLevel.Warning, new EventId(1, nameof(ReadJobAsync)), "Failed to read dead letter job file {Path}");
@@ -133,6 +133,108 @@ public sealed class FileSystemDeadLetterQueue : IDeadLetterQueue
 
         var path = GetActiveJobPath(job);
         await WriteJobAsync(path, job).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task EnqueueAsync<T>(T item, string reason, Exception? exception = null, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureDirectories();
+        await AutoArchiveIfDueAsync().ConfigureAwait(false);
+
+        var job = new FailedScrapeJob
+        {
+            Id = Guid.NewGuid().ToString("N")[..8],
+            Platform = typeof(T).Name,
+            Error = reason + (exception != null ? $": {exception.Message}" : string.Empty),
+            FailedAt = DateTime.UtcNow,
+            StackTrace = exception?.StackTrace ?? string.Empty
+        };
+
+        var metadata = new Dictionary<string, object>
+        {
+            ["Data"] = JsonSerializer.Serialize(item)
+        };
+
+        job.Metadata = metadata;
+
+        var path = GetActiveJobPath(job);
+        await WriteJobAsync(path, job).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<List<Ghost.Core.DeadLetterItem>> PeekAsync(int count, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureDirectories();
+        await AutoArchiveIfDueAsync().ConfigureAwait(false);
+
+        var items = new List<Ghost.Core.DeadLetterItem>();
+
+        foreach (var path in EnumerateActiveFiles().Take(count))
+        {
+            var job = await ReadJobAsync(path).ConfigureAwait(false);
+            if (job is null) continue;
+
+            var data = job.Metadata?.GetValueOrDefault("Data")?.ToString() ?? string.Empty;
+
+            items.Add(new Ghost.Core.DeadLetterItem
+            {
+                Id = Guid.TryParse(job.Id, out var guid) ? guid : Guid.NewGuid(),
+                EnqueuedAt = job.FailedAt,
+                Reason = job.Error,
+                ExceptionMessage = job.StackTrace,
+                ExceptionType = "Exception",
+                ContentType = job.Platform,
+                Content = data,
+                RetryCount = job.RetryCount
+            });
+        }
+
+        return items;
+    }
+
+    /// <inheritdoc />
+    public async Task<List<Ghost.Core.DeadLetterItem>> DequeueAsync(int count, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureDirectories();
+        await AutoArchiveIfDueAsync().ConfigureAwait(false);
+
+        var items = await PeekAsync(count, cancellationToken).ConfigureAwait(false);
+
+        foreach (var item in items)
+        {
+            var path = FindJobFile(item.Id.ToString("N") ?? string.Empty);
+            if (path is not null)
+            {
+                SafeDelete(path);
+            }
+        }
+
+        return items;
+    }
+
+    /// <inheritdoc />
+    public async Task<int> GetCountAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureDirectories();
+        return await GetQueueDepthAsync().ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task ClearAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureDirectories();
+
+        foreach (var path in EnumerateActiveFiles())
+        {
+            SafeDelete(path);
+        }
+
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     /// <inheritdoc />

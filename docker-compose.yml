@@ -4,9 +4,15 @@ services:
       context: .
       dockerfile: src/Ghost.WebApi/Dockerfile
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Production
       - Ghost__Kernel__Headless=true
       - Ghost__Kernel__MaxConcurrentSessions=5
+      # Resilience Configuration
+      - Resilience__CircuitBreaker__FailureThreshold=5
+      - Resilience__CircuitBreaker__SuccessThreshold=2
+      - Resilience__CircuitBreaker__OpenTimeoutSeconds=60
+      - Resilience__CircuitBreaker__HalfOpenTimeoutSeconds=30
+      # Platform Enablement
       - Ghost__Extensions__LinkedIn__Enabled=true
       - Ghost__Extensions__Indeed__Enabled=true
       - Ghost__Extensions__Indeed__Country=ES
@@ -19,3 +25,26 @@ services:
       - "5003:8080"
     volumes:
       - ./data:/app/data
+      - ghost-cache:/var/ghost/cache
+      - ghost-dlq:/var/ghost/dlq
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+volumes:
+  ghost-cache:
+    driver: local
+  ghost-dlq:
+    driver: local
