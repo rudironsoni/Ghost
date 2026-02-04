@@ -1,0 +1,75 @@
+info:
+  name: Search Jobs with Errors
+  type: http
+  seq: 2
+  description: Search jobs with detailed error reporting for each platform
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/jobs/search-with-errors"
+
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "query": "software engineer",
+        "location": "Remote",
+        "maxResults": 25,
+        "sources": ["LinkedIn", "Indeed"]
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200 or 500", function() {
+          expect(res.status).to.be.oneOf([200, 500]);
+        });
+
+docs: |-
+  ## Search Jobs with Errors
+  
+  Search jobs with detailed error reporting for each platform.
+  This endpoint provides granular error information when platforms fail.
+  
+  ### Response Example (200 Partial Success)
+  ```json
+  {
+    "jobs": [
+      {
+        "id": "linkedin-34567",
+        "title": "Software Engineer (Remote)",
+        "company": "Tech Innovations LLC",
+        "location": "Remote - US",
+        "description": "Build scalable microservices architecture...",
+        "salary": "$130k - $160k",
+        "jobType": "FullTime",
+        "experienceLevel": "MidLevel",
+        "postedAt": "2025-02-03T10:15:00Z",
+        "remote": true,
+        "url": "https://linkedin.com/jobs/view/34567",
+        "source": "LinkedIn",
+        "isEasyApply": true
+      }
+    ],
+    "success": true,
+    "platformErrors": [
+      {
+        "platform": "Indeed",
+        "error": "Rate limit exceeded - 429 Too Many Requests",
+        "errorType": "RateLimitExceeded",
+        "timestamp": "2025-02-04T12:00:00Z",
+        "retryAfter": 300
+      }
+    ],
+    "metadata": {
+      "totalPlatforms": 2,
+      "successfulPlatforms": 1,
+      "failedPlatforms": 1,
+      "executionTimeMs": 3420
+    }
+  }
+  ```

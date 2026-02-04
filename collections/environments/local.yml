@@ -1,0 +1,17 @@
+info:
+  name: local
+  type: environment
+
+variables:
+  - name: baseUrl
+    value: http://localhost:8080
+  - name: platform
+    value: LinkedIn
+  - name: jobId
+    value: linkedin-12345
+  - name: profileId
+    value: john-doe
+  - name: strategy
+    value: ""
+  - name: count
+    value: "10"

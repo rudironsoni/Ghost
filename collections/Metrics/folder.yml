@@ -1,0 +1,4 @@
+info:
+  name: Metrics
+  type: folder
+  description: Prometheus-style metrics endpoints

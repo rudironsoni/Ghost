@@ -1,0 +1,35 @@
+info:
+  name: Ghost WebAPI
+  version: "1.0.0"
+  type: collection
+  description: Ghost WebAPI - Job Search Platform
+
+folders:
+  - name: Health
+    description: Health check endpoints for monitoring
+  - name: Metrics
+    description: Prometheus-style metrics endpoints
+  - name: Jobs
+    description: Job search endpoints
+  - name: LinkedIn
+    description: LinkedIn-specific endpoints for jobs, social profiles, and news
+  - name: Admin
+    description: Administrative endpoints for system management
+
+environments:
+  - name: local
+    file: environments/local.yml
+
+variables:
+  - name: baseUrl
+    value: http://localhost:8080
+  - name: platform
+    value: LinkedIn
+  - name: jobId
+    value: linkedin-12345
+  - name: profileId
+    value: john-doe
+  - name: strategy
+    value: ""
+  - name: count
+    value: "10"

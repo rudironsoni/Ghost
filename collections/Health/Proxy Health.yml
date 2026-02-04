@@ -1,0 +1,23 @@
+info:
+  name: Proxy Health
+  type: http
+  seq: 5
+  description: Health status of proxy infrastructure
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/health/proxies"
+
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+docs: |-
+  ## Proxy Health
+  
+  Returns health status of proxy infrastructure.

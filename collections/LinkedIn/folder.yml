@@ -1,0 +1,4 @@
+info:
+  name: LinkedIn
+  type: folder
+  description: LinkedIn-specific endpoints for jobs, social profiles, and news

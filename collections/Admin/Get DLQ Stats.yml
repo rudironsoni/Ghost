@@ -1,0 +1,35 @@
+info:
+  name: Get DLQ Stats
+  type: http
+  seq: 2
+  description: Get Dead Letter Queue statistics
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/admin/dlq/stats"
+
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+        
+        test("Response has activeCount", function() {
+          expect(res.body).to.have.property("activeCount");
+        });
+
+docs: |-
+  ## Get DLQ Stats
+  
+  Get Dead Letter Queue statistics.
+  
+  ### Response Example (200 OK)
+  ```json
+  {
+    "activeCount": 5,
+    "timestamp": "2025-02-04T12:00:00Z"
+  }
+  ```

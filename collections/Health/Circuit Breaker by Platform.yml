@@ -1,0 +1,26 @@
+info:
+  name: Circuit Breaker by Platform
+  type: http
+  seq: 8
+  description: Get health status of a specific circuit breaker
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/health/circuit-breakers/{{platform}}"
+
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200 or 404", function() {
+          expect(res.status).to.be.oneOf([200, 404, 503]);
+        });
+
+docs: |-
+  ## Circuit Breaker by Platform
+  
+  Returns health status of a specific circuit breaker.
+  
+  ### Path Parameters
+  - `platform` - Platform name (LinkedIn, Indeed, Glassdoor, Google)

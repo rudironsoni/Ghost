@@ -1,0 +1,1777 @@
+{
+  "info": {
+    "_postman_id": "ghost-webapi-collection",
+    "name": "Ghost WebAPI",
+    "description": "Postman collection for Ghost WebAPI - Job Search Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "description": "Health check endpoints for monitoring",
+      "item": [
+        {
+          "name": "Basic Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Basic ASP.NET Core health check endpoint"
+          },
+          "response": [
+            {
+              "name": "Healthy",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/health",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "health"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\"status\": \"Healthy\", \"checks\": []}"
+            }
+          ]
+        },
+        {
+          "name": "Jobs Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "health"
+              ]
+            },
+            "description": "Health check for job platform scrapers (Google, Glassdoor, LinkedIn, Indeed)"
+          },
+          "response": [
+            {
+              "name": "Jobs Health Status",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/jobs/health",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "jobs",
+                    "health"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"overallStatus\": \"healthy\",\n  \"timestamp\": \"2025-02-04T12:00:00Z\",\n  \"platforms\": {\n    \"Google\": {\n      \"platform\": \"Google\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 5 jobs\",\n      \"lastChecked\": \"2025-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2025-02-04T12:00:00Z\",\n      \"responseTimeMs\": 1250,\n      \"jobsFound\": 5\n    },\n    \"LinkedIn\": {\n      \"platform\": \"LinkedIn\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 3 jobs\",\n      \"lastChecked\": \"2025-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2025-02-04T12:00:00Z\",\n      \"responseTimeMs\": 2300,\n      \"jobsFound\": 3\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Detailed Health Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/detailed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health",
+                "detailed"
+              ]
+            },
+            "description": "Comprehensive health report including platforms and proxies"
+          }
+        },
+        {
+          "name": "Platform Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/platforms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health",
+                "platforms"
+              ]
+            },
+            "description": "Health status of all platform scrapers"
+          }
+        },
+        {
+          "name": "Proxy Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/proxies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health",
+                "proxies"
+              ]
+            },
+            "description": "Health status of proxy infrastructure"
+          }
+        },
+        {
+          "name": "Metrics Snapshot",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/metrics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health",
+                "metrics"
+              ]
+            },
+            "description": "Current metrics snapshot"
+          }
+        },
+        {
+          "name": "Circuit Breakers Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/circuit-breakers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health",
+                "circuit-breakers"
+              ]
+            },
+            "description": "Get health status of all circuit breakers"
+          },
+          "response": [
+            {
+              "name": "Circuit Breakers Status",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/health/circuit-breakers",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "health",
+                    "circuit-breakers"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"timestamp\": \"2025-02-04T12:00:00Z\",\n  \"overallStatus\": \"healthy\",\n  \"circuitBreakers\": [\n    {\n      \"platform\": \"LinkedIn\",\n      \"state\": \"Closed\",\n      \"isHealthy\": true,\n      \"metrics\": {\n        \"failureCount\": 0,\n        \"successCount\": 125,\n        \"consecutiveFailures\": 0\n      }\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Circuit Breaker by Platform",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/circuit-breakers/{{platform}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health",
+                "circuit-breakers",
+                "{{platform}}"
+              ]
+            },
+            "description": "Get health status of a specific circuit breaker"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Metrics",
+      "description": "Prometheus-style metrics endpoints",
+      "item": [
+        {
+          "name": "Get Metrics (JSON)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/metrics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "metrics"
+              ]
+            },
+            "description": "Get all metrics in JSON format"
+          }
+        },
+        {
+          "name": "Get Metrics (Prometheus)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/metrics/prometheus",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "metrics",
+                "prometheus"
+              ]
+            },
+            "description": "Get metrics in Prometheus exposition format"
+          },
+          "response": [
+            {
+              "name": "Prometheus Metrics",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "text/plain"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/metrics/prometheus",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "metrics",
+                    "prometheus"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "text",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "# HELP ghost_scrape_attempts Total number of scrape attempts\n# TYPE ghost_scrape_attempts counter\nghost_scrape_attempts{platform=\"LinkedIn\"} 125\nghost_scrape_attempts{platform=\"Indeed\"} 89\n\n# HELP ghost_scrape_successes Total number of successful scrapes\n# TYPE ghost_scrape_successes counter\nghost_scrape_successes{platform=\"LinkedIn\"} 120\nghost_scrape_successes{platform=\"Indeed\"} 85\n\n# HELP ghost_scrape_failures Total number of failed scrapes\n# TYPE ghost_scrape_failures counter\nghost_scrape_failures{platform=\"LinkedIn\"} 5\nghost_scrape_failures{platform=\"Indeed\"} 4\n\n# HELP ghost_circuit_breaker_state Circuit breaker state (0=Closed, 1=HalfOpen, 2=Open)\n# TYPE ghost_circuit_breaker_state gauge\nghost_circuit_breaker_state{platform=\"LinkedIn\"} 0\nghost_circuit_breaker_state{platform=\"Indeed\"} 0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Jobs",
+      "description": "Job search endpoints",
+      "item": [
+        {
+          "name": "Search Jobs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"software engineer\",\n  \"location\": \"San Francisco, CA\",\n  \"remoteOnly\": true,\n  \"jobType\": \"FullTime\",\n  \"experienceLevel\": \"MidLevel\",\n  \"postedDate\": \"PastWeek\",\n  \"maxResults\": 25,\n  \"sources\": [\"LinkedIn\", \"Indeed\", \"Glassdoor\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "search"
+              ]
+            },
+            "description": "Search for jobs across multiple platforms"
+          },
+          "response": [
+            {
+              "name": "Remote Only - Software Engineer",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"software engineer\",\n  \"location\": \"Remote\",\n  \"remoteOnly\": true,\n  \"maxResults\": 25\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/jobs/search",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "jobs",
+                    "search"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"jobs\": [\n    {\n      \"id\": \"linkedin-45678\",\n      \"title\": \"Software Engineer - Remote\",\n      \"company\": \"CloudTech Solutions\",\n      \"location\": \"Remote (US)\",\n      \"description\": \"Join our distributed team building cloud-native applications...\",\n      \"salary\": \"$120k - $160k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-02-02T14:30:00Z\",\n      \"remote\": true,\n      \"url\": \"https://linkedin.com/jobs/view/45678\",\n      \"source\": \"LinkedIn\",\n      \"isEasyApply\": true\n    },\n    {\n      \"id\": \"indeed-78901\",\n      \"title\": \"Mid-Level Software Engineer (Remote)\",\n      \"company\": \"DataFlow Inc\",\n      \"location\": \"Remote - Anywhere\",\n      \"description\": \"Work from anywhere while building scalable data pipelines...\",\n      \"salary\": \"$110k - $150k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-02-01T09:15:00Z\",\n      \"remote\": true,\n      \"url\": \"https://indeed.com/viewjob?jk=78901\",\n      \"source\": \"Indeed\",\n      \"isEasyApply\": false\n    },\n    {\n      \"id\": \"glassdoor-23456\",\n      \"title\": \"Full Stack Engineer - Remote First\",\n      \"company\": \"Innovate Labs\",\n      \"location\": \"Remote (USA)\",\n      \"description\": \"Remote-first company seeking full stack engineers...\",\n      \"salary\": \"$130k - $170k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-01-30T11:00:00Z\",\n      \"remote\": true,\n      \"url\": \"https://glassdoor.com/job/23456\",\n      \"source\": \"Glassdoor\",\n      \"isEasyApply\": false\n    }\n  ],\n  \"success\": true,\n  \"platformErrors\": [],\n  \"metadata\": {\n    \"totalPlatforms\": 3,\n    \"successfulPlatforms\": 3,\n    \"failedPlatforms\": 0,\n    \"executionTimeMs\": 3200,\n    \"criteria\": {\n      \"query\": \"software engineer\",\n      \"location\": \"Remote\",\n      \"remoteOnly\": true,\n      \"maxResults\": 25\n    }\n  }\n}"
+            },
+            {
+              "name": "Entry Level - Junior Developer",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"junior developer\",\n  \"location\": \"New York, NY\",\n  \"remoteOnly\": false,\n  \"jobType\": \"FullTime\",\n  \"experienceLevel\": \"EntryLevel\",\n  \"maxResults\": 25\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/jobs/search",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "jobs",
+                    "search"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"jobs\": [\n    {\n      \"id\": \"linkedin-11223\",\n      \"title\": \"Junior Software Developer\",\n      \"company\": \"NYC Tech Startup\",\n      \"location\": \"New York, NY\",\n      \"description\": \"Looking for entry-level developers to join our growing team...\",\n      \"salary\": \"$75k - $95k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"EntryLevel\",\n      \"postedAt\": \"2025-02-03T08:00:00Z\",\n      \"remote\": false,\n      \"url\": \"https://linkedin.com/jobs/view/11223\",\n      \"source\": \"LinkedIn\",\n      \"isEasyApply\": true\n    },\n    {\n      \"id\": \"indeed-33445\",\n      \"title\": \"Entry Level Software Engineer\",\n      \"company\": \"Financial Services Corp\",\n      \"location\": \"New York, NY (Hybrid)\",\n      \"description\": \"Recent graduates welcome! Join our fintech development team...\",\n      \"salary\": \"$80k - $100k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"EntryLevel\",\n      \"postedAt\": \"2025-02-02T16:45:00Z\",\n      \"remote\": false,\n      \"url\": \"https://indeed.com/viewjob?jk=33445\",\n      \"source\": \"Indeed\",\n      \"isEasyApply\": false\n    },\n    {\n      \"id\": \"glassdoor-66778\",\n      \"title\": \"Junior Web Developer\",\n      \"company\": \"Digital Agency NY\",\n      \"location\": \"New York, NY\",\n      \"description\": \"Perfect for new developers looking to grow their skills...\",\n      \"salary\": \"$70k - $90k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"EntryLevel\",\n      \"postedAt\": \"2025-02-01T12:00:00Z\",\n      \"remote\": false,\n      \"url\": \"https://glassdoor.com/job/66778\",\n      \"source\": \"Glassdoor\",\n      \"isEasyApply\": true\n    }\n  ],\n  \"success\": true,\n  \"platformErrors\": [],\n  \"metadata\": {\n    \"totalPlatforms\": 3,\n    \"successfulPlatforms\": 3,\n    \"failedPlatforms\": 0,\n    \"executionTimeMs\": 2890,\n    \"criteria\": {\n      \"query\": \"junior developer\",\n      \"location\": \"New York, NY\",\n      \"remoteOnly\": false,\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"EntryLevel\",\n      \"maxResults\": 25\n    }\n  }\n}"
+            },
+            {
+              "name": "Senior Level - Principal Engineer",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"principal engineer\",\n  \"location\": \"San Francisco, CA\",\n  \"remoteOnly\": false,\n  \"jobType\": \"FullTime\",\n  \"experienceLevel\": \"Senior\",\n  \"postedDate\": \"PastMonth\",\n  \"maxResults\": 25\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/jobs/search",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "jobs",
+                    "search"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"jobs\": [\n    {\n      \"id\": \"linkedin-99887\",\n      \"title\": \"Principal Software Engineer\",\n      \"company\": \"AI Innovations Inc\",\n      \"location\": \"San Francisco, CA\",\n      \"description\": \"Lead our engineering team in building next-generation AI systems...\",\n      \"salary\": \"$220k - $280k + equity\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"Senior\",\n      \"postedAt\": \"2025-01-15T09:00:00Z\",\n      \"remote\": false,\n      \"url\": \"https://linkedin.com/jobs/view/99887\",\n      \"source\": \"LinkedIn\",\n      \"isEasyApply\": true\n    },\n    {\n      \"id\": \"indeed-44556\",\n      \"title\": \"Principal Engineer - Platform\",\n      \"company\": \"Cloud Scale Systems\",\n      \"location\": \"San Francisco, CA\",\n      \"description\": \"Architect and build large-scale distributed systems...\",\n      \"salary\": \"$200k - $260k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"Senior\",\n      \"postedAt\": \"2025-01-20T14:00:00Z\",\n      \"remote\": false,\n      \"url\": \"https://indeed.com/viewjob?jk=44556\",\n      \"source\": \"Indeed\",\n      \"isEasyApply\": false\n    },\n    {\n      \"id\": \"glassdoor-66778\",\n      \"title\": \"Staff/Principal Software Engineer\",\n      \"company\": \"Enterprise Tech Solutions\",\n      \"location\": \"San Francisco, CA (Hybrid)\",\n      \"description\": \"Senior technical leadership role for experienced engineers...\",\n      \"salary\": \"$210k - $270k + benefits\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"Senior\",\n      \"postedAt\": \"2025-01-10T11:30:00Z\",\n      \"remote\": false,\n      \"url\": \"https://glassdoor.com/job/66778\",\n      \"source\": \"Glassdoor\",\n      \"isEasyApply\": false\n    }\n  ],\n  \"success\": true,\n  \"platformErrors\": [],\n  \"metadata\": {\n    \"totalPlatforms\": 3,\n    \"successfulPlatforms\": 3,\n    \"failedPlatforms\": 0,\n    \"executionTimeMs\": 4200,\n    \"criteria\": {\n      \"query\": \"principal engineer\",\n      \"location\": \"San Francisco, CA\",\n      \"remoteOnly\": false,\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"Senior\",\n      \"postedDate\": \"PastMonth\",\n      \"maxResults\": 25\n    }\n  }\n}"
+            },
+            {
+              "name": "Contract Work - Consultant",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"consultant\",\n  \"location\": \"Chicago, IL\",\n  \"remoteOnly\": false,\n  \"jobType\": \"Contract\",\n  \"experienceLevel\": \"MidLevel\",\n  \"maxResults\": 25\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/jobs/search",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "jobs",
+                    "search"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"jobs\": [\n    {\n      \"id\": \"linkedin-55667\",\n      \"title\": \"IT Consultant - Contract\",\n      \"company\": \"Tech Consulting Group\",\n      \"location\": \"Chicago, IL\",\n      \"description\": \"Seeking experienced IT consultant for 6-month project...\",\n      \"salary\": \"$75 - $95/hour\",\n      \"jobType\": \"Contract\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-02-01T13:20:00Z\",\n      \"remote\": false,\n      \"url\": \"https://linkedin.com/jobs/view/55667\",\n      \"source\": \"LinkedIn\",\n      \"isEasyApply\": false\n    },\n    {\n      \"id\": \"indeed-88990\",\n      \"title\": \"Software Development Consultant (Contract)\",\n      \"company\": \"Enterprise Solutions LLC\",\n      \"location\": \"Chicago, IL (Hybrid)\",\n      \"description\": \"Contract opportunity for software consultant with .NET expertise...\",\n      \"salary\": \"$80 - $100/hour\",\n      \"jobType\": \"Contract\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-01-31T10:30:00Z\",\n      \"remote\": false,\n      \"url\": \"https://indeed.com/viewjob?jk=88990\",\n      \"source\": \"Indeed\",\n      \"isEasyApply\": false\n    },\n    {\n      \"id\": \"glassdoor-22334\",\n      \"title\": \"Technical Consultant - Contract Role\",\n      \"company\": \"Business Technology Partners\",\n      \"location\": \"Chicago, IL\",\n      \"description\": \"6-12 month contract for technical consultant with cloud experience...\",\n      \"salary\": \"$70 - $90/hour\",\n      \"jobType\": \"Contract\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-01-29T15:45:00Z\",\n      \"remote\": false,\n      \"url\": \"https://glassdoor.com/job/22334\",\n      \"source\": \"Glassdoor\",\n      \"isEasyApply\": false\n    }\n  ],\n  \"success\": true,\n  \"platformErrors\": [],\n  \"metadata\": {\n    \"totalPlatforms\": 3,\n    \"successfulPlatforms\": 3,\n    \"failedPlatforms\": 0,\n    \"executionTimeMs\": 3150,\n    \"criteria\": {\n      \"query\": \"consultant\",\n      \"location\": \"Chicago, IL\",\n      \"remoteOnly\": false,\n      \"jobType\": \"Contract\",\n      \"experienceLevel\": \"MidLevel\",\n      \"maxResults\": 25\n    }\n  }\n}"
+            },
+            {
+              "name": "All Platforms - Product Manager",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"product manager\",\n  \"location\": \"Remote\",\n  \"remoteOnly\": true,\n  \"jobType\": \"FullTime\",\n  \"experienceLevel\": \"MidLevel\",\n  \"maxResults\": 25,\n  \"sources\": [\"LinkedIn\", \"Indeed\", \"Glassdoor\", \"Google\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/jobs/search",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "jobs",
+                    "search"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"jobs\": [\n    {\n      \"id\": \"linkedin-22334\",\n      \"title\": \"Product Manager - SaaS\",\n      \"company\": \"Growth Tech Co\",\n      \"location\": \"Remote (Worldwide)\",\n      \"description\": \"Drive product strategy for our B2B SaaS platform...\",\n      \"salary\": \"$130k - $160k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-02-03T10:00:00Z\",\n      \"remote\": true,\n      \"url\": \"https://linkedin.com/jobs/view/22334\",\n      \"source\": \"LinkedIn\",\n      \"isEasyApply\": true\n    },\n    {\n      \"id\": \"indeed-55443\",\n      \"title\": \"Product Manager (Remote)\",\n      \"company\": \"Digital Solutions Inc\",\n      \"location\": \"Remote - US\",\n      \"description\": \"Lead product development for mobile applications...\",\n      \"salary\": \"$120k - $150k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-02-02T15:30:00Z\",\n      \"remote\": true,\n      \"url\": \"https://indeed.com/viewjob?jk=55443\",\n      \"source\": \"Indeed\",\n      \"isEasyApply\": false\n    },\n    {\n      \"id\": \"glassdoor-77665\",\n      \"title\": \"Mid-Level Product Manager\",\n      \"company\": \"FinTech Innovators\",\n      \"location\": \"Remote (USA)\",\n      \"description\": \"Shape the future of financial technology products...\",\n      \"salary\": \"$135k - $165k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-02-01T09:00:00Z\",\n      \"remote\": true,\n      \"url\": \"https://glassdoor.com/job/77665\",\n      \"source\": \"Glassdoor\",\n      \"isEasyApply\": false\n    },\n    {\n      \"id\": \"google-99112\",\n      \"title\": \"Product Manager - Platform\",\n      \"company\": \"CloudBridge Systems\",\n      \"location\": \"Remote\",\n      \"description\": \"Manage cloud platform products and roadmap...\",\n      \"salary\": \"$125k - $155k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-01-31T14:00:00Z\",\n      \"remote\": true,\n      \"url\": \"https://google.com/jobs/view/99112\",\n      \"source\": \"Google\",\n      \"isEasyApply\": false\n    }\n  ],\n  \"success\": true,\n  \"platformErrors\": [],\n  \"metadata\": {\n    \"totalPlatforms\": 4,\n    \"successfulPlatforms\": 4,\n    \"failedPlatforms\": 0,\n    \"executionTimeMs\": 4850,\n    \"criteria\": {\n      \"query\": \"product manager\",\n      \"location\": \"Remote\",\n      \"remoteOnly\": true,\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"maxResults\": 25,\n      \"sources\": [\"LinkedIn\", \"Indeed\", \"Glassdoor\", \"Google\"]\n    }\n  }\n}"
+            },
+            {
+              "name": "Error Case - Platform Failures",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"software engineer\",\n  \"location\": \"Remote\",\n  \"remoteOnly\": true,\n  \"maxResults\": 25,\n  \"sources\": [\"LinkedIn\", \"Indeed\", \"Glassdoor\", \"Google\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/jobs/search",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "jobs",
+                    "search"
+                  ]
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"jobs\": [],\n  \"success\": false,\n  \"platformErrors\": [\n    {\n      \"platform\": \"LinkedIn\",\n      \"error\": \"Request timeout after 30000ms\",\n      \"errorType\": \"Timeout\",\n      \"timestamp\": \"2025-02-04T12:00:00Z\"\n    },\n    {\n      \"platform\": \"Indeed\",\n      \"error\": \"Request timeout after 30000ms\",\n      \"errorType\": \"Timeout\",\n      \"timestamp\": \"2025-02-04T12:00:01Z\"\n    },\n    {\n      \"platform\": \"Glassdoor\",\n      \"error\": \"Request timeout after 30000ms\",\n      \"errorType\": \"Timeout\",\n      \"timestamp\": \"2025-02-04T12:00:02Z\"\n    },\n    {\n      \"platform\": \"Google\",\n      \"error\": \"Request timeout after 30000ms\",\n      \"errorType\": \"Timeout\",\n      \"timestamp\": \"2025-02-04T12:00:03Z\"\n    }\n  ],\n  \"metadata\": {\n    \"totalPlatforms\": 4,\n    \"successfulPlatforms\": 0,\n    \"failedPlatforms\": 4,\n    \"executionTimeMs\": 30050,\n    \"criteria\": {\n      \"query\": \"software engineer\",\n      \"location\": \"Remote\",\n      \"remoteOnly\": true,\n      \"maxResults\": 25,\n      \"sources\": [\"LinkedIn\", \"Indeed\", \"Glassdoor\", \"Google\"]\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Search Jobs with Errors",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"software engineer\",\n  \"location\": \"Remote\",\n  \"maxResults\": 25,\n  \"sources\": [\"LinkedIn\", \"Indeed\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/search-with-errors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "search-with-errors"
+              ]
+            },
+            "description": "Search jobs with detailed error reporting for each platform"
+          },
+          "response": [
+            {
+              "name": "Partial Success - Mixed Results",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"software engineer\",\n  \"location\": \"Remote\",\n  \"remoteOnly\": true,\n  \"maxResults\": 25,\n  \"sources\": [\"LinkedIn\", \"Indeed\", \"Glassdoor\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/jobs/search-with-errors",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "jobs",
+                    "search-with-errors"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"jobs\": [\n    {\n      \"id\": \"linkedin-34567\",\n      \"title\": \"Software Engineer (Remote)\",\n      \"company\": \"Tech Innovations LLC\",\n      \"location\": \"Remote - US\",\n      \"description\": \"Build scalable microservices architecture...\",\n      \"salary\": \"$130k - $160k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-02-03T10:15:00Z\",\n      \"remote\": true,\n      \"url\": \"https://linkedin.com/jobs/view/34567\",\n      \"source\": \"LinkedIn\",\n      \"isEasyApply\": true\n    },\n    {\n      \"id\": \"glassdoor-89012\",\n      \"title\": \"Remote Software Developer\",\n      \"company\": \"Digital Ventures\",\n      \"location\": \"Remote (USA)\",\n      \"description\": \"Join our agile development team...\",\n      \"salary\": \"$125k - $155k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-02-02T14:00:00Z\",\n      \"remote\": true,\n      \"url\": \"https://glassdoor.com/job/89012\",\n      \"source\": \"Glassdoor\",\n      \"isEasyApply\": false\n    }\n  ],\n  \"success\": true,\n  \"platformErrors\": [\n    {\n      \"platform\": \"Indeed\",\n      \"error\": \"Rate limit exceeded - 429 Too Many Requests\",\n      \"errorType\": \"RateLimitExceeded\",\n      \"timestamp\": \"2025-02-04T12:00:00Z\",\n      \"retryAfter\": 300\n    }\n  ],\n  \"metadata\": {\n    \"totalPlatforms\": 3,\n    \"successfulPlatforms\": 2,\n    \"failedPlatforms\": 1,\n    \"executionTimeMs\": 3420,\n    \"criteria\": {\n      \"query\": \"software engineer\",\n      \"location\": \"Remote\",\n      \"remoteOnly\": true,\n      \"maxResults\": 25,\n      \"sources\": [\"LinkedIn\", \"Indeed\", \"Glassdoor\"]\n    }\n  }\n}"
+            },
+            {
+              "name": "Complete Failure - All Platforms Down",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"data scientist\",\n  \"location\": \"Boston, MA\",\n  \"maxResults\": 25,\n  \"sources\": [\"LinkedIn\", \"Indeed\", \"Glassdoor\", \"Google\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/jobs/search-with-errors",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "jobs",
+                    "search-with-errors"
+                  ]
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"jobs\": [],\n  \"success\": false,\n  \"platformErrors\": [\n    {\n      \"platform\": \"LinkedIn\",\n      \"error\": \"Circuit breaker is open - too many consecutive failures\",\n      \"errorType\": \"CircuitBreakerOpen\",\n      \"timestamp\": \"2025-02-04T12:00:00Z\",\n      \"circuitBreakerState\": \"Open\",\n      \"consecutiveFailures\": 5\n    },\n    {\n      \"platform\": \"Indeed\",\n      \"error\": \"Authentication failed - invalid or expired credentials\",\n      \"errorType\": \"AuthenticationError\",\n      \"timestamp\": \"2025-02-04T12:00:01Z\"\n    },\n    {\n      \"platform\": \"Glassdoor\",\n      \"error\": \"Scraping blocked - detected as bot (403 Forbidden)\",\n      \"errorType\": \"BlockedByPlatform\",\n      \"timestamp\": \"2025-02-04T12:00:02Z\"\n    },\n    {\n      \"platform\": \"Google\",\n      \"error\": \"Network error - unable to establish connection\",\n      \"errorType\": \"NetworkError\",\n      \"timestamp\": \"2025-02-04T12:00:03Z\"\n    }\n  ],\n  \"metadata\": {\n    \"totalPlatforms\": 4,\n    \"successfulPlatforms\": 0,\n    \"failedPlatforms\": 4,\n    \"executionTimeMs\": 5250,\n    \"criteria\": {\n      \"query\": \"data scientist\",\n      \"location\": \"Boston, MA\",\n      \"maxResults\": 25,\n      \"sources\": [\"LinkedIn\", \"Indeed\", \"Glassdoor\", \"Google\"]\n    }\n  }\n}"
+            },
+            {
+              "name": "Rate Limited - 429 Errors",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"frontend developer\",\n  \"location\": \"Austin, TX\",\n  \"remoteOnly\": false,\n  \"maxResults\": 25,\n  \"sources\": [\"LinkedIn\", \"Indeed\", \"Glassdoor\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/jobs/search-with-errors",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "jobs",
+                    "search-with-errors"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"jobs\": [\n    {\n      \"id\": \"glassdoor-12389\",\n      \"title\": \"Frontend Developer - React\",\n      \"company\": \"Austin Tech Co\",\n      \"location\": \"Austin, TX\",\n      \"description\": \"Build modern web applications with React and TypeScript...\",\n      \"salary\": \"$100k - $130k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-02-03T11:00:00Z\",\n      \"remote\": false,\n      \"url\": \"https://glassdoor.com/job/12389\",\n      \"source\": \"Glassdoor\",\n      \"isEasyApply\": false\n    }\n  ],\n  \"success\": true,\n  \"platformErrors\": [\n    {\n      \"platform\": \"LinkedIn\",\n      \"error\": \"Rate limit exceeded - 429 Too Many Requests\",\n      \"errorType\": \"RateLimitExceeded\",\n      \"timestamp\": \"2025-02-04T12:00:00Z\",\n      \"retryAfter\": 600,\n      \"rateLimitInfo\": {\n        \"requestsRemaining\": 0,\n        \"requestsLimit\": 100,\n        \"resetTime\": \"2025-02-04T12:10:00Z\"\n      }\n    },\n    {\n      \"platform\": \"Indeed\",\n      \"error\": \"Rate limit exceeded - 429 Too Many Requests\",\n      \"errorType\": \"RateLimitExceeded\",\n      \"timestamp\": \"2025-02-04T12:00:01Z\",\n      \"retryAfter\": 300,\n      \"rateLimitInfo\": {\n        \"requestsRemaining\": 0,\n        \"requestsLimit\": 50,\n        \"resetTime\": \"2025-02-04T12:05:00Z\"\n      }\n    }\n  ],\n  \"metadata\": {\n    \"totalPlatforms\": 3,\n    \"successfulPlatforms\": 1,\n    \"failedPlatforms\": 2,\n    \"executionTimeMs\": 2100,\n    \"criteria\": {\n      \"query\": \"frontend developer\",\n      \"location\": \"Austin, TX\",\n      \"remoteOnly\": false,\n      \"maxResults\": 25,\n      \"sources\": [\"LinkedIn\", \"Indeed\", \"Glassdoor\"]\n    }\n  }\n}"
+            },
+            {
+              "name": "Timeout Errors - Platform Unresponsive",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"devops engineer\",\n  \"location\": \"Seattle, WA\",\n  \"remoteOnly\": false,\n  \"maxResults\": 25,\n  \"sources\": [\"LinkedIn\", \"Indeed\", \"Google\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/jobs/search-with-errors",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "jobs",
+                    "search-with-errors"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"jobs\": [\n    {\n      \"id\": \"google-78945\",\n      \"title\": \"DevOps Engineer\",\n      \"company\": \"Cloud Solutions Inc\",\n      \"location\": \"Seattle, WA\",\n      \"description\": \"Manage cloud infrastructure and CI/CD pipelines...\",\n      \"salary\": \"$140k - $180k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-02-02T09:30:00Z\",\n      \"remote\": false,\n      \"url\": \"https://google.com/jobs/view/78945\",\n      \"source\": \"Google\",\n      \"isEasyApply\": false\n    }\n  ],\n  \"success\": true,\n  \"platformErrors\": [\n    {\n      \"platform\": \"LinkedIn\",\n      \"error\": \"Request timeout after 30000ms - no response from server\",\n      \"errorType\": \"Timeout\",\n      \"timestamp\": \"2025-02-04T12:00:30Z\",\n      \"timeoutMs\": 30000,\n      \"attemptedRetries\": 2\n    },\n    {\n      \"platform\": \"Indeed\",\n      \"error\": \"Request timeout after 30000ms - connection timed out\",\n      \"errorType\": \"Timeout\",\n      \"timestamp\": \"2025-02-04T12:01:00Z\",\n      \"timeoutMs\": 30000,\n      \"attemptedRetries\": 2\n    }\n  ],\n  \"metadata\": {\n    \"totalPlatforms\": 3,\n    \"successfulPlatforms\": 1,\n    \"failedPlatforms\": 2,\n    \"executionTimeMs\": 62500,\n    \"criteria\": {\n      \"query\": \"devops engineer\",\n      \"location\": \"Seattle, WA\",\n      \"remoteOnly\": false,\n      \"maxResults\": 25,\n      \"sources\": [\"LinkedIn\", \"Indeed\", \"Google\"]\n    }\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "LinkedIn",
+      "description": "LinkedIn-specific endpoints for jobs, social profiles, and news",
+      "item": [
+        {
+          "name": "Get Job by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/linkedin/jobs/{{jobId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "linkedin",
+                "jobs",
+                "{{jobId}}"
+              ]
+            },
+            "description": "Get detailed information about a specific LinkedIn job"
+          },
+          "response": [
+            {
+              "name": "Full-time Remote Job with Easy Apply",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/jobs/12345",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "jobs",
+                    "12345"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"linkedin-12345\",\n  \"title\": \"Software Engineer - Full Stack\",\n  \"company\": \"RemoteFirst Tech\",\n  \"location\": \"United States (Remote)\",\n  \"description\": \"Join our fully remote engineering team to build scalable web applications. You'll work with React, Node.js, and AWS services to deliver high-quality features for our customers worldwide.\",\n  \"salary\": \"$120k - $160k\",\n  \"jobType\": \"FullTime\",\n  \"experienceLevel\": \"MidLevel\",\n  \"postedAt\": \"2025-02-01T10:00:00Z\",\n  \"remote\": true,\n  \"url\": \"https://linkedin.com/jobs/view/12345\",\n  \"source\": \"LinkedIn\",\n  \"isEasyApply\": true,\n  \"skills\": [\"React\", \"Node.js\", \"TypeScript\", \"AWS\"],\n  \"benefits\": [\"Health Insurance\", \"401k\", \"Remote Work\", \"Flexible Hours\"],\n  \"applicants\": 47\n}"
+            },
+            {
+              "name": "On-site Senior Position without Salary Info",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/jobs/67890",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "jobs",
+                    "67890"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"linkedin-67890\",\n  \"title\": \"Principal Software Engineer\",\n  \"company\": \"Enterprise Solutions Corp\",\n  \"location\": \"New York, NY\",\n  \"description\": \"We are seeking a Principal Software Engineer to lead our platform architecture team. This role requires deep expertise in distributed systems, microservices, and team leadership. You will be responsible for designing scalable solutions and mentoring senior engineers.\",\n  \"salary\": null,\n  \"jobType\": \"FullTime\",\n  \"experienceLevel\": \"Senior\",\n  \"postedAt\": \"2025-01-30T14:30:00Z\",\n  \"remote\": false,\n  \"url\": \"https://linkedin.com/jobs/view/67890\",\n  \"source\": \"LinkedIn\",\n  \"isEasyApply\": false,\n  \"skills\": [\"Java\", \"Kubernetes\", \"System Design\", \"Leadership\"],\n  \"benefits\": [\"Health Insurance\", \"Stock Options\"],\n  \"applicants\": 152\n}"
+            },
+            {
+              "name": "Contract Position with Detailed Description",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/jobs/24680",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "jobs",
+                    "24680"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"linkedin-24680\",\n  \"title\": \"Frontend Developer - React Specialist\",\n  \"company\": \"Digital Agency Group\",\n  \"location\": \"Austin, TX (Hybrid)\",\n  \"description\": \"We are looking for a contract Frontend Developer to join our team for a 6-month project. You will be working on modernizing our client's e-commerce platform using React and Next.js.\\n\\nKey Responsibilities:\\n- Develop responsive UI components using React and TypeScript\\n- Collaborate with designers to implement pixel-perfect designs\\n- Optimize application performance and accessibility\\n- Write comprehensive unit and integration tests\\n- Participate in code reviews and technical discussions\\n\\nRequirements:\\n- 3+ years of experience with React\\n- Strong TypeScript skills\\n- Experience with Next.js and SSR\\n- Knowledge of modern CSS frameworks (Tailwind, CSS Modules)\\n- Excellent communication skills\",\n  \"salary\": \"$70 - $90/hour\",\n  \"jobType\": \"Contract\",\n  \"experienceLevel\": \"MidLevel\",\n  \"postedAt\": \"2025-02-03T09:15:00Z\",\n  \"remote\": false,\n  \"url\": \"https://linkedin.com/jobs/view/24680\",\n  \"source\": \"LinkedIn\",\n  \"isEasyApply\": true,\n  \"skills\": [\"React\", \"TypeScript\", \"Next.js\", \"Tailwind CSS\", \"Jest\"],\n  \"benefits\": [],\n  \"applicants\": 89,\n  \"contractDuration\": \"6 months\"\n}"
+            },
+            {
+              "name": "404 - Job Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/jobs/invalid-id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "jobs",
+                    "invalid-id"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Job not found\",\n  \"message\": \"The job with ID 'invalid-id' does not exist or has been removed.\",\n  \"statusCode\": 404\n}"
+            },
+            {
+              "name": "410 - Deleted/Expired Job",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/jobs/expired-12345",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "jobs",
+                    "expired-12345"
+                  ]
+                }
+              },
+              "status": "Gone",
+              "code": 410,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Job no longer available\",\n  \"message\": \"The job posting has expired or been deleted by the employer.\",\n  \"statusCode\": 410,\n  \"jobId\": \"expired-12345\",\n  \"expirationDate\": \"2025-01-15T23:59:59Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Search LinkedIn Jobs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"software engineer\",\n  \"location\": \"San Francisco, CA\",\n  \"remoteOnly\": false,\n  \"maxResults\": 20\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/linkedin/jobs/search?strategy={{strategy}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "linkedin",
+                "jobs",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "{{strategy}}",
+                  "description": "Optional: GuestApi, BrowserPage, or Hybrid"
+                }
+              ]
+            },
+            "description": "Search LinkedIn jobs with optional strategy override"
+          },
+          "response": [
+            {
+              "name": "GuestApi Strategy - Successful Search",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"python developer\",\n  \"location\": \"Remote\",\n  \"remoteOnly\": true,\n  \"maxResults\": 20\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/jobs/search?strategy=GuestApi",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "jobs",
+                    "search"
+                  ],
+                  "query": [
+                    {
+                      "key": "strategy",
+                      "value": "GuestApi"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"jobs\": [\n    {\n      \"id\": \"linkedin-11111\",\n      \"title\": \"Python Backend Developer\",\n      \"company\": \"CloudTech Solutions\",\n      \"location\": \"United States (Remote)\",\n      \"description\": \"Looking for a Python developer to work on our backend APIs...\",\n      \"salary\": \"$110k - $140k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-02-02T11:00:00Z\",\n      \"remote\": true,\n      \"url\": \"https://linkedin.com/jobs/view/11111\",\n      \"source\": \"LinkedIn\",\n      \"isEasyApply\": true\n    },\n    {\n      \"id\": \"linkedin-22222\",\n      \"title\": \"Senior Python Engineer\",\n      \"company\": \"DataDriven Inc\",\n      \"location\": \"Anywhere\",\n      \"description\": \"Join our data platform team to build scalable ML pipelines...\",\n      \"salary\": \"$140k - $180k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"Senior\",\n      \"postedAt\": \"2025-02-01T09:30:00Z\",\n      \"remote\": true,\n      \"url\": \"https://linkedin.com/jobs/view/22222\",\n      \"source\": \"LinkedIn\",\n      \"isEasyApply\": false\n    }\n  ],\n  \"totalResults\": 2,\n  \"strategy\": \"GuestApi\",\n  \"executionTimeMs\": 1450,\n  \"success\": true\n}"
+            },
+            {
+              "name": "BrowserPage Strategy - More Results",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"data scientist\",\n  \"location\": \"San Francisco, CA\",\n  \"remoteOnly\": false,\n  \"maxResults\": 25\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/jobs/search?strategy=BrowserPage",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "jobs",
+                    "search"
+                  ],
+                  "query": [
+                    {
+                      "key": "strategy",
+                      "value": "BrowserPage"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"jobs\": [\n    {\n      \"id\": \"linkedin-33333\",\n      \"title\": \"Data Scientist - ML Focus\",\n      \"company\": \"AI Innovations\",\n      \"location\": \"San Francisco, CA\",\n      \"description\": \"Work on cutting-edge machine learning models...\",\n      \"salary\": \"$150k - $190k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-02-03T08:00:00Z\",\n      \"remote\": false,\n      \"url\": \"https://linkedin.com/jobs/view/33333\",\n      \"source\": \"LinkedIn\",\n      \"isEasyApply\": true\n    },\n    {\n      \"id\": \"linkedin-44444\",\n      \"title\": \"Senior Data Scientist\",\n      \"company\": \"Finance Analytics Corp\",\n      \"location\": \"San Francisco, CA\",\n      \"description\": \"Lead our data science team in developing predictive models...\",\n      \"salary\": \"$170k - $220k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"Senior\",\n      \"postedAt\": \"2025-02-02T14:30:00Z\",\n      \"remote\": false,\n      \"url\": \"https://linkedin.com/jobs/view/44444\",\n      \"source\": \"LinkedIn\",\n      \"isEasyApply\": false\n    },\n    {\n      \"id\": \"linkedin-55555\",\n      \"title\": \"Data Scientist - Healthcare\",\n      \"company\": \"MedTech Solutions\",\n      \"location\": \"San Francisco, CA (Hybrid)\",\n      \"description\": \"Apply data science to healthcare challenges...\",\n      \"salary\": \"$130k - $160k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-02-01T16:00:00Z\",\n      \"remote\": false,\n      \"url\": \"https://linkedin.com/jobs/view/55555\",\n      \"source\": \"LinkedIn\",\n      \"isEasyApply\": true\n    }\n  ],\n  \"totalResults\": 3,\n  \"strategy\": \"BrowserPage\",\n  \"executionTimeMs\": 3200,\n  \"success\": true\n}"
+            },
+            {
+              "name": "Hybrid Strategy - Fallback from API to Browser",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"devops engineer\",\n  \"location\": \"Seattle, WA\",\n  \"remoteOnly\": false,\n  \"maxResults\": 15\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/jobs/search?strategy=Hybrid",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "jobs",
+                    "search"
+                  ],
+                  "query": [
+                    {
+                      "key": "strategy",
+                      "value": "Hybrid"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"jobs\": [\n    {\n      \"id\": \"linkedin-66666\",\n      \"title\": \"DevOps Engineer\",\n      \"company\": \"Cloud Infrastructure Ltd\",\n      \"location\": \"Seattle, WA\",\n      \"description\": \"Manage and scale our Kubernetes infrastructure...\",\n      \"salary\": \"$130k - $170k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"MidLevel\",\n      \"postedAt\": \"2025-02-03T10:00:00Z\",\n      \"remote\": false,\n      \"url\": \"https://linkedin.com/jobs/view/66666\",\n      \"source\": \"LinkedIn\",\n      \"isEasyApply\": true\n    },\n    {\n      \"id\": \"linkedin-77777\",\n      \"title\": \"Senior DevOps Engineer\",\n      \"company\": \"Enterprise Tech\",\n      \"location\": \"Seattle, WA (Hybrid)\",\n      \"description\": \"Lead DevOps practices and CI/CD pipeline development...\",\n      \"salary\": \"$160k - $200k\",\n      \"jobType\": \"FullTime\",\n      \"experienceLevel\": \"Senior\",\n      \"postedAt\": \"2025-02-02T13:00:00Z\",\n      \"remote\": false,\n      \"url\": \"https://linkedin.com/jobs/view/77777\",\n      \"source\": \"LinkedIn\",\n      \"isEasyApply\": false\n    }\n  ],\n  \"totalResults\": 2,\n  \"strategy\": \"Hybrid\",\n  \"strategyNote\": \"GuestApi failed with rate limit, fell back to BrowserPage\",\n  \"executionTimeMs\": 4100,\n  \"success\": true,\n  \"fallbackOccurred\": true\n}"
+            },
+            {
+              "name": "Empty Results - No Jobs Found",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"underwater basket weaving specialist\",\n  \"location\": \"Antarctica\",\n  \"remoteOnly\": false,\n  \"maxResults\": 20\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/jobs/search",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "jobs",
+                    "search"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"jobs\": [],\n  \"totalResults\": 0,\n  \"strategy\": \"GuestApi\",\n  \"executionTimeMs\": 890,\n  \"success\": true,\n  \"message\": \"No jobs found matching the search criteria\"\n}"
+            },
+            {
+              "name": "Invalid Strategy Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"software engineer\",\n  \"location\": \"San Francisco, CA\",\n  \"remoteOnly\": false,\n  \"maxResults\": 20\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/jobs/search?strategy=InvalidStrategy",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "jobs",
+                    "search"
+                  ],
+                  "query": [
+                    {
+                      "key": "strategy",
+                      "value": "InvalidStrategy"
+                    }
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Invalid strategy\",\n  \"message\": \"Strategy 'InvalidStrategy' is not valid. Supported strategies are: GuestApi, BrowserPage, Hybrid\",\n  \"statusCode\": 400,\n  \"supportedStrategies\": [\"GuestApi\", \"BrowserPage\", \"Hybrid\"]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Social Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/linkedin/social/profile/{{profileId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "linkedin",
+                "social",
+                "profile",
+                "{{profileId}}"
+              ]
+            },
+            "description": "Get LinkedIn social profile by ID"
+          },
+          "response": [
+            {
+              "name": "Complete Profile with Experience and Education",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/social/profile/john-doe",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "social",
+                    "profile",
+                    "john-doe"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"john-doe\",\n  \"name\": \"John Doe\",\n  \"username\": \"johndoe\",\n  \"headline\": \"Senior Software Engineer at TechCorp | Building scalable systems\",\n  \"bio\": \"Passionate software engineer with 8+ years of experience in building distributed systems and leading engineering teams. Specialized in cloud architecture and microservices.\",\n  \"location\": \"San Francisco Bay Area\",\n  \"followersCount\": 2500,\n  \"followingCount\": 850,\n  \"connectionsCount\": 1200,\n  \"createdAt\": \"2015-01-15T00:00:00Z\",\n  \"profileUrl\": \"https://linkedin.com/in/john-doe\",\n  \"experience\": [\n    {\n      \"title\": \"Senior Software Engineer\",\n      \"company\": \"TechCorp Inc.\",\n      \"companyId\": \"techcorp-inc\",\n      \"location\": \"San Francisco, CA\",\n      \"startDate\": \"2020-03-01\",\n      \"endDate\": null,\n      \"isCurrent\": true,\n      \"description\": \"Leading the backend team in developing microservices architecture. Reduced system latency by 40% and improved reliability.\"\n    },\n    {\n      \"title\": \"Software Engineer\",\n      \"company\": \"StartupXYZ\",\n      \"companyId\": \"startupxyz\",\n      \"location\": \"Palo Alto, CA\",\n      \"startDate\": \"2017-06-01\",\n      \"endDate\": \"2020-02-28\",\n      \"isCurrent\": false,\n      \"description\": \"Developed core features for mobile and web platforms. Worked with React Native and Node.js.\"\n    }\n  ],\n  \"education\": [\n    {\n      \"institution\": \"Stanford University\",\n      \"degree\": \"Bachelor of Science\",\n      \"fieldOfStudy\": \"Computer Science\",\n      \"startDate\": \"2010-09-01\",\n      \"endDate\": \"2014-06-01\",\n      \"grade\": \"3.8 GPA\"\n    }\n  ],\n  \"skills\": [\"Python\", \"JavaScript\", \"AWS\", \"Docker\", \"Kubernetes\", \"System Design\"],\n  \"certifications\": [\n    {\n      \"name\": \"AWS Certified Solutions Architect\",\n      \"issuer\": \"Amazon Web Services\",\n      \"issueDate\": \"2022-06-15\",\n      \"expirationDate\": \"2025-06-15\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Minimal Profile - New User",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/social/profile/jane-smith",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "social",
+                    "profile",
+                    "jane-smith"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"jane-smith\",\n  \"name\": \"Jane Smith\",\n  \"username\": \"janesmith\",\n  \"headline\": \"Recent Computer Science Graduate\",\n  \"bio\": \"Aspiring software developer looking for opportunities in tech.\",\n  \"location\": \"Boston, MA\",\n  \"followersCount\": 45,\n  \"followingCount\": 120,\n  \"connectionsCount\": 78,\n  \"createdAt\": \"2024-12-01T00:00:00Z\",\n  \"profileUrl\": \"https://linkedin.com/in/jane-smith\",\n  \"experience\": [],\n  \"education\": [\n    {\n      \"institution\": \"Massachusetts Institute of Technology\",\n      \"degree\": \"Bachelor of Science\",\n      \"fieldOfStudy\": \"Computer Science\",\n      \"startDate\": \"2020-09-01\",\n      \"endDate\": \"2024-05-31\",\n      \"grade\": \"3.9 GPA\"\n    }\n  ],\n  \"skills\": [\"Python\", \"Java\", \"React\", \"Git\"],\n  \"certifications\": []\n}"
+            },
+            {
+              "name": "Profile with Multiple Job Experiences",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/social/profile/alex-johnson",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "social",
+                    "profile",
+                    "alex-johnson"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"alex-johnson\",\n  \"name\": \"Alex Johnson\",\n  \"username\": \"alexjohnson\",\n  \"headline\": \"Engineering Manager | Ex-Google, Meta | Building High-Performance Teams\",\n  \"bio\": \"Engineering leader with 12+ years of experience building and scaling engineering organizations. Passionate about mentorship, technical excellence, and product innovation.\",\n  \"location\": \"Seattle, WA\",\n  \"followersCount\": 5200,\n  \"followingCount\": 1100,\n  \"connectionsCount\": 3000,\n  \"createdAt\": \"2012-03-20T00:00:00Z\",\n  \"profileUrl\": \"https://linkedin.com/in/alex-johnson\",\n  \"experience\": [\n    {\n      \"title\": \"Engineering Manager\",\n      \"company\": \"Amazon Web Services\",\n      \"companyId\": \"aws\",\n      \"location\": \"Seattle, WA\",\n      \"startDate\": \"2022-01-01\",\n      \"endDate\": null,\n      \"isCurrent\": true,\n      \"description\": \"Managing a team of 15 engineers working on cloud infrastructure services. Led initiative to reduce deployment time by 60%.\"\n    },\n    {\n      \"title\": \"Senior Engineering Manager\",\n      \"company\": \"Meta\",\n      \"companyId\": \"meta\",\n      \"location\": \"Menlo Park, CA\",\n      \"startDate\": \"2019-03-01\",\n      \"endDate\": \"2021-12-31\",\n      \"isCurrent\": false,\n      \"description\": \"Built and grew the ads platform engineering team from 8 to 25 engineers. Delivered critical infrastructure improvements.\"\n    },\n    {\n      \"title\": \"Staff Software Engineer\",\n      \"company\": \"Google\",\n      \"companyId\": \"google\",\n      \"location\": \"Mountain View, CA\",\n      \"startDate\": \"2015-06-01\",\n      \"endDate\": \"2019-02-28\",\n      \"isCurrent\": false,\n      \"description\": \"Technical lead for search infrastructure projects. Designed and implemented distributed caching system serving 100M+ QPS.\"\n    },\n    {\n      \"title\": \"Software Engineer II\",\n      \"company\": \"Microsoft\",\n      \"companyId\": \"microsoft\",\n      \"location\": \"Redmond, WA\",\n      \"startDate\": \"2012-07-01\",\n      \"endDate\": \"2015-05-31\",\n      \"isCurrent\": false,\n      \"description\": \"Developed features for Azure platform services. Contributed to cloud storage infrastructure.\"\n    }\n  ],\n  \"education\": [\n    {\n      \"institution\": \"University of Washington\",\n      \"degree\": \"Master of Science\",\n      \"fieldOfStudy\": \"Computer Science\",\n      \"startDate\": \"2010-09-01\",\n      \"endDate\": \"2012-06-01\",\n      \"grade\": \"4.0 GPA\"\n    },\n    {\n      \"institution\": \"University of California, Berkeley\",\n      \"degree\": \"Bachelor of Science\",\n      \"fieldOfStudy\": \"Computer Science\",\n      \"startDate\": \"2006-09-01\",\n      \"endDate\": \"2010-05-31\",\n      \"grade\": \"3.7 GPA\"\n    }\n  ],\n  \"skills\": [\"Engineering Leadership\", \"System Design\", \"Cloud Architecture\", \"Distributed Systems\", \"Team Building\", \"Mentorship\"],\n  \"certifications\": []\n}"
+            },
+            {
+              "name": "404 - Profile Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/social/profile/nonexistent-user",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "social",
+                    "profile",
+                    "nonexistent-user"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Profile not found\",\n  \"message\": \"The LinkedIn profile 'nonexistent-user' does not exist or is not accessible.\",\n  \"statusCode\": 404\n}"
+            },
+            {
+              "name": "403 - Private/Deactivated Profile",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/social/profile/private-user",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "social",
+                    "profile",
+                    "private-user"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Profile not accessible\",\n  \"message\": \"This profile is private or has been deactivated. Access is restricted.\",\n  \"statusCode\": 403,\n  \"profileId\": \"private-user\",\n  \"reason\": \"PRIVATE_OR_DEACTIVATED\"\n}"
+            },
+            {
+              "name": "Profile with Education Only",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/social/profile/student-profile",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "social",
+                    "profile",
+                    "student-profile"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"student-profile\",\n  \"name\": \"Alex Chen\",\n  \"username\": \"alexchen\",\n  \"headline\": \"Computer Science Student at UC Berkeley\",\n  \"bio\": \"Third-year CS student passionate about AI and machine learning. Actively seeking internship opportunities for Summer 2025.\",\n  \"location\": \"Berkeley, CA\",\n  \"followersCount\": 98,\n  \"followingCount\": 215,\n  \"connectionsCount\": 156,\n  \"createdAt\": \"2023-08-15T00:00:00Z\",\n  \"profileUrl\": \"https://linkedin.com/in/student-profile\",\n  \"experience\": [],\n  \"education\": [\n    {\n      \"institution\": \"University of California, Berkeley\",\n      \"degree\": \"Bachelor of Science\",\n      \"fieldOfStudy\": \"Computer Science\",\n      \"startDate\": \"2022-09-01\",\n      \"endDate\": null,\n      \"grade\": \"3.85 GPA\",\n      \"activities\": \"ACM Member, Hackathon Participant\"\n    },\n    {\n      \"institution\": \"Community College of San Francisco\",\n      \"degree\": \"Associate of Science\",\n      \"fieldOfStudy\": \"General Studies\",\n      \"startDate\": \"2020-09-01\",\n      \"endDate\": \"2022-05-31\",\n      \"grade\": \"4.0 GPA\"\n    }\n  ],\n  \"skills\": [\"Python\", \"Java\", \"Machine Learning\", \"TensorFlow\", \"Data Structures\"],\n  \"certifications\": []\n}"
+            }
+          ]
+        },
+        {
+          "name": "Search News",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"artificial intelligence\",\n  \"maxResults\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/linkedin/news/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "linkedin",
+                "news",
+                "search"
+              ]
+            },
+            "description": "Search for news articles"
+          },
+          "response": [
+            {
+              "name": "Technology News Search",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"artificial intelligence\",\n  \"maxResults\": 10\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/news/search",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "news",
+                    "search"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"news-ai-123\",\n    \"title\": \"AI Revolution in Tech Industry Accelerates\",\n    \"content\": \"The latest developments in artificial intelligence are transforming how companies approach software development, customer service, and product innovation. Major tech companies announced significant investments in AI infrastructure this quarter.\",\n    \"summary\": \"New AI models show promising results in software development tasks, with several companies reporting productivity gains of 30-50%.\",\n    \"source\": \"TechNews Daily\",\n    \"author\": \"Sarah Martinez\",\n    \"url\": \"https://technews.com/ai-revolution-2025\",\n    \"publishedAt\": \"2025-02-01T08:00:00Z\",\n    \"category\": \"Technology\",\n    \"tags\": [\"AI\", \"Machine Learning\", \"Innovation\"],\n    \"readTimeMinutes\": 5\n  },\n  {\n    \"id\": \"news-ai-456\",\n    \"title\": \"Ethical AI: New Regulations Shape Industry Standards\",\n    \"content\": \"Governments worldwide are implementing new frameworks for AI governance, focusing on transparency, accountability, and bias prevention. Industry leaders collaborate on best practices for responsible AI development.\",\n    \"summary\": \"Regulatory bodies establish guidelines for ethical AI deployment across various sectors.\",\n    \"source\": \"Digital Policy Review\",\n    \"author\": \"Michael Chen\",\n    \"url\": \"https://digitalpolicy.com/ethical-ai-regulations\",\n    \"publishedAt\": \"2025-01-31T10:30:00Z\",\n    \"category\": \"Policy\",\n    \"tags\": [\"AI Ethics\", \"Regulation\", \"Policy\"],\n    \"readTimeMinutes\": 8\n  },\n  {\n    \"id\": \"news-ai-789\",\n    \"title\": \"AI-Powered Healthcare Diagnostics Show 95% Accuracy\",\n    \"content\": \"Medical institutions report breakthrough results using AI systems for disease detection and diagnosis. The technology demonstrates remarkable accuracy in identifying early-stage cancers and rare conditions.\",\n    \"summary\": \"AI diagnostics revolutionize healthcare with unprecedented accuracy rates.\",\n    \"source\": \"Healthcare Innovation Journal\",\n    \"author\": \"Dr. Emily Watson\",\n    \"url\": \"https://healthcareinnovation.com/ai-diagnostics-2025\",\n    \"publishedAt\": \"2025-01-30T14:00:00Z\",\n    \"category\": \"Healthcare\",\n    \"tags\": [\"AI\", \"Healthcare\", \"Medical Technology\"],\n    \"readTimeMinutes\": 6\n  }\n]"
+            },
+            {
+              "name": "Business News Search",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"startup funding\",\n  \"maxResults\": 5\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/news/search",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "news",
+                    "search"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"news-fund-101\",\n    \"title\": \"Tech Startups Raise Record $45B in Q1 2025\",\n    \"content\": \"Venture capital investment in technology startups reached unprecedented levels this quarter, with AI and climate tech companies attracting the majority of funding. Several unicorns emerged from the enterprise software sector.\",\n    \"summary\": \"Record-breaking quarter for startup funding despite economic uncertainties.\",\n    \"source\": \"Business Insider\",\n    \"author\": \"James Wilson\",\n    \"url\": \"https://businessinsider.com/startup-funding-q1-2025\",\n    \"publishedAt\": \"2025-02-03T07:00:00Z\",\n    \"category\": \"Business\",\n    \"tags\": [\"Venture Capital\", \"Startups\", \"Investment\"],\n    \"readTimeMinutes\": 7\n  },\n  {\n    \"id\": \"news-fund-202\",\n    \"title\": \"Series A Rounds See 40% Increase in Average Size\",\n    \"content\": \"Early-stage funding rounds grow larger as investors bet bigger on promising startups. The trend reflects increased competition for quality deals and higher valuations across multiple sectors.\",\n    \"summary\": \"Series A investments reach new heights with average rounds exceeding $20M.\",\n    \"source\": \"Forbes\",\n    \"author\": \"Patricia Kumar\",\n    \"url\": \"https://forbes.com/series-a-trends\",\n    \"publishedAt\": \"2025-02-02T11:00:00Z\",\n    \"category\": \"Finance\",\n    \"tags\": [\"Series A\", \"Funding Trends\", \"Startups\"],\n    \"readTimeMinutes\": 5\n  }\n]"
+            },
+            {
+              "name": "Empty Results - No News Found",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"xyzzyx quantum crystalline processor\",\n  \"maxResults\": 10\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/news/search",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "news",
+                    "search"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[]"
+            },
+            {
+              "name": "Filtered by Date Range",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"remote work trends\",\n  \"maxResults\": 10,\n  \"startDate\": \"2025-01-01\",\n  \"endDate\": \"2025-01-31\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/linkedin/news/search",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "linkedin",
+                    "news",
+                    "search"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"news-remote-501\",\n    \"title\": \"Remote Work Adoption Stabilizes at 60% for Tech Companies\",\n    \"content\": \"Industry survey reveals that remote and hybrid work models have become the new standard in technology sector. Companies report sustained productivity levels and improved employee satisfaction with flexible arrangements.\",\n    \"summary\": \"Tech companies embrace permanent remote work policies as productivity metrics remain strong.\",\n    \"source\": \"Workplace Trends Magazine\",\n    \"author\": \"Laura Thompson\",\n    \"url\": \"https://workplacetrends.com/remote-work-2025\",\n    \"publishedAt\": \"2025-01-25T09:00:00Z\",\n    \"category\": \"Workplace\",\n    \"tags\": [\"Remote Work\", \"Tech Industry\", \"Work Culture\"],\n    \"readTimeMinutes\": 6\n  },\n  {\n    \"id\": \"news-remote-502\",\n    \"title\": \"Companies Redesign Office Spaces for Hybrid Workforce\",\n    \"content\": \"Real estate trends show significant shifts as organizations optimize office layouts for collaboration rather than individual workstations. Flexible spaces and hot-desking become the norm.\",\n    \"summary\": \"Office redesigns reflect the reality of hybrid work models becoming permanent.\",\n    \"source\": \"Commercial Real Estate Weekly\",\n    \"author\": \"David Park\",\n    \"url\": \"https://creweekly.com/office-redesign-hybrid\",\n    \"publishedAt\": \"2025-01-18T13:30:00Z\",\n    \"category\": \"Real Estate\",\n    \"tags\": [\"Hybrid Work\", \"Office Design\", \"Real Estate\"],\n    \"readTimeMinutes\": 5\n  },\n  {\n    \"id\": \"news-remote-503\",\n    \"title\": \"Study: Remote Workers Report Higher Job Satisfaction\",\n    \"content\": \"New research indicates that employees with remote work options experience better work-life balance and reduced stress levels. However, challenges around team collaboration and career advancement persist.\",\n    \"summary\": \"Remote work benefits outweigh drawbacks according to comprehensive employee survey.\",\n    \"source\": \"HR Insights Journal\",\n    \"author\": \"Rebecca Foster\",\n    \"url\": \"https://hrinsights.com/remote-satisfaction-study\",\n    \"publishedAt\": \"2025-01-12T10:00:00Z\",\n    \"category\": \"Human Resources\",\n    \"tags\": [\"Remote Work\", \"Employee Satisfaction\", \"Work-Life Balance\"],\n    \"readTimeMinutes\": 8\n  }\n]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "description": "Administrative endpoints for system management",
+      "item": [
+        {
+          "name": "Get DLQ Jobs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dlq?count={{count}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dlq"
+              ],
+              "query": [
+                {
+                  "key": "count",
+                  "value": "{{count}}",
+                  "description": "Number of jobs to retrieve (max 100, default 10)"
+                }
+              ]
+            },
+            "description": "Get jobs from the Dead Letter Queue"
+          }
+        },
+        {
+          "name": "Get DLQ Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dlq/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dlq",
+                "stats"
+              ]
+            },
+            "description": "Get Dead Letter Queue statistics"
+          },
+          "response": [
+            {
+              "name": "DLQ Stats",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/dlq/stats",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "dlq",
+                    "stats"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"activeCount\": 5,\n  \"timestamp\": \"2025-02-04T12:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Clear DLQ",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dlq/clear",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dlq",
+                "clear"
+              ]
+            },
+            "description": "Clear all jobs from the Dead Letter Queue"
+          },
+          "response": [
+            {
+              "name": "DLQ Cleared",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/dlq/clear",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "dlq",
+                    "clear"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"DLQ cleared successfully\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string",
+      "description": "Base URL for Ghost WebAPI"
+    },
+    {
+      "key": "platform",
+      "value": "LinkedIn",
+      "type": "string",
+      "description": "Platform name for circuit breaker checks"
+    },
+    {
+      "key": "jobId",
+      "value": "linkedin-12345",
+      "type": "string",
+      "description": "Job ID for LinkedIn job lookup"
+    },
+    {
+      "key": "profileId",
+      "value": "john-doe",
+      "type": "string",
+      "description": "Profile ID for LinkedIn social profile lookup"
+    },
+    {
+      "key": "strategy",
+      "value": "",
+      "type": "string",
+      "description": "Optional scraping strategy: GuestApi, BrowserPage, or Hybrid"
+    },
+    {
+      "key": "count",
+      "value": "10",
+      "type": "string",
+      "description": "Number of items to retrieve (for pagination)"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+info:
+  name: Jobs Health Check
+  type: http
+  seq: 2
+  description: Health check for job platform scrapers (Google, Glassdoor, LinkedIn, Indeed)
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/jobs/health"
+
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+        
+        test("Response has overallStatus", function() {
+          expect(res.body).to.have.property("overallStatus");
+        });
+
+docs: |-
+  ## Jobs Health Check
+  
+  Returns health status for all job platform scrapers.
+  
+  ### Response Example (200 OK)
+  ```json
+  {
+    "overallStatus": "healthy",
+    "timestamp": "2025-02-04T12:00:00Z",
+    "platforms": {
+      "Google": {
+        "platform": "Google",
+        "status": "healthy",
+        "message": "Successfully found 5 jobs",
+        "lastChecked": "2025-02-04T12:00:00Z",
+        "lastSuccessfulSearch": "2025-02-04T12:00:00Z",
+        "responseTimeMs": 1250,
+        "jobsFound": 5
+      },
+      "LinkedIn": {
+        "platform": "LinkedIn",
+        "status": "healthy",
+        "message": "Successfully found 3 jobs",
+        "lastChecked": "2025-02-04T12:00:00Z",
+        "lastSuccessfulSearch": "2025-02-04T12:00:00Z",
+        "responseTimeMs": 2300,
+        "jobsFound": 3
+      }
+    }
+  }
+  ```
