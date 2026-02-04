@@ -1,0 +1,73 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+README.md
+
+# Tests (754MB+)
+tests/
+
+# CI/CD
+.github/
+
+# IDE
+.vscode/
+.idea/
+*.sln.iml
+*.user
+*.suo
+
+# Build artifacts
+[Bb]in/
+[Oo]bj/
+artifacts/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pfx
+*.key
+*.pem
+secrets.json
+appsettings.*.json
+
+# Test results
+coverage/
+coveragereport/
+CoverageReport*/
+test-results/
+TestResults/
+*.trx
+
+# Playwright
+playwright-report/
+.playwright/
+
+# Non-essential directories
+benchmarks/
+examples/
+infrastructure/
+scripts/
+loadtests/
+deploy/
+http/
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+
+# Misc
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
+*.orig
