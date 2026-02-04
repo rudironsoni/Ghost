@@ -1,0 +1,400 @@
+### GraphQL - Simple Mutation
+# Execute a basic GraphQL mutation
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Mutation Spider",
+  "adapter": "graphql",
+  "targets": [
+    {
+      "url": "https://api.example.com/graphql",
+      "method": "POST",
+      "body": {
+        "query": "mutation CreateUser($name: String!, $email: String!) { createUser(name: $name, email: $email) { id name email createdAt } }",
+        "variables": {
+          "name": "John Doe",
+          "email": "john@example.com"
+        }
+      }
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "CreatedUser",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.data.createUser.id" }
+          },
+          {
+            "name": "Name",
+            "selector": { "type": "jsonpath", "expression": "$.data.createUser.name" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### GraphQL - Update Mutation
+# Update existing data with mutation
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Update Spider",
+  "adapter": "graphql",
+  "targets": [
+    {
+      "url": "https://api.example.com/graphql",
+      "method": "POST",
+      "body": {
+        "query": "mutation UpdateUser($id: ID!, $name: String) { updateUser(id: $id, name: $name) { id name email updatedAt } }",
+        "variables": {
+          "id": "123",
+          "name": "Jane Doe"
+        }
+      }
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "UpdatedUser",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.data.updateUser.id" }
+          },
+          {
+            "name": "UpdatedAt",
+            "selector": { "type": "jsonpath", "expression": "$.data.updateUser.updatedAt" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### GraphQL - Delete Mutation
+# Delete data with mutation
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Delete Spider",
+  "adapter": "graphql",
+  "targets": [
+    {
+      "url": "https://api.example.com/graphql",
+      "method": "POST",
+      "body": {
+        "query": "mutation DeleteUser($id: ID!) { deleteUser(id: $id) { success message } }",
+        "variables": {
+          "id": "123"
+        }
+      }
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "DeleteResult",
+        "fields": [
+          {
+            "name": "Success",
+            "selector": { "type": "jsonpath", "expression": "$.data.deleteUser.success" }
+          },
+          {
+            "name": "Message",
+            "selector": { "type": "jsonpath", "expression": "$.data.deleteUser.message" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### GraphQL - Batch Create Mutation
+# Create multiple items in one mutation
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Batch Create Spider",
+  "adapter": "graphql",
+  "targets": [
+    {
+      "url": "https://api.example.com/graphql",
+      "method": "POST",
+      "body": {
+        "query": "mutation CreatePosts($posts: [PostInput!]!) { createPosts(posts: $posts) { id title author { name } } }",
+        "variables": {
+          "posts": [
+            { "title": "First Post", "content": "Content 1", "authorId": "123" },
+            { "title": "Second Post", "content": "Content 2", "authorId": "123" },
+            { "title": "Third Post", "content": "Content 3", "authorId": "123" }
+          ]
+        }
+      }
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "CreatedPosts",
+        "fields": [
+          {
+            "name": "Ids",
+            "selector": { "type": "jsonpath", "expression": "$.data.createPosts[*].id" }
+          },
+          {
+            "name": "Titles",
+            "selector": { "type": "jsonpath", "expression": "$.data.createPosts[*].title" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### GraphQL - Complex Nested Mutation
+# Mutation with nested object creation
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Nested Mutation Spider",
+  "adapter": "graphql",
+  "targets": [
+    {
+      "url": "https://api.example.com/graphql",
+      "method": "POST",
+      "body": {
+        "query": "mutation CreateUserWithProfile($input: CreateUserInput!) { createUser(input: $input) { id name profile { bio avatar socialLinks { twitter github } } } }",
+        "variables": {
+          "input": {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "profile": {
+              "bio": "Software Developer",
+              "avatar": "https://example.com/avatar.jpg",
+              "socialLinks": {
+                "twitter": "@johndoe",
+                "github": "johndoe"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "UserWithProfile",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.data.createUser.id" }
+          },
+          {
+            "name": "Bio",
+            "selector": { "type": "jsonpath", "expression": "$.data.createUser.profile.bio" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### GraphQL - Mutation with File Upload
+# Upload file with mutation
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL File Upload Spider",
+  "adapter": "graphql",
+  "targets": [
+    {
+      "url": "https://api.example.com/graphql",
+      "method": "POST",
+      "body": {
+        "query": "mutation UploadFile($file: Upload!) { uploadFile(file: $file) { id filename url size } }",
+        "variables": {
+          "file": null
+        }
+      },
+      "files": {
+        "file": "/path/to/file.txt"
+      }
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "UploadedFile",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.data.uploadFile.id" }
+          },
+          {
+            "name": "Url",
+            "selector": { "type": "jsonpath", "expression": "$.data.uploadFile.url" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### GraphQL - Conditional Mutation
+# Mutation with conditional logic
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Conditional Mutation Spider",
+  "adapter": "graphql",
+  "targets": [
+    {
+      "url": "https://api.example.com/graphql",
+      "method": "POST",
+      "body": {
+        "query": "mutation UpsertUser($id: ID, $name: String!, $email: String!) { upsertUser(id: $id, name: $name, email: $email) { id name email isNew } }",
+        "variables": {
+          "id": null,
+          "name": "John Doe",
+          "email": "john@example.com"
+        }
+      }
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "UpsertedUser",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.data.upsertUser.id" }
+          },
+          {
+            "name": "IsNew",
+            "selector": { "type": "jsonpath", "expression": "$.data.upsertUser.isNew" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### GraphQL - Multiple Mutations
+# Execute multiple mutations sequentially
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Multi-Mutation Spider",
+  "adapter": "graphql",
+  "targets": [
+    {
+      "url": "https://api.example.com/graphql",
+      "method": "POST",
+      "body": {
+        "query": "mutation { first: createUser(name: \"Alice\", email: \"alice@example.com\") { id } second: createUser(name: \"Bob\", email: \"bob@example.com\") { id } }",
+        "variables": {}
+      }
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "CreatedUsers",
+        "fields": [
+          {
+            "name": "FirstId",
+            "selector": { "type": "jsonpath", "expression": "$.data.first.id" }
+          },
+          {
+            "name": "SecondId",
+            "selector": { "type": "jsonpath", "expression": "$.data.second.id" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### GraphQL - Mutation with Error Handling
+# Handle mutation errors gracefully
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Mutation Error Spider",
+  "adapter": "graphql",
+  "targets": [
+    {
+      "url": "https://api.example.com/graphql",
+      "method": "POST",
+      "body": {
+        "query": "mutation CreateUser($email: String!) { createUser(email: $email) { ... on User { id email } ... on ValidationError { field message } } }",
+        "variables": {
+          "email": "invalid-email"
+        }
+      }
+    }
+  ],
+  "options": {
+    "handleErrors": true
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "MutationResult",
+        "fields": [
+          {
+            "name": "UserId",
+            "selector": { "type": "jsonpath", "expression": "$.data.createUser.id" }
+          },
+          {
+            "name": "Error",
+            "selector": { "type": "jsonpath", "expression": "$.data.createUser.message" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###

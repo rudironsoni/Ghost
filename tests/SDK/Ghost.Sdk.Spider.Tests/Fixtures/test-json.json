@@ -1,0 +1,31 @@
+{
+  "status": "success",
+  "data": {
+    "id": 12345,
+    "name": "Test Product",
+    "price": 99.99,
+    "inStock": true,
+    "tags": ["electronics", "featured", "sale"],
+    "metadata": {
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-02-01T12:00:00Z"
+    },
+    "items": [
+      {
+        "id": 1,
+        "title": "Item One",
+        "value": 10.50
+      },
+      {
+        "id": 2,
+        "title": "Item Two",
+        "value": 20.75
+      },
+      {
+        "id": 3,
+        "title": "Item Three",
+        "value": 30.00
+      }
+    ]
+  }
+}

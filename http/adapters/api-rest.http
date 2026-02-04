@@ -1,0 +1,490 @@
+### REST API - GET Request
+# Simple GET request to REST API
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "REST GET Spider",
+  "adapter": "rest-api",
+  "targets": [
+    {
+      "url": "https://api.example.com/users",
+      "method": "GET"
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "User",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$[*].id" }
+          },
+          {
+            "name": "Name",
+            "selector": { "type": "jsonpath", "expression": "$[*].name" }
+          },
+          {
+            "name": "Email",
+            "selector": { "type": "jsonpath", "expression": "$[*].email" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### REST API - POST Request
+# POST request with JSON body
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "REST POST Spider",
+  "adapter": "rest-api",
+  "targets": [
+    {
+      "url": "https://api.example.com/users",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "role": "user"
+      }
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "CreatedUser",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.id" }
+          },
+          {
+            "name": "Name",
+            "selector": { "type": "jsonpath", "expression": "$.name" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### REST API - PUT Request
+# Update resource with PUT
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "REST PUT Spider",
+  "adapter": "rest-api",
+  "targets": [
+    {
+      "url": "https://api.example.com/users/123",
+      "method": "PUT",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "name": "Jane Doe",
+        "email": "jane@example.com"
+      }
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "UpdatedUser",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.id" }
+          },
+          {
+            "name": "UpdatedAt",
+            "selector": { "type": "jsonpath", "expression": "$.updatedAt" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### REST API - PATCH Request
+# Partial update with PATCH
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "REST PATCH Spider",
+  "adapter": "rest-api",
+  "targets": [
+    {
+      "url": "https://api.example.com/users/123",
+      "method": "PATCH",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "email": "newemail@example.com"
+      }
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "PatchedUser",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.id" }
+          },
+          {
+            "name": "Email",
+            "selector": { "type": "jsonpath", "expression": "$.email" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### REST API - DELETE Request
+# Delete resource
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "REST DELETE Spider",
+  "adapter": "rest-api",
+  "targets": [
+    {
+      "url": "https://api.example.com/users/123",
+      "method": "DELETE"
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "DeleteResult",
+        "fields": [
+          {
+            "name": "Success",
+            "selector": { "type": "jsonpath", "expression": "$.success" }
+          },
+          {
+            "name": "Message",
+            "selector": { "type": "jsonpath", "expression": "$.message" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### REST API - Query Parameters
+# GET with query parameters
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "REST Query Params Spider",
+  "adapter": "rest-api",
+  "targets": [
+    {
+      "url": "https://api.example.com/users",
+      "method": "GET",
+      "queryParams": {
+        "page": "1",
+        "limit": "10",
+        "sort": "name",
+        "filter": "active"
+      }
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "User",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.data[*].id" }
+          },
+          {
+            "name": "Name",
+            "selector": { "type": "jsonpath", "expression": "$.data[*].name" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### REST API - Pagination
+# Handle paginated API responses
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "REST Pagination Spider",
+  "adapter": "rest-api",
+  "targets": [
+    {
+      "url": "https://api.example.com/posts",
+      "method": "GET",
+      "queryParams": {
+        "page": "1",
+        "perPage": "20"
+      }
+    }
+  ],
+  "navigation": {
+    "pagination": {
+      "type": "page-number",
+      "pageParam": "page",
+      "maxPages": 10,
+      "hasNextPath": "$.pagination.hasNext"
+    }
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "Post",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.data[*].id" }
+          },
+          {
+            "name": "Title",
+            "selector": { "type": "jsonpath", "expression": "$.data[*].title" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### REST API - Bearer Authentication
+# API with Bearer token authentication
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "REST Bearer Auth Spider",
+  "adapter": "rest-api",
+  "targets": [
+    {
+      "url": "https://api.example.com/protected/data",
+      "method": "GET",
+      "headers": {
+        "Authorization": "Bearer api-token-here"
+      }
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "ProtectedData",
+        "fields": [
+          {
+            "name": "Data",
+            "selector": { "type": "jsonpath", "expression": "$.data" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### REST API - Basic Authentication
+# API with Basic authentication
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "REST Basic Auth Spider",
+  "adapter": "rest-api",
+  "targets": [
+    {
+      "url": "https://api.example.com/data",
+      "method": "GET",
+      "auth": {
+        "type": "basic",
+        "username": "user",
+        "password": "pass"
+      }
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "Data",
+        "fields": [
+          {
+            "name": "Content",
+            "selector": { "type": "jsonpath", "expression": "$.content" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### REST API - API Key Authentication
+# API with API key in header
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "REST API Key Spider",
+  "adapter": "rest-api",
+  "targets": [
+    {
+      "url": "https://api.example.com/data",
+      "method": "GET",
+      "headers": {
+        "X-API-Key": "your-api-key-here"
+      }
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "Data",
+        "fields": [
+          {
+            "name": "Results",
+            "selector": { "type": "jsonpath", "expression": "$.results" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### REST API - Rate Limited
+# Handle rate-limited APIs
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "REST Rate Limited Spider",
+  "adapter": "rest-api",
+  "targets": [
+    {
+      "url": "https://api.example.com/data/1"
+    },
+    {
+      "url": "https://api.example.com/data/2"
+    },
+    {
+      "url": "https://api.example.com/data/3"
+    }
+  ],
+  "options": {
+    "rateLimit": {
+      "maxRequestsPerSecond": 2,
+      "respectRetryAfter": true
+    }
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "Data",
+        "fields": [
+          {
+            "name": "Content",
+            "selector": { "type": "jsonpath", "expression": "$.data" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### REST API - Nested Endpoints
+# Chain multiple API calls
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "REST Nested Spider",
+  "adapter": "rest-api",
+  "targets": [
+    {
+      "url": "https://api.example.com/users",
+      "method": "GET"
+    }
+  ],
+  "navigation": {
+    "followLinks": {
+      "enabled": true,
+      "linkExtractor": {
+        "type": "jsonpath",
+        "expression": "$[*].profileUrl"
+      },
+      "maxDepth": 1
+    }
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "UserProfile",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.id" }
+          },
+          {
+            "name": "Bio",
+            "selector": { "type": "jsonpath", "expression": "$.bio" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###

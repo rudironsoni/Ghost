@@ -1,0 +1,61 @@
+### Spider Health Check
+GET https://localhost:5001/api/spider/health
+Accept: application/json
+
+###
+
+### Get Spider Status
+GET https://localhost:5001/api/spider/status
+Accept: application/json
+
+###
+
+### List All Spiders
+GET https://localhost:5001/api/spider/list
+Accept: application/json
+
+###
+
+### Get Spider Details
+GET https://localhost:5001/api/spider/example-spider
+Accept: application/json
+
+###
+
+### Start Spider
+POST https://localhost:5001/api/spider/example-spider/start
+Content-Type: application/json
+
+{
+  "options": {
+    "maxConcurrency": 5,
+    "maxRequests": 100,
+    "timeout": "00:00:30"
+  }
+}
+
+###
+
+### Stop Spider
+POST https://localhost:5001/api/spider/example-spider/stop
+Content-Type: application/json
+
+###
+
+### Pause Spider
+POST https://localhost:5001/api/spider/example-spider/pause
+Content-Type: application/json
+
+###
+
+### Resume Spider
+POST https://localhost:5001/api/spider/example-spider/resume
+Content-Type: application/json
+
+###
+
+### Get Spider Statistics
+GET https://localhost:5001/api/spider/example-spider/statistics
+Accept: application/json
+
+###

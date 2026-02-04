@@ -1,0 +1,53 @@
+### Extract with StaticHtml Adapter
+POST https://localhost:5001/api/adapters/static-html/extract
+Content-Type: application/json
+
+{
+  "url": "https://example.com",
+  "method": "GET",
+  "headers": {
+    "User-Agent": "Ghost.Sdk.Spider/1.0"
+  },
+  "timeout": "00:00:30"
+}
+
+###
+
+### Extract with Custom Options
+POST https://localhost:5001/api/adapters/static-html/extract
+Content-Type: application/json
+
+{
+  "url": "https://www.wikipedia.org",
+  "method": "GET",
+  "options": {
+    "timeout": "00:01:00",
+    "followRedirects": true,
+    "maxRedirects": 10,
+    "enableCaching": true,
+    "cacheTtl": "00:05:00"
+  }
+}
+
+###
+
+### Test Adapter Availability
+GET https://localhost:5001/api/adapters/static-html/status
+Accept: application/json
+
+###
+
+### Extract with Proxy
+POST https://localhost:5001/api/adapters/static-html/extract
+Content-Type: application/json
+
+{
+  "url": "https://ipinfo.io/json",
+  "method": "GET",
+  "options": {
+    "proxyUrl": "http://proxy.example.com:8080",
+    "timeout": "00:00:30"
+  }
+}
+
+###

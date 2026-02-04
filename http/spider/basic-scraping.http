@@ -1,0 +1,112 @@
+### Extract Static HTML - Simple
+POST https://localhost:5001/api/spider/extract
+Content-Type: application/json
+
+{
+  "url": "https://example.com",
+  "adapterType": "StaticHtml",
+  "extractors": [
+    {
+      "name": "title",
+      "selector": "h1",
+      "selectorType": "Css"
+    },
+    {
+      "name": "content",
+      "selector": "//p",
+      "selectorType": "XPath"
+    }
+  ]
+}
+
+###
+
+### Extract with Configuration
+POST https://localhost:5001/api/spider/extract
+Content-Type: application/json
+
+{
+  "url": "https://news.ycombinator.com",
+  "adapterType": "StaticHtml",
+  "options": {
+    "timeout": "00:00:30",
+    "followRedirects": true,
+    "maxRedirects": 5
+  },
+  "extractors": [
+    {
+      "name": "stories",
+      "selector": ".athing",
+      "selectorType": "Css",
+      "multiple": true,
+      "fields": [
+        {
+          "name": "title",
+          "selector": ".titleline > a",
+          "selectorType": "Css"
+        },
+        {
+          "name": "url",
+          "selector": ".titleline > a",
+          "selectorType": "Css",
+          "attribute": "href"
+        },
+        {
+          "name": "score",
+          "selector": ".score",
+          "selectorType": "Css"
+        }
+      ]
+    }
+  ]
+}
+
+###
+
+### Extract with Formatters
+POST https://localhost:5001/api/spider/extract
+Content-Type: application/json
+
+{
+  "url": "https://www.example-ecommerce.com/products",
+  "adapterType": "StaticHtml",
+  "extractors": [
+    {
+      "name": "products",
+      "selector": ".product",
+      "selectorType": "Css",
+      "multiple": true,
+      "fields": [
+        {
+          "name": "name",
+          "selector": ".product-name",
+          "selectorType": "Css",
+          "formatters": [
+            {
+              "type": "Trim"
+            },
+            {
+              "type": "Replace",
+              "oldValue": "  ",
+              "newValue": " "
+            }
+          ]
+        },
+        {
+          "name": "price",
+          "selector": ".price",
+          "selectorType": "Css",
+          "formatters": [
+            {
+              "type": "Regex",
+              "pattern": "\\d+\\.\\d+",
+              "group": 0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+###

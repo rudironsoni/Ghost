@@ -1,0 +1,381 @@
+### JavaScript Rendering with Wait
+# Scrape SPA/PWA with JavaScript rendering
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "JavaScript Rendering Spider",
+  "description": "Scrape single-page application with dynamic content",
+  "content": {
+    "type": "javascript",
+    "javascript": {
+      "waitFor": ".content-loaded",
+      "waitTimeout": 10000,
+      "enableJavaScript": true
+    }
+  },
+  "targets": [
+    { "url": "https://spa-example.com" }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "DynamicContent",
+        "fields": [
+          {
+            "name": "Title",
+            "selector": { "type": "css", "expression": ".dynamic-title" }
+          },
+          {
+            "name": "Items",
+            "selector": { "type": "css", "expression": ".item-list .item" },
+            "multiple": true
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### Deep Crawling with Link Following
+# Crawl site by following links
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Deep Crawl Spider",
+  "targets": [
+    { "url": "https://example.com" }
+  ],
+  "navigation": {
+    "followLinks": {
+      "enabled": true,
+      "selector": "a[href]",
+      "maxDepth": 3,
+      "allowedDomains": ["example.com"],
+      "excludePatterns": ["/logout", "/cart", "/checkout"]
+    }
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "Page",
+        "fields": [
+          {
+            "name": "Url",
+            "selector": { "type": "meta", "expression": "url" }
+          },
+          {
+            "name": "Title",
+            "selector": { "type": "css", "expression": "h1" }
+          }
+        ]
+      }
+    ]
+  },
+  "options": {
+    "concurrency": 5,
+    "respectRobotsTxt": true
+  }
+}
+
+###
+
+### Form Submission Spider
+# Submit forms and scrape results
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Form Submission Spider",
+  "content": {
+    "type": "javascript",
+    "javascript": {
+      "actions": [
+        {
+          "type": "fill",
+          "selector": "#search-input",
+          "value": "test query"
+        },
+        {
+          "type": "click",
+          "selector": "#search-button"
+        },
+        {
+          "type": "waitFor",
+          "selector": ".search-results"
+        }
+      ]
+    }
+  },
+  "targets": [
+    { "url": "https://example.com/search" }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "SearchResult",
+        "fields": [
+          {
+            "name": "Title",
+            "selector": { "type": "css", "expression": ".result-title" }
+          },
+          {
+            "name": "Link",
+            "selector": { "type": "css", "expression": ".result-link", "attribute": "href" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### Infinite Scroll Handling
+# Handle infinite scroll pages
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Infinite Scroll Spider",
+  "content": {
+    "type": "javascript",
+    "javascript": {
+      "actions": [
+        {
+          "type": "scroll",
+          "direction": "down",
+          "iterations": 5,
+          "delay": 1000
+        }
+      ],
+      "waitFor": ".items-loaded"
+    }
+  },
+  "targets": [
+    { "url": "https://example.com/infinite-scroll" }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "Item",
+        "fields": [
+          {
+            "name": "Title",
+            "selector": { "type": "css", "expression": ".item-title" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### Authentication with Cookies
+# Scrape authenticated pages with cookies
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Authenticated Spider",
+  "targets": [
+    {
+      "url": "https://example.com/protected",
+      "cookies": [
+        {
+          "name": "session_id",
+          "value": "abc123xyz",
+          "domain": "example.com"
+        }
+      ]
+    }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "ProtectedContent",
+        "fields": [
+          {
+            "name": "Data",
+            "selector": { "type": "css", "expression": ".protected-data" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### Multi-Strategy Scraping
+# Try multiple extraction strategies
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Multi-Strategy Spider",
+  "targets": [
+    { "url": "https://example.com/product" }
+  ],
+  "extraction": {
+    "strategies": [
+      {
+        "name": "Strategy1",
+        "priority": 1,
+        "entities": [
+          {
+            "name": "Product",
+            "fields": [
+              {
+                "name": "Price",
+                "selector": { "type": "css", "expression": ".price-v1" }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Strategy2",
+        "priority": 2,
+        "entities": [
+          {
+            "name": "Product",
+            "fields": [
+              {
+                "name": "Price",
+                "selector": { "type": "css", "expression": ".price-v2" }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### Screenshot Capture
+# Capture screenshots while scraping
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Screenshot Spider",
+  "content": {
+    "type": "javascript",
+    "javascript": {
+      "captureScreenshot": true,
+      "screenshotOptions": {
+        "fullPage": true,
+        "format": "png"
+      }
+    }
+  },
+  "targets": [
+    { "url": "https://example.com" }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "Page",
+        "fields": [
+          {
+            "name": "Title",
+            "selector": { "type": "css", "expression": "h1" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### Proxy Rotation
+# Use proxy rotation for scraping
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Proxy Rotation Spider",
+  "targets": [
+    { "url": "https://example.com/page1" },
+    { "url": "https://example.com/page2" },
+    { "url": "https://example.com/page3" }
+  ],
+  "options": {
+    "proxy": {
+      "enabled": true,
+      "rotation": "round-robin",
+      "servers": [
+        "http://proxy1.example.com:8080",
+        "http://proxy2.example.com:8080"
+      ]
+    }
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "Content",
+        "fields": [
+          {
+            "name": "Title",
+            "selector": { "type": "css", "expression": "h1" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### Retry with Backoff
+# Configure retry logic with exponential backoff
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Retry Spider",
+  "targets": [
+    { "url": "https://unstable-api.example.com" }
+  ],
+  "options": {
+    "retry": {
+      "maxAttempts": 5,
+      "backoffStrategy": "exponential",
+      "initialDelay": 1000,
+      "maxDelay": 30000,
+      "retryOn": [500, 502, 503, 504]
+    }
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "Data",
+        "fields": [
+          {
+            "name": "Content",
+            "selector": { "type": "css", "expression": "body" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###

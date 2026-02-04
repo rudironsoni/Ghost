@@ -1,0 +1,186 @@
+### Create Scheduled Spider Job
+# Schedule a spider to run periodically
+POST {{BASE_URL}}/api/spider/schedule HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Daily News Scraper",
+  "schedule": {
+    "type": "cron",
+    "expression": "0 9 * * *",
+    "timezone": "America/New_York"
+  },
+  "spider": {
+    "name": "News Spider",
+    "targets": [
+      { "url": "https://news.example.com" }
+    ],
+    "extraction": {
+      "entities": [
+        {
+          "name": "Article",
+          "fields": [
+            {
+              "name": "Title",
+              "selector": { "type": "css", "expression": ".article-title" }
+            },
+            {
+              "name": "PublishedAt",
+              "selector": { "type": "css", "expression": ".publish-date" }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "notifications": {
+    "onSuccess": ["email@example.com"],
+    "onFailure": ["admin@example.com"]
+  }
+}
+
+###
+
+### List Scheduled Jobs
+# Get all scheduled spider jobs
+GET {{BASE_URL}}/api/spider/schedule HTTP/1.1
+Accept: application/json
+Authorization: Bearer {{API_KEY}}
+
+###
+
+### Get Scheduled Job Details
+# Get details of a specific scheduled job
+GET {{BASE_URL}}/api/spider/schedule/daily-news-scraper HTTP/1.1
+Accept: application/json
+Authorization: Bearer {{API_KEY}}
+
+###
+
+### Update Scheduled Job
+# Update an existing scheduled job
+PUT {{BASE_URL}}/api/spider/schedule/daily-news-scraper HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "schedule": {
+    "type": "cron",
+    "expression": "0 8 * * *",
+    "timezone": "America/New_York"
+  },
+  "enabled": true
+}
+
+###
+
+### Pause Scheduled Job
+# Temporarily pause a scheduled job
+POST {{BASE_URL}}/api/spider/schedule/daily-news-scraper/pause HTTP/1.1
+Authorization: Bearer {{API_KEY}}
+
+###
+
+### Resume Scheduled Job
+# Resume a paused scheduled job
+POST {{BASE_URL}}/api/spider/schedule/daily-news-scraper/resume HTTP/1.1
+Authorization: Bearer {{API_KEY}}
+
+###
+
+### Delete Scheduled Job
+# Delete a scheduled job
+DELETE {{BASE_URL}}/api/spider/schedule/daily-news-scraper HTTP/1.1
+Authorization: Bearer {{API_KEY}}
+
+###
+
+### Trigger Scheduled Job Manually
+# Manually trigger a scheduled job
+POST {{BASE_URL}}/api/spider/schedule/daily-news-scraper/trigger HTTP/1.1
+Authorization: Bearer {{API_KEY}}
+
+###
+
+### Get Job Execution History
+# Get execution history for a scheduled job
+GET {{BASE_URL}}/api/spider/schedule/daily-news-scraper/history HTTP/1.1
+Accept: application/json
+Authorization: Bearer {{API_KEY}}
+
+###
+
+### Create Interval-Based Schedule
+# Schedule a spider to run at intervals
+POST {{BASE_URL}}/api/spider/schedule HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Hourly Price Monitor",
+  "schedule": {
+    "type": "interval",
+    "intervalMinutes": 60
+  },
+  "spider": {
+    "name": "Price Spider",
+    "targets": [
+      { "url": "https://shop.example.com/product/123" }
+    ],
+    "extraction": {
+      "entities": [
+        {
+          "name": "Product",
+          "fields": [
+            {
+              "name": "Price",
+              "selector": { "type": "css", "expression": ".price" }
+            },
+            {
+              "name": "InStock",
+              "selector": { "type": "css", "expression": ".stock-status" }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+
+###
+
+### Create One-Time Scheduled Job
+# Schedule a spider to run once at a specific time
+POST {{BASE_URL}}/api/spider/schedule HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "One-Time Event Scraper",
+  "schedule": {
+    "type": "once",
+    "runAt": "2026-02-05T10:00:00Z"
+  },
+  "spider": {
+    "name": "Event Spider",
+    "targets": [
+      { "url": "https://events.example.com/special-event" }
+    ],
+    "extraction": {
+      "entities": [
+        {
+          "name": "Event",
+          "fields": [
+            {
+              "name": "Title",
+              "selector": { "type": "css", "expression": ".event-title" }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+
+###
