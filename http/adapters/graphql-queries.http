@@ -1,0 +1,79 @@
+### Execute GraphQL Query
+POST https://localhost:5001/api/adapters/graphql/extract
+Content-Type: application/json
+
+{
+  "url": "https://api.github.com/graphql",
+  "method": "POST",
+  "headers": {
+    "Authorization": "Bearer YOUR_GITHUB_TOKEN"
+  },
+  "body": {
+    "query": "query { viewer { login name email } }"
+  }
+}
+
+###
+
+### GraphQL with Variables
+POST https://localhost:5001/api/adapters/graphql/extract
+Content-Type: application/json
+
+{
+  "url": "https://api.github.com/graphql",
+  "method": "POST",
+  "headers": {
+    "Authorization": "Bearer YOUR_GITHUB_TOKEN"
+  },
+  "body": {
+    "query": "query GetRepository($owner: String!, $name: String!) { repository(owner: $owner, name: $name) { name description stargazerCount forkCount } }",
+    "variables": {
+      "owner": "microsoft",
+      "name": "playwright"
+    }
+  }
+}
+
+###
+
+### GraphQL Mutation
+POST https://localhost:5001/api/adapters/graphql/extract
+Content-Type: application/json
+
+{
+  "url": "https://api.github.com/graphql",
+  "method": "POST",
+  "headers": {
+    "Authorization": "Bearer YOUR_GITHUB_TOKEN"
+  },
+  "body": {
+    "query": "mutation AddStar($starrableId: ID!) { addStar(input: {starrableId: $starrableId}) { starrable { stargazerCount } } }",
+    "variables": {
+      "starrableId": "REPOSITORY_ID"
+    }
+  }
+}
+
+###
+
+### Complex Nested Query
+POST https://localhost:5001/api/adapters/graphql/extract
+Content-Type: application/json
+
+{
+  "url": "https://api.github.com/graphql",
+  "method": "POST",
+  "headers": {
+    "Authorization": "Bearer YOUR_GITHUB_TOKEN"
+  },
+  "body": {
+    "query": "query GetUserRepositories($login: String!, $first: Int!) { user(login: $login) { repositories(first: $first, orderBy: {field: STARGAZERS, direction: DESC}) { edges { node { name description stargazerCount languages(first: 3) { edges { node { name } } } } } } } }",
+    "variables": {
+      "login": "torvalds",
+      "first": 10
+    },
+    "operationName": "GetUserRepositories"
+  }
+}
+
+###

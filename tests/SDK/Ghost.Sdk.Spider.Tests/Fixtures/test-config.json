@@ -1,0 +1,70 @@
+{
+  "id": "test-spider-id",
+  "name": "TestSpider",
+  "version": "1.0.0",
+  "description": "Test spider configuration in JSON",
+  "target": {
+    "startUrls": [
+      "https://api.example.com/data"
+    ]
+  },
+  "targets": [
+    {
+      "url": "https://api.example.com/data",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": "{\"query\": \"test\"}"
+    }
+  ],
+  "pipeline": {
+    "middleware": [
+      {
+        "name": "CircuitBreaker",
+        "type": "CircuitBreakerMiddleware",
+        "enabled": true,
+        "config": {
+          "FailureThreshold": 5,
+          "SuccessThreshold": 2,
+          "Timeout": 60000
+        }
+      }
+    ]
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "ApiResponse",
+        "selector": {
+          "type": "JsonPath",
+          "expression": "$.data.items[*]"
+        },
+        "fields": [
+          {
+            "name": "Id",
+            "selector": {
+              "type": "JsonPath",
+              "expression": "$.id",
+              "takeFirst": true
+            }
+          },
+          {
+            "name": "Name",
+            "selector": {
+              "type": "JsonPath",
+              "expression": "$.name",
+              "takeFirst": true
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "limits": {
+    "maxDepth": 1,
+    "maxPages": 10,
+    "maxConcurrency": 2,
+    "requestTimeout": 15000
+  }
+}

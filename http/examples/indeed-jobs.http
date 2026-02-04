@@ -1,0 +1,149 @@
+### Scrape Indeed Job Listings
+POST https://localhost:5001/api/spider/extract
+Content-Type: application/json
+
+{
+  "url": "https://www.indeed.com/jobs?q=software+engineer&l=Remote",
+  "adapterType": "JavaScript",
+  "options": {
+    "timeout": "00:01:00",
+    "waitForSelector": ".job_seen_beacon",
+    "waitTime": 2000
+  },
+  "extractors": [
+    {
+      "name": "jobs",
+      "selector": ".job_seen_beacon",
+      "selectorType": "Css",
+      "multiple": true,
+      "fields": [
+        {
+          "name": "title",
+          "selector": ".jobTitle",
+          "selectorType": "Css",
+          "formatters": [
+            {
+              "type": "Trim"
+            }
+          ]
+        },
+        {
+          "name": "company",
+          "selector": "[data-testid='company-name']",
+          "selectorType": "Css",
+          "formatters": [
+            {
+              "type": "Trim"
+            }
+          ]
+        },
+        {
+          "name": "location",
+          "selector": "[data-testid='text-location']",
+          "selectorType": "Css",
+          "formatters": [
+            {
+              "type": "Trim"
+            }
+          ]
+        },
+        {
+          "name": "salary",
+          "selector": ".salary-snippet",
+          "selectorType": "Css",
+          "formatters": [
+            {
+              "type": "Trim"
+            }
+          ]
+        },
+        {
+          "name": "description",
+          "selector": ".job-snippet",
+          "selectorType": "Css",
+          "formatters": [
+            {
+              "type": "Trim"
+            },
+            {
+              "type": "Replace",
+              "oldValue": "\\n+",
+              "newValue": " "
+            }
+          ]
+        },
+        {
+          "name": "jobUrl",
+          "selector": ".jcs-JobTitle",
+          "selectorType": "Css",
+          "attribute": "href",
+          "formatters": [
+            {
+              "type": "StringFormatter",
+              "format": "https://www.indeed.com{0}"
+            }
+          ]
+        },
+        {
+          "name": "postedDate",
+          "selector": "[data-testid='myJobsStateDate']",
+          "selectorType": "Css",
+          "formatters": [
+            {
+              "type": "Trim"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "pagination": {
+    "enabled": true,
+    "maxPages": 3,
+    "nextPageSelector": "a[aria-label='Next']",
+    "waitAfterNavigation": 2000
+  },
+  "storage": {
+    "type": "Console",
+    "options": {
+      "prettyPrint": true
+    }
+  }
+}
+
+###
+
+### Scrape Indeed with Advanced Filtering
+POST https://localhost:5001/api/spider/jobs/indeed/start
+Content-Type: application/json
+
+{
+  "searchParams": {
+    "query": "senior software engineer",
+    "location": "New York, NY",
+    "radius": 25,
+    "jobType": "fulltime",
+    "experienceLevel": "senior_level",
+    "remote": true
+  },
+  "options": {
+    "maxPages": 5,
+    "maxJobs": 50,
+    "includeDescription": true,
+    "filters": {
+      "minSalary": 120000,
+      "excludeCompanies": ["Company A", "Company B"]
+    }
+  },
+  "storage": {
+    "type": "PostgreSQL",
+    "connectionString": "Host=localhost;Database=jobs;Username=user;Password=pass",
+    "tableName": "indeed_jobs"
+  },
+  "notifications": {
+    "enabled": true,
+    "webhook": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+  }
+}
+
+###

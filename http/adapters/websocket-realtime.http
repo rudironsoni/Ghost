@@ -1,0 +1,461 @@
+### WebSocket - Basic Connection
+# Connect to WebSocket and receive messages
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "WebSocket Basic Spider",
+  "adapter": "websocket",
+  "targets": [
+    {
+      "url": "wss://stream.example.com",
+      "protocol": "websocket"
+    }
+  ],
+  "options": {
+    "connectionDuration": 30000,
+    "maxMessages": 100
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "Message",
+        "fields": [
+          {
+            "name": "Data",
+            "selector": { "type": "jsonpath", "expression": "$.data" }
+          },
+          {
+            "name": "Timestamp",
+            "selector": { "type": "jsonpath", "expression": "$.timestamp" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### WebSocket - Send and Receive
+# Send messages and capture responses
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "WebSocket Send/Receive Spider",
+  "adapter": "websocket",
+  "targets": [
+    {
+      "url": "wss://api.example.com/ws",
+      "protocol": "websocket",
+      "messages": [
+        {
+          "type": "send",
+          "data": {
+            "action": "subscribe",
+            "channel": "prices",
+            "symbol": "BTC-USD"
+          }
+        }
+      ]
+    }
+  ],
+  "options": {
+    "connectionDuration": 60000
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "PriceUpdate",
+        "fields": [
+          {
+            "name": "Symbol",
+            "selector": { "type": "jsonpath", "expression": "$.symbol" }
+          },
+          {
+            "name": "Price",
+            "selector": { "type": "jsonpath", "expression": "$.price" }
+          },
+          {
+            "name": "Volume",
+            "selector": { "type": "jsonpath", "expression": "$.volume" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### WebSocket - Multiple Channels
+# Subscribe to multiple channels
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "WebSocket Multi-Channel Spider",
+  "adapter": "websocket",
+  "targets": [
+    {
+      "url": "wss://stream.example.com",
+      "protocol": "websocket",
+      "messages": [
+        {
+          "type": "send",
+          "data": { "action": "subscribe", "channel": "trades" }
+        },
+        {
+          "type": "send",
+          "data": { "action": "subscribe", "channel": "orderbook" }
+        },
+        {
+          "type": "send",
+          "data": { "action": "subscribe", "channel": "ticker" }
+        }
+      ]
+    }
+  ],
+  "options": {
+    "connectionDuration": 120000
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "StreamData",
+        "fields": [
+          {
+            "name": "Channel",
+            "selector": { "type": "jsonpath", "expression": "$.channel" }
+          },
+          {
+            "name": "Data",
+            "selector": { "type": "jsonpath", "expression": "$.data" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### WebSocket - Authentication
+# Authenticate WebSocket connection
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "WebSocket Authenticated Spider",
+  "adapter": "websocket",
+  "targets": [
+    {
+      "url": "wss://secure.example.com",
+      "protocol": "websocket",
+      "headers": {
+        "Authorization": "Bearer user-token-here"
+      },
+      "messages": [
+        {
+          "type": "send",
+          "data": {
+            "action": "authenticate",
+            "token": "user-token-here"
+          }
+        },
+        {
+          "type": "wait",
+          "duration": 1000
+        },
+        {
+          "type": "send",
+          "data": {
+            "action": "subscribe",
+            "channel": "private-updates"
+          }
+        }
+      ]
+    }
+  ],
+  "options": {
+    "connectionDuration": 60000
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "PrivateUpdate",
+        "fields": [
+          {
+            "name": "Type",
+            "selector": { "type": "jsonpath", "expression": "$.type" }
+          },
+          {
+            "name": "Data",
+            "selector": { "type": "jsonpath", "expression": "$.data" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### WebSocket - Heartbeat/Ping
+# Send periodic heartbeat messages
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "WebSocket Heartbeat Spider",
+  "adapter": "websocket",
+  "targets": [
+    {
+      "url": "wss://api.example.com/ws",
+      "protocol": "websocket",
+      "messages": [
+        {
+          "type": "send",
+          "data": { "action": "subscribe", "channel": "data" }
+        }
+      ]
+    }
+  ],
+  "options": {
+    "connectionDuration": 300000,
+    "heartbeat": {
+      "enabled": true,
+      "interval": 30000,
+      "message": { "action": "ping" }
+    }
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "Data",
+        "fields": [
+          {
+            "name": "Content",
+            "selector": { "type": "jsonpath", "expression": "$.data" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### WebSocket - Binary Data
+# Handle binary WebSocket messages
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "WebSocket Binary Spider",
+  "adapter": "websocket",
+  "targets": [
+    {
+      "url": "wss://binary.example.com",
+      "protocol": "websocket",
+      "binaryType": "arraybuffer"
+    }
+  ],
+  "options": {
+    "connectionDuration": 60000,
+    "handleBinary": true
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "BinaryMessage",
+        "fields": [
+          {
+            "name": "Size",
+            "selector": { "type": "meta", "expression": "size" }
+          },
+          {
+            "name": "Data",
+            "selector": { "type": "meta", "expression": "base64" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### WebSocket - Reconnection Logic
+# Auto-reconnect on disconnection
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "WebSocket Reconnect Spider",
+  "adapter": "websocket",
+  "targets": [
+    {
+      "url": "wss://unstable.example.com",
+      "protocol": "websocket"
+    }
+  ],
+  "options": {
+    "connectionDuration": 300000,
+    "reconnect": {
+      "enabled": true,
+      "maxAttempts": 10,
+      "delay": 5000,
+      "backoffMultiplier": 2,
+      "maxDelay": 60000
+    }
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "Message",
+        "fields": [
+          {
+            "name": "Data",
+            "selector": { "type": "jsonpath", "expression": "$.data" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### WebSocket - Message Filtering
+# Filter specific message types
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "WebSocket Filtered Spider",
+  "adapter": "websocket",
+  "targets": [
+    {
+      "url": "wss://stream.example.com",
+      "protocol": "websocket",
+      "messages": [
+        {
+          "type": "send",
+          "data": { "action": "subscribe", "channel": "all" }
+        }
+      ]
+    }
+  ],
+  "options": {
+    "connectionDuration": 120000,
+    "messageFilter": {
+      "field": "$.type",
+      "operator": "in",
+      "values": ["trade", "quote"]
+    }
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "FilteredMessage",
+        "fields": [
+          {
+            "name": "Type",
+            "selector": { "type": "jsonpath", "expression": "$.type" }
+          },
+          {
+            "name": "Data",
+            "selector": { "type": "jsonpath", "expression": "$.data" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### WebSocket - Rate Limiting
+# Control message consumption rate
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "WebSocket Rate Limited Spider",
+  "adapter": "websocket",
+  "targets": [
+    {
+      "url": "wss://highfreq.example.com",
+      "protocol": "websocket"
+    }
+  ],
+  "options": {
+    "connectionDuration": 60000,
+    "rateLimit": {
+      "maxMessagesPerSecond": 10,
+      "sampling": "first"
+    }
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "Message",
+        "fields": [
+          {
+            "name": "Data",
+            "selector": { "type": "jsonpath", "expression": "$.data" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### WebSocket - Compression
+# Handle compressed WebSocket messages
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "WebSocket Compressed Spider",
+  "adapter": "websocket",
+  "targets": [
+    {
+      "url": "wss://compressed.example.com",
+      "protocol": "websocket",
+      "compression": true
+    }
+  ],
+  "options": {
+    "connectionDuration": 60000
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "Message",
+        "fields": [
+          {
+            "name": "Data",
+            "selector": { "type": "jsonpath", "expression": "$.data" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###

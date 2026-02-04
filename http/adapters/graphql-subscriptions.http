@@ -1,0 +1,389 @@
+### GraphQL - Basic Subscription
+# Subscribe to real-time updates
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Subscription Spider",
+  "adapter": "graphql-subscription",
+  "targets": [
+    {
+      "url": "wss://api.example.com/graphql",
+      "protocol": "websocket",
+      "body": {
+        "query": "subscription OnNewMessage { messageAdded { id text author { name } createdAt } }",
+        "variables": {}
+      }
+    }
+  ],
+  "options": {
+    "subscriptionDuration": 30000,
+    "maxMessages": 10
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "Message",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.data.messageAdded.id" }
+          },
+          {
+            "name": "Text",
+            "selector": { "type": "jsonpath", "expression": "$.data.messageAdded.text" }
+          },
+          {
+            "name": "Author",
+            "selector": { "type": "jsonpath", "expression": "$.data.messageAdded.author.name" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### GraphQL - Subscription with Variables
+# Subscribe with filter parameters
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Filtered Subscription Spider",
+  "adapter": "graphql-subscription",
+  "targets": [
+    {
+      "url": "wss://api.example.com/graphql",
+      "protocol": "websocket",
+      "body": {
+        "query": "subscription OnUserMessage($userId: ID!) { messageAdded(userId: $userId) { id text timestamp } }",
+        "variables": {
+          "userId": "123"
+        }
+      }
+    }
+  ],
+  "options": {
+    "subscriptionDuration": 60000,
+    "maxMessages": 50
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "UserMessage",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.data.messageAdded.id" }
+          },
+          {
+            "name": "Text",
+            "selector": { "type": "jsonpath", "expression": "$.data.messageAdded.text" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### GraphQL - Multiple Subscriptions
+# Subscribe to multiple event types
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Multi-Subscription Spider",
+  "adapter": "graphql-subscription",
+  "targets": [
+    {
+      "url": "wss://api.example.com/graphql",
+      "protocol": "websocket",
+      "body": {
+        "query": "subscription OnChatEvents { messageAdded { id text } userJoined { id name } userLeft { id name } }",
+        "variables": {}
+      }
+    }
+  ],
+  "options": {
+    "subscriptionDuration": 120000
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "ChatEvent",
+        "fields": [
+          {
+            "name": "MessageId",
+            "selector": { "type": "jsonpath", "expression": "$.data.messageAdded.id" }
+          },
+          {
+            "name": "JoinedUser",
+            "selector": { "type": "jsonpath", "expression": "$.data.userJoined.name" }
+          },
+          {
+            "name": "LeftUser",
+            "selector": { "type": "jsonpath", "expression": "$.data.userLeft.name" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### GraphQL - Subscription with Authentication
+# Authenticated subscription connection
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Authenticated Subscription Spider",
+  "adapter": "graphql-subscription",
+  "targets": [
+    {
+      "url": "wss://api.example.com/graphql",
+      "protocol": "websocket",
+      "headers": {
+        "Authorization": "Bearer user-token-here"
+      },
+      "body": {
+        "query": "subscription OnPrivateMessage { privateMessageReceived { id text sender { name } } }",
+        "variables": {}
+      }
+    }
+  ],
+  "options": {
+    "subscriptionDuration": 60000
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "PrivateMessage",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.data.privateMessageReceived.id" }
+          },
+          {
+            "name": "Text",
+            "selector": { "type": "jsonpath", "expression": "$.data.privateMessageReceived.text" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### GraphQL - Subscription with Reconnect
+# Auto-reconnect on connection loss
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Reconnecting Subscription Spider",
+  "adapter": "graphql-subscription",
+  "targets": [
+    {
+      "url": "wss://api.example.com/graphql",
+      "protocol": "websocket",
+      "body": {
+        "query": "subscription OnStockPrice($symbol: String!) { stockPriceUpdated(symbol: $symbol) { symbol price change timestamp } }",
+        "variables": {
+          "symbol": "AAPL"
+        }
+      }
+    }
+  ],
+  "options": {
+    "subscriptionDuration": 300000,
+    "reconnect": {
+      "enabled": true,
+      "maxAttempts": 5,
+      "delay": 5000
+    }
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "StockPrice",
+        "fields": [
+          {
+            "name": "Symbol",
+            "selector": { "type": "jsonpath", "expression": "$.data.stockPriceUpdated.symbol" }
+          },
+          {
+            "name": "Price",
+            "selector": { "type": "jsonpath", "expression": "$.data.stockPriceUpdated.price" }
+          },
+          {
+            "name": "Change",
+            "selector": { "type": "jsonpath", "expression": "$.data.stockPriceUpdated.change" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### GraphQL - Subscription with Batching
+# Batch subscription updates
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Batched Subscription Spider",
+  "adapter": "graphql-subscription",
+  "targets": [
+    {
+      "url": "wss://api.example.com/graphql",
+      "protocol": "websocket",
+      "body": {
+        "query": "subscription OnOrderUpdate { orderUpdated { id status items { name quantity } total } }",
+        "variables": {}
+      }
+    }
+  ],
+  "options": {
+    "subscriptionDuration": 60000,
+    "batching": {
+      "enabled": true,
+      "batchSize": 10,
+      "batchTimeout": 5000
+    }
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "Order",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.data.orderUpdated.id" }
+          },
+          {
+            "name": "Status",
+            "selector": { "type": "jsonpath", "expression": "$.data.orderUpdated.status" }
+          },
+          {
+            "name": "Total",
+            "selector": { "type": "jsonpath", "expression": "$.data.orderUpdated.total" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### GraphQL - Subscription with Filtering
+# Client-side filtering of subscription data
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Filtered Subscription Spider",
+  "adapter": "graphql-subscription",
+  "targets": [
+    {
+      "url": "wss://api.example.com/graphql",
+      "protocol": "websocket",
+      "body": {
+        "query": "subscription OnComment { commentAdded { id text author { name } post { id title } } }",
+        "variables": {}
+      }
+    }
+  ],
+  "options": {
+    "subscriptionDuration": 60000,
+    "filter": {
+      "field": "$.data.commentAdded.post.id",
+      "operator": "equals",
+      "value": "123"
+    }
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "Comment",
+        "fields": [
+          {
+            "name": "Id",
+            "selector": { "type": "jsonpath", "expression": "$.data.commentAdded.id" }
+          },
+          {
+            "name": "Text",
+            "selector": { "type": "jsonpath", "expression": "$.data.commentAdded.text" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### GraphQL - Subscription with Transformation
+# Transform subscription data before extraction
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "GraphQL Transformed Subscription Spider",
+  "adapter": "graphql-subscription",
+  "targets": [
+    {
+      "url": "wss://api.example.com/graphql",
+      "protocol": "websocket",
+      "body": {
+        "query": "subscription OnSensorData { sensorDataReceived { sensorId temperature humidity timestamp } }",
+        "variables": {}
+      }
+    }
+  ],
+  "options": {
+    "subscriptionDuration": 120000
+  },
+  "extraction": {
+    "entities": [
+      {
+        "name": "SensorReading",
+        "fields": [
+          {
+            "name": "SensorId",
+            "selector": { "type": "jsonpath", "expression": "$.data.sensorDataReceived.sensorId" }
+          },
+          {
+            "name": "Temperature",
+            "selector": { "type": "jsonpath", "expression": "$.data.sensorDataReceived.temperature" },
+            "transform": "number"
+          },
+          {
+            "name": "Humidity",
+            "selector": { "type": "jsonpath", "expression": "$.data.sensorDataReceived.humidity" },
+            "transform": "number"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
