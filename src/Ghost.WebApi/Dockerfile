@@ -1,11 +1,12 @@
-# Base image with .NET 10.0 ASP.NET Runtime
+# Ubuntu-based .NET 10.0 ASP.NET Runtime (Playwright officially supports Ubuntu)
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS base
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
+# Port 8081 changed to 31337 for security
+EXPOSE 31337
 
 # SDK image for building
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-noble AS build
 WORKDIR /src
 
 # Copy solution and package props first for better layer caching
@@ -35,35 +36,31 @@ COPY . .
 # Restore dependencies
 RUN dotnet restore "src/Ghost.WebApi/Ghost.WebApi.csproj"
 
-# Build application
-RUN dotnet build "src/Ghost.WebApi/Ghost.WebApi.csproj" -c Release -o /app/build --no-restore
+# Build stage - creates .playwright directory
+FROM build AS built
+RUN dotnet build "src/Ghost.WebApi/Ghost.WebApi.csproj" -c Release
 
-# Publish application
-FROM build AS publish
-RUN dotnet publish "src/Ghost.WebApi/Ghost.WebApi.csproj" -c Release -o /app/publish /p:UseAppHost=false
-
-# Install Playwright browsers (after publish so Microsoft.Playwright is built)
-FROM publish AS playwright
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    ca-certificates fonts-liberation libasound2t64 libatk-bridge2.0-0 \
-    libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 \
-    libgbm1 libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libnss3 libpango-1.0-0 \
-    libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 \
-    libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 \
-    libxss1 libxtst6 libxkbcommon0 libxshmfence1 && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install Playwright CLI and browsers (project is now built with Microsoft.Playwright)
+# Playwright stage - install browsers
+FROM built AS playwright
+# Install Playwright CLI tool
 RUN dotnet tool install --global Microsoft.Playwright.CLI
 ENV PATH="${PATH}:/root/.dotnet/tools"
+# Install Chromium browsers (CLI finds .playwright in artifacts)
 RUN playwright install chromium
+
+# Publish stage
+FROM built AS publish
+RUN dotnet publish "src/Ghost.WebApi/Ghost.WebApi.csproj" \
+    -c Release \
+    -o /app/publish \
+    /p:UseAppHost=false \
+    --no-build
 
 # Final stage
 FROM base AS final
 WORKDIR /app
 
-# Install Playwright runtime dependencies (required for Chromium to run)
+# Install Playwright runtime dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     ca-certificates fonts-liberation libasound2t64 libatk-bridge2.0-0 \
@@ -71,21 +68,30 @@ RUN apt-get update && \
     libgbm1 libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libnss3 libpango-1.0-0 \
     libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 \
     libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 \
-    libxss1 libxtst6 libxkbcommon0 libxshmfence1 curl && \
+    libxss1 libxtst6 libxkbcommon0 libxshmfence1 wget && \
     rm -rf /var/lib/apt/lists/*
 
-# Create directories for runtime data
-RUN mkdir -p /var/ghost/cache /var/ghost/dlq && \
-    chmod 755 /var/ghost /var/ghost/cache /var/ghost/dlq
+# Create non-root user with home directory
+RUN adduser --disabled-password --gecos "" ghost-app-user && \
+    mkdir -p /var/ghost/cache /var/ghost/dlq /home/ghost-app-user/.cache
 
 # Copy published application
-COPY --from=publish /app/publish .
+COPY --from=publish --chown=ghost-app-user:ghost-app-user /app/publish .
 
-# Copy Playwright browsers
-COPY --from=playwright /root/.cache/ms-playwright /root/.cache/ms-playwright
+# Copy Playwright driver from build stage (it's in Ghost.Hosting output)
+COPY --from=playwright --chown=ghost-app-user:ghost-app-user /src/artifacts/bin/Ghost.Hosting/Release/net10.0/.playwright /app/.playwright
 
-# Health check
+# Copy Playwright browsers to user's home directory (where Playwright looks for them)
+COPY --from=playwright --chown=ghost-app-user:ghost-app-user /root/.cache/ms-playwright /home/ghost-app-user/.cache/ms-playwright
+
+# Set ownership
+RUN chown -R ghost-app-user:ghost-app-user /app /var/ghost /home/ghost-app-user
+
+# Switch to non-root user
+USER ghost-app-user
+
+# Health check using wget
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+    CMD wget --quiet --tries=1 --spider http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["dotnet", "Ghost.WebApi.dll"]

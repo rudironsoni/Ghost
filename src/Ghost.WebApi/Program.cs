@@ -9,6 +9,7 @@ using Ghost.Core;
 using Ghost.Monitoring;
 using Ghost.Resilience;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 // Removed unused reflection/disk/culture usings after replacing dynamic loader with
 // compile-time referenced extensions.
 
@@ -28,7 +29,8 @@ try {
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks()
+    .AddCheck("ghost-webapi", () => HealthCheckResult.Healthy("Ghost WebAPI is running"));
 builder.Services.AddGhostResilience(builder.Configuration);
 builder.Services.AddGhostMonitoring(builder.Configuration);
 builder.Services.AddHttpClient();
