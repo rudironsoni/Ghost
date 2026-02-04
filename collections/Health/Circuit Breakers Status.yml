@@ -1,0 +1,48 @@
+info:
+  name: Circuit Breakers Status
+  type: http
+  seq: 7
+  description: Get health status of all circuit breakers
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/health/circuit-breakers"
+
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+        
+        test("Response has circuitBreakers array", function() {
+          expect(res.body).to.have.property("circuitBreakers");
+          expect(res.body.circuitBreakers).to.be.an("array");
+        });
+
+docs: |-
+  ## Circuit Breakers Status
+  
+  Returns health status of all circuit breakers.
+  
+  ### Response Example (200 OK)
+  ```json
+  {
+    "timestamp": "2025-02-04T12:00:00Z",
+    "overallStatus": "healthy",
+    "circuitBreakers": [
+      {
+        "platform": "LinkedIn",
+        "state": "Closed",
+        "isHealthy": true,
+        "metrics": {
+          "failureCount": 0,
+          "successCount": 125,
+          "consecutiveFailures": 0
+        }
+      }
+    ]
+  }
+  ```

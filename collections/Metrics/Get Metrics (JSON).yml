@@ -1,0 +1,23 @@
+info:
+  name: Get Metrics (JSON)
+  type: http
+  seq: 1
+  description: Get all metrics in JSON format
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/metrics"
+
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+docs: |-
+  ## Get Metrics (JSON)
+  
+  Returns all metrics in JSON format.

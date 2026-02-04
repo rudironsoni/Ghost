@@ -1,0 +1,65 @@
+info:
+  name: Get Job by ID
+  type: http
+  seq: 1
+  description: Get detailed information about a specific LinkedIn job
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/linkedin/jobs/{{jobId}}"
+
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200 or 404", function() {
+          expect(res.status).to.be.oneOf([200, 404, 410]);
+        });
+        
+        test("Response has job details when found", function() {
+          if (res.status === 200) {
+            expect(res.body).to.have.property("id");
+            expect(res.body).to.have.property("title");
+            expect(res.body).to.have.property("company");
+          }
+        });
+
+docs: |-
+  ## Get Job by ID
+  
+  Get detailed information about a specific LinkedIn job.
+  
+  ### Path Parameters
+  - `jobId` - Job ID (e.g., "linkedin-12345")
+  
+  ### Response Example (200 OK)
+  ```json
+  {
+    "id": "linkedin-12345",
+    "title": "Software Engineer - Full Stack",
+    "company": "RemoteFirst Tech",
+    "location": "United States (Remote)",
+    "description": "Join our fully remote engineering team to build scalable web applications. You'll work with React, Node.js, and AWS services to deliver high-quality features for our customers worldwide.",
+    "salary": "$120k - $160k",
+    "jobType": "FullTime",
+    "experienceLevel": "MidLevel",
+    "postedAt": "2025-02-01T10:00:00Z",
+    "remote": true,
+    "url": "https://linkedin.com/jobs/view/12345",
+    "source": "LinkedIn",
+    "isEasyApply": true,
+    "skills": ["React", "Node.js", "TypeScript", "AWS"],
+    "benefits": ["Health Insurance", "401k", "Remote Work", "Flexible Hours"],
+    "applicants": 47
+  }
+  ```
+  
+  ### Response Example (404 Not Found)
+  ```json
+  {
+    "error": "Job not found",
+    "message": "The job with ID 'invalid-id' does not exist or has been removed.",
+    "statusCode": 404
+  }
+  ```

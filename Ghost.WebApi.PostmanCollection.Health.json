@@ -1,0 +1,632 @@
+{
+  "name": "Health",
+  "description": "Health check endpoints for monitoring",
+  "item": [
+    {
+      "name": "Basic Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Basic ASP.NET Core health check endpoint"
+      },
+      "response": [
+        {
+          "name": "Healthy",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\"status\": \"Healthy\", \"checks\": []}"
+        }
+      ]
+    },
+    {
+      "name": "Jobs Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/jobs/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "jobs", "health"]
+        },
+        "description": "Health check for job platform scrapers (Google, Glassdoor, LinkedIn, Indeed)"
+      },
+      "response": [
+        {
+          "name": "All Platforms Healthy",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs", "health"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"overallStatus\": \"healthy\",\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"platforms\": {\n    \"LinkedIn\": {\n      \"platform\": \"LinkedIn\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 12 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 1450,\n      \"jobsFound\": 12\n    },\n    \"Indeed\": {\n      \"platform\": \"Indeed\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 18 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 1680,\n      \"jobsFound\": 18\n    },\n    \"Glassdoor\": {\n      \"platform\": \"Glassdoor\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 8 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 2100,\n      \"jobsFound\": 8\n    },\n    \"Google\": {\n      \"platform\": \"Google\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 15 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 980,\n      \"jobsFound\": 15\n    }\n  }\n}"
+        },
+        {
+          "name": "Some Platforms Degraded",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs", "health"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"overallStatus\": \"degraded\",\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"platforms\": {\n    \"LinkedIn\": {\n      \"platform\": \"LinkedIn\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 10 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 1500,\n      \"jobsFound\": 10\n    },\n    \"Indeed\": {\n      \"platform\": \"Indeed\",\n      \"status\": \"degraded\",\n      \"message\": \"Slow response time detected\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 8500,\n      \"jobsFound\": 5\n    },\n    \"Glassdoor\": {\n      \"platform\": \"Glassdoor\",\n      \"status\": \"degraded\",\n      \"message\": \"Slow response time detected\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 7200,\n      \"jobsFound\": 3\n    },\n    \"Google\": {\n      \"platform\": \"Google\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 12 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 1100,\n      \"jobsFound\": 12\n    }\n  }\n}"
+        },
+        {
+          "name": "One Platform Down (Indeed)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs", "health"]
+            }
+          },
+          "status": "Service Unavailable",
+          "code": 503,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"overallStatus\": \"unhealthy\",\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"platforms\": {\n    \"LinkedIn\": {\n      \"platform\": \"LinkedIn\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 11 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 1650,\n      \"jobsFound\": 11\n    },\n    \"Indeed\": {\n      \"platform\": \"Indeed\",\n      \"status\": \"unhealthy\",\n      \"message\": \"Circuit breaker is open. Too many consecutive failures (12). Last error: HTTP 503 Service Unavailable\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T11:45:00Z\",\n      \"responseTimeMs\": 0,\n      \"jobsFound\": 0\n    },\n    \"Glassdoor\": {\n      \"platform\": \"Glassdoor\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 7 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 2350,\n      \"jobsFound\": 7\n    },\n    \"Google\": {\n      \"platform\": \"Google\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 14 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 1050,\n      \"jobsFound\": 14\n    }\n  }\n}"
+        },
+        {
+          "name": "All Platforms Down",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs", "health"]
+            }
+          },
+          "status": "Service Unavailable",
+          "code": 503,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"overallStatus\": \"unhealthy\",\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"platforms\": {\n    \"LinkedIn\": {\n      \"platform\": \"LinkedIn\",\n      \"status\": \"unhealthy\",\n      \"message\": \"Request timeout after 30000ms\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T11:30:00Z\",\n      \"responseTimeMs\": 30000,\n      \"jobsFound\": 0\n    },\n    \"Indeed\": {\n      \"platform\": \"Indeed\",\n      \"status\": \"unhealthy\",\n      \"message\": \"Circuit breaker is open. Too many consecutive failures (15). Last error: Connection refused\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T11:25:00Z\",\n      \"responseTimeMs\": 0,\n      \"jobsFound\": 0\n    },\n    \"Glassdoor\": {\n      \"platform\": \"Glassdoor\",\n      \"status\": \"unhealthy\",\n      \"message\": \"HTTP 429 Too Many Requests - Rate limit exceeded\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T11:40:00Z\",\n      \"responseTimeMs\": 450,\n      \"jobsFound\": 0\n    },\n    \"Google\": {\n      \"platform\": \"Google\",\n      \"status\": \"unhealthy\",\n      \"message\": \"Proxy connection failed - No healthy proxies available\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T11:35:00Z\",\n      \"responseTimeMs\": 0,\n      \"jobsFound\": 0\n    }\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Detailed Health Report",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/health/detailed",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "health", "detailed"]
+        },
+        "description": "Comprehensive health report including platforms and proxies"
+      },
+      "response": [
+        {
+          "name": "Full System Healthy",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/detailed",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "detailed"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"overallStatus\": \"healthy\",\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"platforms\": {\n    \"LinkedIn\": {\n      \"platform\": \"LinkedIn\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 12 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 1450,\n      \"jobsFound\": 12\n    },\n    \"Indeed\": {\n      \"platform\": \"Indeed\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 18 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 1680,\n      \"jobsFound\": 18\n    },\n    \"Glassdoor\": {\n      \"platform\": \"Glassdoor\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 8 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 2100,\n      \"jobsFound\": 8\n    },\n    \"Google\": {\n      \"platform\": \"Google\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 15 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 980,\n      \"jobsFound\": 15\n    }\n  },\n  \"proxies\": {\n    \"status\": \"healthy\",\n    \"totalProxies\": 10,\n    \"healthyProxies\": 10,\n    \"degradedProxies\": 0,\n    \"unhealthyProxies\": 0,\n    \"averageResponseTimeMs\": 245\n  },\n  \"circuitBreakers\": {\n    \"overallStatus\": \"healthy\",\n    \"totalBreakers\": 4,\n    \"closed\": 4,\n    \"halfOpen\": 0,\n    \"open\": 0\n  }\n}"
+        },
+        {
+          "name": "Degraded - Proxy Issues",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/detailed",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "detailed"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"overallStatus\": \"degraded\",\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"platforms\": {\n    \"LinkedIn\": {\n      \"platform\": \"LinkedIn\",\n      \"status\": \"degraded\",\n      \"message\": \"Slow response time detected\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 6450,\n      \"jobsFound\": 8\n    },\n    \"Indeed\": {\n      \"platform\": \"Indeed\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 15 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 1820,\n      \"jobsFound\": 15\n    },\n    \"Glassdoor\": {\n      \"platform\": \"Glassdoor\",\n      \"status\": \"degraded\",\n      \"message\": \"Slow response time detected\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 7100,\n      \"jobsFound\": 5\n    },\n    \"Google\": {\n      \"platform\": \"Google\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 12 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 1050,\n      \"jobsFound\": 12\n    }\n  },\n  \"proxies\": {\n    \"status\": \"degraded\",\n    \"totalProxies\": 10,\n    \"healthyProxies\": 5,\n    \"degradedProxies\": 3,\n    \"unhealthyProxies\": 2,\n    \"averageResponseTimeMs\": 3450,\n    \"issues\": [\n      \"2 proxies unresponsive\",\n      \"3 proxies experiencing high latency (>3000ms)\"\n    ]\n  },\n  \"circuitBreakers\": {\n    \"overallStatus\": \"healthy\",\n    \"totalBreakers\": 4,\n    \"closed\": 4,\n    \"halfOpen\": 0,\n    \"open\": 0\n  }\n}"
+        },
+        {
+          "name": "Critical - Multiple Failures",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/detailed",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "detailed"]
+            }
+          },
+          "status": "Service Unavailable",
+          "code": 503,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"overallStatus\": \"unhealthy\",\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"platforms\": {\n    \"LinkedIn\": {\n      \"platform\": \"LinkedIn\",\n      \"status\": \"unhealthy\",\n      \"message\": \"Request timeout after 30000ms\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T11:30:00Z\",\n      \"responseTimeMs\": 30000,\n      \"jobsFound\": 0\n    },\n    \"Indeed\": {\n      \"platform\": \"Indeed\",\n      \"status\": \"unhealthy\",\n      \"message\": \"Circuit breaker is open. Too many consecutive failures (15). Last error: Connection refused\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T11:25:00Z\",\n      \"responseTimeMs\": 0,\n      \"jobsFound\": 0\n    },\n    \"Glassdoor\": {\n      \"platform\": \"Glassdoor\",\n      \"status\": \"degraded\",\n      \"message\": \"Slow response time detected\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 8200,\n      \"jobsFound\": 2\n    },\n    \"Google\": {\n      \"platform\": \"Google\",\n      \"status\": \"unhealthy\",\n      \"message\": \"Proxy connection failed - No healthy proxies available\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T11:35:00Z\",\n      \"responseTimeMs\": 0,\n      \"jobsFound\": 0\n    }\n  },\n  \"proxies\": {\n    \"status\": \"unhealthy\",\n    \"totalProxies\": 10,\n    \"healthyProxies\": 1,\n    \"degradedProxies\": 2,\n    \"unhealthyProxies\": 7,\n    \"averageResponseTimeMs\": 12450,\n    \"issues\": [\n      \"7 proxies unresponsive or connection refused\",\n      \"2 proxies experiencing critical latency (>10000ms)\",\n      \"Proxy pool critically degraded - only 1 healthy proxy available\"\n    ]\n  },\n  \"circuitBreakers\": {\n    \"overallStatus\": \"unhealthy\",\n    \"totalBreakers\": 4,\n    \"closed\": 1,\n    \"halfOpen\": 0,\n    \"open\": 3\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Platform Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/health/platforms",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "health", "platforms"]
+        },
+        "description": "Health status of all platform scrapers"
+      },
+      "response": [
+        {
+          "name": "All Platforms Healthy",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/platforms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "platforms"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"overallStatus\": \"healthy\",\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"totalPlatforms\": 4,\n  \"healthyCount\": 4,\n  \"degradedCount\": 0,\n  \"unhealthyCount\": 0,\n  \"platforms\": [\n    {\n      \"platform\": \"LinkedIn\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 12 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 1450,\n      \"jobsFound\": 12,\n      \"successRate\": 98.5\n    },\n    {\n      \"platform\": \"Indeed\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 18 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 1680,\n      \"jobsFound\": 18,\n      \"successRate\": 97.2\n    },\n    {\n      \"platform\": \"Glassdoor\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 8 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 2100,\n      \"jobsFound\": 8,\n      \"successRate\": 95.8\n    },\n    {\n      \"platform\": \"Google\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 15 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 980,\n      \"jobsFound\": 15,\n      \"successRate\": 99.1\n    }\n  ]\n}"
+        },
+        {
+          "name": "Mixed Status with Response Times",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/platforms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "platforms"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"overallStatus\": \"degraded\",\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"totalPlatforms\": 4,\n  \"healthyCount\": 2,\n  \"degradedCount\": 1,\n  \"unhealthyCount\": 1,\n  \"platforms\": [\n    {\n      \"platform\": \"LinkedIn\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 11 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 1650,\n      \"jobsFound\": 11,\n      \"successRate\": 97.5\n    },\n    {\n      \"platform\": \"Indeed\",\n      \"status\": \"unhealthy\",\n      \"message\": \"Circuit breaker is open. Too many consecutive failures (12). Last error: HTTP 503 Service Unavailable\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T11:45:00Z\",\n      \"responseTimeMs\": 0,\n      \"jobsFound\": 0,\n      \"successRate\": 72.3\n    },\n    {\n      \"platform\": \"Glassdoor\",\n      \"status\": \"degraded\",\n      \"message\": \"Slow response time detected\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 7200,\n      \"jobsFound\": 3,\n      \"successRate\": 88.1\n    },\n    {\n      \"platform\": \"Google\",\n      \"status\": \"healthy\",\n      \"message\": \"Successfully found 14 jobs\",\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"lastSuccessfulSearch\": \"2026-02-04T12:00:00Z\",\n      \"responseTimeMs\": 1050,\n      \"jobsFound\": 14,\n      \"successRate\": 98.9\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "Proxy Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/health/proxies",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "health", "proxies"]
+        },
+        "description": "Health status of proxy infrastructure"
+      },
+      "response": [
+        {
+          "name": "All Proxies Healthy",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/proxies",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "proxies"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"status\": \"healthy\",\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"totalProxies\": 10,\n  \"healthyProxies\": 10,\n  \"degradedProxies\": 0,\n  \"unhealthyProxies\": 0,\n  \"averageResponseTimeMs\": 245,\n  \"proxies\": [\n    {\n      \"id\": \"proxy-1\",\n      \"host\": \"proxy1.example.com:8080\",\n      \"status\": \"healthy\",\n      \"responseTimeMs\": 198,\n      \"successRate\": 99.2,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1523,\n      \"successfulRequests\": 1510\n    },\n    {\n      \"id\": \"proxy-2\",\n      \"host\": \"proxy2.example.com:8080\",\n      \"status\": \"healthy\",\n      \"responseTimeMs\": 215,\n      \"successRate\": 98.8,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1487,\n      \"successfulRequests\": 1469\n    },\n    {\n      \"id\": \"proxy-3\",\n      \"host\": \"proxy3.example.com:8080\",\n      \"status\": \"healthy\",\n      \"responseTimeMs\": 234,\n      \"successRate\": 99.5,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1601,\n      \"successfulRequests\": 1593\n    },\n    {\n      \"id\": \"proxy-4\",\n      \"host\": \"proxy4.example.com:8080\",\n      \"status\": \"healthy\",\n      \"responseTimeMs\": 267,\n      \"successRate\": 98.1,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1445,\n      \"successfulRequests\": 1417\n    },\n    {\n      \"id\": \"proxy-5\",\n      \"host\": \"proxy5.example.com:8080\",\n      \"status\": \"healthy\",\n      \"responseTimeMs\": 289,\n      \"successRate\": 97.9,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1532,\n      \"successfulRequests\": 1500\n    },\n    {\n      \"id\": \"proxy-6\",\n      \"host\": \"proxy6.example.com:8080\",\n      \"status\": \"healthy\",\n      \"responseTimeMs\": 201,\n      \"successRate\": 99.3,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1578,\n      \"successfulRequests\": 1567\n    },\n    {\n      \"id\": \"proxy-7\",\n      \"host\": \"proxy7.example.com:8080\",\n      \"status\": \"healthy\",\n      \"responseTimeMs\": 256,\n      \"successRate\": 98.6,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1498,\n      \"successfulRequests\": 1477\n    },\n    {\n      \"id\": \"proxy-8\",\n      \"host\": \"proxy8.example.com:8080\",\n      \"status\": \"healthy\",\n      \"responseTimeMs\": 223,\n      \"successRate\": 99.1,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1555,\n      \"successfulRequests\": 1541\n    },\n    {\n      \"id\": \"proxy-9\",\n      \"host\": \"proxy9.example.com:8080\",\n      \"status\": \"healthy\",\n      \"responseTimeMs\": 278,\n      \"successRate\": 98.4,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1467,\n      \"successfulRequests\": 1444\n    },\n    {\n      \"id\": \"proxy-10\",\n      \"host\": \"proxy10.example.com:8080\",\n      \"status\": \"healthy\",\n      \"responseTimeMs\": 189,\n      \"successRate\": 99.6,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1612,\n      \"successfulRequests\": 1606\n    }\n  ]\n}"
+        },
+        {
+          "name": "Some Proxies Slow",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/proxies",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "proxies"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"status\": \"degraded\",\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"totalProxies\": 10,\n  \"healthyProxies\": 5,\n  \"degradedProxies\": 3,\n  \"unhealthyProxies\": 2,\n  \"averageResponseTimeMs\": 3450,\n  \"issues\": [\n    \"2 proxies unresponsive\",\n    \"3 proxies experiencing high latency (>3000ms)\"\n  ],\n  \"proxies\": [\n    {\n      \"id\": \"proxy-1\",\n      \"host\": \"proxy1.example.com:8080\",\n      \"status\": \"healthy\",\n      \"responseTimeMs\": 198,\n      \"successRate\": 99.2,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1523,\n      \"successfulRequests\": 1510\n    },\n    {\n      \"id\": \"proxy-2\",\n      \"host\": \"proxy2.example.com:8080\",\n      \"status\": \"degraded\",\n      \"responseTimeMs\": 5215,\n      \"successRate\": 87.3,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1487,\n      \"successfulRequests\": 1298,\n      \"message\": \"High latency detected\"\n    },\n    {\n      \"id\": \"proxy-3\",\n      \"host\": \"proxy3.example.com:8080\",\n      \"status\": \"healthy\",\n      \"responseTimeMs\": 234,\n      \"successRate\": 99.5,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1601,\n      \"successfulRequests\": 1593\n    },\n    {\n      \"id\": \"proxy-4\",\n      \"host\": \"proxy4.example.com:8080\",\n      \"status\": \"unhealthy\",\n      \"responseTimeMs\": 0,\n      \"successRate\": 12.5,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1445,\n      \"successfulRequests\": 181,\n      \"message\": \"Connection refused\"\n    },\n    {\n      \"id\": \"proxy-5\",\n      \"host\": \"proxy5.example.com:8080\",\n      \"status\": \"degraded\",\n      \"responseTimeMs\": 6789,\n      \"successRate\": 82.9,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1532,\n      \"successfulRequests\": 1270,\n      \"message\": \"High latency detected\"\n    },\n    {\n      \"id\": \"proxy-6\",\n      \"host\": \"proxy6.example.com:8080\",\n      \"status\": \"healthy\",\n      \"responseTimeMs\": 201,\n      \"successRate\": 99.3,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1578,\n      \"successfulRequests\": 1567\n    },\n    {\n      \"id\": \"proxy-7\",\n      \"host\": \"proxy7.example.com:8080\",\n      \"status\": \"unhealthy\",\n      \"responseTimeMs\": 30000,\n      \"successRate\": 8.2,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1498,\n      \"successfulRequests\": 123,\n      \"message\": \"Request timeout\"\n    },\n    {\n      \"id\": \"proxy-8\",\n      \"host\": \"proxy8.example.com:8080\",\n      \"status\": \"healthy\",\n      \"responseTimeMs\": 223,\n      \"successRate\": 99.1,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1555,\n      \"successfulRequests\": 1541\n    },\n    {\n      \"id\": \"proxy-9\",\n      \"host\": \"proxy9.example.com:8080\",\n      \"status\": \"degraded\",\n      \"responseTimeMs\": 4878,\n      \"successRate\": 89.4,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1467,\n      \"successfulRequests\": 1311,\n      \"message\": \"High latency detected\"\n    },\n    {\n      \"id\": \"proxy-10\",\n      \"host\": \"proxy10.example.com:8080\",\n      \"status\": \"healthy\",\n      \"responseTimeMs\": 189,\n      \"successRate\": 99.6,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1612,\n      \"successfulRequests\": 1606\n    }\n  ]\n}"
+        },
+        {
+          "name": "No Proxies Available",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/proxies",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "proxies"]
+            }
+          },
+          "status": "Service Unavailable",
+          "code": 503,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"status\": \"unhealthy\",\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"totalProxies\": 10,\n  \"healthyProxies\": 0,\n  \"degradedProxies\": 1,\n  \"unhealthyProxies\": 9,\n  \"averageResponseTimeMs\": 15200,\n  \"issues\": [\n    \"No healthy proxies available\",\n    \"9 proxies unresponsive or connection refused\",\n    \"1 proxy experiencing critical latency (>10000ms)\",\n    \"CRITICAL: Proxy pool completely degraded\"\n  ],\n  \"proxies\": [\n    {\n      \"id\": \"proxy-1\",\n      \"host\": \"proxy1.example.com:8080\",\n      \"status\": \"unhealthy\",\n      \"responseTimeMs\": 0,\n      \"successRate\": 15.2,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1523,\n      \"successfulRequests\": 231,\n      \"message\": \"Connection refused\"\n    },\n    {\n      \"id\": \"proxy-2\",\n      \"host\": \"proxy2.example.com:8080\",\n      \"status\": \"unhealthy\",\n      \"responseTimeMs\": 30000,\n      \"successRate\": 5.3,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1487,\n      \"successfulRequests\": 79,\n      \"message\": \"Request timeout\"\n    },\n    {\n      \"id\": \"proxy-3\",\n      \"host\": \"proxy3.example.com:8080\",\n      \"status\": \"unhealthy\",\n      \"responseTimeMs\": 0,\n      \"successRate\": 8.5,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1601,\n      \"successfulRequests\": 136,\n      \"message\": \"Connection refused\"\n    },\n    {\n      \"id\": \"proxy-4\",\n      \"host\": \"proxy4.example.com:8080\",\n      \"status\": \"unhealthy\",\n      \"responseTimeMs\": 0,\n      \"successRate\": 3.2,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1445,\n      \"successfulRequests\": 46,\n      \"message\": \"Connection refused\"\n    },\n    {\n      \"id\": \"proxy-5\",\n      \"host\": \"proxy5.example.com:8080\",\n      \"status\": \"unhealthy\",\n      \"responseTimeMs\": 30000,\n      \"successRate\": 12.9,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1532,\n      \"successfulRequests\": 198,\n      \"message\": \"Request timeout\"\n    },\n    {\n      \"id\": \"proxy-6\",\n      \"host\": \"proxy6.example.com:8080\",\n      \"status\": \"unhealthy\",\n      \"responseTimeMs\": 0,\n      \"successRate\": 6.3,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1578,\n      \"successfulRequests\": 99,\n      \"message\": \"Connection refused\"\n    },\n    {\n      \"id\": \"proxy-7\",\n      \"host\": \"proxy7.example.com:8080\",\n      \"status\": \"unhealthy\",\n      \"responseTimeMs\": 30000,\n      \"successRate\": 2.2,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1498,\n      \"successfulRequests\": 33,\n      \"message\": \"Request timeout\"\n    },\n    {\n      \"id\": \"proxy-8\",\n      \"host\": \"proxy8.example.com:8080\",\n      \"status\": \"unhealthy\",\n      \"responseTimeMs\": 0,\n      \"successRate\": 9.1,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1555,\n      \"successfulRequests\": 141,\n      \"message\": \"Connection refused\"\n    },\n    {\n      \"id\": \"proxy-9\",\n      \"host\": \"proxy9.example.com:8080\",\n      \"status\": \"degraded\",\n      \"responseTimeMs\": 18900,\n      \"successRate\": 45.4,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1467,\n      \"successfulRequests\": 666,\n      \"message\": \"Critical latency\"\n    },\n    {\n      \"id\": \"proxy-10\",\n      \"host\": \"proxy10.example.com:8080\",\n      \"status\": \"unhealthy\",\n      \"responseTimeMs\": 30000,\n      \"successRate\": 4.6,\n      \"lastChecked\": \"2026-02-04T12:00:00Z\",\n      \"totalRequests\": 1612,\n      \"successfulRequests\": 74,\n      \"message\": \"Request timeout\"\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "Metrics Snapshot",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/health/metrics",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "health", "metrics"]
+        },
+        "description": "Current metrics snapshot"
+      },
+      "response": [
+        {
+          "name": "Normal Operation",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "metrics"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"scraping\": {\n    \"totalAttempts\": 4523,\n    \"totalSuccesses\": 4401,\n    \"totalFailures\": 122,\n    \"successRate\": 97.3,\n    \"averageResponseTimeMs\": 1850,\n    \"byPlatform\": {\n      \"LinkedIn\": {\n        \"attempts\": 1145,\n        \"successes\": 1128,\n        \"failures\": 17,\n        \"successRate\": 98.5,\n        \"averageResponseTimeMs\": 1450\n      },\n      \"Indeed\": {\n        \"attempts\": 1089,\n        \"successes\": 1058,\n        \"failures\": 31,\n        \"successRate\": 97.2,\n        \"averageResponseTimeMs\": 1680\n      },\n      \"Glassdoor\": {\n        \"attempts\": 1142,\n        \"successes\": 1094,\n        \"failures\": 48,\n        \"successRate\": 95.8,\n        \"averageResponseTimeMs\": 2100\n      },\n      \"Google\": {\n        \"attempts\": 1147,\n        \"successes\": 1121,\n        \"failures\": 26,\n        \"successRate\": 99.1,\n        \"averageResponseTimeMs\": 980\n      }\n    }\n  },\n  \"circuitBreakers\": {\n    \"closed\": 4,\n    \"halfOpen\": 0,\n    \"open\": 0\n  },\n  \"proxies\": {\n    \"total\": 10,\n    \"healthy\": 10,\n    \"degraded\": 0,\n    \"unhealthy\": 0,\n    \"averageResponseTimeMs\": 245\n  },\n  \"jobsProcessed\": {\n    \"total\": 18467,\n    \"last1Hour\": 1523,\n    \"last24Hours\": 18467\n  },\n  \"cache\": {\n    \"hits\": 8923,\n    \"misses\": 1456,\n    \"hitRate\": 85.9,\n    \"totalEntries\": 3421\n  }\n}"
+        },
+        {
+          "name": "High Load",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "metrics"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"scraping\": {\n    \"totalAttempts\": 15823,\n    \"totalSuccesses\": 14201,\n    \"totalFailures\": 1622,\n    \"successRate\": 89.7,\n    \"averageResponseTimeMs\": 4250,\n    \"byPlatform\": {\n      \"LinkedIn\": {\n        \"attempts\": 4145,\n        \"successes\": 3928,\n        \"failures\": 217,\n        \"successRate\": 94.8,\n        \"averageResponseTimeMs\": 3450\n      },\n      \"Indeed\": {\n        \"attempts\": 3989,\n        \"successes\": 3458,\n        \"failures\": 531,\n        \"successRate\": 86.7,\n        \"averageResponseTimeMs\": 5680\n      },\n      \"Glassdoor\": {\n        \"attempts\": 3842,\n        \"successes\": 3201,\n        \"failures\": 641,\n        \"successRate\": 83.3,\n        \"averageResponseTimeMs\": 6100\n      },\n      \"Google\": {\n        \"attempts\": 3847,\n        \"successes\": 3614,\n        \"failures\": 233,\n        \"successRate\": 93.9,\n        \"averageResponseTimeMs\": 2980\n      }\n    }\n  },\n  \"circuitBreakers\": {\n    \"closed\": 2,\n    \"halfOpen\": 2,\n    \"open\": 0\n  },\n  \"proxies\": {\n    \"total\": 10,\n    \"healthy\": 5,\n    \"degraded\": 3,\n    \"unhealthy\": 2,\n    \"averageResponseTimeMs\": 3450\n  },\n  \"jobsProcessed\": {\n    \"total\": 65423,\n    \"last1Hour\": 8923,\n    \"last24Hours\": 65423\n  },\n  \"cache\": {\n    \"hits\": 42156,\n    \"misses\": 12834,\n    \"hitRate\": 76.7,\n    \"totalEntries\": 8921\n  },\n  \"warnings\": [\n    \"High request volume detected\",\n    \"Average response times elevated\",\n    \"Some proxies degraded\",\n    \"Circuit breakers entering half-open state\"\n  ]\n}"
+        },
+        {
+          "name": "Error Spike",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "metrics"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"scraping\": {\n    \"totalAttempts\": 8923,\n    \"totalSuccesses\": 2456,\n    \"totalFailures\": 6467,\n    \"successRate\": 27.5,\n    \"averageResponseTimeMs\": 12450,\n    \"byPlatform\": {\n      \"LinkedIn\": {\n        \"attempts\": 2345,\n        \"successes\": 892,\n        \"failures\": 1453,\n        \"successRate\": 38.0,\n        \"averageResponseTimeMs\": 15450\n      },\n      \"Indeed\": {\n        \"attempts\": 2189,\n        \"successes\": 345,\n        \"failures\": 1844,\n        \"successRate\": 15.8,\n        \"averageResponseTimeMs\": 18680\n      },\n      \"Glassdoor\": {\n        \"attempts\": 2142,\n        \"successes\": 567,\n        \"failures\": 1575,\n        \"successRate\": 26.5,\n        \"averageResponseTimeMs\": 11200\n      },\n      \"Google\": {\n        \"attempts\": 2247,\n        \"successes\": 652,\n        \"failures\": 1595,\n        \"successRate\": 29.0,\n        \"averageResponseTimeMs\": 9980\n      }\n    }\n  },\n  \"circuitBreakers\": {\n    \"closed\": 0,\n    \"halfOpen\": 1,\n    \"open\": 3\n  },\n  \"proxies\": {\n    \"total\": 10,\n    \"healthy\": 1,\n    \"degraded\": 2,\n    \"unhealthy\": 7,\n    \"averageResponseTimeMs\": 15200\n  },\n  \"jobsProcessed\": {\n    \"total\": 12834,\n    \"last1Hour\": 445,\n    \"last24Hours\": 12834\n  },\n  \"cache\": {\n    \"hits\": 5923,\n    \"misses\": 8956,\n    \"hitRate\": 39.8,\n    \"totalEntries\": 1421\n  },\n  \"errors\": [\n    \"CRITICAL: Error rate exceeds 70%\",\n    \"CRITICAL: Multiple circuit breakers open\",\n    \"CRITICAL: Proxy pool critically degraded\",\n    \"Average response times critically elevated (>10s)\",\n    \"Job processing rate severely reduced\",\n    \"Cache hit rate below acceptable threshold\"\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "Circuit Breakers Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/health/circuit-breakers",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "health", "circuit-breakers"]
+        },
+        "description": "Get health status of all circuit breakers"
+      },
+      "response": [
+        {
+          "name": "All Closed (Healthy)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/circuit-breakers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "circuit-breakers"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"overallStatus\": \"healthy\",\n  \"totalBreakers\": 4,\n  \"closedCount\": 4,\n  \"halfOpenCount\": 0,\n  \"openCount\": 0,\n  \"circuitBreakers\": [\n    {\n      \"platform\": \"LinkedIn\",\n      \"state\": \"Closed\",\n      \"isHealthy\": true,\n      \"lastStateChange\": \"2026-02-04T10:23:15Z\",\n      \"metrics\": {\n        \"failureCount\": 0,\n        \"successCount\": 1145,\n        \"consecutiveFailures\": 0,\n        \"successRate\": 98.5\n      }\n    },\n    {\n      \"platform\": \"Indeed\",\n      \"state\": \"Closed\",\n      \"isHealthy\": true,\n      \"lastStateChange\": \"2026-02-04T09:45:32Z\",\n      \"metrics\": {\n        \"failureCount\": 0,\n        \"successCount\": 1089,\n        \"consecutiveFailures\": 0,\n        \"successRate\": 97.2\n      }\n    },\n    {\n      \"platform\": \"Glassdoor\",\n      \"state\": \"Closed\",\n      \"isHealthy\": true,\n      \"lastStateChange\": \"2026-02-04T11:12:48Z\",\n      \"metrics\": {\n        \"failureCount\": 0,\n        \"successCount\": 1142,\n        \"consecutiveFailures\": 0,\n        \"successRate\": 95.8\n      }\n    },\n    {\n      \"platform\": \"Google\",\n      \"state\": \"Closed\",\n      \"isHealthy\": true,\n      \"lastStateChange\": \"2026-02-04T08:34:22Z\",\n      \"metrics\": {\n        \"failureCount\": 0,\n        \"successCount\": 1147,\n        \"consecutiveFailures\": 0,\n        \"successRate\": 99.1\n      }\n    }\n  ]\n}"
+        },
+        {
+          "name": "Some Half-Open (Recovering)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/circuit-breakers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "circuit-breakers"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"overallStatus\": \"degraded\",\n  \"totalBreakers\": 4,\n  \"closedCount\": 2,\n  \"halfOpenCount\": 2,\n  \"openCount\": 0,\n  \"circuitBreakers\": [\n    {\n      \"platform\": \"LinkedIn\",\n      \"state\": \"Closed\",\n      \"isHealthy\": true,\n      \"lastStateChange\": \"2026-02-04T10:23:15Z\",\n      \"metrics\": {\n        \"failureCount\": 0,\n        \"successCount\": 1145,\n        \"consecutiveFailures\": 0,\n        \"successRate\": 98.5\n      }\n    },\n    {\n      \"platform\": \"Indeed\",\n      \"state\": \"HalfOpen\",\n      \"isHealthy\": false,\n      \"lastStateChange\": \"2026-02-04T11:55:42Z\",\n      \"lastFailure\": \"HTTP 503 Service Unavailable\",\n      \"nextAttempt\": \"2026-02-04T12:05:42Z\",\n      \"metrics\": {\n        \"failureCount\": 8,\n        \"successCount\": 1,\n        \"consecutiveFailures\": 0,\n        \"successRate\": 11.1\n      },\n      \"message\": \"Testing recovery after recent failures\"\n    },\n    {\n      \"platform\": \"Glassdoor\",\n      \"state\": \"HalfOpen\",\n      \"isHealthy\": false,\n      \"lastStateChange\": \"2026-02-04T11:48:23Z\",\n      \"lastFailure\": \"Request timeout after 30000ms\",\n      \"nextAttempt\": \"2026-02-04T12:03:23Z\",\n      \"metrics\": {\n        \"failureCount\": 6,\n        \"successCount\": 2,\n        \"consecutiveFailures\": 0,\n        \"successRate\": 25.0\n      },\n      \"message\": \"Testing recovery after recent failures\"\n    },\n    {\n      \"platform\": \"Google\",\n      \"state\": \"Closed\",\n      \"isHealthy\": true,\n      \"lastStateChange\": \"2026-02-04T08:34:22Z\",\n      \"metrics\": {\n        \"failureCount\": 0,\n        \"successCount\": 1147,\n        \"consecutiveFailures\": 0,\n        \"successRate\": 99.1\n      }\n    }\n  ]\n}"
+        },
+        {
+          "name": "Some Open (Failing)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/circuit-breakers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "circuit-breakers"]
+            }
+          },
+          "status": "Service Unavailable",
+          "code": 503,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"overallStatus\": \"unhealthy\",\n  \"totalBreakers\": 4,\n  \"closedCount\": 1,\n  \"halfOpenCount\": 0,\n  \"openCount\": 3,\n  \"circuitBreakers\": [\n    {\n      \"platform\": \"LinkedIn\",\n      \"state\": \"Open\",\n      \"isHealthy\": false,\n      \"lastStateChange\": \"2026-02-04T11:52:33Z\",\n      \"lastFailure\": \"Request timeout after 30000ms\",\n      \"nextAttempt\": \"2026-02-04T12:07:33Z\",\n      \"metrics\": {\n        \"failureCount\": 15,\n        \"successCount\": 892,\n        \"consecutiveFailures\": 15,\n        \"successRate\": 38.0\n      },\n      \"message\": \"Too many consecutive failures. Waiting before retry.\"\n    },\n    {\n      \"platform\": \"Indeed\",\n      \"state\": \"Open\",\n      \"isHealthy\": false,\n      \"lastStateChange\": \"2026-02-04T11:45:18Z\",\n      \"lastFailure\": \"Circuit breaker is open. Connection refused\",\n      \"nextAttempt\": \"2026-02-04T12:00:18Z\",\n      \"metrics\": {\n        \"failureCount\": 18,\n        \"successCount\": 345,\n        \"consecutiveFailures\": 18,\n        \"successRate\": 15.8\n      },\n      \"message\": \"Too many consecutive failures. Waiting before retry.\"\n    },\n    {\n      \"platform\": \"Glassdoor\",\n      \"state\": \"Open\",\n      \"isHealthy\": false,\n      \"lastStateChange\": \"2026-02-04T11:48:56Z\",\n      \"lastFailure\": \"HTTP 429 Too Many Requests - Rate limit exceeded\",\n      \"nextAttempt\": \"2026-02-04T12:03:56Z\",\n      \"metrics\": {\n        \"failureCount\": 12,\n        \"successCount\": 567,\n        \"consecutiveFailures\": 12,\n        \"successRate\": 26.5\n      },\n      \"message\": \"Too many consecutive failures. Waiting before retry.\"\n    },\n    {\n      \"platform\": \"Google\",\n      \"state\": \"Closed\",\n      \"isHealthy\": true,\n      \"lastStateChange\": \"2026-02-04T08:34:22Z\",\n      \"metrics\": {\n        \"failureCount\": 0,\n        \"successCount\": 652,\n        \"consecutiveFailures\": 0,\n        \"successRate\": 29.0\n      }\n    }\n  ]\n}"
+        },
+        {
+          "name": "Mixed States",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/circuit-breakers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "circuit-breakers"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"overallStatus\": \"degraded\",\n  \"totalBreakers\": 4,\n  \"closedCount\": 2,\n  \"halfOpenCount\": 1,\n  \"openCount\": 1,\n  \"circuitBreakers\": [\n    {\n      \"platform\": \"LinkedIn\",\n      \"state\": \"Closed\",\n      \"isHealthy\": true,\n      \"lastStateChange\": \"2026-02-04T10:23:15Z\",\n      \"metrics\": {\n        \"failureCount\": 0,\n        \"successCount\": 1145,\n        \"consecutiveFailures\": 0,\n        \"successRate\": 98.5\n      }\n    },\n    {\n      \"platform\": \"Indeed\",\n      \"state\": \"Open\",\n      \"isHealthy\": false,\n      \"lastStateChange\": \"2026-02-04T11:45:18Z\",\n      \"lastFailure\": \"HTTP 503 Service Unavailable\",\n      \"nextAttempt\": \"2026-02-04T12:00:18Z\",\n      \"metrics\": {\n        \"failureCount\": 12,\n        \"successCount\": 1058,\n        \"consecutiveFailures\": 12,\n        \"successRate\": 72.3\n      },\n      \"message\": \"Too many consecutive failures. Waiting before retry.\"\n    },\n    {\n      \"platform\": \"Glassdoor\",\n      \"state\": \"HalfOpen\",\n      \"isHealthy\": false,\n      \"lastStateChange\": \"2026-02-04T11:48:23Z\",\n      \"lastFailure\": \"Request timeout after 30000ms\",\n      \"nextAttempt\": \"2026-02-04T12:03:23Z\",\n      \"metrics\": {\n        \"failureCount\": 6,\n        \"successCount\": 3,\n        \"consecutiveFailures\": 0,\n        \"successRate\": 33.3\n      },\n      \"message\": \"Testing recovery after recent failures\"\n    },\n    {\n      \"platform\": \"Google\",\n      \"state\": \"Closed\",\n      \"isHealthy\": true,\n      \"lastStateChange\": \"2026-02-04T08:34:22Z\",\n      \"metrics\": {\n        \"failureCount\": 0,\n        \"successCount\": 1147,\n        \"consecutiveFailures\": 0,\n        \"successRate\": 99.1\n      }\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "Circuit Breaker by Platform",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/health/circuit-breakers/{{platform}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "health", "circuit-breakers", "{{platform}}"]
+        },
+        "description": "Get health status of a specific circuit breaker"
+      },
+      "response": [
+        {
+          "name": "LinkedIn - Healthy",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/circuit-breakers/LinkedIn",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "circuit-breakers", "LinkedIn"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"platform\": \"LinkedIn\",\n  \"state\": \"Closed\",\n  \"isHealthy\": true,\n  \"lastStateChange\": \"2026-02-04T10:23:15Z\",\n  \"timestamp\": \"2026-02-04T12:00:00Z\",\n  \"metrics\": {\n    \"failureCount\": 0,\n    \"successCount\": 1145,\n    \"consecutiveFailures\": 0,\n    \"successRate\": 98.5,\n    \"totalRequests\": 1162,\n    \"averageResponseTimeMs\": 1450\n  },\n  \"configuration\": {\n    \"failureThreshold\": 10,\n    \"successThreshold\": 5,\n    \"timeout\": 30000,\n    \"resetTimeout\": 60000\n  },\n  \"recentActivity\": [\n    {\n      \"timestamp\": \"2026-02-04T11:59:45Z\",\n      \"result\": \"success\",\n      \"responseTimeMs\": 1423\n    },\n    {\n      \"timestamp\": \"2026-02-04T11:58:22Z\",\n      \"result\": \"success\",\n      \"responseTimeMs\": 1567\n    },\n    {\n      \"timestamp\": \"2026-02-04T11:57:01Z\",\n      \"result\": \"success\",\n      \"responseTimeMs\": 1389\n    }\n  ]\n}"
+        },
+        {
+          "name": "Indeed - Failing (Open)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/circuit-breakers/Indeed",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "circuit-breakers", "Indeed"]
+            }
+          },
+          "status": "Service Unavailable",
+          "code": 503,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"platform\": \"Indeed\",\n  \"state\": \"Open\",\n  \"isHealthy\": false,\n  \"lastStateChange\": \"2026-02-04T11:45:18Z\",\n  \"lastFailure\": \"HTTP 503 Service Unavailable\",\n  \"nextAttempt\": \"2026-02-04T12:00:18Z\",\n  \"timestamp\": \"2026-02-04T11:58:00Z\",\n  \"metrics\": {\n    \"failureCount\": 12,\n    \"successCount\": 1058,\n    \"consecutiveFailures\": 12,\n    \"successRate\": 72.3,\n    \"totalRequests\": 1089,\n    \"averageResponseTimeMs\": 8650\n  },\n  \"configuration\": {\n    \"failureThreshold\": 10,\n    \"successThreshold\": 5,\n    \"timeout\": 30000,\n    \"resetTimeout\": 60000\n  },\n  \"message\": \"Too many consecutive failures. Circuit breaker is open. Will attempt recovery in 138 seconds.\",\n  \"recentActivity\": [\n    {\n      \"timestamp\": \"2026-02-04T11:45:18Z\",\n      \"result\": \"failure\",\n      \"error\": \"HTTP 503 Service Unavailable\",\n      \"responseTimeMs\": 8756\n    },\n    {\n      \"timestamp\": \"2026-02-04T11:44:03Z\",\n      \"result\": \"failure\",\n      \"error\": \"HTTP 503 Service Unavailable\",\n      \"responseTimeMs\": 9123\n    },\n    {\n      \"timestamp\": \"2026-02-04T11:42:47Z\",\n      \"result\": \"failure\",\n      \"error\": \"Request timeout after 30000ms\",\n      \"responseTimeMs\": 30000\n    },\n    {\n      \"timestamp\": \"2026-02-04T11:41:22Z\",\n      \"result\": \"failure\",\n      \"error\": \"Connection refused\",\n      \"responseTimeMs\": 0\n    },\n    {\n      \"timestamp\": \"2026-02-04T11:39:58Z\",\n      \"result\": \"failure\",\n      \"error\": \"HTTP 503 Service Unavailable\",\n      \"responseTimeMs\": 7845\n    }\n  ]\n}"
+        },
+        {
+          "name": "Platform Not Found",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/circuit-breakers/InvalidPlatform",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "circuit-breakers", "InvalidPlatform"]
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"error\": \"Platform not found\",\n  \"message\": \"Circuit breaker for platform 'InvalidPlatform' does not exist.\",\n  \"statusCode\": 404,\n  \"availablePlatforms\": [\"LinkedIn\", \"Indeed\", \"Glassdoor\", \"Google\"]\n}"
+        }
+      ]
+    }
+  ]
+}

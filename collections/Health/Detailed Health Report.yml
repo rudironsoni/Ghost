@@ -1,0 +1,23 @@
+info:
+  name: Detailed Health Report
+  type: http
+  seq: 3
+  description: Comprehensive health report including platforms and proxies
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/health/detailed"
+
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+docs: |-
+  ## Detailed Health Report
+  
+  Returns comprehensive health information including platforms and proxy status.
