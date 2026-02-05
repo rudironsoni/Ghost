@@ -4,7 +4,7 @@ info:
 
 variables:
   - name: baseUrl
-    value: http://localhost:8080
+    value: http://localhost:9000
   - name: platform
     value: LinkedIn
   - name: jobId

@@ -103,6 +103,7 @@ public static class GoogleJobsParser
     /// <summary>
     /// Strategy 1: JobSpy-style widget key pattern (matches 520084652":[...])
     /// This is the exact pattern JobSpy uses - finds the widget key followed by job arrays
+    /// UPDATED: Now searches for ALL widget keys dynamically and extracts job data
     /// </summary>
     private static List<JobListing>? TryStrategy1_JobspyWidgetKey(string html, ILogger logger)
     {
@@ -110,41 +111,118 @@ public static class GoogleJobsParser
 
         try
         {
-            // Use JobSpy's exact pattern: widget key followed by job array structure
-            // Pattern: 520084652":([job arrays])}]]]]
-            var widgetKey = "520084652";
-            var pattern = widgetKey + "\":(" + @"\[.*?\]\s*])\s*}\s*]\s*]\s*]\s*]\s*]";
-            var matches = System.Text.RegularExpressions.Regex.Matches(html, pattern, System.Text.RegularExpressions.RegexOptions.Singleline);
-
             var jobs = new List<JobListing>();
 
-            foreach (System.Text.RegularExpressions.Match match in matches)
+            // Try multiple widget key patterns
+            var widgetKeys = new[] { "520084652", "520084653", "htl;jobs" };
+            
+            // Pattern to find widget keys followed by JSON arrays
+            // Matches: "widgetKey":[[...job data...]]
+            foreach (var widgetKey in widgetKeys)
             {
-                if (!match.Success) continue;
-
-                var jobJsonString = match.Groups[1].Value;
-                try
+                // Find all occurrences of the widget key
+                var keyIndex = 0;
+                while ((keyIndex = html.IndexOf($"\"{widgetKey}\":", keyIndex, StringComparison.Ordinal)) >= 0)
                 {
-                    using var doc = System.Text.Json.JsonDocument.Parse(jobJsonString);
-
-                    if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    try
                     {
-                        foreach (var jobArray in doc.RootElement.EnumerateArray())
+                        // Move past the key to find the start of the JSON array
+                        var jsonStart = keyIndex + widgetKey.Length + 3; // +3 for ":" 
+                        if (jsonStart >= html.Length) break;
+
+                        // Skip whitespace
+                        while (jsonStart < html.Length && char.IsWhiteSpace(html[jsonStart]))
                         {
-                            if (jobArray.ValueKind == System.Text.Json.JsonValueKind.Array)
+                            jsonStart++;
+                        }
+
+                        if (jsonStart >= html.Length || html[jsonStart] != '[') 
+                        {
+                            keyIndex = jsonStart;
+                            continue;
+                        }
+
+                        // Extract the JSON array by matching brackets
+                        var depth = 0;
+                        var jsonEnd = jsonStart;
+                        var inString = false;
+                        var escapeNext = false;
+
+                        for (; jsonEnd < html.Length && jsonEnd < jsonStart + 500000; jsonEnd++)
+                        {
+                            var ch = html[jsonEnd];
+
+                            if (escapeNext)
                             {
-                                var job = ExtractJobFromJobspyFormat(jobArray);
-                                if (job != null)
+                                escapeNext = false;
+                                continue;
+                            }
+
+                            if (ch == '\\')
+                            {
+                                escapeNext = true;
+                                continue;
+                            }
+
+                            if (ch == '"')
+                            {
+                                inString = !inString;
+                                continue;
+                            }
+
+                            if (inString) continue;
+
+                            if (ch == '[') depth++;
+                            else if (ch == ']')
+                            {
+                                depth--;
+                                if (depth == 0)
                                 {
-                                    jobs.Add(job);
+                                    jsonEnd++; // Include the closing bracket
+                                    break;
                                 }
                             }
                         }
+
+                        if (depth != 0 || jsonEnd >= html.Length)
+                        {
+                            keyIndex = jsonStart;
+                            continue;
+                        }
+
+                        var jsonString = html.Substring(jsonStart, jsonEnd - jsonStart);
+                        
+                        try
+                        {
+                            using var doc = JsonDocument.Parse(jsonString);
+
+                            if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                            {
+                                // Process each job in the array
+                                foreach (var jobArray in doc.RootElement.EnumerateArray())
+                                {
+                                    if (jobArray.ValueKind == JsonValueKind.Array)
+                                    {
+                                        var job = ExtractJobFromJobspyFormat(jobArray);
+                                        if (job != null)
+                                        {
+                                            jobs.Add(job);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (JsonException)
+                        {
+                            // Invalid JSON, continue searching
+                        }
+
+                        keyIndex = jsonEnd;
                     }
-                }
-                catch
-                {
-                    // Continue to next match
+                    catch
+                    {
+                        keyIndex++;
+                    }
                 }
             }
 
@@ -715,6 +793,11 @@ public static class GoogleJobsParser
         if (html.Contains("consent.google.com") || html.Contains("Before you continue to Google Search"))
         {
             LogDetectedConsentPage(logger, null);
+            
+            // Log a preview of the HTML for debugging
+            var preview = html.Length > 1000 ? html.Substring(0, 1000) : html;
+            logger.LogWarning("Consent page HTML preview: {Preview}", preview);
+            
             return Array.Empty<JobListing>();
         }
 
@@ -747,6 +830,24 @@ public static class GoogleJobsParser
 
         jobs = TryLegacyFallbackStrategy(processedHtml, logger);
         if (jobs != null && jobs.Count > 0) return jobs;
+
+        // All strategies failed - log detailed diagnostic info
+        logger.LogWarning("All parsing strategies failed. HTML length: {Length}. Checking for common patterns...", processedHtml.Length);
+        
+        // Check for common Google patterns
+        var hasDataVed = processedHtml.Contains("data-ved");
+        var hasJobsKeyword = processedHtml.Contains("jobs", StringComparison.OrdinalIgnoreCase);
+        var hasHtlJobs = processedHtml.Contains("htl;jobs", StringComparison.OrdinalIgnoreCase);
+        var hasJsonLd = processedHtml.Contains("application/ld+json", StringComparison.OrdinalIgnoreCase);
+        var hasScriptTags = processedHtml.Contains("<script", StringComparison.OrdinalIgnoreCase);
+        
+        logger.LogWarning("Pattern detection: data-ved={HasDataVed}, jobs={HasJobsKeyword}, htl;jobs={HasHtlJobs}, json-ld={HasJsonLd}, script={HasScriptTags}",
+            hasDataVed, hasJobsKeyword, hasHtlJobs, hasJsonLd, hasScriptTags);
+        
+        // Log a sample of the HTML
+        var sampleSize = Math.Min(2000, processedHtml.Length);
+        var htmlSample = processedHtml.Substring(0, sampleSize);
+        logger.LogDebug("HTML sample (first {Size} chars): {Sample}", sampleSize, htmlSample);
 
         return Array.Empty<JobListing>();
     }

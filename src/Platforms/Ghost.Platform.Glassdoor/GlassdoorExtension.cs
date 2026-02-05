@@ -22,30 +22,40 @@ public sealed class GlassdoorExtension : Ghost.Hosting.IExtension
     {
         services.Configure<GlassdoorOptions>(configuration.GetSection("Ghost:Extensions:Glassdoor"));
 
-        // AddHttpClient extension lives in Microsoft.Extensions.Http package - ensure callers include it.
-        services.AddHttpClient<Internal.GlassdoorApiClient>()
-            .ConfigurePrimaryHttpMessageHandler(sp =>
+        // Register GlassdoorApiClient with a factory that creates an HttpClient with proper configuration
+        services.AddScoped<Internal.GlassdoorApiClient>(sp =>
+        {
+            var opts = sp.GetRequiredService<IOptions<GlassdoorOptions>>().Value;
+            var logger = sp.GetRequiredService<ILogger<Internal.GlassdoorApiClient>>();
+            var proxyProvider = sp.GetService<IProxyProvider>();
+            
+            var handler = opts.ProxyEnabled && proxyProvider != null
+                ? new HttpClientHandler { Proxy = new RotatingWebProxy(proxyProvider), UseProxy = true }
+                : new HttpClientHandler { UseProxy = false };
+            
+            var configuredHandler = HttpClientSecurityExtensions.ConfigureSecureHttpClientHandler(handler);
+            var httpClient = new HttpClient(configuredHandler)
             {
-                var opts = sp.GetRequiredService<IOptions<GlassdoorOptions>>().Value;
-                var handler = opts.ProxyEnabled
-                    ? new HttpClientHandler { Proxy = new RotatingWebProxy(sp.GetRequiredService<IProxyProvider>()), UseProxy = true }
-                    : new HttpClientHandler { UseProxy = false };
+                Timeout = TimeSpan.FromMilliseconds(opts.RequestTimeoutMs)
+            };
+            
+            return new Internal.GlassdoorApiClient(httpClient, logger);
+        });
 
-                return HttpClientSecurityExtensions.ConfigureSecureHttpClientHandler(handler);
-            });
-
-        // Register browser fallback client
+        // Register browser fallback client WITHOUT proxy support to avoid SOCKS5 auth issues
         services.AddScoped<Internal.GlassdoorBrowserClient>(sp =>
         {
             var kernel = sp.GetRequiredService<GhostKernel>();
             var options = sp.GetRequiredService<IOptions<GlassdoorOptions>>();
             var logger = sp.GetRequiredService<ILogger<Internal.GlassdoorBrowserClient>>();
-            var proxyProvider = sp.GetService<IProxyProvider>();
-            return new Internal.GlassdoorBrowserClient(kernel, options, logger, proxyProvider);
+            // Explicitly pass null for proxy provider to disable proxy for Glassdoor browser client
+            return new Internal.GlassdoorBrowserClient(kernel, options, logger, proxyProvider: null);
         });
 
-        // register as IJobScraper and IJobClient
-        services.AddScoped<Ghost.Abstractions.IJobScraper, GlassdoorJobClient>();
-        services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => sp.GetRequiredService<Ghost.Abstractions.IJobScraper>() as Ghost.Contracts.Jobs.IJobClient ?? sp.GetRequiredService<GlassdoorJobClient>());
+        // Register GlassdoorJobClient and expose it as both IJobScraper and IJobClient
+        // IJobScraper is used by AggregatedJobClient, IJobClient for backward compatibility
+        services.AddScoped<GlassdoorJobClient>();
+        services.AddScoped<Ghost.Abstractions.IJobScraper>(sp => sp.GetRequiredService<GlassdoorJobClient>());
+        services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => sp.GetRequiredService<GlassdoorJobClient>());
     }
 }

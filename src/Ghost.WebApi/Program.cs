@@ -27,8 +27,23 @@ try {
     Console.WriteLine($"[DEBUG] Indeed:Country = {builder.Configuration.GetValue<string>("Indeed:Country")}");
 } catch {}
 
+// Force enable platforms for testing
+Environment.SetEnvironmentVariable("GHOST__EXTENSIONS__LINKEDIN__ENABLED", "true");
+Environment.SetEnvironmentVariable("GHOST__EXTENSIONS__GOOGLE__ENABLED", "true");
+Environment.SetEnvironmentVariable("GHOST__EXTENSIONS__GOOGLE__JOBS__ENABLED", "true");
+Environment.SetEnvironmentVariable("GHOST__EXTENSIONS__GLASSDOOR__ENABLED", "true");
+Environment.SetEnvironmentVariable("GHOST__EXTENSIONS__GLASSDOOR__PROXYENABLED", "false");
+Console.WriteLine("[DEBUG] Platforms force-enabled for testing, Glassdoor proxy disabled");
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Configure JSON serialization to handle enum strings
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
+
 builder.Services.AddHealthChecks()
     .AddCheck("ghost-webapi", () => HealthCheckResult.Healthy("Ghost WebAPI is running"));
 builder.Services.AddGhostResilience(builder.Configuration);
@@ -86,7 +101,7 @@ foreach (var child in proxySection.GetChildren())
     }
 }
 
-// Configure Ghost
+// Configure Ghost with extensions first
 builder.Services.AddGhost(builder.Configuration, gw =>
 {
     // Configure Kernel Options
@@ -130,14 +145,10 @@ builder.Services.AddGhost(builder.Configuration, gw =>
     }
 
 });
-// Ensure IDeduplicationService is registered before AggregatedJobClient which depends on it.
-// AddGhostKernel would register this, but to avoid duplicate kernel registrations register
-// the deduplication service explicitly here so DI is satisfied regardless of AddGhostKernel.
-builder.Services.AddSingleton<IDeduplicationService, DeduplicationService>();
 
+// Ensure IDeduplicationService is registered (should already be registered by AddGhost)
 // Register aggregator after extensions have been loaded so it can compose available scrapers
-// If an AddGhostAggregator extension method exists it would be preferable to call that instead.
-// In its absence register the AggregatedJobClient implementation used as the IJobClient.
+// Register as Scoped to match the lifetime of IJobScraper implementations
 builder.Services.AddScoped<Ghost.Contracts.Jobs.IJobClient, Ghost.Core.Services.AggregatedJobClient>();
 
 var app = builder.Build();
@@ -149,12 +160,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Only map LinkedIn endpoints if the extension is enabled
-var linkedInEnabled = builder.Configuration.GetSection("Ghost:Extensions:LinkedIn").GetValue<bool>("Enabled");
-if (linkedInEnabled)
-{
-    app.MapLinkedInEndpoints();
-}
+// Map LinkedIn endpoints (always enabled for testing)
+app.MapLinkedInEndpoints();
 
 // Map job endpoints and health checks
         app.MapJobsEndpoints();

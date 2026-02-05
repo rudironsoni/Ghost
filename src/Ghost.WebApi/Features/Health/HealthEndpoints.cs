@@ -33,7 +33,8 @@ public static class HealthEndpoints
 
     public static void MapHealthEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGroup("/api/jobs").MapGet("/health", CheckJobsHealth);
+        var group = app.MapGroup("/api/jobs");
+        group.MapGet("/health", CheckJobsHealth);
     }
 
     private static async Task<IResult> CheckJobsHealth(

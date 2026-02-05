@@ -63,55 +63,106 @@ public static class GlassdoorJobParser
     {
         try
         {
-            // Common fields
-            string title = GetString(item, "jobTitleText") ?? string.Empty;
-            string company = GetString(item, "employerNameFromSearch") ?? GetString(item, "employerName") ?? string.Empty;
-            string id = GetString(item, "jobId") ?? Guid.NewGuid().ToString();
-            string? location = GetString(item, "location") ?? GetString(item, "jobLocationCity");
-
+            // Initialize with empty values
+            string? title = null;
+            string? company = null;
+            string? id = null;
+            string? location = null;
             string? salary = null;
-            if (item.TryGetProperty("header", out var header) && header.ValueKind == JsonValueKind.Object)
+            string? description = null;
+            string? url = null;
+
+            // Try to extract from nested jobview structure (from GraphQL response)
+            if (item.TryGetProperty("jobview", out var jobview) && jobview.ValueKind == JsonValueKind.Object)
             {
-                if (header.TryGetProperty("payPeriodAdjustedPay", out var pay) && pay.ValueKind == JsonValueKind.Object)
+                if (jobview.TryGetProperty("header", out var header) && header.ValueKind == JsonValueKind.Object)
                 {
-                    var p10 = GetNumber(pay, "p10");
-                    var p90 = GetNumber(pay, "p90");
-                    var cur = GetString(pay, "payCurrency") ?? GetString(pay, "currency");
-                    if (p10.HasValue || p90.HasValue)
+                    title = GetString(header, "jobTitleText");
+                    location = GetString(header, "locationName");
+                    url = GetString(header, "jobLink");
+                    
+                    if (header.TryGetProperty("employer", out var employer) && employer.ValueKind == JsonValueKind.Object)
                     {
-                        var left = p10?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
-                        var right = p90?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
-                        var range = p10.HasValue && p90.HasValue ? $"{left} - {right}" : (p10.HasValue ? left : right);
-                        salary = cur is not null ? $"{range} {cur}" : range;
+                        company = GetString(employer, "name");
+                    }
+
+                    if (header.TryGetProperty("payPeriodAdjustedPay", out var pay) && pay.ValueKind == JsonValueKind.Object)
+                    {
+                        var p10 = GetNumber(pay, "p10");
+                        var p90 = GetNumber(pay, "p90");
+                        var cur = GetString(pay, "payCurrency") ?? GetString(pay, "currency");
+                        if (p10.HasValue || p90.HasValue)
+                        {
+                            var left = p10?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+                            var right = p90?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+                            var range = p10.HasValue && p90.HasValue ? $"{left} - {right}" : (p10.HasValue ? left : right);
+                            salary = cur is not null ? $"{range} {cur}" : range;
+                        }
                     }
                 }
+                
+                if (jobview.TryGetProperty("job", out var job) && job.ValueKind == JsonValueKind.Object)
+                {
+                    id = GetString(job, "listingId");
+                    description = GetString(job, "description");
+                }
+            }
+            else
+            {
+                // Fallback: Try direct field access (for flat structures)
+                title = GetString(item, "jobTitleText", "title", "jobTitle");
+                company = GetString(item, "employerNameFromSearch", "employerName", "employer", "company");
+                id = GetString(item, "jobId", "listingId", "id");
+                location = GetString(item, "location", "jobLocationCity", "locationName");
+                description = GetString(item, "description", "jobDescription");
+                url = GetString(item, "jobLink", "link", "url");
             }
 
-            if (string.IsNullOrWhiteSpace(title)) return null;
+            // Must have at least a title
+            if (string.IsNullOrWhiteSpace(title))
+                return null;
+
+            // Generate ID if not present
+            id ??= Guid.NewGuid().ToString();
 
             return new JobListing
             {
                 Id = id,
                 Title = title,
-                Company = company,
+                Company = company ?? "Unknown Company",
                 Location = location,
-                Salary = salary
-                ,
+                Salary = salary,
+                Description = description,
+                Url = url,
                 Source = "Glassdoor"
             };
         }
         catch { return null; }
     }
 
-    private static string? GetString(JsonElement el, string name)
+    private static string? GetString(JsonElement el, params string[] names)
     {
-        try
+        foreach (var name in names)
         {
-            if (!el.TryGetProperty(name, out var v)) return null;
-            if (v.ValueKind == JsonValueKind.String) return v.GetString();
-            return v.ToString();
+            try
+            {
+                if (el.TryGetProperty(name, out var v))
+                {
+                    if (v.ValueKind == JsonValueKind.String)
+                    {
+                        var str = v.GetString();
+                        if (!string.IsNullOrWhiteSpace(str))
+                            return str;
+                    }
+                    else if (v.ValueKind != JsonValueKind.Null)
+                    {
+                        return v.ToString();
+                    }
+                }
+            }
+            catch { }
         }
-        catch { return null; }
+        return null;
     }
 
     private static double? GetNumber(JsonElement el, string name)

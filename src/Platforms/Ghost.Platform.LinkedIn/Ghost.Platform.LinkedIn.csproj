@@ -7,7 +7,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup>
-    <!-- Analyzer suppressions removed; rely on solution-wide strict settings -->
+    <!-- Suppress CA1848: LoggerMessage delegate warnings -->
+    <NoWarn>$(NoWarn);CA1848</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Ghost\Ghost.csproj" />

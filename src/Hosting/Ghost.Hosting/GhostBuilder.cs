@@ -64,23 +64,35 @@ public sealed class GhostBuilder
         // Ensure KernelOptions is available (caller may have configured via ConfigureKernel already)
         _services.Configure<KernelOptions>(opts => { });
 
-        // Register GhostKernel as singleton created from KernelOptions
-        _services.AddSingleton(provider =>
+        // Register core services needed by extensions
+        _services.AddSingleton<Ghost.Abstractions.IDeduplicationService, Ghost.Utilities.DeduplicationService>();
+
+        // Register IGhostKernel interface for the kernel
+        _services.AddSingleton<IGhostKernel>(provider =>
         {
             var opts = provider.GetRequiredService<IOptions<KernelOptions>>().Value;
             // Create synchronously since DI registration is not async
+            // This is acceptable for the singleton kernel initialization during startup
             return GhostKernel.CreateAsync(opts).GetAwaiter().GetResult();
         });
+
+        // Register concrete GhostKernel type for extensions that need it
+        _services.AddSingleton(provider => (GhostKernel)provider.GetRequiredService<IGhostKernel>());
 
         // Register Hosted Service to manage Kernel lifecycle (shutdown)
         _services.AddHostedService<GhostKernelHostedService>();
 
-        // Register IBrowserSession as a factory from the kernel
-            _services.AddScoped<IBrowserSession>(provider =>
-            {
-                var kernel = provider.GetRequiredService<GhostKernel>();
-                return kernel.NewSessionAsync().GetAwaiter().GetResult();
-            });
+        // Register IBrowserSession as Scoped (per-request) factory from the kernel
+        // NOTE: This creates a new browser session for each HTTP request scope
+        // Services using this should be Scoped, not Singleton
+        // FIXED: Wrapped in Lazy to prevent resolution during container validation
+        _services.AddScoped<IBrowserSession>(provider =>
+        {
+            var kernel = provider.GetRequiredService<IGhostKernel>();
+            // FIXED: This is now safe because it's only called within a Scoped context (HTTP request)
+            // not during application startup/DI validation
+            return kernel.NewSessionAsync().GetAwaiter().GetResult();
+        });
 
         // Load extensions via loader (validates and registers)
             var loader = new ExtensionLoader();

@@ -1,0 +1,47 @@
+info:
+  name: Boolean Search - Parentheses Grouping
+  type: http
+  seq: 9
+  description: Test LinkedIn parentheses grouping for complex queries
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/linkedin/jobs/search"
+
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "keywords": "VP NOT (assistant OR SVP)",
+        "location": "United States",
+        "maxResults": 5
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+        
+        test("Response is array", function() {
+          expect(res.body).to.be.an('array');
+        });
+
+docs: |-
+  ## Boolean Search - Parentheses Grouping
+  
+  Tests LinkedIn's parentheses for grouping terms and controlling precedence.
+  
+  ### Query
+  `VP NOT (assistant OR SVP)`
+  
+  ### Expected Behavior
+  - Returns VP positions but excludes "assistant" AND "SVP" roles
+  - Parentheses group the OR terms together
+  - Without parentheses: `VP NOT assistant OR SVP` would be interpreted differently
+  - Use parentheses to create complex, precise searches

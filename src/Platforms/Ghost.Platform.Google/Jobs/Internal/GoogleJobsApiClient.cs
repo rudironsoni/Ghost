@@ -9,6 +9,11 @@ using Polly;
 
 namespace Ghost.Platform.Google.Jobs.Internal;
 
+/// <summary>
+/// Direct HTML scraper for Google Jobs - NO EXTERNAL API OR SERPAPI REQUIRED
+/// This client makes direct HTTP requests to Google and parses the HTML response.
+/// Uses realistic browser headers, user-agent rotation, and consent bypass cookies.
+/// </summary>
 public sealed class GoogleJobsApiClient : IDisposable
 {
     private readonly HttpClient? _http;
@@ -21,7 +26,7 @@ public sealed class GoogleJobsApiClient : IDisposable
     private string? _currentSessionId;
 
     private static readonly Action<ILogger, string, Exception?> LogFetchingJobs =
-        LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(LogFetchingJobs)), "Fetching Google Jobs from: {Url}");
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(LogFetchingJobs)), "Fetching Google Jobs via DIRECT HTML SCRAPING (NO API): {Url}");
 
     private static readonly Action<ILogger, string, Exception?> LogReceivedEmptyHtml =
         LoggerMessage.Define<string>(LogLevel.Warning, new EventId(2, nameof(LogReceivedEmptyHtml)), "Received empty HTML content from Google for url {Url}");
@@ -118,111 +123,134 @@ public sealed class GoogleJobsApiClient : IDisposable
         _retryPolicy = EnhancedRetryPolicy.CreatePolicy(logger, maxRetries: 3, enableJitter: true);
     }
 
-        public async Task<IReadOnlyList<JobListing>> SearchAsync(string query, string location)
+    public async Task<IReadOnlyList<JobListing>> SearchAsync(string query, string location, CancellationToken ct = default)
+    {
+        if (_sessionOrchestrator != null)
         {
-            if (_sessionOrchestrator != null)
-            {
-                return await SearchWithOrchestratorAsync(query, location);
-            }
-            else
-            {
-                return await SearchLegacyAsync(query, location);
-            }
-        }
-
-        private async Task<IReadOnlyList<JobListing>> SearchWithOrchestratorAsync(string query, string location)
-        {
-            var affinityKey = $"google_jobs_{query}_{location}_{Guid.NewGuid():N}";
-
-            try
-            {
-                var context = new SessionAllocationContext(
-                    PlatformName: "GoogleJobs",
-                    CountryCode: "US",
-                    SessionType: SessionType.Http,
-                    ComplexityScore: 40,
-                    Metadata: new Dictionary<string, string>
-                    {
-                        ["Query"] = query,
-                        ["Location"] = location
-                    }
-                );
-
-                var affinityOptions = new SessionAffinityOptions(
-                    AffinityKey: affinityKey,
-                    AffinityDuration: TimeSpan.FromMinutes(5),
-                    AllowFallback: true
-                );
-
-                _currentSessionId = await _sessionOrchestrator!.AllocateSessionWithAffinityAsync(context, affinityOptions, default);
-                LogSessionAllocated(_logger, _currentSessionId, null);
-
-                var httpSession = await _sessionOrchestrator.GetHttpSessionAsync(_currentSessionId, default);
-                if (httpSession == null)
-                {
-                    LogSessionGetFailed(_logger, _currentSessionId, null);
-                    return Array.Empty<JobListing>();
-                }
-
-                return await ExecuteSearchAsync(query, location, httpSession);
-            }
-            finally
-            {
-                if (_currentSessionId != null)
-                {
-                    await _sessionOrchestrator!.CloseSessionAsync(_currentSessionId, default);
-                    _currentSessionId = null;
-                }
-            }
-        }
-
-        private async Task<IReadOnlyList<JobListing>> SearchLegacyAsync(string query, string location)
-        {
-            return await ExecuteSearchAsync(query, location, null);
-        }
-
-        private async Task<IReadOnlyList<JobListing>> ExecuteSearchAsync(string query, string location, RotatingProxySession? httpSession)
-        {
-            var q = System.Uri.EscapeDataString(query);
-            var loc = System.Uri.EscapeDataString(location);
-        // Append async bootstrap parameter to help bypass consent pages (JobSpy technique)
-        // Use AsyncBootstrapString from GoogleJobsConstants and ensure it's URL-encoded
-        var asyncParam = Uri.EscapeDataString(GoogleJobsConstants.AsyncBootstrapString);
-        // Try using additional parameters to bypass consent: pws=0 (disable personalization), filter=0 (show all results)
-        var url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs&udm=8&gl=us&hl=en&hl=en-US&async={asyncParam}&pws=0&filter=0";
-
-        LogFetchingJobs(_logger, url, null);
-
-        LogCookieInjection(_logger, null);
-        var userAgent = GoogleJobsConstants.GetRandomUserAgent();
-        LogUserAgentRotation(_logger, userAgent, null);
-
-        var req = new HttpRequestMessage(HttpMethod.Get, url);
-        foreach (var header in GoogleJobsConstants.SearchHeaders)
-        {
-            req.Headers.TryAddWithoutValidation(header.Key, header.Value);
-        }
-
-        // Override User-Agent with rotated value
-        req.Headers.TryAddWithoutValidation("User-Agent", userAgent);
-
-        // Add consent bypass cookies
-        var cookieValue = $"{GoogleJobsConstants.ConsentCookie}; {GoogleJobsConstants.SocsCookie}";
-        req.Headers.TryAddWithoutValidation("Cookie", cookieValue);
-
-        HttpResponseMessage res;
-        if (httpSession != null)
-        {
-            res = await _retryPolicy.ExecuteAsync(async () => await httpSession.ExecuteAsync(() => req, default).ConfigureAwait(false)).ConfigureAwait(false);
+            return await SearchWithOrchestratorAsync(query, location, ct).ConfigureAwait(false);
         }
         else
         {
-            res = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(req).ConfigureAwait(false)).ConfigureAwait(false);
+            return await SearchLegacyAsync(query, location, ct).ConfigureAwait(false);
         }
-        var html = await res.Content.ReadAsStringAsync().ConfigureAwait(false);
+    }
+
+    private async Task<IReadOnlyList<JobListing>> SearchWithOrchestratorAsync(string query, string location, CancellationToken ct)
+    {
+        var affinityKey = $"google_jobs_{query}_{location}_{Guid.NewGuid():N}";
+
+        try
+        {
+            var context = new SessionAllocationContext(
+                PlatformName: "GoogleJobs",
+                CountryCode: "US",
+                SessionType: SessionType.Http,
+                ComplexityScore: 40,
+                Metadata: new Dictionary<string, string>
+                {
+                    ["Query"] = query,
+                    ["Location"] = location
+                }
+            );
+
+            var affinityOptions = new SessionAffinityOptions(
+                AffinityKey: affinityKey,
+                AffinityDuration: TimeSpan.FromMinutes(5),
+                AllowFallback: true
+            );
+
+            _currentSessionId = await _sessionOrchestrator!.AllocateSessionWithAffinityAsync(context, affinityOptions, ct).ConfigureAwait(false);
+            LogSessionAllocated(_logger, _currentSessionId, null);
+
+            var httpSession = await _sessionOrchestrator.GetHttpSessionAsync(_currentSessionId, ct).ConfigureAwait(false);
+            if (httpSession == null)
+            {
+                LogSessionGetFailed(_logger, _currentSessionId, null);
+                return Array.Empty<JobListing>();
+            }
+
+            return await ExecuteSearchAsync(query, location, httpSession, ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (_currentSessionId != null)
+            {
+                await _sessionOrchestrator!.CloseSessionAsync(_currentSessionId, ct).ConfigureAwait(false);
+                _currentSessionId = null;
+            }
+        }
+    }
+
+    private async Task<IReadOnlyList<JobListing>> SearchLegacyAsync(string query, string location, CancellationToken ct)
+    {
+        return await ExecuteSearchAsync(query, location, null, ct).ConfigureAwait(false);
+    }
+
+    private async Task<IReadOnlyList<JobListing>> ExecuteSearchAsync(string query, string location, RotatingProxySession? httpSession, CancellationToken ct)
+    {
+        _logger.LogInformation("GoogleJobsApiClient ExecuteSearchAsync starting: Query={Query}, Location={Location}", query, location);
+        
+        // Build the search query: "{query} jobs in {location}" or just "{query} {location}" depending on configuration
+        var searchTerm = string.IsNullOrWhiteSpace(location) 
+            ? query 
+            : $"{query} jobs {location}";
+        
+        var q = System.Uri.EscapeDataString(searchTerm);
+    
+    // Direct Google Jobs URL - NO API NEEDED
+    // Using ibp=htl;jobs parameter to get the Google Jobs widget
+    var url = $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en";
+
+    LogFetchingJobs(_logger, url, null);
+    _logger.LogInformation("Direct Google Jobs URL (NO API): {Url}", url);
+
+    LogCookieInjection(_logger, null);
+    var userAgent = GoogleJobsConstants.GetRandomUserAgent();
+    LogUserAgentRotation(_logger, userAgent, null);
+
+    var req = new HttpRequestMessage(HttpMethod.Get, url);
+    foreach (var header in GoogleJobsConstants.SearchHeaders)
+    {
+        req.Headers.TryAddWithoutValidation(header.Key, header.Value);
+    }
+
+    // Override User-Agent with rotated value
+    req.Headers.TryAddWithoutValidation("User-Agent", userAgent);
+
+    // Add consent bypass cookies
+    var cookieValue = $"{GoogleJobsConstants.ConsentCookie}; {GoogleJobsConstants.SocsCookie}";
+    req.Headers.TryAddWithoutValidation("Cookie", cookieValue);
+
+    HttpResponseMessage res;
+    if (httpSession != null)
+    {
+        _logger.LogDebug("Using RotatingProxySession for request");
+        res = await _retryPolicy.ExecuteAsync(async () => await httpSession.ExecuteAsync(() => req, ct).ConfigureAwait(false)).ConfigureAwait(false);
+    }
+    else
+    {
+        _logger.LogDebug("Using direct HttpClient for request");
+        res = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(req, ct).ConfigureAwait(false)).ConfigureAwait(false);
+    }
+    
+    _logger.LogInformation("Received response with status code: {StatusCode}", res.StatusCode);
+    
+    using (res)
+    {
+        var html = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+        _logger.LogInformation("Received HTML content of length: {Length} bytes", html.Length);
 
         // DEBUG: Write raw HTML to file
-        try { System.IO.File.WriteAllText("logs/google_jobs_search.html", html); } catch { }
+        try 
+        { 
+            System.IO.Directory.CreateDirectory("logs");
+            System.IO.File.WriteAllText("logs/google_jobs_search.html", html); 
+            _logger.LogInformation("Wrote HTML response to logs/google_jobs_search.html");
+        } 
+        catch (Exception ex) 
+        { 
+            _logger.LogWarning(ex, "Failed to write HTML debug file");
+        }
 
         // Enhanced consent detection - check for multiple Google consent patterns
         bool isConsentPage = html.Contains("consent.google.com") || 
@@ -236,24 +264,22 @@ public sealed class GoogleJobsApiClient : IDisposable
         
         if (isConsentPage)
         {
-            LogConsentPageDetected(_logger, query, null);
+            LogConsentPageDetected(_logger, searchTerm, null);
             LogFetchingJobs(_logger, "Detected consent page, trying alternative approaches...", null);
             
             var alternativeUrls = new[]
             {
-                $"https://www.google.com/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=us&hl=en&hl=en-US&tbs=qdr:d",
-                $"https://www.google.com/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=us&hl=en&hl=en-US&tbs=qdr:w",
-                $"https://www.google.com/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=us&hl=en&hl=en-US&tbs=qdr:m",
-                $"https://www.google.com/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=us&hl=en&hl=en-US&source=hp",
-                $"https://www.google.co.uk/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=uk&hl=en",
-                $"https://www.google.ca/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=ca&hl=en",
-                $"https://www.google.com.au/search?q={q}+{loc}&ibp=htl%3Bjobs&udm=8&gl=au&hl=en",
+                $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en&tbs=qdr:d",
+                $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en&tbs=qdr:w",
+                $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en",
+                $"https://www.google.co.uk/search?q={q}&ibp=htl;jobs&udm=8&gl=uk&hl=en",
+                $"https://www.google.ca/search?q={q}&ibp=htl;jobs&udm=8&gl=ca&hl=en",
             };
             
             foreach (var altUrl in alternativeUrls)
             {
                 LogFetchingJobs(_logger, $"Trying alternative URL: {altUrl}", null);
-                await Task.Delay(2000); // Wait longer between retries
+                await Task.Delay(2000, ct).ConfigureAwait(false); // Wait longer between retries
 
                 var retryUserAgent = GoogleJobsConstants.GetRandomUserAgent();
                 LogUserAgentRotation(_logger, retryUserAgent, null);
@@ -272,33 +298,47 @@ public sealed class GoogleJobsApiClient : IDisposable
                     HttpResponseMessage retryRes;
                     if (httpSession != null)
                     {
-                        retryRes = await _retryPolicy.ExecuteAsync(async () => await httpSession.ExecuteAsync(() => retryReq, default).ConfigureAwait(false)).ConfigureAwait(false);
+                        retryRes = await _retryPolicy.ExecuteAsync(async () => await httpSession.ExecuteAsync(() => retryReq, ct).ConfigureAwait(false)).ConfigureAwait(false);
                     }
                     else
                     {
-                        retryRes = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(retryReq).ConfigureAwait(false)).ConfigureAwait(false);
+                        retryRes = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(retryReq, ct).ConfigureAwait(false)).ConfigureAwait(false);
                     }
-                    html = await retryRes.Content.ReadAsStringAsync().ConfigureAwait(false);
                     
-                    try { System.IO.File.WriteAllText($"logs/google_jobs_search_retry_{DateTime.Now.Ticks}.html", html); } catch { }
-                    
-                    // Check if this attempt succeeded
-                    isConsentPage = html.Contains("consent.google.com") || 
-                                   html.Contains("Before you continue to Google Search") ||
-                                   html.Contains("We need to verify you're human") ||
-                                   html.Contains("Checking if the site connection is secure") ||
-                                   html.Contains("www.google.com/sorry/index") ||
-                                   html.Contains("distil_r_captcha") ||
-                                   html.Contains("g-recaptcha") ||
-                                   html.Contains("cf_chl_");
-                    
-                if (!isConsentPage)
-                {
-                        LogFetchingJobs(_logger, $"Successfully bypassed consent page with alternative URL", null);
-                        // log a preview of the html for debugging
-                        var preview = html.Length > 500 ? html.Substring(0, 500) : html;
-                        LogHtmlPreview(_logger, preview, null);
-                        break; // Success! Use this HTML
+                    using (retryRes)
+                    {
+                        html = await retryRes.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                        
+                        try 
+                        { 
+                            System.IO.Directory.CreateDirectory("logs");
+                            var ticks = DateTime.Now.Ticks;
+                            System.IO.File.WriteAllText($"logs/google_jobs_search_retry_{ticks}.html", html); 
+                            _logger.LogInformation("Wrote retry HTML response to logs/google_jobs_search_retry_{Ticks}.html", ticks);
+                        } 
+                        catch (Exception ex) 
+                        { 
+                            _logger.LogWarning(ex, "Failed to write retry HTML debug file");
+                        }
+                        
+                        // Check if this attempt succeeded
+                        isConsentPage = html.Contains("consent.google.com") || 
+                                       html.Contains("Before you continue to Google Search") ||
+                                       html.Contains("We need to verify you're human") ||
+                                       html.Contains("Checking if the site connection is secure") ||
+                                       html.Contains("www.google.com/sorry/index") ||
+                                       html.Contains("distil_r_captcha") ||
+                                       html.Contains("g-recaptcha") ||
+                                       html.Contains("cf_chl_");
+                        
+                        if (!isConsentPage)
+                        {
+                            LogFetchingJobs(_logger, $"Successfully bypassed consent page with alternative URL", null);
+                            // log a preview of the html for debugging
+                            var preview = html.Length > 500 ? html.Substring(0, 500) : html;
+                            LogHtmlPreview(_logger, preview, null);
+                            break; // Success! Use this HTML
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -347,7 +387,7 @@ public sealed class GoogleJobsApiClient : IDisposable
         int rounds = 0;
         while (!string.IsNullOrEmpty(cursor) && rounds++ < 5)
         {
-                var asyncUrl = $"https://www.google.com/async/callback:550?fc={Uri.EscapeDataString(cursor)}&fcv=3&async={Uri.EscapeDataString(_options.AsyncBootstrapString)}";
+            var asyncUrl = $"https://www.google.com/async/callback:550?fc={Uri.EscapeDataString(cursor)}&fcv=3&async={Uri.EscapeDataString(_options.AsyncBootstrapString)}";
             LogSendingAsyncRequest(_logger, asyncUrl, null);
 
             var asyncUserAgent = GoogleJobsConstants.GetRandomUserAgent();
@@ -365,36 +405,40 @@ public sealed class GoogleJobsApiClient : IDisposable
             HttpResponseMessage asyncRes;
             if (httpSession != null)
             {
-                asyncRes = await _retryPolicy.ExecuteAsync(async () => await httpSession.ExecuteAsync(() => asyncReq, default).ConfigureAwait(false)).ConfigureAwait(false);
+                asyncRes = await _retryPolicy.ExecuteAsync(async () => await httpSession.ExecuteAsync(() => asyncReq, ct).ConfigureAwait(false)).ConfigureAwait(false);
             }
             else
             {
-                asyncRes = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(asyncReq).ConfigureAwait(false)).ConfigureAwait(false);
+                asyncRes = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(asyncReq, ct).ConfigureAwait(false)).ConfigureAwait(false);
             }
-            var body = await asyncRes.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-            if (string.IsNullOrEmpty(body))
+            
+            using (asyncRes)
             {
-                LogReceivedEmptyAsyncBody(_logger, asyncUrl, null);
-            }
-            else
-            {
-                LogReceivedAsyncBody(_logger, body.Length, null);
-            }
+                var body = await asyncRes.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
-            var parsed = GoogleJobsParser.ParseFromHtml(body, _logger);
-            LogParserResults(_logger, rounds + 1, parsed.Count, null);
-            if (parsed.Count == 0)
-            {
-                var preview = body.Length > 500 ? body.Substring(0, 500) : body;
-                LogHtmlPreview(_logger, preview, null);
+                if (string.IsNullOrEmpty(body))
+                {
+                    LogReceivedEmptyAsyncBody(_logger, asyncUrl, null);
+                }
+                else
+                {
+                    LogReceivedAsyncBody(_logger, body.Length, null);
+                }
+
+                var parsed = GoogleJobsParser.ParseFromHtml(body, _logger);
+                LogParserResults(_logger, rounds + 1, parsed.Count, null);
+                if (parsed.Count == 0)
+                {
+                    var preview = body.Length > 500 ? body.Substring(0, 500) : body;
+                    LogHtmlPreview(_logger, preview, null);
+                }
+                results.AddRange(parsed);
+
+                var nextCursorMatch = Regex.Match(body, GoogleJobsConstants.DataAsyncFcRegex);
+                cursor = nextCursorMatch.Success ? nextCursorMatch.Groups["cursor"].Value : null;
+
+                await Task.Delay(300, ct).ConfigureAwait(false);
             }
-            results.AddRange(parsed);
-
-            var nextCursorMatch = Regex.Match(body, GoogleJobsConstants.DataAsyncFcRegex);
-            cursor = nextCursorMatch.Success ? nextCursorMatch.Groups["cursor"].Value : null;
-
-            await Task.Delay(300).ConfigureAwait(false);
         }
 
         LogJobsFound(_logger, results.Count, null);
@@ -407,6 +451,7 @@ public sealed class GoogleJobsApiClient : IDisposable
 
         return results;
     }
+}
 
     private async Task CheckAndRecycleSessionAsync()
     {
@@ -445,7 +490,18 @@ public sealed class GoogleJobsApiClient : IDisposable
             {
                 try
                 {
-                    _sessionOrchestrator.CloseSessionAsync(_currentSessionId, default).GetAwaiter().GetResult();
+                    // Don't block on async operations in Dispose - fire and forget
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await _sessionOrchestrator.CloseSessionAsync(_currentSessionId, default).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogSessionCloseFailed(_logger, _currentSessionId, ex);
+                        }
+                    });
                 }
                 catch (Exception ex)
                 {
