@@ -22,16 +22,12 @@ public static class ServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configure);
 
-        // Try to get an IConfiguration already registered, otherwise create a basic one
+        // Try to get an IConfiguration already registered, without building the provider
         IConfiguration? configuration = null;
-        try
+        var configDescriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IConfiguration));
+        if (configDescriptor?.ImplementationInstance is IConfiguration existingConfig)
         {
-            var provider = services.BuildServiceProvider(validateScopes: true);
-            configuration = provider.GetService<IConfiguration>();
-        }
-        catch
-        {
-            // ignore provider build failures; fall back to environment configuration
+            configuration = existingConfig;
         }
 
         // Create a basic configuration if none available

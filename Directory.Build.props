@@ -34,10 +34,13 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <!-- Build output -->
-    <BaseOutputPath>$(MSBuildThisFileDirectory)artifacts/bin/$(MSBuildProjectName)/</BaseOutputPath>
-    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)artifacts/obj/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
-    <PackageOutputPath>$(MSBuildThisFileDirectory)artifacts/packages/</PackageOutputPath>
+    <!-- Build output - using /tmp to avoid stale artifacts -->
+    <BaseOutputPath>/tmp/ghost-build/bin/$(MSBuildProjectName)/</BaseOutputPath>
+    <BaseIntermediateOutputPath>/tmp/ghost-build/obj/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
+    <PackageOutputPath>/tmp/ghost-build/packages/</PackageOutputPath>
+    <!-- Disable automatic AssemblyInfo generation to avoid duplicates -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 
   <!-- Layer detection -->

@@ -15,9 +15,10 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
     private readonly SemaphoreSlim _sessionLock;
     private readonly bool _enableStealth;
     private readonly string _kernelBrowser;
+    private readonly Socks5Bridge? _globalProxyBridge;
     private bool _disposed;
 
-    private GhostKernel(IPlaywright playwright, IBrowser browser, int maxConcurrentSessions, bool enableStealth, string kernelBrowser)
+    private GhostKernel(IPlaywright playwright, IBrowser browser, int maxConcurrentSessions, bool enableStealth, string kernelBrowser, Socks5Bridge? globalProxyBridge = null)
     {
         ArgumentNullException.ThrowIfNull(playwright);
         ArgumentNullException.ThrowIfNull(browser);
@@ -26,6 +27,7 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
         _sessionLock = new SemaphoreSlim(maxConcurrentSessions, maxConcurrentSessions);
         _enableStealth = enableStealth;
         _kernelBrowser = kernelBrowser ?? "Chromium";
+        _globalProxyBridge = globalProxyBridge;
         
         // Ensure cleanup on process exit
         AppDomain.CurrentDomain.ProcessExit += (s, e) => Dispose();
@@ -40,8 +42,12 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
         {
             launchArgs.Add("--disable-blink-features=AutomationControlled");
             launchArgs.Add("--enable-quic");
-            launchArgs.Add("--use-gl=desktop");
+            // Essential flags for server/container environments
             launchArgs.Add("--no-sandbox");
+            launchArgs.Add("--disable-setuid-sandbox");
+            launchArgs.Add("--disable-dev-shm-usage");
+            // Disable GPU to avoid crashes - safer than swiftshader
+            launchArgs.Add("--disable-gpu");
         }
 
         // Additional stealth flags that help prevent direct UDP leaks when using proxies
@@ -55,20 +61,56 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
         // Create Playwright instance and keep it alive
         var playwright = await Microsoft.Playwright.Playwright.CreateAsync();
 
+        Socks5Bridge? globalProxyBridge = null;
+        Microsoft.Playwright.Proxy? browserProxy = null;
+
         try
         {
+            // If a SOCKS5 proxy with authentication is provided at kernel level, create a global bridge
+            if (opts.ProxyServer is not null && opts.ProxyServer.StartsWith("socks5://", StringComparison.OrdinalIgnoreCase))
+            {
+                var proxyUsername = Environment.GetEnvironmentVariable("DOTNET_GHOST_PROXY_USERNAME");
+                var proxyPassword = Environment.GetEnvironmentVariable("DOTNET_GHOST_PROXY_PASSWORD");
+                
+                if (!string.IsNullOrEmpty(proxyUsername) && !string.IsNullOrEmpty(proxyPassword))
+                {
+                    var uri = new Uri(opts.ProxyServer);
+                    globalProxyBridge = new Socks5Bridge(uri.Host, uri.Port, proxyUsername, proxyPassword);
+                    globalProxyBridge.Start();
+                    
+                    // Use the bridge as browser-level proxy
+                    browserProxy = new Microsoft.Playwright.Proxy
+                    {
+                        Server = $"socks5://127.0.0.1:{globalProxyBridge.Port}"
+                    };
+                    
+                    // Add Chromium arg to ensure SOCKS5 DNS resolution works correctly
+                    launchArgs.Add("--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1");
+                }
+                else
+                {
+                    // No credentials, use proxy directly
+                    browserProxy = new Microsoft.Playwright.Proxy { Server = opts.ProxyServer };
+                }
+            }
+            else if (opts.ProxyServer is not null)
+            {
+                browserProxy = new Microsoft.Playwright.Proxy { Server = opts.ProxyServer };
+            }
+
             var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
                 Headless = opts.Headless,
                 SlowMo = opts.SlowMo,
-                Proxy = opts.ProxyServer is not null ? new Microsoft.Playwright.Proxy { Server = opts.ProxyServer } : null,
+                Proxy = browserProxy,
                 Args = launchArgs
             });
 
-            return new GhostKernel(playwright, browser, opts.MaxConcurrentSessions, opts.EnableStealth, opts.Browser);
+            return new GhostKernel(playwright, browser, opts.MaxConcurrentSessions, opts.EnableStealth, opts.Browser, globalProxyBridge);
         }
         catch
         {
+            globalProxyBridge?.Dispose();
             playwright.Dispose();
             throw;
         }
@@ -109,54 +151,26 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
                 Locale = options?.Locale ?? "en-US"
             };
 
-            IAsyncDisposable? bridgeAdapter = null;
-            Socks5Bridge? bridge = null;
-
             var proxy = options?.Proxy;
-            if (proxy is not null)
+            
+            // If there's a global browser-level SOCKS5 proxy bridge, don't override with session-level proxy
+            // Session-level proxies only work for non-SOCKS5 or when no browser-level proxy is set
+            if (proxy is not null && _globalProxyBridge == null)
             {
-                // If upstream is SOCKS5 with username/password and running Chromium, create a local bridge
-                if (proxy.Server is not null && proxy.Server.StartsWith("socks5://", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(proxy.Username) &&
-                    string.Equals(_kernelBrowser, "Chromium", StringComparison.OrdinalIgnoreCase))
+                // Context-level proxy settings (for HTTP/HTTPS or SOCKS5 without auth)
+                // Note: SOCKS5 with authentication doesn't work reliably at context level in Chromium
+                if (proxy.Server is not null && proxy.Server.StartsWith("socks5://", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(proxy.Username))
                 {
-                    try
-                    {
-                        var uri = new Uri(proxy.Server);
-                        var host = uri.Host;
-                        var port = uri.Port;
-                        var user = proxy.Username;
-                        var pass = proxy.Password;
-
-                        bridge = new Socks5Bridge(host, port, user, pass);
-                        bridge.Start();
-
-                        bridgeAdapter = new Socks5BridgeAsyncWrapper(bridge);
-
-                        ctxOptions.Proxy = new Microsoft.Playwright.Proxy
-                        {
-                            Server = $"socks5://127.0.0.1:{bridge.Port}",
-                            // leave Username/Password unset when using local bridge
-                            Bypass = proxy.Bypass
-                        };
-                    }
-                    catch
-                    {
-                        // If bridge creation fails, ensure we don't leave a half-started bridge
-                        try { bridge?.Dispose(); } catch { }
-                        bridge = null;
-                        bridgeAdapter = null;
-                        // fall back to using the provided proxy directly
-                        ctxOptions.Proxy = new Microsoft.Playwright.Proxy
-                        {
-                            Server = proxy.Server!,
-                            Username = proxy.Username,
-                            Password = proxy.Password,
-                            Bypass = proxy.Bypass
-                        };
-                    }
+                    // SOCKS5 with auth requires a bridge, but context-level bridges are unreliable
+                    // Recommend using browser-level proxy via KernelOptions.ProxyServer instead
+                    throw new NotSupportedException(
+                        "SOCKS5 proxies with authentication at the session level are not supported. " +
+                        "Please configure the SOCKS5 proxy at the kernel level using KernelOptions.ProxyServer " +
+                        "and set DOTNET_GHOST_PROXY_USERNAME and DOTNET_GHOST_PROXY_PASSWORD environment variables.");
                 }
                 else
                 {
+                    // HTTP/HTTPS or SOCKS5 without auth - can use context-level proxy
                     ctxOptions.Proxy = new Microsoft.Playwright.Proxy
                     {
                         Server = proxy.Server!,
@@ -236,38 +250,12 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
             }
 
             var sessionId = Guid.NewGuid().ToString();
-            return new BrowserSessionWrapper(context, sessionId, () => _sessionLock.Release(), bridgeAdapter);
+            return new BrowserSessionWrapper(context, sessionId, () => _sessionLock.Release(), null);
         }
         catch
         {
             _sessionLock.Release();
-            // Ensure bridge is cleaned up if created
-            try
-            {
-                // No await here because bridgeAdapter may be null and DisposeAsync is quick
-                // but we can attempt synchronous dispose if wrapper not present
-            }
-            catch { }
             throw;
-        }
-    }
-
-    private sealed class Socks5BridgeAsyncWrapper : IAsyncDisposable
-    {
-        private readonly Socks5Bridge _bridge;
-        public Socks5BridgeAsyncWrapper(Socks5Bridge bridge)
-        {
-            _bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
-        }
-
-        public ValueTask DisposeAsync()
-        {
-            try
-            {
-                _bridge.Dispose();
-            }
-            catch { }
-            return ValueTask.CompletedTask;
         }
     }
 
@@ -288,6 +276,12 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
         try
         {
             _playwright.Dispose();
+        }
+        catch { }
+        
+        try
+        {
+            _globalProxyBridge?.Dispose();
         }
         catch { }
 

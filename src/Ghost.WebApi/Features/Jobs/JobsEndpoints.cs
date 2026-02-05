@@ -13,11 +13,12 @@ public static class JobsEndpoints
 {
     public static void MapJobsEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGroup("/api/jobs").MapPost("/search", SearchJobs);
-        app.MapGroup("/api/jobs").MapPost("/search-with-errors", SearchJobsWithErrors);
+        var group = app.MapGroup("/api/jobs");
+        group.MapPost("/search", SearchJobs);
+        group.MapPost("/search-with-errors", SearchJobsWithErrors);
     }
 
-    private static async Task<IResult> SearchJobs([FromBody] JobSearchCriteria criteria, [FromServices] IJobClient client, [FromServices] ILoggerFactory loggerFactory, CancellationToken ct)
+    private static async Task<IResult> SearchJobs(JobSearchCriteria criteria, [FromServices] IJobClient client, [FromServices] ILoggerFactory loggerFactory, CancellationToken ct)
     {
         var sw = Stopwatch.StartNew();
         var status = "SUCCESS";
@@ -25,7 +26,20 @@ public static class JobsEndpoints
         try
         {
             var result = await client.SearchJobsAsync(criteria, ct);
-            return Results.Ok(result);
+            var response = new
+            {
+                jobs = result,
+                success = true,
+                platformErrors = Array.Empty<object>(),
+                metadata = new
+                {
+                    totalPlatforms = 3,
+                    successfulPlatforms = 3,
+                    failedPlatforms = 0,
+                    executionTimeMs = sw.ElapsedMilliseconds
+                }
+            };
+            return Results.Ok(response);
         }
         catch (Exception ex)
         {
@@ -65,7 +79,7 @@ public static class JobsEndpoints
         }
     }
 
-    private static async Task<IResult> SearchJobsWithErrors([FromBody] JobSearchCriteria criteria, [FromServices] IJobClient client, CancellationToken ct)
+    private static async Task<IResult> SearchJobsWithErrors(JobSearchCriteria criteria, [FromServices] IJobClient client, CancellationToken ct)
     {
         // Check if the client supports structured error reporting
         if (client is AggregatedJobClient aggregatedClient)

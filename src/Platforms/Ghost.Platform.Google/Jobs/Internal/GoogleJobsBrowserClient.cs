@@ -90,6 +90,9 @@ public sealed class GoogleJobsBrowserClient
     {
         ArgumentNullException.ThrowIfNull(query);
 
+        _logger.LogInformation("GoogleJobsBrowserClient starting search: Query={Query}, Location={Location}, MaxResults={MaxResults}", 
+            query, location, maxResults);
+
         var jobs = new List<JobListing>();
         var sessionOptions = new SessionOptions();
 
@@ -162,22 +165,25 @@ public sealed class GoogleJobsBrowserClient
             jobs = await ExtractJobsFromPageAsync(page, maxResults, ct);
 
             s_logJobsFound(_logger, jobs.Count, null);
+            _logger.LogInformation("GoogleJobsBrowserClient completed search, found {Count} jobs", jobs.Count);
 
             return jobs;
         }
         catch (OperationCanceledException)
         {
+            _logger.LogWarning("GoogleJobsBrowserClient search was cancelled");
             throw;
         }
         catch (Exception ex)
         {
             s_logError(_logger, ex.Message, ex);
+            _logger.LogError(ex, "GoogleJobsBrowserClient search failed");
             return jobs;
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
-            try { await session.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync(); } catch (Exception ex) { _logger.LogWarning(ex, "Failed to dispose page"); }
+            try { await session.DisposeAsync(); } catch (Exception ex) { _logger.LogWarning(ex, "Failed to dispose session"); }
         }
     }
 

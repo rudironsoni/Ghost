@@ -54,6 +54,33 @@ public sealed class GlassdoorBrowserClient : IDisposable
 
     private static readonly Action<ILogger, Exception?> s_logLoadMoreFailed =
         LoggerMessage.Define(LogLevel.Debug, new EventId(12, nameof(GlassdoorBrowserClient)), "Failed to load more results");
+    
+    private static readonly Action<ILogger, string?, string?, int, Exception?> s_logSearchStarting =
+        LoggerMessage.Define<string?, string?, int>(LogLevel.Information, new EventId(13, "SearchStarting"), "Starting browser search for query='{Query}', location='{Location}', limit={Limit}");
+    
+    private static readonly Action<ILogger, string, Exception?> s_logBuiltUrl =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(14, "BuiltUrl"), "Built URL={Url}");
+    
+    private static readonly Action<ILogger, int, Exception?> s_logCreatingSession =
+        LoggerMessage.Define<int>(LogLevel.Debug, new EventId(15, "CreatingSession"), "Attempt {Attempt}, creating browser session");
+    
+    private static readonly Action<ILogger, Exception?> s_logNavigatingToUrl =
+        LoggerMessage.Define(LogLevel.Debug, new EventId(16, "NavigatingToUrl"), "Navigating to URL");
+    
+    private static readonly Action<ILogger, int, Exception?> s_logGotHtmlContent =
+        LoggerMessage.Define<int>(LogLevel.Debug, new EventId(17, "GotHtmlContent"), "Got HTML content, length={Length}");
+    
+    private static readonly Action<ILogger, Exception?> s_logHandlingConsent =
+        LoggerMessage.Define(LogLevel.Debug, new EventId(18, "HandlingConsent"), "Handling consent page");
+    
+    private static readonly Action<ILogger, int, Exception?> s_logAfterConsentHtml =
+        LoggerMessage.Define<int>(LogLevel.Debug, new EventId(19, "AfterConsentHtml"), "After consent handling, HTML length={Length}");
+    
+    private static readonly Action<ILogger, int, Exception?> s_logExtractedJobs =
+        LoggerMessage.Define<int>(LogLevel.Debug, new EventId(20, "ExtractedJobs"), "Extracted {JobCount} jobs from page");
+    
+    private static readonly Action<ILogger, Exception?> s_logMaxAttemptsReached =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(21, "MaxAttemptsReached"), "Max attempts reached, giving up");
 
     private readonly ConsentManagerService _consentService;
 
@@ -75,12 +102,14 @@ public sealed class GlassdoorBrowserClient : IDisposable
         ArgumentNullException.ThrowIfNull(criteria);
 
         s_logBrowserFallback(_logger, null);
+        s_logSearchStarting(_logger, criteria.Query, criteria.Location, limit, null);
 
         var jobs = new List<JobListing>();
         var query = Uri.EscapeDataString(criteria.Query ?? string.Empty);
         var location = Uri.EscapeDataString(criteria.Location ?? string.Empty);
 
         var url = BuildSearchUrl(query, location);
+        s_logBuiltUrl(_logger, url, null);
 
         for (var attempt = 1; attempt <= 3 && jobs.Count < limit; attempt++)
         {
@@ -95,25 +124,70 @@ public sealed class GlassdoorBrowserClient : IDisposable
 
                 var sessionOptions = await CreateSessionOptionsAsync(ct);
                 s_logSessionCreating(_logger, sessionOptions.Proxy?.Server ?? "None", null);
+                s_logCreatingSession(_logger, attempt, null);
 
                 session = await _kernel.NewSessionAsync(sessionOptions, ct);
                 page = await session.NewPageAsync(ct: ct);
 
                 s_logNavigating(_logger, url, null);
+                s_logNavigatingToUrl(_logger, null);
                 await page.NavigateAsync(url, ct: ct);
 
-                await Task.Delay(2000, ct);
+                // CRITICAL: Wait for Cloudflare check to complete (10 seconds minimum)
+                await Task.Delay(10000, ct);
+
+                // Perform realistic human-like scrolling to trigger lazy loading and avoid bot detection
+                
+                // Smooth scroll down in multiple steps
+                await page.EvaluateAsync<object>("() => window.scrollTo({ top: 400, behavior: 'smooth' })", null, ct);
+                await Task.Delay(1200, ct);
+                
+                await page.EvaluateAsync<object>("() => window.scrollTo({ top: 800, behavior: 'smooth' })", null, ct);
+                await Task.Delay(1500, ct);
+                
+                await page.EvaluateAsync<object>("() => window.scrollTo({ top: 1200, behavior: 'smooth' })", null, ct);
+                await Task.Delay(1000, ct);
+                
+                // Scroll back up slightly (human behavior)
+                await page.EvaluateAsync<object>("() => window.scrollTo({ top: 600, behavior: 'smooth' })", null, ct);
+                await Task.Delay(800, ct);
+                
+                // One more scroll down to load more jobs
+                await page.EvaluateAsync<object>("() => window.scrollTo({ top: 1600, behavior: 'smooth' })", null, ct);
+                await Task.Delay(1500, ct);
+
+                // Final wait for any additional dynamic content
+                await Task.Delay(3000, ct);
 
                 var html = await page.GetContentAsync(ct);
+                s_logGotHtmlContent(_logger, html.Length, null);
 
                 if (IsConsentPage(html))
                 {
                     s_logConsentDetected(_logger, null);
+                    s_logHandlingConsent(_logger, null);
                     await _consentService.WaitAndHandleConsentAsync(page, maxWaitMs: 8000, checkIntervalMs: 500);
+                    await Task.Delay(2000, ct); // Wait after consent
                     html = await page.GetContentAsync(ct);
+                    s_logAfterConsentHtml(_logger, html.Length, null);
                 }
 
                 var pageJobs = await ExtractJobsFromPageAsync(page, html, ct);
+                s_logExtractedJobs(_logger, pageJobs.Count, null);
+                
+                // Check if we're blocked and need additional wait
+                if (pageJobs.Count == 0)
+                {
+                    if (html.Contains("cloudflare", StringComparison.OrdinalIgnoreCase) || 
+                        html.Contains("just a moment", StringComparison.OrdinalIgnoreCase) ||
+                        html.Contains("checking your browser", StringComparison.OrdinalIgnoreCase))
+                    {
+                        await Task.Delay(5000, ct);
+                        html = await page.GetContentAsync(ct);
+                        pageJobs = await ExtractJobsFromPageAsync(page, html, ct);
+                        s_logExtractedJobs(_logger, pageJobs.Count, null);
+                    }
+                }
 
                 foreach (var job in pageJobs)
                 {
@@ -147,6 +221,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                 s_logBrowserAttemptFailed(_logger, attempt, ex);
                 if (attempt >= 3)
                 {
+                    s_logMaxAttemptsReached(_logger, null);
                     break;
                 }
                 await Task.Delay(TimeSpan.FromSeconds(2 * attempt), ct);
@@ -193,8 +268,25 @@ public sealed class GlassdoorBrowserClient : IDisposable
 
     private async Task<SessionOptions> CreateSessionOptionsAsync(CancellationToken ct)
     {
-        var options = new SessionOptions();
+        var options = new SessionOptions
+        {
+            // Use realistic viewport size
+            ViewportWidth = 1920,
+            ViewportHeight = 1080,
+            // Use realistic user agent matching Chrome 120
+            UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            // Set locale and timezone for US
+            Locale = "en-US",
+            TimezoneId = "America/New_York",
+            // Set New York geolocation for more realistic browsing
+            Geolocation = new SessionOptions.GeolocationSettings(40.7128, -74.0060, 100),
+            // Explicitly disable proxy for Glassdoor to avoid SOCKS5 connection issues
+            Proxy = null
+        };
 
+        // Note: Proxy is intentionally disabled for Glassdoor browser scraping
+        // The proxyProvider is set to null in GlassdoorExtension.cs registration
+        // to prevent SOCKS5 authentication failures that Glassdoor doesn't support
         if (_options.Value.ProxyEnabled && _proxyProvider != null)
         {
             try
@@ -316,59 +408,222 @@ public sealed class GlassdoorBrowserClient : IDisposable
 
         try
         {
+            // Enhanced JavaScript extraction with extensive selector fallbacks and detailed logging
             var script = """
                 () => {
                     const jobs = [];
-                    const jobElements = document.querySelectorAll('[data-test="jobListing"], .jobListing, [data-testid="job-listing"], .job-listing, article[data-job-id]');
+                    
+                    console.log('=== Starting job extraction ===');
+                    
+                    // Try multiple selector strategies for Glassdoor's evolving DOM structure
+                    const selectors = [
+                        'li.react-job-listing',
+                        '[data-test="jobListing"]',
+                        '.jobListing',
+                        '[data-testid="job-listing"]',
+                        '.job-listing',
+                        'article[data-job-id]',
+                        'li[data-test="jobListing"]',
+                        'li.JobsList_jobListItem__wjTHv',
+                        'li[data-brandviews="true"]',
+                        'div[data-test="job-listing"]',
+                        '.jobContainer',
+                        'article.job',
+                        '[class*="JobCard"]',
+                        '[class*="jobCard"]',
+                        'ul > li[class*="job"]',
+                        'li[class*="JobsList"]',
+                        'div[class*="JobCard"]'
+                    ];
+                    
+                    let jobElements = [];
+                    let usedSelector = null;
+                    
+                    for (const selector of selectors) {
+                        jobElements = document.querySelectorAll(selector);
+                        if (jobElements.length > 0) {
+                            usedSelector = selector;
+                            console.log(`Found ${jobElements.length} job elements using selector: ${selector}`);
+                            break;
+                        }
+                    }
+                    
+                    if (jobElements.length === 0) {
+                        console.log('No job elements found with any selector');
+                        return { jobs: [], debug: { usedSelector, elementCount: 0, bodyLength: document.body.innerHTML.length } };
+                    }
 
-                    jobElements.forEach(el => {
+                    jobElements.forEach((el, index) => {
                         try {
-                            const titleEl = el.querySelector('[data-test="job-title"], .jobTitle, h2 a, .job-title, a[data-test="job-link"]');
-                            const companyEl = el.querySelector('[data-test="employer-name"], .employerName, .company-name, .employer');
-                            const locationEl = el.querySelector('[data-test="job-location"], .jobLocation, .location');
-                            const salaryEl = el.querySelector('[data-test="job-salary"], .salary, .salary-estimate');
-                            const linkEl = el.querySelector('a[href*="/job/"], a[data-test="job-title-link"]');
-
-                            const job = {
-                                title: titleEl?.textContent?.trim() || '',
-                                company: companyEl?.textContent?.trim() || '',
-                                location: locationEl?.textContent?.trim() || '',
-                                salary: salaryEl?.textContent?.trim() || '',
-                                url: linkEl?.href || '',
-                                jobId: linkEl?.href?.match(/\/job\/([^\/]+)/)?.[1] || ''
-                            };
-
-                            if (job.title && job.company) {
-                                jobs.push(job);
+                            // Try multiple title selector patterns
+                            const titleSelectors = [
+                                '[data-test="job-title"]',
+                                '.jobTitle',
+                                'h2 a',
+                                'h3 a',
+                                '.job-title',
+                                'a[data-test="job-link"]',
+                                'a[data-test="job-title-link"]',
+                                '.JobCard_jobTitle__GLz9d',
+                                'a.JobCard_jobTitle__GLz9d',
+                                '.jobTitle span',
+                                'a[class*="jobTitle"]',
+                                'h2[class*="jobTitle"]',
+                                'h3[class*="jobTitle"]',
+                                '[class*="JobTitle"]',
+                                'a[class*="job-title"]',
+                                'div[class*="jobTitle"] a'
+                            ];
+                            
+                            let titleEl = null;
+                            for (const sel of titleSelectors) {
+                                titleEl = el.querySelector(sel);
+                                if (titleEl && titleEl.textContent.trim()) break;
                             }
-                        } catch (e) {}
-                    });
+                            
+                            // Try multiple company selector patterns
+                            const companySelectors = [
+                                '[data-test="employer-name"]',
+                                '.employerName',
+                                '.company-name',
+                                '.employer',
+                                '[data-test="employer"]',
+                                '.EmployerProfile_employerName__X8lAb',
+                                'span[data-test="employer-name"]',
+                                '.jobEmpolyerName',
+                                '[class*="employer"]',
+                                '[class*="company"]',
+                                'span[class*="EmployerProfile"]',
+                                'div[class*="employer"] span'
+                            ];
+                            
+                            let companyEl = null;
+                            for (const sel of companySelectors) {
+                                companyEl = el.querySelector(sel);
+                                if (companyEl && companyEl.textContent.trim()) break;
+                            }
+                            
+                            // Try multiple location selector patterns
+                            const locationSelectors = [
+                                '[data-test="job-location"]',
+                                '.jobLocation',
+                                '.location',
+                                '[data-test="location"]',
+                                '.JobCard_location__2FJ4C',
+                                '[class*="location"]',
+                                'span[class*="location"]',
+                                'div[class*="location"]'
+                            ];
+                            
+                            let locationEl = null;
+                            for (const sel of locationSelectors) {
+                                locationEl = el.querySelector(sel);
+                                if (locationEl && locationEl.textContent.trim()) break;
+                            }
+                            
+                            // Try salary selectors
+                            const salarySelectors = [
+                                '[data-test="job-salary"]',
+                                '.salary',
+                                '.salary-estimate',
+                                '[data-test="detailSalary"]',
+                                '.JobCard_salaryEstimate__2pN6s',
+                                '[class*="salary"]'
+                            ];
+                            
+                            let salaryEl = null;
+                            for (const sel of salarySelectors) {
+                                salaryEl = el.querySelector(sel);
+                                if (salaryEl && salaryEl.textContent.trim()) break;
+                            }
+                            
+                            // Try link selectors
+                            const linkSelectors = [
+                                'a[href*="/job-listing/"]',
+                                'a[href*="/job/"]',
+                                'a[data-test="job-title-link"]',
+                                'a[data-test="job-link"]',
+                                'a.JobCard_jobTitle__GLz9d',
+                                'a[class*="jobTitle"]'
+                            ];
+                            
+                            let linkEl = null;
+                            for (const sel of linkSelectors) {
+                                linkEl = el.querySelector(sel);
+                                if (linkEl && linkEl.href) break;
+                            }
 
-                    return jobs;
+                            const title = titleEl?.textContent?.trim() || '';
+                            const company = companyEl?.textContent?.trim() || '';
+                            const location = locationEl?.textContent?.trim() || '';
+                            const salary = salaryEl?.textContent?.trim() || '';
+                            const url = linkEl?.href || '';
+                            const jobId = linkEl?.href?.match(/\/job-listing\/([^\/\?]+)/)?.[1] || 
+                                         linkEl?.href?.match(/\/job\/([^\/\?]+)/)?.[1] || '';
+
+                            console.log(`Job ${index}: title="${title}", company="${company}", location="${location}"`);
+
+                            if (title && company) {
+                                jobs.push({
+                                    title,
+                                    company,
+                                    location,
+                                    salary,
+                                    url,
+                                    jobId
+                                });
+                            } else {
+                                console.log(`Job ${index} skipped - missing title or company`);
+                            }
+                        } catch (e) {
+                            console.error(`Error extracting job ${index}:`, e);
+                        }
+                    });
+                    
+                    console.log(`Total jobs extracted: ${jobs.length}`);
+
+                    return { 
+                        jobs, 
+                        debug: { 
+                            usedSelector, 
+                            elementCount: jobElements.length, 
+                            bodyLength: document.body.innerHTML.length 
+                        } 
+                    };
                 }
             """;
 
-            var extractedJobs = await page.EvaluateAsync<List<Dictionary<string, object>>>(script, null, ct);
-
-            if (extractedJobs != null && extractedJobs.Count > 0)
+            var result = await page.EvaluateAsync<Dictionary<string, object>>(script, null, ct);
+            
+            if (result != null)
             {
-                foreach (var jobData in extractedJobs)
+                // Extract jobs list
+                if (result.TryGetValue("jobs", out var jobsObj) && jobsObj is List<object> extractedJobsList)
                 {
-                    var job = new JobListing
+                    foreach (var jobObj in extractedJobsList)
                     {
-                        Id = jobData.TryGetValue("jobId", out var id) ? id?.ToString() ?? Guid.NewGuid().ToString() : Guid.NewGuid().ToString(),
-                        Title = jobData.TryGetValue("title", out var title) ? title?.ToString() ?? string.Empty : string.Empty,
-                        Company = jobData.TryGetValue("company", out var company) ? company?.ToString() ?? string.Empty : string.Empty,
-                        Location = jobData.TryGetValue("location", out var loc) ? loc?.ToString() : null,
-                        Salary = jobData.TryGetValue("salary", out var salary) ? salary?.ToString() : null,
-                        Url = jobData.TryGetValue("url", out var url) ? url?.ToString() : null,
-                        Source = "Glassdoor"
-                    };
+                        if (jobObj is Dictionary<string, object> jobData)
+                        {
+                            var job = new JobListing
+                            {
+                                Id = jobData.TryGetValue("jobId", out var id) && !string.IsNullOrEmpty(id?.ToString()) 
+                                    ? id.ToString()!
+                                    : Guid.NewGuid().ToString(),
+                                Title = jobData.TryGetValue("title", out var title) ? title?.ToString() ?? string.Empty : string.Empty,
+                                Company = jobData.TryGetValue("company", out var company) ? company?.ToString() ?? string.Empty : string.Empty,
+                                Location = jobData.TryGetValue("location", out var loc) ? loc?.ToString() : null,
+                                Salary = jobData.TryGetValue("salary", out var salary) ? salary?.ToString() : null,
+                                Url = jobData.TryGetValue("url", out var url) ? url?.ToString() : null,
+                                Source = "Glassdoor"
+                            };
 
-                    jobs.Add(job);
+                            jobs.Add(job);
+                        }
+                    }
                 }
             }
-            else
+            
+            if (jobs.Count == 0)
             {
                 jobs = ExtractJobsWithRegex(html);
             }

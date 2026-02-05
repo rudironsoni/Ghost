@@ -23,8 +23,8 @@ public sealed class LinkedInSessionPool : IDisposable
     private readonly IGhostKernel _kernel;
     private readonly LinkedInSessionPoolOptions _options;
     private readonly ILogger<LinkedInSessionPool> _logger;
-    private readonly IProxyProvider _proxyProvider;
-    private readonly LinkedInOptions _linkedInOptions;
+    private IProxyProvider _proxyProvider;
+    private LinkedInOptions _linkedInOptions;
 
     private readonly ConcurrentQueue<IBrowserSession> _available = new();
     private readonly ConcurrentDictionary<string, IBrowserSession> _inUse = new();
@@ -68,46 +68,26 @@ public sealed class LinkedInSessionPool : IDisposable
             _options.HealthCheckInterval,
             _options.HealthCheckInterval);
 
-        if (_options.WarmCount > 0)
-        {
-            _ = Task.Run(() => WarmupAsync(_options.WarmCount, CancellationToken.None));
-        }
+        // Warmup disabled - causes delays on first request. Sessions created on-demand instead.
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="LinkedInSessionPool"/> class with DI-friendly inputs.
+    /// Static factory method to prevent resolution during DI container validation.
     /// </summary>
-    public LinkedInSessionPool(
+    public static LinkedInSessionPool Create(
         IGhostKernel kernel,
         LinkedInSessionPoolOptions options,
         ILogger<LinkedInSessionPool> logger,
-        IProxyProvider proxyProvider,
-        LinkedInOptions linkedInOptions)
+        IProxyProvider? proxyProvider,
+        LinkedInOptions? linkedInOptions)
     {
-        _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
-        _logger = logger ?? NullLogger<LinkedInSessionPool>.Instance;
-        _proxyProvider = proxyProvider ?? NullProxyProvider.Instance;
-        _linkedInOptions = linkedInOptions ?? new LinkedInOptions();
-
-        if (_options.MaxSize <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(options), "MaxSize must be positive.");
-        }
-
-        _maxSessions = new SemaphoreSlim(_options.MaxSize, _options.MaxSize);
-        _lastHealthCheckTicks = DateTime.UtcNow.Ticks;
-        _healthCheckTimer = new Timer(
-            _ => _ = Task.Run(() => PruneAsync(CancellationToken.None), CancellationToken.None),
-            null,
-            _options.HealthCheckInterval,
-            _options.HealthCheckInterval);
-
-        if (_options.WarmCount > 0)
-        {
-            _ = Task.Run(() => WarmupAsync(_options.WarmCount, CancellationToken.None));
-        }
+        var pool = new LinkedInSessionPool(kernel, options, logger);
+        pool._proxyProvider = proxyProvider ?? NullProxyProvider.Instance;
+        pool._linkedInOptions = linkedInOptions ?? new LinkedInOptions();
+        return pool;
     }
+
+
 
     /// <summary>
     /// Acquire a browser session from the pool.
@@ -350,11 +330,23 @@ public sealed class LinkedInSessionPool : IDisposable
 
     private async Task<IBrowserSession> CreateSessionAsync(CancellationToken ct)
     {
-        var sessionOptions = await CreateSessionOptionsAsync(ct).ConfigureAwait(false);
-        var session = await _kernel.NewSessionAsync(sessionOptions, ct).ConfigureAwait(false);
-        _metadata[session.SessionId] = new SessionMetadata(DateTime.UtcNow);
-        Interlocked.Increment(ref _totalCreated);
-        return session;
+        try
+        {
+            var sessionOptions = await CreateSessionOptionsAsync(ct).ConfigureAwait(false);
+            var session = await _kernel.NewSessionAsync(sessionOptions, ct).ConfigureAwait(false);
+            _metadata[session.SessionId] = new SessionMetadata(DateTime.UtcNow);
+            Interlocked.Increment(ref _totalCreated);
+            return session;
+        }
+        catch (Exception ex) when (ex is Microsoft.Playwright.PlaywrightException || 
+                                    ex.Message.Contains("TargetClosedException", StringComparison.OrdinalIgnoreCase) ||
+                                    ex.Message.Contains("ERR_SOCKS_CONNECTION_FAILED", StringComparison.OrdinalIgnoreCase) ||
+                                    ex.Message.Contains("Process exited", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new BrowserServiceUnavailableException(
+                "Failed to initialize browser session. Browser automation service may be unavailable or proxy connection failed.", 
+                ex);
+        }
     }
 
     private async Task<SessionOptions> CreateSessionOptionsAsync(CancellationToken ct)

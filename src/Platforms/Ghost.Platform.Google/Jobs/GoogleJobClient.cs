@@ -10,6 +10,7 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
 {
     private readonly Internal.GoogleJobsApiClient _api;
     private readonly Internal.GoogleJobsBrowserClient? _browserClient;
+    private readonly Internal.GoogleJobsScraper? _scraper;
     private readonly ILogger<GoogleJobClient> _logger;
     private readonly GoogleJobsOptions _options;
 
@@ -47,27 +48,31 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
     public GoogleJobClient(
         Internal.GoogleJobsApiClient api,
         Internal.GoogleJobsBrowserClient browserClient,
+        Internal.GoogleJobsScraper scraper,
         ILogger<GoogleJobClient> logger,
         IOptions<GoogleJobsOptions> options)
     {
         _api = api ?? throw new ArgumentNullException(nameof(api));
         _browserClient = browserClient ?? throw new ArgumentNullException(nameof(browserClient));
+        _scraper = scraper ?? throw new ArgumentNullException(nameof(scraper));
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GoogleJobClient>.Instance;
         _options = options?.Value ?? new GoogleJobsOptions();
     }
 
-    public string PlatformName => "Google";
+    public string PlatformName => "GoogleJobs";
 
     public async Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(criteria);
 
         var strategy = _options.Strategy;
+        _logger.LogInformation("Starting Google Jobs search with strategy: {Strategy}, Query: {Query}, Location: {Location}, MaxResults: {MaxResults}",
+            strategy, criteria.Query, criteria.Location, criteria.MaxResults);
         s_logStrategyAttempt(_logger, strategy.ToString(), null);
 
         try
         {
-            return strategy switch
+            var result = strategy switch
             {
                 JobSearchStrategy.BrowserFirst => await TryBrowserFirstAsync(criteria, ct),
                 JobSearchStrategy.HttpFirst => await TryHttpFirstAsync(criteria, ct),
@@ -75,9 +80,18 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
                 JobSearchStrategy.HttpOnly => await TryHttpOnlyAsync(criteria, ct),
                 _ => await TryBrowserFirstAsync(criteria, ct)
             };
+            
+            _logger.LogInformation("Google Jobs search completed. Found {Count} jobs", result.Count);
+            return result;
         }
         catch (OperationCanceledException)
         {
+            _logger.LogWarning("Google Jobs search was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Google Jobs search failed with exception");
             throw;
         }
     }
@@ -124,7 +138,8 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
         {
             var results = await _api.SearchAsync(
                 criteria.Query ?? string.Empty,
-                criteria.Location ?? string.Empty);
+                criteria.Location ?? string.Empty,
+                ct);
 
             if (results.Count > 0)
             {
@@ -182,7 +197,8 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
         {
             var results = await _api.SearchAsync(
                 criteria.Query ?? string.Empty,
-                criteria.Location ?? string.Empty);
+                criteria.Location ?? string.Empty,
+                ct);
 
             s_logStrategySuccess(_logger, "HttpOnly", results.Count, null);
             return results;

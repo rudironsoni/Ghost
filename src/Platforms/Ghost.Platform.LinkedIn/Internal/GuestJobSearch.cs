@@ -16,7 +16,6 @@ public sealed class GuestJobSearch : IGuestJobSearch
 {
     private readonly ILogger<GuestJobSearch> _logger;
     private readonly IOptions<LinkedInOptions> _options;
-    private readonly LinkedInAuthenticator _authenticator;
     private readonly ICountryDomainProvider _countryProvider;
     private readonly LinkedInSessionPool _sessionPool;
 
@@ -45,12 +44,10 @@ public sealed class GuestJobSearch : IGuestJobSearch
 
     public GuestJobSearch(
         IOptions<LinkedInOptions> options,
-        LinkedInAuthenticator authenticator,
         ILogger<GuestJobSearch> logger,
         ICountryDomainProvider countryProvider,
         LinkedInSessionPool sessionPool)
     {
-        _authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GuestJobSearch>.Instance;
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _countryProvider = countryProvider ?? throw new ArgumentNullException(nameof(countryProvider));
@@ -88,18 +85,30 @@ public sealed class GuestJobSearch : IGuestJobSearch
             // Try up to 3 attempts, fetching a fresh proxy/session each time
             for (var attempt = 1; attempt <= 3 && !success; attempt++)
             {
-                s_logSessionCreating(_logger, _options.Value.WarmUpEnabled, null);
-                var session = await _sessionPool.AcquireAsync(ct);
-                var page = await session.NewPageAsync(ct: ct);
+                IBrowserSession? session = null;
+                IPage? page = null;
+                
                 try
                 {
+                    s_logSessionCreating(_logger, _options.Value.WarmUpEnabled, null);
+                    session = await _sessionPool.AcquireAsync(ct);
+                    page = await session.NewPageAsync(ct: ct);
+                    
                     s_logNavigating(_logger, url, null);
                     if (_options.Value.WarmUpEnabled)
                     {
-                        try { await _authenticator.WarmUpAsync(page, ct); } catch { }
+                        try 
+                        { 
+                            // Simple warm-up: visit a safe URL first
+                            var warmUpUrl = "https://www.google.com";
+                            var warmNav = new NavigationOptions { Timeout = 10_000, WaitUntil = WaitUntil.Load };
+                            await page.NavigateAsync(warmUpUrl, warmNav, ct: ct);
+                        } 
+                        catch { }
                     }
 
-                    await page.NavigateAsync(url, ct: ct);
+                    var navOptions = new NavigationOptions { Timeout = 30_000, WaitUntil = WaitUntil.Load };
+                    await page.NavigateAsync(url, navOptions, ct: ct);
 
                     try
                     {
@@ -108,7 +117,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
                     }
                     catch { }
 
-                        var html = await page.GetContentAsync(ct);
+                    var html = await page.GetContentAsync(ct);
                     if (string.IsNullOrEmpty(html))
                     {
                         success = true;
@@ -143,12 +152,22 @@ public sealed class GuestJobSearch : IGuestJobSearch
                     success = true;
                 }
                 catch (OperationCanceledException) { throw; }
+                catch (BrowserServiceUnavailableException)
+                {
+                    // Browser service is unavailable - propagate to caller
+                    throw;
+                }
                 catch (PlaywrightException pex)
                 {
                     // Any Playwright error during navigation/setup should trigger a proxy retry.
                     s_logSessionFailed(_logger, attempt, pex.Message, null);
-                    try { await page.DisposeAsync(); } catch { }
-                    _sessionPool.Release(session);
+                    if (attempt == 3)
+                    {
+                        // All retries exhausted - wrap and throw
+                        throw new BrowserServiceUnavailableException(
+                            "Failed to connect to LinkedIn after 3 attempts. Browser automation service may be unavailable.", 
+                            pex);
+                    }
                     // continue to next attempt which will fetch a new proxy
                     continue;
                 }
@@ -162,8 +181,11 @@ public sealed class GuestJobSearch : IGuestJobSearch
                 }
                 finally
                 {
-                    try { await page.DisposeAsync(); } catch { }
-                    if (session is not null)
+                    if (page != null)
+                    {
+                        try { await page.DisposeAsync(); } catch { }
+                    }
+                    if (session != null)
                     {
                         _sessionPool.Release(session);
                     }
@@ -192,20 +214,32 @@ public sealed class GuestJobSearch : IGuestJobSearch
         var url = $"{domain}/jobs-guest/jobs/api/jobPosting/{jobId}";
         for (var attempt = 1; attempt <= 3; attempt++)
         {
-            s_logSessionCreating(_logger, _options.Value.WarmUpEnabled, null);
-            var session = await _sessionPool.AcquireAsync(ct);
-            var page = await session.NewPageAsync(ct: ct);
+            IBrowserSession? session = null;
+            IPage? page = null;
+            
             try
             {
+                s_logSessionCreating(_logger, _options.Value.WarmUpEnabled, null);
+                session = await _sessionPool.AcquireAsync(ct);
+                page = await session.NewPageAsync(ct: ct);
+                
                 try
                 {
                     s_logNavigating(_logger, url, null);
                     if (_options.Value.WarmUpEnabled)
                     {
-                        try { await _authenticator.WarmUpAsync(page, ct); } catch { }
+                        try 
+                        { 
+                            // Simple warm-up: visit a safe URL first
+                            var warmUpUrl = "https://www.google.com";
+                            var warmNav = new NavigationOptions { Timeout = 10_000, WaitUntil = WaitUntil.Load };
+                            await page.NavigateAsync(warmUpUrl, warmNav, ct: ct);
+                        } 
+                        catch { }
                     }
 
-                    await page.NavigateAsync(url, ct: ct);
+                    var navOptions = new NavigationOptions { Timeout = 30_000, WaitUntil = WaitUntil.Load };
+                    await page.NavigateAsync(url, navOptions, ct: ct);
                     try { await LinkedInRateLimitDetector.CheckAsync(page); } catch { }
                     Console.WriteLine($"[DEBUG] Fetching content for {jobId}...");
                     var html = await page.GetContentAsync(ct);
@@ -459,11 +493,21 @@ public sealed class GuestJobSearch : IGuestJobSearch
                     return parsed;
                 }
                 catch (OperationCanceledException) { throw; }
+                catch (BrowserServiceUnavailableException)
+                {
+                    // Browser service is unavailable - propagate to caller
+                    throw;
+                }
                 catch (PlaywrightException pex)
                 {
                     s_logSessionFailed(_logger, attempt, pex.Message, null);
-                    try { await page.DisposeAsync(); } catch { }
-                    _sessionPool.Release(session);
+                    if (attempt == 3)
+                    {
+                        // All retries exhausted - wrap and throw
+                        throw new BrowserServiceUnavailableException(
+                            "Failed to fetch job details after 3 attempts. Browser automation service may be unavailable.", 
+                            pex);
+                    }
                     continue;
                 }
                 catch (Exception ex)
@@ -474,8 +518,11 @@ public sealed class GuestJobSearch : IGuestJobSearch
             }
             finally
             {
-                try { await page.DisposeAsync(); } catch { }
-                if (session is not null)
+                if (page != null)
+                {
+                    try { await page.DisposeAsync(); } catch { }
+                }
+                if (session != null)
                 {
                     _sessionPool.Release(session);
                 }

@@ -1,0 +1,46 @@
+info:
+  name: Boolean Search - OR Operator
+  type: http
+  seq: 6
+  description: Test LinkedIn OR operator - finds jobs containing any keyword
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/linkedin/jobs/search"
+
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "keywords": "developer OR programmer OR coder",
+        "location": "United States",
+        "maxResults": 5
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+        
+        test("Response is array", function() {
+          expect(res.body).to.be.an('array');
+        });
+
+docs: |-
+  ## Boolean Search - OR Operator
+  
+  Tests LinkedIn's OR operator which finds jobs containing ANY of the keywords.
+  
+  ### Query
+  `developer OR programmer OR coder`
+  
+  ### Expected Behavior
+  - Returns jobs containing at least one of: "developer", "programmer", OR "coder"
+  - Broadens search results compared to AND operator
+  - Must use uppercase OR (lowercase "or" is treated as a word)

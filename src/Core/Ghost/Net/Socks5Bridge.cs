@@ -257,29 +257,61 @@ public class Socks5Bridge : IDisposable
                             {
                                 var upStream = upstream.GetStream();
 
-                                // Upstream handshake: request user/pass auth
-                                var handshake = new byte[] { 0x05, 0x01, 0x02 };
-                                await upStream.WriteAsync(handshake.AsMemory(0, 3), ct).ConfigureAwait(false);
+                                // Upstream handshake: offer both no-auth (0x00) and user/pass (0x02)
+                                // Let the server choose the method it prefers
+                                byte[] handshake;
+                                if (!string.IsNullOrEmpty(_username) && !string.IsNullOrEmpty(_password))
+                                {
+                                    // Offer both methods: 0x00 (no auth) and 0x02 (username/password)
+                                    handshake = new byte[] { 0x05, 0x02, 0x00, 0x02 };
+                                }
+                                else
+                                {
+                                    // Only offer no-auth method
+                                    handshake = new byte[] { 0x05, 0x01, 0x00 };
+                                }
+                                
+                                await upStream.WriteAsync(handshake.AsMemory(0, handshake.Length), ct).ConfigureAwait(false);
                                 var methodResp = await ReadExactlyAsync(upStream, 2, ct).ConfigureAwait(false);
-                                if (methodResp.Length < 2 || methodResp[0] != 0x05 || methodResp[1] != 0x02)
+                                if (methodResp.Length < 2 || methodResp[0] != 0x05)
                                 {
                                     return;
                                 }
 
-                                var userBytes = Encoding.ASCII.GetBytes(_username ?? string.Empty);
-                                var passBytes = Encoding.ASCII.GetBytes(_password ?? string.Empty);
-                                var auth = new List<byte> { 0x01, (byte)userBytes.Length };
-                                auth.AddRange(userBytes);
-                                auth.Add((byte)passBytes.Length);
-                                auth.AddRange(passBytes);
-                                var authBuf = auth.ToArray();
-                                await upStream.WriteAsync(authBuf.AsMemory(0, authBuf.Length), ct).ConfigureAwait(false);
-
-                                var authResp = await ReadExactlyAsync(upStream, 2, ct).ConfigureAwait(false);
-                                if (authResp.Length < 2 || authResp[0] != 0x01 || authResp[1] != 0x00)
+                                var selectedMethod = methodResp[1];
+                                
+                                // If server selected 0xFF, no acceptable methods
+                                if (selectedMethod == 0xFF)
                                 {
                                     return;
                                 }
+
+                                // If server selected method 0x02 (username/password), authenticate
+                                if (selectedMethod == 0x02)
+                                {
+                                    if (string.IsNullOrEmpty(_username) || string.IsNullOrEmpty(_password))
+                                    {
+                                        // Server requires auth but we don't have credentials
+                                        return;
+                                    }
+
+                                    var userBytes = Encoding.ASCII.GetBytes(_username);
+                                    var passBytes = Encoding.ASCII.GetBytes(_password);
+                                    var auth = new List<byte> { 0x01, (byte)userBytes.Length };
+                                    auth.AddRange(userBytes);
+                                    auth.Add((byte)passBytes.Length);
+                                    auth.AddRange(passBytes);
+                                    var authBuf = auth.ToArray();
+                                    await upStream.WriteAsync(authBuf.AsMemory(0, authBuf.Length), ct).ConfigureAwait(false);
+
+                                    var authResp = await ReadExactlyAsync(upStream, 2, ct).ConfigureAwait(false);
+                                    if (authResp.Length < 2 || authResp[0] != 0x01 || authResp[1] != 0x00)
+                                    {
+                                        // Authentication failed
+                                        return;
+                                    }
+                                }
+                                // If server selected method 0x00 (no auth), proceed without authentication
 
                                 // Forward client's request to upstream
                                 await upStream.WriteAsync(requestBytes.AsMemory(0, requestBytes.Length), ct).ConfigureAwait(false);

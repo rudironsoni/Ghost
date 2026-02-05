@@ -53,16 +53,25 @@ public sealed class GoogleExtension : Ghost.Hosting.IExtension
             .ConfigurePrimaryHttpMessageHandler(sp =>
             {
                 var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Jobs.GoogleJobsOptions>>().Value;
-                var handler = opts.ProxyEnabled
-                    ? new HttpClientHandler { Proxy = new Ghost.Http.RotatingWebProxy(sp.GetRequiredService<Ghost.Abstractions.IProxyProvider>()), UseProxy = true, CookieContainer = new CookieContainer(), UseCookies = true, AllowAutoRedirect = true }
-                    : new HttpClientHandler { CookieContainer = new CookieContainer(), UseCookies = true, AllowAutoRedirect = true };
+                // Force disable proxy for Google Jobs - rely on kernel-level proxy or direct connection
+                // Session-level SOCKS5 proxies cause authentication issues with Playwright
+                var handler = new HttpClientHandler { CookieContainer = new CookieContainer(), UseCookies = true, AllowAutoRedirect = true };
                 return HttpClientSecurityExtensions.ConfigureSecureHttpClientHandler(handler);
             });
 
             services.AddScoped<Jobs.Internal.GoogleJobsBrowserClient>();
-            services.AddScoped<Jobs.GoogleJobClient>();
-            services.AddScoped<Ghost.Abstractions.IJobScraper, Jobs.GoogleJobClient>();
-            services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => (Ghost.Contracts.Jobs.IJobClient)sp.GetRequiredService<Jobs.GoogleJobClient>());
+            // Register GoogleJobClient with both ApiClient and BrowserClient for full strategy support
+            services.AddScoped<Jobs.GoogleJobClient>(sp =>
+            {
+                var apiClient = sp.GetRequiredService<Jobs.Internal.GoogleJobsApiClient>();
+                var browserClient = sp.GetRequiredService<Jobs.Internal.GoogleJobsBrowserClient>();
+                var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.GoogleJobClient>>();
+                var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Jobs.GoogleJobsOptions>>();
+                return new Jobs.GoogleJobClient(apiClient, browserClient, logger, options);
+            });
+            // Register as both IJobScraper (for aggregator) and IJobClient (for backward compatibility)
+            services.AddScoped<Ghost.Abstractions.IJobScraper>(sp => sp.GetRequiredService<Jobs.GoogleJobClient>());
+            services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => sp.GetRequiredService<Jobs.GoogleJobClient>());
         }
     }
 }

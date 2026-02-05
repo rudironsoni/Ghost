@@ -73,11 +73,24 @@ public sealed class GlassdoorApiClient : IDisposable
         {
             _rateLimitSemaphore?.Dispose();
 
+            // Avoid blocking call in Dispose - just release the session reference
+            // The SessionOrchestrator will handle cleanup on its own lifecycle
             if (_currentSessionId != null && _sessionOrchestrator != null)
             {
                 try
                 {
-                    _sessionOrchestrator.CloseSessionAsync(_currentSessionId, default).GetAwaiter().GetResult();
+                    // Fire and forget - avoid deadlock from GetAwaiter().GetResult()
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await _sessionOrchestrator.CloseSessionAsync(_currentSessionId, default).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            if (_logger != null) LogSessionCloseFailed(_logger, _currentSessionId, ex);
+                        }
+                    });
                 }
                 catch (Exception ex)
                 {
@@ -722,14 +735,426 @@ public sealed class GlassdoorApiClient : IDisposable
 
     public async Task<string?> SearchAsync(string keyword, string? location = null, string? csrfToken = null, CancellationToken ct = default)
     {
+        LogTokenExtraction($"SearchAsync: Starting search for keyword='{keyword}', location='{location}', csrfToken={csrfToken != null}");
+        
+        // First try the simple HTTP scraper fallback (no proxy, no browser, no CSRF needed)
+        try
+        {
+            LogTokenExtraction($"SearchAsync: Attempting simple HTTP scraper first");
+            var result = await SearchWithSimpleHttpAsync(keyword, location, ct);
+            if (!string.IsNullOrEmpty(result))
+            {
+                LogTokenExtraction($"Simple HTTP scraper succeeded for query: {keyword}");
+                return result;
+            }
+            LogTokenExtraction($"Simple HTTP scraper returned empty result");
+        }
+        catch (Exception ex)
+        {
+            LogTokenExtraction($"Simple HTTP scraper failed: {ex.GetType().Name} - {ex.Message}, falling back to GraphQL");
+        }
+
+        // Fallback to original GraphQL approach if simple scraper fails
         if (_sessionOrchestrator != null)
         {
+            LogTokenExtraction($"SearchAsync: Using SessionOrchestrator approach");
             return await SearchWithOrchestratorAsync(keyword, location, csrfToken, ct);
         }
         else
         {
+            LogTokenExtraction($"SearchAsync: Using Legacy approach");
             return await SearchLegacyAsync(keyword, location, csrfToken, ct);
         }
+    }
+
+    /// <summary>
+    /// Simple HTTP-based scraper that directly fetches Glassdoor job search HTML
+    /// without requiring SOCKS5 proxies, browser automation, or CSRF tokens.
+    /// </summary>
+#pragma warning disable CA1822 // Mark members as static
+    private async Task<string?> SearchWithSimpleHttpAsync(string keyword, string? location, CancellationToken ct)
+#pragma warning restore CA1822 // Mark members as static
+    {
+        try
+        {
+            // Build the search URL
+            var encodedKeyword = Uri.EscapeDataString(keyword);
+            var encodedLocation = Uri.EscapeDataString(location ?? "");
+            var searchUrl = $"https://www.glassdoor.com/Job/jobs.htm?sc.keyword={encodedKeyword}";
+            
+            if (!string.IsNullOrWhiteSpace(location))
+            {
+                searchUrl += $"&locT=C&locId=&locKeyword={encodedLocation}";
+            }
+
+            LogTokenExtraction($"Simple HTTP: Fetching {searchUrl}");
+
+            // Create a simple HTTP client with realistic headers
+            using var handler = new HttpClientHandler
+            {
+                AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
+                AllowAutoRedirect = true,
+                MaxAutomaticRedirections = 5
+            };
+
+            using var httpClient = new HttpClient(handler)
+            {
+                Timeout = TimeSpan.FromSeconds(30)
+            };
+
+            var request = new HttpRequestMessage(HttpMethod.Get, searchUrl);
+            
+            // Add realistic browser headers
+            request.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+            request.Headers.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+            request.Headers.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.9");
+            request.Headers.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate, br");
+            request.Headers.TryAddWithoutValidation("Connection", "keep-alive");
+            request.Headers.TryAddWithoutValidation("Upgrade-Insecure-Requests", "1");
+            request.Headers.TryAddWithoutValidation("Sec-Fetch-Dest", "document");
+            request.Headers.TryAddWithoutValidation("Sec-Fetch-Mode", "navigate");
+            request.Headers.TryAddWithoutValidation("Sec-Fetch-Site", "none");
+            request.Headers.TryAddWithoutValidation("Sec-Fetch-User", "?1");
+
+            var response = await httpClient.SendAsync(request, ct);
+            response.EnsureSuccessStatusCode();
+
+            var html = await response.Content.ReadAsStringAsync(ct);
+
+            // Log the HTML for debugging
+            try { System.IO.File.WriteAllText("logs/glassdoor_simple_http.html", html); } catch { }
+
+            LogTokenExtraction($"Simple HTTP: Received {html.Length} characters");
+
+            // Parse the HTML to extract job data
+            var jobsJson = ParseHtmlToJobsJson(html);
+            
+            if (!string.IsNullOrEmpty(jobsJson))
+            {
+                try { System.IO.File.WriteAllText("logs/glassdoor_simple_http_parsed.json", jobsJson); } catch { }
+                LogTokenExtraction($"Simple HTTP: Successfully parsed {jobsJson.Length} characters of JSON");
+                return jobsJson;
+            }
+
+            LogTokenExtraction("Simple HTTP: Failed to extract job data from HTML");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            LogTokenExtraction($"Simple HTTP scraper exception: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Parse Glassdoor HTML job search results into JSON format compatible with existing parser
+    /// </summary>
+    private static string? ParseHtmlToJobsJson(string html)
+    {
+        if (string.IsNullOrEmpty(html))
+            return null;
+
+        try
+        {
+            var jobs = new List<object>();
+
+            // Look for embedded JSON data in script tags (modern Glassdoor often embeds data)
+            // Pattern 1: Look for window.gdInitialState or similar
+            var jsonPatterns = new[]
+            {
+                @"window\.gdInitialState\s*=\s*({.*?});",
+                @"window\.__INITIAL_STATE__\s*=\s*({.*?});",
+                @"window\.__NEXT_DATA__\s*=\s*({.*?});",
+                @"<script[^>]*type\s*=\s*[""']application/json[""'][^>]*id\s*=\s*[""']__NEXT_DATA__[""'][^>]*>(.*?)</script>",
+                @"<script[^>]*id\s*=\s*[""']__NEXT_DATA__[""'][^>]*type\s*=\s*[""']application/json[""'][^>]*>(.*?)</script>"
+            };
+
+            foreach (var pattern in jsonPatterns)
+            {
+                var match = Regex.Match(html, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                if (match.Success && match.Groups.Count > 1)
+                {
+                    var jsonContent = match.Groups[1].Value;
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(jsonContent);
+                        var extractedJobs = ExtractJobsFromJsonElement(doc.RootElement);
+                        if (extractedJobs.Count > 0)
+                        {
+                            jobs.AddRange(extractedJobs);
+                            break;
+                        }
+                    }
+                    catch { }
+                }
+            }
+
+            // Fallback: Parse HTML structure for job cards
+            if (jobs.Count == 0)
+            {
+                jobs.AddRange(ParseJobCardsFromHtml(html));
+            }
+
+            if (jobs.Count == 0)
+                return null;
+
+            // Return JSON in a format compatible with existing parser
+            var result = JsonSerializer.Serialize(new
+            {
+                data = new
+                {
+                    jobListings = new
+                    {
+                        jobListings = jobs,
+                        totalJobsCount = jobs.Count
+                    }
+                }
+            });
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            LogTokenExtraction($"ParseHtmlToJobsJson exception: {ex.Message}");
+            return null;
+        }
+    }
+
+    private static List<object> ExtractJobsFromJsonElement(JsonElement element)
+    {
+        var jobs = new List<object>();
+
+        try
+        {
+            // Recursively search for job data in the JSON structure
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var prop in element.EnumerateObject())
+                {
+                    // Look for properties that likely contain job listings
+                    if (prop.Name.Contains("job", StringComparison.OrdinalIgnoreCase) ||
+                        prop.Name.Contains("listing", StringComparison.OrdinalIgnoreCase) ||
+                        prop.Name.Contains("result", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (prop.Value.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var item in prop.Value.EnumerateArray())
+                            {
+                                var job = ExtractJobFromElement(item);
+                                if (job != null)
+                                    jobs.Add(job);
+                            }
+                        }
+                        else
+                        {
+                            jobs.AddRange(ExtractJobsFromJsonElement(prop.Value));
+                        }
+                    }
+                    else
+                    {
+                        jobs.AddRange(ExtractJobsFromJsonElement(prop.Value));
+                    }
+                }
+            }
+            else if (element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                {
+                    var job = ExtractJobFromElement(item);
+                    if (job != null)
+                        jobs.Add(job);
+                    else
+                        jobs.AddRange(ExtractJobsFromJsonElement(item));
+                }
+            }
+        }
+        catch { }
+
+        return jobs;
+    }
+
+    private static object? ExtractJobFromElement(JsonElement element)
+    {
+        try
+        {
+            // Try to extract job fields
+            string? title = null;
+            string? company = null;
+            string? location = null;
+            string? id = null;
+            string? description = null;
+            string? link = null;
+
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                // Try different field name variations
+                title = GetJsonString(element, "jobTitleText", "jobTitle", "title", "job_title");
+                company = GetJsonString(element, "employerName", "employer", "company", "companyName");
+                location = GetJsonString(element, "locationName", "location", "jobLocationCity", "city");
+                id = GetJsonString(element, "listingId", "jobId", "id");
+                description = GetJsonString(element, "description", "jobDescription");
+                link = GetJsonString(element, "jobLink", "link", "url");
+
+                // Check for nested structures (header, job, employer, etc.)
+                if (element.TryGetProperty("jobview", out var jobview))
+                {
+                    if (jobview.TryGetProperty("header", out var header))
+                    {
+                        title ??= GetJsonString(header, "jobTitleText", "jobTitle");
+                        location ??= GetJsonString(header, "locationName", "location");
+                        link ??= GetJsonString(header, "jobLink");
+                        
+                        if (header.TryGetProperty("employer", out var employer))
+                        {
+                            company ??= GetJsonString(employer, "name");
+                        }
+                    }
+                    
+                    if (jobview.TryGetProperty("job", out var job))
+                    {
+                        id ??= GetJsonString(job, "listingId");
+                        description ??= GetJsonString(job, "description");
+                    }
+                }
+
+                // Must have at least title to be a valid job
+                if (!string.IsNullOrEmpty(title))
+                {
+                    return new
+                    {
+                        jobview = new
+                        {
+                            header = new
+                            {
+                                jobTitleText = title,
+                                locationName = location,
+                                employer = new { name = company },
+                                jobLink = link
+                            },
+                            job = new
+                            {
+                                listingId = id ?? Guid.NewGuid().ToString(),
+                                description = description
+                            }
+                        }
+                    };
+                }
+            }
+        }
+        catch { }
+
+        return null;
+    }
+
+    private static string? GetJsonString(JsonElement element, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (element.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.String)
+            {
+                var str = value.GetString();
+                if (!string.IsNullOrWhiteSpace(str))
+                    return str;
+            }
+        }
+        return null;
+    }
+
+    private static List<object> ParseJobCardsFromHtml(string html)
+    {
+        var jobs = new List<object>();
+
+        try
+        {
+            // Use regex to find job card data attributes or structured data
+            // Pattern: Look for data-* attributes with job information
+            var jobCardPattern = @"<(?:li|div|article)[^>]*(?:data-job-id|data-id|id)[^>]*=[\""']([^\""']+)[\""'][^>]*>.*?(?:data-job-title|class[\""'][^>]*job-title)[^>]*>([^<]+)<.*?(?:data-employer-name|class[\""'][^>]*employer)[^>]*>([^<]+)<.*?(?:data-location|class[\""'][^>]*location)[^>]*>([^<]+)<";
+            
+            var matches = Regex.Matches(html, jobCardPattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            
+            foreach (Match match in matches)
+            {
+                if (match.Groups.Count >= 5)
+                {
+                    var job = new
+                    {
+                        jobview = new
+                        {
+                            header = new
+                            {
+                                jobTitleText = match.Groups[2].Value.Trim(),
+                                locationName = match.Groups[4].Value.Trim(),
+                                employer = new { name = match.Groups[3].Value.Trim() },
+                                jobLink = (string?)null
+                            },
+                            job = new
+                            {
+                                listingId = match.Groups[1].Value.Trim(),
+                                description = (string?)null
+                            }
+                        }
+                    };
+                    jobs.Add(job);
+                }
+            }
+
+            // Alternative pattern: Look for structured data (JSON-LD)
+            if (jobs.Count == 0)
+            {
+                var jsonLdPattern = @"<script[^>]*type\s*=\s*[""']application/ld\+json[""'][^>]*>(.*?)</script>";
+                var jsonLdMatches = Regex.Matches(html, jsonLdPattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                
+                foreach (Match match in jsonLdMatches)
+                {
+                    if (match.Groups.Count > 1)
+                    {
+                        try
+                        {
+                            var jsonContent = match.Groups[1].Value;
+                            using var doc = JsonDocument.Parse(jsonContent);
+                            var root = doc.RootElement;
+                            
+                            // Check if it's a JobPosting
+                            if (root.TryGetProperty("@type", out var type) && 
+                                type.GetString()?.Contains("JobPosting", StringComparison.OrdinalIgnoreCase) == true)
+                            {
+                                var title = GetJsonString(root, "title", "name");
+                                var company = GetJsonString(root, "hiringOrganization", "companyName");
+                                var location = GetJsonString(root, "jobLocation", "addressLocality");
+                                var description = GetJsonString(root, "description");
+                                var id = GetJsonString(root, "identifier", "jobId");
+
+                                if (!string.IsNullOrEmpty(title))
+                                {
+                                    jobs.Add(new
+                                    {
+                                        jobview = new
+                                        {
+                                            header = new
+                                            {
+                                                jobTitleText = title,
+                                                locationName = location,
+                                                employer = new { name = company },
+                                                jobLink = (string?)null
+                                            },
+                                            job = new
+                                            {
+                                                listingId = id ?? Guid.NewGuid().ToString(),
+                                                description = description
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+                }
+            }
+        }
+        catch { }
+
+        return jobs;
     }
 
     private async Task<string?> SearchWithOrchestratorAsync(string keyword, string? location, string? csrfToken, CancellationToken ct)
@@ -854,10 +1279,13 @@ public sealed class GlassdoorApiClient : IDisposable
 
     private async Task<string?> SearchLegacyAsync(string keyword, string? location, string? csrfToken, CancellationToken ct)
     {
+        LogTokenExtraction($"SearchLegacyAsync: Starting with keyword='{keyword}', location='{location}'");
         var token = csrfToken ?? await GetCsrfTokenAsync(ct);
+        LogTokenExtraction($"SearchLegacyAsync: Got token={token?.Substring(0, Math.Min(10, token?.Length ?? 0)) ?? "null"}");
 
         // Build payload based on JobSpy's structure
         var payload = BuildSearchPayload(keyword, location);
+        LogTokenExtraction($"SearchLegacyAsync: Built payload length={payload.Length}");
 
         // Apply rate limiting before the request
         await ApplyRateLimitAsync(ct);
@@ -879,6 +1307,7 @@ public sealed class GlassdoorApiClient : IDisposable
 
         try
         {
+            LogTokenExtraction($"SearchLegacyAsync: Sending POST request to {GlassdoorConstants.ApiUrl}");
             // Use EnhancedRetryPolicy for automatic retry with exponential backoff
             var res = await _retryPolicy.ExecuteAsync(async () =>
             {
@@ -901,36 +1330,44 @@ public sealed class GlassdoorApiClient : IDisposable
                 return await _http!.SendAsync(retryRequest, ct).ConfigureAwait(false);
             }).ConfigureAwait(false);
 
+            LogTokenExtraction($"SearchLegacyAsync: Got response StatusCode={res.StatusCode}");
             var json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            LogTokenExtraction($"SearchLegacyAsync: Response length={json.Length}");
 
             // DEBUG: Write raw JSON to file
             try { System.IO.File.WriteAllText($"logs/glassdoor_search.json", json); } catch { }
 
             // Parse GraphQL response for errors
             var (hasErrors, shouldRetry) = ParseGraphQLErrors(json);
+            LogTokenExtraction($"SearchLegacyAsync: ParseGraphQLErrors returned hasErrors={hasErrors}, shouldRetry={shouldRetry}");
 
             if (hasErrors)
             {
                 // EnhancedRetryPolicy handles retries for transient errors
                 // If we still have errors after retries, return null
+                LogTokenExtraction($"SearchLegacyAsync: Returning null due to GraphQL errors");
                 return null;
             }
 
             if (res.IsSuccessStatusCode)
             {
+                LogTokenExtraction($"SearchLegacyAsync: Success, returning JSON");
                 return json;
             }
 
+            LogTokenExtraction($"SearchLegacyAsync: Non-success status code, returning null");
             return null;
         }
         catch (TaskCanceledException) when (ct.IsCancellationRequested)
         {
+            LogTokenExtraction($"SearchLegacyAsync: Request cancelled");
             // Operation was cancelled
             return null;
         }
         catch (Exception ex)
         {
             // Log the exception if logger is available
+            LogTokenExtraction($"SearchLegacyAsync: Exception {ex.GetType().Name}: {ex.Message}");
             if (_logger != null)
             {
                 LogSearchFailed(_logger, ex);
