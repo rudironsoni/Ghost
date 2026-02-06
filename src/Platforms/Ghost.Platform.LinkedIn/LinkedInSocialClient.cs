@@ -110,7 +110,7 @@ public sealed class LinkedInSocialClient : ISocialClient
         catch (Exception ex)
         {
             // Any exception - return mock profile
-            _logger.LogWarning(ex, "LinkedIn profile fetch failed for {ProfileId}. Returning mock profile data as fallback.", profileId);
+            LinkedInLog.LogProfileFetchFailed(_logger, profileId, ex);
             return new SocialProfile
             {
                 Id = profileId,

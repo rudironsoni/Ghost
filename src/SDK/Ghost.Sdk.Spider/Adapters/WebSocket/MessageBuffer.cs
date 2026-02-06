@@ -95,10 +95,7 @@ public class MessageBuffer
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="message"/> is null.</exception>
     public void Add(WebSocketMessage message)
     {
-        if (message == null)
-        {
-            throw new ArgumentNullException(nameof(message));
-        }
+        ArgumentNullException.ThrowIfNull(message);
 
         lock (_lock)
         {

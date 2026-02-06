@@ -63,23 +63,19 @@ public sealed class ProxyRotationMiddleware : IPipelineMiddleware
     /// Invokes the middleware to assign a proxy to the request.
     /// </summary>
     /// <param name="context">The pipeline context containing the request.</param>
-    /// <param name="next">The delegate to invoke the next middleware in the pipeline.</param>
+    /// <param name="continuation">The delegate to invoke the next middleware in the pipeline.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <exception cref="InvalidOperationException">Thrown when no healthy proxies are available.</exception>
-    public async Task InvokeAsync(PipelineContext context, PipelineDelegate next)
+    public async Task InvokeAsync(PipelineContext context, PipelineDelegate continuation)
     {
         var request = context.GetRequestAs<Request>();
         if (request == null)
         {
-            await next(context);
+            await continuation(context);
             return;
         }
 
-        var proxy = SelectProxy();
-        if (proxy == null)
-        {
-            throw new InvalidOperationException("No healthy proxies available for request.");
-        }
+        var proxy = SelectProxy() ?? throw new InvalidOperationException("No healthy proxies available for request.");
 
         // Store the selected proxy in the request metadata
         request.Metadata["Proxy"] = proxy.Url;
@@ -87,7 +83,7 @@ public sealed class ProxyRotationMiddleware : IPipelineMiddleware
 
         try
         {
-            await next(context);
+            await continuation(context);
 
             // Mark proxy as successful
             proxy.RecordSuccess();

@@ -40,6 +40,24 @@ public sealed class GoogleJobsBrowserClient
     private static readonly Action<ILogger, string, Exception?> s_logUserAgentRotation =
         LoggerMessage.Define<string>(LogLevel.Debug, new EventId(7, nameof(SearchAsync)), "Using user agent: {UserAgent}");
 
+    private static readonly Action<ILogger, string, string, int, Exception?> s_logSearchStarting =
+        LoggerMessage.Define<string, string, int>(LogLevel.Information, new EventId(8, nameof(SearchAsync)), "GoogleJobsBrowserClient starting search: Query={Query}, Location={Location}, MaxResults={MaxResults}");
+
+    private static readonly Action<ILogger, int, Exception?> s_logSearchCompleted =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(9, nameof(SearchAsync)), "GoogleJobsBrowserClient completed search, found {Count} jobs");
+
+    private static readonly Action<ILogger, Exception?> s_logSearchCancelled =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(10, nameof(SearchAsync)), "GoogleJobsBrowserClient search was cancelled");
+
+    private static readonly Action<ILogger, Exception?> s_logSearchFailed =
+        LoggerMessage.Define(LogLevel.Error, new EventId(11, nameof(SearchAsync)), "GoogleJobsBrowserClient search failed");
+
+    private static readonly Action<ILogger, Exception?> s_logPageDisposeFailed =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(12, nameof(SearchAsync)), "Failed to dispose page");
+
+    private static readonly Action<ILogger, Exception?> s_logSessionDisposeFailed =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(13, nameof(SearchAsync)), "Failed to dispose session");
+
     private int _sessionRequestCount;
     private const int MaxRequestsPerSession = 5;
 
@@ -90,8 +108,7 @@ public sealed class GoogleJobsBrowserClient
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        _logger.LogInformation("GoogleJobsBrowserClient starting search: Query={Query}, Location={Location}, MaxResults={MaxResults}",
-            query, location, maxResults);
+        s_logSearchStarting(_logger, query, location, maxResults, null);
 
         var jobs = new List<JobListing>();
         var sessionOptions = new SessionOptions();
@@ -165,25 +182,25 @@ public sealed class GoogleJobsBrowserClient
             jobs = await ExtractJobsFromPageAsync(page, maxResults, ct);
 
             s_logJobsFound(_logger, jobs.Count, null);
-            _logger.LogInformation("GoogleJobsBrowserClient completed search, found {Count} jobs", jobs.Count);
+            s_logSearchCompleted(_logger, jobs.Count, null);
 
             return jobs;
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GoogleJobsBrowserClient search was cancelled");
+            s_logSearchCancelled(_logger, null);
             throw;
         }
         catch (Exception ex)
         {
             s_logError(_logger, ex.Message, ex);
-            _logger.LogError(ex, "GoogleJobsBrowserClient search failed");
+            s_logSearchFailed(_logger, ex);
             return jobs;
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch (Exception ex) { _logger.LogWarning(ex, "Failed to dispose page"); }
-            try { await session.DisposeAsync(); } catch (Exception ex) { _logger.LogWarning(ex, "Failed to dispose session"); }
+            try { await page.DisposeAsync(); } catch (Exception ex) { s_logPageDisposeFailed(_logger, ex); }
+            try { await session.DisposeAsync(); } catch (Exception ex) { s_logSessionDisposeFailed(_logger, ex); }
         }
     }
 

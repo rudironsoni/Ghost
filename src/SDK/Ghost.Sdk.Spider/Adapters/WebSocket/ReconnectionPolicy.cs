@@ -91,7 +91,7 @@ public class ReconnectionPolicy
     /// When false, reconnection only occurs for abnormal closures (network errors,
     /// timeouts, etc.). When true, reconnection happens for all closures.
     /// </remarks>
-    public bool ReconnectOnNormalClose { get; set; } = false;
+    public bool ReconnectOnNormalClose { get; set; }
 
     /// <summary>
     /// Gets or sets the timeout for reconnection attempts.

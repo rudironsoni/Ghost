@@ -9,6 +9,7 @@ namespace Ghost.Sdk.Spider.Engine.Queue;
 /// Request queues manage the pending requests in a spider, supporting
 /// priority-based scheduling, deduplication, and persistence.
 /// </remarks>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "IRequestQueue is an interface for a queue data structure and the name is appropriate")]
 public interface IRequestQueue
 {
     /// <summary>

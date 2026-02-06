@@ -181,19 +181,16 @@ internal class HttpRequestBuilder
     /// <param name="httpRequest">The HTTP request message.</param>
     /// <param name="name">The header name.</param>
     /// <param name="value">The header value.</param>
-    private void TryAddHeader(HttpRequestMessage httpRequest, string name, string value)
+    private static void TryAddHeader(HttpRequestMessage httpRequest, string name, string value)
     {
         // Remove existing header if present
         httpRequest.Headers.Remove(name);
 
         // Try to add to request headers first
-        if (!httpRequest.Headers.TryAddWithoutValidation(name, value))
+        if (!httpRequest.Headers.TryAddWithoutValidation(name, value) && httpRequest.Content != null)
         {
             // If that fails and we have content, try adding to content headers
-            if (httpRequest.Content != null)
-            {
-                httpRequest.Content.Headers.TryAddWithoutValidation(name, value);
-            }
+            httpRequest.Content.Headers.TryAddWithoutValidation(name, value);
         }
     }
 
@@ -290,7 +287,7 @@ internal class HttpRequestBuilder
     /// </summary>
     /// <param name="httpRequest">The HTTP request message.</param>
     /// <param name="formData">The form data dictionary.</param>
-    private void ConfigureFormContent(HttpRequestMessage httpRequest, Dictionary<string, string> formData)
+    private static void ConfigureFormContent(HttpRequestMessage httpRequest, Dictionary<string, string> formData)
     {
         httpRequest.Content = new FormUrlEncodedContent(formData);
     }

@@ -213,7 +213,7 @@ public static class XServiceCollectionExtensions
 /// <summary>
 /// Background service for health checks.
 /// </summary>
-public class XHealthCheckService : BackgroundService
+public partial class XHealthCheckService : BackgroundService
 {
     private readonly XPlatformHealthCheck _healthCheck;
     private readonly IXMetricsService _metrics;
@@ -239,12 +239,12 @@ public class XHealthCheckService : BackgroundService
 
                 if (result.Status == HealthStatus.Unhealthy)
                 {
-                    _logger.LogError("X platform health check failed: {Messages}",
+                    Log.HealthCheckFailed(_logger,
                         string.Join(", ", result.Messages));
                 }
                 else if (result.Status == HealthStatus.Degraded)
                 {
-                    _logger.LogWarning("X platform health check degraded: {Messages}",
+                    Log.HealthCheckDegraded(_logger,
                         string.Join(", ", result.Messages));
                 }
 
@@ -252,8 +252,7 @@ public class XHealthCheckService : BackgroundService
                 var metrics = _metrics.GetMetrics();
                 if (metrics.TotalRequests > 0)
                 {
-                    _logger.LogInformation(
-                        "X Metrics - Total: {Total}, Success: {SuccessRate:P}, RateLimits: {RateLimits}",
+                    Log.Metrics(_logger,
                         metrics.TotalRequests,
                         metrics.SuccessRate,
                         metrics.RateLimitHits);
@@ -261,7 +260,7 @@ public class XHealthCheckService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Health check service error");
+                Log.HealthCheckServiceError(_logger, ex);
             }
 
             await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);

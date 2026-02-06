@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace Ghost.Platform.X;
 
-public class XSocialClient : ISocialClient
+public partial class XSocialClient : ISocialClient
 {
     private readonly IBrowserSession _session;
     private readonly XOptions _options;
@@ -36,7 +36,7 @@ public class XSocialClient : ISocialClient
 
     public async Task<SocialProfile> GetProfileAsync(string profileId, CancellationToken ct = default)
     {
-        _logger.LogInformation("Fetching X profile for: {ProfileId}", profileId);
+        Log.FetchingProfile(_logger, profileId);
         var pageOpts = _options.GetPageOptions();
         var page = await _session.NewPageAsync(pageOpts, ct: ct);
 
@@ -47,7 +47,7 @@ public class XSocialClient : ISocialClient
             await page.WaitForLoadStateAsync(ct: ct);
             await _authenticator.EnsureAuthenticatedAsync(page, ct).ConfigureAwait(false);
             var profile = await ExtractProfileDataAsync(page, profileId, ct);
-            _logger.LogInformation("Successfully fetched profile for: {ProfileId}", profileId);
+            Log.ProfileFetched(_logger, profileId);
             return profile;
         }
         finally
@@ -60,7 +60,7 @@ public class XSocialClient : ISocialClient
         ProfileSearchCriteria criteria,
         CancellationToken ct = default)
     {
-        _logger.LogInformation("Searching X profiles for: {Query}", criteria.Query);
+        Log.SearchingProfiles(_logger, criteria.Query);
         var pageOpts = _options.GetPageOptions();
         var page = await _session.NewPageAsync(pageOpts, ct: ct);
 
@@ -72,7 +72,7 @@ public class XSocialClient : ISocialClient
             await page.WaitForLoadStateAsync(ct: ct);
             await _authenticator.EnsureAuthenticatedAsync(page, ct).ConfigureAwait(false);
             var profiles = await ExtractSearchResultsAsync(page, criteria.MaxResults, ct);
-            _logger.LogInformation("Found {Count} profiles for query: {Query}", profiles.Count, criteria.Query);
+            Log.ProfilesFound(_logger, profiles.Count, criteria.Query);
             return profiles.AsReadOnly();
         }
         finally
@@ -85,8 +85,7 @@ public class XSocialClient : ISocialClient
         CreatePostRequest request,
         CancellationToken ct = default)
     {
-        _logger.LogInformation("Creating X post with content length: {Length}",
-            request.Content?.Length ?? 0);
+        Log.CreatingPost(_logger, request.Content?.Length ?? 0);
         var pageOpts = _options.GetPageOptions();
         var page = await _session.NewPageAsync(pageOpts, ct: ct);
 
@@ -103,7 +102,7 @@ public class XSocialClient : ISocialClient
                 CreatedAt = DateTime.UtcNow
             };
 
-            _logger.LogInformation("Successfully created X post with ID: {PostId}", postId);
+            Log.PostCreated(_logger, postId);
             return post;
         }
         finally
@@ -116,7 +115,7 @@ public class XSocialClient : ISocialClient
         FeedOptions? options = null,
         CancellationToken ct = default)
     {
-        _logger.LogInformation("Fetching X feed");
+        Log.FetchingFeed(_logger);
         var pageOpts = _options.GetPageOptions();
         var page = await _session.NewPageAsync(pageOpts, ct: ct);
 
@@ -128,7 +127,7 @@ public class XSocialClient : ISocialClient
             await page.WaitForLoadStateAsync(ct: ct);
             await _authenticator.EnsureAuthenticatedAsync(page, ct).ConfigureAwait(false);
             var posts = await ExtractFeedPostsAsync(page, options?.PageSize ?? 25, ct);
-            _logger.LogInformation("Fetched {Count} posts from feed", posts.Count);
+            Log.FeedFetched(_logger, posts.Count);
             return posts.AsReadOnly();
         }
         finally
@@ -142,7 +141,7 @@ public class XSocialClient : ISocialClient
         string message,
         CancellationToken ct = default)
     {
-        _logger.LogInformation("Sending message to: {RecipientId}", recipientId);
+        Log.SendingMessage(_logger, recipientId);
         var pageOpts = _options.GetPageOptions();
         var page = await _session.NewPageAsync(pageOpts, ct: ct);
 
@@ -208,7 +207,7 @@ public class XSocialClient : ISocialClient
             await sendButton.ClickAsync(ct: ct);
             await Task.Delay(1000, ct);
 
-            _logger.LogInformation("Successfully sent message to: {RecipientId}", recipientId);
+            Log.MessageSent(_logger, recipientId);
         }
         finally
         {
@@ -221,7 +220,7 @@ public class XSocialClient : ISocialClient
         CancellationToken ct = default)
     {
         var profileId = options?.ProfileId ?? "me";
-        _logger.LogInformation("Fetching connections for: {ProfileId}", profileId);
+        Log.FetchingConnections(_logger, profileId);
         var pageOpts = _options.GetPageOptions();
         var page = await _session.NewPageAsync(pageOpts, ct: ct);
 
@@ -233,8 +232,7 @@ public class XSocialClient : ISocialClient
             await page.WaitForLoadStateAsync(ct: ct);
             await _authenticator.EnsureAuthenticatedAsync(page, ct).ConfigureAwait(false);
             var connections = await ExtractSocialConnectionsAsync(page, profileId, ct);
-            _logger.LogInformation("Fetched {Count} connections for: {ProfileId}",
-                connections.Count, profileId);
+            Log.ConnectionsFetched(_logger, connections.Count, profileId);
             return connections.AsReadOnly();
         }
         finally
@@ -248,7 +246,7 @@ public class XSocialClient : ISocialClient
         string? message = null,
         CancellationToken ct = default)
     {
-        _logger.LogInformation("Following user: {ProfileId}", profileId);
+        Log.FollowingUser(_logger, profileId);
         var pageOpts = _options.GetPageOptions();
         var page = await _session.NewPageAsync(pageOpts, ct: ct);
 
@@ -268,7 +266,7 @@ public class XSocialClient : ISocialClient
                 var followingButton = await page.QuerySelectorAsync("button[data-testid='unfollow']", ct);
                 if (followingButton != null)
                 {
-                    _logger.LogInformation("Already following user: {ProfileId}", profileId);
+                    Log.AlreadyFollowing(_logger, profileId);
                     return;
                 }
 
@@ -278,7 +276,7 @@ public class XSocialClient : ISocialClient
             await followButton.ClickAsync(ct: ct);
             await Task.Delay(1000, ct);
 
-            _logger.LogInformation("Successfully followed user: {ProfileId}", profileId);
+            Log.UserFollowed(_logger, profileId);
         }
         finally
         {
@@ -310,7 +308,7 @@ public class XSocialClient : ISocialClient
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to extract profile name");
+            Log.ProfileNameExtractionFailed(_logger, ex);
         }
 
         try
@@ -324,7 +322,7 @@ public class XSocialClient : ISocialClient
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to extract profile bio");
+            Log.ProfileBioExtractionFailed(_logger, ex);
         }
 
         try
@@ -346,7 +344,7 @@ public class XSocialClient : ISocialClient
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to extract follower count");
+            Log.FollowerCountExtractionFailed(_logger, ex);
         }
 
         return new SocialProfile
@@ -395,13 +393,13 @@ public class XSocialClient : ISocialClient
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to extract search result");
+                    Log.SearchResultExtractionFailed(_logger, ex);
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to extract search results");
+            Log.SearchResultsExtractionFailed(_logger, ex);
         }
 
         return profiles;
@@ -430,13 +428,13 @@ public class XSocialClient : ISocialClient
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to extract feed post");
+                    Log.FeedPostExtractionFailed(_logger, ex);
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to extract feed posts");
+            Log.FeedPostsExtractionFailed(_logger, ex);
         }
 
         return posts;
@@ -479,7 +477,7 @@ public class XSocialClient : ISocialClient
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to extract post from article");
+            Log.PostFromArticleExtractionFailed(_logger, ex);
             return null;
         }
     }
@@ -523,13 +521,13 @@ public class XSocialClient : ISocialClient
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to extract connection");
+                    Log.ConnectionExtractionFailed(_logger, ex);
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to extract connections");
+            Log.ConnectionsExtractionFailed(_logger, ex);
         }
 
         return connections;

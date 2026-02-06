@@ -32,7 +32,7 @@ namespace Ghost.Sdk.Spider.Pipeline;
 public sealed class PipelineBuilder
 {
     private readonly List<MiddlewareEntry> _middlewareEntries = new();
-    private int _nextOrder = 0;
+    private int _nextOrder;
 
     /// <summary>
     /// Adds a middleware component to the pipeline with default configuration.
@@ -156,7 +156,7 @@ public sealed class PipelineBuilder
     /// builder.Use(async (context, next) =>
     /// {
     ///     Console.WriteLine($"Before: {context.RequestId}");
-    ///     await next(context);
+    ///     await continuation(context);
     ///     Console.WriteLine($"After: {context.RequestId}");
     /// });
     /// </code>
@@ -278,9 +278,9 @@ public sealed class PipelineBuilder
             _middlewareFunc = middlewareFunc;
         }
 
-        public Task InvokeAsync(PipelineContext context, PipelineDelegate next)
+        public Task InvokeAsync(PipelineContext context, PipelineDelegate continuation)
         {
-            return _middlewareFunc(context, next);
+            return _middlewareFunc(context, continuation);
         }
     }
 }

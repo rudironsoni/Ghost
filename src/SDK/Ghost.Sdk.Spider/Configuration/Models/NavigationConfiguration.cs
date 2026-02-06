@@ -23,7 +23,7 @@ public sealed class NavigationConfiguration
     /// <summary>
     /// Gets or sets whether to handle pagination automatically.
     /// </summary>
-    public bool HandlePagination { get; set; } = false;
+    public bool HandlePagination { get; set; }
 
     /// <summary>
     /// Gets or sets the pagination configuration.
@@ -33,7 +33,7 @@ public sealed class NavigationConfiguration
     /// <summary>
     /// Gets or sets whether to handle infinite scroll.
     /// </summary>
-    public bool HandleInfiniteScroll { get; set; } = false;
+    public bool HandleInfiniteScroll { get; set; }
 
     /// <summary>
     /// Gets or sets infinite scroll configuration.

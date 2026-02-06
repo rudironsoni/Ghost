@@ -28,7 +28,7 @@ public sealed class TargetConfiguration
     /// <summary>
     /// Gets or sets the maximum depth for crawling. 0 means only start URLs.
     /// </summary>
-    public int MaxDepth { get; set; } = 0;
+    public int MaxDepth { get; set; }
 
     /// <summary>
     /// Gets or sets whether to follow redirects.

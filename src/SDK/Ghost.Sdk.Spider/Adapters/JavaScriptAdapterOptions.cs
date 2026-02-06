@@ -48,7 +48,7 @@ public class JavaScriptAdapterOptions : AdapterOptions
     /// <c>true</c> to block image loading for faster page loads; otherwise, <c>false</c>.
     /// Defaults to <c>false</c>.
     /// </value>
-    public bool BlockImages { get; set; } = false;
+    public bool BlockImages { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether to block CSS.
@@ -57,7 +57,7 @@ public class JavaScriptAdapterOptions : AdapterOptions
     /// <c>true</c> to block CSS loading; otherwise, <c>false</c>.
     /// Defaults to <c>false</c>.
     /// </value>
-    public bool BlockCss { get; set; } = false;
+    public bool BlockCss { get; set; }
 
     /// <summary>
     /// Gets or sets the wait condition after page load.
@@ -92,7 +92,7 @@ public class JavaScriptAdapterOptions : AdapterOptions
     /// <c>true</c> to capture screenshots when errors occur; otherwise, <c>false</c>.
     /// Defaults to <c>false</c>.
     /// </value>
-    public bool ScreenshotOnError { get; set; } = false;
+    public bool ScreenshotOnError { get; set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JavaScriptAdapterOptions"/> class.

@@ -18,6 +18,21 @@ public class GoogleJobsScraper
     private readonly HttpClient _httpClient;
     private readonly ILogger<GoogleJobsScraper> _logger;
 
+    private static readonly Action<ILogger, string, Exception?> s_logScrapingStarted =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(ScrapeJobsAsync)), "Scraping Google Jobs from: {Url}");
+
+    private static readonly Action<ILogger, int, Exception?> s_logHtmlReceived =
+        LoggerMessage.Define<int>(LogLevel.Debug, new EventId(2, nameof(ScrapeJobsAsync)), "Received {Length} bytes of HTML");
+
+    private static readonly Action<ILogger, Exception?> s_logJsonLdParsingFailed =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(3, nameof(ScrapeJobsAsync)), "Failed to parse JSON-LD job");
+
+    private static readonly Action<ILogger, int, Exception?> s_logScrapingSuccessful =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(4, nameof(ScrapeJobsAsync)), "Successfully scraped {Count} jobs from Google");
+
+    private static readonly Action<ILogger, Exception?> s_logScrapingFailed =
+        LoggerMessage.Define(LogLevel.Error, new EventId(5, nameof(ScrapeJobsAsync)), "Failed to scrape Google Jobs");
+
     public GoogleJobsScraper(HttpClient httpClient, ILogger<GoogleJobsScraper> logger)
     {
         _httpClient = httpClient;
@@ -34,7 +49,7 @@ public class GoogleJobsScraper
             var searchQuery = Uri.EscapeDataString($"{query} jobs {location}".Trim());
             var url = $"https://www.google.com/search?q={searchQuery}&ibp=htl;jobs";
 
-            _logger.LogInformation("Scraping Google Jobs from: {Url}", url);
+            s_logScrapingStarted(_logger, url, null);
 
             // Set headers to mimic real browser
             var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -47,7 +62,7 @@ public class GoogleJobsScraper
             var response = await _httpClient.SendAsync(request, ct);
             var html = await response.Content.ReadAsStringAsync(ct);
 
-            _logger.LogDebug("Received {Length} bytes of HTML", html.Length);
+            s_logHtmlReceived(_logger, html.Length, null);
 
             // Parse HTML
             var doc = new HtmlDocument();
@@ -74,7 +89,7 @@ public class GoogleJobsScraper
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "Failed to parse JSON-LD job");
+                        s_logJsonLdParsingFailed(_logger, ex);
                     }
                 }
             }
@@ -85,12 +100,12 @@ public class GoogleJobsScraper
                 jobs = ExtractJobsFromHtml(doc, maxResults);
             }
 
-            _logger.LogInformation("Successfully scraped {Count} jobs from Google", jobs.Count);
+            s_logScrapingSuccessful(_logger, jobs.Count, null);
             return jobs;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to scrape Google Jobs");
+            s_logScrapingFailed(_logger, ex);
             return jobs;
         }
     }

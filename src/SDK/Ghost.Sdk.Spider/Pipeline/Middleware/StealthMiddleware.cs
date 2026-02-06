@@ -92,9 +92,9 @@ public sealed class StealthMiddleware : IPipelineMiddleware
     /// Invokes the middleware to apply stealth techniques to the request.
     /// </summary>
     /// <param name="context">The pipeline context containing the request.</param>
-    /// <param name="next">The delegate to invoke the next middleware in the pipeline.</param>
+    /// <param name="continuation">The delegate to invoke the next middleware in the pipeline.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task InvokeAsync(PipelineContext context, PipelineDelegate next)
+    public async Task InvokeAsync(PipelineContext context, PipelineDelegate continuation)
     {
         var request = context.GetRequestAs<Request>();
         if (request != null && _enableFingerprinting)
@@ -108,7 +108,7 @@ public sealed class StealthMiddleware : IPipelineMiddleware
             await Task.Delay(delay, context.CancellationToken);
         }
 
-        await next(context);
+        await continuation(context);
     }
 
     /// <summary>

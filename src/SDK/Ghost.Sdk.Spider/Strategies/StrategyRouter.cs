@@ -4,6 +4,33 @@ using Microsoft.Extensions.Logging;
 
 namespace Ghost.Sdk.Spider.Strategies;
 
+internal static partial class StrategyRouterLogMessages
+{
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Registered strategy: {StrategyName}")]
+    public static partial void LogStrategyRegistered(this ILogger logger, string strategyName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Executing strategies for URL: {Url}")]
+    public static partial void LogExecutingStrategies(this ILogger logger, string url);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Strategy {StrategyName} succeeded for {Url}")]
+    public static partial void LogStrategySucceeded(this ILogger logger, string strategyName, string url);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Strategy {StrategyName} failed for {Url}: {Error}")]
+    public static partial void LogStrategyFailed(this ILogger logger, string strategyName, string url, string? error);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Strategy {StrategyName} threw exception for {Url}")]
+    public static partial void LogStrategyException(this ILogger logger, Exception ex, string strategyName, string url);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Strategy {StrategyName} not found in chain")]
+    public static partial void LogStrategyNotFoundInChain(this ILogger logger, string strategyName);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Chain execution stopped at {StrategyName} due to failure")]
+    public static partial void LogChainExecutionStopped(this ILogger logger, string strategyName);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Strategy metrics reset")]
+    public static partial void LogMetricsReset(this ILogger logger);
+}
+
 /// <summary>
 /// Router for executing extraction strategies with fallback and chaining support.
 /// </summary>
@@ -52,7 +79,7 @@ public class StrategyRouter : IStrategyRouter
             }
         }
 
-        _logger?.LogDebug("Registered strategy: {StrategyName}", name);
+        _logger?.LogStrategyRegistered(name);
     }
 
     /// <inheritdoc/>
@@ -62,7 +89,7 @@ public class StrategyRouter : IStrategyRouter
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        _logger?.LogDebug("Executing strategies for URL: {Url}", context.Url);
+        _logger?.LogExecutingStrategies(context.Url);
 
         // Execute strategies in order until one succeeds
         foreach (var (name, strategy) in _strategies.OrderBy(s => s.Key))
@@ -74,16 +101,15 @@ public class StrategyRouter : IStrategyRouter
 
                 if (result.Success)
                 {
-                    _logger?.LogDebug("Strategy {StrategyName} succeeded for {Url}", name, context.Url);
+                    _logger?.LogStrategySucceeded(name, context.Url);
                     return result;
                 }
 
-                _logger?.LogDebug("Strategy {StrategyName} failed for {Url}: {Error}",
-                    name, context.Url, result.ErrorMessage);
+                _logger?.LogStrategyFailed(name, context.Url, result.ErrorMessage);
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Strategy {StrategyName} threw exception for {Url}", name, context.Url);
+                _logger?.LogStrategyException(ex, name, context.Url);
                 UpdateMetrics(name, false, TimeSpan.Zero);
             }
         }
@@ -131,7 +157,7 @@ public class StrategyRouter : IStrategyRouter
             var strategyName = strategyConfig.Name;
             if (!_strategies.TryGetValue(strategyName, out var strategy))
             {
-                _logger?.LogWarning("Strategy {StrategyName} not found in chain", strategyName);
+                _logger?.LogStrategyNotFoundInChain(strategyName);
                 continue;
             }
 
@@ -148,7 +174,7 @@ public class StrategyRouter : IStrategyRouter
             // Stop chain on failure if configured
             if (!result.Success && chain.StopOnFailure)
             {
-                _logger?.LogWarning("Chain execution stopped at {StrategyName} due to failure", strategyName);
+                _logger?.LogChainExecutionStopped(strategyName);
                 break;
             }
         }
@@ -190,7 +216,7 @@ public class StrategyRouter : IStrategyRouter
             }
         }
 
-        _logger?.LogInformation("Strategy metrics reset");
+        _logger?.LogMetricsReset();
     }
 
     private async Task<ExtractionResult> ExecuteStrategyInternalAsync(

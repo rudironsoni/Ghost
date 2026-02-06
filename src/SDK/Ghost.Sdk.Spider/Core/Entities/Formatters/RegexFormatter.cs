@@ -52,19 +52,19 @@ public class RegexFormatter : Formatter
     /// Only used when <see cref="Replacement"/> is null.
     /// </summary>
     /// <value>The zero-based group index. Defaults to 0.</value>
-    public int Group { get; set; } = 0;
+    public int Group { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the pattern is case-insensitive.
     /// </summary>
     /// <value><c>true</c> for case-insensitive matching; otherwise, <c>false</c>. Defaults to <c>false</c>.</value>
-    public bool IgnoreCase { get; set; } = false;
+    public bool IgnoreCase { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether to use multiline mode.
     /// </summary>
     /// <value><c>true</c> to enable multiline mode; otherwise, <c>false</c>. Defaults to <c>false</c>.</value>
-    public bool Multiline { get; set; } = false;
+    public bool Multiline { get; set; }
 
     /// <inheritdoc/>
     public override object? Format(object? value)

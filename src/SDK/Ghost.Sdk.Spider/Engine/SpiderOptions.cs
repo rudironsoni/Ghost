@@ -63,7 +63,7 @@ public class SpiderOptions
     /// Gets or sets a value indicating whether to enable auto-throttling.
     /// </summary>
     /// <value><c>true</c> to automatically adjust request rate; otherwise, <c>false</c>. Defaults to <c>false</c>.</value>
-    public bool EnableAutoThrottle { get; set; } = false;
+    public bool EnableAutoThrottle { get; set; }
 
     /// <summary>
     /// Gets or sets custom metadata for the spider.

@@ -88,6 +88,36 @@ public sealed class GoogleJobsApiClient : IDisposable
     private static readonly Action<ILogger, string, Exception?> LogSessionCloseFailed =
         LoggerMessage.Define<string>(LogLevel.Error, new EventId(21, "SessionCloseFailed"), "Failed to close session {SessionId} during disposal");
 
+    private static readonly Action<ILogger, string, string, Exception?> LogExecuteSearchStarting =
+        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(22, "ExecuteSearchStarting"), "GoogleJobsApiClient ExecuteSearchAsync starting: Query={Query}, Location={Location}");
+
+    private static readonly Action<ILogger, string, Exception?> LogDirectGoogleJobsUrl =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(23, "DirectGoogleJobsUrl"), "Direct Google Jobs URL (NO API): {Url}");
+
+    private static readonly Action<ILogger, Exception?> LogUsingRotatingProxySession =
+        LoggerMessage.Define(LogLevel.Debug, new EventId(24, "UsingRotatingProxySession"), "Using RotatingProxySession for request");
+
+    private static readonly Action<ILogger, Exception?> LogUsingDirectHttpClient =
+        LoggerMessage.Define(LogLevel.Debug, new EventId(25, "UsingDirectHttpClient"), "Using direct HttpClient for request");
+
+    private static readonly Action<ILogger, int, Exception?> LogReceivedResponseStatus =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(26, "ReceivedResponseStatus"), "Received response with status code: {StatusCode}");
+
+    private static readonly Action<ILogger, int, Exception?> LogReceivedHtmlContent =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(27, "ReceivedHtmlContent"), "Received HTML content of length: {Length} bytes");
+
+    private static readonly Action<ILogger, Exception?> LogWroteHtmlDebugFile =
+        LoggerMessage.Define(LogLevel.Information, new EventId(28, "WroteHtmlDebugFile"), "Wrote HTML response to logs/google_jobs_search.html");
+
+    private static readonly Action<ILogger, Exception?> LogFailedToWriteHtmlDebugFile =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(29, "FailedToWriteHtmlDebugFile"), "Failed to write HTML debug file");
+
+    private static readonly Action<ILogger, long, Exception?> LogWroteRetryHtmlDebugFile =
+        LoggerMessage.Define<long>(LogLevel.Information, new EventId(30, "WroteRetryHtmlDebugFile"), "Wrote retry HTML response to logs/google_jobs_search_retry_{Ticks}.html");
+
+    private static readonly Action<ILogger, Exception?> LogFailedToWriteRetryHtmlDebugFile =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(31, "FailedToWriteRetryHtmlDebugFile"), "Failed to write retry HTML debug file");
+
     // Track request count if needed for session rotation logic. Suppress unused/analysis warnings for now.
 #pragma warning disable CS0169, CS0414, CA1805
     private int _requestCount;
@@ -188,7 +218,7 @@ public sealed class GoogleJobsApiClient : IDisposable
 
     private async Task<IReadOnlyList<JobListing>> ExecuteSearchAsync(string query, string location, RotatingProxySession? httpSession, CancellationToken ct)
     {
-        _logger.LogInformation("GoogleJobsApiClient ExecuteSearchAsync starting: Query={Query}, Location={Location}", query, location);
+        LogExecuteSearchStarting(_logger, query, location, null);
 
         // Build the search query: "{query} jobs in {location}" or just "{query} {location}" depending on configuration
         var searchTerm = string.IsNullOrWhiteSpace(location)
@@ -202,7 +232,7 @@ public sealed class GoogleJobsApiClient : IDisposable
         var url = $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en";
 
         LogFetchingJobs(_logger, url, null);
-        _logger.LogInformation("Direct Google Jobs URL (NO API): {Url}", url);
+        LogDirectGoogleJobsUrl(_logger, url, null);
 
         LogCookieInjection(_logger, null);
         var userAgent = GoogleJobsConstants.GetRandomUserAgent();
@@ -224,32 +254,32 @@ public sealed class GoogleJobsApiClient : IDisposable
         HttpResponseMessage res;
         if (httpSession != null)
         {
-            _logger.LogDebug("Using RotatingProxySession for request");
+            LogUsingRotatingProxySession(_logger, null);
             res = await _retryPolicy.ExecuteAsync(async () => await httpSession.ExecuteAsync(() => req, ct).ConfigureAwait(false)).ConfigureAwait(false);
         }
         else
         {
-            _logger.LogDebug("Using direct HttpClient for request");
+            LogUsingDirectHttpClient(_logger, null);
             res = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(req, ct).ConfigureAwait(false)).ConfigureAwait(false);
         }
 
-        _logger.LogInformation("Received response with status code: {StatusCode}", res.StatusCode);
+        LogReceivedResponseStatus(_logger, (int)res.StatusCode, null);
 
         using (res)
         {
             var html = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            _logger.LogInformation("Received HTML content of length: {Length} bytes", html.Length);
+            LogReceivedHtmlContent(_logger, html.Length, null);
 
             // DEBUG: Write raw HTML to file
             try
             {
                 System.IO.Directory.CreateDirectory("logs");
                 System.IO.File.WriteAllText("logs/google_jobs_search.html", html);
-                _logger.LogInformation("Wrote HTML response to logs/google_jobs_search.html");
+                LogWroteHtmlDebugFile(_logger, null);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to write HTML debug file");
+                LogFailedToWriteHtmlDebugFile(_logger, ex);
             }
 
             // Enhanced consent detection - check for multiple Google consent patterns
@@ -314,11 +344,11 @@ public sealed class GoogleJobsApiClient : IDisposable
                                 System.IO.Directory.CreateDirectory("logs");
                                 var ticks = DateTime.Now.Ticks;
                                 System.IO.File.WriteAllText($"logs/google_jobs_search_retry_{ticks}.html", html);
-                                _logger.LogInformation("Wrote retry HTML response to logs/google_jobs_search_retry_{Ticks}.html", ticks);
+                                LogWroteRetryHtmlDebugFile(_logger, ticks, null);
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogWarning(ex, "Failed to write retry HTML debug file");
+                                LogFailedToWriteRetryHtmlDebugFile(_logger, ex);
                             }
 
                             // Check if this attempt succeeded

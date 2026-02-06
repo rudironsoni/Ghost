@@ -76,12 +76,12 @@ public sealed class RetryMiddleware : IPipelineMiddleware
     /// Invokes the middleware to execute the request with retry logic.
     /// </summary>
     /// <param name="context">The pipeline context containing the request.</param>
-    /// <param name="next">The delegate to invoke the next middleware in the pipeline.</param>
+    /// <param name="continuation">The delegate to invoke the next middleware in the pipeline.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <exception cref="AggregateException">
     /// Thrown when all retry attempts have been exhausted.
     /// </exception>
-    public async Task InvokeAsync(PipelineContext context, PipelineDelegate next)
+    public async Task InvokeAsync(PipelineContext context, PipelineDelegate continuation)
     {
         var exceptions = new List<Exception>();
         var attempt = 0;
@@ -90,7 +90,7 @@ public sealed class RetryMiddleware : IPipelineMiddleware
         {
             try
             {
-                await next(context);
+                await continuation(context);
 
                 // Success - record the attempt if it was a retry
                 if (attempt > 0 && context.StateBox != null)

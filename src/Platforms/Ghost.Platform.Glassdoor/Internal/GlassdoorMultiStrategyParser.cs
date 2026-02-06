@@ -18,13 +18,11 @@ namespace Ghost.Platform.Glassdoor.Internal;
 /// </summary>
 public sealed class GlassdoorMultiStrategyParser
 {
-    private readonly EntityParser _entityParser;
     private readonly ILogger<GlassdoorMultiStrategyParser> _logger;
 
     public GlassdoorMultiStrategyParser(ILogger<GlassdoorMultiStrategyParser>? logger = null)
     {
         _logger = logger ?? NullLogger<GlassdoorMultiStrategyParser>.Instance;
-        _entityParser = new EntityParser();
     }
 
     #region Logging Definitions
@@ -107,7 +105,7 @@ public sealed class GlassdoorMultiStrategyParser
                 Timestamp = DateTime.UtcNow
             };
 
-            var entities = _entityParser.Parse<GlassdoorJobEntity>(context);
+            var entities = EntityParser.Parse<GlassdoorJobEntity>(context);
 
             if (entities.Count > 0)
             {

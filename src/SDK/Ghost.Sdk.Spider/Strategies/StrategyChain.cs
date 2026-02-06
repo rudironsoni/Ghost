@@ -23,7 +23,7 @@ public class StrategyChain
     /// <summary>
     /// Gets or sets a value indicating whether to stop execution on first success.
     /// </summary>
-    public bool StopOnSuccess { get; init; } = false;
+    public bool StopOnSuccess { get; init; }
 
     /// <summary>
     /// Gets or sets the strategy for aggregating results from multiple strategies.

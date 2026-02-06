@@ -42,7 +42,7 @@ public class UrlDecodeFormatter : Formatter
     /// <c>true</c> to decode until no more encoded sequences remain (useful for double-encoded URLs);
     /// otherwise, <c>false</c>. Defaults to <c>false</c>.
     /// </value>
-    public bool DecodeMultipleTimes { get; set; } = false;
+    public bool DecodeMultipleTimes { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum number of decode iterations when <see cref="DecodeMultipleTimes"/> is true.

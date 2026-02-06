@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>Ghost.Platform.X</RootNamespace>
     <Description>Ghost X (Twitter) platform integration</Description>
-    <NoWarn>$(NoWarn);CA1805;CA1848;CA1822;CA1305;CA2016;CA1834;IDE0032;IDE0270</NoWarn>
+    <NoWarn>$(NoWarn);CA1805;CA1822;CA1305;CA2016;CA1834;IDE0032;IDE0270</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

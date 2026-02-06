@@ -16,12 +16,12 @@ public class FieldAttribute : Attribute
     /// <summary>
     /// Gets or sets a value indicating whether this field is required for entity validation.
     /// </summary>
-    public bool Required { get; init; } = false;
+    public bool Required { get; init; }
 
     /// <summary>
     /// Gets or sets a value indicating whether to ignore this field if it's null or empty.
     /// </summary>
-    public bool IgnoreNull { get; init; } = false;
+    public bool IgnoreNull { get; init; }
 
     /// <summary>
     /// Gets or sets the maximum length for string values.
@@ -33,7 +33,7 @@ public class FieldAttribute : Attribute
     /// Gets or sets the minimum length for string values.
     /// Values shorter than this will fail validation if Required is true.
     /// </summary>
-    public int MinLength { get; init; } = 0;
+    public int MinLength { get; init; }
 
     /// <summary>
     /// Gets or sets a regular expression pattern for validation.
@@ -43,7 +43,7 @@ public class FieldAttribute : Attribute
     /// <summary>
     /// Gets or sets a value indicating whether to remove HTML tags from the extracted value.
     /// </summary>
-    public bool RemoveHtml { get; init; } = false;
+    public bool RemoveHtml { get; init; }
 
     /// <summary>
     /// Gets or sets the order in which this field should be processed relative to other fields.

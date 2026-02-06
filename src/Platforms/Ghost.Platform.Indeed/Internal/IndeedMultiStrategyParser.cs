@@ -18,13 +18,11 @@ namespace Ghost.Platform.Indeed.Internal;
 /// </summary>
 public sealed class IndeedMultiStrategyParser
 {
-    private readonly EntityParser _entityParser;
     private readonly ILogger<IndeedMultiStrategyParser> _logger;
 
     public IndeedMultiStrategyParser(ILogger<IndeedMultiStrategyParser>? logger = null)
     {
         _logger = logger ?? NullLogger<IndeedMultiStrategyParser>.Instance;
-        _entityParser = new EntityParser();
     }
 
 
@@ -44,6 +42,12 @@ public sealed class IndeedMultiStrategyParser
 
     private static readonly Action<ILogger, string, string, Exception?> LogIncompleteEntity =
         LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(5, nameof(LogIncompleteEntity)), "Skipping incomplete job: title={Title}, company={Company}");
+
+    private static readonly Action<ILogger, Exception?> LogParseError =
+        LoggerMessage.Define(LogLevel.Error, new EventId(6, nameof(LogParseError)), "Error parsing HTML");
+
+    private static readonly Action<ILogger, Exception?> LogConversionWarning =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(7, nameof(LogConversionWarning)), "Failed to convert entity to JobListing");
 
     #endregion
 
@@ -72,7 +76,7 @@ public sealed class IndeedMultiStrategyParser
             };
 
             // Parse entities using EntityParser
-            var entities = _entityParser.Parse<IndeedJobEntity>(context);
+            var entities = EntityParser.Parse<IndeedJobEntity>(context);
 
             if (entities.Count == 0)
             {
@@ -89,7 +93,7 @@ public sealed class IndeedMultiStrategyParser
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error parsing HTML");
+            LogParseError(_logger, ex);
             return Task.FromResult(new List<JobListing>());
         }
     }
@@ -133,7 +137,7 @@ public sealed class IndeedMultiStrategyParser
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to convert entity to JobListing");
+                LogConversionWarning(_logger, ex);
                 continue;
             }
         }

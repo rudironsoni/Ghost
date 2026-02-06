@@ -4,6 +4,54 @@ using Microsoft.Extensions.Logging;
 
 namespace Ghost.Sdk.Spider.Adapters;
 
+internal static partial class AdapterFactoryLogMessages
+{
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Creating adapter for request: {RequestId}, URL: {Url}")]
+    public static partial void LogCreatingAdapter(this ILogger logger, string requestId, string url);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Using preferred adapter: {AdapterName} for request: {RequestId}")]
+    public static partial void LogUsingPreferredAdapter(this ILogger logger, string adapterName, string requestId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Preferred adapter {AdapterName} not available for request: {RequestId}")]
+    public static partial void LogPreferredAdapterNotAvailable(this ILogger logger, string adapterName, string requestId);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Using adapter for content type {ContentType}: {AdapterName} for request: {RequestId}")]
+    public static partial void LogUsingAdapterForContentType(this ILogger logger, ContentType contentType, string adapterName, string requestId);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Selected adapter: {AdapterName} for request: {RequestId}")]
+    public static partial void LogSelectedAdapter(this ILogger logger, string adapterName, string requestId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "No suitable adapter found for request: {RequestId}, URL: {Url}")]
+    public static partial void LogNoSuitableAdapter(this ILogger logger, string requestId, string url);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Creating adapter by name: {AdapterName}")]
+    public static partial void LogCreatingAdapterByName(this ILogger logger, string adapterName);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Adapter type not found: {AdapterName}")]
+    public static partial void LogAdapterTypeNotFound(this ILogger logger, string adapterName);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Adapter not available: {AdapterName}")]
+    public static partial void LogAdapterNotAvailable(this ILogger logger, string adapterName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Creating adapters for content type: {ContentType}")]
+    public static partial void LogCreatingAdaptersForContentType(this ILogger logger, ContentType contentType);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Created adapter: {AdapterName} for content type: {ContentType}")]
+    public static partial void LogCreatedAdapterForContentType(this ILogger logger, string adapterName, ContentType contentType);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Created {Count} adapters for content type: {ContentType}")]
+    public static partial void LogCreatedAdaptersCount(this ILogger logger, int count, ContentType contentType);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Getting all available adapters")]
+    public static partial void LogGettingAllAdapters(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Found {Count} available adapters")]
+    public static partial void LogFoundAdapters(this ILogger logger, int count);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to create adapter instance: {AdapterType}")]
+    public static partial void LogFailedToCreateAdapter(this ILogger logger, Exception ex, string adapterType);
+}
+
 /// <summary>
 /// Factory for creating and managing content adapter instances.
 /// </summary>
@@ -59,7 +107,7 @@ public class AdapterFactory
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        _logger.LogDebug("Creating adapter for request: {RequestId}, URL: {Url}", request.RequestId, request.Url);
+        _logger.LogCreatingAdapter(request.RequestId, request.Url);
 
         // Check for adapter preference in metadata
         if (request.Metadata.TryGetValue("AdapterPreference", out var preference) &&
@@ -68,13 +116,11 @@ public class AdapterFactory
             var preferredAdapter = await TryCreateAdapterByNameAsync(preferredName, request, cancellationToken);
             if (preferredAdapter != null)
             {
-                _logger.LogInformation("Using preferred adapter: {AdapterName} for request: {RequestId}",
-                    preferredName, request.RequestId);
+                _logger.LogUsingPreferredAdapter(preferredName, request.RequestId);
                 return preferredAdapter;
             }
 
-            _logger.LogWarning("Preferred adapter {AdapterName} not available for request: {RequestId}",
-                preferredName, request.RequestId);
+            _logger.LogPreferredAdapterNotAvailable(preferredName, request.RequestId);
         }
 
         // Try to find adapter by expected content type
@@ -87,8 +133,7 @@ public class AdapterFactory
 
             if (adapterByType != null)
             {
-                _logger.LogInformation("Using adapter for content type {ContentType}: {AdapterName} for request: {RequestId}",
-                    request.ExpectedContentType, adapterByType.Name, request.RequestId);
+                _logger.LogUsingAdapterForContentType(request.ExpectedContentType, adapterByType.Name, request.RequestId);
                 return adapterByType;
             }
         }
@@ -97,13 +142,11 @@ public class AdapterFactory
         var adapter = await TryCreateAnyAdapterAsync(request, cancellationToken);
         if (adapter != null)
         {
-            _logger.LogInformation("Selected adapter: {AdapterName} for request: {RequestId}",
-                adapter.Name, request.RequestId);
+            _logger.LogSelectedAdapter(adapter.Name, request.RequestId);
             return adapter;
         }
 
-        _logger.LogWarning("No suitable adapter found for request: {RequestId}, URL: {Url}",
-            request.RequestId, request.Url);
+        _logger.LogNoSuitableAdapter(request.RequestId, request.Url);
         return null;
     }
 
@@ -121,19 +164,19 @@ public class AdapterFactory
         if (string.IsNullOrWhiteSpace(adapterName))
             throw new ArgumentException("Adapter name cannot be null or empty.", nameof(adapterName));
 
-        _logger.LogDebug("Creating adapter by name: {AdapterName}", adapterName);
+        _logger.LogCreatingAdapterByName(adapterName);
 
         var adapterType = _registry.GetAdapterType(adapterName);
         if (adapterType == null)
         {
-            _logger.LogWarning("Adapter type not found: {AdapterName}", adapterName);
+            _logger.LogAdapterTypeNotFound(adapterName);
             return null;
         }
 
         var adapter = CreateAdapterInstance(adapterType);
         if (adapter == null || !adapter.IsAvailable)
         {
-            _logger.LogWarning("Adapter not available: {AdapterName}", adapterName);
+            _logger.LogAdapterNotAvailable(adapterName);
             return null;
         }
 
@@ -151,7 +194,7 @@ public class AdapterFactory
     /// </remarks>
     public IEnumerable<IContentAdapter> CreateAdaptersByContentType(ContentType contentType)
     {
-        _logger.LogDebug("Creating adapters for content type: {ContentType}", contentType);
+        _logger.LogCreatingAdaptersForContentType(contentType);
 
         var adapterTypes = _registry.GetAdaptersByContentType(contentType);
         var adapters = new List<IContentAdapter>();
@@ -162,13 +205,11 @@ public class AdapterFactory
             if (adapter != null && adapter.IsAvailable)
             {
                 adapters.Add(adapter);
-                _logger.LogDebug("Created adapter: {AdapterName} for content type: {ContentType}",
-                    adapter.Name, contentType);
+                _logger.LogCreatedAdapterForContentType(adapter.Name, contentType);
             }
         }
 
-        _logger.LogInformation("Created {Count} adapters for content type: {ContentType}",
-            adapters.Count, contentType);
+        _logger.LogCreatedAdaptersCount(adapters.Count, contentType);
 
         return adapters;
     }
@@ -183,7 +224,7 @@ public class AdapterFactory
     /// </remarks>
     public IEnumerable<IContentAdapter> GetAllAvailableAdapters()
     {
-        _logger.LogDebug("Getting all available adapters");
+        _logger.LogGettingAllAdapters();
 
         var adapterTypes = _registry.GetAllAdapterTypes();
         var adapters = new List<IContentAdapter>();
@@ -197,7 +238,7 @@ public class AdapterFactory
             }
         }
 
-        _logger.LogInformation("Found {Count} available adapters", adapters.Count);
+        _logger.LogFoundAdapters(adapters.Count);
         return adapters;
     }
 
@@ -262,7 +303,7 @@ public class AdapterFactory
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to create adapter instance: {AdapterType}", adapterType.Name);
+            _logger.LogFailedToCreateAdapter(ex, adapterType.Name);
             return null;
         }
     }

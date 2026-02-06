@@ -59,7 +59,7 @@ public sealed class LoggingConfiguration
     /// <summary>
     /// Gets or sets whether to log successful extractions.
     /// </summary>
-    public bool LogSuccessfulExtractions { get; set; } = false;
+    public bool LogSuccessfulExtractions { get; set; }
 
     /// <summary>
     /// Gets or sets whether to log failed extractions.
@@ -69,7 +69,7 @@ public sealed class LoggingConfiguration
     /// <summary>
     /// Gets or sets whether to include extracted data in logs.
     /// </summary>
-    public bool IncludeExtractedData { get; set; } = false;
+    public bool IncludeExtractedData { get; set; }
 
     /// <summary>
     /// Gets or sets custom log enrichers.
@@ -85,12 +85,12 @@ public sealed class TelemetryConfiguration
     /// <summary>
     /// Gets or sets whether to export traces.
     /// </summary>
-    public bool ExportTraces { get; set; } = false;
+    public bool ExportTraces { get; set; }
 
     /// <summary>
     /// Gets or sets whether to export metrics.
     /// </summary>
-    public bool ExportMetrics { get; set; } = false;
+    public bool ExportMetrics { get; set; }
 
     /// <summary>
     /// Gets or sets the OTLP endpoint for telemetry export.
@@ -137,7 +137,7 @@ public sealed class AlertConfiguration
     /// <summary>
     /// Gets or sets whether alerts are enabled.
     /// </summary>
-    public bool Enabled { get; set; } = false;
+    public bool Enabled { get; set; }
 
     /// <summary>
     /// Gets or sets alert rules.

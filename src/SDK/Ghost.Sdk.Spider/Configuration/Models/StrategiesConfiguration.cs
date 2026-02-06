@@ -132,7 +132,7 @@ public sealed class CachingConfiguration
     /// <summary>
     /// Gets or sets whether caching is enabled.
     /// </summary>
-    public bool Enabled { get; set; } = false;
+    public bool Enabled { get; set; }
 
     /// <summary>
     /// Gets or sets the cache provider (Memory, Redis, Disk).

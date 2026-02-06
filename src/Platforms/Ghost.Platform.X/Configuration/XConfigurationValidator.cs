@@ -8,7 +8,7 @@ namespace Ghost.Platform.X.Configuration;
 /// <summary>
 /// Validates X platform configuration on startup.
 /// </summary>
-public class XConfigurationValidator : IValidateOptions<XOptions>
+public partial class XConfigurationValidator : IValidateOptions<XOptions>
 {
     private readonly ILogger<XConfigurationValidator> _logger;
 
@@ -46,8 +46,7 @@ public class XConfigurationValidator : IValidateOptions<XOptions>
         }
         else
         {
-            _logger.LogWarning("StorageStatePath is not configured. Authentication will fail. " +
-                             "Please authenticate and save storage state to use X platform.");
+            Log.StorageStatePathNotConfigured(_logger);
         }
 
         // Validate timeouts
@@ -57,8 +56,7 @@ public class XConfigurationValidator : IValidateOptions<XOptions>
         }
         else if (options.PageLoadTimeout < 5)
         {
-            _logger.LogWarning("PageLoadTimeout is set to {Timeout}s which may be too short for slow connections",
-                options.PageLoadTimeout);
+            Log.PageLoadTimeoutTooShort(_logger, options.PageLoadTimeout);
         }
 
         // Validate retry settings
@@ -78,13 +76,11 @@ public class XConfigurationValidator : IValidateOptions<XOptions>
         // Validate media limits (read-only, but log warnings)
         if (options.MaxImageSizeMB > 10)
         {
-            _logger.LogWarning("MaxImageSizeMB is set to {Size}MB which exceeds X's limit of 5MB",
-                options.MaxImageSizeMB);
+            Log.MaxImageSizeExceeded(_logger, options.MaxImageSizeMB);
         }
         if (options.MaxVideoSizeMB > 512)
         {
-            _logger.LogWarning("MaxVideoSizeMB is set to {Size}MB which exceeds X's limit of 512MB",
-                options.MaxVideoSizeMB);
+            Log.MaxVideoSizeExceeded(_logger, options.MaxVideoSizeMB);
         }
 
         if (failures.Count > 0)
@@ -92,7 +88,7 @@ public class XConfigurationValidator : IValidateOptions<XOptions>
             return ValidateOptionsResult.Fail(failures);
         }
 
-        _logger.LogInformation("X platform configuration validated successfully");
+        Log.ConfigurationValidated(_logger);
         return ValidateOptionsResult.Success;
     }
 
@@ -116,7 +112,7 @@ public class XConfigurationValidator : IValidateOptions<XOptions>
             try
             {
                 using var doc = JsonDocument.Parse(content);
-                _logger.LogDebug("Storage state file '{Path}' is valid JSON", path);
+                Log.StorageStateFileValid(_logger, path);
                 return (true, null);
             }
             catch (JsonException ex)
@@ -138,7 +134,7 @@ public class XConfigurationValidator : IValidateOptions<XOptions>
 /// <summary>
 /// Startup health check for X platform.
 /// </summary>
-public class XPlatformHealthCheck
+public partial class XPlatformHealthCheck
 {
     private readonly IBrowserSession _session;
     private readonly XOptions _options;
@@ -163,7 +159,7 @@ public class XPlatformHealthCheck
 
         try
         {
-            _logger.LogDebug("Starting X platform health check");
+            Log.StartingHealthCheck(_logger);
 
             // Check browser connectivity
             result.BrowserAvailable = await CheckBrowserConnectivityAsync(ct);
@@ -199,18 +195,18 @@ public class XPlatformHealthCheck
 
             if (result.Status == HealthStatus.Healthy)
             {
-                _logger.LogInformation("X platform health check passed");
+                Log.HealthCheckPassed(_logger);
             }
             else
             {
-                _logger.LogWarning("X platform health check returned status: {Status}", result.Status);
+                Log.HealthCheckStatus(_logger, result.Status);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Health check failed with exception");
+            Log.HealthCheckException(_logger, ex);
             result.Status = HealthStatus.Unhealthy;
             result.Messages.Add($"Health check exception: {ex.Message}");
             return result;
@@ -227,7 +223,7 @@ public class XPlatformHealthCheck
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Browser connectivity check failed");
+            Log.BrowserConnectivityFailed(_logger, ex);
             return false;
         }
     }
@@ -238,12 +234,12 @@ public class XPlatformHealthCheck
         {
             // Try to load storage state
             await _session.SaveStorageStateAsync(_options.StorageStatePath!);
-            _logger.LogDebug("Authentication state file is readable");
+            Log.AuthStateFileReadable(_logger);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Authentication state check failed");
+            Log.AuthStateCheckFailed(_logger, ex);
             return false;
         }
     }
@@ -259,7 +255,7 @@ public class XPlatformHealthCheck
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "X platform connectivity check failed");
+            Log.XConnectivityCheckFailed(_logger, ex);
             return false;
         }
     }

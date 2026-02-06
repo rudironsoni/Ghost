@@ -67,12 +67,12 @@ public sealed class RateLimitMiddleware : IPipelineMiddleware
     /// Invokes the middleware to apply rate limiting to the request.
     /// </summary>
     /// <param name="context">The pipeline context containing the request.</param>
-    /// <param name="next">The delegate to invoke the next middleware in the pipeline.</param>
+    /// <param name="continuation">The delegate to invoke the next middleware in the pipeline.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <exception cref="InvalidOperationException">
     /// Thrown when rate limit is exceeded and WaitWhenExceeded is false.
     /// </exception>
-    public async Task InvokeAsync(PipelineContext context, PipelineDelegate next)
+    public async Task InvokeAsync(PipelineContext context, PipelineDelegate continuation)
     {
         var limiter = GetLimiter(context);
 
@@ -91,7 +91,7 @@ public sealed class RateLimitMiddleware : IPipelineMiddleware
             }
         }
 
-        await next(context);
+        await continuation(context);
     }
 
     /// <summary>

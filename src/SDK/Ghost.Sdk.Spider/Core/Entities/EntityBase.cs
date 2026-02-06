@@ -28,6 +28,7 @@ public abstract class EntityBase<T> where T : EntityBase<T>, new()
     /// Gets the entity metadata including selector configurations and field mappings.
     /// </summary>
     /// <returns>An <see cref="EntityMetadata"/> instance containing the entity configuration.</returns>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1000:Do not declare static members on generic types", Justification = "GetMetadata needs to be static to support reflection-based entity extraction without requiring an instance")]
     public static EntityMetadata GetMetadata()
     {
         var type = typeof(T);

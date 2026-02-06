@@ -35,6 +35,18 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
     private static readonly Action<ILogger, string, Exception?> s_logStrategyNoFallback =
         LoggerMessage.Define<string>(LogLevel.Warning, new EventId(7, nameof(SearchJobsAsync)), "Strategy {Strategy} failed, no fallback available");
 
+    private static readonly Action<ILogger, string, string, string?, int, Exception?> s_logSearchStarted =
+        LoggerMessage.Define<string, string, string?, int>(LogLevel.Information, new EventId(8, nameof(SearchJobsAsync)), "Starting Google Jobs search with strategy: {Strategy}, Query: {Query}, Location: {Location}, MaxResults: {MaxResults}");
+
+    private static readonly Action<ILogger, int, Exception?> s_logSearchCompleted =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(9, nameof(SearchJobsAsync)), "Google Jobs search completed. Found {Count} jobs");
+
+    private static readonly Action<ILogger, Exception?> s_logSearchCancelled =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(10, nameof(SearchJobsAsync)), "Google Jobs search was cancelled");
+
+    private static readonly Action<ILogger, Exception?> s_logSearchFailed =
+        LoggerMessage.Define(LogLevel.Error, new EventId(11, nameof(SearchJobsAsync)), "Google Jobs search failed with exception");
+
     public GoogleJobClient(
         Internal.GoogleJobsApiClient api,
         ILogger<GoogleJobClient> logger,
@@ -66,8 +78,7 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
         ArgumentNullException.ThrowIfNull(criteria);
 
         var strategy = _options.Strategy;
-        _logger.LogInformation("Starting Google Jobs search with strategy: {Strategy}, Query: {Query}, Location: {Location}, MaxResults: {MaxResults}",
-            strategy, criteria.Query, criteria.Location, criteria.MaxResults);
+        s_logSearchStarted(_logger, strategy.ToString(), criteria.Query ?? string.Empty, criteria.Location, criteria.MaxResults, null);
         s_logStrategyAttempt(_logger, strategy.ToString(), null);
 
         try
@@ -81,17 +92,17 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
                 _ => await TryBrowserFirstAsync(criteria, ct)
             };
 
-            _logger.LogInformation("Google Jobs search completed. Found {Count} jobs", result.Count);
+            s_logSearchCompleted(_logger, result.Count, null);
             return result;
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("Google Jobs search was cancelled");
+            s_logSearchCancelled(_logger, null);
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Google Jobs search failed with exception");
+            s_logSearchFailed(_logger, ex);
             throw;
         }
     }

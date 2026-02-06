@@ -8,7 +8,7 @@ namespace Ghost.Platform.X.Internal;
 /// <summary>
 /// Composes and posts single tweets or multi-tweet threads.
 /// </summary>
-public class XThreadComposer
+public partial class XThreadComposer
 {
     private readonly XOptions _options;
     private readonly ILogger<XThreadComposer> _logger;
@@ -39,7 +39,7 @@ public class XThreadComposer
             throw new ArgumentException("Content cannot be empty", nameof(request));
         }
 
-        _logger.LogInformation("Posting {Count} tweet(s) as thread", parts.Count);
+        Log.PostingThread(_logger, parts.Count);
 
         string? firstTweetId = null;
         string? previousTweetId = null;
@@ -50,8 +50,7 @@ public class XThreadComposer
             var isLastTweet = i == parts.Count - 1;
             var part = parts[i];
 
-            _logger.LogDebug("Posting tweet {Index}/{Total}: {Preview}...",
-                i + 1, parts.Count, part[..Math.Min(50, part.Length)]);
+            Log.PostingTweet(_logger, i + 1, parts.Count, part[..Math.Min(50, part.Length)]);
 
             string tweetId;
 
@@ -72,12 +71,12 @@ public class XThreadComposer
             // Add delay between tweets to avoid rate limiting
             if (!isLastTweet && _options.ThreadDelayMs > 0)
             {
-                _logger.LogDebug("Waiting {DelayMs}ms before next tweet", _options.ThreadDelayMs);
+                Log.WaitingBeforeTweet(_logger, _options.ThreadDelayMs);
                 await Task.Delay(_options.ThreadDelayMs, ct);
             }
         }
 
-        _logger.LogInformation("Successfully posted thread with {Count} tweets", parts.Count);
+        Log.ThreadPosted(_logger, parts.Count);
         return firstTweetId!;
     }
 
@@ -135,7 +134,7 @@ public class XThreadComposer
 
         if (string.IsNullOrEmpty(tweetId))
         {
-            _logger.LogWarning("Could not extract tweet ID, using generated ID");
+            Log.TweetIdExtractionFailed(_logger);
             tweetId = Guid.NewGuid().ToString("N")[..16];
         }
 
@@ -205,7 +204,7 @@ public class XThreadComposer
 
         if (string.IsNullOrEmpty(tweetId))
         {
-            _logger.LogWarning("Could not extract reply tweet ID, using generated ID");
+            Log.ReplyTweetIdExtractionFailed(_logger);
             tweetId = Guid.NewGuid().ToString("N")[..16];
         }
 
@@ -220,14 +219,14 @@ public class XThreadComposer
         IReadOnlyList<string> mediaUrls,
         CancellationToken ct)
     {
-        _logger.LogInformation("Uploading {Count} media files", mediaUrls.Count);
+        Log.UploadingMedia(_logger, mediaUrls.Count);
 
         // Find media input
         var mediaInput = await page.QuerySelectorAsync("input[type='file']", ct);
 
         if (mediaInput == null)
         {
-            _logger.LogWarning("Could not find media input, attempting to click media button first");
+            Log.MediaInputNotFound(_logger);
 
             // Try clicking the media button to reveal the input
             var mediaButton = await page.QuerySelectorAsync("[data-testid='mediaButton']", ct);
@@ -250,7 +249,7 @@ public class XThreadComposer
         {
             if (!File.Exists(url))
             {
-                _logger.LogWarning("Media file not found: {Path}", url);
+                Log.MediaFileNotFound(_logger, url);
                 continue;
             }
 
@@ -262,30 +261,30 @@ public class XThreadComposer
             }
             else
             {
-                _logger.LogWarning("Unsupported media format: {Extension}", extension);
+                Log.UnsupportedMediaFormat(_logger, extension);
             }
         }
 
         if (validFiles.Count == 0)
         {
-            _logger.LogWarning("No valid media files to upload");
+            Log.NoValidMediaFiles(_logger);
             return;
         }
 
         if (validFiles.Count > _options.MaxMediaAttachments)
         {
-            _logger.LogWarning("Truncating to {Max} media files", _options.MaxMediaAttachments);
+            Log.TruncatingMediaFiles(_logger, _options.MaxMediaAttachments);
             validFiles = validFiles.Take(_options.MaxMediaAttachments).ToList();
         }
 
         // Set files on input
         // Note: This is a placeholder - actual implementation depends on Ghost's IPage interface
-        _logger.LogInformation("Setting {Count} media files for upload", validFiles.Count);
+        Log.SettingMediaFiles(_logger, validFiles.Count);
 
         // Wait for upload to complete
         await Task.Delay(2000, ct);
 
-        _logger.LogInformation("Media upload completed");
+        Log.MediaUploadCompleted(_logger);
     }
 
     /// <summary>
@@ -323,7 +322,7 @@ public class XThreadComposer
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to extract tweet ID from page");
+            Log.TweetIdFromPageExtractionFailed(_logger, ex);
             return null;
         }
     }

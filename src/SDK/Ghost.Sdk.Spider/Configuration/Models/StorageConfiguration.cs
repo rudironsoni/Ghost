@@ -115,7 +115,7 @@ public sealed class ElasticsearchConfiguration
     /// <summary>
     /// Gets or sets the number of replicas.
     /// </summary>
-    public int NumberOfReplicas { get; set; } = 0;
+    public int NumberOfReplicas { get; set; }
 
     /// <summary>
     /// Gets or sets authentication username.
@@ -130,7 +130,7 @@ public sealed class ElasticsearchConfiguration
     /// <summary>
     /// Gets or sets whether to use SSL.
     /// </summary>
-    public bool UseSsl { get; set; } = false;
+    public bool UseSsl { get; set; }
 
     /// <summary>
     /// Gets or sets index mappings configuration.

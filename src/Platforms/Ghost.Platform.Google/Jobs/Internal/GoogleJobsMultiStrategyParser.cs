@@ -47,6 +47,12 @@ public sealed class GoogleJobsMultiStrategyParser
     private static readonly Action<ILogger, Exception?> LogConsentPageDetected =
         LoggerMessage.Define(LogLevel.Warning, new EventId(6, nameof(LogConsentPageDetected)), "Detected Google consent page - no job data available");
 
+    private static readonly Action<ILogger, Exception?> LogParsingError =
+        LoggerMessage.Define(LogLevel.Error, new EventId(7, nameof(LogParsingError)), "Error parsing HTML with EntityParser");
+
+    private static readonly Action<ILogger, Exception?> LogConversionError =
+        LoggerMessage.Define(LogLevel.Error, new EventId(8, nameof(LogConversionError)), "Error converting entity to JobListing");
+
     #endregion
 
     /// <summary>
@@ -82,7 +88,7 @@ public sealed class GoogleJobsMultiStrategyParser
             };
 
             // Parse entities using Ghost.Sdk.Spider EntityParser
-            var entities = _entityParser.Parse<GoogleJobsEntity>(context);
+            var entities = EntityParser.Parse<GoogleJobsEntity>(context);
 
             // Convert entities to JobListing objects
             var jobs = entities
@@ -112,7 +118,7 @@ public sealed class GoogleJobsMultiStrategyParser
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error parsing HTML with EntityParser");
+            LogParsingError(_logger, ex);
             return Task.FromResult(new List<JobListing>());
         }
     }
@@ -148,7 +154,7 @@ public sealed class GoogleJobsMultiStrategyParser
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error converting entity to JobListing");
+            LogConversionError(_logger, ex);
             return null;
         }
     }

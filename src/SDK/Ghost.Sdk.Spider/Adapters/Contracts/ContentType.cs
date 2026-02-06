@@ -277,9 +277,9 @@ public static class ContentTypeExtensions
             var mime when mime.Contains("application/rss+xml") => ContentType.Rss,
             var mime when mime.Contains("application/atom+xml") => ContentType.Atom,
             var mime when mime.Contains("application/grpc") => ContentType.Grpc,
-            var mime when mime.StartsWith("image/") => ContentType.Binary,
-            var mime when mime.StartsWith("video/") => ContentType.Binary,
-            var mime when mime.StartsWith("audio/") => ContentType.Binary,
+            var mime when mime.StartsWith("image/", StringComparison.Ordinal) => ContentType.Binary,
+            var mime when mime.StartsWith("video/", StringComparison.Ordinal) => ContentType.Binary,
+            var mime when mime.StartsWith("audio/", StringComparison.Ordinal) => ContentType.Binary,
             var mime when mime.Contains("application/pdf") => ContentType.Binary,
             var mime when mime.Contains("application/octet-stream") => ContentType.Binary,
             _ => ContentType.Unknown

@@ -28,13 +28,13 @@ public class TrimFormatter : Formatter
     /// Gets or sets a value indicating whether to trim only the start of the string.
     /// </summary>
     /// <value><c>true</c> to trim only the start; otherwise, <c>false</c>. Defaults to <c>false</c>.</value>
-    public bool TrimStart { get; set; } = false;
+    public bool TrimStart { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether to trim only the end of the string.
     /// </summary>
     /// <value><c>true</c> to trim only the end; otherwise, <c>false</c>. Defaults to <c>false</c>.</value>
-    public bool TrimEnd { get; set; } = false;
+    public bool TrimEnd { get; set; }
 
     /// <inheritdoc/>
     public override object? Format(object? value)

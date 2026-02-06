@@ -100,7 +100,7 @@ public abstract class Spider
         if (Options.AllowedDomains.Count > 0)
         {
             var host = uri.Host.ToLowerInvariant();
-            if (!Options.AllowedDomains.Any(d => host.Contains(d.ToLowerInvariant())))
+            if (!Options.AllowedDomains.Any(d => host.Contains(d.ToLowerInvariant(), StringComparison.Ordinal)))
                 return false;
         }
 

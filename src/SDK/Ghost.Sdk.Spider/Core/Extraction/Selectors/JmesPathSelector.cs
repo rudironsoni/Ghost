@@ -28,7 +28,7 @@ public class JmesPathSelector : ISelector
     public string Expression { get; }
 
     /// <inheritdoc/>
-    public List<string> Select(string content)
+    public List<string> SelectValues(string content)
     {
         if (string.IsNullOrWhiteSpace(content))
             return new List<string>();
@@ -110,9 +110,9 @@ public class JmesPathSelector : ISelector
         return token.Type switch
         {
             JTokenType.String => token.Value<string>(),
-            JTokenType.Integer => token.Value<long>().ToString(),
+            JTokenType.Integer => token.Value<long>().ToString(System.Globalization.CultureInfo.InvariantCulture),
             JTokenType.Float => token.Value<double>().ToString(System.Globalization.CultureInfo.InvariantCulture),
-            JTokenType.Boolean => token.Value<bool>().ToString().ToLowerInvariant(),
+            JTokenType.Boolean => token.Value<bool>().ToString(System.Globalization.CultureInfo.InvariantCulture).ToLowerInvariant(),
             JTokenType.Null => null,
             JTokenType.Object => token.ToString(Newtonsoft.Json.Formatting.None),
             JTokenType.Array => token.ToString(Newtonsoft.Json.Formatting.None),

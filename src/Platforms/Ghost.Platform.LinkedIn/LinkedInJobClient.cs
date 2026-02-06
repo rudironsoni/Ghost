@@ -120,7 +120,7 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "LinkedIn job details fetch failed for job {JobId}. Returning mock job data as fallback.", jobId);
+            LinkedInLog.LogJobDetailsFetchFailed(_logger, jobId, ex);
             return GenerateMockJobs("", "", 1).First();
         }
     }
@@ -181,7 +181,7 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
                 Timestamp = DateTime.UtcNow
             };
 
-            var entity = _entityParser.ParseSingle<LinkedInJobEntity>(context);
+            var entity = EntityParser.ParseSingle<LinkedInJobEntity>(context);
 
             if (entity == null || !entity.Validate())
             {

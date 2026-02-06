@@ -5,6 +5,27 @@ using Microsoft.Extensions.Logging;
 
 namespace Ghost.Sdk.Spider.Adapters;
 
+internal static partial class StaticHtmlAdapterLogMessages
+{
+    [LoggerMessage(Level = LogLevel.Debug, Message = "StaticHtmlAdapter extracting content from {Url}")]
+    public static partial void LogExtractingContent(this ILogger logger, string url);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "StaticHtmlAdapter completed extraction from {Url} in {Duration}ms with status {StatusCode}")]
+    public static partial void LogExtractionCompleted(this ILogger logger, string url, double duration, int statusCode);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Extraction from {Url} was canceled")]
+    public static partial void LogExtractionCanceled(this ILogger logger, Exception ex, string url);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "HTTP request failed for {Url}")]
+    public static partial void LogHttpRequestFailed(this ILogger logger, Exception ex, string url);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Request to {Url} timed out after {Timeout}")]
+    public static partial void LogRequestTimedOut(this ILogger logger, Exception ex, string url, TimeSpan timeout);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Unexpected error extracting content from {Url}")]
+    public static partial void LogUnexpectedError(this ILogger logger, Exception ex, string url);
+}
+
 /// <summary>
 /// Adapter for extracting content from static HTML pages using HttpClient.
 /// </summary>
@@ -106,7 +127,8 @@ public class StaticHtmlAdapter : IContentAdapter
 
         try
         {
-            _logger?.LogDebug("StaticHtmlAdapter extracting content from {Url}", request.Url);
+            if (_logger != null)
+                StaticHtmlAdapterLogMessages.LogExtractingContent(_logger, request.Url);
 
             using var httpRequest = CreateHttpRequestMessage(request, staticOptions);
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -123,32 +145,35 @@ public class StaticHtmlAdapter : IContentAdapter
                 startTime,
                 cancellationToken).ConfigureAwait(false);
 
-            _logger?.LogDebug(
-                "StaticHtmlAdapter completed extraction from {Url} in {Duration}ms with status {StatusCode}",
-                request.Url,
-                response.Duration.TotalMilliseconds,
-                response.StatusCode);
+            if (_logger != null)
+                StaticHtmlAdapterLogMessages.LogExtractionCompleted(
+                    _logger,
+                    request.Url,
+                    response.Duration.TotalMilliseconds,
+                    response.StatusCode ?? 0);
 
             return response;
         }
         catch (OperationCanceledException ex) when (cancellationToken.IsCancellationRequested)
         {
-            _logger?.LogWarning(ex, "Extraction from {Url} was canceled", request.Url);
+            _logger?.LogExtractionCanceled(ex, request.Url);
             return CreateErrorResponse("Request was canceled", ex, startTime, request.Url);
         }
         catch (HttpRequestException ex)
         {
-            _logger?.LogError(ex, "HTTP request failed for {Url}", request.Url);
+            if (_logger != null)
+                StaticHtmlAdapterLogMessages.LogHttpRequestFailed(_logger, ex, request.Url);
             return CreateErrorResponse($"HTTP request failed: {ex.Message}", ex, startTime, request.Url);
         }
         catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
-            _logger?.LogError(ex, "Request to {Url} timed out after {Timeout}", request.Url, request.Timeout);
+            _logger?.LogRequestTimedOut(ex, request.Url, request.Timeout);
             return CreateErrorResponse($"Request timed out after {request.Timeout}", ex, startTime, request.Url);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Unexpected error extracting content from {Url}", request.Url);
+            if (_logger != null)
+                StaticHtmlAdapterLogMessages.LogUnexpectedError(_logger, ex, request.Url);
             return CreateErrorResponse($"Unexpected error: {ex.Message}", ex, startTime, request.Url);
         }
     }
@@ -172,7 +197,7 @@ public class StaticHtmlAdapter : IContentAdapter
         }
     }
 
-    private HttpRequestMessage CreateHttpRequestMessage(Request request, StaticHtmlAdapterOptions options)
+    private static HttpRequestMessage CreateHttpRequestMessage(Request request, StaticHtmlAdapterOptions options)
     {
         var httpRequest = new HttpRequestMessage(new HttpMethod(request.Method), request.Url);
 

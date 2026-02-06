@@ -37,7 +37,7 @@ public class ReplaceFormatter : Formatter
     /// Gets or sets a value indicating whether the replacement is case-insensitive.
     /// </summary>
     /// <value><c>true</c> for case-insensitive replacement; otherwise, <c>false</c>. Defaults to <c>false</c>.</value>
-    public bool IgnoreCase { get; set; } = false;
+    public bool IgnoreCase { get; set; }
 
     /// <inheritdoc/>
     public override object? Format(object? value)

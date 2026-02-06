@@ -12,13 +12,6 @@ namespace Ghost.Platform.LinkedIn.Tests;
 [TestFixture]
 public class LinkedInEntityTests
 {
-    private EntityParser _parser = null!;
-
-    [SetUp]
-    public void Setup()
-    {
-        _parser = new EntityParser();
-    }
 
     [Test]
     public async Task ParseWithTestJobFixtureShouldExtractAllFields()
@@ -33,7 +26,7 @@ public class LinkedInEntityTests
         };
 
         // Act
-        var result = _parser.ParseSingle<LinkedInJobEntity>(context);
+        var result = EntityParser.ParseSingle<LinkedInJobEntity>(context);
 
         // Assert
         result.Should().NotBeNull();
@@ -60,7 +53,7 @@ public class LinkedInEntityTests
         };
 
         // Act
-        var result = _parser.ParseSingle<LinkedInJobEntity>(context);
+        var result = EntityParser.ParseSingle<LinkedInJobEntity>(context);
 
         // Assert
         result.Should().NotBeNull();
@@ -82,7 +75,7 @@ public class LinkedInEntityTests
         };
 
         // Act
-        var result = _parser.ParseSingle<LinkedInJobEntity>(context);
+        var result = EntityParser.ParseSingle<LinkedInJobEntity>(context);
 
         // Assert
         result.Should().NotBeNull();
@@ -104,7 +97,7 @@ public class LinkedInEntityTests
         };
 
         // Act
-        var result = _parser.ParseSingle<LinkedInJobEntity>(context);
+        var result = EntityParser.ParseSingle<LinkedInJobEntity>(context);
 
         // Assert
         result.Should().NotBeNull();
@@ -126,7 +119,7 @@ public class LinkedInEntityTests
         };
 
         // Act
-        var result = _parser.ParseSingle<LinkedInJobEntity>(context);
+        var result = EntityParser.ParseSingle<LinkedInJobEntity>(context);
 
         // Assert
         result.Should().NotBeNull();
@@ -148,7 +141,7 @@ public class LinkedInEntityTests
         };
 
         // Act
-        var result = _parser.ParseSingle<LinkedInJobEntity>(context);
+        var result = EntityParser.ParseSingle<LinkedInJobEntity>(context);
 
         // Assert
         result.Should().NotBeNull();
@@ -168,7 +161,7 @@ public class LinkedInEntityTests
         };
 
         // Act
-        var result = _parser.ParseSingle<LinkedInJobEntity>(context);
+        var result = EntityParser.ParseSingle<LinkedInJobEntity>(context);
 
         // Assert
         result.Should().NotBeNull();
@@ -189,7 +182,7 @@ public class LinkedInEntityTests
         };
 
         // Act
-        var result = _parser.ParseSingle<LinkedInJobEntity>(context);
+        var result = EntityParser.ParseSingle<LinkedInJobEntity>(context);
 
         // Assert
         result.Should().NotBeNull();
@@ -211,7 +204,7 @@ public class LinkedInEntityTests
         };
 
         // Act
-        var result = _parser.ParseSingle<LinkedInJobEntity>(context);
+        var result = EntityParser.ParseSingle<LinkedInJobEntity>(context);
 
         // Assert
         result.Should().NotBeNull();
@@ -235,7 +228,7 @@ public class LinkedInEntityTests
         };
 
         // Act
-        var result = _parser.ParseSingle<LinkedInJobEntity>(context);
+        var result = EntityParser.ParseSingle<LinkedInJobEntity>(context);
 
         // Assert
         result.Should().BeNull();
@@ -253,7 +246,7 @@ public class LinkedInEntityTests
         };
 
         // Act
-        var result = _parser.ParseSingle<LinkedInJobEntity>(context);
+        var result = EntityParser.ParseSingle<LinkedInJobEntity>(context);
 
         // Assert
         result.Should().BeNull();
@@ -287,7 +280,7 @@ public class LinkedInEntityTests
         };
 
         // Act
-        var result = _parser.ParseSingle<LinkedInJobEntity>(context);
+        var result = EntityParser.ParseSingle<LinkedInJobEntity>(context);
 
         // Assert
         result.Should().NotBeNull();
@@ -316,7 +309,7 @@ public class LinkedInEntityTests
         };
 
         // Act
-        var result = _parser.ParseSingle<LinkedInJobEntity>(context);
+        var result = EntityParser.ParseSingle<LinkedInJobEntity>(context);
 
         // Assert
         result.Should().NotBeNull();
