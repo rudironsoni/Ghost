@@ -6,7 +6,7 @@ namespace Ghost.Platform.LinkedIn.Tests;
 public class LinkedInSessionPoolOptionsTests
 {
     [Fact]
-    public void Defaults_And_Setters()
+    public void DefaultsAndSetters()
     {
         var options = new LinkedInSessionPoolOptions();
 

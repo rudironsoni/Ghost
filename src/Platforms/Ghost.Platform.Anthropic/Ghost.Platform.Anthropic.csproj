@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <RootNamespace>Ghost.Platform.Anthropic</RootNamespace>
     <Description>Ghost Anthropic/Claude platform integration</Description>
     <ImplicitUsings>enable</ImplicitUsings>

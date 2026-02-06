@@ -10,7 +10,7 @@ public class ParsingTests
     [InlineData("Jan 2020 - Present", 2020, 1, false, 0)]
     [InlineData("2015 - 2019", 2015, 1, true, 2019)]
     [InlineData("May 2022", 2022, 5, false, 0)]
-    public void DateParserParse_ValidInputs(string input, int expStartYear, int expStartMonth, bool hasEnd, int expEndYear)
+    public void DateParserParseValidInputs(string input, int expStartYear, int expStartMonth, bool hasEnd, int expEndYear)
     {
         var (start, end) = new Ghost.Utilities.DateParser().ParseDateRange(input);
 
@@ -34,7 +34,7 @@ public class ParsingTests
     [InlineData("")]
     [InlineData("Not a date")]
     [InlineData("Foo - Bar")]
-    public void DateParserParse_InvalidInputs_ShouldReturnNulls(string input)
+    public void DateParserParseInvalidInputsShouldReturnNulls(string input)
     {
         var (start, end) = new Ghost.Utilities.DateParser().ParseDateRange(input);
 
@@ -50,7 +50,7 @@ public class ParsingTests
     [InlineData("INTERNSHIP", Ghost.Contracts.Jobs.JobType.Internship)]
     [InlineData("Unknown", Ghost.Contracts.Jobs.JobType.Unknown)]
     [InlineData(null, Ghost.Contracts.Jobs.JobType.Unknown)]
-    public void ParseJobType_MapsCorrectly(string? input, Ghost.Contracts.Jobs.JobType expected)
+    public void ParseJobTypeMapsCorrectly(string? input, Ghost.Contracts.Jobs.JobType expected)
     {
         // Wrap JSON in script tag as the Parser expects HTML
         var json = $$"""

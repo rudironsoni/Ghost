@@ -12,7 +12,7 @@ namespace Ghost.Platform.LinkedIn.Tests;
 public class LinkedInNewsClientTests
 {
     [Fact]
-    public async Task GetArticlesAsync_ReturnsEnumerable()
+    public async Task GetArticlesAsyncReturnsEnumerable()
     {
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();
@@ -28,7 +28,7 @@ public class LinkedInNewsClientTests
     }
 
     [Fact]
-    public async Task SearchAsync_ReturnsEnumerable()
+    public async Task SearchAsyncReturnsEnumerable()
     {
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();

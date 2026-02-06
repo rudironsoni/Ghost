@@ -15,7 +15,7 @@ namespace Ghost.Platform.LinkedIn.Tests;
 public class LinkedInJobClientTests
 {
     [Fact]
-    public async Task SearchJobsAsync_ReturnsEnumerable()
+    public async Task SearchJobsAsyncReturnsEnumerable()
     {
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();
@@ -34,7 +34,7 @@ public class LinkedInJobClientTests
     }
 
     [Fact]
-    public async Task ApplyAsync_ReturnsFalse_WhenNoApplyButton()
+    public async Task ApplyAsyncReturnsFalseWhenNoApplyButton()
     {
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();
@@ -53,7 +53,7 @@ public class LinkedInJobClientTests
     }
 
     [Fact]
-    public async Task GetJobDetailsBrowserAsync_SetsProxyTimezone_WhenConfigured()
+    public async Task GetJobDetailsBrowserAsyncSetsProxyTimezoneWhenConfigured()
     {
         // Arrange
         var mockSession = Substitute.For<IBrowserSession>();
@@ -84,7 +84,7 @@ public class LinkedInJobClientTests
     }
 
     [Fact]
-    public async Task GetJobDetailsBrowserAsync_DetectsEasyApply()
+    public async Task GetJobDetailsBrowserAsyncDetectsEasyApply()
     {
         // Arrange
         var mockSession = Substitute.For<IBrowserSession>();

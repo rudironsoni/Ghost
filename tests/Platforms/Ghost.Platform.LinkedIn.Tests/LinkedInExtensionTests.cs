@@ -10,7 +10,7 @@ namespace Ghost.Platform.LinkedIn.Tests;
 public class LinkedInExtensionTests
 {
     [Fact]
-    public void Provides_All_Clients()
+    public void ProvidesAllClients()
     {
         var ext = new LinkedInExtension();
         var services = new ServiceCollection();

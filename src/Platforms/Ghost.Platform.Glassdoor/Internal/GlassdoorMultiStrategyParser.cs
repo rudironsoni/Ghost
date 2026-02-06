@@ -218,12 +218,12 @@ public sealed class GlassdoorMultiStrategyParser
     /// Main entry point for parsing HTML
     /// Tries EntityParser first, then falls back to JSON parser if available
     /// </summary>
-    public async Task<List<JobListing>> ParseHtmlAsync(string html)
+    public Task<List<JobListing>> ParseHtmlAsync(string html)
     {
         if (string.IsNullOrWhiteSpace(html))
         {
             LogEmptyHtml(_logger, null);
-            return new List<JobListing>();
+            return Task.FromResult(new List<JobListing>());
         }
 
         LogStartingParse(_logger, html.Length, null);
@@ -233,16 +233,16 @@ public sealed class GlassdoorMultiStrategyParser
         // Strategy 1: Try Ghost.Sdk.Spider entity parser
         var jobs = TryStrategy1_EntityParser(html);
         if (jobs != null && jobs.Count > 0)
-            return jobs;
+            return Task.FromResult(jobs);
 
         // Strategy 2: Try original JSON-based parser
         jobs = TryStrategy2_OriginalJsonParser(html);
         if (jobs != null && jobs.Count > 0)
-            return jobs;
+            return Task.FromResult(jobs);
 
         // All strategies failed
         LogAllStrategiesFailed(_logger, 2, null);
-        return new List<JobListing>();
+        return Task.FromResult(new List<JobListing>());
     }
 
     /// <summary>

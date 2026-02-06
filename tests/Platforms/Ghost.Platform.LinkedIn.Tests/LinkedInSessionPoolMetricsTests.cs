@@ -6,7 +6,7 @@ namespace Ghost.Platform.LinkedIn.Tests;
 public class LinkedInSessionPoolMetricsTests
 {
     [Fact]
-    public void Metrics_Properties_SetAndGet()
+    public void MetricsPropertiesSetAndGet()
     {
         var metrics = new SessionPoolMetrics
         {

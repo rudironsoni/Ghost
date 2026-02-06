@@ -15,7 +15,7 @@ namespace Ghost.Platform.LinkedIn.Tests;
 public class LinkedInJobClientParallelTests
 {
     [Fact]
-    public async Task SearchJobsParallelAsync_YieldsJobsFromGuestPages()
+    public async Task SearchJobsParallelAsyncYieldsJobsFromGuestPages()
     {
         var session = Substitute.For<IBrowserSession>();
         var firstPage = Substitute.For<IPage>();
