@@ -121,5 +121,5 @@ public class LinkedInSpider : Spider
         return true;
     }
 
-    public override Task ProcessResponseAsync(Response response, Sdk.Spider.Engine.ExecutionContext context, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+
 }

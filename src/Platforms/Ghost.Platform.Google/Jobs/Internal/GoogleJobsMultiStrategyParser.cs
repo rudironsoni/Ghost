@@ -88,7 +88,7 @@ public sealed class GoogleJobsMultiStrategyParser
             var jobs = entities
                 .Select(ConvertToJobListing)
                 .Where(job => job != null && !string.IsNullOrWhiteSpace(job.Title) && !string.IsNullOrWhiteSpace(job.Company))
-                .ToList()!;
+                .Select(job => job!).ToList();
 
             // Log incomplete entities
             foreach (var entity in entities)
