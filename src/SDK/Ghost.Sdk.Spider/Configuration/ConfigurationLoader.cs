@@ -149,6 +149,7 @@ public sealed class ConfigurationLoader
     /// Validates a configuration file without loading it.
     /// </summary>
     /// <param name="filePath">The path to the configuration file.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A list of validation errors, or an empty list if valid.</returns>
     public async Task<IReadOnlyList<string>> ValidateFileAsync(
         string filePath,
