@@ -8,7 +8,7 @@ namespace Ghost.Sdk.Spider.Core.Entities.Formatters;
 /// <remarks>
 /// This formatter converts HTML entity references back to their character equivalents.
 /// For example, "&amp;lt;" becomes "&lt;", "&amp;amp;" becomes "&amp;", etc.
-/// It uses <see cref="WebUtility.HtmlDecode"/> for decoding.
+/// It uses <see cref="WebUtility.HtmlDecode(string?)"/> for decoding.
 /// </remarks>
 /// <example>
 /// <code>
