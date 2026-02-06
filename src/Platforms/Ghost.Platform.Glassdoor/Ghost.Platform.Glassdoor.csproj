@@ -7,6 +7,9 @@
     <Nullable>enable</Nullable>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
+  <PropertyGroup>
+    <NoWarn>CA1848;CA1866;CA1310;CA1822;CA1707</NoWarn>
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Ghost\Ghost.csproj" />
