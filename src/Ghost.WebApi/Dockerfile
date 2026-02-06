@@ -45,8 +45,8 @@ FROM built AS playwright
 # Install Playwright CLI tool
 RUN dotnet tool install --global Microsoft.Playwright.CLI
 ENV PATH="${PATH}:/root/.dotnet/tools"
-# Install Chromium browsers (CLI finds .playwright in artifacts)
-RUN playwright install chromium
+# Install Chromium browsers with system dependencies (CLI finds .playwright in artifacts)
+RUN playwright install chromium --with-deps
 
 # Publish stage
 FROM built AS publish

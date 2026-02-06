@@ -3,6 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
+using Ghost.Sdk.Spider.Adapters;
+using Ghost.Sdk.Spider.Core.Extraction;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -23,10 +25,10 @@ public class LinkedInJobClientTests
             .Returns(Task.FromResult<IElement?>(null));
 
         var logger = Substitute.For<ILogger<LinkedInJobClient>>();
-        // Create a simple fake IGuestJobSearch implementation for DI
-        var guest = new TestGuestJobSearch();
+        var jsAdapter = Substitute.For<JavaScriptAdapter>();
+        var entityParser = Substitute.For<EntityParser>();
         var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
-        var client = new LinkedInJobClient(mockSession, Options.Create(opts), logger, guest);
+        var client = new LinkedInJobClient(mockSession, Options.Create(opts), logger, jsAdapter, entityParser);
         var jobs = await client.SearchJobsAsync(new JobSearchCriteria { Query = "developer" }, CancellationToken.None);
         jobs.Should().BeAssignableTo<System.Collections.Generic.IEnumerable<JobListing>>();
     }
@@ -42,9 +44,10 @@ public class LinkedInJobClientTests
             .Returns(Task.FromResult<IElement?>(null));
 
         var logger = Substitute.For<ILogger<LinkedInJobClient>>();
-        var guest = new TestGuestJobSearch();
+        var jsAdapter = Substitute.For<JavaScriptAdapter>();
+        var entityParser = Substitute.For<EntityParser>();
         var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
-        var client = new LinkedInJobClient(mockSession, Options.Create(opts), logger, guest);
+        var client = new LinkedInJobClient(mockSession, Options.Create(opts), logger, jsAdapter, entityParser);
         var result = await client.ApplyAsync("job:1", new ApplicationDetails { ApplicantName = "Test", ApplicantEmail = "a@b.com" }, CancellationToken.None);
         result.Should().BeNull();
     }
@@ -59,6 +62,8 @@ public class LinkedInJobClientTests
         mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(mockPage));
 
+        var jsAdapter = Substitute.For<JavaScriptAdapter>();
+        var entityParser = Substitute.For<EntityParser>();
         var opts = new LinkedInOptions
         {
             TimezoneId = "Europe/Madrid",
@@ -66,8 +71,7 @@ public class LinkedInJobClientTests
             ScrapingStrategy = JobScrapingStrategy.BrowserPage
         };
 
-        var guest = new TestGuestJobSearch();
-        var client = new LinkedInJobClient(mockSession, Options.Create(opts), null!, guest);
+        var client = new LinkedInJobClient(mockSession, Options.Create(opts), null!, jsAdapter, entityParser);
 
         // Act
         await client.GetJobDetailsAsync("123");
@@ -96,9 +100,10 @@ public class LinkedInJobClientTests
         mockPage.QuerySelectorAsync(Arg.Is<string>(s => s.Contains("jobs-apply-button") || s.Contains("jobs-s-apply")), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IElement?>(mockBtn));
 
-        var guest = new TestGuestJobSearch();
+        var jsAdapter = Substitute.For<JavaScriptAdapter>();
+        var entityParser = Substitute.For<EntityParser>();
         var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
-        var client = new LinkedInJobClient(mockSession, Options.Create(opts), null!, guest);
+        var client = new LinkedInJobClient(mockSession, Options.Create(opts), null!, jsAdapter, entityParser);
 
         // Act
         var result = await client.GetJobDetailsAsync("123");
@@ -106,18 +111,5 @@ public class LinkedInJobClientTests
         // Assert
         result.Should().NotBeNull();
         result.IsEasyApply.Should().BeTrue();
-    }
-}
-
-internal sealed class TestGuestJobSearch : Ghost.Platform.LinkedIn.Internal.IGuestJobSearch
-{
-    public Task<IReadOnlyList<string>> SearchAsync(Ghost.Contracts.Jobs.JobSearchCriteria criteria, int limit, CancellationToken ct)
-    {
-        return Task.FromResult((IReadOnlyList<string>)new System.Collections.Generic.List<string>());
-    }
-
-    public Task<Ghost.Contracts.Jobs.JobListing?> FetchJobDetailsAsync(string jobId, CancellationToken ct)
-    {
-        return Task.FromResult<Ghost.Contracts.Jobs.JobListing?>(null);
     }
 }
