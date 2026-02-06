@@ -14,7 +14,7 @@ namespace Ghost.Tests.Services;
 public class StaticProxySourceTests
 {
     [Fact]
-    public async Task FetchProxiesAsync_ShouldUseGlobalConfig_WhenItemIsBareHost()
+    public async Task FetchProxiesAsyncShouldUseGlobalConfigWhenItemIsBareHost()
     {
         // With the new configuration model, global Port fallback for bare hosts is removed.
         var cfg = new ProxySourceConfig
@@ -33,7 +33,7 @@ public class StaticProxySourceTests
     }
 
     [Fact]
-    public async Task FetchProxiesAsync_ShouldPrioritizeItemConfig_WhenItemHasFullUrl()
+    public async Task FetchProxiesAsyncShouldPrioritizeItemConfigWhenItemHasFullUrl()
     {
         var cfg = new ProxySourceConfig
         {
@@ -53,7 +53,7 @@ public class StaticProxySourceTests
     }
 
     [Fact]
-    public async Task FetchProxiesAsync_ShouldEnrichItem_WhenItemMissingAuth()
+    public async Task FetchProxiesAsyncShouldEnrichItemWhenItemMissingAuth()
     {
         var cfg = new ProxySourceConfig
         {
@@ -73,7 +73,7 @@ public class StaticProxySourceTests
     }
 
     [Fact]
-    public async Task FetchProxiesAsync_ShouldSkipInvalidItems()
+    public async Task FetchProxiesAsyncShouldSkipInvalidItems()
     {
         var cfg = new ProxySourceConfig
         {

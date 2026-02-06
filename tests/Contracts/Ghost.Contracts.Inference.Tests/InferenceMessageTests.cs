@@ -7,7 +7,7 @@ namespace Ghost.Contracts.Inference.Tests;
 public class InferenceMessageTests
 {
     [Fact]
-    public void Defaults_AreExpected()
+    public void DefaultsAreExpected()
     {
         var m = new InferenceMessage();
         m.Role.Should().Be(InferenceRole.User);
@@ -15,7 +15,7 @@ public class InferenceMessageTests
     }
 
     [Fact]
-    public void Equality_Works()
+    public void EqualityWorks()
     {
         var a = new InferenceMessage { Role = InferenceRole.System, Content = "x" };
         var b = new InferenceMessage { Role = InferenceRole.System, Content = "x" };

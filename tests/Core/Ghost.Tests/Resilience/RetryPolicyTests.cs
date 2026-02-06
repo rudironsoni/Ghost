@@ -9,7 +9,7 @@ namespace Ghost.Tests.Resilience;
 public class RetryPolicyTests
 {
     [Fact]
-    public async Task ExecuteAsync_SucceedsWithoutRetries()
+    public async Task ExecuteAsyncSucceedsWithoutRetries()
     {
         var policy = new RetryPolicy(new RetryPolicyOptions
         {
@@ -26,7 +26,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_RetriesUntilSuccess()
+    public async Task ExecuteAsyncRetriesUntilSuccess()
     {
         var attempts = 0;
         var policy = new RetryPolicy(new RetryPolicyOptions
@@ -53,7 +53,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_StopsAfterMaxRetries()
+    public async Task ExecuteAsyncStopsAfterMaxRetries()
     {
         var attempts = 0;
         var policy = new RetryPolicy(new RetryPolicyOptions
@@ -75,7 +75,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_DoesNotRetryForNonRetryableException()
+    public async Task ExecuteAsyncDoesNotRetryForNonRetryableException()
     {
         var attempts = 0;
         var policy = new RetryPolicy(new RetryPolicyOptions
@@ -97,7 +97,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_UsesZeroRetries_WhenMaxRetriesIsZero()
+    public async Task ExecuteAsyncUsesZeroRetriesWhenMaxRetriesIsZero()
     {
         var attempts = 0;
         var policy = new RetryPolicy(new RetryPolicyOptions
@@ -119,7 +119,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_DelaysWithExponentialBackoffWithoutJitter()
+    public async Task ExecuteAsyncDelaysWithExponentialBackoffWithoutJitter()
     {
         var policy = new RetryPolicy(new RetryPolicyOptions
         {
@@ -143,7 +143,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_ThrowsWhenMaxDelayIsLessThanBaseDelay()
+    public async Task ExecuteAsyncThrowsWhenMaxDelayIsLessThanBaseDelay()
     {
         var policy = new RetryPolicy(new RetryPolicyOptions
         {
@@ -162,7 +162,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteHttpAsync_RetriesOnHttpRequestException()
+    public async Task ExecuteHttpAsyncRetriesOnHttpRequestException()
     {
         var attempts = 0;
         var policy = new RetryPolicy(new RetryPolicyOptions
@@ -184,7 +184,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteHttpAsync_RetriesOnRetryableStatusCode()
+    public async Task ExecuteHttpAsyncRetriesOnRetryableStatusCode()
     {
         var attempts = 0;
         var policy = new RetryPolicy(new RetryPolicyOptions
@@ -207,7 +207,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteHttpAsync_DoesNotRetryOnNonRetryableStatusCode()
+    public async Task ExecuteHttpAsyncDoesNotRetryOnNonRetryableStatusCode()
     {
         var attempts = 0;
         var policy = new RetryPolicy(new RetryPolicyOptions
@@ -229,7 +229,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteHttpAsync_ThrowsWhenActionReturnsNull()
+    public async Task ExecuteHttpAsyncThrowsWhenActionReturnsNull()
     {
         var policy = new RetryPolicy(new RetryPolicyOptions
         {
@@ -245,7 +245,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_ResetsCurrentAttemptAfterCompletion()
+    public async Task ExecuteAsyncResetsCurrentAttemptAfterCompletion()
     {
         var policy = new RetryPolicy(new RetryPolicyOptions
         {
@@ -261,7 +261,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_PreservesAmbientAttemptValue()
+    public async Task ExecuteAsyncPreservesAmbientAttemptValue()
     {
         var policy = new RetryPolicy(new RetryPolicyOptions
         {
@@ -281,7 +281,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_InvalidOptionsThrow()
+    public async Task ExecuteAsyncInvalidOptionsThrow()
     {
         var policy = new RetryPolicy(new RetryPolicyOptions
         {
@@ -297,7 +297,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_NullArgumentsThrow()
+    public async Task ExecuteAsyncNullArgumentsThrow()
     {
         var policy = new RetryPolicy();
 
@@ -306,7 +306,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_AllowsRetryablePredicate()
+    public async Task ExecuteAsyncAllowsRetryablePredicate()
     {
         var attempts = 0;
         var policy = new RetryPolicy(new RetryPolicyOptions
@@ -328,7 +328,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_UsesMaxDelayWhenExceeded()
+    public async Task ExecuteAsyncUsesMaxDelayWhenExceeded()
     {
         var policy = new RetryPolicy(new RetryPolicyOptions
         {

@@ -10,7 +10,7 @@ namespace Ghost.Hosting.Tests;
 public class ServiceCollectionExtensionsTests
 {
     [Fact]
-    public void AddGhost_NullServices_ThrowsArgumentNullException()
+    public void AddGhostNullServicesThrowsArgumentNullException()
     {
         IServiceCollection? services = null;
         var act = () => Ghost.Hosting.ServiceCollectionExtensions.AddGhost(services!, _ => { });
@@ -18,7 +18,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddGhost_NullConfigure_ThrowsArgumentNullException()
+    public void AddGhostNullConfigureThrowsArgumentNullException()
     {
         var services = new ServiceCollection();
         var act = () => services.AddGhost(null!);
@@ -26,7 +26,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddGhost_ValidConfig_ReturnsServices()
+    public void AddGhostValidConfigReturnsServices()
     {
         var services = new ServiceCollection();
         var result = services.AddGhost(_ => { });
@@ -34,7 +34,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddGhost_WithConfiguration_UsesProvidedConfig()
+    public void AddGhostWithConfigurationUsesProvidedConfig()
     {
         var services = new ServiceCollection();
         var config = new ConfigurationBuilder()
@@ -45,7 +45,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddGhost_RegistersKernelServices()
+    public void AddGhostRegistersKernelServices()
     {
         var services = new ServiceCollection();
         services.AddGhost(_ => { });

@@ -19,7 +19,7 @@ public class GhostKernelHostedServiceTests
     }
 
     [Fact]
-    public async Task StopAsync_CallsDisposeAsync_OnKernel()
+    public async Task StopAsyncCallsDisposeAsyncOnKernel()
     {
         var playwright = Substitute.For<IPlaywright>();
         var browser = Substitute.For<IBrowser>();
@@ -39,7 +39,7 @@ public class GhostKernelHostedServiceTests
     }
 
     [Fact]
-    public async Task ApplicationStopping_Cancellation_TriggersKernelDisposeAsync()
+    public async Task ApplicationStoppingCancellationTriggersKernelDisposeAsync()
     {
         var playwright = Substitute.For<IPlaywright>();
         var browser = Substitute.For<IBrowser>();

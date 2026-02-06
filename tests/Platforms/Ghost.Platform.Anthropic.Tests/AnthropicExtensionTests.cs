@@ -7,7 +7,7 @@ namespace Ghost.Platform.Anthropic.Tests;
 public class AnthropicExtensionTests
 {
     [Fact]
-    public void Name_ShouldContainAnthropic()
+    public void NameShouldContainAnthropic()
     {
         var ext = new AnthropicExtension();
         ext.Name.Should().NotBeNullOrEmpty();
@@ -15,7 +15,7 @@ public class AnthropicExtensionTests
     }
 
     [Fact]
-    public void Version_ShouldBeSet()
+    public void VersionShouldBeSet()
     {
         var ext = new AnthropicExtension();
         ext.Version.Should().NotBeNull();
@@ -23,7 +23,7 @@ public class AnthropicExtensionTests
     }
 
     [Fact]
-    public void ProvidedServices_And_RequiredServices_AreConsistent()
+    public void ProvidedServicesAndRequiredServicesAreConsistent()
     {
         var ext = new AnthropicExtension();
         ext.ProvidedServices.Should().NotBeNull();
@@ -31,7 +31,7 @@ public class AnthropicExtensionTests
     }
 
     [Fact]
-    public void ConfigureServices_DoesNotThrow()
+    public void ConfigureServicesDoesNotThrow()
     {
         var ext = new AnthropicExtension();
         var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();

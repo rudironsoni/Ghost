@@ -27,7 +27,7 @@ public class IExtensionTests
     }
 
     [Fact]
-    public void Implementation_Properties_WorkAndConfigureServicesExecutes()
+    public void ImplementationPropertiesWorkAndConfigureServicesExecutes()
     {
         var ext = new FakeExtension();
         ext.Name.Should().Be("fake");

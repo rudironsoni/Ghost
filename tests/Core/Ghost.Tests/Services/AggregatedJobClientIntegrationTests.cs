@@ -29,7 +29,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task SearchJobsAsync_ReturnsJobs_WhenAllScrapersSucceed()
+    public async Task SearchJobsAsyncReturnsJobsWhenAllScrapersSucceed()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -62,7 +62,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task SearchJobsAsync_DeduplicatesJobs_WhenSameJobFromMultipleSources()
+    public async Task SearchJobsAsyncDeduplicatesJobsWhenSameJobFromMultipleSources()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -90,11 +90,11 @@ public class AggregatedJobClientIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Count.Should().Be(1);
-        result.First().Title.Should().Be("Software Engineer");
+        result[0].Title.Should().Be("Software Engineer");
     }
 
     [Fact]
-    public async Task SearchJobsAsync_ReturnsEmpty_WhenAllScrapersFail()
+    public async Task SearchJobsAsyncReturnsEmptyWhenAllScrapersFail()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -119,7 +119,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task SearchJobsAsync_ReturnsPartialResults_WhenSomeScrapersFail()
+    public async Task SearchJobsAsyncReturnsPartialResultsWhenSomeScrapersFail()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -144,11 +144,11 @@ public class AggregatedJobClientIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Count.Should().Be(1);
-        result.First().Title.Should().Be("Software Engineer");
+        result[0].Title.Should().Be("Software Engineer");
     }
 
     [Fact]
-    public async Task SearchJobsAsync_FiltersBySources_WhenSourcesSpecified()
+    public async Task SearchJobsAsyncFiltersBySourcesWhenSourcesSpecified()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -180,13 +180,13 @@ public class AggregatedJobClientIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Count.Should().Be(1);
-        result.First().Source.Should().Be("Google");
+        result[0].Source.Should().Be("Google");
         await scraper1.Received(1).SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>());
         await scraper2.DidNotReceive().SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task SearchJobsAsync_RunsAllScrapers_WhenNoSourcesSpecified()
+    public async Task SearchJobsAsyncRunsAllScrapersWhenNoSourcesSpecified()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -218,7 +218,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task SearchJobsAsync_HandlesEmptyScraperList()
+    public async Task SearchJobsAsyncHandlesEmptyScraperList()
     {
         // Arrange
         var client = new AggregatedJobClient(Enumerable.Empty<IJobScraper>(), _dedupe, _logger);
@@ -233,7 +233,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task SearchJobsAsync_HandlesNullCriteria()
+    public async Task SearchJobsAsyncHandlesNullCriteria()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -252,7 +252,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task SearchJobsAsync_RespectsCancellationToken()
+    public async Task SearchJobsAsyncRespectsCancellationToken()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -273,7 +273,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task SearchJobsAsync_LogsScraperFailures()
+    public async Task SearchJobsAsyncLogsScraperFailures()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -297,7 +297,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task SearchJobsAsync_RunsScrapersInParallel()
+    public async Task SearchJobsAsyncRunsScrapersInParallel()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -337,7 +337,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task SearchJobsWithErrorsAsync_ReturnsStructuredErrors_WhenScrapersFail()
+    public async Task SearchJobsWithErrorsAsyncReturnsStructuredErrorsWhenScrapersFail()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -364,8 +364,8 @@ public class AggregatedJobClientIntegrationTests
         result.Success.Should().BeTrue();
         result.Jobs.Count.Should().Be(1);
         result.PlatformErrors.Count.Should().Be(1);
-        result.PlatformErrors.First().Platform.Should().Be("Google");
-        result.PlatformErrors.First().ErrorCategory.Should().Be("Network");
+        result.PlatformErrors[0].Platform.Should().Be("Google");
+        result.PlatformErrors[0].ErrorCategory.Should().Be("Network");
         result.Metadata.Should().NotBeNull();
         result.Metadata.TotalPlatforms.Should().Be(2);
         result.Metadata.SuccessfulPlatforms.Should().Be(1);
@@ -373,7 +373,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task SearchJobsWithErrorsAsync_ReturnsUnsuccessful_WhenAllScrapersFail()
+    public async Task SearchJobsWithErrorsAsyncReturnsUnsuccessfulWhenAllScrapersFail()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -401,7 +401,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task SearchJobsWithErrorsAsync_IncludesExecutionTime()
+    public async Task SearchJobsWithErrorsAsyncIncludesExecutionTime()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -425,7 +425,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task SearchJobsWithErrorsAsync_IncludesCriteriaInMetadata()
+    public async Task SearchJobsWithErrorsAsyncIncludesCriteriaInMetadata()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -453,7 +453,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task GetJobDetailsAsync_ReturnsDetails_WhenScraperSucceeds()
+    public async Task GetJobDetailsAsyncReturnsDetailsWhenScraperSucceeds()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -479,7 +479,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task GetJobDetailsAsync_TriesMultipleScrapers_UntilOneSucceeds()
+    public async Task GetJobDetailsAsyncTriesMultipleScrapersUntilOneSucceeds()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -510,7 +510,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task GetJobDetailsAsync_ReturnsEmptyJob_WhenAllScrapersFail()
+    public async Task GetJobDetailsAsyncReturnsEmptyJobWhenAllScrapersFail()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -530,7 +530,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public void PlatformName_ReturnsAggregated()
+    public void PlatformNameReturnsAggregated()
     {
         // Arrange
         var client = new AggregatedJobClient(Enumerable.Empty<IJobScraper>(), _dedupe, _logger);
@@ -543,7 +543,7 @@ public class AggregatedJobClientIntegrationTests
     }
 
     [Fact]
-    public async Task SearchJobsAsync_HandlesCaseInsensitiveSourceFiltering()
+    public async Task SearchJobsAsyncHandlesCaseInsensitiveSourceFiltering()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();
@@ -574,13 +574,13 @@ public class AggregatedJobClientIntegrationTests
 
         // Assert
         result.Count.Should().Be(1);
-        result.First().Source.Should().Be("Google");
+        result[0].Source.Should().Be("Google");
         await scraper1.Received(1).SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>());
         await scraper2.DidNotReceive().SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task SearchJobsAsync_HandlesMultipleSources()
+    public async Task SearchJobsAsyncHandlesMultipleSources()
     {
         // Arrange
         var scraper1 = Substitute.For<IJobScraper>();

@@ -7,7 +7,7 @@ namespace Ghost.Tests.Abstractions;
 public class ClickOptionsTests
 {
     [Fact]
-    public void Defaults_AreExpected()
+    public void DefaultsAreExpected()
     {
         var o = new ClickOptions();
         o.Button.Should().Be("left");
@@ -17,7 +17,7 @@ public class ClickOptionsTests
     }
 
     [Fact]
-    public void Properties_CanBeSet()
+    public void PropertiesCanBeSet()
     {
         var o = new ClickOptions { Button = "right", ClickCount = 2, Delay = 10, Modifiers = new[] { "Shift" } };
         o.Button.Should().Be("right");

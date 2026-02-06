@@ -7,7 +7,7 @@ namespace Ghost.Tests.Resilience;
 public class RetryPolicyOptionsTests
 {
     [Fact]
-    public void Defaults_AreExpected()
+    public void DefaultsAreExpected()
     {
         var options = new RetryPolicyOptions();
 

@@ -18,7 +18,7 @@ namespace Ghost.Hosting.Tests;
 public class ExtensionDependencyFilteringTests
 {
     [Fact]
-    public void ServiceCollection_WithAllExtensionsDisabled_ShouldRegisterNoJobScrapers()
+    public void ServiceCollectionWithAllExtensionsDisabledShouldRegisterNoJobScrapers()
     {
         var services = new ServiceCollection();
         var config = new ConfigurationBuilder()
@@ -50,7 +50,7 @@ public class ExtensionDependencyFilteringTests
     }
 
     [Fact]
-    public void ServiceCollection_WithSomeExtensionsEnabled_ShouldRegisterOnlyEnabledOnes()
+    public void ServiceCollectionWithSomeExtensionsEnabledShouldRegisterOnlyEnabledOnes()
     {
         var services = new ServiceCollection();
         var config = new ConfigurationBuilder()
@@ -84,7 +84,7 @@ public class ExtensionDependencyFilteringTests
     }
 
     [Fact]
-    public void ConfigurationValue_WhenFalse_ShouldPreventConditionalRegistration()
+    public void ConfigurationValueWhenFalseShouldPreventConditionalRegistration()
     {
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -102,7 +102,7 @@ public class ExtensionDependencyFilteringTests
     }
 
     [Fact]
-    public void ConditionalRegistration_WithBooleanCheck_ShouldSkipDisabledExtensions()
+    public void ConditionalRegistrationWithBooleanCheckShouldSkipDisabledExtensions()
     {
         var services = new ServiceCollection();
         var config = new ConfigurationBuilder()
@@ -135,7 +135,7 @@ public class ExtensionDependencyFilteringTests
     }
 
     [Fact]
-    public void ServiceProvider_WithNoService_ShouldThrowOnResolution()
+    public void ServiceProviderWithNoServiceShouldThrowOnResolution()
     {
         var services = new ServiceCollection();
         var serviceProvider = services.BuildServiceProvider();
@@ -145,7 +145,7 @@ public class ExtensionDependencyFilteringTests
     }
 
     [Fact]
-    public void ServiceCollection_ShouldTrackConditionalRegistrationsCorrectly()
+    public void ServiceCollectionShouldTrackConditionalRegistrationsCorrectly()
     {
         var services = new ServiceCollection();
         var enabledServices = new List<Type> { typeof(MockJobScraper1), typeof(MockJobScraper2) };

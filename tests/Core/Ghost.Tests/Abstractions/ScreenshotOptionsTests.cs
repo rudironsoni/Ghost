@@ -6,7 +6,7 @@ namespace Ghost.Tests.Abstractions;
 public class ScreenshotOptionsTests
 {
     [Fact]
-    public void Defaults_AreExpected()
+    public void DefaultsAreExpected()
     {
         var o = new ScreenshotOptions();
         o.Path.Should().BeNull();
@@ -16,7 +16,7 @@ public class ScreenshotOptionsTests
     }
 
     [Fact]
-    public void Properties_CanBeSet()
+    public void PropertiesCanBeSet()
     {
         var o = new ScreenshotOptions { Path = "p", Type = "jpeg", Quality = 50, FullPage = true };
         o.Path.Should().Be("p");

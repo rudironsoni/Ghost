@@ -6,7 +6,7 @@ namespace Ghost.Stealth.Tests;
 public class FingerprintProfileTests
 {
     [Fact]
-    public void DesktopDefault_HasExpectedFields()
+    public void DesktopDefaultHasExpectedFields()
     {
         var p = FingerprintProfile.DesktopDefault;
         p.Name.Should().Be("desktop-default");
@@ -16,7 +16,7 @@ public class FingerprintProfileTests
     }
 
     [Fact]
-    public void InitProperties_CanBeAssigned_AndAreImmutable()
+    public void InitPropertiesCanBeAssignedAndAreImmutable()
     {
         var p = new FingerprintProfile
         {

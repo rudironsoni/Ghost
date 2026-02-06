@@ -12,7 +12,7 @@ namespace Ghost.Core.Tests.Resilience;
 public class FileSystemDeadLetterQueueTests
 {
     [Fact]
-    public async Task EnqueueAsync_PersistsJob_WithDefaults()
+    public async Task EnqueueAsyncPersistsJobWithDefaults()
     {
         var root = CreateTempRoot();
         var dlq = CreateQueue(root);
@@ -27,7 +27,7 @@ public class FileSystemDeadLetterQueueTests
     }
 
     [Fact]
-    public async Task GetFailedJobsByPlatformAsync_FiltersByPlatform()
+    public async Task GetFailedJobsByPlatformAsyncFiltersByPlatform()
     {
         var root = CreateTempRoot();
         var dlq = CreateQueue(root);
@@ -42,7 +42,7 @@ public class FileSystemDeadLetterQueueTests
     }
 
     [Fact]
-    public async Task GetFailedJobsAsync_RespectsSinceWindow()
+    public async Task GetFailedJobsAsyncRespectsSinceWindow()
     {
         var root = CreateTempRoot();
         var dlq = CreateQueue(root);
@@ -64,7 +64,7 @@ public class FileSystemDeadLetterQueueTests
     }
 
     [Fact]
-    public async Task GetJobAsync_ReturnsJob_WhenFound()
+    public async Task GetJobAsyncReturnsJobWhenFound()
     {
         var root = CreateTempRoot();
         var dlq = CreateQueue(root);
@@ -78,7 +78,7 @@ public class FileSystemDeadLetterQueueTests
     }
 
     [Fact]
-    public async Task RetryAsync_IncrementsRetryCountAndTimestamp()
+    public async Task RetryAsyncIncrementsRetryCountAndTimestamp()
     {
         var root = CreateTempRoot();
         var dlq = CreateQueue(root);
@@ -93,7 +93,7 @@ public class FileSystemDeadLetterQueueTests
     }
 
     [Fact]
-    public async Task RetryAllAsync_IncrementsForMatchingWindow()
+    public async Task RetryAllAsyncIncrementsForMatchingWindow()
     {
         var root = CreateTempRoot();
         var dlq = CreateQueue(root);
@@ -121,7 +121,7 @@ public class FileSystemDeadLetterQueueTests
     }
 
     [Fact]
-    public async Task ArchiveAsync_MovesJobToArchive()
+    public async Task ArchiveAsyncMovesJobToArchive()
     {
         var root = CreateTempRoot();
         var dlq = CreateQueue(root);
@@ -139,7 +139,7 @@ public class FileSystemDeadLetterQueueTests
     }
 
     [Fact]
-    public async Task ArchiveAllAsync_MovesOldJobsOnly()
+    public async Task ArchiveAllAsyncMovesOldJobsOnly()
     {
         var root = CreateTempRoot();
         var dlq = CreateQueue(root);
@@ -171,7 +171,7 @@ public class FileSystemDeadLetterQueueTests
     }
 
     [Fact]
-    public async Task GetQueueDepthAsync_ReturnsActiveCount()
+    public async Task GetQueueDepthAsyncReturnsActiveCount()
     {
         var root = CreateTempRoot();
         var dlq = CreateQueue(root);
@@ -185,7 +185,7 @@ public class FileSystemDeadLetterQueueTests
     }
 
     [Fact]
-    public async Task EnqueueAsync_UsesDeterministicFileName()
+    public async Task EnqueueAsyncUsesDeterministicFileName()
     {
         var root = CreateTempRoot();
         var dlq = CreateQueue(root);
@@ -206,7 +206,7 @@ public class FileSystemDeadLetterQueueTests
     }
 
     [Fact]
-    public async Task EnqueueAsync_ThrowsWhenJobIsNull()
+    public async Task EnqueueAsyncThrowsWhenJobIsNull()
     {
         var root = CreateTempRoot();
         var dlq = CreateQueue(root);
@@ -215,7 +215,7 @@ public class FileSystemDeadLetterQueueTests
     }
 
     [Fact]
-    public async Task GetFailedJobsAsync_ThrowsOnNegativeSince()
+    public async Task GetFailedJobsAsyncThrowsOnNegativeSince()
     {
         var root = CreateTempRoot();
         var dlq = CreateQueue(root);

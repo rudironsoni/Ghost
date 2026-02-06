@@ -5,7 +5,7 @@ namespace Ghost.Core.Tests;
 public class KernelOptionsTests
 {
     [Fact]
-    public void Ctor_Defaults_AreExpected()
+    public void CtorDefaultsAreExpected()
     {
         var opts = new KernelOptions();
         opts.Headless.Should().BeTrue();
@@ -14,7 +14,7 @@ public class KernelOptionsTests
     }
 
     [Fact]
-    public void Properties_SetGet_Works()
+    public void PropertiesSetGetWorks()
     {
         var opts = new KernelOptions();
         opts.Headless = false;

@@ -14,7 +14,7 @@ public class RetryableErrorClassifierTests
     [InlineData(HttpStatusCode.TooManyRequests)]
     [InlineData(HttpStatusCode.ServiceUnavailable)]
     [InlineData(HttpStatusCode.GatewayTimeout)]
-    public void IsRetryable_StatusCodes_AreRetryable(HttpStatusCode code)
+    public void IsRetryableStatusCodesAreRetryable(HttpStatusCode code)
     {
         RetryableErrorClassifier.IsRetryable(code).Should().BeTrue();
     }
@@ -24,44 +24,44 @@ public class RetryableErrorClassifierTests
     [InlineData(HttpStatusCode.Unauthorized)]
     [InlineData(HttpStatusCode.Forbidden)]
     [InlineData(HttpStatusCode.NotFound)]
-    public void IsRetryable_StatusCodes_AreNotRetryable(HttpStatusCode code)
+    public void IsRetryableStatusCodesAreNotRetryable(HttpStatusCode code)
     {
         RetryableErrorClassifier.IsRetryable(code).Should().BeFalse();
     }
 
     [Fact]
-    public void IsRetryable_TaskCanceledException_IsRetryable()
+    public void IsRetryableTaskCanceledExceptionIsRetryable()
     {
         RetryableErrorClassifier.IsRetryable(new TaskCanceledException()).Should().BeTrue();
     }
 
     [Fact]
-    public void IsRetryable_HttpRequestException_IsRetryable()
+    public void IsRetryableHttpRequestExceptionIsRetryable()
     {
         RetryableErrorClassifier.IsRetryable(new HttpRequestException("network")).Should().BeTrue();
     }
 
     [Fact]
-    public void IsRetryable_ValidationException_IsNotRetryable()
+    public void IsRetryableValidationExceptionIsNotRetryable()
     {
         RetryableErrorClassifier.IsRetryable(new ValidationException("invalid")).Should().BeFalse();
     }
 
     [Fact]
-    public void IsRetryable_JsonException_IsNotRetryable()
+    public void IsRetryableJsonExceptionIsNotRetryable()
     {
         RetryableErrorClassifier.IsRetryable(new JsonException("parse")).Should().BeFalse();
     }
 
     [Fact]
-    public void IsRetryable_InvalidOperationException_IsNotRetryable()
+    public void IsRetryableInvalidOperationExceptionIsNotRetryable()
     {
         RetryableErrorClassifier.IsRetryable(new InvalidOperationException("parse")).Should().BeFalse();
     }
 
     [Fact]
-    public void IsRetryable_UnknownException_IsNotRetryable()
+    public void IsRetryableUnknownExceptionIsNotRetryable()
     {
-        RetryableErrorClassifier.IsRetryable(new Exception("other")).Should().BeFalse();
+        RetryableErrorClassifier.IsRetryable(new NotSupportedException("other")).Should().BeFalse();
     }
 }

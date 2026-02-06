@@ -6,7 +6,7 @@ namespace Ghost.Tests.Abstractions;
 public class PageOptionsTests
 {
     [Fact]
-    public void Defaults_AreExpected()
+    public void DefaultsAreExpected()
     {
         var o = new PageOptions();
         o.Width.Should().Be(1280);
@@ -16,7 +16,7 @@ public class PageOptionsTests
     }
 
     [Fact]
-    public void Properties_CanBeSet()
+    public void PropertiesCanBeSet()
     {
         var o = new PageOptions { Width = 300, Height = 400, UserAgent = "x", JavaScriptEnabled = false };
         o.Width.Should().Be(300);

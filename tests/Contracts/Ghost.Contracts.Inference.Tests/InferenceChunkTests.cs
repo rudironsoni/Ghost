@@ -7,7 +7,7 @@ namespace Ghost.Contracts.Inference.Tests;
 public class InferenceChunkTests
 {
     [Fact]
-    public void Defaults_AreExpected()
+    public void DefaultsAreExpected()
     {
         var c = new InferenceChunk();
         c.Delta.Should().BeEmpty();
@@ -15,7 +15,7 @@ public class InferenceChunkTests
     }
 
     [Fact]
-    public void Equality_Works()
+    public void EqualityWorks()
     {
         var a = new InferenceChunk { Delta = "d", FinishReason = "f" };
         var b = new InferenceChunk { Delta = "d", FinishReason = "f" };
