@@ -163,8 +163,8 @@ public sealed class XPostContentSplitter
 
         foreach (var word in words)
         {
-            var testChunk = currentChunk.Length > 0 
-                ? currentChunk + " " + word 
+            var testChunk = currentChunk.Length > 0
+                ? currentChunk + " " + word
                 : word;
 
             if (EstimateLength(testChunk) <= _maxLength)
@@ -216,7 +216,7 @@ public sealed class XPostContentSplitter
         {
             var remainingLength = word.Length - position;
             var chunkSize = Math.Min(_maxLength, remainingLength);
-            
+
             chunks.Add(word.Substring(position, chunkSize));
             position += chunkSize;
         }
@@ -236,7 +236,7 @@ public sealed class XPostContentSplitter
         {
             var partNumber = i + 1;
             var suffix = $" ({partNumber}/{totalParts})";
-            
+
             // Check if we need to trim content to fit the numbering
             var content = parts[i];
             if (EstimateLength(content + suffix) > _maxLength)

@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.Mvc;
 using Ghost.Resilience;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Ghost.WebApi.Features.Health;
 

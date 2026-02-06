@@ -1,7 +1,7 @@
 using Ghost.Contracts.Social;
-using Microsoft.Extensions.Logging;
-using Ghost.Platform.LinkedIn.Internal;
 using Ghost.Extensions;
+using Ghost.Platform.LinkedIn.Internal;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Ghost.Platform.LinkedIn;
@@ -111,10 +111,10 @@ public sealed class LinkedInSocialClient : ISocialClient
         {
             // Any exception - return mock profile
             _logger.LogWarning(ex, "LinkedIn profile fetch failed for {ProfileId}. Returning mock profile data as fallback.", profileId);
-            return new SocialProfile 
-            { 
-                Id = profileId, 
-                Name = "John Doe", 
+            return new SocialProfile
+            {
+                Id = profileId,
+                Name = "John Doe",
                 Bio = "Software Engineer with 5+ years of experience in building scalable applications."
             };
         }
@@ -128,7 +128,7 @@ public sealed class LinkedInSocialClient : ISocialClient
             // container scope if provided, otherwise page scope.
             var selector = ".inline-show-more-text__button, button[aria-label*='see more']";
             IReadOnlyList<IElement> buttons;
-            
+
             if (container != null)
                 buttons = await container.QuerySelectorAllAsync(selector, ct);
             else
@@ -339,12 +339,12 @@ public sealed class LinkedInSocialClient : ISocialClient
             await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct);
             var btn = await page.WaitForSelectorAsync("button[data-control-name='sharebox-trigger']", ct: ct);
             if (btn != null) await btn.HumanClickAsync(ct: ct);
-            
+
             await page.TypeAsync("div.ql-editor", request.Content, ct: ct);
-            
+
             var submitBtn = await page.QuerySelectorAsync("button[data-control-name='submit_post']", ct: ct);
             if (submitBtn != null) await submitBtn.HumanClickAsync(ct: ct);
-            
+
             await page.WaitForNavigationAsync(ct: ct);
 
             return new SocialPost { Id = Guid.NewGuid().ToString(), Content = request.Content };
@@ -442,7 +442,7 @@ public sealed class LinkedInSocialClient : ISocialClient
             await page.NavigateAsync($"{_options.BaseUrl}/in/{profileId}", ct: ct);
             var connectBtn = await page.WaitForSelectorAsync("button[data-control-name='connect']", ct: ct);
             if (connectBtn != null) await connectBtn.HumanClickAsync(ct: ct);
-            
+
             if (!string.IsNullOrEmpty(message))
             {
                 await page.TypeAsync("textarea[name='message']", message, ct: ct);

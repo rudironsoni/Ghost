@@ -1,9 +1,9 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Linq;
-using Ghost.Core;
 using Ghost;
+using Ghost.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -36,19 +36,19 @@ public sealed class LinkedInAuthenticator
 
         var pageOpts = _options.GetPageOptions();
         var page = await _session.NewPageAsync(pageOpts, ct: ct);
-            try
-            {
-                await page.NavigateAsync(_options.BaseUrl, ct: ct);
-                // set cookie via document.cookie
-                await page.EvaluateAsync<object>($"document.cookie = 'li_at={liAt}; domain=.linkedin.com; path=/';", ct: ct);
-                await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct);
+        try
+        {
+            await page.NavigateAsync(_options.BaseUrl, ct: ct);
+            // set cookie via document.cookie
+            await page.EvaluateAsync<object>($"document.cookie = 'li_at={liAt}; domain=.linkedin.com; path=/';", ct: ct);
+            await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct);
 
-                var logged = await IsLoggedInAsync(page, ct).ConfigureAwait(false);
-                if (!logged)
-                {
-                    _logger.LoginCookieSetNotLoggedIn();
-                }
+            var logged = await IsLoggedInAsync(page, ct).ConfigureAwait(false);
+            if (!logged)
+            {
+                _logger.LoginCookieSetNotLoggedIn();
             }
+        }
         finally
         {
             try { await page.DisposeAsync(); } catch { }

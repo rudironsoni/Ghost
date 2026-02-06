@@ -38,8 +38,8 @@
     <BaseOutputPath>/tmp/ghost-build/bin/$(MSBuildProjectName)/</BaseOutputPath>
     <BaseIntermediateOutputPath>/tmp/ghost-build/obj/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
     <PackageOutputPath>/tmp/ghost-build/packages/</PackageOutputPath>
-    <!-- Disable automatic AssemblyInfo generation to avoid duplicates -->
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- Enable automatic AssemblyInfo generation for versioning attributes -->
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 

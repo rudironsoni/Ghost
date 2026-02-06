@@ -1,11 +1,11 @@
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using NSubstitute;
+using Ghost.Contracts.News;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NSubstitute;
 using Xunit;
-using Ghost.Contracts.News;
 
 namespace Ghost.Platform.LinkedIn.Tests;
 

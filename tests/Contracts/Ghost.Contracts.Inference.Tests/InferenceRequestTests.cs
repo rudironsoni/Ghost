@@ -1,7 +1,7 @@
-using FluentAssertions;
 using System;
-using Xunit;
+using FluentAssertions;
 using Ghost.Contracts.Inference;
+using Xunit;
 
 namespace Ghost.Contracts.Inference.Tests;
 

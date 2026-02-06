@@ -1,9 +1,9 @@
+using System.Reflection;
+using AngleSharp.Html.Parser;
 using Ghost.Sdk.Spider.Core.Entities;
 using Ghost.Sdk.Spider.Core.Entities.Attributes;
 using Ghost.Sdk.Spider.Core.Extraction.Selectors;
-using System.Reflection;
 using HtmlAgilityPack;
-using AngleSharp.Html.Parser;
 
 namespace Ghost.Sdk.Spider.Core.Extraction;
 
@@ -55,17 +55,17 @@ public class EntityParser
     public T? ParseSingle<T>(ExtractionContext context) where T : EntityBase<T>, new()
     {
         var metadata = EntityBase<T>.GetMetadata();
-        
+
         // If an entity selector is defined, use it to find the first matching entity
         if (metadata.EntitySelector != null)
         {
             var entityNodes = SelectEntityNodes(context.Content, metadata.EntitySelector);
             if (entityNodes.Count == 0)
                 return null;
-            
+
             return ParseSingleEntity<T>(entityNodes[0], metadata, context);
         }
-        
+
         // If no entity selector, treat the entire content as a single entity
         return ParseSingleEntity<T>(context.Content, metadata, context);
     }
@@ -93,7 +93,7 @@ public class EntityParser
             }
             return selectorInstance.Select(content);
         }
-        
+
         return new List<string>();
     }
 
@@ -102,7 +102,7 @@ public class EntityParser
         var parser = new AngleSharp.Html.Parser.HtmlParser();
         var document = parser.ParseDocument(content);
         var elements = document.QuerySelectorAll(expression);
-        
+
         var results = new List<string>();
         foreach (var element in elements)
         {
@@ -110,7 +110,7 @@ public class EntityParser
             results.Add(element.OuterHtml);
             if (takeFirst) break;
         }
-        
+
         return results;
     }
 
@@ -118,11 +118,11 @@ public class EntityParser
     {
         var doc = new HtmlDocument();
         doc.LoadHtml(content);
-        
+
         var nodes = doc.DocumentNode.SelectNodes(expression);
         if (nodes == null || nodes.Count == 0)
             return new List<string>();
-        
+
         var results = new List<string>();
         foreach (var node in nodes)
         {
@@ -130,7 +130,7 @@ public class EntityParser
             results.Add(node.OuterHtml);
             if (takeFirst) break;
         }
-        
+
         return results;
     }
 

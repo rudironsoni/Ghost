@@ -78,7 +78,7 @@ public class XAuthenticator
             {
                 _logger.LogInformation("Loading storage state from {Path}", _options.StorageStatePath);
                 await _session.SaveStorageStateAsync(_options.StorageStatePath);
-                
+
                 // Reload page to apply cookies
                 await page.NavigateAsync(_options.BaseUrl, ct: ct);
                 await page.WaitForLoadStateAsync(ct: ct);
@@ -113,12 +113,12 @@ public class XAuthenticator
         {
             _logger.LogDebug("Warming up X session");
             var page = await _session.NewPageAsync(ct: ct);
-            
+
             try
             {
                 await page.NavigateAsync(_options.BaseUrl, ct: ct);
                 await page.WaitForLoadStateAsync(ct: ct);
-                
+
                 // Check if logged in
                 var isLoggedIn = await IsLoggedInAsync(page, ct);
                 _logger.LogInformation("Warm-up complete. Logged in: {IsLoggedIn}", isLoggedIn);

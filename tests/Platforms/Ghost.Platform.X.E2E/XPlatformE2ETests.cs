@@ -39,7 +39,7 @@ public class XPlatformE2ETests : IClassFixture<GhostKernelFixture>
         {
             // Assert
             Assert.NotNull(page);
-            
+
             // Verify timezone is set correctly
             var timezone = await page.EvaluateAsync<string>("() => Intl.DateTimeFormat().resolvedOptions().timeZone");
             Assert.Equal("America/New_York", timezone);
@@ -168,7 +168,7 @@ public class XPlatformE2ETests : IClassFixture<GhostKernelFixture>
 
         // Assert
         Assert.True(result.Count > 1, "Long content should be split into multiple tweets");
-        
+
         // Verify each tweet has thread numbering
         for (int i = 0; i < result.Count; i++)
         {

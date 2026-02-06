@@ -32,7 +32,7 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
     private readonly TimeSpan _timeout;
     private readonly TimeSpan _samplingDuration;
     private readonly object _lock = new();
-    
+
     private CircuitState _state;
     private int _failureCount;
     private int _successCount;
@@ -97,7 +97,7 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
         try
         {
             await next(context);
-            
+
             // Record success
             lock (_lock)
             {
@@ -149,7 +149,7 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
         if (_state == CircuitState.HalfOpen)
         {
             _successCount++;
-            
+
             // If we've had enough successes in half-open state, close the circuit
             if (_successCount >= _successThreshold)
             {
@@ -209,11 +209,11 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
                 _successCount = 0;
                 _recentFailures.Clear();
                 break;
-            
+
             case CircuitState.Open:
                 _successCount = 0;
                 break;
-            
+
             case CircuitState.HalfOpen:
                 _failureCount = 0;
                 _successCount = 0;

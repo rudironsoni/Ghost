@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Diagnostics.CodeAnalysis;
+using Ghost.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Ghost.Core;
 
 namespace Ghost.Resilience;
 
@@ -250,8 +250,8 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
         foreach (var path in EnumerateActiveFiles())
         {
             var job = await ReadJobAsync(path).ConfigureAwait(false);
-        if (job is null)
-            continue;
+            if (job is null)
+                continue;
 
             var failedAt = GetFailedAtUtc(job, path);
             if (failedAt >= threshold)

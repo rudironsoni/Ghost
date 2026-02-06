@@ -1,15 +1,15 @@
-using Ghost.Hosting;
 using Ghost.Abstractions;
-using Ghost.Utilities;
-using Ghost.WebApi.Features.LinkedIn;
-using Ghost.WebApi.Features.Jobs;
-using Ghost.WebApi.Features.Health;
-using Ghost.WebApi.Features.Admin;
 using Ghost.Core;
+using Ghost.Hosting;
 using Ghost.Monitoring;
 using Ghost.Resilience;
-using Microsoft.Extensions.Logging.Abstractions;
+using Ghost.Utilities;
+using Ghost.WebApi.Features.Admin;
+using Ghost.WebApi.Features.Health;
+using Ghost.WebApi.Features.Jobs;
+using Ghost.WebApi.Features.LinkedIn;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Logging.Abstractions;
 // Removed unused reflection/disk/culture usings after replacing dynamic loader with
 // compile-time referenced extensions.
 
@@ -21,11 +21,13 @@ DotNetEnv.Env.TraversePath().Load();
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-try {
+try
+{
     Console.WriteLine($"[DEBUG] Environment: {builder.Environment.EnvironmentName}");
     Console.WriteLine($"[DEBUG] Ghost:Extensions:Google:Enabled = {builder.Configuration.GetValue<bool?>("Ghost:Extensions:Google:Enabled")}");
     Console.WriteLine($"[DEBUG] Indeed:Country = {builder.Configuration.GetValue<string>("Indeed:Country")}");
-} catch {}
+}
+catch { }
 
 // Force enable platforms for testing
 Environment.SetEnvironmentVariable("GHOST__EXTENSIONS__LINKEDIN__ENABLED", "true");
@@ -164,12 +166,12 @@ if (app.Environment.IsDevelopment())
 app.MapLinkedInEndpoints();
 
 // Map job endpoints and health checks
-        app.MapJobsEndpoints();
-        app.MapHealthEndpoints();
-        app.MapDetailedHealth();
-        app.MapCircuitBreakerHealth();
-        app.MapDlqEndpoints();
-        app.MapMetricsEndpoints();
-        app.MapHealthChecks("/health");
+app.MapJobsEndpoints();
+app.MapHealthEndpoints();
+app.MapDetailedHealth();
+app.MapCircuitBreakerHealth();
+app.MapDlqEndpoints();
+app.MapMetricsEndpoints();
+app.MapHealthChecks("/health");
 
 app.Run();

@@ -1,11 +1,11 @@
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using NSubstitute;
+using Ghost.Contracts.Inference;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NSubstitute;
 using Xunit;
-using Ghost.Contracts.Inference;
 
 namespace Ghost.Platform.OpenAI.Tests;
 

@@ -1,13 +1,13 @@
-using Microsoft.Extensions.DependencyInjection;
-using Ghost.Models;
-using Microsoft.Extensions.Configuration;
-using Ghost.Platform.Indeed.Internal;
-using Ghost.Contracts;
-using Ghost.Hosting;
-using Ghost.Contracts.Jobs;
-using Ghost.Abstractions;
-using Ghost.Http;
 using System.Net.Http;
+using Ghost.Abstractions;
+using Ghost.Contracts;
+using Ghost.Contracts.Jobs;
+using Ghost.Hosting;
+using Ghost.Http;
+using Ghost.Models;
+using Ghost.Platform.Indeed.Internal;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Ghost.Platform.Indeed;
 
@@ -24,7 +24,7 @@ public class IndeedExtension : Ghost.Hosting.IExtension
         services.AddSingleton<Microsoft.Extensions.Options.IValidateOptions<IndeedOptions>, IndeedOptionsValidator>();
         services.Configure<IndeedOptions>(configuration.GetSection("Ghost:Extensions:Indeed"));
         var opts = configuration.GetSection("Ghost:Extensions:Indeed").Get<IndeedOptions>() ?? new IndeedOptions();
-        try { Console.WriteLine($"[DEBUG] IndeedExtension bound options: Country={opts.Country}"); } catch {}
+        try { Console.WriteLine($"[DEBUG] IndeedExtension bound options: Country={opts.Country}"); } catch { }
 
         if (!opts.Enabled) return;
 

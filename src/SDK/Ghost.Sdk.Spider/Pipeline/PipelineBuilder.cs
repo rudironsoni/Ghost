@@ -131,7 +131,7 @@ public sealed class PipelineBuilder
     public PipelineBuilder Use(Func<IPipelineMiddleware> factory)
     {
         ArgumentNullException.ThrowIfNull(factory);
-        var middleware = factory() ?? throw new ArgumentNullException(nameof(factory), 
+        var middleware = factory() ?? throw new ArgumentNullException(nameof(factory),
             "Middleware factory returned null.");
         return Use(middleware);
     }

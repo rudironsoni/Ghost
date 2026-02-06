@@ -66,7 +66,7 @@ public class ParsingTests
         var extractor = new Ghost.Utilities.JsonLdExtractor();
         var parser = new Ghost.Platform.LinkedIn.Internal.JsonLdParser(extractor);
         var result = parser.Parse(json, "123", "http://url");
-        
+
         result.Should().NotBeNull();
         result!.JobType.Should().Be(expected);
     }

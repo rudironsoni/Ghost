@@ -1,7 +1,7 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using Ghost.Core;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Ghost.Hosting;
 
@@ -95,9 +95,9 @@ public sealed class GhostBuilder
         });
 
         // Load extensions via loader (validates and registers)
-            var loader = new ExtensionLoader();
-            if (_extensions.Count > 0)
-            {
+        var loader = new ExtensionLoader();
+        if (_extensions.Count > 0)
+        {
             if (_services.Any(sd => sd.ServiceType == typeof(GhostOptions)))
             {
                 // nothing special
@@ -105,9 +105,9 @@ public sealed class GhostBuilder
 
             if (_services is null) throw new InvalidOperationException("Services collection is missing");
 
-// Tell the extension loader that IBrowserSession and GhostKernel are provided by the kernel
-var kernelProvidedServices = new HashSet<Type> { typeof(IBrowserSession), typeof(Ghost.Core.GhostKernel) };
-ExtensionLoader.LoadExtensions(_extensions, _services, _configuration, kernelProvidedServices);
+            // Tell the extension loader that IBrowserSession and GhostKernel are provided by the kernel
+            var kernelProvidedServices = new HashSet<Type> { typeof(IBrowserSession), typeof(Ghost.Core.GhostKernel) };
+            ExtensionLoader.LoadExtensions(_extensions, _services, _configuration, kernelProvidedServices);
         }
     }
 }

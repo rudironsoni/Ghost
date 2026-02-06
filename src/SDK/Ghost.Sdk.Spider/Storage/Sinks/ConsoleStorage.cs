@@ -1,7 +1,7 @@
+using System.Diagnostics;
 using Ghost.Sdk.Spider.Storage.Contracts;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Diagnostics;
 
 namespace Ghost.Sdk.Spider.Storage.Sinks;
 
@@ -56,7 +56,7 @@ public class ConsoleStorage : IStorage
         try
         {
             var json = JsonConvert.SerializeObject(item, _jsonSettings);
-            
+
             Console.WriteLine("=".PadRight(80, '='));
             Console.WriteLine($"Spider: {context.SpiderName}");
             Console.WriteLine($"Source: {context.SourceUrl}");

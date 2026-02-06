@@ -1,5 +1,5 @@
-using Ghost.Models;
 using System.Collections.Generic;
+using Ghost.Models;
 
 namespace Ghost.Platform.Indeed.Internal;
 
@@ -44,7 +44,7 @@ internal static class IndeedConstants
         }}
     """;
 
-    public static Dictionary<string,string> GetHeaders(CountryCode country, string apiKey)
+    public static Dictionary<string, string> GetHeaders(CountryCode country, string apiKey)
     {
         // Use the provided API key or throw if empty
         if (string.IsNullOrEmpty(apiKey))
@@ -81,7 +81,7 @@ internal static class IndeedConstants
         var language = locale.Split('-')[0];
         var acceptLanguage = $"{locale},{language};q=0.9";
 
-        return new Dictionary<string,string>
+        return new Dictionary<string, string>
         {
             ["Host"] = "apis.indeed.com",
             ["indeed-api-key"] = keyToUse,

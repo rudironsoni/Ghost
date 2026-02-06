@@ -1,7 +1,7 @@
+using System.Text.RegularExpressions;
 using Ghost.Contracts.Social;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Text.RegularExpressions;
 
 namespace Ghost.Platform.X.Internal;
 
@@ -33,7 +33,7 @@ public class XThreadComposer
     {
         // Split content into tweet-sized parts
         var parts = _contentSplitter.Split(request.Content);
-        
+
         if (parts.Count == 0)
         {
             throw new ArgumentException("Content cannot be empty", nameof(request));
@@ -50,11 +50,11 @@ public class XThreadComposer
             var isLastTweet = i == parts.Count - 1;
             var part = parts[i];
 
-            _logger.LogDebug("Posting tweet {Index}/{Total}: {Preview}...", 
+            _logger.LogDebug("Posting tweet {Index}/{Total}: {Preview}...",
                 i + 1, parts.Count, part[..Math.Min(50, part.Length)]);
 
             string tweetId;
-            
+
             if (isFirstTweet)
             {
                 // Post first tweet (with media if provided)
@@ -96,8 +96,8 @@ public class XThreadComposer
 
         // Wait for compose textarea
         var composeBox = await page.WaitForSelectorAsync(
-            "div[role='textbox'][contenteditable='true']", 
-            new WaitOptions { Timeout = 10000 }, 
+            "div[role='textbox'][contenteditable='true']",
+            new WaitOptions { Timeout = 10000 },
             ct);
 
         if (composeBox == null)
@@ -228,7 +228,7 @@ public class XThreadComposer
         if (mediaInput == null)
         {
             _logger.LogWarning("Could not find media input, attempting to click media button first");
-            
+
             // Try clicking the media button to reveal the input
             var mediaButton = await page.QuerySelectorAsync("[data-testid='mediaButton']", ct);
             if (mediaButton != null)
@@ -255,7 +255,7 @@ public class XThreadComposer
             }
 
             var extension = Path.GetExtension(url).ToLowerInvariant();
-            if (_options.SupportedImageFormats.Contains(extension) || 
+            if (_options.SupportedImageFormats.Contains(extension) ||
                 _options.SupportedVideoFormats.Contains(extension))
             {
                 validFiles.Add(url);
@@ -281,7 +281,7 @@ public class XThreadComposer
         // Set files on input
         // Note: This is a placeholder - actual implementation depends on Ghost's IPage interface
         _logger.LogInformation("Setting {Count} media files for upload", validFiles.Count);
-        
+
         // Wait for upload to complete
         await Task.Delay(2000, ct);
 
@@ -296,7 +296,7 @@ public class XThreadComposer
         try
         {
             var url = page.Url;
-            
+
             // Match /status/123456789 pattern
             var match = Regex.Match(url, @"/status/(\d+)");
             if (match.Success)

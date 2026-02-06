@@ -139,7 +139,7 @@ public class XSimulationE2ETests : IClassFixture<GhostKernelFixture>
         // Arrange
         var request = new CreatePostRequest
         {
-            Content = string.Join(" ", Enumerable.Range(1, 20).Select(i => 
+            Content = string.Join(" ", Enumerable.Range(1, 20).Select(i =>
                 $"This is a very long sentence that will create a thread with many parts number {i}."))
         };
 
@@ -214,7 +214,7 @@ public class XSimulationE2ETests : IClassFixture<GhostKernelFixture>
         // Arrange
         var request = new CreatePostRequest
         {
-            Content = string.Join(" ", Enumerable.Range(1, 10).Select(i => 
+            Content = string.Join(" ", Enumerable.Range(1, 10).Select(i =>
                 $"This is sentence {i} that makes a thread with many parts."))
         };
 
@@ -257,7 +257,7 @@ public class XSimulationE2ETests : IClassFixture<GhostKernelFixture>
     public async Task GeneratePreviewAsync_ThreadContent_ReturnsMultiTweetPreview()
     {
         // Arrange
-        var content = string.Join(" ", Enumerable.Range(1, 10).Select(i => 
+        var content = string.Join(" ", Enumerable.Range(1, 10).Select(i =>
             $"This is a very long sentence number {i} that will create a thread."));
         var request = new CreatePostRequest { Content = content };
 
@@ -335,7 +335,7 @@ public class XSimulationE2ETests : IClassFixture<GhostKernelFixture>
         try
         {
             File.WriteAllText(tempFile, "test content");
-            
+
             var request = new CreatePostRequest
             {
                 Content = "Test content",

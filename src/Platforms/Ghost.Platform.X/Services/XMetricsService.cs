@@ -65,7 +65,7 @@ public class XMetricsService : IXMetricsService
     public XMetrics GetMetrics()
     {
         var posts = _posts.Values.ToList();
-        
+
         return new XMetrics
         {
             TotalRequests = _totalRequests,
@@ -73,7 +73,7 @@ public class XMetricsService : IXMetricsService
             FailedRequests = _failedRequests,
             SuccessRate = _totalRequests > 0 ? (double)_successfulRequests / _totalRequests : 0,
             RateLimitHits = _rateLimitHits,
-            AverageRequestDuration = posts.Any(p => p.Success) 
+            AverageRequestDuration = posts.Any(p => p.Success)
                 ? TimeSpan.FromMilliseconds(posts.Where(p => p.Success).Average(p => p.Duration.TotalMilliseconds))
                 : TimeSpan.Zero,
             TotalPosts = posts.Count,

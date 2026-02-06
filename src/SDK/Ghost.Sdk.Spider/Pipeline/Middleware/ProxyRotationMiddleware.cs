@@ -44,7 +44,7 @@ public sealed class ProxyRotationMiddleware : IPipelineMiddleware
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        if (!configuration.TryGetValue("ProxyList", out var proxyListObj) || 
+        if (!configuration.TryGetValue("ProxyList", out var proxyListObj) ||
             proxyListObj is not List<string> proxyList ||
             proxyList.Count == 0)
         {
@@ -52,8 +52,8 @@ public sealed class ProxyRotationMiddleware : IPipelineMiddleware
         }
 
         _proxies = proxyList.Select(url => new ProxyEndpoint(url)).ToList();
-        _rotationStrategy = configuration.TryGetValue("RotationStrategy", out var strategy) 
-            ? strategy.ToString() ?? "RoundRobin" 
+        _rotationStrategy = configuration.TryGetValue("RotationStrategy", out var strategy)
+            ? strategy.ToString() ?? "RoundRobin"
             : "RoundRobin";
         _random = new Random();
         _currentIndex = 0;
@@ -88,7 +88,7 @@ public sealed class ProxyRotationMiddleware : IPipelineMiddleware
         try
         {
             await next(context);
-            
+
             // Mark proxy as successful
             proxy.RecordSuccess();
         }

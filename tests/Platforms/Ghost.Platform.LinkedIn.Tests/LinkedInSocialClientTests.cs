@@ -3,11 +3,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using NSubstitute;
+using Ghost.Contracts.Social;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NSubstitute;
 using Xunit;
-using Ghost.Contracts.Social;
 
 namespace Ghost.Platform.LinkedIn.Tests;
 

@@ -1,20 +1,20 @@
+using System.Net.Http;
+using Ghost.Abstractions;
+using Ghost.Contracts;
+using Ghost.Core;
+using Ghost.Hosting;
+using Ghost.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Ghost.Contracts;
-using Ghost.Hosting;
-using Ghost.Abstractions;
-using Ghost.Http;
-using System.Net.Http;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
-using Ghost.Core;
+using Microsoft.Extensions.Options;
 
 namespace Ghost.Platform.Glassdoor;
 
 public sealed class GlassdoorExtension : Ghost.Hosting.IExtension
 {
     public string Name => "Glassdoor";
-    public Version Version => new(1,0,0);
+    public Version Version => new(1, 0, 0);
     public IReadOnlyList<Type> ProvidedServices => new[] { typeof(Ghost.Contracts.Jobs.IJobClient) };
     public IReadOnlyList<Type> RequiredServices { get { Console.WriteLine("[DEBUG] GlassdoorExtension.RequiredServices called"); return Array.Empty<Type>(); } }
 
@@ -28,17 +28,17 @@ public sealed class GlassdoorExtension : Ghost.Hosting.IExtension
             var opts = sp.GetRequiredService<IOptions<GlassdoorOptions>>().Value;
             var logger = sp.GetRequiredService<ILogger<Internal.GlassdoorApiClient>>();
             var proxyProvider = sp.GetService<IProxyProvider>();
-            
+
             var handler = opts.ProxyEnabled && proxyProvider != null
                 ? new HttpClientHandler { Proxy = new RotatingWebProxy(proxyProvider), UseProxy = true }
                 : new HttpClientHandler { UseProxy = false };
-            
+
             var configuredHandler = HttpClientSecurityExtensions.ConfigureSecureHttpClientHandler(handler);
             var httpClient = new HttpClient(configuredHandler)
             {
                 Timeout = TimeSpan.FromMilliseconds(opts.RequestTimeoutMs)
             };
-            
+
             return new Internal.GlassdoorApiClient(httpClient, logger);
         });
 

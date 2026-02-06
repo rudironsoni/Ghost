@@ -55,7 +55,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
         LoggerMessage.Define<int>(LogLevel.Warning, new EventId(5, "FallbackActivated"), "Primary proxy sources exhausted, activating fallback chain with {Count} proxies");
 
     private static readonly Action<ILogger, string, int, double, double, Exception?> s_logProxyMetrics =
-        LoggerMessage.Define<string, int, double, double>(LogLevel.Information, new EventId(6, "ProxyMetrics"), 
+        LoggerMessage.Define<string, int, double, double>(LogLevel.Information, new EventId(6, "ProxyMetrics"),
             "Proxy {Proxy} metrics - Requests: {Requests}, Success Rate: {SuccessRate:F2}%, Avg Latency: {AvgLatency:F2}ms");
 
     private static readonly Action<ILogger, string, string, Exception?> s_logRotationStrategy =
@@ -90,7 +90,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
         _sources = sources ?? throw new ArgumentNullException(nameof(sources));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        
+
         if (_options.FallbackChain?.Count > 0)
         {
             _fallbackSources = CreateFallbackSources(_options.FallbackChain);
@@ -520,7 +520,7 @@ public class ProxyHealthMetrics
     public DateTimeOffset FirstSeen { get; set; }
     public DateTimeOffset LastUsed { get; set; }
     public DateTimeOffset? LastFailure { get; set; }
-    
+
     public long TotalRequests { get; set; }
     public long SuccessfulRequests { get; set; }
     public long FailedRequests { get; set; }
@@ -529,12 +529,12 @@ public class ProxyHealthMetrics
     public List<double> LatencyHistory { get; } = new();
     public Dictionary<string, List<double>> GeographicLatency { get; } = new();
 
-    public double SuccessRate => TotalRequests > 0 
-        ? (double)SuccessfulRequests / TotalRequests 
+    public double SuccessRate => TotalRequests > 0
+        ? (double)SuccessfulRequests / TotalRequests
         : 0.0;
 
-    public double AverageLatency => LatencyHistory.Count > 0 
-        ? LatencyHistory.Average() 
+    public double AverageLatency => LatencyHistory.Count > 0
+        ? LatencyHistory.Average()
         : 0.0;
 
     public double MedianLatency

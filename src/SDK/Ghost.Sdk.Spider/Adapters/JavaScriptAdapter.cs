@@ -39,7 +39,7 @@ public class JavaScriptAdapter : IContentAdapter
     private async Task<IBrowser> InitializeBrowserAsync()
     {
         _logger?.LogInformation("Initializing Playwright browser");
-        
+
         var playwright = await Playwright.CreateAsync().ConfigureAwait(false);
         var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
@@ -196,7 +196,7 @@ public class JavaScriptAdapter : IContentAdapter
     private Response CreateErrorResponse(string error, Exception? exception, DateTimeOffset startTime, string url)
     {
         var contentResult = ContentResult.CreateFailure(error, ContentType.JavaScript);
-        
+
         return new Response(contentResult)
         {
             IsSuccess = false,

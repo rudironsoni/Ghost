@@ -86,7 +86,7 @@ public class XWebhookService : IXWebhookService
     public async Task NotifyAsync(string eventName, XEventArgs args)
     {
         List<Func<XEventArgs, Task>>? callbacks;
-        
+
         lock (_lock)
         {
             if (!_callbacks.TryGetValue(eventName, out var eventCallbacks))

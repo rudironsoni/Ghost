@@ -1,11 +1,11 @@
 using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
+using Ghost.Platform.Google.Gemini;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using FluentAssertions;
 using NSubstitute;
 using Xunit;
-using Ghost.Platform.Google.Gemini;
 
 namespace Ghost.Platform.Google.Tests;
 

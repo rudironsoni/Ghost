@@ -24,17 +24,17 @@ public sealed class GhostKernelFixture : IAsyncLifetime
         };
 
         Kernel = await GhostKernel.CreateAsync(options);
-        
+
         // Create a session for testing
         Session = await Kernel.NewSessionAsync();
-        
+
         // Build service provider with X platform
         var services = new ServiceCollection();
         services.AddSingleton(Session);
         services.AddSingleton<IBrowserSession>(Session);
         services.AddLogging();
         services.AddXPlatform();
-        
+
         ServiceProvider = services.BuildServiceProvider();
     }
 
@@ -44,7 +44,7 @@ public sealed class GhostKernelFixture : IAsyncLifetime
         {
             await Session.DisposeAsync();
         }
-        
+
         if (Kernel != null)
         {
             await Kernel.DisposeAsync();

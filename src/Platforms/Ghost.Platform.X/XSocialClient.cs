@@ -1,9 +1,9 @@
+using System.Text.RegularExpressions;
 using Ghost.Contracts.Simulation;
 using Ghost.Contracts.Social;
 using Ghost.Platform.X.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Text.RegularExpressions;
 
 namespace Ghost.Platform.X;
 
@@ -57,7 +57,7 @@ public class XSocialClient : ISocialClient
     }
 
     public async Task<IReadOnlyList<SocialProfile>> SearchProfilesAsync(
-        ProfileSearchCriteria criteria, 
+        ProfileSearchCriteria criteria,
         CancellationToken ct = default)
     {
         _logger.LogInformation("Searching X profiles for: {Query}", criteria.Query);
@@ -82,10 +82,10 @@ public class XSocialClient : ISocialClient
     }
 
     public async Task<SocialPost> CreatePostAsync(
-        CreatePostRequest request, 
+        CreatePostRequest request,
         CancellationToken ct = default)
     {
-        _logger.LogInformation("Creating X post with content length: {Length}", 
+        _logger.LogInformation("Creating X post with content length: {Length}",
             request.Content?.Length ?? 0);
         var pageOpts = _options.GetPageOptions();
         var page = await _session.NewPageAsync(pageOpts, ct: ct);
@@ -113,7 +113,7 @@ public class XSocialClient : ISocialClient
     }
 
     public async Task<IReadOnlyList<SocialPost>> GetFeedAsync(
-        FeedOptions? options = null, 
+        FeedOptions? options = null,
         CancellationToken ct = default)
     {
         _logger.LogInformation("Fetching X feed");
@@ -138,8 +138,8 @@ public class XSocialClient : ISocialClient
     }
 
     public async Task SendMessageAsync(
-        string recipientId, 
-        string message, 
+        string recipientId,
+        string message,
         CancellationToken ct = default)
     {
         _logger.LogInformation("Sending message to: {RecipientId}", recipientId);
@@ -153,8 +153,8 @@ public class XSocialClient : ISocialClient
             await page.WaitForLoadStateAsync(ct: ct);
 
             var searchBox = await page.WaitForSelectorAsync(
-                "input[placeholder*='Search']", 
-                new WaitOptions { Timeout = 10000 }, 
+                "input[placeholder*='Search']",
+                new WaitOptions { Timeout = 10000 },
                 ct);
 
             if (searchBox == null)
@@ -217,7 +217,7 @@ public class XSocialClient : ISocialClient
     }
 
     public async Task<IReadOnlyList<SocialConnection>> GetConnectionsAsync(
-        ConnectionsOptions? options = null, 
+        ConnectionsOptions? options = null,
         CancellationToken ct = default)
     {
         var profileId = options?.ProfileId ?? "me";
@@ -233,7 +233,7 @@ public class XSocialClient : ISocialClient
             await page.WaitForLoadStateAsync(ct: ct);
             await _authenticator.EnsureAuthenticatedAsync(page, ct).ConfigureAwait(false);
             var connections = await ExtractSocialConnectionsAsync(page, profileId, ct);
-            _logger.LogInformation("Fetched {Count} connections for: {ProfileId}", 
+            _logger.LogInformation("Fetched {Count} connections for: {ProfileId}",
                 connections.Count, profileId);
             return connections.AsReadOnly();
         }
@@ -244,8 +244,8 @@ public class XSocialClient : ISocialClient
     }
 
     public async Task SendConnectionRequestAsync(
-        string profileId, 
-        string? message = null, 
+        string profileId,
+        string? message = null,
         CancellationToken ct = default)
     {
         _logger.LogInformation("Following user: {ProfileId}", profileId);
@@ -287,8 +287,8 @@ public class XSocialClient : ISocialClient
     }
 
     private async Task<SocialProfile> ExtractProfileDataAsync(
-        IPage page, 
-        string profileId, 
+        IPage page,
+        string profileId,
         CancellationToken ct)
     {
         string? name = null;
@@ -334,7 +334,7 @@ public class XSocialClient : ISocialClient
                 "    const link = document.querySelector('a[href$=\"/followers\"]');" +
                 "    return link?.innerText || '';" +
                 "}", ct);
-            
+
             if (!string.IsNullOrWhiteSpace(followersText))
             {
                 var match = Regex.Match(followersText, @"([\d,\.]+)\s*[KkMm]?");
@@ -349,8 +349,8 @@ public class XSocialClient : ISocialClient
             _logger.LogWarning(ex, "Failed to extract follower count");
         }
 
-        return new SocialProfile 
-        { 
+        return new SocialProfile
+        {
             Id = profileId,
             Name = name ?? profileId,
             Bio = bio,
@@ -359,8 +359,8 @@ public class XSocialClient : ISocialClient
     }
 
     private async Task<List<SocialProfile>> ExtractSearchResultsAsync(
-        IPage page, 
-        int maxResults, 
+        IPage page,
+        int maxResults,
         CancellationToken ct)
     {
         var profiles = new List<SocialProfile>();
@@ -379,17 +379,17 @@ public class XSocialClient : ISocialClient
                     var name = await userNameEl.GetTextContentAsync(ct);
 
                     var linkEl = await cell.QuerySelectorAsync("a[href^='/']", ct);
-                    var handle = linkEl != null 
-                        ? await linkEl.GetAttributeAsync("href", ct) 
+                    var handle = linkEl != null
+                        ? await linkEl.GetAttributeAsync("href", ct)
                         : null;
-                    
+
                     if (!string.IsNullOrWhiteSpace(handle))
                     {
                         handle = handle.TrimStart('/');
-                        profiles.Add(new SocialProfile 
-                        { 
-                            Id = handle, 
-                            Name = name ?? handle 
+                        profiles.Add(new SocialProfile
+                        {
+                            Id = handle,
+                            Name = name ?? handle
                         });
                     }
                 }
@@ -408,8 +408,8 @@ public class XSocialClient : ISocialClient
     }
 
     private async Task<List<SocialPost>> ExtractFeedPostsAsync(
-        IPage page, 
-        int maxPosts, 
+        IPage page,
+        int maxPosts,
         CancellationToken ct)
     {
         var posts = new List<SocialPost>();
@@ -448,7 +448,7 @@ public class XSocialClient : ISocialClient
         {
             var linkEl = await article.QuerySelectorAsync("a[href*='/status/']", ct);
             var href = linkEl != null ? await linkEl.GetAttributeAsync("href", ct) : null;
-            
+
             if (string.IsNullOrWhiteSpace(href)) return null;
 
             var match = Regex.Match(href, @"/status/(\d+)");
@@ -457,8 +457,8 @@ public class XSocialClient : ISocialClient
             var tweetId = match.Groups[1].Value;
 
             var contentEl = await article.QuerySelectorAsync("[data-testid='tweetText']", ct);
-            var content = contentEl != null 
-                ? await contentEl.GetTextContentAsync(ct) 
+            var content = contentEl != null
+                ? await contentEl.GetTextContentAsync(ct)
                 : "";
 
             var userNameEl = await article.QuerySelectorAsync("[data-testid='User-Name']", ct);
@@ -485,7 +485,7 @@ public class XSocialClient : ISocialClient
     }
 
     private async Task<List<SocialConnection>> ExtractSocialConnectionsAsync(
-        IPage page, 
+        IPage page,
         string profileId,
         CancellationToken ct)
     {
@@ -505,15 +505,15 @@ public class XSocialClient : ISocialClient
                     var name = await userNameEl.GetTextContentAsync(ct);
 
                     var linkEl = await cell.QuerySelectorAsync("a[href^='/']", ct);
-                    var handle = linkEl != null 
-                        ? await linkEl.GetAttributeAsync("href", ct) 
+                    var handle = linkEl != null
+                        ? await linkEl.GetAttributeAsync("href", ct)
                         : null;
-                    
+
                     if (!string.IsNullOrWhiteSpace(handle))
                     {
                         handle = handle.TrimStart('/');
-                        connections.Add(new SocialConnection 
-                        { 
+                        connections.Add(new SocialConnection
+                        {
                             Id = Guid.NewGuid().ToString(),
                             FromProfileId = profileId,
                             ToProfileId = handle,

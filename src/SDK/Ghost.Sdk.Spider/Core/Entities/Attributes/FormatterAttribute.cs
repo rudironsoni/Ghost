@@ -201,7 +201,7 @@ public class DateTimeFormatterAttribute : FormatterAttribute
         if (value == null)
             return null;
 
-        var culture = Culture != null 
+        var culture = Culture != null
             ? System.Globalization.CultureInfo.GetCultureInfo(Culture)
             : System.Globalization.CultureInfo.InvariantCulture;
 

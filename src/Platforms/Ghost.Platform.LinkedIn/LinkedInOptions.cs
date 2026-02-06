@@ -41,7 +41,7 @@ public sealed class LinkedInOptions
     /// Default is true.
     /// </summary>
     public bool WarmUpEnabled { get; set; } = true;
-    
+
     /// <summary>
     /// Country used to resolve platform domains (e.g. ES -> es.linkedin.com)
     /// </summary>

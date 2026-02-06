@@ -338,13 +338,13 @@ public sealed class LinkedInSessionPool : IDisposable
             Interlocked.Increment(ref _totalCreated);
             return session;
         }
-        catch (Exception ex) when (ex is Microsoft.Playwright.PlaywrightException || 
+        catch (Exception ex) when (ex is Microsoft.Playwright.PlaywrightException ||
                                     ex.Message.Contains("TargetClosedException", StringComparison.OrdinalIgnoreCase) ||
                                     ex.Message.Contains("ERR_SOCKS_CONNECTION_FAILED", StringComparison.OrdinalIgnoreCase) ||
                                     ex.Message.Contains("Process exited", StringComparison.OrdinalIgnoreCase))
         {
             throw new BrowserServiceUnavailableException(
-                "Failed to initialize browser session. Browser automation service may be unavailable or proxy connection failed.", 
+                "Failed to initialize browser session. Browser automation service may be unavailable or proxy connection failed.",
                 ex);
         }
     }

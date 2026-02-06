@@ -107,14 +107,14 @@ public sealed class LinkedInNewsClient : INewsClient
                         // .update-components-text is common for the post text
                         // article titles often in .update-components-article__title
                         var titleEl = await n.QuerySelectorAsync(".update-components-article__title, .update-components-text span[dir='ltr']", ct);
-                        string title = titleEl is not null 
-                            ? await titleEl.GetTextContentAsync(ct) ?? string.Empty 
+                        string title = titleEl is not null
+                            ? await titleEl.GetTextContentAsync(ct) ?? string.Empty
                             : string.Empty;
 
                         // Link
                         var aEl = await n.QuerySelectorAsync("a.app-aware-link", ct);
-                        string url = aEl is not null 
-                            ? await aEl.GetAttributeAsync("href", ct) ?? string.Empty 
+                        string url = aEl is not null
+                            ? await aEl.GetAttributeAsync("href", ct) ?? string.Empty
                             : string.Empty;
 
                         if (!string.IsNullOrWhiteSpace(title) || !string.IsNullOrWhiteSpace(url))

@@ -63,21 +63,21 @@ public class SessionFactory
                 options.JitterMinMs = 2000;
                 options.JitterMaxMs = 8000;
                 break;
-            
+
             case "indeed":
                 options.Timeout = TimeSpan.FromSeconds(30);
                 options.MaxRetries = 3;
                 options.JitterMinMs = 1000;
                 options.JitterMaxMs = 4000;
                 break;
-            
+
             case "google":
                 options.Timeout = TimeSpan.FromSeconds(60);
                 options.MaxRetries = 4;
                 options.JitterMinMs = 3000;
                 options.JitterMaxMs = 10000;
                 break;
-            
+
             default:
                 // Use default options
                 break;

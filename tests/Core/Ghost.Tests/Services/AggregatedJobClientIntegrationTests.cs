@@ -4,12 +4,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
-using NSubstitute;
-using Xunit;
 using Ghost.Abstractions;
 using Ghost.Contracts.Jobs;
 using Ghost.Core.Services;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
+using Xunit;
 
 namespace Ghost.Core.Tests.Services;
 

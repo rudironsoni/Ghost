@@ -107,7 +107,7 @@ public sealed class GoogleJobsOptions
             }
         }
     }
-    
+
     /// <summary>
     /// Async bootstrap string for Google Jobs pagination calls.
     /// This is a long basejs/xjs bootstrap string that Google expects.

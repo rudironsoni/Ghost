@@ -46,7 +46,7 @@ public class LinkedInFixtureScraper
         {
             // Step 1: Scrape search results
             Console.WriteLine("[1/6] Scraping LinkedIn job search results...");
-            var jobIds = await ScrapeSearchResultsAsync(page);
+            var jobIds = await ScrapeSearchResultsAsync((IPage)page);
 
             if (jobIds.Count == 0)
             {

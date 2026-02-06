@@ -110,7 +110,7 @@ public class LinkedInJobEntity : EntityBase<LinkedInJobEntity>
     /// </summary>
     public override bool Validate()
     {
-        return !string.IsNullOrWhiteSpace(Title) && 
+        return !string.IsNullOrWhiteSpace(Title) &&
                !string.IsNullOrWhiteSpace(Company);
     }
 }

@@ -1,10 +1,10 @@
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using NSubstitute;
-using Xunit;
 using Ghost;
 using Ghost.Extensions;
+using NSubstitute;
+using Xunit;
 
 namespace Ghost.Tests.Extensions;
 

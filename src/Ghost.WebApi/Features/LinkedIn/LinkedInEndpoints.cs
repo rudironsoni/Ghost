@@ -1,9 +1,9 @@
 using Ghost.Contracts.Jobs;
 using Ghost.Contracts.News;
 using Ghost.Contracts.Social;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
 using Ghost.Platform.LinkedIn;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Ghost.WebApi.Features.LinkedIn;
 

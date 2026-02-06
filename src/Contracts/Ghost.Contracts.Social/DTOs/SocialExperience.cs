@@ -1,6 +1,7 @@
 using System;
 
 namespace Ghost.Contracts.Social;
+
 public sealed record SocialExperience
 {
     public string Title { get; init; } = string.Empty;

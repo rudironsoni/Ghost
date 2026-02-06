@@ -71,10 +71,10 @@ public sealed partial class AnthropicClient : Ghost.Contracts.Inference.IInferen
             {
                 await page.WaitForSelectorAsync("textarea", options: null, ct: ct);
             }
-                catch (Exception ex)
-                {
-                    AnthropicLog.PromptTextboxNotFound(_logger, ex);
-                }
+            catch (Exception ex)
+            {
+                AnthropicLog.PromptTextboxNotFound(_logger, ex);
+            }
 
             // Type prompt
             var prompt = string.Join("\n", request.Messages.Select(m => m.Content));

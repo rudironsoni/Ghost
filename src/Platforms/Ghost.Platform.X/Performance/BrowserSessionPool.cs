@@ -1,7 +1,7 @@
+using System.Collections.Concurrent;
 using Ghost.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Collections.Concurrent;
 
 namespace Ghost.Platform.X.Performance;
 
@@ -14,17 +14,17 @@ public interface IBrowserSessionPool : IDisposable
     /// Gets a session from the pool or creates a new one.
     /// </summary>
     Task<IBrowserSession> GetSessionAsync(CancellationToken ct = default);
-    
+
     /// <summary>
     /// Returns a session to the pool.
     /// </summary>
     void ReturnSession(IBrowserSession session);
-    
+
     /// <summary>
     /// Gets the number of available sessions in the pool.
     /// </summary>
     int AvailableCount { get; }
-    
+
     /// <summary>
     /// Gets the total number of sessions (in use + available).
     /// </summary>
@@ -40,17 +40,17 @@ public class BrowserSessionPoolOptions
     /// Maximum number of sessions in the pool.
     /// </summary>
     public int MaxPoolSize { get; set; } = 5;
-    
+
     /// <summary>
     /// Minimum number of sessions to keep in the pool.
     /// </summary>
     public int MinPoolSize { get; set; } = 1;
-    
+
     /// <summary>
     /// Maximum time a session can be idle before being closed.
     /// </summary>
     public TimeSpan IdleTimeout { get; set; } = TimeSpan.FromMinutes(10);
-    
+
     /// <summary>
     /// Maximum time to wait for a session from the pool.
     /// </summary>
@@ -81,7 +81,7 @@ public class BrowserSessionPool : IBrowserSessionPool
         _logger = logger;
         _semaphore = new SemaphoreSlim(_options.MaxPoolSize);
         _cleanupTimer = new Timer(CleanupIdleSessions, null, _options.IdleTimeout, _options.IdleTimeout);
-        
+
         _logger.LogInformation("Browser session pool initialized with max size {MaxSize}", _options.MaxPoolSize);
     }
 
@@ -139,7 +139,7 @@ public class BrowserSessionPool : IBrowserSessionPool
         if (_inUseSessions.TryRemove(session, out var entry))
         {
             entry.LastUsedAt = DateTime.UtcNow;
-            
+
             // Check if we should return to pool or dispose
             if (_availableSessions.Count < _options.MaxPoolSize && !IsSessionExpired(entry))
             {
@@ -153,7 +153,7 @@ public class BrowserSessionPool : IBrowserSessionPool
                 _ = DisposeSessionAsync(entry);
             }
         }
-        
+
         _semaphore.Release();
     }
 
@@ -168,7 +168,7 @@ public class BrowserSessionPool : IBrowserSessionPool
         try
         {
             var expiredSessions = _availableSessions.Where(IsSessionExpired).ToList();
-            
+
             foreach (var entry in expiredSessions)
             {
                 if (_availableSessions.TryTake(out var removed) && removed == entry)
@@ -215,7 +215,7 @@ public class BrowserSessionPool : IBrowserSessionPool
         }
 
         _logger.LogInformation("Browser session pool disposed");
-        
+
         GC.SuppressFinalize(this);
     }
 

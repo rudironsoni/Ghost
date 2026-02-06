@@ -192,17 +192,17 @@ public static class XServiceCollectionExtensions
     public static IServiceCollection ConfigureXAccounts(this IServiceCollection services, IEnumerable<XAccountOptions> accounts)
     {
         services.AddSingleton<IEnumerable<XAccountOptions>>(accounts);
-        
+
         services.AddSingleton<IXAccountManager>(sp =>
         {
             var manager = new XAccountManager(sp.GetRequiredService<ILogger<XAccountManager>>());
             var accountOptions = sp.GetRequiredService<IEnumerable<XAccountOptions>>();
-            
+
             foreach (var account in accountOptions)
             {
                 manager.RegisterAccount(account.AccountId, account);
             }
-            
+
             return manager;
         });
 
@@ -236,10 +236,10 @@ public class XHealthCheckService : BackgroundService
             try
             {
                 var result = await _healthCheck.CheckHealthAsync(stoppingToken);
-                
+
                 if (result.Status == HealthStatus.Unhealthy)
                 {
-                    _logger.LogError("X platform health check failed: {Messages}", 
+                    _logger.LogError("X platform health check failed: {Messages}",
                         string.Join(", ", result.Messages));
                 }
                 else if (result.Status == HealthStatus.Degraded)

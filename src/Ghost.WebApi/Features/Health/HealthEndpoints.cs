@@ -38,7 +38,7 @@ public static class HealthEndpoints
     }
 
     private static async Task<IResult> CheckJobsHealth(
-        [FromServices] IJobClient jobClient, 
+        [FromServices] IJobClient jobClient,
         [FromServices] ILoggerFactory loggerFactory,
         CancellationToken ct)
     {
@@ -68,10 +68,10 @@ public static class HealthEndpoints
             if (IsPlatformEnabled("Google"))
             {
                 var googleStatus = await TestPlatformHealthAsync(
-                    "Google", 
-                    testCriteria with { Sources = new List<string> { "Google" } }, 
-                    jobClient, 
-                    loggerFactory, 
+                    "Google",
+                    testCriteria with { Sources = new List<string> { "Google" } },
+                    jobClient,
+                    loggerFactory,
                     ct);
                 healthStatus.Platforms["Google"] = googleStatus;
             }
@@ -80,10 +80,10 @@ public static class HealthEndpoints
             if (IsPlatformEnabled("Glassdoor"))
             {
                 var glassdoorStatus = await TestPlatformHealthAsync(
-                    "Glassdoor", 
-                    testCriteria with { Sources = new List<string> { "Glassdoor" } }, 
-                    jobClient, 
-                    loggerFactory, 
+                    "Glassdoor",
+                    testCriteria with { Sources = new List<string> { "Glassdoor" } },
+                    jobClient,
+                    loggerFactory,
                     ct);
                 healthStatus.Platforms["Glassdoor"] = glassdoorStatus;
             }
@@ -92,10 +92,10 @@ public static class HealthEndpoints
             if (IsPlatformEnabled("LinkedIn"))
             {
                 var linkedinStatus = await TestPlatformHealthAsync(
-                    "LinkedIn", 
-                    testCriteria with { Sources = new List<string> { "LinkedIn" } }, 
-                    jobClient, 
-                    loggerFactory, 
+                    "LinkedIn",
+                    testCriteria with { Sources = new List<string> { "LinkedIn" } },
+                    jobClient,
+                    loggerFactory,
                     ct);
                 healthStatus.Platforms["LinkedIn"] = linkedinStatus;
             }
@@ -104,10 +104,10 @@ public static class HealthEndpoints
             if (IsPlatformEnabled("Indeed"))
             {
                 var indeedStatus = await TestPlatformHealthAsync(
-                    "Indeed", 
-                    testCriteria with { Sources = new List<string> { "Indeed" } }, 
-                    jobClient, 
-                    loggerFactory, 
+                    "Indeed",
+                    testCriteria with { Sources = new List<string> { "Indeed" } },
+                    jobClient,
+                    loggerFactory,
                     ct);
                 healthStatus.Platforms["Indeed"] = indeedStatus;
             }
@@ -198,8 +198,8 @@ public static class HealthEndpoints
         var hasDegraded = platforms.Values.Any(p => p.Status == "degraded");
         var allHealthy = platforms.Values.All(p => p.Status == "healthy");
 
-        return hasUnhealthy ? "unhealthy" : 
-               hasDegraded ? "degraded" : 
+        return hasUnhealthy ? "unhealthy" :
+               hasDegraded ? "degraded" :
                allHealthy ? "healthy" : "unknown";
     }
 }

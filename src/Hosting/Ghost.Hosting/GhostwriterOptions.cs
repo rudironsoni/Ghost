@@ -1,6 +1,6 @@
+using Ghost.Core; // for KernelOptions
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Ghost.Core; // for KernelOptions
 
 namespace Ghost.Hosting;
 

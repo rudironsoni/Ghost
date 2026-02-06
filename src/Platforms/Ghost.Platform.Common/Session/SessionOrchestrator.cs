@@ -146,12 +146,12 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
                     "Reusing existing session {SessionId} for affinity key {AffinityKey}",
                     existingMapping.SessionId,
                     affinityOptions.AffinityKey);
-                
+
                 if (_sessions.TryGetValue(existingMapping.SessionId, out var metadata))
                 {
                     metadata.LastUsedAt = DateTime.UtcNow;
                 }
-                
+
                 return existingMapping.SessionId;
             }
 
@@ -161,7 +161,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
         var sessionId = await AllocateSessionAsync(context, ct);
 
         var affinityDuration = affinityOptions.AffinityDuration ?? _options.DefaultAffinityDuration;
-        
+
         if (affinityDuration > _options.MaxAffinityDuration)
         {
             affinityDuration = _options.MaxAffinityDuration;
@@ -521,7 +521,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
         };
 
         metadata.HttpSession = new RotatingProxySession(_proxyProvider, sessionOptions);
-        
+
         return Task.CompletedTask;
     }
 
@@ -574,7 +574,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
     private SessionHealth CalculateSessionHealth(SessionMetadata metadata)
     {
         var cutoffTime = DateTime.UtcNow.Subtract(_options.FailureTrackingWindow);
-        
+
         while (metadata.RecentFailures.TryPeek(out var failureTime))
         {
             if (failureTime < cutoffTime)
@@ -736,7 +736,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
         public int FailedRequests { get; set; }
         public ConcurrentQueue<DateTime> RecentFailures { get; init; } = new();
         public Dictionary<string, string>? Metadata { get; init; }
-        
+
         public RotatingProxySession? HttpSession { get; set; }
         public IBrowserSession? BrowserSession { get; set; }
         public Tier? BrowserTier { get; set; }

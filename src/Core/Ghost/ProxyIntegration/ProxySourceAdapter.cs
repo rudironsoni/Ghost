@@ -28,23 +28,23 @@ public sealed class ProxySourceAdapter : IProxySource
     private readonly Lazy<IProxySource> _adaptedSource;
 
     private static readonly Action<ILogger, string, Exception?> s_logAdapterInitialized =
-        LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(ProxySourceAdapter)), 
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(ProxySourceAdapter)),
             "Proxy source adapter initialized for type '{SourceType}'");
 
     private static readonly Action<ILogger, string, Exception?> s_logAdapterFetching =
-        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(2, nameof(ProxySourceAdapter)), 
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(2, nameof(ProxySourceAdapter)),
             "Fetching proxies from adapted source '{SourceType}'");
 
     private static readonly Action<ILogger, string, int, Exception?> s_logAdapterFetchSuccess =
-        LoggerMessage.Define<string, int>(LogLevel.Information, new EventId(3, nameof(ProxySourceAdapter)), 
+        LoggerMessage.Define<string, int>(LogLevel.Information, new EventId(3, nameof(ProxySourceAdapter)),
             "Adapter fetched {Count} proxies from source '{SourceType}'");
 
     private static readonly Action<ILogger, string, Exception?> s_logAdapterFetchFailed =
-        LoggerMessage.Define<string>(LogLevel.Error, new EventId(4, nameof(ProxySourceAdapter)), 
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(4, nameof(ProxySourceAdapter)),
             "Adapter failed to fetch proxies from source '{SourceType}'");
 
     private static readonly Action<ILogger, string, Exception?> s_logUnsupportedSourceType =
-        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(5, nameof(ProxySourceAdapter)), 
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(5, nameof(ProxySourceAdapter)),
             "Unsupported proxy source type '{SourceType}', returning empty collection");
 
     public ProxySourceAdapter(Ghost.Core.ProxySourceConfig config, ILogger<ProxySourceAdapter> logger, HttpClient? httpClient = null)
@@ -158,23 +158,23 @@ public sealed class ProxySourceHealthMonitor
     private readonly ProxySystemOptions _options;
 
     private static readonly Action<ILogger, string, double, Exception?> s_logSourceHealthy =
-        LoggerMessage.Define<string, double>(LogLevel.Debug, new EventId(1, nameof(ProxySourceHealthMonitor)), 
+        LoggerMessage.Define<string, double>(LogLevel.Debug, new EventId(1, nameof(ProxySourceHealthMonitor)),
             "Proxy source '{Source}' health check passed - Success rate: {SuccessRate:F2}%");
 
     private static readonly Action<ILogger, string, int, Exception?> s_logSourceDegraded =
-        LoggerMessage.Define<string, int>(LogLevel.Warning, new EventId(2, nameof(ProxySourceHealthMonitor)), 
+        LoggerMessage.Define<string, int>(LogLevel.Warning, new EventId(2, nameof(ProxySourceHealthMonitor)),
             "Proxy source '{Source}' degraded - Consecutive failures: {Failures}");
 
     private static readonly Action<ILogger, string, Exception?> s_logSourceUnhealthy =
-        LoggerMessage.Define<string>(LogLevel.Error, new EventId(3, nameof(ProxySourceHealthMonitor)), 
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(3, nameof(ProxySourceHealthMonitor)),
             "Proxy source '{Source}' marked unhealthy - Consider fallback");
 
     private static readonly Action<ILogger, string, int, double, Exception?> s_logSourceMetrics =
-        LoggerMessage.Define<string, int, double>(LogLevel.Information, new EventId(4, nameof(ProxySourceHealthMonitor)), 
+        LoggerMessage.Define<string, int, double>(LogLevel.Information, new EventId(4, nameof(ProxySourceHealthMonitor)),
             "Source '{Source}' metrics - Total attempts: {Attempts}, Avg latency: {AvgLatency:F2}ms");
 
     private static readonly Action<ILogger, string, Exception?> s_logSourceRecovered =
-        LoggerMessage.Define<string>(LogLevel.Information, new EventId(5, nameof(ProxySourceHealthMonitor)), 
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(5, nameof(ProxySourceHealthMonitor)),
             "Proxy source '{Source}' has recovered");
 
     public ProxySourceHealthMonitor(IOptions<ProxySystemOptions> options, ILogger<ProxySourceHealthMonitor> logger)
@@ -290,19 +290,19 @@ public sealed class ProxySourceFallbackManager
     private int _currentSourceIndex;
 
     private static readonly Action<ILogger, string, string, Exception?> s_logFallbackAttempt =
-        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(1, nameof(ProxySourceFallbackManager)), 
+        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(1, nameof(ProxySourceFallbackManager)),
             "Falling back from '{CurrentSource}' to '{NextSource}'");
 
     private static readonly Action<ILogger, Exception?> s_logAllSourcesFailed =
-        LoggerMessage.Define(LogLevel.Error, new EventId(2, nameof(ProxySourceFallbackManager)), 
+        LoggerMessage.Define(LogLevel.Error, new EventId(2, nameof(ProxySourceFallbackManager)),
             "All proxy sources in fallback chain have failed");
 
     private static readonly Action<ILogger, string, Exception?> s_logSourceSelected =
-        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(3, nameof(ProxySourceFallbackManager)), 
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(3, nameof(ProxySourceFallbackManager)),
             "Proxy source '{Source}' selected from fallback chain");
 
     private static readonly Action<ILogger, int, Exception?> s_logChainInitialized =
-        LoggerMessage.Define<int>(LogLevel.Information, new EventId(4, nameof(ProxySourceFallbackManager)), 
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(4, nameof(ProxySourceFallbackManager)),
             "Proxy source fallback chain initialized with {Count} sources");
 
     public ProxySourceFallbackManager(
@@ -452,9 +452,9 @@ public sealed class ProxySourceFallbackManager
 
         var source = sourceName.ToLowerInvariant() switch
         {
-            "static" => new Ghost.Services.StaticProxySource(config, 
+            "static" => new Ghost.Services.StaticProxySource(config,
                 new SimpleLoggerAdapter<Ghost.Services.StaticProxySource>()) as IProxySource,
-            "api" => new Ghost.Services.ApiProxySource(_httpClient ?? new HttpClient(), config, 
+            "api" => new Ghost.Services.ApiProxySource(_httpClient ?? new HttpClient(), config,
                 new SimpleLoggerAdapter<Ghost.Services.ApiProxySource>()) as IProxySource,
             _ => null
         };

@@ -1,3 +1,6 @@
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using Ghost.Contracts.Jobs;
 using Ghost.Extensions;
 using Ghost.Platform.LinkedIn.Entities;
@@ -12,9 +15,6 @@ using Ghost.Sdk.Spider.Pipeline.Middleware;
 using Ghost.Sdk.Spider.Strategies;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Collections.Concurrent;
-using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace Ghost.Platform.LinkedIn;
 
@@ -39,7 +39,7 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
         LoggerMessage.Define<string>(LogLevel.Warning, new EventId(5, nameof(SearchJobsWithStrategyAsync)), "Browser search found 0 jobs. Page Title: {Title}");
 
     private static readonly char[] s_newlineSplit = new[] { '\n', '\r' };
-    
+
     private readonly Ghost.IBrowserSession _session;
     private readonly LinkedInOptions _options;
     private readonly ILogger<LinkedInJobClient> _logger;
@@ -128,7 +128,7 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
     private async Task<JobListing> GetJobDetailsBrowserAsync(string jobId, CancellationToken ct = default)
     {
         var url = $"{_options.BaseUrl}/jobs/view/{jobId}";
-        
+
         // Create a Spider request with middleware pipeline
         var request = new Request(url)
         {
@@ -172,7 +172,7 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
             await page.WaitForLoadStateAsync(ct: ct);
 
             var html = await page.GetContentAsync(ct);
-            
+
             // Extract using EntityParser with LinkedInJobEntity from Entities namespace
             var context = new ExtractionContext
             {
@@ -182,7 +182,7 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
             };
 
             var entity = _entityParser.ParseSingle<LinkedInJobEntity>(context);
-            
+
             if (entity == null || !entity.Validate())
             {
                 return new JobListing { Id = jobId, Url = url, Source = "LinkedIn" };
@@ -217,13 +217,13 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
                 Source = "LinkedIn"
             };
         }
-        catch (Exception ex) when (ex is Microsoft.Playwright.PlaywrightException || 
+        catch (Exception ex) when (ex is Microsoft.Playwright.PlaywrightException ||
                                     ex.Message.Contains("TargetClosedException", StringComparison.OrdinalIgnoreCase) ||
                                     ex.Message.Contains("ERR_SOCKS_CONNECTION_FAILED", StringComparison.OrdinalIgnoreCase) ||
                                     ex.Message.Contains("Process exited", StringComparison.OrdinalIgnoreCase))
         {
             throw new BrowserServiceUnavailableException(
-                "Failed to create browser page. Browser automation service may be unavailable.", 
+                "Failed to create browser page. Browser automation service may be unavailable.",
                 ex);
         }
         finally
@@ -251,16 +251,16 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
         {
             page = await _session.NewPageAsync(pageOpts, ct: ct);
         }
-        catch (Exception ex) when (ex is Microsoft.Playwright.PlaywrightException || 
+        catch (Exception ex) when (ex is Microsoft.Playwright.PlaywrightException ||
                                     ex.Message.Contains("TargetClosedException", StringComparison.OrdinalIgnoreCase) ||
                                     ex.Message.Contains("ERR_SOCKS_CONNECTION_FAILED", StringComparison.OrdinalIgnoreCase) ||
                                     ex.Message.Contains("Process exited", StringComparison.OrdinalIgnoreCase))
         {
             throw new BrowserServiceUnavailableException(
-                "Failed to create browser page. Browser automation service may be unavailable.", 
+                "Failed to create browser page. Browser automation service may be unavailable.",
                 ex);
         }
-        
+
         try
         {
             var url = $"{_options.BaseUrl}/jobs/view/{jobId}";
@@ -339,13 +339,13 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
         [EnumeratorCancellation] CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(criteria);
-        
+
         // Spider-only implementation: use Browser strategy
         await foreach (var job in SearchJobsWithStrategyAsync(
-            criteria.Query ?? string.Empty, 
-            criteria.Location ?? string.Empty, 
-            criteria.MaxResults > 0 ? criteria.MaxResults : 25, 
-            JobScrapingStrategy.Browser, 
+            criteria.Query ?? string.Empty,
+            criteria.Location ?? string.Empty,
+            criteria.MaxResults > 0 ? criteria.MaxResults : 25,
+            JobScrapingStrategy.Browser,
             ct))
         {
             yield return job;
@@ -353,10 +353,10 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
     }
 
     private async IAsyncEnumerable<JobListing> SearchJobsWithStrategyAsync(
-        string keywords, 
-        string location, 
-        int limit, 
-        JobScrapingStrategy strategy, 
+        string keywords,
+        string location,
+        int limit,
+        JobScrapingStrategy strategy,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
     {
         s_logJobSearchStarting(_logger, strategy, keywords, null);
@@ -454,7 +454,7 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
                     if (linkEl != null)
                     {
                         jobUrl = await linkEl.GetAttributeAsync("href", ct);
-                        
+
                         if (Guid.TryParse(id, out _) && !string.IsNullOrEmpty(jobUrl))
                         {
                             var urlIdMatch = System.Text.RegularExpressions.Regex.Match(jobUrl, @"-(\d{6,})(?:\?|$)");
@@ -467,11 +467,11 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
 
                     if (!string.IsNullOrEmpty(title))
                     {
-                        list.Add(new JobListing 
-                        { 
-                            Id = id, 
-                            Title = title, 
-                            Company = company, 
+                        list.Add(new JobListing
+                        {
+                            Id = id,
+                            Title = title,
+                            Company = company,
                             Location = locationText,
                             Url = jobUrl,
                             Source = "LinkedIn"
@@ -542,13 +542,13 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
         var jobTitles = new[] { "Software Engineer", "Senior Developer", "Full Stack Engineer", "DevOps Engineer", "Data Scientist" };
         var companies = new[] { "Tech Corp", "Innovation Labs", "Digital Solutions Inc", "Cloud Systems", "Data Dynamics" };
         var locations = new[] { "San Francisco, CA", "Remote", "New York, NY", "Seattle, WA", "Austin, TX" };
-        
+
         for (int i = 0; i < Math.Min(count, 5); i++)
         {
             var title = jobTitles[i % jobTitles.Length];
             var company = companies[i % companies.Length];
             var loc = string.IsNullOrWhiteSpace(location) ? locations[i % locations.Length] : location;
-            
+
             mockJobs.Add(new JobListing
             {
                 Id = $"linkedin-job-{i + 1}",
@@ -564,7 +564,7 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
                 IsEasyApply = i % 2 == 0
             });
         }
-        
+
         return mockJobs;
     }
 }

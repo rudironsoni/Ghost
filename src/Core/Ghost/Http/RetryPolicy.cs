@@ -1,7 +1,7 @@
+using System.Net;
+using System.Net.Http;
 using Polly;
 using Polly.Retry;
-using System.Net.Http;
-using System.Net;
 
 namespace Ghost.Http;
 

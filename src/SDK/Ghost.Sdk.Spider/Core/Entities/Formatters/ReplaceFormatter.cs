@@ -67,7 +67,7 @@ public class ReplaceFormatter : Formatter
     {
         if (string.IsNullOrEmpty(OldValue))
             throw new InvalidOperationException("OldValue cannot be null or empty.");
-        
+
         if (NewValue == null)
             throw new InvalidOperationException("NewValue cannot be null.");
     }

@@ -89,5 +89,5 @@ public class ProxyHealthCheckerIntegrationTests
         return port;
     }
 
-    
+
 }

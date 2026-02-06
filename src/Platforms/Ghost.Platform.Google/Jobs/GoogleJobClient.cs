@@ -80,7 +80,7 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
                 JobSearchStrategy.HttpOnly => await TryHttpOnlyAsync(criteria, ct),
                 _ => await TryBrowserFirstAsync(criteria, ct)
             };
-            
+
             _logger.LogInformation("Google Jobs search completed. Found {Count} jobs", result.Count);
             return result;
         }

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using Ghost.Contracts.Jobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Ghost.Contracts.Jobs;
 
 namespace Ghost.Platform.Google.Jobs.Internal;
 
@@ -115,7 +115,7 @@ public static class GoogleJobsParser
 
             // Try multiple widget key patterns
             var widgetKeys = new[] { "520084652", "520084653", "htl;jobs" };
-            
+
             // Pattern to find widget keys followed by JSON arrays
             // Matches: "widgetKey":[[...job data...]]
             foreach (var widgetKey in widgetKeys)
@@ -136,7 +136,7 @@ public static class GoogleJobsParser
                             jsonStart++;
                         }
 
-                        if (jsonStart >= html.Length || html[jsonStart] != '[') 
+                        if (jsonStart >= html.Length || html[jsonStart] != '[')
                         {
                             keyIndex = jsonStart;
                             continue;
@@ -191,7 +191,7 @@ public static class GoogleJobsParser
                         }
 
                         var jsonString = html.Substring(jsonStart, jsonEnd - jsonStart);
-                        
+
                         try
                         {
                             using var doc = JsonDocument.Parse(jsonString);
@@ -793,11 +793,11 @@ public static class GoogleJobsParser
         if (html.Contains("consent.google.com") || html.Contains("Before you continue to Google Search"))
         {
             LogDetectedConsentPage(logger, null);
-            
+
             // Log a preview of the HTML for debugging
             var preview = html.Length > 1000 ? html.Substring(0, 1000) : html;
             logger.LogWarning("Consent page HTML preview: {Preview}", preview);
-            
+
             return Array.Empty<JobListing>();
         }
 
@@ -833,17 +833,17 @@ public static class GoogleJobsParser
 
         // All strategies failed - log detailed diagnostic info
         logger.LogWarning("All parsing strategies failed. HTML length: {Length}. Checking for common patterns...", processedHtml.Length);
-        
+
         // Check for common Google patterns
         var hasDataVed = processedHtml.Contains("data-ved");
         var hasJobsKeyword = processedHtml.Contains("jobs", StringComparison.OrdinalIgnoreCase);
         var hasHtlJobs = processedHtml.Contains("htl;jobs", StringComparison.OrdinalIgnoreCase);
         var hasJsonLd = processedHtml.Contains("application/ld+json", StringComparison.OrdinalIgnoreCase);
         var hasScriptTags = processedHtml.Contains("<script", StringComparison.OrdinalIgnoreCase);
-        
+
         logger.LogWarning("Pattern detection: data-ved={HasDataVed}, jobs={HasJobsKeyword}, htl;jobs={HasHtlJobs}, json-ld={HasJsonLd}, script={HasScriptTags}",
             hasDataVed, hasJobsKeyword, hasHtlJobs, hasJsonLd, hasScriptTags);
-        
+
         // Log a sample of the HTML
         var sampleSize = Math.Min(2000, processedHtml.Length);
         var htmlSample = processedHtml.Substring(0, sampleSize);

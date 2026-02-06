@@ -43,20 +43,20 @@ public sealed class RateLimitMiddleware : IPipelineMiddleware
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        _capacity = configuration.TryGetValue("Capacity", out var cap) && cap is int capacity 
-            ? capacity 
+        _capacity = configuration.TryGetValue("Capacity", out var cap) && cap is int capacity
+            ? capacity
             : 10;
 
-        _tokensPerSecond = configuration.TryGetValue("TokensPerSecond", out var tps) && tps is double tokensPerSecond 
-            ? tokensPerSecond 
+        _tokensPerSecond = configuration.TryGetValue("TokensPerSecond", out var tps) && tps is double tokensPerSecond
+            ? tokensPerSecond
             : 1.0;
 
-        _perDomain = configuration.TryGetValue("PerDomain", out var pd) && pd is bool perDomain 
-            ? perDomain 
+        _perDomain = configuration.TryGetValue("PerDomain", out var pd) && pd is bool perDomain
+            ? perDomain
             : true;
 
-        _waitWhenExceeded = configuration.TryGetValue("WaitWhenExceeded", out var wwe) && wwe is bool waitWhenExceeded 
-            ? waitWhenExceeded 
+        _waitWhenExceeded = configuration.TryGetValue("WaitWhenExceeded", out var wwe) && wwe is bool waitWhenExceeded
+            ? waitWhenExceeded
             : true;
 
         _domainLimiters = new Dictionary<string, TokenBucketRateLimiter>();

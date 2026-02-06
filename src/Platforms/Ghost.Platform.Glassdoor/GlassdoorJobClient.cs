@@ -1,9 +1,9 @@
-using Ghost.Contracts.Jobs;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
+using Ghost.Contracts.Jobs;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Ghost.Platform.Glassdoor;
 
@@ -26,8 +26,8 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
             // Simpler: create new CookieContainer and swap via local variable (this instance is readonly, so we use Add to clear)
             // Remove cookies by enumerating domains and expiring them
             // Best-effort: enumerate all cookies from known Glassdoor domains
-            var domains = new[] { 
-                ".glassdoor.com", "glassdoor.com", "www.glassdoor.com" 
+            var domains = new[] {
+                ".glassdoor.com", "glassdoor.com", "www.glassdoor.com"
             };
             foreach (var d in domains)
             {
@@ -191,7 +191,7 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
     public async Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
     {
         s_logSearchStarting(_logger, criteria.Query, criteria.Location, null);
-        
+
         // Primary attempt: try GraphQL API using current CSRF token
         var currentToken = _csrfToken;
         s_logApiCsrfToken(_logger, currentToken != null, null);

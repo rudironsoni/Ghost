@@ -1,9 +1,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Xunit;
-using Ghost.Platform.LinkedIn.Internal;
 using Ghost.Contracts.Jobs;
+using Ghost.Platform.LinkedIn.Internal;
+using Xunit;
 
 namespace Ghost.Platform.LinkedIn.Tests;
 

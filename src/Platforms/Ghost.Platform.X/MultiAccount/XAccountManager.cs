@@ -12,22 +12,22 @@ public interface IXAccountManager
     /// Registers an account for use.
     /// </summary>
     void RegisterAccount(string accountId, XAccountOptions options);
-    
+
     /// <summary>
     /// Gets the next available account using round-robin rotation.
     /// </summary>
     XAccount? GetNextAccount();
-    
+
     /// <summary>
     /// Marks an account as rate-limited.
     /// </summary>
     void MarkRateLimited(string accountId, TimeSpan duration);
-    
+
     /// <summary>
     /// Gets all registered accounts.
     /// </summary>
     IReadOnlyList<XAccount> GetAllAccounts();
-    
+
     /// <summary>
     /// Gets account by ID.
     /// </summary>
@@ -43,27 +43,27 @@ public class XAccountOptions
     /// Unique account identifier.
     /// </summary>
     public string AccountId { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Path to storage state file for this account.
     /// </summary>
     public string StorageStatePath { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Display name for the account.
     /// </summary>
     public string? DisplayName { get; set; }
-    
+
     /// <summary>
     /// Maximum posts per hour for this account.
     /// </summary>
     public int MaxPostsPerHour { get; set; } = 50;
-    
+
     /// <summary>
     /// Whether this account is enabled.
     /// </summary>
     public bool IsEnabled { get; set; } = true;
-    
+
     /// <summary>
     /// Priority for account selection (higher = preferred).
     /// </summary>
@@ -81,14 +81,14 @@ public class XAccount
     public int MaxPostsPerHour { get; set; }
     public bool IsEnabled { get; set; }
     public int Priority { get; set; }
-    
+
     public bool IsRateLimited { get; set; }
     public DateTime? RateLimitExpiresAt { get; set; }
     public int PostsThisHour { get; set; }
     public DateTime LastPostAt { get; set; }
     public int TotalPosts { get; set; }
     public int FailedPosts { get; set; }
-    
+
     /// <summary>
     /// Checks if account can post based on rate limits.
     /// </summary>
@@ -134,7 +134,7 @@ public class XAccountManager : IXAccountManager
             };
 
             _accounts[accountId] = account;
-            
+
             if (!_accountIds.Contains(accountId))
             {
                 _accountIds.Add(accountId);
@@ -184,7 +184,7 @@ public class XAccountManager : IXAccountManager
             {
                 account.IsRateLimited = true;
                 account.RateLimitExpiresAt = DateTime.UtcNow.Add(duration);
-                _logger.LogWarning("Marked X account {AccountId} as rate limited for {Duration}", 
+                _logger.LogWarning("Marked X account {AccountId} as rate limited for {Duration}",
                     accountId, duration);
             }
         }
@@ -218,7 +218,7 @@ public class XAccountManager : IXAccountManager
                 account.PostsThisHour++;
                 account.TotalPosts++;
                 account.LastPostAt = DateTime.UtcNow;
-                
+
                 // Reset hourly counter if needed
                 if (account.LastPostAt.AddHours(1) < DateTime.UtcNow)
                 {

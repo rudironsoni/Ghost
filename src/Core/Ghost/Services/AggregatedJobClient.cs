@@ -142,7 +142,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
     }
 
     public async Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
-        {
+    {
         // ensure we have a non-null criteria to pass to scrapers
         var criteriaNonNull = criteria ?? new JobSearchCriteria();
 
@@ -188,24 +188,24 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         }
 
         // log selected scrapers after filtering
-            try
-            {
-                _logger.LogInformation("Selected scrapers: {Scrapers}", string.Join(", ", (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => s.PlatformName)));
-            }
-            catch { }
+        try
+        {
+            _logger.LogInformation("Selected scrapers: {Scrapers}", string.Join(", ", (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => s.PlatformName)));
+        }
+        catch { }
 
         var tasks = (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => Task.Run(async () =>
         {
-                try
-                {
-                    return await s.SearchJobsAsync(criteriaNonNull, ct).ConfigureAwait(false);
-                }
+            try
+            {
+                return await s.SearchJobsAsync(criteriaNonNull, ct).ConfigureAwait(false);
+            }
             catch (OperationCanceledException) { throw; }
-                catch (Exception ex)
-                {
-                    if (_logger != null) s_logScraperFailed(_logger, s.PlatformName, ex);
-                    return (IReadOnlyList<JobListing>)new List<JobListing>();
-                }
+            catch (Exception ex)
+            {
+                if (_logger != null) s_logScraperFailed(_logger, s.PlatformName, ex);
+                return (IReadOnlyList<JobListing>)new List<JobListing>();
+            }
         }, ct)).ToArray();
 
         await Task.WhenAll(tasks);

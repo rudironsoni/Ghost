@@ -1,10 +1,10 @@
-using Microsoft.Extensions.Logging.Abstractions;
 using System.IO;
+using Ghost.Internal;
 using Ghost.Net;
+using Ghost.Stealth;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
-using Ghost.Internal;
-using Ghost.Stealth;
 
 namespace Ghost.Core;
 
@@ -28,7 +28,7 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
         _enableStealth = enableStealth;
         _kernelBrowser = kernelBrowser ?? "Chromium";
         _globalProxyBridge = globalProxyBridge;
-        
+
         // Ensure cleanup on process exit
         AppDomain.CurrentDomain.ProcessExit += (s, e) => Dispose();
     }
@@ -71,19 +71,19 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
             {
                 var proxyUsername = Environment.GetEnvironmentVariable("DOTNET_GHOST_PROXY_USERNAME");
                 var proxyPassword = Environment.GetEnvironmentVariable("DOTNET_GHOST_PROXY_PASSWORD");
-                
+
                 if (!string.IsNullOrEmpty(proxyUsername) && !string.IsNullOrEmpty(proxyPassword))
                 {
                     var uri = new Uri(opts.ProxyServer);
                     globalProxyBridge = new Socks5Bridge(uri.Host, uri.Port, proxyUsername, proxyPassword);
                     globalProxyBridge.Start();
-                    
+
                     // Use the bridge as browser-level proxy
                     browserProxy = new Microsoft.Playwright.Proxy
                     {
                         Server = $"socks5://127.0.0.1:{globalProxyBridge.Port}"
                     };
-                    
+
                     // Add Chromium arg to ensure SOCKS5 DNS resolution works correctly
                     launchArgs.Add("--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1");
                 }
@@ -152,7 +152,7 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
             };
 
             var proxy = options?.Proxy;
-            
+
             // If there's a global browser-level SOCKS5 proxy bridge, don't override with session-level proxy
             // Session-level proxies only work for non-SOCKS5 or when no browser-level proxy is set
             if (proxy is not null && _globalProxyBridge == null)
@@ -225,10 +225,10 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
             // Ensure geolocation permission if set
             if (ctxOptions.Geolocation is not null)
             {
-                 var _perms2 = ctxOptions.Permissions?.ToList() ?? new List<string>();
-                 if (!_perms2.Contains("geolocation")) _perms2.Add("geolocation");
-                 ctxOptions.Permissions = _perms2;
-             }
+                var _perms2 = ctxOptions.Permissions?.ToList() ?? new List<string>();
+                if (!_perms2.Contains("geolocation")) _perms2.Add("geolocation");
+                ctxOptions.Permissions = _perms2;
+            }
 
             if (options?.Permissions is not null && options.Permissions.Count > 0)
             {
@@ -278,7 +278,7 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
             _playwright.Dispose();
         }
         catch { }
-        
+
         try
         {
             _globalProxyBridge?.Dispose();
