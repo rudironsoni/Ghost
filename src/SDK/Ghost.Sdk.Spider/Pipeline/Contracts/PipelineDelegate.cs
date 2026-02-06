@@ -11,4 +11,5 @@ namespace Ghost.Sdk.Spider.Pipeline.Contracts;
 /// receives this delegate as a parameter and can choose to invoke it to continue
 /// the pipeline or short-circuit by not calling it.
 /// </remarks>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "PipelineDelegate is an appropriate name for a delegate type in a pipeline pattern")]
 public delegate Task PipelineDelegate(PipelineContext context);

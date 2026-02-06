@@ -10,7 +10,6 @@ namespace Ghost.Platform.LinkedIn.Tests.Migration;
 /// </summary>
 public class LinkedInSpider : Spider
 {
-    private readonly EntityParser _parser;
     private readonly List<LinkedInJobEntity> _extractedJobs = new();
 
     public override string Name => "LinkedInJobSpider";
@@ -31,7 +30,6 @@ public class LinkedInSpider : Spider
 
     public LinkedInSpider()
     {
-        _parser = new EntityParser();
     }
 
     public override IEnumerable<string> GetStartUrls()
@@ -63,7 +61,7 @@ public class LinkedInSpider : Spider
         };
 
         // Extract job entities from the page
-        var jobs = _parser.Parse<LinkedInJobEntity>(extractionContext);
+        var jobs = EntityParser.Parse<LinkedInJobEntity>(extractionContext);
 
         foreach (var job in jobs)
         {

@@ -11,13 +11,6 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 [TestFixture]
 public class EntityParserBoostTests
 {
-    private EntityParser _parser = null!;
-
-    [SetUp]
-    public void Setup()
-    {
-        _parser = new EntityParser();
-    }
 
     [Test]
     public void Parse_WithNullContent_ShouldReturnEmptyList()
@@ -31,7 +24,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().BeEmpty();
@@ -49,7 +42,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().BeEmpty();
@@ -79,7 +72,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var result = _parser.ParseSingle<TestProduct>(context);
+        var result = EntityParser.ParseSingle<TestProduct>(context);
 
         // Assert
         result.Should().NotBeNull();
@@ -109,7 +102,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().NotBeEmpty();
@@ -140,7 +133,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestArticle>(context);
+        var results = EntityParser.Parse<TestArticle>(context);
 
         // Assert
         results.Should().NotBeEmpty();
@@ -169,7 +162,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().NotBeNull();
@@ -197,7 +190,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().NotBeNull();
@@ -217,7 +210,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().NotBeNull();
@@ -245,7 +238,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().NotBeNull();
@@ -277,7 +270,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestArticle>(context);
+        var results = EntityParser.Parse<TestArticle>(context);
 
         // Assert
         results.Should().NotBeEmpty();
@@ -304,7 +297,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().NotBeNull();
@@ -331,7 +324,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().NotBeNull();
@@ -359,7 +352,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().NotBeNull();
@@ -387,7 +380,7 @@ public class EntityParserBoostTests
         };
 
         // Act & Assert - Should be able to parse different entity types
-        var articles = _parser.Parse<TestArticle>(context);
+        var articles = EntityParser.Parse<TestArticle>(context);
         articles.Should().NotBeEmpty();
     }
 
@@ -413,7 +406,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().NotBeNull();
@@ -431,7 +424,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var result = _parser.ParseSingle<TestProduct>(context);
+        var result = EntityParser.ParseSingle<TestProduct>(context);
 
         // Assert
         result.Should().BeNull();
@@ -456,7 +449,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestApiItem>(context);
+        var results = EntityParser.Parse<TestApiItem>(context);
 
         // Assert
         results.Should().NotBeNull();
@@ -488,7 +481,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestApiItem>(context);
+        var results = EntityParser.Parse<TestApiItem>(context);
 
         // Assert
         results.Should().NotBeNull();
@@ -508,7 +501,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestApiItem>(context);
+        var results = EntityParser.Parse<TestApiItem>(context);
 
         // Assert
         results.Should().BeEmpty();
@@ -536,7 +529,7 @@ public class EntityParserBoostTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().NotBeNull();
@@ -559,7 +552,7 @@ public class EntityParserBoostTests
 
         // Act
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        var results = _parser.Parse<TestArticle>(context);
+        var results = EntityParser.Parse<TestArticle>(context);
         stopwatch.Stop();
 
         // Assert

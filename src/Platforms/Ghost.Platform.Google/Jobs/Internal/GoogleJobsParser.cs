@@ -69,6 +69,15 @@ public static class GoogleJobsParser
     private static readonly Action<ILogger, int, Exception?> LogJobsExtractedFromStrategy =
         LoggerMessage.Define<int>(LogLevel.Information, new EventId(20, nameof(LogJobsExtractedFromStrategy)), "Extracted {Count} jobs from strategy");
 
+    private static readonly Action<ILogger, string, Exception?> LogConsentPagePreview =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(21, nameof(LogConsentPagePreview)), "Consent page HTML preview: {Preview}");
+
+    private static readonly Action<ILogger, int, bool, bool, bool, bool, bool, Exception?> LogPatternDetection =
+        LoggerMessage.Define<int, bool, bool, bool, bool, bool>(LogLevel.Warning, new EventId(22, nameof(LogPatternDetection)), "All parsing strategies failed. HTML length: {Length}. Pattern detection: data-ved={HasDataVed}, jobs={HasJobsKeyword}, htl;jobs={HasHtlJobs}, json-ld={HasJsonLd}, script={HasScriptTags}");
+
+    private static readonly Action<ILogger, int, string, Exception?> LogHtmlSample =
+        LoggerMessage.Define<int, string>(LogLevel.Debug, new EventId(23, nameof(LogHtmlSample)), "HTML sample (first {Size} chars): {Sample}");
+
     /// <summary>
     /// Dynamically detects widget key by searching for 9+ digit numbers in data attributes near job listings
     /// </summary>
@@ -796,7 +805,7 @@ public static class GoogleJobsParser
 
             // Log a preview of the HTML for debugging
             var preview = html.Length > 1000 ? html.Substring(0, 1000) : html;
-            logger.LogWarning("Consent page HTML preview: {Preview}", preview);
+            LogConsentPagePreview(logger, preview, null);
 
             return Array.Empty<JobListing>();
         }
@@ -832,8 +841,6 @@ public static class GoogleJobsParser
         if (jobs != null && jobs.Count > 0) return jobs;
 
         // All strategies failed - log detailed diagnostic info
-        logger.LogWarning("All parsing strategies failed. HTML length: {Length}. Checking for common patterns...", processedHtml.Length);
-
         // Check for common Google patterns
         var hasDataVed = processedHtml.Contains("data-ved");
         var hasJobsKeyword = processedHtml.Contains("jobs", StringComparison.OrdinalIgnoreCase);
@@ -841,13 +848,12 @@ public static class GoogleJobsParser
         var hasJsonLd = processedHtml.Contains("application/ld+json", StringComparison.OrdinalIgnoreCase);
         var hasScriptTags = processedHtml.Contains("<script", StringComparison.OrdinalIgnoreCase);
 
-        logger.LogWarning("Pattern detection: data-ved={HasDataVed}, jobs={HasJobsKeyword}, htl;jobs={HasHtlJobs}, json-ld={HasJsonLd}, script={HasScriptTags}",
-            hasDataVed, hasJobsKeyword, hasHtlJobs, hasJsonLd, hasScriptTags);
+        LogPatternDetection(logger, processedHtml.Length, hasDataVed, hasJobsKeyword, hasHtlJobs, hasJsonLd, hasScriptTags, null);
 
         // Log a sample of the HTML
         var sampleSize = Math.Min(2000, processedHtml.Length);
         var htmlSample = processedHtml.Substring(0, sampleSize);
-        logger.LogDebug("HTML sample (first {Size} chars): {Sample}", sampleSize, htmlSample);
+        LogHtmlSample(logger, sampleSize, htmlSample, null);
 
         return Array.Empty<JobListing>();
     }

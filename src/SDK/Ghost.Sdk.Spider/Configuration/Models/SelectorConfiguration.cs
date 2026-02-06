@@ -23,12 +23,12 @@ public sealed class SelectorConfiguration
     /// <summary>
     /// Gets or sets whether to extract all matches (default: false, first match only).
     /// </summary>
-    public bool Multiple { get; set; } = false;
+    public bool Multiple { get; set; }
 
     /// <summary>
     /// Gets or sets whether to extract inner HTML instead of text.
     /// </summary>
-    public bool ExtractHtml { get; set; } = false;
+    public bool ExtractHtml { get; set; }
 
     /// <summary>
     /// Gets or sets regex pattern to apply after initial extraction.
@@ -38,5 +38,5 @@ public sealed class SelectorConfiguration
     /// <summary>
     /// Gets or sets the regex group to extract (default: 0 for entire match).
     /// </summary>
-    public int RegexGroup { get; set; } = 0;
+    public int RegexGroup { get; set; }
 }

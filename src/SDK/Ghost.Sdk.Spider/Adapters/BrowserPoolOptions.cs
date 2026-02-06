@@ -117,7 +117,7 @@ public class BrowserPoolOptions
     /// desired for web scraping. Enable caching if you need to test caching behavior
     /// or reduce bandwidth usage.
     /// </remarks>
-    public bool EnableCache { get; set; } = false;
+    public bool EnableCache { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether to enable JavaScript execution.

@@ -34,7 +34,7 @@ public class RegexSelector : ISelector
     public int Group { get; }
 
     /// <inheritdoc/>
-    public List<string> Select(string content)
+    public List<string> SelectValues(string content)
     {
         if (string.IsNullOrWhiteSpace(content))
             return new List<string>();

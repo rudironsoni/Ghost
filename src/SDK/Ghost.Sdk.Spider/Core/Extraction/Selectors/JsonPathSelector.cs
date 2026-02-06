@@ -27,7 +27,7 @@ public class JsonPathSelector : ISelector
     public string Expression { get; }
 
     /// <inheritdoc/>
-    public List<string> Select(string content)
+    public List<string> SelectValues(string content)
     {
         if (string.IsNullOrWhiteSpace(content))
             return new List<string>();

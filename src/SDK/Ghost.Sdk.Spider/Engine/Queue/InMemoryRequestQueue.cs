@@ -10,6 +10,7 @@ namespace Ghost.Sdk.Spider.Engine.Queue;
 /// This queue stores requests in memory using concurrent collections for thread-safety.
 /// It supports priority-based ordering and automatic deduplication.
 /// </remarks>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "InMemoryRequestQueue is implementing a queue data structure and the name is appropriate")]
 public class InMemoryRequestQueue : IRequestQueue
 {
     private readonly PriorityQueue<Request, int> _queue;

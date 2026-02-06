@@ -15,7 +15,7 @@ public interface ISelector
     /// </summary>
     /// <param name="content">The content to select from.</param>
     /// <returns>A list of selected string values.</returns>
-    List<string> Select(string content);
+    List<string> SelectValues(string content);
 
     /// <summary>
     /// Selects a single value from the content using the selector expression.

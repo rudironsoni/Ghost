@@ -6,7 +6,7 @@ namespace Ghost.Platform.X.Internal;
 /// <summary>
 /// Handles authentication for X (Twitter) using cookie-based storage state.
 /// </summary>
-public class XAuthenticator
+public partial class XAuthenticator
 {
     private readonly IBrowserSession _session;
     private readonly XOptions _options;
@@ -36,7 +36,7 @@ public class XAuthenticator
 
             if (accountMenu != null)
             {
-                _logger.LogDebug("User appears to be logged in to X");
+                Log.UserLoggedIn(_logger);
                 return true;
             }
 
@@ -46,16 +46,16 @@ public class XAuthenticator
 
             if (loginButton != null)
             {
-                _logger.LogDebug("User appears to be logged out of X");
+                Log.UserLoggedOut(_logger);
                 return false;
             }
 
-            _logger.LogWarning("Could not determine login state, assuming not logged in");
+            Log.LoginStateUndetermined(_logger);
             return false;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking login state");
+            Log.LoginStateCheckError(_logger, ex);
             return false;
         }
     }
@@ -67,7 +67,7 @@ public class XAuthenticator
     {
         if (await IsLoggedInAsync(page, ct).ConfigureAwait(false))
         {
-            _logger.LogDebug("User is already authenticated");
+            Log.AlreadyAuthenticated(_logger);
             return;
         }
 
@@ -76,7 +76,7 @@ public class XAuthenticator
         {
             try
             {
-                _logger.LogInformation("Loading storage state from {Path}", _options.StorageStatePath);
+                Log.LoadingStorageState(_logger, _options.StorageStatePath);
                 await _session.SaveStorageStateAsync(_options.StorageStatePath);
 
                 // Reload page to apply cookies
@@ -85,17 +85,17 @@ public class XAuthenticator
 
                 if (await IsLoggedInAsync(page, ct).ConfigureAwait(false))
                 {
-                    _logger.LogInformation("Successfully authenticated using storage state");
+                    Log.AuthenticationSuccessful(_logger);
                     return;
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to load storage state from {Path}", _options.StorageStatePath);
+                Log.StorageStateLoadFailed(_logger, ex, _options.StorageStatePath);
             }
         }
 
-        _logger.LogError("User is not authenticated and no valid storage state found");
+        Log.NotAuthenticated(_logger);
         throw new InvalidOperationException("Not authenticated to X. Please log in and save storage state.");
     }
 
@@ -111,7 +111,7 @@ public class XAuthenticator
 
         try
         {
-            _logger.LogDebug("Warming up X session");
+            Log.WarmingUp(_logger);
             var page = await _session.NewPageAsync(ct: ct);
 
             try
@@ -121,7 +121,7 @@ public class XAuthenticator
 
                 // Check if logged in
                 var isLoggedIn = await IsLoggedInAsync(page, ct);
-                _logger.LogInformation("Warm-up complete. Logged in: {IsLoggedIn}", isLoggedIn);
+                Log.WarmUpComplete(_logger, isLoggedIn);
             }
             finally
             {
@@ -130,7 +130,7 @@ public class XAuthenticator
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Warm-up failed, but continuing anyway");
+            Log.WarmUpFailed(_logger, ex);
         }
     }
 
@@ -141,7 +141,7 @@ public class XAuthenticator
     {
         if (string.IsNullOrWhiteSpace(_options.StorageStatePath))
         {
-            _logger.LogWarning("No storage state path configured, cannot save authentication");
+            Log.NoStorageStatePath(_logger);
             return;
         }
 
@@ -155,11 +155,11 @@ public class XAuthenticator
             }
 
             await _session.SaveStorageStateAsync(_options.StorageStatePath);
-            _logger.LogInformation("Authentication state saved to {Path}", _options.StorageStatePath);
+            Log.AuthenticationStateSaved(_logger, _options.StorageStatePath);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to save authentication state to {Path}", _options.StorageStatePath);
+            Log.AuthenticationStateSaveFailed(_logger, ex, _options.StorageStatePath);
             throw;
         }
     }

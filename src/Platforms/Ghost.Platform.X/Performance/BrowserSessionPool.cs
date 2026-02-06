@@ -60,7 +60,7 @@ public class BrowserSessionPoolOptions
 /// <summary>
 /// Implementation of browser session pool.
 /// </summary>
-public class BrowserSessionPool : IBrowserSessionPool
+public partial class BrowserSessionPool : IBrowserSessionPool
 {
     private readonly IGhostKernel _kernel;
     private readonly BrowserSessionPoolOptions _options;
@@ -82,7 +82,7 @@ public class BrowserSessionPool : IBrowserSessionPool
         _semaphore = new SemaphoreSlim(_options.MaxPoolSize);
         _cleanupTimer = new Timer(CleanupIdleSessions, null, _options.IdleTimeout, _options.IdleTimeout);
 
-        _logger.LogInformation("Browser session pool initialized with max size {MaxSize}", _options.MaxPoolSize);
+        Log.PoolInitialized(_logger, _options.MaxPoolSize);
     }
 
     public int AvailableCount => _availableSessions.Count;
@@ -105,8 +105,7 @@ public class BrowserSessionPool : IBrowserSessionPool
             {
                 entry.LastUsedAt = DateTime.UtcNow;
                 _inUseSessions[entry.Session] = entry;
-                _logger.LogDebug("Reused session from pool. Available: {Available}, InUse: {InUse}",
-                    AvailableCount, _inUseSessions.Count);
+                Log.SessionReused(_logger, AvailableCount, _inUseSessions.Count);
                 return entry.Session;
             }
 
@@ -119,7 +118,7 @@ public class BrowserSessionPool : IBrowserSessionPool
                 LastUsedAt = DateTime.UtcNow
             };
             _inUseSessions[session] = entry;
-            _logger.LogDebug("Created new session. Total: {Total}", TotalCount);
+            Log.SessionCreated(_logger, TotalCount);
             return session;
         }
         catch
@@ -144,8 +143,7 @@ public class BrowserSessionPool : IBrowserSessionPool
             if (_availableSessions.Count < _options.MaxPoolSize && !IsSessionExpired(entry))
             {
                 _availableSessions.Add(entry);
-                _logger.LogDebug("Returned session to pool. Available: {Available}, InUse: {InUse}",
-                    AvailableCount, _inUseSessions.Count);
+                Log.SessionReturned(_logger, AvailableCount, _inUseSessions.Count);
             }
             else
             {
@@ -174,13 +172,13 @@ public class BrowserSessionPool : IBrowserSessionPool
                 if (_availableSessions.TryTake(out var removed) && removed == entry)
                 {
                     await DisposeSessionAsync(entry);
-                    _logger.LogDebug("Cleaned up idle session");
+                    Log.IdleSessionCleaned(_logger);
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during session cleanup");
+            Log.CleanupError(_logger, ex);
         }
     }
 
@@ -192,7 +190,7 @@ public class BrowserSessionPool : IBrowserSessionPool
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error disposing session");
+            Log.DisposeSessionError(_logger, ex);
         }
     }
 
@@ -214,7 +212,7 @@ public class BrowserSessionPool : IBrowserSessionPool
             _ = DisposeSessionAsync(entry);
         }
 
-        _logger.LogInformation("Browser session pool disposed");
+        Log.PoolDisposed(_logger);
 
         GC.SuppressFinalize(this);
     }

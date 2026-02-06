@@ -73,7 +73,7 @@ public sealed class LinkedInNewsClient : INewsClient
         catch (Exception ex)
         {
             // Any exception - return mock news articles
-            _logger.LogWarning(ex, "LinkedIn news articles fetch failed. Returning mock news data as fallback.");
+            LinkedInLog.LogNewsArticlesFetchFailed(_logger, ex);
             return GenerateMockArticles(filter?.MaxResults ?? 20);
         }
     }
@@ -139,7 +139,7 @@ public sealed class LinkedInNewsClient : INewsClient
         catch (Exception ex)
         {
             // Any exception - return mock news articles
-            _logger.LogWarning(ex, "LinkedIn news search failed. Returning mock news data as fallback.");
+            LinkedInLog.LogNewsSearchFailed(_logger, ex);
             return GenerateMockArticles(options?.MaxResults ?? 20);
         }
     }

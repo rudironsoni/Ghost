@@ -7,7 +7,7 @@
     <AssemblyName>Ghost.Sdk.Spider</AssemblyName>
     <RootNamespace>Ghost.Sdk.Spider</RootNamespace>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsNotAsErrors>CS1591;CA1805;CA1848;CA1711;CA1310;CA1816;CA1822;CA1852;CA1862;CA1865;IDE0032;CA1016;CA1510;CA1861;IDE0270;IDE0031;CA1305;CA1716;CA1000;CA1826;CA2201</WarningsNotAsErrors>
+    <WarningsNotAsErrors>CS1591;CA1805;CA1711;CA1310;CA1816;CA1822;CA1852;CA1862;CA1865;IDE0032;CA1016;CA1510;CA1861;IDE0270;IDE0031;CA1305;CA1716;CA1000;CA1826;CA2201</WarningsNotAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <LangVersion>preview</LangVersion>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>

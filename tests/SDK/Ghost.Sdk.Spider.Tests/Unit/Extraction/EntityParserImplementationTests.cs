@@ -9,13 +9,6 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 [TestFixture]
 public class EntityParserImplementationTests
 {
-    private EntityParser _parser = null!;
-
-    [SetUp]
-    public void Setup()
-    {
-        _parser = new EntityParser();
-    }
 
     [Test]
     public void Parse_WithXPathSelector_ExtractsMultipleProducts()
@@ -33,7 +26,7 @@ public class EntityParserImplementationTests
         };
 
         // Act
-        var results = _parser.Parse<XPathProduct>(context);
+        var results = EntityParser.Parse<XPathProduct>(context);
 
         // Assert
         results.Should().HaveCount(2);
@@ -59,7 +52,7 @@ public class EntityParserImplementationTests
         };
 
         // Act
-        var results = _parser.Parse<CssArticle>(context);
+        var results = EntityParser.Parse<CssArticle>(context);
 
         // Assert
         results.Should().HaveCount(2);
@@ -82,7 +75,7 @@ public class EntityParserImplementationTests
         };
 
         // Act
-        var results = _parser.Parse<HtmlEmailEntity>(context);
+        var results = EntityParser.Parse<HtmlEmailEntity>(context);
 
         // Assert
         results.Should().HaveCount(1);
@@ -102,7 +95,7 @@ public class EntityParserImplementationTests
         };
 
         // Act
-        var results = _parser.Parse<JsonUser>(context);
+        var results = EntityParser.Parse<JsonUser>(context);
 
         // Assert
         results.Should().HaveCount(2);
@@ -134,7 +127,7 @@ public class EntityParserImplementationTests
         };
 
         // Act
-        var results = _parser.Parse<NestedItem>(context);
+        var results = EntityParser.Parse<NestedItem>(context);
 
         // Assert
         results.Should().HaveCount(1);
@@ -158,7 +151,7 @@ public class EntityParserImplementationTests
         };
 
         // Act
-        var results = _parser.Parse<LinkEntity>(context);
+        var results = EntityParser.Parse<LinkEntity>(context);
 
         // Assert
         results.Should().HaveCount(1);
@@ -183,7 +176,7 @@ public class EntityParserImplementationTests
         };
 
         // Act
-        var result = _parser.ParseSingle<XPathProduct>(context);
+        var result = EntityParser.ParseSingle<XPathProduct>(context);
 
         // Assert
         result.Should().NotBeNull();
@@ -203,7 +196,7 @@ public class EntityParserImplementationTests
         };
 
         // Act
-        var result = _parser.ParseSingle<XPathProduct>(context);
+        var result = EntityParser.ParseSingle<XPathProduct>(context);
 
         // Assert
         result.Should().BeNull();
@@ -222,7 +215,7 @@ public class EntityParserImplementationTests
         };
 
         // Act
-        var results = _parser.Parse<TypedItem>(context);
+        var results = EntityParser.Parse<TypedItem>(context);
 
         // Assert
         results.Should().HaveCount(1);
@@ -242,7 +235,7 @@ public class EntityParserImplementationTests
         };
 
         // Act
-        var results = _parser.Parse<DecimalItem>(context);
+        var results = EntityParser.Parse<DecimalItem>(context);
 
         // Assert
         results.Should().HaveCount(1);
@@ -262,7 +255,7 @@ public class EntityParserImplementationTests
         };
 
         // Act
-        var results = _parser.Parse<BoolItem>(context);
+        var results = EntityParser.Parse<BoolItem>(context);
 
         // Assert
         results.Should().HaveCount(1);
@@ -282,7 +275,7 @@ public class EntityParserImplementationTests
         };
 
         // Act
-        var results = _parser.Parse<ItemWithDefault>(context);
+        var results = EntityParser.Parse<ItemWithDefault>(context);
 
         // Assert
         results.Should().HaveCount(1);
@@ -309,7 +302,7 @@ public class EntityParserImplementationTests
         };
 
         // Act
-        var results = _parser.Parse<ItemWithTags>(context);
+        var results = EntityParser.Parse<ItemWithTags>(context);
 
         // Assert
         results.Should().HaveCount(1);
@@ -332,7 +325,7 @@ public class EntityParserImplementationTests
         };
 
         // Act
-        var results = _parser.Parse<XPathProduct>(context);
+        var results = EntityParser.Parse<XPathProduct>(context);
 
         // Assert
         results.Should().HaveCount(1);

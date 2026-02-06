@@ -22,7 +22,7 @@ public class GraphQLAdapterOptions : AdapterOptions
     /// For security reasons, it's recommended to keep this disabled in production
     /// to avoid exposing sensitive query information in logs or error messages.
     /// </remarks>
-    public bool IncludeQueryInErrors { get; set; } = false;
+    public bool IncludeQueryInErrors { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether to include extensions in the request.
@@ -53,7 +53,7 @@ public class GraphQLAdapterOptions : AdapterOptions
     /// <remarks>
     /// Query batching is only supported by servers that implement the batching extension.
     /// </remarks>
-    public bool EnableBatching { get; set; } = false;
+    public bool EnableBatching { get; set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GraphQLAdapterOptions"/> class.

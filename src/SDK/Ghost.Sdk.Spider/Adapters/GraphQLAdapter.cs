@@ -7,6 +7,24 @@ using Newtonsoft.Json;
 
 namespace Ghost.Sdk.Spider.Adapters;
 
+internal static partial class GraphQLAdapterLogMessages
+{
+    [LoggerMessage(Level = LogLevel.Debug, Message = "GraphQLAdapter executing query at {Url}")]
+    public static partial void LogExecutingQuery(this ILogger logger, string url);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "GraphQLAdapter completed query at {Url} in {Duration}ms")]
+    public static partial void LogQueryCompleted(this ILogger logger, string url, double duration);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to parse GraphQL request/response for {Url}")]
+    public static partial void LogParseError(this ILogger logger, Exception ex, string url);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "HTTP request failed for {Url}")]
+    public static partial void LogHttpRequestFailed(this ILogger logger, Exception ex, string url);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Unexpected error executing GraphQL query at {Url}")]
+    public static partial void LogUnexpectedError(this ILogger logger, Exception ex, string url);
+}
+
 /// <summary>
 /// Adapter for extracting content from GraphQL APIs.
 /// </summary>
@@ -72,7 +90,7 @@ public class GraphQLAdapter : IContentAdapter
 
         try
         {
-            _logger?.LogDebug("GraphQLAdapter executing query at {Url}", request.Url);
+            _logger?.LogExecutingQuery(request.Url);
 
             // Parse GraphQL request from body or metadata
             GraphQLRequest graphQLRequest;
@@ -170,8 +188,7 @@ public class GraphQLAdapter : IContentAdapter
                 response.Metadata["GraphQL.Extensions"] = graphQLResponse.Extensions;
             }
 
-            _logger?.LogDebug(
-                "GraphQLAdapter completed query at {Url} in {Duration}ms",
+            _logger?.LogQueryCompleted(
                 request.Url,
                 response.Duration.TotalMilliseconds);
 
@@ -179,17 +196,19 @@ public class GraphQLAdapter : IContentAdapter
         }
         catch (JsonException ex)
         {
-            _logger?.LogError(ex, "Failed to parse GraphQL request/response for {Url}", request.Url);
+            _logger?.LogParseError(ex, request.Url);
             return CreateErrorResponse($"JSON parsing error: {ex.Message}", ex, startTime, request.Url);
         }
         catch (HttpRequestException ex)
         {
-            _logger?.LogError(ex, "HTTP request failed for {Url}", request.Url);
+            if (_logger != null)
+                GraphQLAdapterLogMessages.LogHttpRequestFailed(_logger, ex, request.Url);
             return CreateErrorResponse($"HTTP request failed: {ex.Message}", ex, startTime, request.Url);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Unexpected error executing GraphQL query at {Url}", request.Url);
+            if (_logger != null)
+                GraphQLAdapterLogMessages.LogUnexpectedError(_logger, ex, request.Url);
             return CreateErrorResponse($"Unexpected error: {ex.Message}", ex, startTime, request.Url);
         }
     }

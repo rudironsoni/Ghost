@@ -14,7 +14,7 @@ public class ConditionEvaluator
     /// <param name="context">The strategy context.</param>
     /// <param name="attempts">The list of previous strategy attempts.</param>
     /// <returns><c>true</c> if the conditions are met; otherwise, <c>false</c>.</returns>
-    public bool Evaluate(List<ConditionConfiguration> conditions, StrategyContext context, List<StrategyAttempt> attempts)
+    public static bool Evaluate(List<ConditionConfiguration> conditions, StrategyContext context, List<StrategyAttempt> attempts)
     {
         if (conditions.Count == 0)
         {
@@ -57,7 +57,7 @@ public class ConditionEvaluator
     /// <param name="context">The strategy context.</param>
     /// <param name="attempts">The list of previous strategy attempts.</param>
     /// <returns><c>true</c> if the condition is met; otherwise, <c>false</c>.</returns>
-    private bool EvaluateCondition(ConditionConfiguration condition, StrategyContext context, List<StrategyAttempt> attempts)
+    private static bool EvaluateCondition(ConditionConfiguration condition, StrategyContext context, List<StrategyAttempt> attempts)
     {
         return condition.Type switch
         {
@@ -80,7 +80,7 @@ public class ConditionEvaluator
     /// <summary>
     /// Evaluates a timeout condition.
     /// </summary>
-    private bool EvaluateTimeout(ConditionConfiguration condition, List<StrategyAttempt> attempts)
+    private static bool EvaluateTimeout(ConditionConfiguration condition, List<StrategyAttempt> attempts)
     {
         var lastAttempt = attempts.LastOrDefault();
         if (lastAttempt == null)
@@ -97,7 +97,7 @@ public class ConditionEvaluator
     /// <summary>
     /// Evaluates a status code condition.
     /// </summary>
-    private bool EvaluateStatusCode(ConditionConfiguration condition, StrategyContext context)
+    private static bool EvaluateStatusCode(ConditionConfiguration condition, StrategyContext context)
     {
         if (!context.StatusCode.HasValue || condition.Value == null)
         {
@@ -110,7 +110,7 @@ public class ConditionEvaluator
     /// <summary>
     /// Evaluates an element not found condition.
     /// </summary>
-    private bool EvaluateElementNotFound(ConditionConfiguration condition, List<StrategyAttempt> attempts)
+    private static bool EvaluateElementNotFound(ConditionConfiguration condition, List<StrategyAttempt> attempts)
     {
         var lastAttempt = attempts.LastOrDefault();
         if (lastAttempt == null)
@@ -127,7 +127,7 @@ public class ConditionEvaluator
     /// <summary>
     /// Evaluates whether any previous strategy failed.
     /// </summary>
-    private bool EvaluateAnyFailed(List<StrategyAttempt> attempts)
+    private static bool EvaluateAnyFailed(List<StrategyAttempt> attempts)
     {
         return attempts.Any(a => !a.Success);
     }
@@ -135,7 +135,7 @@ public class ConditionEvaluator
     /// <summary>
     /// Evaluates whether all previous strategies failed.
     /// </summary>
-    private bool EvaluateAllFailed(List<StrategyAttempt> attempts)
+    private static bool EvaluateAllFailed(List<StrategyAttempt> attempts)
     {
         return attempts.Count > 0 && attempts.All(a => !a.Success);
     }
@@ -143,7 +143,7 @@ public class ConditionEvaluator
     /// <summary>
     /// Evaluates a content match condition.
     /// </summary>
-    private bool EvaluateContentMatch(ConditionConfiguration condition, StrategyContext context)
+    private static bool EvaluateContentMatch(ConditionConfiguration condition, StrategyContext context)
     {
         if (string.IsNullOrEmpty(context.Content) || condition.Value == null)
         {
@@ -157,7 +157,7 @@ public class ConditionEvaluator
     /// <summary>
     /// Evaluates whether the previous strategy succeeded.
     /// </summary>
-    private bool EvaluatePreviousSuccess(List<StrategyAttempt> attempts)
+    private static bool EvaluatePreviousSuccess(List<StrategyAttempt> attempts)
     {
         var lastAttempt = attempts.LastOrDefault();
         return lastAttempt?.Success ?? false;
@@ -166,7 +166,7 @@ public class ConditionEvaluator
     /// <summary>
     /// Evaluates whether the previous strategy failed.
     /// </summary>
-    private bool EvaluatePreviousFailed(List<StrategyAttempt> attempts)
+    private static bool EvaluatePreviousFailed(List<StrategyAttempt> attempts)
     {
         var lastAttempt = attempts.LastOrDefault();
         return lastAttempt != null && !lastAttempt.Success;
@@ -175,7 +175,7 @@ public class ConditionEvaluator
     /// <summary>
     /// Evaluates a retry count condition.
     /// </summary>
-    private bool EvaluateRetryCount(ConditionConfiguration condition, StrategyContext context)
+    private static bool EvaluateRetryCount(ConditionConfiguration condition, StrategyContext context)
     {
         if (condition.Value == null)
         {
@@ -188,7 +188,7 @@ public class ConditionEvaluator
     /// <summary>
     /// Evaluates an elapsed time condition.
     /// </summary>
-    private bool EvaluateElapsedTime(ConditionConfiguration condition, StrategyContext context)
+    private static bool EvaluateElapsedTime(ConditionConfiguration condition, StrategyContext context)
     {
         if (condition.Value == null)
         {
@@ -210,7 +210,7 @@ public class ConditionEvaluator
     /// <summary>
     /// Evaluates a custom condition.
     /// </summary>
-    private bool EvaluateCustom(ConditionConfiguration condition, StrategyContext context)
+    private static bool EvaluateCustom(ConditionConfiguration condition, StrategyContext context)
     {
         // Custom conditions can be extended by checking context.State or Parameters
         if (string.IsNullOrEmpty(condition.Field))
@@ -236,7 +236,7 @@ public class ConditionEvaluator
     /// <summary>
     /// Compares two values using the specified operator.
     /// </summary>
-    private bool CompareValues(object actual, object expected, ConditionOperator op)
+    private static bool CompareValues(object actual, object expected, ConditionOperator op)
     {
         // Convert to comparable types
         if (actual is IComparable actualComparable && TryConvertToComparable(expected, actual.GetType(), out var expectedComparable))
@@ -278,7 +278,7 @@ public class ConditionEvaluator
     /// <summary>
     /// Compares two strings using the specified operator.
     /// </summary>
-    private bool CompareStrings(string actual, string expected, ConditionOperator op)
+    private static bool CompareStrings(string actual, string expected, ConditionOperator op)
     {
         return op switch
         {
@@ -296,7 +296,7 @@ public class ConditionEvaluator
     /// <summary>
     /// Attempts to convert a value to a comparable type.
     /// </summary>
-    private bool TryConvertToComparable(object value, Type targetType, out IComparable? result)
+    private static bool TryConvertToComparable(object value, Type targetType, out IComparable? result)
     {
         result = null;
 
@@ -308,7 +308,7 @@ public class ConditionEvaluator
                 return result != null;
             }
 
-            var converted = Convert.ChangeType(value, targetType);
+            var converted = Convert.ChangeType(value, targetType, System.Globalization.CultureInfo.InvariantCulture);
             result = converted as IComparable;
             return result != null;
         }

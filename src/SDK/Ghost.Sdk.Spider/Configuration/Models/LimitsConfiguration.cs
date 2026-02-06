@@ -8,27 +8,27 @@ public sealed class LimitsConfiguration
     /// <summary>
     /// Gets or sets the maximum number of pages to crawl. 0 means no limit.
     /// </summary>
-    public int MaxPages { get; set; } = 0;
+    public int MaxPages { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum crawl duration (seconds). 0 means no limit.
     /// </summary>
-    public int MaxDurationSeconds { get; set; } = 0;
+    public int MaxDurationSeconds { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum file size to download (bytes). 0 means no limit.
     /// </summary>
-    public long MaxFileSizeBytes { get; set; } = 0;
+    public long MaxFileSizeBytes { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum total download size (bytes). 0 means no limit.
     /// </summary>
-    public long MaxTotalDownloadBytes { get; set; } = 0;
+    public long MaxTotalDownloadBytes { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum memory usage (bytes). 0 means no limit.
     /// </summary>
-    public long MaxMemoryBytes { get; set; } = 0;
+    public long MaxMemoryBytes { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum queue size for URLs.
@@ -90,7 +90,7 @@ public sealed class ResourceBlockingConfiguration
     /// <summary>
     /// Gets or sets whether to block stylesheets.
     /// </summary>
-    public bool BlockStylesheets { get; set; } = false;
+    public bool BlockStylesheets { get; set; }
 
     /// <summary>
     /// Gets or sets whether to block fonts.

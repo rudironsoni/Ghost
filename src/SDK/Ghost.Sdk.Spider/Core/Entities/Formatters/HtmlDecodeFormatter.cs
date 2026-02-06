@@ -33,7 +33,7 @@ public class HtmlDecodeFormatter : Formatter
     /// Use with caution: enabling this can cause issues if the content legitimately
     /// contains strings that look like HTML entities.
     /// </remarks>
-    public bool DecodeMultipleTimes { get; set; } = false;
+    public bool DecodeMultipleTimes { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum number of decode iterations when <see cref="DecodeMultipleTimes"/> is true.

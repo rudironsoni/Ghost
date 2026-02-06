@@ -23,7 +23,7 @@ public sealed class FieldConfiguration
     /// <summary>
     /// Gets or sets whether this field is required.
     /// </summary>
-    public bool Required { get; set; } = false;
+    public bool Required { get; set; }
 
     /// <summary>
     /// Gets or sets the default value if extraction fails.

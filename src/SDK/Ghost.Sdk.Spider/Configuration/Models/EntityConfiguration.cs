@@ -18,7 +18,7 @@ public sealed class EntityConfiguration
     /// <summary>
     /// Gets or sets whether this entity represents a list of items.
     /// </summary>
-    public bool IsList { get; set; } = false;
+    public bool IsList { get; set; }
 
     /// <summary>
     /// Gets or sets the fields to extract for this entity.
@@ -44,7 +44,7 @@ public sealed class EntityValidationConfiguration
     /// <summary>
     /// Gets or sets whether this entity is required.
     /// </summary>
-    public bool Required { get; set; } = false;
+    public bool Required { get; set; }
 
     /// <summary>
     /// Gets or sets the minimum number of items (for lists).

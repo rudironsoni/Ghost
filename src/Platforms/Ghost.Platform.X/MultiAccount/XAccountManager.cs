@@ -104,7 +104,7 @@ public class XAccount
 /// <summary>
 /// Implementation of account manager with round-robin rotation.
 /// </summary>
-public class XAccountManager : IXAccountManager
+public partial class XAccountManager : IXAccountManager
 {
     private readonly Dictionary<string, XAccount> _accounts = new();
     private readonly List<string> _accountIds = new();
@@ -142,7 +142,7 @@ public class XAccountManager : IXAccountManager
                 _accountIds.Sort((a, b) => _accounts[b].Priority.CompareTo(_accounts[a].Priority));
             }
 
-            _logger.LogInformation("Registered X account: {AccountId}", accountId);
+            Log.AccountRegistered(_logger, accountId);
         }
     }
 
@@ -152,7 +152,7 @@ public class XAccountManager : IXAccountManager
         {
             if (_accountIds.Count == 0)
             {
-                _logger.LogWarning("No X accounts registered");
+                Log.NoAccountsRegistered(_logger);
                 return null;
             }
 
@@ -166,12 +166,12 @@ public class XAccountManager : IXAccountManager
                 if (account.CanPost())
                 {
                     _currentIndex = (index + 1) % _accountIds.Count;
-                    _logger.LogDebug("Selected X account: {AccountId}", accountId);
+                    Log.AccountSelected(_logger, accountId);
                     return account;
                 }
             }
 
-            _logger.LogWarning("All X accounts are rate limited or disabled");
+            Log.AllAccountsRateLimited(_logger);
             return null;
         }
     }
@@ -184,8 +184,7 @@ public class XAccountManager : IXAccountManager
             {
                 account.IsRateLimited = true;
                 account.RateLimitExpiresAt = DateTime.UtcNow.Add(duration);
-                _logger.LogWarning("Marked X account {AccountId} as rate limited for {Duration}",
-                    accountId, duration);
+                Log.AccountMarkedRateLimited(_logger, accountId, duration);
             }
         }
     }

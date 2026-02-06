@@ -68,7 +68,7 @@ public class StrategyConfiguration
     /// <summary>
     /// Gets or sets a value indicating whether this strategy should stop execution on failure.
     /// </summary>
-    public bool StopOnFailure { get; init; } = false;
+    public bool StopOnFailure { get; init; }
 
     /// <summary>
     /// Gets or sets the delay before executing this strategy.

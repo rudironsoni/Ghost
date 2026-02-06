@@ -8,13 +8,6 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Entities;
 [TestFixture]
 public class EntityParserTests
 {
-    private EntityParser _parser = null!;
-
-    [SetUp]
-    public void Setup()
-    {
-        _parser = new EntityParser();
-    }
 
     [Test]
     public async Task Parse_WithXPathSelector_ShouldExtractEntities()
@@ -29,7 +22,7 @@ public class EntityParserTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().NotBeEmpty();
@@ -49,7 +42,7 @@ public class EntityParserTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().HaveCountGreaterThan(1);
@@ -70,7 +63,7 @@ public class EntityParserTests
         };
 
         // Act
-        var results = _parser.Parse<TestArticle>(context);
+        var results = EntityParser.Parse<TestArticle>(context);
 
         // Assert
         results.Should().NotBeEmpty();
@@ -91,7 +84,7 @@ public class EntityParserTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().BeEmpty();
@@ -109,7 +102,7 @@ public class EntityParserTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().BeEmpty();
@@ -128,7 +121,7 @@ public class EntityParserTests
         };
 
         // Act
-        var result = _parser.ParseSingle<TestArticle>(context);
+        var result = EntityParser.ParseSingle<TestArticle>(context);
 
         // Assert
         result.Should().NotBeNull();
@@ -149,7 +142,7 @@ public class EntityParserTests
         };
 
         // Act
-        var result = _parser.ParseSingle<TestProduct>(context);
+        var result = EntityParser.ParseSingle<TestProduct>(context);
 
         // Assert
         result.Should().BeNull();
@@ -170,7 +163,7 @@ public class EntityParserTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().NotBeEmpty();
@@ -195,7 +188,7 @@ public class EntityParserTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().NotBeEmpty();
@@ -215,7 +208,7 @@ public class EntityParserTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().NotBeEmpty();
@@ -237,7 +230,7 @@ public class EntityParserTests
         };
 
         // Act
-        var results = _parser.Parse<TestApiItem>(context);
+        var results = EntityParser.Parse<TestApiItem>(context);
 
         // Assert
         results.Should().NotBeEmpty();
@@ -260,7 +253,7 @@ public class EntityParserTests
         };
 
         // Act
-        var results = _parser.Parse<TestProduct>(context);
+        var results = EntityParser.Parse<TestProduct>(context);
 
         // Assert
         results.Should().NotBeEmpty();

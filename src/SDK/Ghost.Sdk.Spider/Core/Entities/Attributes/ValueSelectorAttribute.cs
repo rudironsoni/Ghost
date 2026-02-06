@@ -43,7 +43,7 @@ public class ValueSelectorAttribute : Attribute
     /// Gets or sets a value indicating whether this value is required.
     /// If true, extraction fails when no value is found.
     /// </summary>
-    public bool Required { get; init; } = false;
+    public bool Required { get; init; }
 
     /// <summary>
     /// Gets or sets the default value to use when no match is found.
@@ -53,10 +53,10 @@ public class ValueSelectorAttribute : Attribute
     /// <summary>
     /// Gets or sets a value indicating whether to extract values from the outerHTML instead of innerText.
     /// </summary>
-    public bool OuterHtml { get; init; } = false;
+    public bool OuterHtml { get; init; }
 
     /// <summary>
     /// Gets or sets a value indicating whether to extract values from the innerHTML instead of innerText.
     /// </summary>
-    public bool InnerHtml { get; init; } = false;
+    public bool InnerHtml { get; init; }
 }

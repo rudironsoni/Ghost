@@ -23,10 +23,10 @@ namespace Ghost.Sdk.Spider.Pipeline.Contracts;
 /// <code>
 /// public class LoggingMiddleware : IPipelineMiddleware
 /// {
-///     public async Task InvokeAsync(PipelineContext context, PipelineDelegate next)
+///     public async Task InvokeAsync(PipelineContext context, PipelineDelegate continuation)
 ///     {
 ///         Console.WriteLine($"Processing request {context.RequestId}");
-///         await next(context);
+///         await continuation(context);
 ///         Console.WriteLine($"Completed request {context.RequestId}");
 ///     }
 /// }
@@ -40,7 +40,7 @@ public interface IPipelineMiddleware
     /// <param name="context">
     /// The pipeline context containing the request, state, and cancellation token.
     /// </param>
-    /// <param name="next">
+    /// <param name="continuation">
     /// The delegate to invoke the next middleware in the pipeline.
     /// Call this to continue pipeline execution, or omit to short-circuit.
     /// </param>
@@ -48,5 +48,5 @@ public interface IPipelineMiddleware
     /// <exception cref="OperationCanceledException">
     /// Thrown when the operation is cancelled via the context's cancellation token.
     /// </exception>
-    Task InvokeAsync(PipelineContext context, PipelineDelegate next);
+    Task InvokeAsync(PipelineContext context, PipelineDelegate continuation);
 }

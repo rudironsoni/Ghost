@@ -7,6 +7,33 @@ using Newtonsoft.Json;
 
 namespace Ghost.Sdk.Spider.Storage.Sinks;
 
+internal static partial class WebhookStorageLogMessages
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Webhook storage initialized for URL: {WebhookUrl}")]
+    public static partial void LogStorageInitialized(this ILogger logger, string webhookUrl);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Successfully posted item to webhook: {StatusCode}")]
+    public static partial void LogItemPosted(this ILogger logger, System.Net.HttpStatusCode statusCode);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Webhook post failed: {Error}")]
+    public static partial void LogWebhookPostFailed(this ILogger logger, string error);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to post item to webhook")]
+    public static partial void LogFailedToPostItem(this ILogger logger, Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Successfully posted batch to webhook: {Count} items")]
+    public static partial void LogBatchPosted(this ILogger logger, int count);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Webhook batch post failed: {Error}")]
+    public static partial void LogWebhookBatchPostFailed(this ILogger logger, string error);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to post batch to webhook")]
+    public static partial void LogFailedToPostBatch(this ILogger logger, Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Webhook storage closed")]
+    public static partial void LogStorageClosed(this ILogger logger);
+}
+
 /// <summary>
 /// Storage implementation that sends data to a webhook endpoint.
 /// </summary>
@@ -50,7 +77,7 @@ public class WebhookStorage : IStorage
     /// <inheritdoc/>
     public Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        _logger?.LogInformation("Webhook storage initialized for URL: {WebhookUrl}", _webhookUrl);
+        _logger?.LogStorageInitialized(_webhookUrl);
         return Task.CompletedTask;
     }
 
@@ -82,20 +109,20 @@ public class WebhookStorage : IStorage
 
             if (response.IsSuccessStatusCode)
             {
-                _logger?.LogDebug("Successfully posted item to webhook: {StatusCode}", response.StatusCode);
+                _logger?.LogItemPosted(response.StatusCode);
                 return StorageResult.CreateSuccess(1, duration);
             }
             else
             {
                 var error = $"Webhook returned {response.StatusCode}: {response.ReasonPhrase}";
-                _logger?.LogWarning("Webhook post failed: {Error}", error);
+                _logger?.LogWebhookPostFailed(error);
                 return StorageResult.CreateFailure(error, null, duration);
             }
         }
         catch (Exception ex)
         {
             var duration = DateTimeOffset.UtcNow - startTime;
-            _logger?.LogError(ex, "Failed to post item to webhook");
+            _logger?.LogFailedToPostItem(ex);
             return StorageResult.CreateFailure($"Webhook error: {ex.Message}", ex, duration);
         }
     }
@@ -131,20 +158,20 @@ public class WebhookStorage : IStorage
 
             if (response.IsSuccessStatusCode)
             {
-                _logger?.LogDebug("Successfully posted batch to webhook: {Count} items", itemList.Count);
+                _logger?.LogBatchPosted(itemList.Count);
                 return StorageResult.CreateSuccess(itemList.Count, duration);
             }
             else
             {
                 var error = $"Webhook returned {response.StatusCode}: {response.ReasonPhrase}";
-                _logger?.LogWarning("Webhook batch post failed: {Error}", error);
+                _logger?.LogWebhookBatchPostFailed(error);
                 return StorageResult.CreateFailure(error, null, duration);
             }
         }
         catch (Exception ex)
         {
             var duration = DateTimeOffset.UtcNow - startTime;
-            _logger?.LogError(ex, "Failed to post batch to webhook");
+            _logger?.LogFailedToPostBatch(ex);
             return StorageResult.CreateFailure($"Webhook error: {ex.Message}", ex, duration);
         }
     }
@@ -159,7 +186,8 @@ public class WebhookStorage : IStorage
     /// <inheritdoc/>
     public Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        _logger?.LogInformation("Webhook storage closed");
+        if (_logger != null)
+            WebhookStorageLogMessages.LogStorageClosed(_logger);
         return Task.CompletedTask;
     }
 }

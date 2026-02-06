@@ -35,12 +35,12 @@ public class TrimFormatterAttribute : FormatterAttribute
     /// <summary>
     /// Gets or sets a value indicating whether to trim only the start of the string.
     /// </summary>
-    public bool TrimStart { get; init; } = false;
+    public bool TrimStart { get; init; }
 
     /// <summary>
     /// Gets or sets a value indicating whether to trim only the end of the string.
     /// </summary>
-    public bool TrimEnd { get; init; } = false;
+    public bool TrimEnd { get; init; }
 
     /// <inheritdoc/>
     public override object? Format(object? value)
@@ -93,7 +93,7 @@ public class ReplaceFormatterAttribute : FormatterAttribute
     /// <summary>
     /// Gets or sets a value indicating whether the replacement is case-insensitive.
     /// </summary>
-    public bool IgnoreCase { get; init; } = false;
+    public bool IgnoreCase { get; init; }
 
     /// <inheritdoc/>
     public override object? Format(object? value)
@@ -139,12 +139,12 @@ public class RegexFormatterAttribute : FormatterAttribute
     /// Gets or sets the capture group index to extract (0 = whole match).
     /// Only used when Replacement is null.
     /// </summary>
-    public int Group { get; init; } = 0;
+    public int Group { get; init; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the pattern is case-insensitive.
     /// </summary>
-    public bool IgnoreCase { get; init; } = false;
+    public bool IgnoreCase { get; init; }
 
     /// <inheritdoc/>
     public override object? Format(object? value)

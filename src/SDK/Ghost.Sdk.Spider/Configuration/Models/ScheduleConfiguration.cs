@@ -8,7 +8,7 @@ public sealed class ScheduleConfiguration
     /// <summary>
     /// Gets or sets whether scheduling is enabled.
     /// </summary>
-    public bool Enabled { get; set; } = false;
+    public bool Enabled { get; set; }
 
     /// <summary>
     /// Gets or sets the schedule type (Cron, Interval, Once).
@@ -38,15 +38,15 @@ public sealed class ScheduleConfiguration
     /// <summary>
     /// Gets or sets whether to run immediately on startup.
     /// </summary>
-    public bool RunOnStartup { get; set; } = false;
+    public bool RunOnStartup { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum runtime (seconds). 0 means no limit.
     /// </summary>
-    public int MaxRuntimeSeconds { get; set; } = 0;
+    public int MaxRuntimeSeconds { get; set; }
 
     /// <summary>
     /// Gets or sets whether concurrent executions are allowed.
     /// </summary>
-    public bool AllowConcurrentExecutions { get; set; } = false;
+    public bool AllowConcurrentExecutions { get; set; }
 }

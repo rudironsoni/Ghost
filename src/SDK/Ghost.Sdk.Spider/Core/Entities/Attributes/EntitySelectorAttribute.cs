@@ -20,7 +20,7 @@ public class EntitySelectorAttribute : Attribute
     /// <summary>
     /// Gets or sets a value indicating whether to extract multiple entities or just the first match.
     /// </summary>
-    public bool TakeFirst { get; init; } = false;
+    public bool TakeFirst { get; init; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the selector is required.

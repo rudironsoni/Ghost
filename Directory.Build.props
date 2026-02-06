@@ -19,6 +19,8 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <!-- Zero tolerance for warnings - Principal Engineer standard -->
+    <!-- All warnings must be fixed, not suppressed -->
   </PropertyGroup>
 
   <PropertyGroup>

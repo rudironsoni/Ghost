@@ -61,7 +61,7 @@ public class StaticHtmlAdapterOptions : AdapterOptions
     /// Gets or sets a value indicating whether to allow HTTP/3 protocol.
     /// </summary>
     /// <value><c>true</c> to allow HTTP/3; otherwise, <c>false</c>. Defaults to <c>false</c>.</value>
-    public bool AllowHttp3 { get; set; } = false;
+    public bool AllowHttp3 { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum response content buffer size in bytes.
@@ -103,7 +103,7 @@ public class StaticHtmlAdapterOptions : AdapterOptions
     /// <c>true</c> to send Expect: 100-Continue header; otherwise, <c>false</c>.
     /// Defaults to <c>false</c>.
     /// </value>
-    public bool Expect100Continue { get; set; } = false;
+    public bool Expect100Continue { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether to use default credentials.
@@ -112,7 +112,7 @@ public class StaticHtmlAdapterOptions : AdapterOptions
     /// <c>true</c> to use default system credentials for authentication; otherwise, <c>false</c>.
     /// Defaults to <c>false</c>.
     /// </value>
-    public bool UseDefaultCredentials { get; set; } = false;
+    public bool UseDefaultCredentials { get; set; }
 
     /// <summary>
     /// Gets or sets the Accept header value.

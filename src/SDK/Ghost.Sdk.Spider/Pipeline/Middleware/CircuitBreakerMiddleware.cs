@@ -77,10 +77,10 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
     /// Invokes the middleware to apply circuit breaker logic.
     /// </summary>
     /// <param name="context">The pipeline context containing the request.</param>
-    /// <param name="next">The delegate to invoke the next middleware in the pipeline.</param>
+    /// <param name="continuation">The delegate to invoke the next middleware in the pipeline.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the circuit is open.</exception>
-    public async Task InvokeAsync(PipelineContext context, PipelineDelegate next)
+    public async Task InvokeAsync(PipelineContext context, PipelineDelegate continuation)
     {
         // Check circuit state before proceeding
         lock (_lock)
@@ -96,7 +96,7 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
 
         try
         {
-            await next(context);
+            await continuation(context);
 
             // Record success
             lock (_lock)

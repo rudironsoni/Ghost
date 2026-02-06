@@ -41,7 +41,6 @@ namespace Ghost.Sdk.Spider.Pipeline;
 public sealed class CompiledPipeline
 {
     private readonly PipelineDelegate _pipeline;
-    private readonly IReadOnlyList<string> _middlewareNames;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CompiledPipeline"/> class.
@@ -54,19 +53,19 @@ public sealed class CompiledPipeline
     internal CompiledPipeline(PipelineDelegate pipeline, IReadOnlyList<string> middlewareNames)
     {
         _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
-        _middlewareNames = middlewareNames ?? throw new ArgumentNullException(nameof(middlewareNames));
+        MiddlewareNames = middlewareNames ?? throw new ArgumentNullException(nameof(middlewareNames));
     }
 
     /// <summary>
     /// Gets the ordered list of middleware names in this pipeline.
     /// This is useful for diagnostics and debugging.
     /// </summary>
-    public IReadOnlyList<string> MiddlewareNames => _middlewareNames;
+    public IReadOnlyList<string> MiddlewareNames { get; }
 
     /// <summary>
     /// Gets the number of middleware components in this pipeline.
     /// </summary>
-    public int MiddlewareCount => _middlewareNames.Count;
+    public int MiddlewareCount => MiddlewareNames.Count;
 
     /// <summary>
     /// Executes the pipeline with the given context.
@@ -96,6 +95,6 @@ public sealed class CompiledPipeline
     /// <returns>A string describing the pipeline structure.</returns>
     public override string ToString()
     {
-        return $"CompiledPipeline with {MiddlewareCount} middleware: [{string.Join(" -> ", _middlewareNames)}]";
+        return $"CompiledPipeline with {MiddlewareCount} middleware: [{string.Join(" -> ", MiddlewareNames)}]";
     }
 }

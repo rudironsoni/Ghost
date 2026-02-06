@@ -49,7 +49,7 @@ public sealed class PipelineStageConfiguration
     /// <summary>
     /// Gets or sets the execution order (lower values execute first).
     /// </summary>
-    public int Order { get; set; } = 0;
+    public int Order { get; set; }
 
     /// <summary>
     /// Gets or sets stage-specific configuration.

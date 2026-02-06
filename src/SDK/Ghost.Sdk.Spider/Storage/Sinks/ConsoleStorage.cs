@@ -5,6 +5,21 @@ using Newtonsoft.Json;
 
 namespace Ghost.Sdk.Spider.Storage.Sinks;
 
+internal static partial class ConsoleStorageLogMessages
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Console storage initialized")]
+    public static partial void LogStorageInitialized(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to write item to console")]
+    public static partial void LogFailedToWriteItem(this ILogger logger, Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to write batch to console")]
+    public static partial void LogFailedToWriteBatch(this ILogger logger, Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Console storage closed")]
+    public static partial void LogStorageClosed(this ILogger logger);
+}
+
 /// <summary>
 /// Storage implementation that writes data to the console.
 /// </summary>
@@ -41,7 +56,7 @@ public class ConsoleStorage : IStorage
     /// <inheritdoc/>
     public Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        _logger?.LogInformation("Console storage initialized");
+        _logger?.LogStorageInitialized();
         return Task.CompletedTask;
     }
 
@@ -72,7 +87,7 @@ public class ConsoleStorage : IStorage
         catch (Exception ex)
         {
             stopwatch.Stop();
-            _logger?.LogError(ex, "Failed to write item to console");
+            _logger?.LogFailedToWriteItem(ex);
             return Task.FromResult(StorageResult.CreateFailure(
                 $"Console write failed: {ex.Message}",
                 ex,
@@ -112,7 +127,7 @@ public class ConsoleStorage : IStorage
         catch (Exception ex)
         {
             stopwatch.Stop();
-            _logger?.LogError(ex, "Failed to write batch to console");
+            _logger?.LogFailedToWriteBatch(ex);
             return StorageResult.CreateFailure(
                 $"Console batch write failed: {ex.Message}",
                 ex,
@@ -130,7 +145,8 @@ public class ConsoleStorage : IStorage
     /// <inheritdoc/>
     public Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        _logger?.LogInformation("Console storage closed");
+        if (_logger != null)
+            ConsoleStorageLogMessages.LogStorageClosed(_logger);
         return Task.CompletedTask;
     }
 }

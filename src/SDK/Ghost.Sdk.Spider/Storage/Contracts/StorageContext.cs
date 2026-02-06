@@ -55,7 +55,7 @@ public class StorageContext
     /// Gets or sets a value indicating whether to update existing items.
     /// </summary>
     /// <value><c>true</c> to update on conflict; otherwise, <c>false</c>. Defaults to <c>false</c>.</value>
-    public bool UpdateOnConflict { get; set; } = false;
+    public bool UpdateOnConflict { get; set; }
 
     /// <summary>
     /// Gets or sets the unique key field names for conflict detection.

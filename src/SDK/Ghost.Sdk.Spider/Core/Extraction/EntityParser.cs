@@ -19,7 +19,7 @@ public class EntityParser
     /// <typeparam name="T">The entity type to extract.</typeparam>
     /// <param name="context">The extraction context containing the content and metadata.</param>
     /// <returns>A list of extracted entities.</returns>
-    public List<T> Parse<T>(ExtractionContext context) where T : EntityBase<T>, new()
+    public static List<T> Parse<T>(ExtractionContext context) where T : EntityBase<T>, new()
     {
         var metadata = EntityBase<T>.GetMetadata();
         var entities = new List<T>();
@@ -52,7 +52,7 @@ public class EntityParser
     /// <typeparam name="T">The entity type to extract.</typeparam>
     /// <param name="context">The extraction context containing the content and metadata.</param>
     /// <returns>The extracted entity, or null if extraction fails.</returns>
-    public T? ParseSingle<T>(ExtractionContext context) where T : EntityBase<T>, new()
+    public static T? ParseSingle<T>(ExtractionContext context) where T : EntityBase<T>, new()
     {
         var metadata = EntityBase<T>.GetMetadata();
 
@@ -70,7 +70,7 @@ public class EntityParser
         return ParseSingleEntity<T>(context.Content, metadata, context);
     }
 
-    private List<string> SelectEntityNodes(string content, EntitySelectorAttribute selector)
+    private static List<string> SelectEntityNodes(string content, EntitySelectorAttribute selector)
     {
         // For entity selection, we need to extract the HTML structure, not just text
         // This allows nested selectors to work properly
@@ -91,13 +91,13 @@ public class EntityParser
                 var firstNode = selectorInstance.SelectFirst(content);
                 return firstNode != null ? new List<string> { firstNode } : new List<string>();
             }
-            return selectorInstance.Select(content);
+            return selectorInstance.SelectValues(content);
         }
 
         return new List<string>();
     }
 
-    private List<string> SelectEntityNodesWithCss(string content, string expression, bool takeFirst)
+    private static List<string> SelectEntityNodesWithCss(string content, string expression, bool takeFirst)
     {
         var parser = new AngleSharp.Html.Parser.HtmlParser();
         var document = parser.ParseDocument(content);
@@ -114,7 +114,7 @@ public class EntityParser
         return results;
     }
 
-    private List<string> SelectEntityNodesWithXPath(string content, string expression, bool takeFirst)
+    private static List<string> SelectEntityNodesWithXPath(string content, string expression, bool takeFirst)
     {
         var doc = new HtmlDocument();
         doc.LoadHtml(content);
@@ -134,7 +134,7 @@ public class EntityParser
         return results;
     }
 
-    private T? ParseSingleEntity<T>(string content, EntityMetadata metadata, ExtractionContext context) where T : EntityBase<T>, new()
+    private static T? ParseSingleEntity<T>(string content, EntityMetadata metadata, ExtractionContext context) where T : EntityBase<T>, new()
     {
         var entity = new T
         {
@@ -172,7 +172,7 @@ public class EntityParser
         return entity.Validate() ? entity : null;
     }
 
-    private object? ExtractPropertyValue(string content, PropertyMetadata propertyMeta, ExtractionContext context)
+    private static object? ExtractPropertyValue(string content, PropertyMetadata propertyMeta, ExtractionContext context)
     {
         var selector = propertyMeta.ValueSelector;
         var selectorInstance = CreateSelector(selector.Expression, selector.Type, selector.Attribute);
@@ -185,7 +185,7 @@ public class EntityParser
         }
         else
         {
-            var values = selectorInstance.Select(content);
+            var values = selectorInstance.SelectValues(content);
             rawValue = values.Count > 0 ? values : null;
         }
 
@@ -218,7 +218,7 @@ public class EntityParser
         return ConvertValue(rawValue, propertyMeta.PropertyInfo.PropertyType);
     }
 
-    private string ApplyFieldTransformations(string value, FieldAttribute field)
+    private static string ApplyFieldTransformations(string value, FieldAttribute field)
     {
         if (string.IsNullOrEmpty(value))
             return value;
@@ -256,7 +256,7 @@ public class EntityParser
         return value;
     }
 
-    private void SetPropertyValue<T>(T entity, PropertyMetadata propertyMeta, object? value) where T : EntityBase<T>, new()
+    private static void SetPropertyValue<T>(T entity, PropertyMetadata propertyMeta, object? value) where T : EntityBase<T>, new()
     {
         if (value == null)
         {
@@ -267,7 +267,7 @@ public class EntityParser
         propertyMeta.PropertyInfo.SetValue(entity, value);
     }
 
-    private object? ConvertValue(object? value, Type targetType)
+    private static object? ConvertValue(object? value, Type targetType)
     {
         if (value == null)
             return null;
@@ -364,7 +364,7 @@ public class EntityParser
         }
     }
 
-    private ISelector CreateSelector(string expression, SelectorType type, string? attribute)
+    private static ISelector CreateSelector(string expression, SelectorType type, string? attribute)
     {
         return type switch
         {
