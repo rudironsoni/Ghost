@@ -46,7 +46,7 @@ public class LinkedInSpider : Spider
 
     public override async Task ProcessResponseAsync(
         Response response,
-        ExecutionContext context,
+        Ghost.Sdk.Spider.Engine.ExecutionContext context,
         CancellationToken cancellationToken = default)
     {
         // Only process successful HTML responses
@@ -81,7 +81,7 @@ public class LinkedInSpider : Spider
         await Task.CompletedTask;
     }
 
-    public override Task OnStartAsync(ExecutionContext context, CancellationToken cancellationToken = default)
+    public override Task OnStartAsync(Ghost.Sdk.Spider.Engine.ExecutionContext context, CancellationToken cancellationToken = default)
     {
         Console.WriteLine($"Starting {Name} spider...");
         _extractedJobs.Clear();
@@ -89,7 +89,7 @@ public class LinkedInSpider : Spider
     }
 
     public override Task OnCompleteAsync(
-        ExecutionContext context,
+        Ghost.Sdk.Spider.Engine.ExecutionContext context,
         SpiderResult result,
         CancellationToken cancellationToken = default)
     {
@@ -99,7 +99,7 @@ public class LinkedInSpider : Spider
 
     public override Task OnErrorAsync(
         Exception exception,
-        ExecutionContext context,
+        Ghost.Sdk.Spider.Engine.ExecutionContext context,
         CancellationToken cancellationToken = default)
     {
         Console.WriteLine($"Error in {Name} spider: {exception.Message}");
@@ -109,7 +109,7 @@ public class LinkedInSpider : Spider
     /// <summary>
     /// Determines if a URL should be followed based on LinkedIn-specific rules
     /// </summary>
-    public override bool ShouldFollowUrl(string url, ExecutionContext context)
+    public override bool ShouldFollowUrl(string url, Ghost.Sdk.Spider.Engine.ExecutionContext context)
     {
         if (!base.ShouldFollowUrl(url, context))
             return false;
