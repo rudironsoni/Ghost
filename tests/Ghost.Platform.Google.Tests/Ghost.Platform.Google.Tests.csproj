@@ -3,6 +3,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <NoWarn>CA1707;CA1826;CA1001;CA1852</NoWarn>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Platforms\Ghost.Platform.Google\Ghost.Platform.Google.csproj" />

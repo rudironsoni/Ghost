@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <InternalsVisibleTo>Ghost.Platform.Indeed.Tests</InternalsVisibleTo>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Ghost\Ghost.csproj" />
