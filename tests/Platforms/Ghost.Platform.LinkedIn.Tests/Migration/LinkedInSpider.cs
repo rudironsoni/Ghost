@@ -50,16 +50,16 @@ public class LinkedInSpider : Spider
         CancellationToken cancellationToken = default)
     {
         // Only process successful HTML responses
-        if (!response.IsSuccess || response.ContentResult?.ContentType != ContentType.DynamicHtml)
+        if (!response.IsSuccess || response.Content?.ContentType != ContentType.JavaScript)
         {
             return;
         }
 
         var extractionContext = new ExtractionContext
         {
-            Content = response.ContentResult.Content ?? string.Empty,
-            SourceUrl = response.FinalUrl ?? response.Request?.Url ?? "unknown",
-            Timestamp = response.RespondedAt?.DateTime ?? DateTime.UtcNow
+            Content = response.Content.Content ?? string.Empty,
+            SourceUrl = response.FinalUrl ?? "unknown",
+            Timestamp = response.RespondedAt.DateTime
         };
 
         // Extract job entities from the page

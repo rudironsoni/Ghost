@@ -3,6 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
 using Ghost.Platform.LinkedIn.Internal;
+using Ghost.Sdk.Spider.Adapters;
+using Ghost.Sdk.Spider.Core.Extraction;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -27,9 +29,10 @@ public class LinkedInJobClientParallelTests
         secondPage.GetContentAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(BuildHtml("789", null, 50)));
 
-        var guest = new StubGuestJobSearch();
+        var jsAdapter = Substitute.For<JavaScriptAdapter>();
+        var entityParser = Substitute.For<EntityParser>();
         var options = Options.Create(new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.GuestApi });
-        var client = new LinkedInJobClient(session, options, NullLogger<LinkedInJobClient>.Instance, guest);
+        var client = new LinkedInJobClient(session, options, NullLogger<LinkedInJobClient>.Instance, jsAdapter, entityParser);
 
         var criteria = new JobSearchCriteria { Query = "dev", Location = "remote", MaxResults = 50 };
         var count = 0;

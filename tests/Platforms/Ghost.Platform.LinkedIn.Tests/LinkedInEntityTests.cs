@@ -380,7 +380,9 @@ public class LinkedInEntityTests
 
         // Assert
         metadata.Should().NotBeNull();
+#pragma warning disable CA2263 // Prefer generic type parameter
         metadata.EntityType.Should().Be(typeof(LinkedInJobEntity));
+#pragma warning restore CA2263
         metadata.Properties.Should().NotBeEmpty();
         metadata.Properties.Should().Contain(p => p.PropertyInfo.Name == "Title");
         metadata.Properties.Should().Contain(p => p.PropertyInfo.Name == "Company");

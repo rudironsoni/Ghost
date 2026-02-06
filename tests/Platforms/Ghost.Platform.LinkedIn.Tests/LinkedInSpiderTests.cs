@@ -3,6 +3,7 @@ using Ghost.Platform.LinkedIn.Tests.Migration;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Engine;
 using NUnit.Framework;
+using ExecutionContext = Ghost.Sdk.Spider.Engine.ExecutionContext;
 
 namespace Ghost.Platform.LinkedIn.Tests;
 
@@ -71,7 +72,7 @@ public class LinkedInSpiderTests
         var response = CreateResponse(
             url: "https://www.linkedin.com/jobs/view/test-job",
             content: html,
-            contentType: ContentType.DynamicHtml
+            contentType: ContentType.JavaScript
         );
         var context = new ExecutionContext("Test", new SpiderOptions());
 
@@ -80,7 +81,7 @@ public class LinkedInSpiderTests
 
         // Assert
         _spider.ExtractedJobs.Should().HaveCount(1);
-        var job = _spider.ExtractedJobs.First();
+        var job = _spider.ExtractedJobs[0];
         job.Title.Should().Be("Software Engineer, New Grad");
         job.Company.Should().Be("Stripe");
     }
@@ -92,8 +93,8 @@ public class LinkedInSpiderTests
         var html1 = await ReadFixtureAsync("test-job.html");
         var html2 = CreateJobHtml("Backend Engineer", "Microsoft", "Redmond, WA");
 
-        var response1 = CreateResponse("https://www.linkedin.com/jobs/view/job1", html1, ContentType.DynamicHtml);
-        var response2 = CreateResponse("https://www.linkedin.com/jobs/view/job2", html2, ContentType.DynamicHtml);
+        var response1 = CreateResponse("https://www.linkedin.com/jobs/view/job1", html1, ContentType.JavaScript);
+        var response2 = CreateResponse("https://www.linkedin.com/jobs/view/job2", html2, ContentType.JavaScript);
         var context = new ExecutionContext("Test", new SpiderOptions());
 
         // Act
@@ -114,7 +115,7 @@ public class LinkedInSpiderTests
         var response = CreateResponse(
             "https://www.linkedin.com/jobs/view/invalid",
             invalidHtml,
-            ContentType.DynamicHtml
+            ContentType.JavaScript
         );
         var context = new ExecutionContext("Test", new SpiderOptions());
 
@@ -150,7 +151,7 @@ public class LinkedInSpiderTests
         var response = CreateResponse(
             "https://www.linkedin.com/jobs/view/test",
             "",
-            ContentType.DynamicHtml,
+            ContentType.JavaScript,
             statusCode: 404,
             isSuccess: false
         );
@@ -171,7 +172,7 @@ public class LinkedInSpiderTests
 
         // Add a job first
         var html = await ReadFixtureAsync("test-job.html");
-        var response = CreateResponse("https://www.linkedin.com/jobs/view/test", html, ContentType.DynamicHtml);
+        var response = CreateResponse("https://www.linkedin.com/jobs/view/test", html, ContentType.JavaScript);
         await _spider.ProcessResponseAsync(response, context);
 
         _spider.ExtractedJobs.Should().HaveCount(1);
@@ -192,8 +193,8 @@ public class LinkedInSpiderTests
         {
             SpiderName = "LinkedInJobSpider",
             Success = true,
-            TotalRequests = 10,
-            SuccessfulRequests = 10
+            RequestsProcessed = 10,
+            RequestsSucceeded = 10
         };
 
         // Act
@@ -208,7 +209,7 @@ public class LinkedInSpiderTests
     {
         // Arrange
         var context = new ExecutionContext("Test", new SpiderOptions());
-        var exception = new Exception("Test error");
+        var exception = new InvalidOperationException("Test error");
 
         // Act
         Func<Task> act = async () => await _spider.OnErrorAsync(exception, context);
@@ -350,7 +351,7 @@ public class LinkedInSpiderTests
                 var response = CreateResponse(
                     $"https://www.linkedin.com/jobs/view/{fixture}",
                     html,
-                    ContentType.DynamicHtml
+                    ContentType.JavaScript
                 );
                 await _spider.ProcessResponseAsync(response, context);
             }
@@ -366,7 +367,7 @@ public class LinkedInSpiderTests
     {
         // Arrange
         var html = await ReadFixtureAsync("test-job.html");
-        var response = CreateResponse("https://www.linkedin.com/jobs/view/test", html, ContentType.DynamicHtml);
+        var response = CreateResponse("https://www.linkedin.com/jobs/view/test", html, ContentType.JavaScript);
         var context = new ExecutionContext("Test", new SpiderOptions());
 
         await _spider.ProcessResponseAsync(response, context);
@@ -391,7 +392,7 @@ public class LinkedInSpiderTests
             ContentType = contentType,
             MimeType = contentType switch
             {
-                ContentType.DynamicHtml => "text/html",
+                ContentType.JavaScript => "text/html",
                 ContentType.StaticHtml => "text/html",
                 ContentType.Json => "application/json",
                 _ => "text/plain"
@@ -410,17 +411,7 @@ public class LinkedInSpiderTests
             AdapterName = "JavaScriptAdapter",
             IsSuccess = isSuccess,
             RequestedAt = DateTimeOffset.UtcNow.AddSeconds(-1),
-            RespondedAt = DateTimeOffset.UtcNow,
-            Request = new Request
-            {
-                RequestId = Guid.NewGuid().ToString(),
-                Url = url,
-                Method = "GET",
-                Headers = new Dictionary<string, string>(),
-                Timeout = TimeSpan.FromSeconds(30),
-                ExpectedContentType = contentType,
-                Metadata = new Dictionary<string, object>()
-            }
+            RespondedAt = DateTimeOffset.UtcNow
         };
     }
 

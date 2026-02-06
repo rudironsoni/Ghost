@@ -17,7 +17,9 @@ public class LinkedInFixtureScraper
     private const string SearchLocation = "";
     private const string FixturesDir = ".";
 
+#pragma warning disable CS8892 // Method will not be used as an entry point
     public static async Task Main()
+#pragma warning restore CS8892
     {
         Console.WriteLine("=== LinkedIn Fixture Scraper ===");
         Console.WriteLine($"Search Query: {SearchQuery}");
@@ -46,7 +48,7 @@ public class LinkedInFixtureScraper
         {
             // Step 1: Scrape search results
             Console.WriteLine("[1/6] Scraping LinkedIn job search results...");
-            var jobIds = await ScrapeSearchResultsAsync((IPage)page);
+            var jobIds = await ScrapeSearchResultsAsync(page);
 
             if (jobIds.Count == 0)
             {
@@ -83,7 +85,7 @@ public class LinkedInFixtureScraper
         }
     }
 
-    private static async Task<List<string>> ScrapeSearchResultsAsync(IPage page)
+    private static async Task<List<string>> ScrapeSearchResultsAsync(Microsoft.Playwright.IPage page)
     {
         var encodedQuery = Uri.EscapeDataString(SearchQuery);
         var encodedLocation = Uri.EscapeDataString(SearchLocation);
@@ -93,11 +95,10 @@ public class LinkedInFixtureScraper
 
         await page.GotoAsync(searchUrl, new PageGotoOptions
         {
-            WaitUntil = WaitUntilState.Load,
+            WaitUntil = WaitUntilState.NetworkIdle,
             Timeout = 30000
         });
 
-        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Task.Delay(3000);
 
         var html = await page.ContentAsync();
@@ -142,7 +143,7 @@ public class LinkedInFixtureScraper
         return ids;
     }
 
-    private static async Task ScrapeJobDetailsAsync(IPage page, string jobId, int index)
+    private static async Task ScrapeJobDetailsAsync(Microsoft.Playwright.IPage page, string jobId, int index)
     {
         var jobUrl = $"https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{jobId}";
 
@@ -150,11 +151,10 @@ public class LinkedInFixtureScraper
 
         await page.GotoAsync(jobUrl, new PageGotoOptions
         {
-            WaitUntil = WaitUntilState.Load,
+            WaitUntil = WaitUntilState.NetworkIdle,
             Timeout = 30000
         });
 
-        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Task.Delay(2000);
 
         var html = await page.ContentAsync();
@@ -172,7 +172,7 @@ public class LinkedInFixtureScraper
         Console.WriteLine($"    Location: {location ?? "N/A"}");
     }
 
-    private static async Task<string?> ExtractTextAsync(IPage page, string selectors)
+    private static async Task<string?> ExtractTextAsync(Microsoft.Playwright.IPage page, string selectors)
     {
         try
         {
