@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <LangVersion>preview</LangVersion>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
     <NoWarn>CA2252;CA1707;CA1805;CA1304;CA1311;CA2263;CA1861;CA1852;CA1860;CA1305;CA1822;CA1854;CA1866;CA1310;CA2201;CA1826;CA1016</NoWarn>
   </PropertyGroup>
 

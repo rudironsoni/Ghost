@@ -5,6 +5,7 @@
     <Description>Ghost LinkedIn platform integration</Description>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
   <PropertyGroup>
     <!-- Suppress CA1848: LoggerMessage delegate warnings -->
