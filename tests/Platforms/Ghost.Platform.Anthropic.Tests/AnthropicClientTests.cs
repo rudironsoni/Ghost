@@ -10,7 +10,7 @@ namespace Ghost.Platform.Anthropic.Tests;
 public class AnthropicClientTests
 {
     [Fact]
-    public async Task CompleteAsync_Succeeds_WithMockedSession()
+    public async Task CompleteAsyncSucceedsWithMockedSession()
     {
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();
@@ -30,7 +30,7 @@ public class AnthropicClientTests
     }
 
     [Fact]
-    public async Task StreamAsync_InvokesCallback_WithMockedPage()
+    public async Task StreamAsyncInvokesCallbackWithMockedPage()
     {
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();

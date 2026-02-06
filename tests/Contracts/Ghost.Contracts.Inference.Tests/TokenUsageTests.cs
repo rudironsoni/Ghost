@@ -7,7 +7,7 @@ namespace Ghost.Contracts.Inference.Tests;
 public class TokenUsageTests
 {
     [Fact]
-    public void Defaults_AreExpected()
+    public void DefaultsAreExpected()
     {
         var t = new TokenUsage();
         t.PromptTokens.Should().Be(0);
@@ -16,7 +16,7 @@ public class TokenUsageTests
     }
 
     [Fact]
-    public void Can_Set_And_Equality_Works()
+    public void CanSetAndEqualityWorks()
     {
         var a = new TokenUsage { PromptTokens = 5, CompletionTokens = 10, TotalTokens = 15 };
         var b = new TokenUsage { PromptTokens = 5, CompletionTokens = 10, TotalTokens = 15 };

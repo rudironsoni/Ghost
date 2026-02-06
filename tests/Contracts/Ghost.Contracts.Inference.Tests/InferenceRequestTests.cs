@@ -8,7 +8,7 @@ namespace Ghost.Contracts.Inference.Tests;
 public class InferenceRequestTests
 {
     [Fact]
-    public void Defaults_AreExpected()
+    public void DefaultsAreExpected()
     {
         var r = new InferenceRequest();
         r.Model.Should().BeEmpty();
@@ -21,7 +21,7 @@ public class InferenceRequestTests
     }
 
     [Fact]
-    public void Can_Set_And_Equality_Works()
+    public void CanSetAndEqualityWorks()
     {
         var m = new InferenceMessage { Role = InferenceRole.Assistant, Content = "hi" };
         var r1 = new InferenceRequest { Model = "x", Messages = new[] { m }, Temperature = 0.5, MaxTokens = 10, TopP = 0.9, StopSequences = new[] { "s" }, SystemPrompt = "sys" };
@@ -31,7 +31,7 @@ public class InferenceRequestTests
     }
 
     [Fact]
-    public void EdgeCases_NullOrEmpty_Accepted()
+    public void EdgeCasesNullOrEmptyAccepted()
     {
         var r = new InferenceRequest { Model = string.Empty, Messages = Array.Empty<InferenceMessage>(), StopSequences = Array.Empty<string>() };
         r.Model.Should().Be(string.Empty);

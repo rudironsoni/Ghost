@@ -13,7 +13,7 @@ namespace Ghost.Core.Tests.Services;
 public class ErrorCategorizationServiceIntegrationTests
 {
     [Fact]
-    public void CategorizeError_NetworkError_ReturnsNetworkCategory()
+    public void CategorizeErrorNetworkErrorReturnsNetworkCategory()
     {
         // Arrange
         var exception = new HttpRequestException("Network error");
@@ -31,7 +31,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeError_TimeoutError_ReturnsTimeoutCategory()
+    public void CategorizeErrorTimeoutErrorReturnsTimeoutCategory()
     {
         // Arrange
         var exception = new TaskCanceledException("Request timed out");
@@ -49,7 +49,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeError_AuthError_ReturnsAuthCategory()
+    public void CategorizeErrorAuthErrorReturnsAuthCategory()
     {
         // Arrange
         var exception = new UnauthorizedAccessException("Authentication failed");
@@ -67,7 +67,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeError_ConfigurationError_ReturnsConfigurationCategory()
+    public void CategorizeErrorConfigurationErrorReturnsConfigurationCategory()
     {
         // Arrange
         var exception = new ArgumentException("Invalid argument");
@@ -85,7 +85,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeError_ParseError_ReturnsParseCategory()
+    public void CategorizeErrorParseErrorReturnsParseCategory()
     {
         // Arrange
         var exception = new InvalidOperationException("Parse error");
@@ -103,7 +103,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeError_CancelledError_ReturnsCancelledCategory()
+    public void CategorizeErrorCancelledErrorReturnsCancelledCategory()
     {
         // Arrange
         var exception = new OperationCanceledException("Request was cancelled");
@@ -121,10 +121,10 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeError_UnknownError_ReturnsUnknownCategory()
+    public void CategorizeErrorUnknownErrorReturnsUnknownCategory()
     {
         // Arrange
-        var exception = new Exception("Unknown error");
+        var exception = new NotImplementedException("Unknown error");
 
         // Act
         var result = ErrorCategorizationService.CategorizeError(exception, "LinkedIn");
@@ -139,7 +139,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeHttpError_Unauthorized_ReturnsAuthCategory()
+    public void CategorizeHttpErrorUnauthorizedReturnsAuthCategory()
     {
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
@@ -157,7 +157,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeHttpError_Forbidden_ReturnsAuthCategory()
+    public void CategorizeHttpErrorForbiddenReturnsAuthCategory()
     {
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.Forbidden);
@@ -175,7 +175,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeHttpError_NotFound_ReturnsNotFoundCategory()
+    public void CategorizeHttpErrorNotFoundReturnsNotFoundCategory()
     {
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.NotFound);
@@ -193,7 +193,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeHttpError_TooManyRequests_ReturnsRateLimitCategory()
+    public void CategorizeHttpErrorTooManyRequestsReturnsRateLimitCategory()
     {
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
@@ -211,7 +211,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeHttpError_InternalServerError_ReturnsServerCategory()
+    public void CategorizeHttpErrorInternalServerErrorReturnsServerCategory()
     {
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.InternalServerError);
@@ -229,7 +229,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeHttpError_BadGateway_ReturnsServerCategory()
+    public void CategorizeHttpErrorBadGatewayReturnsServerCategory()
     {
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.BadGateway);
@@ -247,7 +247,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeHttpError_ServiceUnavailable_ReturnsServerCategory()
+    public void CategorizeHttpErrorServiceUnavailableReturnsServerCategory()
     {
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
@@ -265,7 +265,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeHttpError_GatewayTimeout_ReturnsServerCategory()
+    public void CategorizeHttpErrorGatewayTimeoutReturnsServerCategory()
     {
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.GatewayTimeout);
@@ -283,7 +283,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeHttpError_BadRequest_ReturnsClientCategory()
+    public void CategorizeHttpErrorBadRequestReturnsClientCategory()
     {
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.BadRequest);
@@ -301,7 +301,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeHttpError_UnknownStatusCode_ReturnsUnknownCategory()
+    public void CategorizeHttpErrorUnknownStatusCodeReturnsUnknownCategory()
     {
         // Arrange
         var response = new HttpResponseMessage((HttpStatusCode)418);
@@ -319,7 +319,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeError_SetsTimestamp()
+    public void CategorizeErrorSetsTimestamp()
     {
         // Arrange
         var exception = new HttpRequestException("Network error");
@@ -335,7 +335,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeHttpError_SetsTimestamp()
+    public void CategorizeHttpErrorSetsTimestamp()
     {
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.InternalServerError);
@@ -351,7 +351,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeError_IncludesTechnicalDetails()
+    public void CategorizeErrorIncludesTechnicalDetails()
     {
         // Arrange
         var exception = new HttpRequestException("Network error");
@@ -366,7 +366,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeHttpError_IncludesTechnicalDetails()
+    public void CategorizeHttpErrorIncludesTechnicalDetails()
     {
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.InternalServerError);
@@ -381,10 +381,10 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeError_HandlesInnerException()
+    public void CategorizeErrorHandlesInnerException()
     {
         // Arrange
-        var innerException = new Exception("Inner error");
+        var innerException = new InvalidOperationException("Inner error");
         var exception = new HttpRequestException("Network error", innerException);
 
         // Act
@@ -397,7 +397,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeError_HandlesArgumentNullException()
+    public void CategorizeErrorHandlesArgumentNullException()
     {
         // Arrange
         var exception = new ArgumentNullException("param", "Parameter cannot be null");
@@ -415,7 +415,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeError_HandlesComplexExceptionMessage()
+    public void CategorizeErrorHandlesComplexExceptionMessage()
     {
         // Arrange
         var exception = new HttpRequestException("A complex error message with details: timeout after 30 seconds");
@@ -432,7 +432,7 @@ public class ErrorCategorizationServiceIntegrationTests
     }
 
     [Fact]
-    public void CategorizeHttpError_HandlesCustomReasonPhrase()
+    public void CategorizeHttpErrorHandlesCustomReasonPhrase()
     {
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.InternalServerError)

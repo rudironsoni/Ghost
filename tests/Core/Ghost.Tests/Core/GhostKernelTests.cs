@@ -17,7 +17,7 @@ public class GhostKernelTests
         return (GhostKernel)ctor.Invoke(new object[] { playwright, browser, 1, useStealth, "Chromium" });
     }
     [Fact]
-    public async Task NewSessionAsync_UsesOptions_ToCreateContext()
+    public async Task NewSessionAsyncUsesOptionsToCreateContext()
     {
         var playwright = Substitute.For<IPlaywright>();
         var browser = Substitute.For<IBrowser>();
@@ -40,7 +40,7 @@ public class GhostKernelTests
     }
 
     [Fact]
-    public void Constructor_NullBrowser_ThrowsArgumentNullException()
+    public void ConstructorNullBrowserThrowsArgumentNullException()
     {
         var playwright = Substitute.For<IPlaywright>();
         var ctor = typeof(GhostKernel).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(IPlaywright), typeof(IBrowser), typeof(int), typeof(bool), typeof(string) }, null)!;
@@ -49,7 +49,7 @@ public class GhostKernelTests
     }
 
     [Fact]
-    public async Task NewSessionAsync_RespectsMaxConcurrentSessions()
+    public async Task NewSessionAsyncRespectsMaxConcurrentSessions()
     {
         var playwright = Substitute.For<IPlaywright>();
         var browser = Substitute.For<IBrowser>();
@@ -81,7 +81,7 @@ public class GhostKernelTests
     }
 
     [Fact]
-    public async Task NewSessionAsync_EnablesStealth_InjectsScript()
+    public async Task NewSessionAsyncEnablesStealthInjectsScript()
     {
         var playwright = Substitute.For<IPlaywright>();
         var browser = Substitute.For<IBrowser>();

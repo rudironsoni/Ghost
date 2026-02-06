@@ -9,14 +9,14 @@ namespace Ghost.Hosting.Tests;
 public class ExtensionLoaderTests
 {
     [Fact]
-    public void ValidateExtensions_NoExtensions_Succeeds()
+    public void ValidateExtensionsNoExtensionsSucceeds()
     {
         var act = () => ExtensionLoader.ValidateExtensions([]);
         act.Should().NotThrow();
     }
 
     [Fact]
-    public void ValidateExtensions_MissingDependency_ThrowsExtensionException()
+    public void ValidateExtensionsMissingDependencyThrowsExtensionException()
     {
         var extensions = new IExtension[] { new MockMissingDepExtension() };
         var act = () => ExtensionLoader.ValidateExtensions(extensions);
@@ -24,7 +24,7 @@ public class ExtensionLoaderTests
     }
 
     [Fact]
-    public void ValidateExtensions_CircularDependency_ThrowsExtensionException()
+    public void ValidateExtensionsCircularDependencyThrowsExtensionException()
     {
         var extensions = new IExtension[] { new Circular1(), new Circular2() };
         var act = () => ExtensionLoader.ValidateExtensions(extensions);
@@ -32,7 +32,7 @@ public class ExtensionLoaderTests
     }
 
     [Fact]
-    public void LoadExtensions_RegistersServicesInOrder()
+    public void LoadExtensionsRegistersServicesInOrder()
     {
         var extensions = new IExtension[] { new ExtensionB(), new ExtensionA() };
         var services = new ServiceCollection();

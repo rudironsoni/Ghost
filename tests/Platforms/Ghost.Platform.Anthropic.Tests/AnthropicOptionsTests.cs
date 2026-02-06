@@ -6,7 +6,7 @@ namespace Ghost.Platform.Anthropic.Tests;
 public class AnthropicOptionsTests
 {
     [Fact]
-    public void Defaults_AreReasonable()
+    public void DefaultsAreReasonable()
     {
         var opts = new AnthropicOptions();
         opts.BaseUrl.Should().NotBeNull();
@@ -15,7 +15,7 @@ public class AnthropicOptionsTests
     }
 
     [Fact]
-    public void PropertySetters_Work()
+    public void PropertySettersWork()
     {
         var opts = new AnthropicOptions
         {

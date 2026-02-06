@@ -6,7 +6,7 @@ namespace Ghost.Core.Tests;
 public class SessionOptionsTests
 {
     [Fact]
-    public void Ctor_Defaults_AreExpected()
+    public void CtorDefaultsAreExpected()
     {
         var opts = new SessionOptions();
         opts.ViewportWidth.Should().Be(1280);
@@ -15,7 +15,7 @@ public class SessionOptionsTests
     }
 
     [Fact]
-    public void Properties_SetGet_Works()
+    public void PropertiesSetGetWorks()
     {
         var opts = new SessionOptions { ViewportWidth = 200, ViewportHeight = 100, UserAgent = "ua" };
         opts.ViewportWidth.Should().Be(200);

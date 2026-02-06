@@ -10,7 +10,7 @@ public class InferenceRoleTests
     [InlineData(InferenceRole.System)]
     [InlineData(InferenceRole.User)]
     [InlineData(InferenceRole.Assistant)]
-    public void Enum_Values_Available(InferenceRole r)
+    public void EnumValuesAvailable(InferenceRole r)
     {
         r.ToString().Should().NotBeNullOrWhiteSpace();
     }

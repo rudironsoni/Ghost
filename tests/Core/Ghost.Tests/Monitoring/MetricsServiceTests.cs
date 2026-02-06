@@ -7,7 +7,7 @@ namespace Ghost.Tests.Monitoring;
 public class MetricsServiceTests
 {
     [Fact]
-    public void RecordRequest_IncrementsTotalRequests()
+    public void RecordRequestIncrementsTotalRequests()
     {
         var service = new MetricsService();
 
@@ -20,7 +20,7 @@ public class MetricsServiceTests
     }
 
     [Fact]
-    public void GetSnapshot_DoesNotResetCounters()
+    public void GetSnapshotDoesNotResetCounters()
     {
         var service = new MetricsService();
 
@@ -35,7 +35,7 @@ public class MetricsServiceTests
     }
 
     [Fact]
-    public void GetSnapshot_SetsTimestampWithinCallWindow()
+    public void GetSnapshotSetsTimestampWithinCallWindow()
     {
         var service = new MetricsService();
         var before = DateTimeOffset.UtcNow;

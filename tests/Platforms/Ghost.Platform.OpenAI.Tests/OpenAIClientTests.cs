@@ -12,7 +12,7 @@ namespace Ghost.Platform.OpenAI.Tests;
 public class OpenAIClientTests
 {
     [Fact]
-    public async Task CompleteAsync_ReturnsText_WhenPageEvaluates()
+    public async Task CompleteAsyncReturnsTextWhenPageEvaluates()
     {
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();
@@ -29,7 +29,7 @@ public class OpenAIClientTests
     }
 
     [Fact]
-    public async Task StreamAsync_CallsHandler()
+    public async Task StreamAsyncCallsHandler()
     {
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();

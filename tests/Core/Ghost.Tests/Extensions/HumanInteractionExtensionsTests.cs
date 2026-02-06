@@ -11,7 +11,7 @@ namespace Ghost.Tests.Extensions;
 public class HumanInteractionExtensionsTests
 {
     [Fact]
-    public async Task HumanClickAsync_CallsMethodsInOrder()
+    public async Task HumanClickAsyncCallsMethodsInOrder()
     {
         // Arrange
         var element = Substitute.For<IElement>();
@@ -30,7 +30,7 @@ public class HumanInteractionExtensionsTests
     }
 
     [Fact]
-    public async Task HumanClickAsync_ThrowsIfElementNull()
+    public async Task HumanClickAsyncThrowsIfElementNull()
     {
         IElement? element = null;
         await Assert.ThrowsAsync<System.ArgumentNullException>(() => element!.HumanClickAsync());

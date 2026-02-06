@@ -8,7 +8,7 @@ namespace Ghost.Tests.Monitoring;
 public class HealthReportServiceTests
 {
     [Fact]
-    public async Task BuildReportAsync_ReturnsEmptyLists_WhenNoProxySources()
+    public async Task BuildReportAsyncReturnsEmptyListsWhenNoProxySources()
     {
         var service = new HealthReportService(Array.Empty<IProxySource>());
 
@@ -19,7 +19,7 @@ public class HealthReportServiceTests
     }
 
     [Fact]
-    public async Task BuildReportAsync_ReturnsOneProxyEntryPerSource()
+    public async Task BuildReportAsyncReturnsOneProxyEntryPerSource()
     {
         var sources = new[]
         {
@@ -35,7 +35,7 @@ public class HealthReportServiceTests
     }
 
     [Fact]
-    public async Task BuildReportAsync_PopulatesHealthyProxyEntries()
+    public async Task BuildReportAsyncPopulatesHealthyProxyEntries()
     {
         var service = new HealthReportService(new[] { new TestProxySource() });
 
@@ -45,7 +45,7 @@ public class HealthReportServiceTests
     }
 
     [Fact]
-    public async Task BuildReportAsync_ThrowsWhenCancelled()
+    public async Task BuildReportAsyncThrowsWhenCancelled()
     {
         using var cts = new CancellationTokenSource();
         cts.Cancel();

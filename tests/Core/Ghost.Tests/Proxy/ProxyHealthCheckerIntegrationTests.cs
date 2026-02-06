@@ -17,7 +17,7 @@ namespace Ghost.Tests.Proxy;
 public class ProxyHealthCheckerIntegrationTests
 {
     [Fact]
-    public async Task CheckAllProxiesAsync_ReturnsAllStatuses_WhenCredentialsMissing()
+    public async Task CheckAllProxiesAsyncReturnsAllStatusesWhenCredentialsMissing()
     {
         var previousUser = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_USERNAME");
         var previousPassword = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_PASSWORD");
@@ -44,7 +44,7 @@ public class ProxyHealthCheckerIntegrationTests
     }
 
     [Fact]
-    public async Task MeasureLatencyAsync_Throws_WhenProxyUrlMissing()
+    public async Task MeasureLatencyAsyncThrowsWhenProxyUrlMissing()
     {
         using var httpClient = new HttpClient();
         var checker = new ProxyHealthChecker(httpClient, NullLogger<ProxyHealthChecker>.Instance);
@@ -53,7 +53,7 @@ public class ProxyHealthCheckerIntegrationTests
     }
 
     [Fact]
-    public async Task MeasureLatencyAsync_HandlesUnreachableProxyGracefully()
+    public async Task MeasureLatencyAsyncHandlesUnreachableProxyGracefully()
     {
         var proxyHost = "127.0.0.1";
         var port = GetFreePort();

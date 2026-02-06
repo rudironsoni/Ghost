@@ -6,7 +6,7 @@ namespace Ghost.Hosting.Tests;
 public class GhostOptionsTests
 {
     [Fact]
-    public void DefaultValues_AreCorrect()
+    public void DefaultValuesAreCorrect()
     {
         var options = new GhostOptions();
         options.ValidateExtensionDependencies.Should().BeTrue();
@@ -14,7 +14,7 @@ public class GhostOptionsTests
     }
 
     [Fact]
-    public void Kernel_CanBeModified()
+    public void KernelCanBeModified()
     {
         var options = new GhostOptions();
         options.Kernel.Headless = true;
@@ -22,7 +22,7 @@ public class GhostOptionsTests
     }
 
     [Fact]
-    public void ValidateExtensionDependencies_CanBeDisabled()
+    public void ValidateExtensionDependenciesCanBeDisabled()
     {
         var options = new GhostOptions();
         options.ValidateExtensionDependencies = false;

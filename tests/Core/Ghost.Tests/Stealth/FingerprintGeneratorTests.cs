@@ -7,7 +7,7 @@ namespace Ghost.Tests.Stealth;
 public class FingerprintGeneratorTests
 {
     [Fact]
-    public void Generate_ReturnsCoherentProfile()
+    public void GenerateReturnsCoherentProfile()
     {
         var profile = FingerprintGenerator.Generate();
 
@@ -31,7 +31,7 @@ public class FingerprintGeneratorTests
     }
 
     [Fact]
-    public void Generate_ProducesDifferentProfiles()
+    public void GenerateProducesDifferentProfiles()
     {
         var p1 = FingerprintGenerator.Generate();
         var p2 = FingerprintGenerator.Generate();

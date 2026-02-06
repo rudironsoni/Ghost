@@ -6,7 +6,7 @@ namespace Ghost.Tests.Abstractions;
 public class NavigationOptionsTests
 {
     [Fact]
-    public void Defaults_AreExpected()
+    public void DefaultsAreExpected()
     {
         var o = new NavigationOptions();
         o.Timeout.Should().Be(30_000);
@@ -17,7 +17,7 @@ public class NavigationOptionsTests
     [InlineData(WaitUntil.Load)]
     [InlineData(WaitUntil.DomContentLoaded)]
     [InlineData(WaitUntil.NetworkIdle)]
-    public void WaitUntil_EnumValues_Available(WaitUntil val)
+    public void WaitUntilEnumValuesAvailable(WaitUntil val)
     {
         val.ToString().Should().NotBeNullOrWhiteSpace();
     }

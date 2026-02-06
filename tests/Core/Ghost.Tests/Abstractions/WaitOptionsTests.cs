@@ -6,7 +6,7 @@ namespace Ghost.Tests.Abstractions;
 public class WaitOptionsTests
 {
     [Fact]
-    public void Defaults_AreExpected()
+    public void DefaultsAreExpected()
     {
         var o = new WaitOptions();
         o.Timeout.Should().Be(30_000);
@@ -19,7 +19,7 @@ public class WaitOptionsTests
     [InlineData(WaitState.Visible)]
     [InlineData(WaitState.Hidden)]
     [InlineData(WaitState.Load)]
-    public void WaitState_Enum_HasValues(WaitState s)
+    public void WaitStateEnumHasValues(WaitState s)
     {
         s.ToString().Should().NotBeNullOrWhiteSpace();
     }

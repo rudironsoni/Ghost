@@ -7,7 +7,7 @@ namespace Ghost.Extensions.Tests;
 public class ServiceCollectionExtensionsTests
 {
     [Fact]
-    public void AddGhostKernel_RegistersOptionsAndLoggerFactory()
+    public void AddGhostKernelRegistersOptionsAndLoggerFactory()
     {
         var services = new ServiceCollection();
         services.AddGhostKernel();

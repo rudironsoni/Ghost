@@ -7,7 +7,7 @@ namespace Ghost.Tests.Stealth;
 public class StealthScriptsTests
 {
     [Fact]
-    public void GetInitScript_ContainsProfileValues()
+    public void GetInitScriptContainsProfileValues()
     {
         var profile = FingerprintGenerator.Generate();
         var script = StealthScripts.GetInitScript(profile);
@@ -25,7 +25,7 @@ public class StealthScriptsTests
     }
 
     [Fact]
-    public void GetCanvasNoiseScript_ContainsExpectedOverrides()
+    public void GetCanvasNoiseScriptContainsExpectedOverrides()
     {
         var script = StealthScripts.GetCanvasNoiseScript();
 

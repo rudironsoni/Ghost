@@ -11,7 +11,7 @@ public class GhostKernelIntegrationTests
     // It verifies that when stealth is enabled the init script alters navigator properties
     // as expected (navigator.webdriver undefined, languages present, plugins array-like).
     [Fact]
-    public async Task StealthScript_IsInjected_VerifyNavigatorProperties()
+    public async Task StealthScriptIsInjectedVerifyNavigatorProperties()
     {
         var options = new KernelOptions
         {
