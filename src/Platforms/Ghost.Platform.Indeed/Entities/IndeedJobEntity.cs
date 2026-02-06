@@ -1,56 +1,54 @@
-using DotnetSpider.DataFlow.Parser;
-using DotnetSpider.DataFlow.Parser.Formatters;
-using DotnetSpider.DataFlow.Storage.Entity;
-using DotnetSpider.Selector;
+using Ghost.Sdk.Spider.Core.Entities;
+using Ghost.Sdk.Spider.Core.Entities.Attributes;
+using Ghost.Sdk.Spider.Core.Entities.Formatters;
 
 namespace Ghost.Platform.Indeed.Entities;
 
-[Schema("indeed", "jobs")]
 [EntitySelector(Expression = "//div[contains(@class,'job_seen_beacon') or contains(@class,'job_')]", Type = SelectorType.XPath)]
 public class IndeedJobEntity : EntityBase<IndeedJobEntity>
 {
-    [ValueSelector(Expression = "./@data-jk", Type = SelectorType.XPath)]
+    [ValueSelector("./@data-jk", SelectorType.XPath)]
     [TrimFormatter]
     public string? JobKey { get; set; }
 
-    [ValueSelector(Expression = ".//h2[contains(@class,'jobTitle')]//span", Type = SelectorType.XPath)]
+    [ValueSelector(".//h2[contains(@class,'jobTitle')]//span", SelectorType.XPath)]
     [TrimFormatter]
-    [ReplaceFormatter(OldValue = "\n", NewValue = " ")]
+    [ReplaceFormatter("\n", " ")]
     public string? Title { get; set; }
 
-    [ValueSelector(Expression = ".//span[contains(@class,'companyName')]", Type = SelectorType.XPath)]
+    [ValueSelector(".//span[contains(@class,'companyName')]", SelectorType.XPath)]
     [TrimFormatter]
     public string? Company { get; set; }
 
-    [ValueSelector(Expression = ".//div[contains(@class,'companyLocation')]", Type = SelectorType.XPath)]
+    [ValueSelector(".//div[contains(@class,'companyLocation')]", SelectorType.XPath)]
     [TrimFormatter]
-    [ReplaceFormatter(OldValue = "\n", NewValue = " ")]
+    [ReplaceFormatter("\n", " ")]
     public string? Location { get; set; }
 
-    [ValueSelector(Expression = ".//*[contains(@class,'salary-snippet')]", Type = SelectorType.XPath)]
+    [ValueSelector(".//*[contains(@class,'salary-snippet')]", SelectorType.XPath)]
     [TrimFormatter]
     public string? Salary { get; set; }
 
-    [ValueSelector(Expression = ".//div[contains(@class,'job-snippet')]", Type = SelectorType.XPath)]
+    [ValueSelector(".//div[contains(@class,'job-snippet')]", SelectorType.XPath)]
     [TrimFormatter]
-    [ReplaceFormatter(OldValue = "\n", NewValue = " ")]
+    [ReplaceFormatter("\n", " ")]
     public string? Description { get; set; }
 
-    [ValueSelector(Expression = ".//a[contains(@class,'jcs-JobTitle')]/@href", Type = SelectorType.XPath)]
+    [ValueSelector(".//a[contains(@class,'jcs-JobTitle')]/@href", SelectorType.XPath)]
     [TrimFormatter]
-    [StringFormatter(FormatStr = "https://www.indeed.com{0}")]
+    [StringFormatter("https://www.indeed.com{0}")]
     public string? JobUrl { get; set; }
 
-    [ValueSelector(Expression = ".//span[contains(@class,'date') or contains(@class,'datePosted')]", Type = SelectorType.XPath)]
+    [ValueSelector(".//span[contains(@class,'date') or contains(@class,'datePosted')]", SelectorType.XPath)]
     [TrimFormatter]
     public string? PostedAt { get; set; }
 
-    [ValueSelector(Expression = ".//span[contains(@class,'remote') or contains(@class,'Remote')]", Type = SelectorType.XPath)]
+    [ValueSelector(".//span[contains(@class,'remote') or contains(@class,'Remote')]", SelectorType.XPath)]
     [TrimFormatter]
     public string? RemoteLabel { get; set; }
 
-    [ValueSelector(Expression = ".//div[contains(@class,'metadata') or contains(@class,'jobMetaDataGroup')]", Type = SelectorType.XPath)]
+    [ValueSelector(".//div[contains(@class,'metadata') or contains(@class,'jobMetaDataGroup')]", SelectorType.XPath)]
     [TrimFormatter]
-    [ReplaceFormatter(OldValue = "\n", NewValue = " ")]
+    [ReplaceFormatter("\n", " ")]
     public string? JobType { get; set; }
 }

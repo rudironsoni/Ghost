@@ -9,7 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Ghost\Ghost.csproj" />
-    <ProjectReference Include="..\..\Core\Ghost.Scraper.DotnetSpider\Ghost.Scraper.DotnetSpider.csproj" />
+    <ProjectReference Include="..\..\SDK\Ghost.Sdk.Spider\Ghost.Sdk.Spider.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Inference\Ghost.Contracts.Inference.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
@@ -23,6 +23,5 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Http" />
-    <PackageReference Include="DotnetSpider" />
   </ItemGroup>
 </Project>

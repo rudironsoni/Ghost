@@ -29,7 +29,5 @@ variables:
     value: linkedin-12345
   - name: profileId
     value: john-doe
-  - name: strategy
-    value: ""
   - name: count
     value: "10"

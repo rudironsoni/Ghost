@@ -52,5 +52,6 @@ public enum JobScrapingStrategy
 {
     GuestApi,
     BrowserPage,
-    Hybrid
+    Hybrid,
+    Browser
 }

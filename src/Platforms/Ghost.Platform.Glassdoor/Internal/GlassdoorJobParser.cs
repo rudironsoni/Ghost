@@ -32,8 +32,17 @@ public static class GlassdoorJobParser
         {
             foreach (var item in element.EnumerateArray())
             {
+                // Try to parse as job first
                 var jl = ParseJobItem(item);
-                if (jl != null) jobs.Add(jl);
+                if (jl != null)
+                {
+                    jobs.Add(jl);
+                }
+                else if (item.ValueKind == JsonValueKind.Object)
+                {
+                    // If not a job, recursively search inside the object
+                    FindJobArrays(item, jobs);
+                }
             }
         }
         else if (element.ValueKind == JsonValueKind.Object)

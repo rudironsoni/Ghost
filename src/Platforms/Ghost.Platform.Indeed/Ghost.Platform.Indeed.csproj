@@ -9,7 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Ghost\Ghost.csproj" />
-    <ProjectReference Include="..\..\Core\Ghost.Scraper.DotnetSpider\Ghost.Scraper.DotnetSpider.csproj" />
+    <ProjectReference Include="..\..\SDK\Ghost.Sdk.Spider\Ghost.Sdk.Spider.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
     <ProjectReference Include="..\..\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
@@ -18,6 +18,5 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
-    <PackageReference Include="DotnetSpider" />
   </ItemGroup>
 </Project>

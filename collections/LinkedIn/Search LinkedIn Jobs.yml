@@ -2,11 +2,11 @@ info:
   name: Search LinkedIn Jobs
   type: http
   seq: 2
-  description: Search LinkedIn jobs with optional strategy override
+  description: Search LinkedIn jobs using Ghost.Sdk.Spider
 
 http:
   method: POST
-  url: "{{baseUrl}}/api/linkedin/jobs/search?strategy={{strategy}}"
+  url: "{{baseUrl}}/api/linkedin/jobs/search"
 
   headers:
     - name: Content-Type
@@ -32,10 +32,7 @@ runtime:
 docs: |-
   ## Search LinkedIn Jobs
   
-  Search LinkedIn jobs with optional scraping strategy.
-  
-  ### Query Parameters
-  - `strategy` - Optional strategy: GuestApi, BrowserPage, or Hybrid
+  Search LinkedIn jobs using Ghost.Sdk.Spider entity extraction.
   
   ### Request Body
   | Field | Type | Description |
