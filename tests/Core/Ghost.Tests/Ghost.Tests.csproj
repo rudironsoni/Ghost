@@ -11,6 +11,7 @@
     <!-- Analyzer suppressions removed from this test project. Keep warnings enabled but do not escalate to errors here to avoid blocking unrelated analyzer issues in the solution. -->
     <!-- Inherit TreatWarningsAsErrors from Directory.Build.props -->
     <NoWarn>$(NoWarn);CA1707;CA1826;CA2201</NoWarn>
+    <WarningsNotAsErrors>CA1707</WarningsNotAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
