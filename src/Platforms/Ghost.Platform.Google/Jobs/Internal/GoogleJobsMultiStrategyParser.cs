@@ -4,331 +4,153 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using DotnetSpider.DataFlow.Parser;
-using DotnetSpider.DataFlow.Storage.Entity;
 using Ghost.Contracts.Jobs;
 using Ghost.Platform.Google.Jobs.Entities;
-using Ghost.Scraper.DotnetSpider;
+using Ghost.Sdk.Spider.Core.Extraction;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ghost.Platform.Google.Jobs.Internal;
 
 /// <summary>
-/// Multi-strategy parser for Google Jobs listings that attempts multiple parsing approaches:
-/// 1. DotnetSpider entity parser (primary strategy)
-/// 2. Original GoogleJobsParser logic (secondary strategy)
-/// 3. Heuristic regex-based parsing (fallback strategy)
-/// 
-/// This parser provides robust parsing by gracefully falling back to alternative strategies
-/// when primary approaches fail, along with structured logging and content classification.
+/// Parser for Google Jobs listings using Ghost.Sdk.Spider EntityParser.
+/// This parser extracts job listings from Google Search results using attribute-based entity extraction.
 /// </summary>
 public sealed class GoogleJobsMultiStrategyParser
 {
-    private readonly DotnetSpiderHtmlParser _dotnetSpiderParser;
+    private readonly EntityParser _entityParser;
     private readonly ILogger<GoogleJobsMultiStrategyParser> _logger;
 
     public GoogleJobsMultiStrategyParser(ILogger<GoogleJobsMultiStrategyParser>? logger = null)
     {
         _logger = logger ?? NullLogger<GoogleJobsMultiStrategyParser>.Instance;
-        _dotnetSpiderParser = new DotnetSpiderHtmlParser(logger as ILogger<DotnetSpiderHtmlParser>);
+        _entityParser = new EntityParser();
     }
 
     #region Logging Definitions
 
     private static readonly Action<ILogger, int, Exception?> LogStartingParse =
-        LoggerMessage.Define<int>(LogLevel.Debug, new EventId(1, nameof(LogStartingParse)), "Starting multi-strategy parse of {Length} bytes");
+        LoggerMessage.Define<int>(LogLevel.Debug, new EventId(1, nameof(LogStartingParse)), "Starting parse of {Length} bytes");
 
-    private static readonly Action<ILogger, string, Exception?> LogStrategyAttempt =
-        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(2, nameof(LogStrategyAttempt)), "Attempting parsing strategy: {Strategy}");
-
-    private static readonly Action<ILogger, string, Exception?> LogStrategySuccess =
-        LoggerMessage.Define<string>(LogLevel.Information, new EventId(3, nameof(LogStrategySuccess)), "Successfully parsed jobs using strategy: {Strategy}");
-
-    private static readonly Action<ILogger, string, Exception?> LogStrategyFailed =
-        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(4, nameof(LogStrategyFailed)), "Strategy failed: {Strategy}");
-
-    private static readonly Action<ILogger, string, Exception?> LogContentClassification =
-        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(5, nameof(LogContentClassification)), "Content classified as: {ContentType}");
-
-    private static readonly Action<ILogger, int, string, Exception?> LogJobsExtractedFromStrategy =
-        LoggerMessage.Define<int, string>(LogLevel.Information, new EventId(6, nameof(LogJobsExtractedFromStrategy)), "Extracted {Count} jobs from {Strategy} strategy");
+    private static readonly Action<ILogger, int, Exception?> LogJobsExtracted =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(2, nameof(LogJobsExtracted)), "Extracted {Count} jobs");
 
     private static readonly Action<ILogger, Exception?> LogEmptyHtml =
-        LoggerMessage.Define(LogLevel.Warning, new EventId(7, nameof(LogEmptyHtml)), "ParseHtmlAsync called with empty or null HTML");
+        LoggerMessage.Define(LogLevel.Warning, new EventId(3, nameof(LogEmptyHtml)), "ParseHtmlAsync called with empty or null HTML");
 
-    private static readonly Action<ILogger, int, Exception?> LogAllStrategiesFailed =
-        LoggerMessage.Define<int>(LogLevel.Warning, new EventId(8, nameof(LogAllStrategiesFailed)), "All {StrategyCount} strategies failed to extract jobs");
+    private static readonly Action<ILogger, Exception?> LogNoJobsExtracted =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(4, nameof(LogNoJobsExtracted)), "No jobs extracted from HTML");
 
     private static readonly Action<ILogger, string, string, Exception?> LogIncompleteEntity =
-        LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(9, nameof(LogIncompleteEntity)), "Skipping incomplete job: title={Title}, company={Company}");
+        LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(5, nameof(LogIncompleteEntity)), "Skipping incomplete job: title={Title}, company={Company}");
 
     private static readonly Action<ILogger, Exception?> LogConsentPageDetected =
-        LoggerMessage.Define(LogLevel.Warning, new EventId(10, nameof(LogConsentPageDetected)), "Detected Google consent page - no job data available");
-
-    private static readonly Action<ILogger, string, Exception?> LogWidgetKeyDetected =
-        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(11, nameof(LogWidgetKeyDetected)), "Detected widget key: {WidgetKey}");
+        LoggerMessage.Define(LogLevel.Warning, new EventId(6, nameof(LogConsentPageDetected)), "Detected Google consent page - no job data available");
 
     #endregion
 
     /// <summary>
-    /// Content classification enum for categorizing HTML content
+    /// Main entry point for parsing HTML using Ghost.Sdk.Spider EntityParser
     /// </summary>
-    private enum ContentType
-    {
-        Unknown,
-        JsonResponseFormat,
-        HtmlPageFormat,
-        WidgetData,
-        MixedContent
-    }
-
-    /// <summary>
-    /// Classifies the HTML content to determine the most appropriate parsing strategy
-    /// </summary>
-    private ContentType ClassifyContent(string html)
+    public async Task<List<JobListing>> ParseHtmlAsync(string html)
     {
         if (string.IsNullOrWhiteSpace(html))
-            return ContentType.Unknown;
+        {
+            LogEmptyHtml(_logger, null);
+            return new List<JobListing>();
+        }
 
-        // Check for consent page
+        LogStartingParse(_logger, html.Length, null);
+
+        // Check for consent page early
         if (html.Contains("consent.google.com", StringComparison.OrdinalIgnoreCase) ||
             html.Contains("Before you continue to Google Search", StringComparison.OrdinalIgnoreCase))
-            return ContentType.Unknown;
-
-        var trimmed = html.Trim();
-        var hasJsonMarkers = trimmed.StartsWith('{') || trimmed.StartsWith('[');
-        var hasHtmlMarkers = html.Contains("<html", StringComparison.OrdinalIgnoreCase) ||
-                            html.Contains("<body", StringComparison.OrdinalIgnoreCase) ||
-                            html.Contains("<!DOCTYPE", StringComparison.OrdinalIgnoreCase) ||
-                            html.Contains("<div", StringComparison.OrdinalIgnoreCase) ||
-                            html.Contains("<span", StringComparison.OrdinalIgnoreCase);
-        var hasWidgetData = html.Contains("data-ved", StringComparison.OrdinalIgnoreCase) ||
-                           html.Contains("AF_initDataCallback", StringComparison.OrdinalIgnoreCase) ||
-                           html.Contains("gws-plugins-horizon-jobs", StringComparison.OrdinalIgnoreCase);
-
-        ContentType contentType = hasJsonMarkers && !hasHtmlMarkers ? ContentType.JsonResponseFormat :
-                                 hasHtmlMarkers && !hasJsonMarkers && hasWidgetData ? ContentType.WidgetData :
-                                 hasHtmlMarkers && !hasJsonMarkers ? ContentType.HtmlPageFormat :
-                                 hasJsonMarkers && hasHtmlMarkers ? ContentType.MixedContent :
-                                 ContentType.Unknown;
-
-        LogContentClassification(_logger, contentType.ToString(), null);
-        return contentType;
-    }
-
-    /// <summary>
-    /// Primary parsing strategy using DotnetSpider entity parser (GoogleJobsEntity)
-    /// </summary>
-    private async Task<List<JobListing>?> TryStrategy1_DotnetSpiderEntityParser(string html)
-    {
-        LogStrategyAttempt(_logger, "DotnetSpiderEntityParser", null);
+        {
+            LogConsentPageDetected(_logger, null);
+            return new List<JobListing>();
+        }
 
         try
         {
-            var parser = new DataParser<GoogleJobsEntity>();
-            var jobs = await _dotnetSpiderParser.ParseHtmlAsync(
-                html,
-                parser,
-                "Google",
-                null,
-                null);
-
-            if (jobs.Count > 0)
+            // Create extraction context
+            var context = new ExtractionContext
             {
-                LogStrategySuccess(_logger, "DotnetSpiderEntityParser", null);
-                LogJobsExtractedFromStrategy(_logger, jobs.Count, "DotnetSpiderEntityParser", null);
-                return jobs;
-            }
+                Content = html,
+                ContentType = "text/html",
+                SourceUrl = "https://www.google.com/search",
+                Timestamp = DateTime.UtcNow
+            };
 
-            LogStrategyFailed(_logger, "DotnetSpiderEntityParser", null);
-            return null;
-        }
-        catch (Exception ex)
-        {
-            LogStrategyFailed(_logger, "DotnetSpiderEntityParser", ex);
-            return null;
-        }
-    }
+            // Parse entities using Ghost.Sdk.Spider EntityParser
+            var entities = _entityParser.Parse<GoogleJobsEntity>(context);
 
-    /// <summary>
-    /// Secondary parsing strategy using original GoogleJobsParser logic
-    /// </summary>
-    private List<JobListing>? TryStrategy2_OriginalGoogleJobsParser(string html)
-    {
-        LogStrategyAttempt(_logger, "OriginalGoogleJobsParser", null);
+            // Convert entities to JobListing objects
+            var jobs = entities
+                .Select(ConvertToJobListing)
+                .Where(job => job != null && !string.IsNullOrWhiteSpace(job.Title) && !string.IsNullOrWhiteSpace(job.Company))
+                .ToList()!;
 
-        try
-        {
-            var jobs = GoogleJobsParser.ParseFromHtml(html, _logger).ToList();
-
-            if (jobs.Count > 0)
+            // Log incomplete entities
+            foreach (var entity in entities)
             {
-                LogStrategySuccess(_logger, "OriginalGoogleJobsParser", null);
-                LogJobsExtractedFromStrategy(_logger, jobs.Count, "OriginalGoogleJobsParser", null);
-                return jobs;
-            }
-
-            LogStrategyFailed(_logger, "OriginalGoogleJobsParser", null);
-            return null;
-        }
-        catch (Exception ex)
-        {
-            LogStrategyFailed(_logger, "OriginalGoogleJobsParser", ex);
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Tertiary fallback strategy using heuristic regex-based parsing for HTML widget patterns
-    /// </summary>
-    private List<JobListing> TryStrategy3_HeuristicRegexParser(string html)
-    {
-        LogStrategyAttempt(_logger, "HeuristicRegexParser", null);
-
-        var jobs = new List<JobListing>();
-
-        try
-        {
-            // Pattern to match Google Jobs widget listing containers
-            var jobPattern = @"<div[^>]*(?:role\s*=\s*['""]listitem['""]|class\s*=\s*['""][^'""]*gws-plugins-horizon-jobs__li[^'""]*['""])[^>]*>.*?(?=<div[^>]*(?:role\s*=\s*['""]listitem['""]|class\s*=\s*['""][^'""]*gws-plugins-horizon-jobs__li[^'""]*['""])|</div>)";
-            var matches = Regex.Matches(html, jobPattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
-
-            if (matches.Count == 0)
-            {
-                LogStrategyFailed(_logger, "HeuristicRegexParser", null);
-                return jobs;
-            }
-
-            foreach (System.Text.RegularExpressions.Match match in matches)
-            {
-                var jobHtml = match.Value;
-                var job = ExtractJobFromHtml(jobHtml);
-
-                if (job != null && !string.IsNullOrWhiteSpace(job.Title) && !string.IsNullOrWhiteSpace(job.Company))
+                if (string.IsNullOrWhiteSpace(entity.Title) || string.IsNullOrWhiteSpace(entity.Company))
                 {
-                    jobs.Add(job);
-                }
-                else if (job != null)
-                {
-                    LogIncompleteEntity(_logger, job.Title ?? "[empty]", job.Company ?? "[empty]", null);
+                    LogIncompleteEntity(_logger, entity.Title ?? "[empty]", entity.Company ?? "[empty]", null);
                 }
             }
 
             if (jobs.Count > 0)
             {
-                LogStrategySuccess(_logger, "HeuristicRegexParser", null);
-                LogJobsExtractedFromStrategy(_logger, jobs.Count, "HeuristicRegexParser", null);
-                return jobs;
+                LogJobsExtracted(_logger, jobs.Count, null);
+            }
+            else
+            {
+                LogNoJobsExtracted(_logger, null);
             }
 
-            LogStrategyFailed(_logger, "HeuristicRegexParser", null);
             return jobs;
         }
         catch (Exception ex)
         {
-            LogStrategyFailed(_logger, "HeuristicRegexParser", ex);
-            return jobs;
+            _logger.LogError(ex, "Error parsing HTML with EntityParser");
+            return new List<JobListing>();
         }
     }
 
     /// <summary>
-    /// Extracts a single job from HTML widget using heuristic regex patterns
+    /// Converts a GoogleJobsEntity to a JobListing
     /// </summary>
-    private static JobListing? ExtractJobFromHtml(string jobHtml)
+    private JobListing? ConvertToJobListing(GoogleJobsEntity entity)
     {
+        if (entity == null)
+            return null;
+
         try
         {
-            // Extract job ID from data-ved or data-id attributes
-            var jobIdMatch = Regex.Match(jobHtml, @"data-ved\s*=\s*['""]([^'""]+)['""]|data-id\s*=\s*['""]([^'""]+)['""]|data-job-id\s*=\s*['""]([^'""]+)['""]", RegexOptions.IgnoreCase);
-            var jobId = jobIdMatch.Success ? 
-                jobIdMatch.Groups[1].Value ?? jobIdMatch.Groups[2].Value ?? jobIdMatch.Groups[3].Value ?? Guid.NewGuid().ToString() :
-                Guid.NewGuid().ToString();
-
-            // Extract title - look for h3 or elements with role='heading'
-            var titleMatch = Regex.Match(jobHtml, @"<h3[^>]*>.*?<.*?>([^<]+)</.*?></h3>|<[^>]*role\s*=\s*['""]heading['""][^>]*>([^<]+)<", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-            var title = titleMatch.Success ? CleanHtmlText(titleMatch.Groups[1].Value ?? titleMatch.Groups[2].Value) : null;
-
-            if (string.IsNullOrWhiteSpace(title))
-                return null;
-
-            // Extract company
-            var companyMatch = Regex.Match(jobHtml, @"<.*?class\s*=\s*['""][^'""]*vNEEBe[^'""]*['""][^>]*>([^<]+)<|<.*?class\s*=\s*['""][^'""]*Employer[^'""]*['""][^>]*>([^<]+)<", RegexOptions.IgnoreCase);
-            var company = companyMatch.Success ? CleanHtmlText(companyMatch.Groups[1].Value ?? companyMatch.Groups[2].Value) : null;
-
-            // Extract location
-            var locationMatch = Regex.Match(jobHtml, @"<.*?class\s*=\s*['""][^'""]*Qk3sIe[^'""]*['""][^>]*>([^<]+)<|<.*?class\s*=\s*['""][^'""]*location[^'""]*['""][^>]*>([^<]+)<", RegexOptions.IgnoreCase);
-            var location = locationMatch.Success ? CleanHtmlText(locationMatch.Groups[1].Value ?? locationMatch.Groups[2].Value) : null;
-
-            // Extract salary
-            var salaryMatch = Regex.Match(jobHtml, @"<.*?class\s*=\s*['""][^'""]*salary[^'""]*['""][^>]*>([^<]+)<", RegexOptions.IgnoreCase);
-            var salary = salaryMatch.Success ? CleanHtmlText(salaryMatch.Groups[1].Value) : null;
-
-            // Extract description - look for snippet or job description patterns
-            var descriptionMatch = Regex.Match(jobHtml, @"<.*?class\s*=\s*['""][^'""]*HBvzbc[^'""]*['""][^>]*>([^<]+)<|<.*?class\s*=\s*['""][^'""]*snippet[^'""]*['""][^>]*>([^<]+)<", RegexOptions.IgnoreCase);
-            var description = descriptionMatch.Success ? CleanHtmlText(descriptionMatch.Groups[1].Value ?? descriptionMatch.Groups[2].Value) : null;
-
-            // Extract job URL
-            var urlMatch = Regex.Match(jobHtml, @"<a[^>]*href\s*=\s*['""]([^'""]*jobs[^'""]*)['""]", RegexOptions.IgnoreCase);
-            var jobUrl = urlMatch.Success ? 
-                (urlMatch.Groups[1].Value.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? urlMatch.Groups[1].Value : "https://www.google.com" + urlMatch.Groups[1].Value) :
-                null;
-
-            // Extract posted date
-            var postedAtMatch = Regex.Match(jobHtml, @"<.*?class\s*=\s*['""][^'""]*date[^'""]*['""][^>]*>([^<]+)<", RegexOptions.IgnoreCase);
-            var postedAtStr = postedAtMatch.Success ? CleanHtmlText(postedAtMatch.Groups[1].Value) : null;
-            var postedAt = ParsePostedDate(postedAtStr);
-
-            // Extract job type
-            var jobTypeMatch = Regex.Match(jobHtml, @"<.*?class\s*=\s*['""][^'""]*job-type[^'""]*['""][^>]*>([^<]+)<|<.*?class\s*=\s*['""][^'""]*employment[^'""]*['""][^>]*>([^<]+)<", RegexOptions.IgnoreCase);
-            var jobTypeStr = jobTypeMatch.Success ? CleanHtmlText(jobTypeMatch.Groups[1].Value ?? jobTypeMatch.Groups[2].Value) : null;
-            var jobType = ParseJobType(jobTypeStr);
-
-            // Check for remote
-            var isRemote = jobHtml.Contains("Remote", StringComparison.OrdinalIgnoreCase) ||
-                          jobHtml.Contains("Work from home", StringComparison.OrdinalIgnoreCase);
-
-            return new JobListing
+            var job = new JobListing
             {
-                Id = jobId,
-                Title = title ?? string.Empty,
-                Company = company ?? string.Empty,
-                Location = location,
-                Description = description,
-                Salary = salary,
-                JobType = jobType,
-                PostedAt = postedAt,
-                Remote = isRemote,
-                Url = jobUrl,
+                Id = entity.JobId ?? entity.Id ?? Guid.NewGuid().ToString(),
+                Title = entity.Title ?? string.Empty,
+                Company = entity.Company ?? string.Empty,
+                Location = entity.Location,
+                Description = entity.Description,
+                Salary = entity.Salary,
+                JobType = ParseJobType(entity.JobType),
+                PostedAt = ParsePostedDate(entity.PostedAt),
+                Remote = !string.IsNullOrWhiteSpace(entity.RemoteLabel),
+                Url = entity.JobUrl,
                 Source = "Google",
                 ExperienceLevel = ExperienceLevel.Unknown,
                 IsEasyApply = false
             };
+
+            return job;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error converting entity to JobListing");
             return null;
         }
-    }
-
-    /// <summary>
-    /// Cleans HTML text by removing tags and decoding entities
-    /// </summary>
-    private static string? CleanHtmlText(string? text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-            return null;
-
-        // Remove HTML tags
-        text = Regex.Replace(text, "<[^>]+>", string.Empty);
-
-        // Decode HTML entities
-        text = System.Net.WebUtility.HtmlDecode(text);
-
-        // Normalize whitespace
-        text = Regex.Replace(text, @"\s+", " ").Trim();
-
-        return string.IsNullOrWhiteSpace(text) ? null : text;
     }
 
     /// <summary>
@@ -413,49 +235,5 @@ public sealed class GoogleJobsMultiStrategyParser
         }
 
         return DateTimeOffset.UtcNow;
-    }
-
-    /// <summary>
-    /// Main entry point for parsing HTML using multi-strategy approach
-    /// Tries strategies in order: DotnetSpider → OriginalGoogleJobsParser → HeuristicRegex
-    /// </summary>
-    public async Task<List<JobListing>> ParseHtmlAsync(string html)
-    {
-        if (string.IsNullOrWhiteSpace(html))
-        {
-            LogEmptyHtml(_logger, null);
-            return new List<JobListing>();
-        }
-
-        LogStartingParse(_logger, html.Length, null);
-
-        // Check for consent page early
-        if (html.Contains("consent.google.com", StringComparison.OrdinalIgnoreCase) ||
-            html.Contains("Before you continue to Google Search", StringComparison.OrdinalIgnoreCase))
-        {
-            LogConsentPageDetected(_logger, null);
-            return new List<JobListing>();
-        }
-
-        var contentType = ClassifyContent(html);
-
-        // Strategy 1: Try DotnetSpider entity parser
-        var jobs = await TryStrategy1_DotnetSpiderEntityParser(html);
-        if (jobs != null && jobs.Count > 0)
-            return jobs;
-
-        // Strategy 2: Try original GoogleJobsParser logic
-        jobs = TryStrategy2_OriginalGoogleJobsParser(html);
-        if (jobs != null && jobs.Count > 0)
-            return jobs;
-
-        // Strategy 3: Fall back to heuristic regex parsing
-        jobs = TryStrategy3_HeuristicRegexParser(html);
-        if (jobs.Count > 0)
-            return jobs;
-
-        // All strategies failed
-        LogAllStrategiesFailed(_logger, 3, null);
-        return new List<JobListing>();
     }
 }

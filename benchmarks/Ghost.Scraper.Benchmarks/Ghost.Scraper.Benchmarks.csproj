@@ -12,7 +12,6 @@
     <ProjectReference Include="../../src/Platforms/Ghost.Platform.Indeed/Ghost.Platform.Indeed.csproj" />
     <ProjectReference Include="../../src/Platforms/Ghost.Platform.Glassdoor/Ghost.Platform.Glassdoor.csproj" />
     <ProjectReference Include="../../src/Platforms/Ghost.Platform.Google/Ghost.Platform.Google.csproj" />
-    <ProjectReference Include="../../src/Core/Ghost.Scraper.DotnetSpider/Ghost.Scraper.DotnetSpider.csproj" />
     <ProjectReference Include="../../src/Contracts/Ghost.Contracts.Jobs/Ghost.Contracts.Jobs.csproj" />
   </ItemGroup>
 

@@ -60,14 +60,16 @@ public sealed class GoogleExtension : Ghost.Hosting.IExtension
             });
 
             services.AddScoped<Jobs.Internal.GoogleJobsBrowserClient>();
+            services.AddScoped<Jobs.Internal.GoogleJobsScraper>();
             // Register GoogleJobClient with both ApiClient and BrowserClient for full strategy support
             services.AddScoped<Jobs.GoogleJobClient>(sp =>
             {
                 var apiClient = sp.GetRequiredService<Jobs.Internal.GoogleJobsApiClient>();
                 var browserClient = sp.GetRequiredService<Jobs.Internal.GoogleJobsBrowserClient>();
+                var scraper = sp.GetRequiredService<Jobs.Internal.GoogleJobsScraper>();
                 var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.GoogleJobClient>>();
                 var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Jobs.GoogleJobsOptions>>();
-                return new Jobs.GoogleJobClient(apiClient, browserClient, logger, options);
+                return new Jobs.GoogleJobClient(apiClient, browserClient, scraper, logger, options);
             });
             // Register as both IJobScraper (for aggregator) and IJobClient (for backward compatibility)
             services.AddScoped<Ghost.Abstractions.IJobScraper>(sp => sp.GetRequiredService<Jobs.GoogleJobClient>());

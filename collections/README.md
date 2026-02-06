@@ -48,7 +48,6 @@ Ghost-WebAPI-OpenCollection/
 | `platform` | `LinkedIn` | Platform name for circuit breaker checks |
 | `jobId` | `linkedin-12345` | Job ID for LinkedIn job lookup |
 | `profileId` | `john-doe` | Profile ID for LinkedIn social profile lookup |
-| `strategy` | `""` | Optional scraping strategy (GuestApi, BrowserPage, Hybrid) |
 | `count` | `10` | Number of items to retrieve |
 
 ## Usage with Bruno CLI

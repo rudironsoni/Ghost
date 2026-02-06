@@ -195,10 +195,9 @@ public class GoogleJobsScraper
                 return new GoogleJobsEntity
                 {
                     Title = title,
-                    CompanyName = company ?? "Unknown",
+                    Company = company ?? "Unknown",
                     Location = location ?? "",
-                    Description = description ?? "",
-                    Source = "GoogleJobs"
+                    Description = description ?? ""
                 };
             }
         }

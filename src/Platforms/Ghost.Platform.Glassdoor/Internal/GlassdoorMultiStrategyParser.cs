@@ -4,34 +4,27 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using DotnetSpider.DataFlow.Parser;
-using DotnetSpider.DataFlow.Storage.Entity;
 using Ghost.Contracts.Jobs;
 using Ghost.Platform.Glassdoor.Entities;
-using Ghost.Scraper.DotnetSpider;
+using Ghost.Sdk.Spider.Core.Extraction;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ghost.Platform.Glassdoor.Internal;
 
 /// <summary>
-/// Multi-strategy parser for Glassdoor job listings that attempts multiple parsing approaches:
-/// 1. DotnetSpider entity parser (primary strategy)
-/// 2. Original JSON-based parser (secondary strategy)
-/// 3. Heuristic regex-based parsing (fallback strategy)
-/// 
-/// This parser provides robust parsing by gracefully falling back to alternative strategies
-/// when primary approaches fail, along with structured logging and content classification.
+/// Parser for Glassdoor job listings using Ghost.Sdk.Spider framework.
+/// Uses EntityParser for attribute-based extraction with fallback to JSON parser.
 /// </summary>
 public sealed class GlassdoorMultiStrategyParser
 {
-    private readonly DotnetSpiderHtmlParser _dotnetSpiderParser;
+    private readonly EntityParser _entityParser;
     private readonly ILogger<GlassdoorMultiStrategyParser> _logger;
 
     public GlassdoorMultiStrategyParser(ILogger<GlassdoorMultiStrategyParser>? logger = null)
     {
         _logger = logger ?? NullLogger<GlassdoorMultiStrategyParser>.Instance;
-        _dotnetSpiderParser = new DotnetSpiderHtmlParser(logger as ILogger<DotnetSpiderHtmlParser>);
+        _entityParser = new EntityParser();
     }
 
     #region Logging Definitions
@@ -59,9 +52,6 @@ public sealed class GlassdoorMultiStrategyParser
 
     private static readonly Action<ILogger, int, Exception?> LogAllStrategiesFailed =
         LoggerMessage.Define<int>(LogLevel.Warning, new EventId(8, nameof(LogAllStrategiesFailed)), "All {StrategyCount} strategies failed to extract jobs");
-
-    private static readonly Action<ILogger, string, string, Exception?> LogIncompleteEntity =
-        LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(9, nameof(LogIncompleteEntity)), "Skipping incomplete job: title={Title}, company={Company}");
 
     #endregion
 
@@ -102,35 +92,86 @@ public sealed class GlassdoorMultiStrategyParser
     }
 
     /// <summary>
-    /// Primary parsing strategy using DotnetSpider entity parser (GlassdoorJobEntity)
+    /// Primary parsing strategy using Ghost.Sdk.Spider EntityParser
     /// </summary>
-    private async Task<List<JobListing>?> TryStrategy1_DotnetSpiderEntityParser(string html)
+    private List<JobListing>? TryStrategy1_EntityParser(string html)
     {
-        LogStrategyAttempt(_logger, "DotnetSpiderEntityParser", null);
+        LogStrategyAttempt(_logger, "EntityParser", null);
 
         try
         {
-            var parser = new DataParser<GlassdoorJobEntity>();
-            var jobs = await _dotnetSpiderParser.ParseHtmlAsync(
-                html,
-                parser,
-                "Glassdoor",
-                null,
-                null);
-
-            if (jobs.Count > 0)
+            var context = new ExtractionContext
             {
-                LogStrategySuccess(_logger, "DotnetSpiderEntityParser", null);
-                LogJobsExtractedFromStrategy(_logger, jobs.Count, "DotnetSpiderEntityParser", null);
-                return jobs;
+                Content = html,
+                SourceUrl = "https://www.glassdoor.com",
+                Timestamp = DateTime.UtcNow
+            };
+
+            var entities = _entityParser.Parse<GlassdoorJobEntity>(context);
+
+            if (entities.Count > 0)
+            {
+                var jobs = entities
+                    .Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Company))
+                    .Select(ConvertEntityToJobListing)
+                    .Where(j => j != null)
+                    .Cast<JobListing>()
+                    .ToList();
+
+                if (jobs.Count > 0)
+                {
+                    LogStrategySuccess(_logger, "EntityParser", null);
+                    LogJobsExtractedFromStrategy(_logger, jobs.Count, "EntityParser", null);
+                    return jobs;
+                }
             }
 
-            LogStrategyFailed(_logger, "DotnetSpiderEntityParser", null);
+            LogStrategyFailed(_logger, "EntityParser", null);
             return null;
         }
         catch (Exception ex)
         {
-            LogStrategyFailed(_logger, "DotnetSpiderEntityParser", ex);
+            LogStrategyFailed(_logger, "EntityParser", ex);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Converts a GlassdoorJobEntity to a JobListing
+    /// </summary>
+    private static JobListing? ConvertEntityToJobListing(GlassdoorJobEntity entity)
+    {
+        try
+        {
+            // Parse job type
+            var jobType = ParseJobType(entity.JobType);
+
+            // Parse posted date
+            var postedAt = ParsePostedDate(entity.PostedAt);
+
+            // Determine if remote
+            var isRemote = !string.IsNullOrWhiteSpace(entity.RemoteLabel) ||
+                          (entity.Location?.Contains("Remote", StringComparison.OrdinalIgnoreCase) ?? false);
+
+            return new JobListing
+            {
+                Id = entity.JobId ?? Guid.NewGuid().ToString(),
+                Title = entity.Title ?? string.Empty,
+                Company = entity.Company ?? string.Empty,
+                Location = entity.Location,
+                Description = entity.Description,
+                Salary = entity.Salary,
+                JobType = jobType,
+                PostedAt = postedAt,
+                Remote = isRemote,
+                Url = entity.JobUrl,
+                Source = "Glassdoor",
+                ExperienceLevel = ExperienceLevel.Unknown,
+                IsEasyApply = false
+            };
+        }
+        catch
+        {
             return null;
         }
     }
@@ -174,151 +215,34 @@ public sealed class GlassdoorMultiStrategyParser
     }
 
     /// <summary>
-    /// Tertiary fallback strategy using heuristic regex-based parsing
+    /// Main entry point for parsing HTML
+    /// Tries EntityParser first, then falls back to JSON parser if available
     /// </summary>
-    private List<JobListing> TryStrategy3_HeuristicRegexParser(string html)
+    public async Task<List<JobListing>> ParseHtmlAsync(string html)
     {
-        LogStrategyAttempt(_logger, "HeuristicRegexParser", null);
-
-        var jobs = new List<JobListing>();
-
-        try
+        if (string.IsNullOrWhiteSpace(html))
         {
-            // Pattern to match job listing containers (Glassdoor-specific)
-            var jobPattern = @"<li[^>]*(?:class=['""](?:react-job-listing|jobListing|JobsList_jobListItem)[^'""]*['""])[^>]*>.*?</li>";
-            var matches = Regex.Matches(html, jobPattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            LogEmptyHtml(_logger, null);
+            return new List<JobListing>();
+        }
 
-            if (matches.Count == 0)
-            {
-                LogStrategyFailed(_logger, "HeuristicRegexParser", null);
-                return jobs;
-            }
+        LogStartingParse(_logger, html.Length, null);
 
-            foreach (System.Text.RegularExpressions.Match match in matches)
-            {
-                var jobHtml = match.Value;
-                var job = ExtractJobFromHtml(jobHtml);
+        var contentType = ClassifyContent(html);
 
-                if (job != null && !string.IsNullOrWhiteSpace(job.Title) && !string.IsNullOrWhiteSpace(job.Company))
-                {
-                    jobs.Add(job);
-                }
-                else if (job != null)
-                {
-                    LogIncompleteEntity(_logger, job.Title ?? "[empty]", job.Company ?? "[empty]", null);
-                }
-            }
-
-            if (jobs.Count > 0)
-            {
-                LogStrategySuccess(_logger, "HeuristicRegexParser", null);
-                LogJobsExtractedFromStrategy(_logger, jobs.Count, "HeuristicRegexParser", null);
-                return jobs;
-            }
-
-            LogStrategyFailed(_logger, "HeuristicRegexParser", null);
+        // Strategy 1: Try Ghost.Sdk.Spider entity parser
+        var jobs = TryStrategy1_EntityParser(html);
+        if (jobs != null && jobs.Count > 0)
             return jobs;
-        }
-        catch (Exception ex)
-        {
-            LogStrategyFailed(_logger, "HeuristicRegexParser", ex);
+
+        // Strategy 2: Try original JSON-based parser
+        jobs = TryStrategy2_OriginalJsonParser(html);
+        if (jobs != null && jobs.Count > 0)
             return jobs;
-        }
-    }
 
-    /// <summary>
-    /// Extracts a single job from HTML using heuristic regex patterns
-    /// </summary>
-    private static JobListing? ExtractJobFromHtml(string jobHtml)
-    {
-        try
-        {
-            // Extract title (Glassdoor-specific classes)
-            var titleMatch = Regex.Match(jobHtml, @"<a[^>]*class=['""](?:jobLink|jobTitle|job-title)[^'""]*['""][^>]*>([^<]+)</a>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-            var title = titleMatch.Success ? CleanHtmlText(titleMatch.Groups[1].Value) : null;
-
-            if (string.IsNullOrWhiteSpace(title))
-                return null;
-
-            // Extract company
-            var companyMatch = Regex.Match(jobHtml, @"<[^>]*class=['""]EmployerProfile_compactEmployerName|employer-name|companyName|company[^'""]*['""][^>]*>([^<]+)</[^>]*>", RegexOptions.IgnoreCase);
-            var company = companyMatch.Success ? CleanHtmlText(companyMatch.Groups[1].Value) : null;
-
-            // Extract location
-            var locationMatch = Regex.Match(jobHtml, @"<[^>]*class=['""]JobCard_location|location|loc[^'""]*['""][^>]*>([^<]+)</[^>]*>", RegexOptions.IgnoreCase);
-            var location = locationMatch.Success ? CleanHtmlText(locationMatch.Groups[1].Value) : null;
-
-            // Extract salary
-            var salaryMatch = Regex.Match(jobHtml, @"<[^>]*class=['""]salary|pay|Salary[^'""]*['""][^>]*>([^<]+)</[^>]*>", RegexOptions.IgnoreCase);
-            var salary = salaryMatch.Success ? CleanHtmlText(salaryMatch.Groups[1].Value) : null;
-
-            // Extract description
-            var descriptionMatch = Regex.Match(jobHtml, @"<[^>]*class=['""]jobDescription|jobDesc|summary|snippet[^'""]*['""][^>]*>([^<]+)</[^>]*>", RegexOptions.IgnoreCase);
-            var description = descriptionMatch.Success ? CleanHtmlText(descriptionMatch.Groups[1].Value) : null;
-
-            // Extract job URL
-            var urlMatch = Regex.Match(jobHtml, @"<a[^>]*class=['""](?:jobLink|jobTitle|job-title)[^'""]*['""][^>]*href=['""]([^'""]+)['""]", RegexOptions.IgnoreCase);
-            var jobUrl = urlMatch.Success ? "https://www.glassdoor.com" + CleanHtmlText(urlMatch.Groups[1].Value) : null;
-
-            // Extract job ID
-            var jobIdMatch = Regex.Match(jobHtml, @"data-(?:id|jobid)=['""]([^'""]+)['""]", RegexOptions.IgnoreCase);
-            var jobId = jobIdMatch.Success ? jobIdMatch.Groups[1].Value : Guid.NewGuid().ToString();
-
-            // Extract posted date
-            var postedAtMatch = Regex.Match(jobHtml, @"<[^>]*class=['""]date|posted|job-age|age[^'""]*['""][^>]*>([^<]+)</[^>]*>", RegexOptions.IgnoreCase);
-            var postedAtStr = postedAtMatch.Success ? CleanHtmlText(postedAtMatch.Groups[1].Value) : null;
-            var postedAt = ParsePostedDate(postedAtStr);
-
-            // Extract job type
-            var jobTypeMatch = Regex.Match(jobHtml, @"<[^>]*class=['""]jobType|job-type|employmentStatus|full-time|part-time[^'""]*['""][^>]*>([^<]+)</[^>]*>", RegexOptions.IgnoreCase);
-            var jobTypeStr = jobTypeMatch.Success ? CleanHtmlText(jobTypeMatch.Groups[1].Value) : null;
-            var jobType = ParseJobType(jobTypeStr);
-
-            // Check for remote
-            var isRemote = jobHtml.Contains("Remote", StringComparison.OrdinalIgnoreCase) ||
-                          jobHtml.Contains("remote", StringComparison.OrdinalIgnoreCase);
-
-            return new JobListing
-            {
-                Id = jobId,
-                Title = title ?? string.Empty,
-                Company = company ?? string.Empty,
-                Location = location,
-                Description = description,
-                Salary = salary,
-                JobType = jobType,
-                PostedAt = postedAt,
-                Remote = isRemote,
-                Url = jobUrl,
-                Source = "Glassdoor",
-                ExperienceLevel = ExperienceLevel.Unknown,
-                IsEasyApply = false
-            };
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Cleans HTML text by removing tags and decoding entities
-    /// </summary>
-    private static string? CleanHtmlText(string? text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-            return null;
-
-        // Remove HTML tags
-        text = Regex.Replace(text, "<[^>]+>", string.Empty);
-
-        // Decode HTML entities
-        text = System.Net.WebUtility.HtmlDecode(text);
-
-        // Normalize whitespace
-        text = Regex.Replace(text, @"\s+", " ").Trim();
-
-        return string.IsNullOrWhiteSpace(text) ? null : text;
+        // All strategies failed
+        LogAllStrategiesFailed(_logger, 2, null);
+        return new List<JobListing>();
     }
 
     /// <summary>
@@ -403,41 +327,5 @@ public sealed class GlassdoorMultiStrategyParser
         }
 
         return DateTimeOffset.UtcNow;
-    }
-
-    /// <summary>
-    /// Main entry point for parsing HTML using multi-strategy approach
-    /// Tries strategies in order: DotnetSpider → OriginalJson → HeuristicRegex
-    /// </summary>
-    public async Task<List<JobListing>> ParseHtmlAsync(string html)
-    {
-        if (string.IsNullOrWhiteSpace(html))
-        {
-            LogEmptyHtml(_logger, null);
-            return new List<JobListing>();
-        }
-
-        LogStartingParse(_logger, html.Length, null);
-
-        var contentType = ClassifyContent(html);
-
-        // Strategy 1: Try DotnetSpider entity parser
-        var jobs = await TryStrategy1_DotnetSpiderEntityParser(html);
-        if (jobs != null && jobs.Count > 0)
-            return jobs;
-
-        // Strategy 2: Try original JSON-based parser
-        jobs = TryStrategy2_OriginalJsonParser(html);
-        if (jobs != null && jobs.Count > 0)
-            return jobs;
-
-        // Strategy 3: Fall back to heuristic regex parsing
-        jobs = TryStrategy3_HeuristicRegexParser(html);
-        if (jobs.Count > 0)
-            return jobs;
-
-        // All strategies failed
-        LogAllStrategiesFailed(_logger, 3, null);
-        return new List<JobListing>();
     }
 }

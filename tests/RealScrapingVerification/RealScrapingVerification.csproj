@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <NoWarn>$(NoWarn);CA1016</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Platforms\Ghost.Platform.LinkedIn\Ghost.Platform.LinkedIn.csproj" />
+    <ProjectReference Include="..\..\src\Platforms\Ghost.Platform.Google\Ghost.Platform.Google.csproj" />
+    <ProjectReference Include="..\..\src\Platforms\Ghost.Platform.Glassdoor\Ghost.Platform.Glassdoor.csproj" />
+    <ProjectReference Include="..\..\src\Core\Ghost\Ghost.csproj" />
+    <ProjectReference Include="..\..\src\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+  </ItemGroup>
+
+</Project>

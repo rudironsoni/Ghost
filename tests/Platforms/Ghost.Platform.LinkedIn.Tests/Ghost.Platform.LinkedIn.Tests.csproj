@@ -13,12 +13,20 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Platforms\Ghost.Platform.LinkedIn\Ghost.Platform.LinkedIn.csproj" />
+    <ProjectReference Include="..\..\..\src\SDK\Ghost.Sdk.Spider\Ghost.Sdk.Spider.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="NSubstitute" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Fixtures\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
