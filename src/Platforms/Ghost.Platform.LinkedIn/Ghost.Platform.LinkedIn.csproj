@@ -9,7 +9,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <!-- Suppress CA1848: LoggerMessage delegate warnings -->
-    <NoWarn>$(NoWarn);CA1848;CA1866;CA1310;CA1822;CA1707</NoWarn>
+    <NoWarn>$(NoWarn);CA1848;CA1866;CA1310;CA1822;CA1707;CA1826;CA2201</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Ghost\Ghost.csproj" />

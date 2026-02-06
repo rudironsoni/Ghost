@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <InternalsVisibleTo>Ghost.Platform.Google.Tests</InternalsVisibleTo>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
-    <NoWarn>CA1848;CA1866;CA1310;CA1822;CA1707</NoWarn>
+    <NoWarn>CA1848;CA1866;CA1310;CA1822;CA1707;CA1826;CA2201</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Ghost\Ghost.csproj" />
