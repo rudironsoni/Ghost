@@ -1,9 +1,9 @@
+using System.Net.Http.Headers;
+using System.Text;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Storage.Contracts;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Net.Http.Headers;
-using System.Text;
 
 namespace Ghost.Sdk.Spider.Storage.Sinks;
 

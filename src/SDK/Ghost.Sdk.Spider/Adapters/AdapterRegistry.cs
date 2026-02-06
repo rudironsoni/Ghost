@@ -181,10 +181,10 @@ public class AdapterRegistry
         foreach (var type in adapterTypes)
         {
             var name = type.Name.Replace("Adapter", string.Empty);
-            
+
             // Try to determine supported content types from the type
             var supportedTypes = DetermineSupportedContentTypes(type);
-            
+
             Register(type, name, supportedTypes);
             count++;
         }

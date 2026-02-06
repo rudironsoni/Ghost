@@ -1,8 +1,8 @@
 using System.Text.Json;
+using FluentValidation.Results;
+using Ghost.Sdk.Spider.Configuration.Validation;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using Ghost.Sdk.Spider.Configuration.Validation;
-using FluentValidation.Results;
 
 namespace Ghost.Sdk.Spider.Configuration.Compiler;
 
@@ -51,7 +51,7 @@ public sealed class ConfigurationCompiler
         try
         {
             var config = _yamlDeserializer.Deserialize<SpiderConfiguration>(yamlContent);
-            
+
             if (config == null)
             {
                 return ConfigurationCompilationResult.Failure("Failed to deserialize YAML configuration");
@@ -64,7 +64,7 @@ public sealed class ConfigurationCompiler
             }
 
             var validationResult = _validator.Validate(config);
-            
+
             if (!validationResult.IsValid)
             {
                 return ConfigurationCompilationResult.Failure(validationResult);
@@ -97,7 +97,7 @@ public sealed class ConfigurationCompiler
         try
         {
             var config = JsonSerializer.Deserialize<SpiderConfiguration>(jsonContent, _jsonOptions);
-            
+
             if (config == null)
             {
                 return ConfigurationCompilationResult.Failure("Failed to deserialize JSON configuration");
@@ -110,7 +110,7 @@ public sealed class ConfigurationCompiler
             }
 
             var validationResult = _validator.Validate(config);
-            
+
             if (!validationResult.IsValid)
             {
                 return ConfigurationCompilationResult.Failure(validationResult);

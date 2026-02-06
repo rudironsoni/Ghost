@@ -1,5 +1,5 @@
-using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
+using Microsoft.Extensions.Logging;
 
 namespace Ghost.Http;
 

@@ -1,5 +1,5 @@
-using Ghost.Contracts.Jobs;
 using System.Globalization;
+using Ghost.Contracts.Jobs;
 
 namespace Ghost.Platform.InfoJobs.Jobs.Internal;
 
@@ -110,14 +110,14 @@ public static class InfoJobsConstants
             return JobType.Unknown;
 
         var lowerType = spanishType.ToLower(CultureInfo.InvariantCulture);
-        
+
         if (lowerType.Contains("contrato en prácticas", StringComparison.OrdinalIgnoreCase) ||
             lowerType.Contains("contrato de prácticas", StringComparison.OrdinalIgnoreCase))
             return JobType.Internship;
-            
+
         if (lowerType.Contains("contrato indefinido", StringComparison.OrdinalIgnoreCase))
             return JobType.FullTime;
-            
+
         if (lowerType.Contains("obra o servicio", StringComparison.OrdinalIgnoreCase))
             return JobType.Contract;
 

@@ -32,7 +32,7 @@ public abstract class EntityBase<T> where T : EntityBase<T>, new()
     {
         var type = typeof(T);
         var entitySelectorAttr = type.GetCustomAttribute<Attributes.EntitySelectorAttribute>();
-        
+
         var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanWrite && p.GetCustomAttribute<Attributes.ValueSelectorAttribute>() != null)
             .Select(p => new PropertyMetadata

@@ -1,7 +1,7 @@
-using Ghost;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Ghost;
 
 namespace Ghost.Extensions;
 
@@ -21,16 +21,16 @@ public static class HumanInteractionExtensions
 
         // 1. Scroll into view if needed
         await element.ScrollIntoViewAsync(ct);
-        
+
         // 2. Hover first with a small delay
         await element.HoverAsync(ct);
-        
+
         // 3. Random micro-delay (50-250ms) to simulate reaction/verification time
         await Task.Delay(_random.Next(50, 250), ct);
-        
+
         // 4. Click
         await element.ClickAsync(ct: ct);
-        
+
         // 5. Post-click delay (user usually waits or moves mouse away)
         // We add a tiny delay to prevent instant subsequent actions
         await Task.Delay(_random.Next(100, 300), ct);

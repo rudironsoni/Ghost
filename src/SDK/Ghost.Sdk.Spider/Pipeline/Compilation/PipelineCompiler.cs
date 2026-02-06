@@ -152,7 +152,7 @@ internal static class PipelineCompiler
         for (int i = 0; i < middlewareEntries.Count; i++)
         {
             var entry = middlewareEntries[i];
-            
+
             if (entry.Middleware == null)
             {
                 throw new InvalidOperationException(

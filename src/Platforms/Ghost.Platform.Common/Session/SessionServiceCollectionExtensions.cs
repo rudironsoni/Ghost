@@ -1,6 +1,6 @@
+using Ghost.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Ghost.Abstractions;
 
 namespace Ghost.Platform.Common.Session;
 
@@ -15,7 +15,7 @@ public static class SessionServiceCollectionExtensions
     public static IServiceCollection AddRotatingProxySession(this IServiceCollection services, RotatingProxySessionOptions? options = null)
     {
         // IProxyProvider must be registered separately by the consuming platform
-        
+
         if (options != null)
         {
             services.AddSingleton(options);
@@ -24,7 +24,7 @@ public static class SessionServiceCollectionExtensions
         {
             services.AddSingleton(new RotatingProxySessionOptions());
         }
-        
+
         services.AddScoped<SessionFactory>();
         services.AddScoped<RotatingProxySession>(provider =>
         {
@@ -32,7 +32,7 @@ public static class SessionServiceCollectionExtensions
             var sessionOptions = provider.GetService<RotatingProxySessionOptions>() ?? new RotatingProxySessionOptions();
             return new RotatingProxySession(proxyProvider, sessionOptions);
         });
-        
+
         return services;
     }
 
@@ -43,7 +43,7 @@ public static class SessionServiceCollectionExtensions
     {
         var options = new RotatingProxySessionOptions();
         configureOptions(options);
-        
+
         return services.AddRotatingProxySession(options);
     }
 
@@ -56,7 +56,7 @@ public static class SessionServiceCollectionExtensions
         {
             ConfigurePlatformOptions(options, platformName);
         });
-        
+
         return services;
     }
 
@@ -77,21 +77,21 @@ public static class SessionServiceCollectionExtensions
                 options.JitterMinMs = 2000;
                 options.JitterMaxMs = 8000;
                 break;
-            
+
             case "indeed":
                 options.Timeout = TimeSpan.FromSeconds(30);
                 options.MaxRetries = 3;
                 options.JitterMinMs = 1000;
                 options.JitterMaxMs = 4000;
                 break;
-            
+
             case "google":
                 options.Timeout = TimeSpan.FromSeconds(60);
                 options.MaxRetries = 4;
                 options.JitterMinMs = 3000;
                 options.JitterMaxMs = 10000;
                 break;
-            
+
             default:
                 // Use default options for unknown platforms
                 break;

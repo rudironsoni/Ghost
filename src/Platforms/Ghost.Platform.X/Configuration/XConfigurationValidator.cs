@@ -1,7 +1,7 @@
+using System.Text.Json;
 using Ghost.Platform.X.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
 
 namespace Ghost.Platform.X.Configuration;
 
@@ -57,7 +57,7 @@ public class XConfigurationValidator : IValidateOptions<XOptions>
         }
         else if (options.PageLoadTimeout < 5)
         {
-            _logger.LogWarning("PageLoadTimeout is set to {Timeout}s which may be too short for slow connections", 
+            _logger.LogWarning("PageLoadTimeout is set to {Timeout}s which may be too short for slow connections",
                 options.PageLoadTimeout);
         }
 
@@ -78,12 +78,12 @@ public class XConfigurationValidator : IValidateOptions<XOptions>
         // Validate media limits (read-only, but log warnings)
         if (options.MaxImageSizeMB > 10)
         {
-            _logger.LogWarning("MaxImageSizeMB is set to {Size}MB which exceeds X's limit of 5MB", 
+            _logger.LogWarning("MaxImageSizeMB is set to {Size}MB which exceeds X's limit of 5MB",
                 options.MaxImageSizeMB);
         }
         if (options.MaxVideoSizeMB > 512)
         {
-            _logger.LogWarning("MaxVideoSizeMB is set to {Size}MB which exceeds X's limit of 512MB", 
+            _logger.LogWarning("MaxVideoSizeMB is set to {Size}MB which exceeds X's limit of 512MB",
                 options.MaxVideoSizeMB);
         }
 
@@ -145,7 +145,7 @@ public class XPlatformHealthCheck
     private readonly ILogger<XPlatformHealthCheck> _logger;
 
     public XPlatformHealthCheck(
-        IBrowserSession session, 
+        IBrowserSession session,
         IOptions<XOptions> options,
         ILogger<XPlatformHealthCheck> logger)
     {

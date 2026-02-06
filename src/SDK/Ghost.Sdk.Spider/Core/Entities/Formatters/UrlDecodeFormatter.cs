@@ -87,7 +87,7 @@ public class UrlDecodeFormatter : Formatter
     private string DecodeUrl(string str)
     {
         var decoded = WebUtility.UrlDecode(str);
-        
+
         // UrlDecode handles + as space by default, but we may want to control this
         if (!DecodePlusAsSpace && decoded != null)
         {

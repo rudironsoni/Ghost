@@ -67,7 +67,7 @@ public class GhostKernelTests
         // 2. Try start second session (should block/timeout because limit is 1)
         // We use a short timeout to verify it blocks
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
-        await Assert.ThrowsAsync<OperationCanceledException>(async () => 
+        await Assert.ThrowsAsync<OperationCanceledException>(async () =>
             await kernel.NewSessionAsync(ct: cts.Token));
 
         // 3. Dispose first session
@@ -76,7 +76,7 @@ public class GhostKernelTests
         // 4. Start second session (should now succeed)
         var session2 = await kernel.NewSessionAsync();
         session2.Should().NotBeNull();
-        
+
         await kernel.DisposeAsync();
     }
 

@@ -1,7 +1,7 @@
+using System.Text.RegularExpressions;
 using Ghost.Contracts.Simulation;
 using Ghost.Contracts.Social;
 using Microsoft.Extensions.Options;
-using System.Text.RegularExpressions;
 
 namespace Ghost.Platform.X.Internal;
 
@@ -29,7 +29,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
     public int MaxMediaAttachments => _options.MaxMediaAttachments;
 
     /// <inheritdoc />
-    public IReadOnlyList<string> SupportedMediaTypes => 
+    public IReadOnlyList<string> SupportedMediaTypes =>
         _options.SupportedImageFormats.Concat(_options.SupportedVideoFormats).ToList().AsReadOnly();
 
     /// <inheritdoc />
@@ -54,11 +54,11 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         if (!string.IsNullOrWhiteSpace(request.Content))
         {
             var parts = _contentSplitter.Split(request.Content);
-            
+
             foreach (var (part, index) in parts.Select((p, i) => (p, i)))
             {
                 var effectiveLength = CalculateEffectiveLength(part);
-                
+
                 if (effectiveLength > _options.MaxTweetLength)
                 {
                     errors.Add(new ValidationError
@@ -122,7 +122,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
                 if (_options.SupportedImageFormats.Contains(extension))
                 {
                     imageCount++;
-                    
+
                     // Check image size
                     if (fileInfo.Length > _options.MaxImageSizeMB * 1024 * 1024)
                     {
@@ -138,7 +138,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
                 else if (_options.SupportedVideoFormats.Contains(extension))
                 {
                     videoCount++;
-                    
+
                     // Check video size
                     if (fileInfo.Length > _options.MaxVideoSizeMB * 1024 * 1024)
                     {
@@ -202,7 +202,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         if (!string.IsNullOrWhiteSpace(request.Content))
         {
             var content = request.Content.ToLowerInvariant();
-            
+
             // Check for excessive hashtags
             var hashtagCount = Regex.Matches(request.Content, @"#\w+").Count;
             if (hashtagCount > 5)
@@ -251,7 +251,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
     public async Task<ValidationResult> ValidateSelectorsAsync(object page)
     {
         var errors = new List<ValidationError>();
-        
+
         if (page is not IPage browserPage)
         {
             errors.Add(new ValidationError
@@ -312,7 +312,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
     {
         var parts = _contentSplitter.Split(request.Content);
         var html = new System.Text.StringBuilder();
-        
+
         html.AppendLine("<!DOCTYPE html>");
         html.AppendLine("<html>");
         html.AppendLine("<head>");
@@ -335,9 +335,9 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         html.AppendLine("</style>");
         html.AppendLine("</head>");
         html.AppendLine("<body>");
-        
+
         html.AppendLine("<h2>X Post Preview</h2>");
-        
+
         if (parts.Count > 1)
         {
             html.AppendLine($"<p><strong>Thread with {parts.Count} tweets</strong></p>");
@@ -346,12 +346,12 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         for (int i = 0; i < parts.Count; i++)
         {
             html.AppendLine("<div class='tweet'>");
-            
+
             if (parts.Count > 1)
             {
                 html.AppendLine($"<div class='thread-indicator'>🧵 Tweet {i + 1} of {parts.Count}</div>");
             }
-            
+
             html.AppendLine("<div class='header'>");
             html.AppendLine("<div class='avatar'></div>");
             html.AppendLine("<div class='user-info'>");
@@ -359,11 +359,11 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
             html.AppendLine("<div class='handle'>@yourhandle</div>");
             html.AppendLine("</div>");
             html.AppendLine("</div>");
-            
+
             html.AppendLine("<div class='content'>");
             html.AppendLine(System.Net.WebUtility.HtmlEncode(parts[i]).Replace("\n", "<br/>"));
             html.AppendLine("</div>");
-            
+
             // Show media only on first tweet
             if (i == 0 && request.MediaUrls?.Count > 0)
             {
@@ -385,7 +385,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
                 }
                 html.AppendLine("</div>");
             }
-            
+
             html.AppendLine("<div class='stats'>💬 0 🔁 0 ❤️ 0 👁️ 0</div>");
             html.AppendLine("</div>");
         }
@@ -393,7 +393,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         // Add character count info
         var totalChars = parts.Sum(p => CalculateEffectiveLength(p));
         html.AppendLine($"<p><strong>Total character count: {totalChars}</strong></p>");
-        
+
         if (request.MediaUrls?.Count > 0)
         {
             html.AppendLine($"<p>Media attachments: {request.MediaUrls.Count}</p>");
@@ -409,21 +409,21 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
     public async Task<SimulationResult> SimulatePostAsync(CreatePostRequest request)
     {
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        
+
         // Validate content
         var validationResult = await ValidatePostAsync(request);
-        
+
         if (!validationResult.IsValid)
         {
             stopwatch.Stop();
-            return SimulationResult.Failure(PlatformName, "CreatePost", 
+            return SimulationResult.Failure(PlatformName, "CreatePost",
                 validationResult.Errors.Select(e => e.Message));
         }
 
         // Simulate the posting process
         var parts = _contentSplitter.Split(request.Content);
         var simulatedIds = new List<string>();
-        
+
         // Generate simulated tweet IDs
         for (int i = 0; i < parts.Count; i++)
         {
@@ -432,7 +432,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
 
         // Generate warnings
         var warnings = validationResult.Warnings.Select(w => w.Message).ToList();
-        
+
         if (parts.Count > 1)
         {
             warnings.Add($"This will create a thread with {parts.Count} tweets");
@@ -478,10 +478,10 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         var urls = Regex.Matches(content, urlPattern);
         var urlPlaceholderLength = 23;
         var urlTotalLength = urls.Count * urlPlaceholderLength;
-        
+
         // Remove URLs and calculate remaining content length
         var contentWithoutUrls = Regex.Replace(content, urlPattern, "");
-        
+
         return urlTotalLength + contentWithoutUrls.Length;
     }
 }

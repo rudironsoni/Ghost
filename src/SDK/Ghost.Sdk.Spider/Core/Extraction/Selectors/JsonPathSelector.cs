@@ -1,5 +1,5 @@
-using Json.Path;
 using System.Text.Json.Nodes;
+using Json.Path;
 
 namespace Ghost.Sdk.Spider.Core.Extraction.Selectors;
 

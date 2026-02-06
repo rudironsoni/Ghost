@@ -1,8 +1,8 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Ghost.Contracts.Jobs;
 using Ghost.Abstractions;
+using Ghost.Contracts.Jobs;
 
 namespace Ghost.Platform.LinkedIn.Internal;
 
@@ -143,11 +143,11 @@ internal sealed class JsonLdParser
 
         return null;
 
-            static string? FormatAmount(double amount, string? cur)
-            {
-                if (string.IsNullOrWhiteSpace(cur)) return amount.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                return $"{amount.ToString(System.Globalization.CultureInfo.InvariantCulture)} {cur}";
-            }
+        static string? FormatAmount(double amount, string? cur)
+        {
+            if (string.IsNullOrWhiteSpace(cur)) return amount.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            return $"{amount.ToString(System.Globalization.CultureInfo.InvariantCulture)} {cur}";
+        }
 
         static double? TryGetDouble(System.Text.Json.JsonElement obj, string prop)
         {

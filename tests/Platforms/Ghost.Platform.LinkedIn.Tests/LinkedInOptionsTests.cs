@@ -1,6 +1,6 @@
 using FluentAssertions;
-using Xunit;
 using Microsoft.Extensions.DependencyInjection;
+using Xunit;
 
 namespace Ghost.Platform.LinkedIn.Tests;
 

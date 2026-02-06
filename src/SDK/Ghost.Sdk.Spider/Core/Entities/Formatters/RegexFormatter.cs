@@ -115,10 +115,10 @@ public class RegexFormatter : Formatter
     private Regex CompileRegex()
     {
         var options = RegexOptions.Compiled;
-        
+
         if (IgnoreCase)
             options |= RegexOptions.IgnoreCase;
-        
+
         if (Multiline)
             options |= RegexOptions.Multiline;
 

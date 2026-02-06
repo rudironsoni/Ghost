@@ -1,10 +1,9 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using Ghost.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-
-using System.Diagnostics.CodeAnalysis;
 
 namespace Ghost.Proxy;
 
@@ -83,7 +82,7 @@ public sealed class ProxyManager : IProxyManager, IDisposable
         };
 
         _providers.TryAdd(config.Name, entry);
-        
+
         if (_config.EnableHealthChecks)
         {
             _ = Task.Run(() => PerformHealthCheckAsync(entry), ct);
@@ -95,7 +94,7 @@ public sealed class ProxyManager : IProxyManager, IDisposable
     public Task UnregisterProviderAsync(string providerName, CancellationToken ct = default)
     {
         _providers.TryRemove(providerName, out _);
-        
+
         var keysToRemove = _healthStatus.Keys.Where(k => k.StartsWith(providerName + "_", StringComparison.Ordinal)).ToList();
         foreach (var key in keysToRemove)
         {
@@ -111,7 +110,7 @@ public sealed class ProxyManager : IProxyManager, IDisposable
             .SelectMany(p => p.Config.SupportedCountries)
             .Distinct()
             .ToList();
-        
+
         return Task.FromResult<IReadOnlyList<string>>(countries);
     }
 
@@ -213,12 +212,12 @@ public sealed class ProxyManager : IProxyManager, IDisposable
     private async Task<bool> PerformHealthCheckAsync(ProviderEntry entry)
     {
         var key = $"{entry.Config.Name}_default";
-        
+
         try
         {
             using var cts = new CancellationTokenSource(_config.HealthCheckTimeout);
             var proxy = await entry.Provider.GetProxyAsync("US", cts.Token);
-            
+
             var status = new ProxyHealthStatus
             {
                 ProviderName = entry.Config.Name,

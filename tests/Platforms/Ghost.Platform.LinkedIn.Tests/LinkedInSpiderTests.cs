@@ -91,7 +91,7 @@ public class LinkedInSpiderTests
         // Arrange
         var html1 = await ReadFixtureAsync("test-job.html");
         var html2 = CreateJobHtml("Backend Engineer", "Microsoft", "Redmond, WA");
-        
+
         var response1 = CreateResponse("https://www.linkedin.com/jobs/view/job1", html1, ContentType.DynamicHtml);
         var response2 = CreateResponse("https://www.linkedin.com/jobs/view/job2", html2, ContentType.DynamicHtml);
         var context = new ExecutionContext("Test", new SpiderOptions());
@@ -168,12 +168,12 @@ public class LinkedInSpiderTests
     {
         // Arrange
         var context = new ExecutionContext("Test", new SpiderOptions());
-        
+
         // Add a job first
         var html = await ReadFixtureAsync("test-job.html");
         var response = CreateResponse("https://www.linkedin.com/jobs/view/test", html, ContentType.DynamicHtml);
         await _spider.ProcessResponseAsync(response, context);
-        
+
         _spider.ExtractedJobs.Should().HaveCount(1);
 
         // Act

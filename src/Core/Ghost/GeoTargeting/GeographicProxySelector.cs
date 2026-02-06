@@ -24,46 +24,46 @@ public sealed class GeographicProxySelector : IDisposable
     private readonly ProxyHealthIntelligence _healthIntelligence;
     private readonly ILogger<GeographicProxySelector> _logger;
     private readonly GeographicTargetingOptions _options;
-    
+
     private readonly ConcurrentDictionary<string, GeographicProxyPool> _geoPoolCache = new();
     private readonly ConcurrentDictionary<string, ProxyLocationMetrics> _locationMetrics = new();
     private readonly CountryRegionMapping _countryRegionMapping;
-    
+
     private volatile bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
     private static readonly string[] SchemeSeparator = ["://"];
 
     private static readonly Action<ILogger, string, Exception?> s_logProxySelected =
-        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(1, "ProxySelected"), 
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(1, "ProxySelected"),
             "Geographic proxy selected: {Proxy}");
 
     private static readonly Action<ILogger, string, Exception?> s_logNoProxyAvailable =
-        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(2, "NoProxyAvailable"), 
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(2, "NoProxyAvailable"),
             "No healthy proxy available for geographic region: {Region}");
 
     private static readonly Action<ILogger, string, double, Exception?> s_logLocationLatency =
-        LoggerMessage.Define<string, double>(LogLevel.Information, new EventId(3, "LocationLatency"), 
+        LoggerMessage.Define<string, double>(LogLevel.Information, new EventId(3, "LocationLatency"),
             "Average latency for region {Region}: {LatencyMs}ms");
 
     private static readonly Action<ILogger, string, string, Exception?> s_logProxyLocationValidated =
-        LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(4, "ProxyLocationValidated"), 
+        LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(4, "ProxyLocationValidated"),
             "Proxy {Proxy} location validated for region {Region}");
 
     private static readonly Action<ILogger, string, string, Exception?> s_logProxyLocationMismatch =
-        LoggerMessage.Define<string, string>(LogLevel.Warning, new EventId(5, "ProxyLocationMismatch"), 
+        LoggerMessage.Define<string, string>(LogLevel.Warning, new EventId(5, "ProxyLocationMismatch"),
             "Proxy {Proxy} location does not match requested region {Region}");
 
     private static readonly Action<ILogger, string, string, int, Exception?> s_logGeographicRoutingDecision =
-        LoggerMessage.Define<string, string, int>(LogLevel.Information, new EventId(6, "RoutingDecision"), 
+        LoggerMessage.Define<string, string, int>(LogLevel.Information, new EventId(6, "RoutingDecision"),
             "Routed {CountryCode} request to proxy in {ProxyRegion} with latency {Latency}ms");
 
     private static readonly Action<ILogger, int, Exception?> s_logGeoPoolsCached =
-        LoggerMessage.Define<int>(LogLevel.Information, new EventId(7, "PoolsCached"), 
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(7, "PoolsCached"),
             "Initialized {Count} geographic proxy pools");
 
     private static readonly Action<ILogger, string, int, Exception?> s_logRegionProxyCount =
-        LoggerMessage.Define<string, int>(LogLevel.Debug, new EventId(8, "RegionProxyCount"), 
+        LoggerMessage.Define<string, int>(LogLevel.Debug, new EventId(8, "RegionProxyCount"),
             "Region {Region} has {Count} available proxies");
 
     public GeographicProxySelector(
@@ -114,7 +114,7 @@ public sealed class GeographicProxySelector : IDisposable
         await EnsureInitializedAsync(token).ConfigureAwait(false);
 
         var normalizedCountry = countryCode.ToUpperInvariant();
-        var normalizedRegion = string.IsNullOrWhiteSpace(regionCode) 
+        var normalizedRegion = string.IsNullOrWhiteSpace(regionCode)
             ? _countryRegionMapping.GetRegionForCountry(normalizedCountry)
             : regionCode.ToUpperInvariant();
 
@@ -128,17 +128,17 @@ public sealed class GeographicProxySelector : IDisposable
         }
 
         var validProxies = candidates.Where(p => ValidateProxyLocation(p, normalizedCountry, normalizedRegion)).ToList();
-        
+
         if (validProxies.Count == 0)
         {
             validProxies = candidates;
         }
 
         var selected = SelectByLatencyMetrics(validProxies, normalizedRegion);
-        
+
         if (selected != null)
         {
-            s_logGeographicRoutingDecision(_logger, normalizedCountry, normalizedRegion, 
+            s_logGeographicRoutingDecision(_logger, normalizedCountry, normalizedRegion,
                 (int)GetAverageLatencyForRegion(normalizedRegion), null);
         }
 
@@ -346,7 +346,7 @@ public sealed class GeographicProxySelector : IDisposable
         var countryLower = countryCode.ToLowerInvariant();
         var regionLower = regionCode.ToLowerInvariant();
 
-        return lowerHostname.Contains(countryLower) || 
+        return lowerHostname.Contains(countryLower) ||
                lowerHostname.Contains(regionLower) ||
                !_options.StrictLocationValidation;
     }

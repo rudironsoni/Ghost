@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
@@ -8,7 +9,6 @@ using Ghost.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
-using System.Text;
 
 namespace Ghost.Platform.Google.Jobs.Internal;
 
@@ -90,7 +90,7 @@ public sealed class GoogleJobsBrowserClient
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        _logger.LogInformation("GoogleJobsBrowserClient starting search: Query={Query}, Location={Location}, MaxResults={MaxResults}", 
+        _logger.LogInformation("GoogleJobsBrowserClient starting search: Query={Query}, Location={Location}, MaxResults={MaxResults}",
             query, location, maxResults);
 
         var jobs = new List<JobListing>();
@@ -101,8 +101,8 @@ public sealed class GoogleJobsBrowserClient
         var session = await _kernel.NewSessionAsync(sessionOptions, ct);
         var page = await session.NewPageAsync(ct: ct);
 
-            try
-            {
+        try
+        {
             s_logCookieInjection(_logger, null);
             await InjectConsentCookiesAsync(page, ct);
 
@@ -329,7 +329,8 @@ public sealed class GoogleJobsBrowserClient
                 }";
 
                 var clicked = await page.EvaluateAsync<bool>(script, null, ct);
-                if (clicked) {
+                if (clicked)
+                {
                     await RandomDelayAsync(800, 1500, ct);
                     var still = await IsConsentPageAsync(page, ct);
                     if (!still) return true;

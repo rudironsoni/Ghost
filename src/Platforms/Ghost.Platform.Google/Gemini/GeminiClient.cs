@@ -1,7 +1,7 @@
 using Ghost.Contracts.Inference;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace Ghost.Platform.Google.Gemini;
 

@@ -2,9 +2,9 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Logging;
 using Ghost.Http;
 using Ghost.Platform.Common.Session;
+using Microsoft.Extensions.Logging;
 using Polly;
 
 namespace Ghost.Platform.Glassdoor.Internal;
@@ -132,7 +132,7 @@ public sealed class GlassdoorApiClient : IDisposable
             );
 
             var sessionId = await _sessionOrchestrator!.AllocateSessionAsync(context, ct);
-            
+
             try
             {
                 var httpSession = await _sessionOrchestrator.GetHttpSessionAsync(sessionId, ct);
@@ -149,7 +149,7 @@ public sealed class GlassdoorApiClient : IDisposable
                     request.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
 
-                var res = await _retryPolicy.ExecuteAsync(async () => 
+                var res = await _retryPolicy.ExecuteAsync(async () =>
                     await httpSession.ExecuteAsync(() => request, ct).ConfigureAwait(false)).ConfigureAwait(false);
                 var html = await res.Content.ReadAsStringAsync(ct);
 
@@ -167,7 +167,7 @@ public sealed class GlassdoorApiClient : IDisposable
                         altRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
                     }
 
-                    var altRes = await _retryPolicy.ExecuteAsync(async () => 
+                    var altRes = await _retryPolicy.ExecuteAsync(async () =>
                         await httpSession.ExecuteAsync(() => altRequest, ct).ConfigureAwait(false)).ConfigureAwait(false);
                     html = await altRes.Content.ReadAsStringAsync(ct);
 
@@ -348,7 +348,7 @@ public sealed class GlassdoorApiClient : IDisposable
 
             request.Headers.TryAddWithoutValidation("gd-csrf-token", token);
 
-            var res = await _retryPolicy.ExecuteAsync(async () => 
+            var res = await _retryPolicy.ExecuteAsync(async () =>
                 await httpSession.ExecuteAsync(() => request, ct).ConfigureAwait(false)).ConfigureAwait(false);
             var json = await res.Content.ReadAsStringAsync(ct);
 
@@ -505,7 +505,7 @@ public sealed class GlassdoorApiClient : IDisposable
         // JSON-based extraction: Parse all JSON script tags and search recursively
         var jsonScriptPattern = @"<script[^>]*type\s*=\s*[""']application/json[""'][^>]*>(.*?)</script>";
         var jsonMatches = Regex.Matches(html, jsonScriptPattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
-        
+
         foreach (Match jsonMatch in jsonMatches)
         {
             var jsonContent = jsonMatch.Groups[1].Value;
@@ -736,7 +736,7 @@ public sealed class GlassdoorApiClient : IDisposable
     public async Task<string?> SearchAsync(string keyword, string? location = null, string? csrfToken = null, CancellationToken ct = default)
     {
         LogTokenExtraction($"SearchAsync: Starting search for keyword='{keyword}', location='{location}', csrfToken={csrfToken != null}");
-        
+
         // First try the simple HTTP scraper fallback (no proxy, no browser, no CSRF needed)
         try
         {
@@ -781,7 +781,7 @@ public sealed class GlassdoorApiClient : IDisposable
             var encodedKeyword = Uri.EscapeDataString(keyword);
             var encodedLocation = Uri.EscapeDataString(location ?? "");
             var searchUrl = $"https://www.glassdoor.com/Job/jobs.htm?sc.keyword={encodedKeyword}";
-            
+
             if (!string.IsNullOrWhiteSpace(location))
             {
                 searchUrl += $"&locT=C&locId=&locKeyword={encodedLocation}";
@@ -803,7 +803,7 @@ public sealed class GlassdoorApiClient : IDisposable
             };
 
             var request = new HttpRequestMessage(HttpMethod.Get, searchUrl);
-            
+
             // Add realistic browser headers
             request.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
             request.Headers.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
@@ -828,7 +828,7 @@ public sealed class GlassdoorApiClient : IDisposable
 
             // Parse the HTML to extract job data
             var jobsJson = ParseHtmlToJobsJson(html);
-            
+
             if (!string.IsNullOrEmpty(jobsJson))
             {
                 try { System.IO.File.WriteAllText("logs/glassdoor_simple_http_parsed.json", jobsJson); } catch { }
@@ -1003,13 +1003,13 @@ public sealed class GlassdoorApiClient : IDisposable
                         title ??= GetJsonString(header, "jobTitleText", "jobTitle");
                         location ??= GetJsonString(header, "locationName", "location");
                         link ??= GetJsonString(header, "jobLink");
-                        
+
                         if (header.TryGetProperty("employer", out var employer))
                         {
                             company ??= GetJsonString(employer, "name");
                         }
                     }
-                    
+
                     if (jobview.TryGetProperty("job", out var job))
                     {
                         id ??= GetJsonString(job, "listingId");
@@ -1069,9 +1069,9 @@ public sealed class GlassdoorApiClient : IDisposable
             // Use regex to find job card data attributes or structured data
             // Pattern: Look for data-* attributes with job information
             var jobCardPattern = @"<(?:li|div|article)[^>]*(?:data-job-id|data-id|id)[^>]*=[\""']([^\""']+)[\""'][^>]*>.*?(?:data-job-title|class[\""'][^>]*job-title)[^>]*>([^<]+)<.*?(?:data-employer-name|class[\""'][^>]*employer)[^>]*>([^<]+)<.*?(?:data-location|class[\""'][^>]*location)[^>]*>([^<]+)<";
-            
+
             var matches = Regex.Matches(html, jobCardPattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
-            
+
             foreach (Match match in matches)
             {
                 if (match.Groups.Count >= 5)
@@ -1103,7 +1103,7 @@ public sealed class GlassdoorApiClient : IDisposable
             {
                 var jsonLdPattern = @"<script[^>]*type\s*=\s*[""']application/ld\+json[""'][^>]*>(.*?)</script>";
                 var jsonLdMatches = Regex.Matches(html, jsonLdPattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
-                
+
                 foreach (Match match in jsonLdMatches)
                 {
                     if (match.Groups.Count > 1)
@@ -1113,9 +1113,9 @@ public sealed class GlassdoorApiClient : IDisposable
                             var jsonContent = match.Groups[1].Value;
                             using var doc = JsonDocument.Parse(jsonContent);
                             var root = doc.RootElement;
-                            
+
                             // Check if it's a JobPosting
-                            if (root.TryGetProperty("@type", out var type) && 
+                            if (root.TryGetProperty("@type", out var type) &&
                                 type.GetString()?.Contains("JobPosting", StringComparison.OrdinalIgnoreCase) == true)
                             {
                                 var title = GetJsonString(root, "title", "name");
@@ -1455,8 +1455,8 @@ public sealed class GlassdoorApiClient : IDisposable
                     if (error.ValueKind == JsonValueKind.Object)
                     {
                         // Extract error message
-                        var message = error.TryGetProperty("message", out var msg) 
-                            ? msg.GetString() ?? "" 
+                        var message = error.TryGetProperty("message", out var msg)
+                            ? msg.GetString() ?? ""
                             : "";
 
                         // Determine retry strategy based on error type

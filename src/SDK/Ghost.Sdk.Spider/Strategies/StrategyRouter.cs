@@ -1,5 +1,5 @@
-using Ghost.Sdk.Spider.Strategies.Contracts;
 using Ghost.Sdk.Spider.Adapters.Contracts;
+using Ghost.Sdk.Spider.Strategies.Contracts;
 using Microsoft.Extensions.Logging;
 
 namespace Ghost.Sdk.Spider.Strategies;
@@ -43,7 +43,7 @@ public class StrategyRouter : IStrategyRouter
         ArgumentNullException.ThrowIfNull(strategy);
 
         _strategies[name] = strategy;
-        
+
         lock (_metricsLock)
         {
             if (!_metrics.ContainsKey(name))

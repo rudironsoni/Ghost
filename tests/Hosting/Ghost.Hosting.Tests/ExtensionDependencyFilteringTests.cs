@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
-using Ghost.Hosting;
-using Ghost.Contracts.Jobs;
 using Ghost.Abstractions;
+using Ghost.Contracts.Jobs;
+using Ghost.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -115,17 +115,17 @@ public class ExtensionDependencyFilteringTests
             .Build();
 
         int registeredCount = 0;
-        
+
         if (config.GetValue<bool>("Ghost:Extensions:ProviderA:Enabled"))
         {
             registeredCount++;
         }
-        
+
         if (config.GetValue<bool>("Ghost:Extensions:ProviderB:Enabled"))
         {
             registeredCount++;
         }
-        
+
         if (config.GetValue<bool>("Ghost:Extensions:ProviderC:Enabled"))
         {
             registeredCount++;

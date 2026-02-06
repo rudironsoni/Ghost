@@ -1,11 +1,11 @@
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
 using Ghost.Core.Services;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 
 namespace Ghost.WebApi.Features.Jobs;
 

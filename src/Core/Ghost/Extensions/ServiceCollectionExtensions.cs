@@ -1,6 +1,6 @@
-using Microsoft.Extensions.DependencyInjection;
 using Ghost.Abstractions;
 using Ghost.Utilities;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Ghost.Extensions;
 

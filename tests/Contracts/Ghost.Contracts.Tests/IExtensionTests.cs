@@ -1,7 +1,7 @@
+using System;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using Xunit;
 
 namespace Ghost.Contracts.Tests;
@@ -31,7 +31,7 @@ public class IExtensionTests
     {
         var ext = new FakeExtension();
         ext.Name.Should().Be("fake");
-        ext.Version.Should().Be(new Version(1,2,3));
+        ext.Version.Should().Be(new Version(1, 2, 3));
         ext.ProvidedServices.Should().Contain(typeof(string));
 
         var services = new ServiceCollection();

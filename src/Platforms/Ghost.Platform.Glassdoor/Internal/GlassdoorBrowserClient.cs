@@ -1,8 +1,8 @@
 using System.Text.RegularExpressions;
-using Ghost.Contracts.Jobs;
-using Ghost.Core;
 using Ghost.Abstractions;
 using Ghost.ConsentManagement;
+using Ghost.Contracts.Jobs;
+using Ghost.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -54,31 +54,31 @@ public sealed class GlassdoorBrowserClient : IDisposable
 
     private static readonly Action<ILogger, Exception?> s_logLoadMoreFailed =
         LoggerMessage.Define(LogLevel.Debug, new EventId(12, nameof(GlassdoorBrowserClient)), "Failed to load more results");
-    
+
     private static readonly Action<ILogger, string?, string?, int, Exception?> s_logSearchStarting =
         LoggerMessage.Define<string?, string?, int>(LogLevel.Information, new EventId(13, "SearchStarting"), "Starting browser search for query='{Query}', location='{Location}', limit={Limit}");
-    
+
     private static readonly Action<ILogger, string, Exception?> s_logBuiltUrl =
         LoggerMessage.Define<string>(LogLevel.Debug, new EventId(14, "BuiltUrl"), "Built URL={Url}");
-    
+
     private static readonly Action<ILogger, int, Exception?> s_logCreatingSession =
         LoggerMessage.Define<int>(LogLevel.Debug, new EventId(15, "CreatingSession"), "Attempt {Attempt}, creating browser session");
-    
+
     private static readonly Action<ILogger, Exception?> s_logNavigatingToUrl =
         LoggerMessage.Define(LogLevel.Debug, new EventId(16, "NavigatingToUrl"), "Navigating to URL");
-    
+
     private static readonly Action<ILogger, int, Exception?> s_logGotHtmlContent =
         LoggerMessage.Define<int>(LogLevel.Debug, new EventId(17, "GotHtmlContent"), "Got HTML content, length={Length}");
-    
+
     private static readonly Action<ILogger, Exception?> s_logHandlingConsent =
         LoggerMessage.Define(LogLevel.Debug, new EventId(18, "HandlingConsent"), "Handling consent page");
-    
+
     private static readonly Action<ILogger, int, Exception?> s_logAfterConsentHtml =
         LoggerMessage.Define<int>(LogLevel.Debug, new EventId(19, "AfterConsentHtml"), "After consent handling, HTML length={Length}");
-    
+
     private static readonly Action<ILogger, int, Exception?> s_logExtractedJobs =
         LoggerMessage.Define<int>(LogLevel.Debug, new EventId(20, "ExtractedJobs"), "Extracted {JobCount} jobs from page");
-    
+
     private static readonly Action<ILogger, Exception?> s_logMaxAttemptsReached =
         LoggerMessage.Define(LogLevel.Warning, new EventId(21, "MaxAttemptsReached"), "Max attempts reached, giving up");
 
@@ -137,21 +137,21 @@ public sealed class GlassdoorBrowserClient : IDisposable
                 await Task.Delay(10000, ct);
 
                 // Perform realistic human-like scrolling to trigger lazy loading and avoid bot detection
-                
+
                 // Smooth scroll down in multiple steps
                 await page.EvaluateAsync<object>("() => window.scrollTo({ top: 400, behavior: 'smooth' })", null, ct);
                 await Task.Delay(1200, ct);
-                
+
                 await page.EvaluateAsync<object>("() => window.scrollTo({ top: 800, behavior: 'smooth' })", null, ct);
                 await Task.Delay(1500, ct);
-                
+
                 await page.EvaluateAsync<object>("() => window.scrollTo({ top: 1200, behavior: 'smooth' })", null, ct);
                 await Task.Delay(1000, ct);
-                
+
                 // Scroll back up slightly (human behavior)
                 await page.EvaluateAsync<object>("() => window.scrollTo({ top: 600, behavior: 'smooth' })", null, ct);
                 await Task.Delay(800, ct);
-                
+
                 // One more scroll down to load more jobs
                 await page.EvaluateAsync<object>("() => window.scrollTo({ top: 1600, behavior: 'smooth' })", null, ct);
                 await Task.Delay(1500, ct);
@@ -174,11 +174,11 @@ public sealed class GlassdoorBrowserClient : IDisposable
 
                 var pageJobs = await ExtractJobsFromPageAsync(page, html, ct);
                 s_logExtractedJobs(_logger, pageJobs.Count, null);
-                
+
                 // Check if we're blocked and need additional wait
                 if (pageJobs.Count == 0)
                 {
-                    if (html.Contains("cloudflare", StringComparison.OrdinalIgnoreCase) || 
+                    if (html.Contains("cloudflare", StringComparison.OrdinalIgnoreCase) ||
                         html.Contains("just a moment", StringComparison.OrdinalIgnoreCase) ||
                         html.Contains("checking your browser", StringComparison.OrdinalIgnoreCase))
                     {
@@ -378,13 +378,13 @@ public sealed class GlassdoorBrowserClient : IDisposable
                 try
                 {
                     var element = await page.QuerySelectorAsync(selector, ct);
-                if (element != null)
-                {
-                    await element.ClickAsync(ct: ct);
-                    s_logClickedConsent(_logger, selector, null);
-                    await Task.Delay(1000, ct);
-                    return;
-                }
+                    if (element != null)
+                    {
+                        await element.ClickAsync(ct: ct);
+                        s_logClickedConsent(_logger, selector, null);
+                        await Task.Delay(1000, ct);
+                        return;
+                    }
                 }
                 catch { }
             }
@@ -594,7 +594,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
             """;
 
             var result = await page.EvaluateAsync<Dictionary<string, object>>(script, null, ct);
-            
+
             if (result != null)
             {
                 // Extract jobs list
@@ -606,7 +606,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                         {
                             var job = new JobListing
                             {
-                                Id = jobData.TryGetValue("jobId", out var id) && !string.IsNullOrEmpty(id?.ToString()) 
+                                Id = jobData.TryGetValue("jobId", out var id) && !string.IsNullOrEmpty(id?.ToString())
                                     ? id.ToString()!
                                     : Guid.NewGuid().ToString(),
                                 Title = jobData.TryGetValue("title", out var title) ? title?.ToString() ?? string.Empty : string.Empty,
@@ -622,7 +622,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                     }
                 }
             }
-            
+
             if (jobs.Count == 0)
             {
                 jobs = ExtractJobsWithRegex(html);

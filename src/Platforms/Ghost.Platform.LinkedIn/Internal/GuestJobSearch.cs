@@ -87,23 +87,23 @@ public sealed class GuestJobSearch : IGuestJobSearch
             {
                 IBrowserSession? session = null;
                 IPage? page = null;
-                
+
                 try
                 {
                     s_logSessionCreating(_logger, _options.Value.WarmUpEnabled, null);
                     session = await _sessionPool.AcquireAsync(ct);
                     page = await session.NewPageAsync(ct: ct);
-                    
+
                     s_logNavigating(_logger, url, null);
                     if (_options.Value.WarmUpEnabled)
                     {
-                        try 
-                        { 
+                        try
+                        {
                             // Simple warm-up: visit a safe URL first
                             var warmUpUrl = "https://www.google.com";
                             var warmNav = new NavigationOptions { Timeout = 10_000, WaitUntil = WaitUntil.Load };
                             await page.NavigateAsync(warmUpUrl, warmNav, ct: ct);
-                        } 
+                        }
                         catch { }
                     }
 
@@ -165,7 +165,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
                     {
                         // All retries exhausted - wrap and throw
                         throw new BrowserServiceUnavailableException(
-                            "Failed to connect to LinkedIn after 3 attempts. Browser automation service may be unavailable.", 
+                            "Failed to connect to LinkedIn after 3 attempts. Browser automation service may be unavailable.",
                             pex);
                     }
                     // continue to next attempt which will fetch a new proxy
@@ -216,25 +216,25 @@ public sealed class GuestJobSearch : IGuestJobSearch
         {
             IBrowserSession? session = null;
             IPage? page = null;
-            
+
             try
             {
                 s_logSessionCreating(_logger, _options.Value.WarmUpEnabled, null);
                 session = await _sessionPool.AcquireAsync(ct);
                 page = await session.NewPageAsync(ct: ct);
-                
+
                 try
                 {
                     s_logNavigating(_logger, url, null);
                     if (_options.Value.WarmUpEnabled)
                     {
-                        try 
-                        { 
+                        try
+                        {
                             // Simple warm-up: visit a safe URL first
                             var warmUpUrl = "https://www.google.com";
                             var warmNav = new NavigationOptions { Timeout = 10_000, WaitUntil = WaitUntil.Load };
                             await page.NavigateAsync(warmUpUrl, warmNav, ct: ct);
-                        } 
+                        }
                         catch { }
                     }
 
@@ -243,7 +243,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
                     try { await LinkedInRateLimitDetector.CheckAsync(page); } catch { }
                     Console.WriteLine($"[DEBUG] Fetching content for {jobId}...");
                     var html = await page.GetContentAsync(ct);
-                    
+
                     // NOTE: debug artifacts removed - production code should not write files during parsing
                     if (string.IsNullOrEmpty(html)) return null;
 
@@ -254,14 +254,14 @@ public sealed class GuestJobSearch : IGuestJobSearch
                     }
 
                     // Use the JsonLdExtractor implementation from Ghost.Utilities via DI/Activator
-                    var extractor = (Ghost.Abstractions.IJsonLdExtractor?)Activator.CreateInstance(Type.GetType("Ghost.Utilities.JsonLdExtractor, Ghost.Core" ) ?? typeof(Ghost.Utilities.JsonLdExtractor));
+                    var extractor = (Ghost.Abstractions.IJsonLdExtractor?)Activator.CreateInstance(Type.GetType("Ghost.Utilities.JsonLdExtractor, Ghost.Core") ?? typeof(Ghost.Utilities.JsonLdExtractor));
                     var parser = new JsonLdParser(extractor!);
                     var parsed = parser.Parse(html, jobId, url);
 
                     // If JSON-LD parsing failed to extract critical fields, fall back to DOM scraping
                     // We check Description, Company, or Location as primary signals of a good parse
-                    if (parsed is null || 
-                        string.IsNullOrEmpty(parsed.Description) || 
+                    if (parsed is null ||
+                        string.IsNullOrEmpty(parsed.Description) ||
                         string.IsNullOrEmpty(parsed.Company) ||
                         string.IsNullOrEmpty(parsed.Location))
                     {
@@ -285,29 +285,29 @@ public sealed class GuestJobSearch : IGuestJobSearch
                         }
 
                         // Robust selectors for guest view (updated 2026)
-                        var descSelectors = new[] { 
-                            ".show-more-less-html__markup", 
-                            ".description__text", 
+                        var descSelectors = new[] {
+                            ".show-more-less-html__markup",
+                            ".description__text",
                             "#job-details",
                             ".job-description",
                             ".core-section-container__content"
                         };
-                        
-                        var titleSelectors = new[] { 
-                            ".top-card-layout__title", 
+
+                        var titleSelectors = new[] {
+                            ".top-card-layout__title",
                             ".top-card-layout__entity-info h1",
-                            "h1" 
+                            "h1"
                         };
-                        
-                        var companySelectors = new[] { 
+
+                        var companySelectors = new[] {
                             ".top-card-layout__first-subline .topcard__org-name-link",
                             ".top-card-layout__company-url",
                             "a[data-tracking-control-name='public_jobs_topcard-org-name']",
                             ".job-details-jobs-unified-top-card__company-name",
                             ".topcard__org-name-link"
                         };
-                        
-                        var locationSelectors = new[] { 
+
+                        var locationSelectors = new[] {
                             ".top-card-layout__first-subline .topcard__flavor:not(.topcard__org-name-link)",
                             ".top-card-layout__first-subline .topcard__flavor--bullet",
                             ".job-details-jobs-unified-top-card__bullet",
@@ -323,12 +323,13 @@ public sealed class GuestJobSearch : IGuestJobSearch
                         // Try to scrape criteria for JobType/Experience
                         string? scrapedJobType = null;
                         string? scrapedExperience = null;
-                        
+
                         // Prefer the newer criteria item structure
                         var criteriaList = await page.QuerySelectorAllAsync(".description__job-criteria-list .description__job-criteria-item, .description__job-criteria-list li, .job-details-jobs-unified-top-card__job-insight", ct);
                         foreach (var item in criteriaList)
                         {
-                            try {
+                            try
+                            {
                                 var text = await item.GetTextContentAsync(ct);
                                 if (!string.IsNullOrEmpty(text))
                                 {
@@ -342,7 +343,8 @@ public sealed class GuestJobSearch : IGuestJobSearch
                                         else if (header.Contains("Seniority", StringComparison.OrdinalIgnoreCase) || header.Contains("Seniority level", StringComparison.OrdinalIgnoreCase)) scrapedExperience = value;
                                     }
                                 }
-                            } catch {}
+                            }
+                            catch { }
                         }
 
                         // Salary: attempt to find salary block in guest view using multiple selectors
@@ -505,7 +507,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
                     {
                         // All retries exhausted - wrap and throw
                         throw new BrowserServiceUnavailableException(
-                            "Failed to fetch job details after 3 attempts. Browser automation service may be unavailable.", 
+                            "Failed to fetch job details after 3 attempts. Browser automation service may be unavailable.",
                             pex);
                     }
                     continue;

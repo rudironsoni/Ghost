@@ -31,16 +31,16 @@ public enum JobSearchStrategy
 public sealed class GlassdoorOptions
 {
     public bool Enabled { get; set; } = true;
-    
+
     /// <summary>
     /// When true, the Glassdoor HTTP client will attempt to use the configured proxy provider.
     /// When false, the client will use a direct connection.
     /// Defaults to FALSE to avoid proxy authentication issues with SOCKS5 proxies.
     /// </summary>
     public bool ProxyEnabled { get; set; }
-    
+
     public CountryCode Country { get; set; } = CountryCode.US;
-    
+
     /// <summary>
     /// Minimum delay between requests in milliseconds.
     /// </summary>

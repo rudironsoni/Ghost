@@ -13,25 +13,25 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
     private readonly GhostKernel _kernel;
     private readonly TieredBrowserPoolOptions _options;
     private readonly ILogger<TieredBrowserPool> _logger;
-    
+
     private readonly ConcurrentBag<PooledBrowserSession> _hotPool = new();
     private readonly ConcurrentBag<PooledBrowserSession> _warmPool = new();
     private readonly SemaphoreSlim _coldPoolSemaphore;
-    
+
     private readonly SemaphoreSlim _hotPoolLock = new(1, 1);
     private readonly SemaphoreSlim _warmPoolLock = new(1, 1);
-    
+
     private readonly ConcurrentDictionary<string, PooledBrowserSession> _activeSessions = new();
-    
+
     private long _totalAcquisitions;
     private long _hotAcquisitions;
     private long _warmAcquisitions;
     private long _coldAcquisitions;
-    
+
     private double _hotAcquisitionTimeSum;
     private double _warmAcquisitionTimeSum;
     private double _coldAcquisitionTimeSum;
-    
+
     private readonly Timer _healthCheckTimer;
     private bool _disposed;
 
@@ -43,15 +43,15 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
         _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
         _options = options ?? new TieredBrowserPoolOptions();
         _logger = logger ?? NullLogger<TieredBrowserPool>.Instance;
-        
+
         _coldPoolSemaphore = new SemaphoreSlim(_options.Cold.MaximumConcurrent, _options.Cold.MaximumConcurrent);
-        
+
         _healthCheckTimer = new Timer(
             HealthCheckCallback,
             null,
             _options.HealthCheckInterval,
             _options.HealthCheckInterval);
-        
+
         _ = Task.Run(async () => await InitializePoolsAsync());
     }
 
@@ -61,7 +61,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
         {
             await WarmUpAsync(Tier.Hot, _options.Hot.MinimumSize, CancellationToken.None);
             await WarmUpAsync(Tier.Warm, _options.Warm.MinimumSize, CancellationToken.None);
-            
+
             _logger.LogInformation(
                 "Tiered browser pool initialized: Hot={HotCount}, Warm={WarmCount}",
                 _options.Hot.MinimumSize,
@@ -90,7 +90,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
             sw.Stop();
             RecordAcquisitionTime(tier, sw.Elapsed.TotalMilliseconds);
-            
+
             _activeSessions[session.SessionId] = new PooledBrowserSession
             {
                 Session = session,
@@ -123,9 +123,9 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
             Interlocked.Increment(ref _hotAcquisitions);
             pooled.LastUsedAt = DateTime.UtcNow;
             pooled.UseCount++;
-            
+
             _ = Task.Run(async () => await ReplenishHotPoolAsync(), CancellationToken.None);
-            
+
             return pooled.Session;
         }
 
@@ -139,18 +139,18 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
         if (_warmPool.TryTake(out var pooled))
         {
             Interlocked.Increment(ref _warmAcquisitions);
-            
+
             if (pooled.IsExpired(_options.Warm.MaxAge))
             {
                 pooled.Dispose();
                 return await CreateNewSessionAsync(ct);
             }
-            
+
             pooled.LastUsedAt = DateTime.UtcNow;
             pooled.UseCount++;
-            
+
             _ = Task.Run(async () => await ReplenishWarmPoolAsync(), CancellationToken.None);
-            
+
             return pooled.Session;
         }
 
@@ -160,7 +160,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
     private async Task<IBrowserSession> AcquireFromColdPoolAsync(CancellationToken ct)
     {
         await _coldPoolSemaphore.WaitAsync(ct);
-        
+
         try
         {
             Interlocked.Increment(ref _coldAcquisitions);
@@ -176,13 +176,13 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
     private async Task<IBrowserSession> CreateNewSessionAsync(CancellationToken ct)
     {
         var memoryPressure = GetMemoryPressure();
-        
+
         if (memoryPressure > _options.MemoryPressureThreshold)
         {
             _logger.LogWarning(
                 "High memory pressure: {Pressure:P0}, triggering cleanup",
                 memoryPressure);
-            
+
             await CleanupExpiredSessionsAsync();
         }
 
@@ -392,9 +392,9 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
             try
             {
                 await CleanupExpiredSessionsAsync();
-                
+
                 var health = await GetHealthAsync();
-                
+
                 if (!health.IsHealthy)
                 {
                     _logger.LogWarning(

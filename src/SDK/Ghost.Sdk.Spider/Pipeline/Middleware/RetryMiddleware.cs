@@ -91,7 +91,7 @@ public sealed class RetryMiddleware : IPipelineMiddleware
             try
             {
                 await next(context);
-                
+
                 // Success - record the attempt if it was a retry
                 if (attempt > 0 && context.StateBox != null)
                 {
@@ -161,7 +161,7 @@ public sealed class RetryMiddleware : IPipelineMiddleware
     {
         // Calculate exponential backoff: initialDelay * (multiplier ^ (attempt - 1))
         var delay = _initialDelayMs * Math.Pow(_backoffMultiplier, attempt - 1);
-        
+
         // Cap at max delay
         delay = Math.Min(delay, _maxDelayMs);
 

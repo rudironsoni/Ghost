@@ -32,11 +32,11 @@ public class RotatingProxySession : IDisposable
         _proxyProvider = proxyProvider ?? throw new ArgumentNullException(nameof(proxyProvider));
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _options = options ?? new RotatingProxySessionOptions();
-        
+
         // Initialize proxy pool
         _proxyPool = new List<ProxyInfo>();
         _currentProxyIndex = 0;
-        
+
         // Set default headers
         SetDefaultHeaders();
     }
@@ -94,20 +94,20 @@ public class RotatingProxySession : IDisposable
     public async Task<HttpResponseMessage> ExecuteAsync(Func<HttpRequestMessage> requestFactory, CancellationToken cancellationToken = default)
     {
         var policy = CreateRetryPolicy();
-        
+
         return await policy.ExecuteAsync(async () =>
         {
             var request = requestFactory();
-            
+
             // Rotate proxy if enabled
             if (_options.EnableProxyRotation)
             {
                 await RotateProxyAsync();
             }
-            
+
             // Apply jitter delay
             await ApplyJitterDelay(cancellationToken);
-            
+
             return await _httpClient.SendAsync(request, cancellationToken);
         });
     }
@@ -118,13 +118,13 @@ public class RotatingProxySession : IDisposable
     private AsyncRetryPolicy<HttpResponseMessage> CreateRetryPolicy()
     {
         return Policy<HttpResponseMessage>
-            .HandleResult(r => (int)r.StatusCode == 429 || 
-                             r.StatusCode == HttpStatusCode.InternalServerError || 
-                             r.StatusCode == HttpStatusCode.BadGateway || 
-                             r.StatusCode == HttpStatusCode.ServiceUnavailable || 
+            .HandleResult(r => (int)r.StatusCode == 429 ||
+                             r.StatusCode == HttpStatusCode.InternalServerError ||
+                             r.StatusCode == HttpStatusCode.BadGateway ||
+                             r.StatusCode == HttpStatusCode.ServiceUnavailable ||
                              r.StatusCode == HttpStatusCode.GatewayTimeout)
             .WaitAndRetryAsync(
-                _options.MaxRetries, 
+                _options.MaxRetries,
                 attempt => TimeSpan.FromSeconds(Math.Pow(_options.BackoffFactor, attempt)),
                 onRetry: (result, timeSpan, retryCount, context) =>
                 {
@@ -142,7 +142,7 @@ public class RotatingProxySession : IDisposable
             return;
 
         _currentProxyIndex = (_currentProxyIndex + 1) % _proxyPool.Count;
-        
+
         // Refresh proxy pool if needed
         if (_currentProxyIndex == 0 && _options.RefreshProxyPoolOnCycle)
         {

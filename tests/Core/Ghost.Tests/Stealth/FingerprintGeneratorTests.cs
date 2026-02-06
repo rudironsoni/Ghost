@@ -14,18 +14,18 @@ public class FingerprintGeneratorTests
         profile.Should().NotBeNull();
         profile.UserAgent.Should().Contain(profile.ChromeVersion);
         profile.Platform.Should().NotBeNullOrEmpty();
-        
+
         // Basic range checks
         profile.Cores.Should().BeGreaterThan(0);
         profile.MemoryGb.Should().BeGreaterThan(0);
         profile.BatteryLevel.Should().BeInRange(0.7, 1.0);
         profile.Rtt.Should().BeGreaterThan(0);
         profile.Downlink.Should().BeGreaterThan(0);
-        
+
         // Geo checks (roughly NYC bounding box)
         profile.Latitude.Should().BeInRange(40.5, 41.0);
         profile.Longitude.Should().BeInRange(-74.3, -73.6);
-        
+
         profile.VideoCardVendor.Should().NotBeNullOrEmpty();
         profile.VideoCardRenderer.Should().NotBeNullOrEmpty();
     }

@@ -18,7 +18,7 @@ public sealed record JobSearchCriteria
 #pragma warning disable IDE0032 // Use auto property - backing field is required for fallback logic
     private string? _query;
 #pragma warning restore IDE0032
-    
+
     /// <summary>
     /// Text query matching title, company, or description.
     /// </summary>
@@ -28,7 +28,7 @@ public sealed record JobSearchCriteria
         get => _query ?? Keywords;
         init => _query = value;
     }
-    
+
     /// <summary>
     /// Alternative name for Query field (accepts 'keywords' in JSON).
     /// </summary>

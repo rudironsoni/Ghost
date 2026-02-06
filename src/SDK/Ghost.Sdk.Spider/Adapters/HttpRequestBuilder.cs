@@ -93,7 +93,7 @@ internal class HttpRequestBuilder
         {
             var uriBuilder = new UriBuilder(baseUri);
             var queryString = HttpUtility.ParseQueryString(uriBuilder.Query);
-            
+
             foreach (var (key, value) in _queryParameters)
             {
                 queryString[key] = value;
@@ -237,8 +237,8 @@ internal class HttpRequestBuilder
     private void ConfigureContent(HttpRequestMessage httpRequest)
     {
         // Only add content for methods that support it
-        if (httpRequest.Method == HttpMethod.Get || 
-            httpRequest.Method == HttpMethod.Head || 
+        if (httpRequest.Method == HttpMethod.Get ||
+            httpRequest.Method == HttpMethod.Head ||
             httpRequest.Method == HttpMethod.Options ||
             httpRequest.Method == HttpMethod.Trace)
         {

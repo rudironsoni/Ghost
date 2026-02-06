@@ -1,6 +1,6 @@
+using Ghost.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Ghost.Hosting;
 
 namespace Ghost.Platform.Anthropic;
 

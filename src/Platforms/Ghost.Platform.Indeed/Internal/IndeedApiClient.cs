@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Net.Http.Headers;
-using System.Text.Json;
+using System.Net.Http.Json;
+using System.Security.Authentication;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Security.Authentication;
-using Ghost.Models;
 using Ghost.Abstractions;
 using Ghost.Http;
+using Ghost.Models;
 using Ghost.Platform.Common.Session;
 using Microsoft.Extensions.Logging;
 
@@ -47,44 +47,44 @@ public class IndeedApiClient : IDisposable
         "content-type"
     };
     private static readonly TimeSpan MetricsWindow = TimeSpan.FromSeconds(1);
-        private static readonly Action<ILogger, string, string, Exception?> LogRequestStart =
-            LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(2001, "FetchingIndeedJobs"), "Fetching Indeed jobs for query '{Query}' at {Location}...");
-        private static readonly Action<ILogger, string, Exception?> LogSendingRequest =
-            LoggerMessage.Define<string>(LogLevel.Information, new EventId(2002, "SendingRequest"), "Sending request to {Url}");
-        private static readonly Action<ILogger, string, Exception?> LogResponseStatus =
-            LoggerMessage.Define<string>(LogLevel.Information, new EventId(2003, "ResponseStatus"), "Response Status: {StatusCode}");
-        private static readonly Action<ILogger, string, Exception?> LogResponseContent =
-            LoggerMessage.Define<string>(LogLevel.Information, new EventId(2004, "ResponseContent"), "Response Content: {Content}");
-        private static readonly Action<ILogger, string, Exception?> LogRequestPayload =
-            LoggerMessage.Define<string>(LogLevel.Information, new EventId(2005, "RequestPayload"), "Request Payload: {Content}");
-        private static readonly Action<ILogger, string, string, Exception?> LogRequestHeader =
-            LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(2006, nameof(LogRequestHeader)), "Header: {Key} = {Value}");
+    private static readonly Action<ILogger, string, string, Exception?> LogRequestStart =
+        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(2001, "FetchingIndeedJobs"), "Fetching Indeed jobs for query '{Query}' at {Location}...");
+    private static readonly Action<ILogger, string, Exception?> LogSendingRequest =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(2002, "SendingRequest"), "Sending request to {Url}");
+    private static readonly Action<ILogger, string, Exception?> LogResponseStatus =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(2003, "ResponseStatus"), "Response Status: {StatusCode}");
+    private static readonly Action<ILogger, string, Exception?> LogResponseContent =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(2004, "ResponseContent"), "Response Content: {Content}");
+    private static readonly Action<ILogger, string, Exception?> LogRequestPayload =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(2005, "RequestPayload"), "Request Payload: {Content}");
+    private static readonly Action<ILogger, string, string, Exception?> LogRequestHeader =
+        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(2006, nameof(LogRequestHeader)), "Header: {Key} = {Value}");
 
-        private static readonly Action<ILogger, CountryCode, Exception?> LogConstructedWithCountry =
-            LoggerMessage.Define<CountryCode>(LogLevel.Information, new EventId(2007, "ConstructedWithCountry"), "IndeedApiClient constructed with Country={Country}");
+    private static readonly Action<ILogger, CountryCode, Exception?> LogConstructedWithCountry =
+        LoggerMessage.Define<CountryCode>(LogLevel.Information, new EventId(2007, "ConstructedWithCountry"), "IndeedApiClient constructed with Country={Country}");
 
-        private static readonly Action<ILogger, CountryCode, Exception?> LogGetHeadersReturnedNull =
-            LoggerMessage.Define<CountryCode>(LogLevel.Warning, new EventId(2008, "GetHeadersReturnedNull"), "IndeedConstants.GetHeaders returned null for country {Country}");
+    private static readonly Action<ILogger, CountryCode, Exception?> LogGetHeadersReturnedNull =
+        LoggerMessage.Define<CountryCode>(LogLevel.Warning, new EventId(2008, "GetHeadersReturnedNull"), "IndeedConstants.GetHeaders returned null for country {Country}");
 
-        private static readonly Action<ILogger, CountryCode, Exception?> LogUsingCountryForRequest =
-            LoggerMessage.Define<CountryCode>(LogLevel.Information, new EventId(2009, "UsingCountryForRequest"), "IndeedApiClient: using country {Country} when sending request");
+    private static readonly Action<ILogger, CountryCode, Exception?> LogUsingCountryForRequest =
+        LoggerMessage.Define<CountryCode>(LogLevel.Information, new EventId(2009, "UsingCountryForRequest"), "IndeedApiClient: using country {Country} when sending request");
 
-        private static readonly Action<ILogger, string, Exception?> LogSessionAllocated =
-            LoggerMessage.Define<string>(LogLevel.Information, new EventId(2010, "SessionAllocated"), "Allocated session {SessionId} for Indeed requests");
+    private static readonly Action<ILogger, string, Exception?> LogSessionAllocated =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(2010, "SessionAllocated"), "Allocated session {SessionId} for Indeed requests");
 
-        private static readonly Action<ILogger, string, Exception?> LogSessionRecycled =
-            LoggerMessage.Define<string>(LogLevel.Warning, new EventId(2011, "SessionRecycled"), "Recycling unhealthy session {SessionId}");
+    private static readonly Action<ILogger, string, Exception?> LogSessionRecycled =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(2011, "SessionRecycled"), "Recycling unhealthy session {SessionId}");
 
-        private static readonly Action<ILogger, string, Exception?> LogSessionGetFailed =
-            LoggerMessage.Define<string>(LogLevel.Error, new EventId(2012, "SessionGetFailed"), "Failed to get HTTP session {SessionId}");
+    private static readonly Action<ILogger, string, Exception?> LogSessionGetFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(2012, "SessionGetFailed"), "Failed to get HTTP session {SessionId}");
 
-        private static readonly Action<ILogger, string, Exception?> LogSessionHealthCheckFailed =
-            LoggerMessage.Define<string>(LogLevel.Error, new EventId(2013, "SessionHealthCheckFailed"), "Failed to check session health for {SessionId}");
+    private static readonly Action<ILogger, string, Exception?> LogSessionHealthCheckFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(2013, "SessionHealthCheckFailed"), "Failed to check session health for {SessionId}");
 
-        private static readonly Action<ILogger, string, Exception?> LogSessionCloseFailed =
-            LoggerMessage.Define<string>(LogLevel.Error, new EventId(2014, "SessionCloseFailed"), "Failed to close session {SessionId} during disposal");
+    private static readonly Action<ILogger, string, Exception?> LogSessionCloseFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(2014, "SessionCloseFailed"), "Failed to close session {SessionId} during disposal");
 
-        private static readonly CompositeFormat JobSearchQueryFormat = CompositeFormat.Parse(IndeedConstants.JobSearchQuery);
+    private static readonly CompositeFormat JobSearchQueryFormat = CompositeFormat.Parse(IndeedConstants.JobSearchQuery);
 
     /// <summary>
     /// Legacy constructor for backward compatibility. Uses direct proxy provider.
@@ -556,40 +556,40 @@ public class IndeedApiClient : IDisposable
             var json = JsonSerializer.Serialize(payload);
             LogRequestPayload(_logger, json, null);
 
-                LogSendingRequest(_logger, IndeedConstants.ApiUrl, null);
+            LogSendingRequest(_logger, IndeedConstants.ApiUrl, null);
 
-                foreach (var header in _httpClient.DefaultRequestHeaders)
-                {
-                    LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
-                }
+            foreach (var header in _httpClient.DefaultRequestHeaders)
+            {
+                LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
+            }
 
-                try
-                {
-                    LogUsingCountryForRequest(_logger, _country, null);
-                }
-                catch { }
-                HttpResponseMessage? resp = null;
-                string content = string.Empty;
-                Stopwatch stopwatch;
-                StartRequestMetrics(out stopwatch);
+            try
+            {
+                LogUsingCountryForRequest(_logger, _country, null);
+            }
+            catch { }
+            HttpResponseMessage? resp = null;
+            string content = string.Empty;
+            Stopwatch stopwatch;
+            StartRequestMetrics(out stopwatch);
 
             for (int attempt = 0; attempt < 3; attempt++)
             {
-                    try
+                try
+                {
+                    using var attemptReq = CreateRequest(payload);
+                    foreach (var header in attemptReq.Headers)
                     {
-                        using var attemptReq = CreateRequest(payload);
-                        foreach (var header in attemptReq.Headers)
+                        LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
+                    }
+                    if (attemptReq.Content?.Headers != null)
+                    {
+                        foreach (var header in attemptReq.Content.Headers)
                         {
                             LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
                         }
-                        if (attemptReq.Content?.Headers != null)
-                        {
-                            foreach (var header in attemptReq.Content.Headers)
-                            {
-                                LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
-                            }
-                        }
-                        resp = await _httpClient.SendAsync(attemptReq);
+                    }
+                    resp = await _httpClient.SendAsync(attemptReq);
 
                     if ((int)resp.StatusCode == 429)
                     {
@@ -623,13 +623,13 @@ public class IndeedApiClient : IDisposable
                     await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000));
                     continue;
                 }
-                    catch (Exception)
-                    {
-                        throw;
-                    }
+                catch (Exception)
+                {
+                    throw;
                 }
+            }
 
-                EndRequestMetrics(resp != null && resp.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content), stopwatch);
+            EndRequestMetrics(resp != null && resp.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content), stopwatch);
 
             if (resp == null || !resp.IsSuccessStatusCode || IsBlockedOrConsentRequired(content))
             {
@@ -724,7 +724,7 @@ public class IndeedApiClient : IDisposable
         // Only check for explicit error indicators at the start of the response
         // Valid job responses will contain {"data":{"jobSearch"...}}
         var trimmed = responseContent.TrimStart();
-        
+
         // If it starts with valid JSON object with "data" property, it's likely a valid response
         if (trimmed.StartsWith("{\"data\":", StringComparison.Ordinal) ||
             trimmed.StartsWith("{\"data\": {", StringComparison.Ordinal))

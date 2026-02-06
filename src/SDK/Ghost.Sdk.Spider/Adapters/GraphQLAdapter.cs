@@ -1,9 +1,9 @@
+using System.Net.Http.Headers;
+using System.Text;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Adapters.GraphQL;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Net.Http.Headers;
-using System.Text;
 
 namespace Ghost.Sdk.Spider.Adapters;
 
@@ -197,7 +197,7 @@ public class GraphQLAdapter : IContentAdapter
     private Response CreateErrorResponse(string error, Exception? exception, DateTimeOffset startTime, string url)
     {
         var contentResult = ContentResult.CreateFailure(error, ContentType.GraphQL);
-        
+
         return new Response(contentResult)
         {
             IsSuccess = false,

@@ -45,7 +45,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
         };
 
         _pool = new TieredBrowserPool(_kernel, options, NullLogger<TieredBrowserPool>.Instance);
-        
+
         await Task.Delay(2000);
     }
 
@@ -66,7 +66,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
         stopwatch.Stop();
 
         Assert.NotNull(session);
-        Assert.True(stopwatch.ElapsedMilliseconds < 500, 
+        Assert.True(stopwatch.ElapsedMilliseconds < 500,
             $"Hot pool acquisition took {stopwatch.ElapsedMilliseconds}ms, expected <500ms");
         Assert.True(session.IsConnected);
     }
@@ -149,11 +149,11 @@ public class TieredBrowserPoolTests : IAsyncLifetime
         Assert.NotNull(health.Hot);
         Assert.NotNull(health.Warm);
         Assert.NotNull(health.Cold);
-        
+
         Assert.True(health.Hot.Total >= 0);
         Assert.True(health.Warm.Total >= 0);
         Assert.True(health.Cold.Total >= 0);
-        
+
         Assert.True(health.MemoryPressure >= 0 && health.MemoryPressure <= 1);
     }
 
@@ -163,7 +163,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
         await _pool!.WarmUpAsync(Tier.Hot, 3);
 
         var health = await _pool.GetHealthAsync();
-        
+
         Assert.True(health.Hot.Total >= 3);
     }
 
@@ -195,7 +195,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
     public async Task Pool_FallsBackToWarm_WhenHotExhausted()
     {
         var hotSessions = new List<IBrowserSession>();
-        
+
         for (int i = 0; i < 10; i++)
         {
             var session = await _pool!.AcquireBrowserAsync(Tier.Hot);
@@ -203,8 +203,8 @@ public class TieredBrowserPoolTests : IAsyncLifetime
         }
 
         var health = await _pool!.GetHealthAsync();
-        
-        Assert.True(health.Warm.AcquisitionCount > 0 || health.Cold.AcquisitionCount > 0, 
+
+        Assert.True(health.Warm.AcquisitionCount > 0 || health.Cold.AcquisitionCount > 0,
             "Pool should fallback to Warm or Cold when Hot is exhausted");
 
         foreach (var session in hotSessions)
@@ -225,7 +225,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
         }
 
         var health = await _pool!.GetHealthAsync();
-        
+
         Assert.True(health.Cold.AcquisitionCount > 0,
             "Pool should fallback to Cold when Warm is exhausted");
 

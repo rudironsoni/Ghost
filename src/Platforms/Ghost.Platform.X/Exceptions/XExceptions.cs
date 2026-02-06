@@ -15,14 +15,14 @@ public abstract class XException : Exception
     /// </summary>
     public DateTime Timestamp { get; }
 
-    protected XException(string errorCode, string message) 
+    protected XException(string errorCode, string message)
         : base(message)
     {
         ErrorCode = errorCode;
         Timestamp = DateTime.UtcNow;
     }
 
-    protected XException(string errorCode, string message, Exception innerException) 
+    protected XException(string errorCode, string message, Exception innerException)
         : base(message, innerException)
     {
         ErrorCode = errorCode;
@@ -45,7 +45,7 @@ public class XAuthenticationException : XException
     /// </summary>
     public string Remediation { get; }
 
-    public XAuthenticationException(string authStep, string message) 
+    public XAuthenticationException(string authStep, string message)
         : base("AUTH_FAILED", $"Authentication failed at step '{authStep}': {message}")
     {
         AuthStep = authStep;
@@ -53,7 +53,7 @@ public class XAuthenticationException : XException
                      "Navigate to X.com in a browser, log in, and save the storage state.";
     }
 
-    public XAuthenticationException(string authStep, string message, Exception innerException) 
+    public XAuthenticationException(string authStep, string message, Exception innerException)
         : base("AUTH_FAILED", $"Authentication failed at step '{authStep}': {message}", innerException)
     {
         AuthStep = authStep;
@@ -76,8 +76,8 @@ public class XRateLimitException : XException
     /// </summary>
     public int? RemainingRequests { get; }
 
-    public XRateLimitException(TimeSpan retryAfter, int? remainingRequests = null) 
-        : base("RATE_LIMITED", 
+    public XRateLimitException(TimeSpan retryAfter, int? remainingRequests = null)
+        : base("RATE_LIMITED",
                $"X rate limit exceeded. Retry after {retryAfter.TotalMinutes:F1} minutes.")
     {
         RetryAfter = retryAfter;
@@ -101,8 +101,8 @@ public class XValidationException : XException
     /// </summary>
     public IReadOnlyList<ValidationError> ValidationErrors { get; }
 
-    public XValidationException(IEnumerable<ValidationError> errors) 
-        : base("VALIDATION_FAILED", 
+    public XValidationException(IEnumerable<ValidationError> errors)
+        : base("VALIDATION_FAILED",
                $"Content validation failed with {errors.Count()} error(s).")
     {
         ValidationErrors = errors.ToList().AsReadOnly();
@@ -139,7 +139,7 @@ public class XBrowserException : XException
     /// </summary>
     public string Action { get; }
 
-    public XBrowserException(string action, string message, string? url = null, string? selector = null) 
+    public XBrowserException(string action, string message, string? url = null, string? selector = null)
         : base("BROWSER_ERROR", $"Browser automation failed during '{action}': {message}")
     {
         Action = action;
@@ -147,7 +147,7 @@ public class XBrowserException : XException
         Selector = selector;
     }
 
-    public XBrowserException(string action, string message, Exception innerException, string? url = null, string? selector = null) 
+    public XBrowserException(string action, string message, Exception innerException, string? url = null, string? selector = null)
         : base("BROWSER_ERROR", $"Browser automation failed during '{action}': {message}", innerException)
     {
         Action = action;
@@ -164,13 +164,13 @@ public class XBrowserException : XException
         {
             var sb = new System.Text.StringBuilder();
             sb.Append("Browser automation failed. ");
-            
+
             if (!string.IsNullOrEmpty(Selector))
             {
                 sb.Append($"The selector '{Selector}' was not found. ");
                 sb.Append("X may have changed their DOM structure or you may need to update selectors. ");
             }
-            
+
             sb.Append("Try enabling stealth mode or waiting for the page to fully load.");
             return sb.ToString();
         }
@@ -192,7 +192,7 @@ public class XMediaException : XException
     /// </summary>
     public string? MediaType { get; }
 
-    public XMediaException(string message, string? mediaPath = null, string? mediaType = null) 
+    public XMediaException(string message, string? mediaPath = null, string? mediaType = null)
         : base("MEDIA_ERROR", message)
     {
         MediaPath = mediaPath;
@@ -208,15 +208,15 @@ public class XMediaException : XException
         {
             var sb = new System.Text.StringBuilder();
             sb.Append("Media upload failed. ");
-            
+
             if (!string.IsNullOrEmpty(MediaPath))
             {
                 sb.Append($"Check that '{MediaPath}' exists and is accessible. ");
             }
-            
+
             sb.Append("Images must be under 5MB (.jpg, .png, .gif, .webp). ");
             sb.Append("Videos must be under 512MB (.mp4, .mov, .webm).");
-            
+
             return sb.ToString();
         }
     }
@@ -237,8 +237,8 @@ public class XThreadException : XException
     /// </summary>
     public int TotalTweets { get; }
 
-    public XThreadException(int tweetNumber, int totalTweets, string message) 
-        : base("THREAD_ERROR", 
+    public XThreadException(int tweetNumber, int totalTweets, string message)
+        : base("THREAD_ERROR",
                $"Thread composition failed at tweet {tweetNumber} of {totalTweets}: {message}")
     {
         TweetNumber = tweetNumber;

@@ -1,5 +1,5 @@
-using Ghost.Sdk.Spider.Adapters.Contracts;
 using System.Collections.Concurrent;
+using Ghost.Sdk.Spider.Adapters.Contracts;
 
 namespace Ghost.Sdk.Spider.Engine.Queue;
 

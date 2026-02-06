@@ -192,7 +192,7 @@ public class LinkedInJobEntity : EntityBase<LinkedInJobEntity>
     /// <summary>
     /// Gets a value indicating whether this job supports Easy Apply based on button detection.
     /// </summary>
-    public bool IsEasyApply => !string.IsNullOrWhiteSpace(EasyApplyButton) && 
+    public bool IsEasyApply => !string.IsNullOrWhiteSpace(EasyApplyButton) &&
                                EasyApplyButton.Contains("Easy Apply", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
@@ -218,7 +218,7 @@ public class LinkedInJobEntity : EntityBase<LinkedInJobEntity>
         // At minimum, we need either a JobId or Url, and a Title
         var hasIdentifier = !string.IsNullOrWhiteSpace(JobId) || !string.IsNullOrWhiteSpace(Url);
         var hasTitle = !string.IsNullOrWhiteSpace(Title);
-        
+
         return hasIdentifier && hasTitle;
     }
 
@@ -278,21 +278,21 @@ public class LinkedInJobEntity : EntityBase<LinkedInJobEntity>
 
         // Pattern 1: /jobs/view/{id}
         var viewMatch = System.Text.RegularExpressions.Regex.Match(
-            Url, 
+            Url,
             @"/jobs/(?:view|r)/(?<id>[0-9]+)");
         if (viewMatch.Success)
             return viewMatch.Groups["id"].Value;
 
         // Pattern 2: ?jobId={id}
         var queryMatch = System.Text.RegularExpressions.Regex.Match(
-            Url, 
+            Url,
             @"[?&](?:jobId|id)=(?<id>[0-9]+)");
         if (queryMatch.Success)
             return queryMatch.Groups["id"].Value;
 
         // Pattern 3: URL ending with -{id}
         var endingMatch = System.Text.RegularExpressions.Regex.Match(
-            Url, 
+            Url,
             @"-(\d{6,})(?:\?|$)");
         if (endingMatch.Success)
             return endingMatch.Groups[1].Value;

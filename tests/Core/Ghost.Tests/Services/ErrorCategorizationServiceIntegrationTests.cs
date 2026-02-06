@@ -1,9 +1,9 @@
 using System.Net;
 using System.Net.Http;
 using FluentAssertions;
-using Xunit;
-using Ghost.Core.Services;
 using Ghost.Contracts.Jobs;
+using Ghost.Core.Services;
+using Xunit;
 
 namespace Ghost.Core.Tests.Services;
 

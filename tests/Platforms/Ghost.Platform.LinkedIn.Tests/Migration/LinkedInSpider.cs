@@ -64,13 +64,13 @@ public class LinkedInSpider : Spider
 
         // Extract job entities from the page
         var jobs = _parser.Parse<LinkedInJobEntity>(extractionContext);
-        
+
         foreach (var job in jobs)
         {
             if (job.Validate())
             {
                 _extractedJobs.Add(job);
-                
+
                 // Log extraction (in real scenario, you'd use proper logging)
                 Console.WriteLine($"Extracted job: {job.Title} at {job.Company}");
             }
@@ -120,4 +120,6 @@ public class LinkedInSpider : Spider
 
         return true;
     }
+
+    public override Task ProcessResponseAsync(Response response, Sdk.Spider.Engine.ExecutionContext context, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }

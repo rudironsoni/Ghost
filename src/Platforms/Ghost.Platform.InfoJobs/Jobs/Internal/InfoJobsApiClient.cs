@@ -2,8 +2,8 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
 using Ghost.Contracts.Jobs;
+using Microsoft.Extensions.Logging;
 
 namespace Ghost.Platform.InfoJobs.Jobs.Internal;
 
@@ -54,14 +54,14 @@ public sealed class InfoJobsApiClient
         LogFetchingJobs(_logger, url, null);
 
         var req = new HttpRequestMessage(HttpMethod.Get, url);
-        
+
         // Set authentication headers (Basic Auth with Client ID/Secret)
         if (!string.IsNullOrEmpty(_options.ClientId) && !string.IsNullOrEmpty(_options.ClientSecret))
         {
             var auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));
             req.Headers.Authorization = new AuthenticationHeaderValue("Basic", auth);
         }
-        
+
         // Add InfoJobs API headers
         foreach (var header in InfoJobsConstants.ApiHeaders)
         {
@@ -102,19 +102,19 @@ public sealed class InfoJobsApiClient
     private string BuildSearchUrl(string query, string location)
     {
         var parameters = new List<string>();
-        
+
         if (!string.IsNullOrEmpty(query))
             parameters.Add($"q={Uri.EscapeDataString(query)}");
-            
+
         if (!string.IsNullOrEmpty(location))
             parameters.Add($"province={Uri.EscapeDataString(location)}");
-            
+
         // Add Spanish locale
         parameters.Add($"locale={_options.Language}");
-        
+
         // Limit results for efficiency
         parameters.Add("maxResults=50");
-        
+
         var queryString = string.Join("&", parameters);
         return $"{_options.ApiEndpoint}1/offer?{queryString}";
     }
@@ -125,15 +125,15 @@ public sealed class InfoJobsApiClient
         {
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
-            
-            if (!root.TryGetProperty("offers", out var offersArray) || 
+
+            if (!root.TryGetProperty("offers", out var offersArray) ||
                 offersArray.ValueKind != JsonValueKind.Array)
             {
                 return Array.Empty<JobListing>();
             }
 
             var jobs = new List<JobListing>();
-            
+
             foreach (var offer in offersArray.EnumerateArray())
             {
                 var job = ParseJobOffer(offer);
@@ -160,7 +160,7 @@ public sealed class InfoJobsApiClient
 
             // Parse company from author field (correct per InfoJobs API)
             var company = offer.GetProperty("author").GetProperty("name").GetString() ?? string.Empty;
-            
+
             // Parse location (optional city + mandatory province)
             var location = string.Empty;
             if (offer.TryGetProperty("city", out var city))
@@ -169,7 +169,7 @@ public sealed class InfoJobsApiClient
                 if (!string.IsNullOrEmpty(cityValue))
                     location = cityValue;
             }
-            
+
             if (offer.TryGetProperty("province", out var province))
             {
                 var provinceValue = province.GetProperty("value").GetString() ?? string.Empty;
@@ -181,21 +181,21 @@ public sealed class InfoJobsApiClient
                         location = provinceValue;
                 }
             }
-            
+
             var id = offer.GetProperty("id").GetString() ?? Guid.NewGuid().ToString();
-            
+
             // Parse URL (link field)
             string? url = null;
             if (offer.TryGetProperty("link", out var link))
             {
                 url = link.GetString();
             }
-            
+
             // Parse salary information (salaryMin/salaryMax per InfoJobs API)
             string? salary = null;
             var hasSalaryMin = offer.TryGetProperty("salaryMin", out var salaryMin) && salaryMin.ValueKind != JsonValueKind.Null;
             var hasSalaryMax = offer.TryGetProperty("salaryMax", out var salaryMax) && salaryMax.ValueKind != JsonValueKind.Null;
-            
+
             if (hasSalaryMin)
             {
                 var minAmount = salaryMin.GetProperty("value").GetString() ?? string.Empty;
@@ -222,7 +222,7 @@ public sealed class InfoJobsApiClient
             if (offer.TryGetProperty("contractType", out var contractType))
             {
                 var contractValue = contractType.GetProperty("value").GetString()?.ToLowerInvariant() ?? string.Empty;
-                
+
                 foreach (var mapping in InfoJobsConstants.JobTypeMapping)
                 {
                     if (contractValue.Contains(mapping.Key))
@@ -239,7 +239,7 @@ public sealed class InfoJobsApiClient
             {
                 description = requirementMin.GetString() ?? string.Empty;
             }
-            
+
             // Parse publication date (updated field per InfoJobs API)
             DateTimeOffset postedAt = DateTimeOffset.UtcNow;
             if (offer.TryGetProperty("updated", out var updated))

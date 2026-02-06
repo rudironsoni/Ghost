@@ -204,7 +204,8 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
     private bool _inTryAdd(HttpClient key, PooledConnection value) => _inUse.TryAdd(key, value);
 }
 
-public sealed record PooledConnection {
+public sealed record PooledConnection
+{
     public HttpClient Client { get; init; } = null!;
     public DateTime CreatedAt { get; init; }
     public DateTime LastUsed { get; set; }

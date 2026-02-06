@@ -147,7 +147,7 @@ internal sealed class ElementWrapper : IElement, Ghost.IElementHandle
     Task<string?> Ghost.IElementHandle.TextContentAsync(CancellationToken ct)
         => _handle.TextContentAsync();
 
-    
+
 
     public async ValueTask DisposeAsync()
     {

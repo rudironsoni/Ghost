@@ -37,9 +37,9 @@ public class XPathSelector : ISelector
 
         // Try the expression as-is first
         var nodes = doc.DocumentNode.SelectNodes(Expression);
-        
+
         // If no results and expression starts with @, try from first element
-        if ((nodes == null || nodes.Count == 0) && Expression.StartsWith("@", StringComparison.Ordinal))
+        if ((nodes == null || nodes.Count == 0) && Expression.StartsWith('@'))
         {
             var firstElement = doc.DocumentNode.FirstChild;
             if (firstElement != null && firstElement.NodeType == HtmlNodeType.Element)
@@ -47,7 +47,7 @@ public class XPathSelector : ISelector
                 nodes = firstElement.SelectNodes(Expression);
             }
         }
-        
+
         if (nodes == null || nodes.Count == 0)
             return new List<string>();
 
@@ -73,9 +73,9 @@ public class XPathSelector : ISelector
 
         // Try the expression as-is first
         var node = doc.DocumentNode.SelectSingleNode(Expression);
-        
+
         // If no result and expression starts with @, try from first element
-        if (node == null && Expression.StartsWith("@", StringComparison.Ordinal))
+        if (node == null && Expression.StartsWith('@'))
         {
             var firstElement = doc.DocumentNode.FirstChild;
             if (firstElement != null && firstElement.NodeType == HtmlNodeType.Element)
@@ -83,7 +83,7 @@ public class XPathSelector : ISelector
                 node = firstElement.SelectSingleNode(Expression);
             }
         }
-        
+
         return node != null ? ExtractValue(node) : null;
     }
 
@@ -113,7 +113,7 @@ public class XPathSelector : ISelector
 
         // If the XPath expression is selecting an attribute (starts with @),
         // we need to extract the attribute value from the returned element
-        if (Expression.StartsWith("@", StringComparison.Ordinal))
+        if (Expression.StartsWith('@'))
         {
             // Extract the attribute name from expressions like "@data-id" or "@href"
             var attrName = Expression.TrimStart('@');
@@ -121,7 +121,7 @@ public class XPathSelector : ISelector
             var spaceIndex = attrName.IndexOf('[');
             if (spaceIndex > 0)
                 attrName = attrName.Substring(0, spaceIndex);
-            
+
             return node.GetAttributeValue(attrName, null);
         }
 

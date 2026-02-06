@@ -50,7 +50,7 @@ public static class GlassdoorJobParser
             foreach (var prop in element.EnumerateObject())
             {
                 // Check if this property contains job data
-                if (prop.Name.Contains("job", StringComparison.OrdinalIgnoreCase) && 
+                if (prop.Name.Contains("job", StringComparison.OrdinalIgnoreCase) &&
                     prop.Value.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var item in prop.Value.EnumerateArray())
@@ -89,7 +89,7 @@ public static class GlassdoorJobParser
                     title = GetString(header, "jobTitleText");
                     location = GetString(header, "locationName");
                     url = GetString(header, "jobLink");
-                    
+
                     if (header.TryGetProperty("employer", out var employer) && employer.ValueKind == JsonValueKind.Object)
                     {
                         company = GetString(employer, "name");
@@ -109,7 +109,7 @@ public static class GlassdoorJobParser
                         }
                     }
                 }
-                
+
                 if (jobview.TryGetProperty("job", out var job) && job.ValueKind == JsonValueKind.Object)
                 {
                     id = GetString(job, "listingId");

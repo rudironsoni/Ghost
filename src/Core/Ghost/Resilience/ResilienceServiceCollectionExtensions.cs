@@ -1,11 +1,11 @@
+using Ghost.Core.Caching;
+using Ghost.Core.Configuration;
+using Ghost.Core.Monitoring;
+using Ghost.Resilience;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Ghost.Resilience;
-using Ghost.Core.Caching;
-using Ghost.Core.Monitoring;
-using Ghost.Core.Configuration;
 
 namespace Ghost.Core;
 

@@ -1,8 +1,8 @@
 using System;
 using FluentAssertions;
-using NSubstitute;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Xunit;
 
 namespace Ghost.Platform.OpenAI.Tests

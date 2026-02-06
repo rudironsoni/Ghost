@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Playwright;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Playwright;
 
 namespace Ghost.ConsentManagement;
 
@@ -143,7 +143,7 @@ public class ConsentManagerService
     public async Task<bool> HandleConsentAsync(IPage page, int timeoutMs = 5000)
     {
         _logger.LogDebug("Checking for consent banners...");
-        
+
         foreach (var manager in ConsentManagers)
         {
             try
@@ -160,10 +160,10 @@ public class ConsentManagerService
                 if (handled)
                 {
                     _logger.LogInformation("Successfully handled consent for: {ManagerId}", manager.Id);
-                    
+
                     // Wait a moment for the banner to disappear and page to settle
                     await Task.Delay(1000);
-                    
+
                     // Check if banner is actually gone
                     var stillPresent = await DetectConsentManagerAsync(page, manager, 1000);
                     if (!stillPresent)
@@ -252,7 +252,7 @@ public class ConsentManagerService
                             return false;
                         }}
                     ");
-                    
+
                     if (clicked)
                     {
                         _logger.LogDebug("Clicked iframe consent button: {Selector}", selector);
@@ -266,11 +266,11 @@ public class ConsentManagerService
                     {
                         var isVisible = await button.IsVisibleAsync();
                         var isEnabled = await button.IsEnabledAsync();
-                        
+
                         if (isVisible && isEnabled)
                         {
                             _logger.LogDebug("Clicking consent button: {Selector}", selector);
-                            
+
                             try
                             {
                                 await button.ClickAsync();
@@ -300,13 +300,13 @@ public class ConsentManagerService
     public async Task<bool> WaitAndHandleConsentAsync(IPage page, int maxWaitMs = 10000, int checkIntervalMs = 500)
     {
         var startTime = DateTime.UtcNow;
-        
+
         while ((DateTime.UtcNow - startTime).TotalMilliseconds < maxWaitMs)
         {
             var handled = await HandleConsentAsync(page, checkIntervalMs);
             if (handled)
                 return true;
-                
+
             await Task.Delay(checkIntervalMs);
         }
 

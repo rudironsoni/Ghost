@@ -1,5 +1,5 @@
-using Microsoft.Extensions.Configuration;
 using Ghost.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -20,7 +20,7 @@ public sealed class LinkedInExtension : IExtension
         // Bind from nested path: Ghost:Extensions:LinkedIn in appsettings.json
         services.Configure<LinkedInOptions>(configuration.GetSection("Ghost:Extensions:LinkedIn"));
         services.Configure<LinkedInSessionPoolOptions>(configuration.GetSection("Ghost:Extensions:LinkedIn:SessionPool"));
-        
+
         // Use factory method to prevent resolution during DI container validation
         services.AddSingleton<Internal.LinkedInSessionPool>(sp =>
         {
@@ -38,15 +38,15 @@ public sealed class LinkedInExtension : IExtension
         services.AddSingleton<Ghost.Abstractions.IJsonLdExtractor, Ghost.Utilities.JsonLdExtractor>();
         // GuestJobSearch implements guest API scraping logic - Singleton since it only uses the session pool
         services.AddSingleton<Internal.IGuestJobSearch, Internal.GuestJobSearch>();
-        
+
         // Register concrete implementations as Scoped (not Singleton) because they depend on IBrowserSession
         services.AddScoped<LinkedInSocialClient>();
         services.AddScoped<LinkedInJobClient>();
         services.AddScoped<LinkedInNewsClient>();
-        
+
         // Authenticator used by LinkedInSocialClient for logging in / cookie handling - Scoped because it uses IBrowserSession
         services.AddScoped<Internal.LinkedInAuthenticator>();
-        
+
         // Register interface mappings (for when aggregators need them)
         services.AddScoped<Ghost.Contracts.Social.ISocialClient>(sp => sp.GetRequiredService<LinkedInSocialClient>());
         services.AddScoped<Ghost.Abstractions.IJobScraper>(sp => sp.GetRequiredService<LinkedInJobClient>());

@@ -2,9 +2,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using Ghost.Contracts.Jobs;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Ghost.Contracts.Jobs;
 
 namespace Ghost.Core.Caching;
 

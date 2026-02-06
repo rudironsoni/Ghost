@@ -1,7 +1,7 @@
-using Ghost.Sdk.Spider.Adapters.Contracts;
-using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Http.Headers;
+using Ghost.Sdk.Spider.Adapters.Contracts;
+using Microsoft.Extensions.Logging;
 
 namespace Ghost.Sdk.Spider.Adapters;
 
@@ -196,7 +196,7 @@ public class StaticHtmlAdapter : IContentAdapter
             request.Method.Equals("PATCH", StringComparison.OrdinalIgnoreCase)))
         {
             httpRequest.Content = new StringContent(request.Body);
-            
+
             // Set content type if specified in headers
             if (request.Headers.TryGetValue("Content-Type", out var contentType))
             {
@@ -267,7 +267,7 @@ public class StaticHtmlAdapter : IContentAdapter
     private Response CreateErrorResponse(string error, Exception? exception, DateTimeOffset startTime, string url)
     {
         var contentResult = ContentResult.CreateFailure(error, ContentType.StaticHtml);
-        
+
         return new Response(contentResult)
         {
             IsSuccess = false,
