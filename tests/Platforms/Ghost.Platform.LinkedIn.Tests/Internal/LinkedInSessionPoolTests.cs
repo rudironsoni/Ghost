@@ -14,7 +14,7 @@ namespace Ghost.Platform.LinkedIn.Tests.Internal;
 public class LinkedInSessionPoolTests
 {
     [Fact]
-    public void Constructor_Rejects_Invalid_MaxSize()
+    public void ConstructorRejectsInvalidMaxSize()
     {
         var kernel = CreateKernelSubstitute();
         var options = new LinkedInSessionPoolOptions { MaxSize = 0, WarmCount = 0 };
@@ -25,7 +25,7 @@ public class LinkedInSessionPoolTests
     }
 
     [Fact]
-    public async Task AcquireAsync_ReturnsNewSession_WhenPoolEmpty()
+    public async Task AcquireAsyncReturnsNewSessionWhenPoolEmpty()
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s1");
@@ -42,7 +42,7 @@ public class LinkedInSessionPoolTests
     }
 
     [Fact]
-    public async Task Release_SkipsReuse_WhenPoolAtCapacity()
+    public async Task ReleaseSkipsReuseWhenPoolAtCapacity()
     {
         var kernel = CreateKernelSubstitute();
         var session1 = CreateSession("cap-1");
@@ -63,7 +63,7 @@ public class LinkedInSessionPoolTests
     }
 
     [Fact]
-    public async Task Release_RecyclesSessionIntoPool()
+    public async Task ReleaseRecyclesSessionIntoPool()
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s2");
@@ -81,7 +81,7 @@ public class LinkedInSessionPoolTests
     }
 
     [Fact]
-    public async Task AcquireAsync_ReusesReleasedSession()
+    public async Task AcquireAsyncReusesReleasedSession()
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s3");
@@ -98,7 +98,7 @@ public class LinkedInSessionPoolTests
     }
 
     [Fact]
-    public async Task Release_UnknownSession_DisposesIt()
+    public async Task ReleaseUnknownSessionDisposesIt()
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s4");
@@ -110,7 +110,7 @@ public class LinkedInSessionPoolTests
     }
 
     [Fact]
-    public async Task PruneAsync_RemovesExpiredIdleSessions()
+    public async Task PruneAsyncRemovesExpiredIdleSessions()
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s5");
@@ -137,7 +137,7 @@ public class LinkedInSessionPoolTests
     }
 
     [Fact]
-    public async Task PruneAsync_MarksInUseExpiredSessionsForRecycle()
+    public async Task PruneAsyncMarksInUseExpiredSessionsForRecycle()
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s6");
@@ -163,7 +163,7 @@ public class LinkedInSessionPoolTests
     }
 
     [Fact]
-    public async Task Release_DisposesDisconnectedSessions()
+    public async Task ReleaseDisposesDisconnectedSessions()
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s7", isConnected: false);
@@ -178,7 +178,7 @@ public class LinkedInSessionPoolTests
     }
 
     [Fact]
-    public async Task WarmupAsync_CreatesUpToRemainingCapacity()
+    public async Task WarmupAsyncCreatesUpToRemainingCapacity()
     {
         var kernel = CreateKernelSubstitute();
         var sessions = new Queue<IBrowserSession>(new[]
@@ -201,7 +201,7 @@ public class LinkedInSessionPoolTests
     }
 
     [Fact]
-    public async Task AcquireAsync_UpdatesMetricsWithAverageTime()
+    public async Task AcquireAsyncUpdatesMetricsWithAverageTime()
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s8");

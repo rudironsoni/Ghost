@@ -148,7 +148,7 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
         return null;
     }
 
-    public async Task SetJobsAsync(string cacheKey, IReadOnlyList<JobListing> jobs, TimeSpan? expiration = null, CancellationToken ct = default)
+    public Task SetJobsAsync(string cacheKey, IReadOnlyList<JobListing> jobs, TimeSpan? expiration = null, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(cacheKey);
         ArgumentNullException.ThrowIfNull(jobs);
@@ -179,6 +179,8 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
                 lockObj.Release();
             }
         }, ct);
+        
+        return Task.CompletedTask;
     }
 
     public Task InvalidateAsync(string pattern, CancellationToken ct = default)

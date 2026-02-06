@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <NoWarn>CA1707;CA1826;CA2201</NoWarn>
     <WarningsNotAsErrors>CA1707;CA1826;CA2201</WarningsNotAsErrors>

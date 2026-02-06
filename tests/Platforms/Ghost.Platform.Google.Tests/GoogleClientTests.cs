@@ -12,7 +12,7 @@ namespace Ghost.Platform.Google.Tests;
 public class GoogleClientTests
 {
     [Fact]
-    public async Task CompleteAsync_ReturnsText_WhenPageEvaluates()
+    public async Task CompleteAsyncReturnsTextWhenPageEvaluates()
     {
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();
@@ -30,7 +30,7 @@ public class GoogleClientTests
     }
 
     [Fact]
-    public async Task StreamAsync_InvokesHandler()
+    public async Task StreamAsyncInvokesHandler()
     {
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();

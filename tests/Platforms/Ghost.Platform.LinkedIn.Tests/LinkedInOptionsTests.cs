@@ -7,7 +7,7 @@ namespace Ghost.Platform.LinkedIn.Tests;
 public class LinkedInOptionsTests
 {
     [Fact]
-    public void Defaults_And_Setters()
+    public void DefaultsAndSetters()
     {
         var opts = new LinkedInOptions();
         opts.BaseUrl.Should().Be("https://www.linkedin.com");

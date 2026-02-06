@@ -23,14 +23,14 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public void Name_ShouldReturnLinkedInJobSpider()
+    public void NameShouldReturnLinkedInJobSpider()
     {
         // Assert
         _spider.Name.Should().Be("LinkedInJobSpider");
     }
 
     [Test]
-    public void GetStartUrls_ShouldReturnLinkedInUrls()
+    public void GetStartUrlsShouldReturnLinkedInUrls()
     {
         // Act
         var urls = _spider.GetStartUrls().ToList();
@@ -41,14 +41,14 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public void Options_ShouldHaveLinkedInDomain()
+    public void OptionsShouldHaveLinkedInDomain()
     {
         // Assert
         _spider.Options.AllowedDomains.Should().Contain("linkedin.com");
     }
 
     [Test]
-    public void Options_ShouldExcludeAdminPages()
+    public void OptionsShouldExcludeAdminPages()
     {
         // Assert
         _spider.Options.ExcludePatterns.Should().Contain(@".*/admin/.*");
@@ -56,7 +56,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public void Options_ShouldHaveReasonableDefaults()
+    public void OptionsShouldHaveReasonableDefaults()
     {
         // Assert
         _spider.Options.MaxDepth.Should().Be(2);
@@ -65,7 +65,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public async Task ProcessResponseAsync_WithValidJobPage_ShouldExtractJob()
+    public async Task ProcessResponseAsyncWithValidJobPageShouldExtractJob()
     {
         // Arrange
         var html = await ReadFixtureAsync("test-job.html");
@@ -87,7 +87,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public async Task ProcessResponseAsync_WithMultipleJobPages_ShouldExtractAllJobs()
+    public async Task ProcessResponseAsyncWithMultipleJobPagesShouldExtractAllJobs()
     {
         // Arrange
         var html1 = await ReadFixtureAsync("test-job.html");
@@ -108,7 +108,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public async Task ProcessResponseAsync_WithInvalidJob_ShouldNotExtract()
+    public async Task ProcessResponseAsyncWithInvalidJobShouldNotExtract()
     {
         // Arrange - Job without required fields
         var invalidHtml = "<html><body><p>Not a job page</p></body></html>";
@@ -127,7 +127,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public async Task ProcessResponseAsync_WithNonHtmlResponse_ShouldNotProcess()
+    public async Task ProcessResponseAsyncWithNonHtmlResponseShouldNotProcess()
     {
         // Arrange
         var response = CreateResponse(
@@ -145,7 +145,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public async Task ProcessResponseAsync_WithFailedResponse_ShouldNotProcess()
+    public async Task ProcessResponseAsyncWithFailedResponseShouldNotProcess()
     {
         // Arrange
         var response = CreateResponse(
@@ -165,7 +165,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public async Task OnStartAsync_ShouldClearExtractedJobs()
+    public async Task OnStartAsyncShouldClearExtractedJobs()
     {
         // Arrange
         var context = new ExecutionContext("Test", new SpiderOptions());
@@ -185,7 +185,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public async Task OnCompleteAsync_ShouldBeCallable()
+    public async Task OnCompleteAsyncShouldBeCallable()
     {
         // Arrange
         var context = new ExecutionContext("Test", new SpiderOptions());
@@ -205,7 +205,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public async Task OnErrorAsync_ShouldHandleException()
+    public async Task OnErrorAsyncShouldHandleException()
     {
         // Arrange
         var context = new ExecutionContext("Test", new SpiderOptions());
@@ -219,7 +219,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public void ShouldFollowUrl_WithJobViewUrl_ShouldReturnTrue()
+    public void ShouldFollowUrlWithJobViewUrlShouldReturnTrue()
     {
         // Arrange
         var context = new ExecutionContext("Test", new SpiderOptions());
@@ -233,7 +233,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public void ShouldFollowUrl_WithJobSearchUrl_ShouldReturnTrue()
+    public void ShouldFollowUrlWithJobSearchUrlShouldReturnTrue()
     {
         // Arrange
         var context = new ExecutionContext("Test", new SpiderOptions());
@@ -247,7 +247,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public void ShouldFollowUrl_WithNonJobUrl_ShouldReturnFalse()
+    public void ShouldFollowUrlWithNonJobUrlShouldReturnFalse()
     {
         // Arrange
         var context = new ExecutionContext("Test", new SpiderOptions());
@@ -261,7 +261,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public void ShouldFollowUrl_WithAdminUrl_ShouldReturnFalse()
+    public void ShouldFollowUrlWithAdminUrlShouldReturnFalse()
     {
         // Arrange
         var context = new ExecutionContext("Test", new SpiderOptions());
@@ -275,7 +275,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public void ShouldFollowUrl_WithLogoutUrl_ShouldReturnFalse()
+    public void ShouldFollowUrlWithLogoutUrlShouldReturnFalse()
     {
         // Arrange
         var context = new ExecutionContext("Test", new SpiderOptions());
@@ -289,7 +289,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public void ShouldFollowUrl_WithNonLinkedInDomain_ShouldReturnFalse()
+    public void ShouldFollowUrlWithNonLinkedInDomainShouldReturnFalse()
     {
         // Arrange
         var context = new ExecutionContext("Test", new SpiderOptions());
@@ -303,7 +303,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public void ShouldFollowUrl_WithInvalidUrl_ShouldReturnFalse()
+    public void ShouldFollowUrlWithInvalidUrlShouldReturnFalse()
     {
         // Arrange
         var context = new ExecutionContext("Test", new SpiderOptions());
@@ -317,7 +317,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public void ShouldFollowUrl_WithNullUrl_ShouldReturnFalse()
+    public void ShouldFollowUrlWithNullUrlShouldReturnFalse()
     {
         // Arrange
         var context = new ExecutionContext("Test", new SpiderOptions());
@@ -330,7 +330,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public async Task ProcessResponseAsync_WithRealFixtures_ShouldExtractValidJobs()
+    public async Task ProcessResponseAsyncWithRealFixturesShouldExtractValidJobs()
     {
         // Arrange
         var fixtures = new[]
@@ -363,7 +363,7 @@ public class LinkedInSpiderTests
     }
 
     [Test]
-    public async Task ExtractedJobs_ShouldBeReadOnly()
+    public async Task ExtractedJobsShouldBeReadOnly()
     {
         // Arrange
         var html = await ReadFixtureAsync("test-job.html");

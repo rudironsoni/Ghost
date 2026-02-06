@@ -10,7 +10,7 @@ namespace Ghost.Platform.LinkedIn.Tests;
 public class GuestJobSearchParsingTests
 {
     [Fact]
-    public void JsonLdParser_FormatSalary_HandleNull()
+    public void JsonLdParserFormatSalaryHandleNull()
     {
         var html = "";
         var extractor = new Ghost.Utilities.JsonLdExtractor();
@@ -20,7 +20,7 @@ public class GuestJobSearchParsingTests
     }
 
     [Fact]
-    public void ParseExperience_NotApplicable_MapsToUnknown()
+    public void ParseExperienceNotApplicableMapsToUnknown()
     {
         var level = GuestJobSearch_ParseExperience("Not Applicable");
         level.Should().Be(Contracts.Jobs.ExperienceLevel.Unknown);

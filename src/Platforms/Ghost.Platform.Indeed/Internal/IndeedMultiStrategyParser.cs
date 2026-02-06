@@ -51,12 +51,12 @@ public sealed class IndeedMultiStrategyParser
     /// <summary>
     /// Main entry point for parsing HTML using Ghost.Sdk.Spider EntityParser
     /// </summary>
-    public async Task<List<JobListing>> ParseHtmlAsync(string html)
+    public Task<List<JobListing>> ParseHtmlAsync(string html)
     {
         if (string.IsNullOrWhiteSpace(html))
         {
             LogEmptyHtml(_logger, null);
-            return new List<JobListing>();
+            return Task.FromResult(new List<JobListing>());
         }
 
         LogStartingParse(_logger, html.Length, null);
@@ -77,7 +77,7 @@ public sealed class IndeedMultiStrategyParser
             if (entities.Count == 0)
             {
                 LogNoJobsExtracted(_logger, null);
-                return new List<JobListing>();
+                return Task.FromResult(new List<JobListing>());
             }
 
             // Convert entities to JobListing objects
@@ -85,12 +85,12 @@ public sealed class IndeedMultiStrategyParser
 
             LogJobsExtracted(_logger, jobListings.Count, null);
 
-            return jobListings;
+            return Task.FromResult(jobListings);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error parsing HTML");
-            return new List<JobListing>();
+            return Task.FromResult(new List<JobListing>());
         }
     }
 

@@ -9,14 +9,14 @@ namespace Ghost.Platform.Google.Tests;
 public class GoogleExtensionTests
 {
     [Fact]
-    public void Name_ShouldContainGoogle()
+    public void NameShouldContainGoogle()
     {
         var ext = new GoogleExtension();
         ext.Name.ToLowerInvariant().Should().Contain("google");
     }
 
     [Fact]
-    public void ConfigureServices_DoesNotThrow()
+    public void ConfigureServicesDoesNotThrow()
     {
         var ext = new GoogleExtension();
         var services = new ServiceCollection();

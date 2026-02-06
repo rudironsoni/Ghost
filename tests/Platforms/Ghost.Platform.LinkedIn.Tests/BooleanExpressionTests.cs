@@ -32,7 +32,7 @@ public class BooleanExpressionTests
     [InlineData("golang (remote)", "golang%20%28remote%29")]
     [InlineData("\"data scientist", "%22data%20scientist")]
     [InlineData("data scientist\"", "data%20scientist%22")]
-    public void BuildSearchUrl_EncodesQueries(string query, string expectedQuery)
+    public void BuildSearchUrlEncodesQueries(string query, string expectedQuery)
     {
         var url = LinkedInQueryBuilder.BuildSearchUrl(query, "Seattle");
 
@@ -43,7 +43,7 @@ public class BooleanExpressionTests
     [InlineData(0, "start=0")]
     [InlineData(25, "start=25")]
     [InlineData(-1, "start=0")]
-    public void BuildSearchUrl_IncludesOffset(int offset, string expected)
+    public void BuildSearchUrlIncludesOffset(int offset, string expected)
     {
         var url = LinkedInQueryBuilder.BuildSearchUrl("software engineer", "Seattle", offset);
 
@@ -53,7 +53,7 @@ public class BooleanExpressionTests
     [Theory]
     [InlineData(3600, "f_TPR=r3600")]
     [InlineData(86400, "f_TPR=r86400")]
-    public void BuildSearchUrl_IncludesPostedWithin(int seconds, string expected)
+    public void BuildSearchUrlIncludesPostedWithin(int seconds, string expected)
     {
         var url = LinkedInQueryBuilder.BuildSearchUrl("software engineer", "Seattle", postedWithin: TimeSpan.FromSeconds(seconds));
 
@@ -61,7 +61,7 @@ public class BooleanExpressionTests
     }
 
     [Fact]
-    public void BuildSearchUrl_EmptyQuery_StillBuildsUrl()
+    public void BuildSearchUrlEmptyQueryStillBuildsUrl()
     {
         var url = LinkedInQueryBuilder.BuildSearchUrl("", "Seattle");
 
@@ -69,7 +69,7 @@ public class BooleanExpressionTests
     }
 
     [Fact]
-    public void BuildSearchUrl_NullLocation_StillBuildsUrl()
+    public void BuildSearchUrlNullLocationStillBuildsUrl()
     {
         var url = LinkedInQueryBuilder.BuildSearchUrl("software engineer", null!);
 

@@ -52,12 +52,12 @@ public sealed class GoogleJobsMultiStrategyParser
     /// <summary>
     /// Main entry point for parsing HTML using Ghost.Sdk.Spider EntityParser
     /// </summary>
-    public async Task<List<JobListing>> ParseHtmlAsync(string html)
+    public Task<List<JobListing>> ParseHtmlAsync(string html)
     {
         if (string.IsNullOrWhiteSpace(html))
         {
             LogEmptyHtml(_logger, null);
-            return new List<JobListing>();
+            return Task.FromResult(new List<JobListing>());
         }
 
         LogStartingParse(_logger, html.Length, null);
@@ -67,7 +67,7 @@ public sealed class GoogleJobsMultiStrategyParser
             html.Contains("Before you continue to Google Search", StringComparison.OrdinalIgnoreCase))
         {
             LogConsentPageDetected(_logger, null);
-            return new List<JobListing>();
+            return Task.FromResult(new List<JobListing>());
         }
 
         try
@@ -108,12 +108,12 @@ public sealed class GoogleJobsMultiStrategyParser
                 LogNoJobsExtracted(_logger, null);
             }
 
-            return jobs;
+            return Task.FromResult(jobs);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error parsing HTML with EntityParser");
-            return new List<JobListing>();
+            return Task.FromResult(new List<JobListing>());
         }
     }
 

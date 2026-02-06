@@ -21,7 +21,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public async Task Parse_WithTestJobFixture_ShouldExtractAllFields()
+    public async Task ParseWithTestJobFixtureShouldExtractAllFields()
     {
         // Arrange
         var html = await ReadFixtureAsync("test-job.html");
@@ -48,7 +48,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public async Task Parse_WithTestJobFixture_ShouldExtractUrls()
+    public async Task ParseWithTestJobFixtureShouldExtractUrls()
     {
         // Arrange
         var html = await ReadFixtureAsync("test-job.html");
@@ -70,7 +70,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public async Task Parse_WithTestJobFixture_ShouldExtractDescription()
+    public async Task ParseWithTestJobFixtureShouldExtractDescription()
     {
         // Arrange
         var html = await ReadFixtureAsync("test-job.html");
@@ -92,7 +92,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public async Task Parse_WithTestJobFixture_ShouldExtractApplicantCount()
+    public async Task ParseWithTestJobFixtureShouldExtractApplicantCount()
     {
         // Arrange
         var html = await ReadFixtureAsync("test-job.html");
@@ -112,7 +112,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public async Task Parse_WithTestJobFixture_ShouldSetBaseProperties()
+    public async Task ParseWithTestJobFixtureShouldSetBaseProperties()
     {
         // Arrange
         var sourceUrl = "https://www.linkedin.com/jobs/view/test-job";
@@ -136,7 +136,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public async Task Parse_WithTestJobFixture_ShouldPassValidation()
+    public async Task ParseWithTestJobFixtureShouldPassValidation()
     {
         // Arrange
         var html = await ReadFixtureAsync("test-job.html");
@@ -156,7 +156,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public async Task Parse_WithRealFixture1_ShouldExtractTitle()
+    public async Task ParseWithRealFixture1ShouldExtractTitle()
     {
         // Arrange
         var html = await ReadFixtureAsync("linkedin-job-detail-1.html");
@@ -177,7 +177,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public async Task Parse_WithRealFixture2_ShouldExtractAllRequiredFields()
+    public async Task ParseWithRealFixture2ShouldExtractAllRequiredFields()
     {
         // Arrange
         var html = await ReadFixtureAsync("linkedin-job-detail-2.html");
@@ -199,7 +199,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public async Task Parse_WithRealFixture3_ShouldHandleOptionalFields()
+    public async Task ParseWithRealFixture3ShouldHandleOptionalFields()
     {
         // Arrange
         var html = await ReadFixtureAsync("linkedin-job-detail-3.html");
@@ -224,7 +224,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public void Parse_WithEmptyContent_ShouldReturnNull()
+    public void ParseWithEmptyContentShouldReturnNull()
     {
         // Arrange
         var context = new ExtractionContext
@@ -242,7 +242,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public void Parse_WithInvalidHtml_ShouldReturnNull()
+    public void ParseWithInvalidHtmlShouldReturnNull()
     {
         // Arrange
         var context = new ExtractionContext
@@ -260,7 +260,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public async Task TrimFormatter_ShouldRemoveWhitespace()
+    public void TrimFormatterShouldRemoveWhitespace()
     {
         // Arrange - Create HTML with extra whitespace
         var htmlWithWhitespace = @"
@@ -296,7 +296,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public async Task RegexFormatter_ShouldExtractNumericValues()
+    public void RegexFormatterShouldExtractNumericValues()
     {
         // Arrange - HTML with applicant text
         var htmlWithApplicants = @"
@@ -324,7 +324,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public void Validate_WithMissingTitle_ShouldReturnFalse()
+    public void ValidateWithMissingTitleShouldReturnFalse()
     {
         // Arrange
         var entity = new LinkedInJobEntity
@@ -340,7 +340,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public void Validate_WithMissingCompany_ShouldReturnFalse()
+    public void ValidateWithMissingCompanyShouldReturnFalse()
     {
         // Arrange
         var entity = new LinkedInJobEntity
@@ -356,7 +356,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public void Validate_WithBothRequiredFields_ShouldReturnTrue()
+    public void ValidateWithBothRequiredFieldsShouldReturnTrue()
     {
         // Arrange
         var entity = new LinkedInJobEntity
@@ -373,7 +373,7 @@ public class LinkedInEntityTests
     }
 
     [Test]
-    public void GetMetadata_ShouldReturnEntityConfiguration()
+    public void GetMetadataShouldReturnEntityConfiguration()
     {
         // Act
         var metadata = LinkedInJobEntity.GetMetadata();

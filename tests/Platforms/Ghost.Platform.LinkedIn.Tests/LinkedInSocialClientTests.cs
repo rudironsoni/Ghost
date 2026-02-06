@@ -14,7 +14,7 @@ namespace Ghost.Platform.LinkedIn.Tests;
 public class LinkedInSocialClientTests
 {
     [Fact]
-    public async Task GetProfileAsync_ReturnsDefault_WhenNoElementFound()
+    public async Task GetProfileAsyncReturnsDefaultWhenNoElementFound()
     {
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();
@@ -30,7 +30,7 @@ public class LinkedInSocialClientTests
     }
 
     [Fact]
-    public async Task SearchProfilesAsync_ReturnsList_OnSuccess()
+    public async Task SearchProfilesAsyncReturnsListOnSuccess()
     {
         var mockSession = Substitute.For<IBrowserSession>();
         var mockPage = Substitute.For<IPage>();
