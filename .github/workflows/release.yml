@@ -53,12 +53,15 @@ jobs:
           esac
           new_tag="v${major}.${minor}.${patch}"
           if git rev-parse -q --verify "refs/tags/$new_tag" >/dev/null; then
-            echo "Tag $new_tag already exists" >&2
-            exit 1
+            echo "Tag $new_tag already exists, will skip creation"
+            echo "tag_exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag_exists=false" >> "$GITHUB_OUTPUT"
           fi
           echo "tag=$new_tag" >> "$GITHUB_OUTPUT"
 
       - name: Create git tag
+        if: steps.version.outputs.tag_exists == 'false'
         env:
           GIT_AUTHOR_NAME: github-actions[bot]
           GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
