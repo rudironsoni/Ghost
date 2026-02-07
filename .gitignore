@@ -97,3 +97,6 @@ coverage/*
 coveragereport/*
 CoverageReport/*
 CoverageReportFinal/*
+
+# bv (beads viewer) local config and caches
+.bv/
