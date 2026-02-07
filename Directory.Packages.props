@@ -9,7 +9,7 @@
    <!-- Core Dependencies -->
   <ItemGroup Label="Core">
     <PackageVersion Include="DotNetEnv" Version="3.1.1" />
-    <PackageVersion Include="Microsoft.Playwright" Version="1.49.0" />
+    <PackageVersion Include="Patchright" Version="1.58.0" />
     <PackageVersion Include="Polly.Core" Version="8.5.2" />
     <PackageVersion Include="Polly" Version="8.5.2" />
     <PackageVersion Include="Polly.Extensions.Http" Version="3.0.0" />
@@ -82,7 +82,7 @@
        <PackageVersion Include="NUnit.Analyzers" Version="4.6.0" />
        <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="9.0.1" />
        <PackageVersion Include="WireMock.Net" Version="1.6.11" />
-       <PackageVersion Include="Microsoft.Playwright.NUnit" Version="1.49.0" />
+       <PackageVersion Include="Patchright.NUnit" Version="1.58.0" />
      </ItemGroup>
 
   <!-- Roslyn Analyzers -->

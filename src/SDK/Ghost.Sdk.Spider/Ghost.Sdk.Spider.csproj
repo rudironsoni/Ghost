@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <!-- Browser Automation -->
-    <PackageReference Include="Microsoft.Playwright" />
+    <PackageReference Include="Patchright" />
     
     <!-- Configuration -->
     <PackageReference Include="YamlDotNet" />

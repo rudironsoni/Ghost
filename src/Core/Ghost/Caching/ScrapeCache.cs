@@ -179,7 +179,7 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
                 lockObj.Release();
             }
         }, ct);
-        
+
         return Task.CompletedTask;
     }
 
