@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Abstractions;
 using Ghost.ProxyManagement;
-using Microsoft.Extensions.Logging.Nulls;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace Ghost.Tests.ProxyManagement;

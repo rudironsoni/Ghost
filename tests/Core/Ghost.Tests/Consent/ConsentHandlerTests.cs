@@ -89,7 +89,7 @@ public class ConsentHandlerTests
         var handler = new ConsentHandler();
         var page = Substitute.For<IPage>();
         page.Url.Returns("https://example.com");
-        page.QuerySelectorAsync(Arg.Any<string>()).Returns((IElementHandle?)null);
+        page.QuerySelectorAsync(Arg.Any<string>()).Returns(Task.FromResult<IElement?>(null));
 
         // Act
         var result = await handler.DetectCMPAsync(page);
@@ -119,7 +119,7 @@ public class ConsentHandlerTests
         var handler = new ConsentHandler();
         var page = Substitute.For<IPage>();
         page.Url.Returns("https://example.com");
-        page.QuerySelectorAsync(Arg.Any<string>()).Returns((IElementHandle?)null);
+        page.QuerySelectorAsync(Arg.Any<string>()).Returns(Task.FromResult<IElement?>(null));
 
         // Act
         var result = await handler.HandleConsentAsync(page);

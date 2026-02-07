@@ -40,7 +40,8 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
         var launchArgs = new List<string>(opts.Args ?? []);
         if (opts.EnableStealth && !opts.DisableDefaultStealthArgs)
         {
-            launchArgs.Add("--disable-blink-features=AutomationControlled");
+            // NOTE: Patchright automatically handles --disable-blink-features=AutomationControlled
+            // No need to add this flag manually - it's patched at the binary level
             launchArgs.Add("--enable-quic");
             // Essential flags for server/container environments
             launchArgs.Add("--no-sandbox");
