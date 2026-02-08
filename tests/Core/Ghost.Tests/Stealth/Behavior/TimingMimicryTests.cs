@@ -1,4 +1,5 @@
 using Ghost.Stealth.Behavior;
+using Xunit;
 
 namespace Ghost.Tests.Stealth.Behavior;
 

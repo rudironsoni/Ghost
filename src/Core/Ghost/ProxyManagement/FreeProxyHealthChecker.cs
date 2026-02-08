@@ -119,7 +119,7 @@ public sealed class FreeProxyHealthChecker
     /// <summary>
     /// Calculates the success rate for the given metrics.
     /// </summary>
-    public double CalculateSuccessRate(long totalRequests, long successfulRequests)
+    public static double CalculateSuccessRate(long totalRequests, long successfulRequests)
     {
         if (totalRequests == 0)
             return 0.0;

@@ -129,7 +129,7 @@ public class ConsentFlowHandlerTests
     {
         // Arrange
         var page = Substitute.For<IPage>();
-        page.QuerySelectorAsync(Arg.Any<string>()).Returns((IElementHandle?)null);
+        page.QuerySelectorAsync(Arg.Any<string>()).Returns(Task.FromResult<IElement?>(null));
 
         // Act
         var result = await ConsentFlowHandler.DetectElementAsync(page, ".not-found", checkShadowDOM: false);
@@ -144,7 +144,7 @@ public class ConsentFlowHandlerTests
         // Arrange
         var handler = new ConsentFlowHandler();
         var page = Substitute.For<IPage>();
-        page.QuerySelectorAsync(Arg.Any<string>()).Returns((IElementHandle?)null);
+        page.QuerySelectorAsync(Arg.Any<string>()).Returns(Task.FromResult<IElement?>(null));
 
         var config = new CMPConfig
         {

@@ -25,7 +25,7 @@ public static class QueueServiceCollectionExtensions
             configuration.GetSection("Redis"));
 
         // Register queue service
-        services.TryAddSingleton<IJobQueue, RedisJobQueue>();
+        services.TryAddSingleton<IJobDispatcher, RedisJobDispatcher>();
 
         return services;
     }
@@ -41,7 +41,7 @@ public static class QueueServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configureOptions);
 
         services.Configure(configureOptions);
-        services.TryAddSingleton<IJobQueue, RedisJobQueue>();
+        services.TryAddSingleton<IJobDispatcher, RedisJobDispatcher>();
 
         return services;
     }

@@ -97,7 +97,7 @@ public class TLSFingerprintServiceTests
     public void GetTLSLaunchArgs_WithChrome_ReturnsChromiumArgs()
     {
         // Act
-        var args = _service.GetTLSLaunchArgs("chrome");
+        var args = TLSFingerprintService.GetTLSLaunchArgs("chrome");
 
         // Assert
         args.Should().NotBeEmpty();
@@ -108,7 +108,7 @@ public class TLSFingerprintServiceTests
     public void GetTLSLaunchArgs_WithEdge_ReturnsChromiumArgs()
     {
         // Act
-        var args = _service.GetTLSLaunchArgs("edge");
+        var args = TLSFingerprintService.GetTLSLaunchArgs("edge");
 
         // Assert
         args.Should().NotBeEmpty();
@@ -119,7 +119,7 @@ public class TLSFingerprintServiceTests
     public void GetTLSLaunchArgs_WithFirefox_ReturnsFirefoxArgs()
     {
         // Act
-        var args = _service.GetTLSLaunchArgs("firefox");
+        var args = TLSFingerprintService.GetTLSLaunchArgs("firefox");
 
         // Assert
         args.Should().NotBeEmpty();
@@ -129,7 +129,7 @@ public class TLSFingerprintServiceTests
     public void GetTLSLaunchArgs_WithUnknownBrowser_ReturnsEmptyList()
     {
         // Act
-        var args = _service.GetTLSLaunchArgs("unknown");
+        var args = TLSFingerprintService.GetTLSLaunchArgs("unknown");
 
         // Assert
         args.Should().BeEmpty();

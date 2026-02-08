@@ -27,6 +27,8 @@ public sealed class FreeProxyScraper : IProxySource
         LoggerMessage.Define<string>(LogLevel.Warning, new EventId(2, "ScrapeFailed"),
             "Failed to scrape proxies from {Source}");
 
+    private static readonly char[] s_lineSeparators = new[] { '\n', '\r' };
+
     public FreeProxyScraper(ILogger<FreeProxyScraper> logger)
         : this(new HttpClient { Timeout = TimeSpan.FromSeconds(30) }, logger)
     {
@@ -203,7 +205,7 @@ public sealed class FreeProxyScraper : IProxySource
         if (string.IsNullOrWhiteSpace(content))
             return proxies;
 
-        var lines = content.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+        var lines = content.Split(s_lineSeparators, StringSplitOptions.RemoveEmptyEntries);
 
         foreach (var line in lines)
         {

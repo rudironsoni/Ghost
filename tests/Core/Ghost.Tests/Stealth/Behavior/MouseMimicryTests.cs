@@ -1,6 +1,7 @@
 using Ghost.Stealth.Behavior;
 using Microsoft.Playwright;
 using NSubstitute;
+using Xunit;
 
 namespace Ghost.Tests.Stealth.Behavior;
 

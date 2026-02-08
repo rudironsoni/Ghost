@@ -93,7 +93,7 @@ public class ShadowDOMHelperTests
         // Arrange
         var page = Substitute.For<IPage>();
         page.QuerySelectorAsync(Arg.Any<string>())
-            .Returns(Task.FromException<IElementHandle?>(new Exception("Test error")));
+            .Returns(Task.FromResult<IElement?>(null));
         page.EvaluateAsync<bool>(Arg.Any<string>())
             .Returns(Task.FromException<bool>(new Exception("Test error")));
 
@@ -110,7 +110,7 @@ public class ShadowDOMHelperTests
         // Arrange
         var page = Substitute.For<IPage>();
         page.QuerySelectorAsync(Arg.Any<string>())
-            .Returns(Task.FromException<IElementHandle?>(new Exception("Test error")));
+            .Returns(Task.FromResult<IElement?>(null));
         page.EvaluateAsync<bool>(Arg.Any<string>())
             .Returns(Task.FromException<bool>(new Exception("Test error")));
 

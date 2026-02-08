@@ -1,9 +1,9 @@
 namespace Ghost.Queue;
 
 /// <summary>
-/// Interface for job queue operations
+/// Interface for job dispatcher operations
 /// </summary>
-public interface IJobQueue
+public interface IJobDispatcher
 {
     /// <summary>
     /// Enqueue a job with specified priority
@@ -34,9 +34,9 @@ public interface IJobQueue
     /// Mark a job as failed and handle retry logic
     /// </summary>
     /// <param name="jobId">Job identifier</param>
-    /// <param name="error">Exception that caused the failure</param>
+    /// <param name="exception">Exception that caused the failure</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    Task FailAsync(string jobId, Exception error, CancellationToken cancellationToken = default);
+    Task FailAsync(string jobId, Exception exception, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get count of pending jobs
