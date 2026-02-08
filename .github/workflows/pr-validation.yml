@@ -29,7 +29,11 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const title = context.payload.pull_request.title;
+            // Support act local testing with fallback to environment variable or test default
+            const title = context.payload.pull_request?.title
+              || process.env.PR_TITLE
+              || 'test: default title for local testing';
+
             const conventionalCommitRegex = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9-]+\))?: .+$/i;
 
             if (!conventionalCommitRegex.test(title)) {
@@ -54,6 +58,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Normalize Line Endings
+        run: |
+          # Configure git to normalize line endings to LF
+          git config core.autocrlf input
+          git config core.eol lf
+
+          # Re-checkout files with normalized line endings
+          git rm --cached -r .
+          git reset --hard
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
