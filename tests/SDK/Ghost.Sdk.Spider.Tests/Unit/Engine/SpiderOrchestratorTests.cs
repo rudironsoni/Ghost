@@ -88,7 +88,7 @@ public class SpiderOrchestratorTests
     {
         // Arrange
         var spider = new ConfigurableTestSpider("ErrorSpider", _options);
-        
+
         var expectedResult = new SpiderResult
         {
             SpiderName = "ErrorSpider",
@@ -194,7 +194,7 @@ public class SpiderOrchestratorTests
     {
         // Arrange
         var context = new SpiderExecutionContext("TestSpider", _options);
-        
+
         _mockEngine.Setup(e => e.GetCurrentContext())
             .Returns(context);
 

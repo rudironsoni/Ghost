@@ -89,8 +89,8 @@ public class XExtensionTests
 
         // Assert
         var provider = services.BuildServiceProvider();
-        var authenticatorDescriptor = services.FirstOrDefault(s => 
-            s.ServiceType == typeof(XAuthenticator) && 
+        var authenticatorDescriptor = services.FirstOrDefault(s =>
+            s.ServiceType == typeof(XAuthenticator) &&
             s.Lifetime == ServiceLifetime.Scoped);
         Assert.NotNull(authenticatorDescriptor);
     }
@@ -107,8 +107,8 @@ public class XExtensionTests
         extension.ConfigureServices(services, configuration);
 
         // Assert
-        var composerDescriptor = services.FirstOrDefault(s => 
-            s.ServiceType == typeof(XThreadComposer) && 
+        var composerDescriptor = services.FirstOrDefault(s =>
+            s.ServiceType == typeof(XThreadComposer) &&
             s.Lifetime == ServiceLifetime.Scoped);
         Assert.NotNull(composerDescriptor);
     }
@@ -125,8 +125,8 @@ public class XExtensionTests
         extension.ConfigureServices(services, configuration);
 
         // Assert
-        var validatorDescriptor = services.FirstOrDefault(s => 
-            s.ServiceType == typeof(XSimulationValidator) && 
+        var validatorDescriptor = services.FirstOrDefault(s =>
+            s.ServiceType == typeof(XSimulationValidator) &&
             s.Lifetime == ServiceLifetime.Scoped);
         Assert.NotNull(validatorDescriptor);
     }
@@ -143,8 +143,8 @@ public class XExtensionTests
         extension.ConfigureServices(services, configuration);
 
         // Assert
-        var clientDescriptor = services.FirstOrDefault(s => 
-            s.ServiceType == typeof(ISocialClient) && 
+        var clientDescriptor = services.FirstOrDefault(s =>
+            s.ServiceType == typeof(ISocialClient) &&
             s.ImplementationType == typeof(XSocialClient) &&
             s.Lifetime == ServiceLifetime.Scoped);
         Assert.NotNull(clientDescriptor);
@@ -162,8 +162,8 @@ public class XExtensionTests
         extension.ConfigureServices(services, configuration);
 
         // Assert
-        var validatorDescriptor = services.FirstOrDefault(s => 
-            s.ServiceType == typeof(IXPlatformSimulationValidator) && 
+        var validatorDescriptor = services.FirstOrDefault(s =>
+            s.ServiceType == typeof(IXPlatformSimulationValidator) &&
             s.Lifetime == ServiceLifetime.Scoped);
         Assert.NotNull(validatorDescriptor);
     }
@@ -180,8 +180,8 @@ public class XExtensionTests
         extension.ConfigureServices(services, configuration);
 
         // Assert
-        var splitterDescriptor = services.FirstOrDefault(s => 
-            s.ServiceType == typeof(XPostContentSplitter) && 
+        var splitterDescriptor = services.FirstOrDefault(s =>
+            s.ServiceType == typeof(XPostContentSplitter) &&
             s.Lifetime == ServiceLifetime.Singleton);
         Assert.NotNull(splitterDescriptor);
     }

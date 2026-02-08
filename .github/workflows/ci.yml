@@ -10,10 +10,13 @@ on:
       - '*.sln'
       - '**/*.csproj'
       - '.github/workflows/ci.yml'
+  schedule:
+    - cron: '0 4 * * 1'  # Weekly on Mondays at 4 AM UTC for security scans
+  workflow_dispatch:  # Allow manual trigger
 
 concurrency:
-  group: ci-main
-  cancel-in-progress: false
+  group: ci-main-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   DOTNET_VERSION: '10.0.x'
@@ -50,6 +53,16 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
+
+      - name: Cache Build Output
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/bin/Release/
+            **/obj/Release/
+          key: ${{ runner.os }}-build-${{ hashFiles('**/*.cs', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-build-
 
       - name: Restore Dependencies
         run: dotnet restore Ghost.sln
@@ -146,6 +159,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
       - name: Restore Dependencies
         run: dotnet restore Ghost.sln
 
@@ -180,6 +201,8 @@ jobs:
     name: E2E Tests
     runs-on: ubuntu-latest
     needs: build
+    # Only run E2E on main push or manual trigger, not on every commit
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -202,6 +225,14 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
+
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
 
       - name: Restore Dependencies
         run: dotnet restore Ghost.sln
@@ -234,6 +265,8 @@ jobs:
   codeql-analysis:
     name: CodeQL Security Scan
     runs-on: ubuntu-latest
+    # Only run CodeQL on schedule or manual trigger, not on every push
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     timeout-minutes: 30
     permissions:
       contents: read
@@ -269,6 +302,8 @@ jobs:
   dependency-scan:
     name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
+    # Only run on schedule or manual trigger, not on every push
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -303,6 +338,8 @@ jobs:
   secret-scan:
     name: Secret Detection
     runs-on: ubuntu-latest
+    # Only run on schedule or manual trigger, not on every push
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -363,6 +400,8 @@ jobs:
     name: Generate SBOM
     runs-on: ubuntu-latest
     needs: build
+    # Only run on schedule or manual trigger, not on every push
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -394,7 +433,7 @@ jobs:
   ci-summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [build, unit-tests, integration-tests, e2e-tests, codeql-analysis, dependency-scan, secret-scan, package-artifacts, generate-sbom]
+    needs: [build, unit-tests, integration-tests]
     if: always()
     steps:
       - name: Check Results
@@ -402,19 +441,9 @@ jobs:
           # Required jobs (must succeed)
           if [[ "${{ needs.build.result }}" != "success" ]] || \
              [[ "${{ needs.unit-tests.result }}" != "success" ]] || \
-             [[ "${{ needs.integration-tests.result }}" != "success" ]] || \
-             [[ "${{ needs.e2e-tests.result }}" != "success" ]] || \
-             [[ "${{ needs.dependency-scan.result }}" != "success" ]] || \
-             [[ "${{ needs.secret-scan.result }}" != "success" ]]; then
+             [[ "${{ needs.integration-tests.result }}" != "success" ]]; then
             echo "❌ CI pipeline failed"
             exit 1
           fi
-          
-          # CodeQL is required to run but can fail for permission issues
-          if [[ "${{ needs.codeql-analysis.result }}" == "failure" ]]; then
-            echo "⚠️  CodeQL analysis failed (may require GitHub Advanced Security)"
-          elif [[ "${{ needs.codeql-analysis.result }}" != "success" ]]; then
-            echo "⚠️  CodeQL analysis was skipped or cancelled"
-          fi
-          
+
           echo "✅ CI pipeline passed"

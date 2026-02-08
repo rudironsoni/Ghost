@@ -260,14 +260,14 @@ public class LinkedInEntityTests
             <html>
                 <body>
                     <h2 class='top-card-layout__title topcard__title'>
-                        
-                        Software Engineer   
-                        
+
+                        Software Engineer
+
                     </h2>
                     <a class='topcard__org-name-link'>
-                        
-                        Test Company   
-                        
+
+                        Test Company
+
                     </a>
                 </body>
             </html>";

@@ -34,16 +34,16 @@ if grep -q "role=\"listitem\"" /tmp/google-jobs-raw.html || \
    grep -q "JobPosting" /tmp/google-jobs-raw.html; then
     echo "✓ SUCCESS: Found job listings in HTML response!"
     echo ""
-    
+
     # Count potential job listings
     JOB_COUNT=$(grep -o "role=\"listitem\"" /tmp/google-jobs-raw.html | wc -l)
     echo "Potential job listings found: $JOB_COUNT"
-    
+
     # Check for JSON-LD
     if grep -q "application/ld+json" /tmp/google-jobs-raw.html; then
         echo "✓ Found JSON-LD structured data in response"
     fi
-    
+
     # Check for specific job data
     if grep -q "BjJfJf" /tmp/google-jobs-raw.html || \
        grep -q "vNEEBe" /tmp/google-jobs-raw.html; then
@@ -53,7 +53,7 @@ else
     echo "✗ WARNING: No obvious job listings found in response"
     echo ""
     echo "Checking for consent/captcha pages..."
-    
+
     if grep -q "consent.google.com" /tmp/google-jobs-raw.html; then
         echo "✗ Detected consent page"
     elif grep -q "recaptcha" /tmp/google-jobs-raw.html; then
@@ -61,7 +61,7 @@ else
     elif grep -q "sorry/index" /tmp/google-jobs-raw.html; then
         echo "✗ Detected Google sorry page"
     fi
-    
+
     echo ""
     echo "First 1000 chars of response:"
     head -c 1000 /tmp/google-jobs-raw.html

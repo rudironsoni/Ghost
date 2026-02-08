@@ -13,16 +13,16 @@ namespace Ghost.Sdk.Spider.Core.Entities.Formatters;
 /// <example>
 /// <code>
 /// // Parse custom format and output as ISO 8601
-/// var formatter = new DateTimeFormatter 
-/// { 
+/// var formatter = new DateTimeFormatter
+/// {
 ///     InputFormat = "MM/dd/yyyy",
 ///     OutputFormat = "yyyy-MM-dd"
 /// };
 /// var result = formatter.Format("12/25/2024"); // Returns "2024-12-25"
-/// 
+///
 /// // Parse with specific culture
-/// var frenchFormatter = new DateTimeFormatter 
-/// { 
+/// var frenchFormatter = new DateTimeFormatter
+/// {
 ///     Culture = "fr-FR",
 ///     OutputFormat = "D"
 /// };

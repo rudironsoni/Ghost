@@ -52,7 +52,7 @@ try {
     Console.WriteLine("1. Set up a browser session provider");
     Console.WriteLine("2. Initialize the Playwright browser");
     Console.WriteLine("3. Run the LinkedIn client with real browser context");
-    
+
     Console.WriteLine("\n=== Build Verification Complete ===");
     Console.WriteLine("✓ Ghost.Platform.LinkedIn builds successfully");
     Console.WriteLine("✓ Ghost.Sdk.Spider integration working");

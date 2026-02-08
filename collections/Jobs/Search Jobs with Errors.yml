@@ -31,10 +31,10 @@ runtime:
 
 docs: |-
   ## Search Jobs with Errors
-  
+
   Search jobs with detailed error reporting for each platform.
   This endpoint provides granular error information when platforms fail.
-  
+
   ### Response Example (200 Partial Success)
   ```json
   {

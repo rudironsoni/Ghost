@@ -294,7 +294,7 @@ public class StealthMiddlewareFullTests
         };
         var middleware = new StealthMiddleware(config);
         var request = new Request { Url = "http://test.com", Method = "GET", Timeout = TimeSpan.FromSeconds(30) };
-        
+
         // Preset all headers
         request.Headers["Accept"] = "custom-accept";
         request.Headers["Accept-Language"] = "custom-lang";
@@ -321,7 +321,7 @@ public class StealthMiddlewareFullTests
         request.Headers["Sec-Fetch-Mode"].Should().Be("custom-mode");
         request.Headers["Sec-Fetch-Site"].Should().Be("custom-site");
         request.Headers["Sec-Fetch-User"].Should().Be("custom-user");
-        
+
         // Only User-Agent should be set by middleware
         request.Headers["User-Agent"].Should().Contain("Mozilla");
     }

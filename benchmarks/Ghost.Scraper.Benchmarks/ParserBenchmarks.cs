@@ -22,7 +22,7 @@ public class Program
     {
         var config = BenchmarkDotNet.Configs.ManualConfig
             .Create(BenchmarkDotNet.Configs.DefaultConfig.Instance);
-        
+
         var summary = BenchmarkRunner.Run(
             typeof(Program).Assembly,
             args: args ?? Array.Empty<string>());

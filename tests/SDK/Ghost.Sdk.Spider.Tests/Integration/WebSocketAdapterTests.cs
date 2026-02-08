@@ -37,7 +37,7 @@ public class WebSocketAdapterTests
     {
         // Arrange
         var wsUrl = $"ws://localhost:{_server.Ports[0]}/ws";
-        
+
         // TODO: Implement when WebSocketAdapter is available
         // var adapter = new WebSocketAdapter();
         // var request = new Request
@@ -56,7 +56,7 @@ public class WebSocketAdapterTests
         // response.IsSuccess.Should().BeTrue();
         // response.Connection.Should().NotBeNull();
         // response.Connection.IsConnected.Should().BeTrue();
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -82,7 +82,7 @@ public class WebSocketAdapterTests
         // response.Should().NotBeNull();
         // response.IsSuccess.Should().BeFalse();
         // response.Error.Should().NotBeNullOrEmpty();
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -92,7 +92,7 @@ public class WebSocketAdapterTests
     {
         // Arrange
         var wssUrl = $"wss://localhost:{_server.Ports[0]}/ws";
-        
+
         // TODO: Implement when WebSocketAdapter is available
         // var adapter = new WebSocketAdapter();
         // var request = new Request
@@ -110,7 +110,7 @@ public class WebSocketAdapterTests
         // response.Should().NotBeNull();
         // response.IsSuccess.Should().BeTrue();
         // response.Connection.IsSecure.Should().BeTrue();
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -142,7 +142,7 @@ public class WebSocketAdapterTests
         // message.Should().NotBeNull();
         // message.Type.Should().Be(WebSocketMessageType.Text);
         // message.Content.Should().Be(expectedMessage);
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -152,7 +152,7 @@ public class WebSocketAdapterTests
     {
         // Arrange
         var expectedData = new byte[] { 0x48, 0x65, 0x6C, 0x6C, 0x6F }; // "Hello" in bytes
-        
+
         // TODO: Implement when WebSocketAdapter is available
         // var adapter = new WebSocketAdapter();
         // Mock server configured to send binary data
@@ -164,7 +164,7 @@ public class WebSocketAdapterTests
         // message.Should().NotBeNull();
         // message.Type.Should().Be(WebSocketMessageType.Binary);
         // message.BinaryData.Should().Equal(expectedData);
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -174,7 +174,7 @@ public class WebSocketAdapterTests
     {
         // Arrange
         var expectedMessages = new[] { "Message 1", "Message 2", "Message 3" };
-        
+
         // TODO: Implement when WebSocketAdapter is available
         // var adapter = new WebSocketAdapter();
         // Mock server configured to send multiple messages
@@ -189,7 +189,7 @@ public class WebSocketAdapterTests
 
         // Assert
         // messages.Should().Equal(expectedMessages);
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -209,7 +209,7 @@ public class WebSocketAdapterTests
             "\"name\":\"test\",",
             "\"data\":[1,2,3]}"
         };
-        
+
         // TODO: Implement when WebSocketAdapter is available
         // var adapter = new WebSocketAdapter(new WebSocketAdapterOptions
         // {
@@ -225,7 +225,7 @@ public class WebSocketAdapterTests
         // var json = JsonConvert.DeserializeObject<dynamic>(message.Content);
         // json.id.Should().Be(1);
         // json.name.Should().Be("test");
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -235,7 +235,7 @@ public class WebSocketAdapterTests
     {
         // Arrange
         // Simulate streaming JSON array: [{"id":1},{"id":2},{"id":3}]
-        
+
         // TODO: Implement when WebSocketAdapter is available
         // var adapter = new WebSocketAdapter(new WebSocketAdapterOptions
         // {
@@ -251,7 +251,7 @@ public class WebSocketAdapterTests
 
         // Assert
         // objects.Should().HaveCount(3);
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -265,7 +265,7 @@ public class WebSocketAdapterTests
     {
         // Arrange
         // Server doesn't send any messages
-        
+
         // TODO: Implement when WebSocketAdapter is available
         // var adapter = new WebSocketAdapter();
         // var options = new WebSocketReceiveOptions
@@ -278,7 +278,7 @@ public class WebSocketAdapterTests
 
         // Assert
         // await Assert.ThrowsAsync<TimeoutException>(() => receiveTask);
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -304,7 +304,7 @@ public class WebSocketAdapterTests
         // response.Should().NotBeNull();
         // response.IsSuccess.Should().BeFalse();
         // response.Error.Should().Contain("timeout");
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -318,7 +318,7 @@ public class WebSocketAdapterTests
     {
         // Arrange
         var wsUrl = $"ws://localhost:{_server.Ports[0]}/ws";
-        
+
         // TODO: Implement when WebSocketAdapter is available
         // var reconnectionPolicy = new ReconnectionPolicy
         // {
@@ -339,7 +339,7 @@ public class WebSocketAdapterTests
         // response.Should().NotBeNull();
         // response.IsSuccess.Should().BeTrue();
         // response.ReconnectionAttempts.Should().BeGreaterThan(0);
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -349,7 +349,7 @@ public class WebSocketAdapterTests
     {
         // Arrange
         var wsUrl = $"ws://localhost:{_server.Ports[0]}/ws";
-        
+
         // TODO: Implement when WebSocketAdapter is available
         // var adapter = new WebSocketAdapter(new WebSocketAdapterOptions
         // {
@@ -362,7 +362,7 @@ public class WebSocketAdapterTests
         // });
 
         // var connection = await adapter.ConnectAsync(request);
-        
+
         // Simulate connection drop
         // await connection.CloseAsync();
 
@@ -373,7 +373,7 @@ public class WebSocketAdapterTests
         // Assert
         // connection.IsConnected.Should().BeTrue();
         // connection.ReconnectionCount.Should().BeGreaterThan(0);
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -383,7 +383,7 @@ public class WebSocketAdapterTests
     {
         // Arrange
         var wsUrl = $"ws://localhost:{_server.Ports[0]}/ws";
-        
+
         // TODO: Implement when WebSocketAdapter is available
         // var adapter = new WebSocketAdapter(new WebSocketAdapterOptions
         // {
@@ -391,7 +391,7 @@ public class WebSocketAdapterTests
         // });
 
         // var connection = await adapter.ConnectAsync(request);
-        
+
         // Simulate connection drop
         // await connection.CloseAsync();
 
@@ -401,7 +401,7 @@ public class WebSocketAdapterTests
 
         // Assert
         // connection.IsConnected.Should().BeFalse();
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -415,7 +415,7 @@ public class WebSocketAdapterTests
     {
         // Arrange
         var wsUrl = $"ws://localhost:{_server.Ports[0]}/ws";
-        
+
         // TODO: Implement when WebSocketAdapter is available
         // var adapter = new WebSocketAdapter(new WebSocketAdapterOptions
         // {
@@ -433,7 +433,7 @@ public class WebSocketAdapterTests
 
         // Assert
         // pingCount.Should().BeGreaterOrEqualTo(3);
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -443,7 +443,7 @@ public class WebSocketAdapterTests
     {
         // Arrange
         var wsUrl = $"ws://localhost:{_server.Ports[0]}/ws";
-        
+
         // TODO: Implement when WebSocketAdapter is available
         // var adapter = new WebSocketAdapter(new WebSocketAdapterOptions
         // {
@@ -462,7 +462,7 @@ public class WebSocketAdapterTests
         // Assert
         // connection.IsConnected.Should().BeFalse();
         // connection.DisconnectReason.Should().Contain("heartbeat");
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -476,7 +476,7 @@ public class WebSocketAdapterTests
     {
         // Arrange
         // Server sends messages rapidly
-        
+
         // TODO: Implement when WebSocketAdapter is available
         // var adapter = new WebSocketAdapter(new WebSocketAdapterOptions
         // {
@@ -496,7 +496,7 @@ public class WebSocketAdapterTests
         // All messages should be retrievable
         // var messages = await connection.FlushBufferAsync();
         // messages.Should().HaveCount(100);
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }
@@ -510,7 +510,7 @@ public class WebSocketAdapterTests
     {
         // Arrange
         var wsUrl = $"ws://localhost:{_server.Ports[0]}/ws";
-        
+
         // TODO: Implement when WebSocketAdapter is available
         // var adapter = new WebSocketAdapter();
         // var connection = await adapter.ConnectAsync(request);
@@ -521,7 +521,7 @@ public class WebSocketAdapterTests
         // Assert
         // connection.IsConnected.Should().BeFalse();
         // connection.CloseStatus.Should().Be(WebSocketCloseStatus.NormalClosure);
-        
+
         await Task.CompletedTask;
         Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
     }

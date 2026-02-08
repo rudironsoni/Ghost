@@ -721,26 +721,26 @@ metadata:
 data:
   README.md: |
     # OPA Gatekeeper Constraint Templates
-    
+
     ## Overview
-    
+
     This file contains all constraint templates used by OPA Gatekeeper for
     enforcing security and operational policies in the Ghost Kubernetes cluster.
-    
+
     ## Deployment
-    
+
     Deploy all templates:
     ```bash
     kubectl apply -f constraint-templates.yaml
     ```
-    
+
     Verify templates are installed:
     ```bash
     kubectl get constrainttemplates
     ```
-    
+
     ## Available Templates
-    
+
     ### Security Templates
     - **K8sPSPPrivilegedContainer**: Block privileged containers
     - **K8sPSPHostNamespace**: Block host namespace usage
@@ -752,18 +752,18 @@ data:
     - **K8sPSPHostPorts**: Block host port usage
     - **K8sPSPSeccomp**: Enforce seccomp profiles
     - **K8sPSPAppArmor**: Enforce AppArmor profiles
-    
+
     ### Operational Templates
     - **K8sRequiredLabels**: Require specific labels
     - **K8sRequiredResources**: Require resource requests/limits
     - **K8sAllowedRepos**: Restrict container registries
     - **K8sBlockLatestImages**: Block :latest tag
     - **K8sResourceRatio**: Enforce resource ratios
-    
+
     ## Creating Constraints
-    
+
     After deploying templates, create constraints to enforce policies:
-    
+
     ```yaml
     apiVersion: constraints.gatekeeper.sh/v1beta1
     kind: K8sPSPPrivilegedContainer
@@ -776,58 +776,58 @@ data:
           - apiGroups: [""]
             kinds: ["Pod"]
     ```
-    
+
     ## Enforcement Actions
-    
+
     - **deny**: Block resource creation (recommended for production)
     - **dryrun**: Log violations without blocking
     - **warn**: Allow creation but log warning
-    
+
     ## Testing
-    
+
     Test policies before enforcing:
     ```bash
     # Deploy with dryrun mode
     kubectl apply -f test-constraint.yaml
-    
+
     # Check audit violations
     kubectl get constraint <constraint-name> -o yaml
-    
+
     # Review violations in status
     kubectl describe constraint <constraint-name>
     ```
-    
+
     ## Monitoring
-    
+
     View all constraints:
     ```bash
     kubectl get constraints --all-namespaces
     ```
-    
+
     Check violations:
     ```bash
     kubectl get <constraint-kind> <constraint-name> -o jsonpath='{.status.violations}'
     ```
-    
+
     ## Troubleshooting
-    
+
     ### Template not found
     Ensure templates are deployed before constraints:
     ```bash
     kubectl get constrainttemplates
     ```
-    
+
     ### Constraint not enforcing
     Check enforcement action and match criteria:
     ```bash
     kubectl get constraint <name> -o yaml
     ```
-    
+
     ### False positives
     Use namespace exclusions or adjust match criteria in constraints.
-    
+
     ## Documentation
-    
+
     - OPA Gatekeeper: https://open-policy-agent.github.io/gatekeeper/
     - Rego Language: https://www.openpolicyagent.org/docs/latest/policy-language/
     - Kubernetes PSP: https://kubernetes.io/docs/concepts/policy/pod-security-policy/

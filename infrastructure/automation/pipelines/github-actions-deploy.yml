@@ -251,7 +251,7 @@ jobs:
             -l app=ghost \
             -n ghost-dev \
             --timeout=300s
-          
+
           kubectl run test-pod \
             --image=curlimages/curl:latest \
             --rm -i --restart=Never \
@@ -321,7 +321,7 @@ jobs:
             -l app=ghost \
             -n ghost-staging \
             --timeout=300s
-          
+
           # Run comprehensive tests
           ./infrastructure/automation/scripts/test-deployment.sh staging
 
@@ -374,7 +374,7 @@ jobs:
         run: |
           # Create blue deployment (current)
           kubectl label deployment ghost-production version=blue -n ghost-production --overwrite || true
-          
+
           # Deploy green version
           helm upgrade --install ghost-production-green \
             ./infrastructure/automation/templates/helm-chart \
@@ -392,7 +392,7 @@ jobs:
             -l app=ghost,deployment=green \
             -n ghost-production \
             --timeout=300s
-          
+
           ./infrastructure/automation/scripts/test-deployment.sh production green
 
       - name: Switch traffic to green
@@ -400,7 +400,7 @@ jobs:
           kubectl patch service ghost-service \
             -n ghost-production \
             -p '{"spec":{"selector":{"deployment":"green"}}}'
-          
+
           # Wait for traffic to stabilize
           sleep 30
 
@@ -437,7 +437,7 @@ jobs:
             "environment": "production"
           }
           EOF
-          
+
           aws s3 cp deployment-record.json \
             s3://ghost-deployments/records/$(date +%Y%m%d-%H%M%S).json
 
@@ -486,7 +486,7 @@ jobs:
             -l app=ghost \
             -n ghost-production \
             --timeout=300s
-          
+
           ./infrastructure/automation/scripts/test-deployment.sh production
 
       - name: Notify rollback completion

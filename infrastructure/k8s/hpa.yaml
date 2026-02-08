@@ -114,7 +114,7 @@ spec:
       annotations:
         summary: "High Redis queue depth for Ghost workers"
         description: "Redis queue has {{ $value }} jobs pending, workers may be overwhelmed"
-    
+
     - alert: GhostWorkerMaxReplicasReached
       expr: kube_horizontalpodautoscaler_status_current_replicas{horizontalpodautoscaler="ghost-worker-hpa"} >= 100
       for: 5m
@@ -124,7 +124,7 @@ spec:
       annotations:
         summary: "Ghost worker HPA at maximum replicas"
         description: "Worker autoscaler has reached max replicas (100), queue may continue growing"
-    
+
     - alert: GhostWorkerScalingFailure
       expr: |
         kube_horizontalpodautoscaler_status_condition{condition="ScalingLimited",status="true",horizontalpodautoscaler="ghost-worker-hpa"} == 1

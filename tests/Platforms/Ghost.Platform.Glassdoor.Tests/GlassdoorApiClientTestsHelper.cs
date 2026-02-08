@@ -87,8 +87,8 @@ public static class GlassdoorApiClientTestsHelper
                 {
                     if (error.ValueKind == JsonValueKind.Object)
                     {
-                        var message = error.TryGetProperty("message", out var msg) 
-                            ? msg.GetString() ?? "" 
+                        var message = error.TryGetProperty("message", out var msg)
+                            ? msg.GetString() ?? ""
                             : "";
                         if (message.Contains("rate limit", StringComparison.OrdinalIgnoreCase) ||
                             message.Contains("too many requests", StringComparison.OrdinalIgnoreCase) ||

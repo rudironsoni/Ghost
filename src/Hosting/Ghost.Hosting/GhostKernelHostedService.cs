@@ -22,7 +22,7 @@ public class GhostKernelHostedService : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        // Kernel is lazy-loaded or already initialized by DI factory, 
+        // Kernel is lazy-loaded or already initialized by DI factory,
         // we just need to ensure we are hooked for shutdown.
         return Task.CompletedTask;
     }

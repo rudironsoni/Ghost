@@ -205,7 +205,7 @@ public class MessageBufferTests
         // Arrange
         var buffer = new MessageBuffer(maxMessageCount: 100, maxWaitTime: TimeSpan.FromMilliseconds(10));
         buffer.Add(WebSocketMessage.CreateText("test"));
-        
+
         // Act
         Thread.Sleep(15); // Wait for timeout to be exceeded
         var shouldFlush = buffer.ShouldFlush;
@@ -522,12 +522,12 @@ public class MessageBufferTests
     {
         // Arrange
         var buffer = new MessageBuffer(maxMessageCount: 100, maxWaitTime: TimeSpan.FromMilliseconds(50));
-        
+
         // Act
         buffer.Add(WebSocketMessage.CreateText("test1"));
         Thread.Sleep(20);
         buffer.Flush(); // Clear buffer
-        
+
         buffer.Add(WebSocketMessage.CreateText("test2")); // Should reset timestamp
         var shouldFlush = buffer.ShouldFlush;
 

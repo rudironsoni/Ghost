@@ -79,7 +79,7 @@ public class ConsoleStorageTests
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.ItemsStored.Should().Be(1);
-        
+
         var output = _consoleOutput.ToString();
         output.Should().Contain("TestSpider");
         output.Should().Contain("https://example.com");
@@ -112,7 +112,7 @@ public class ConsoleStorageTests
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.ItemsStored.Should().Be(3);
-        
+
         var output = _consoleOutput.ToString();
         output.Should().Contain("BatchSpider");
         output.Should().Contain("batch-123");

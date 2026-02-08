@@ -416,9 +416,9 @@ public class FormatterTests
         {
             // Arrange
             var formatter1 = new TrimFormatter { Order = 1, Name = "Trim" };
-            var formatter2 = new ReplaceFormatter 
-            { 
-                Order = 2, 
+            var formatter2 = new ReplaceFormatter
+            {
+                Order = 2,
                 Name = "Replace",
                 OldValue = "test",
                 NewValue = "result"

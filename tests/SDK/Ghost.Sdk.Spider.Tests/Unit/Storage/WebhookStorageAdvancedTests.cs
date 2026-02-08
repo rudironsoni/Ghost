@@ -129,7 +129,7 @@ public class WebhookStorageAdvancedTests
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
         var storage = new WebhookStorage(_httpClient, WebhookUrl, NullLogger<WebhookStorage>.Instance);
-        
+
         var complexItem = new
         {
             Id = 123,
@@ -143,7 +143,7 @@ public class WebhookStorageAdvancedTests
             },
             CreatedAt = DateTimeOffset.UtcNow
         };
-        
+
         var context = new StorageContext
         {
             SpiderName = "ComplexSpider",
@@ -159,7 +159,7 @@ public class WebhookStorageAdvancedTests
         // Assert
         capturedRequest.Should().NotBeNull();
         var content = await capturedRequest!.Content!.ReadAsStringAsync();
-        
+
         content.Should().Contain("ComplexSpider");
         content.Should().Contain("Complex Item");
         content.Should().Contain("99.99");
@@ -180,14 +180,14 @@ public class WebhookStorageAdvancedTests
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
         var storage = new WebhookStorage(_httpClient, WebhookUrl, NullLogger<WebhookStorage>.Instance);
-        
+
         var items = new[]
         {
             new { Type = "A", Value = 1 },
             new { Type = "B", Value = 2 },
             new { Type = "C", Value = 3 }
         };
-        
+
         var context = StorageContext.Create("MixedSpider");
 
         // Act
@@ -210,11 +210,11 @@ public class WebhookStorageAdvancedTests
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
         var storage = new WebhookStorage(_httpClient, WebhookUrl, NullLogger<WebhookStorage>.Instance);
-        
+
         var items = Enumerable.Range(1, 1000)
             .Select(i => new { Id = i, Name = $"Item {i}" })
             .ToList();
-        
+
         var context = new StorageContext
         {
             SpiderName = "LargeBatchSpider",
@@ -244,7 +244,7 @@ public class WebhookStorageAdvancedTests
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
         var storage = new WebhookStorage(_httpClient, WebhookUrl, NullLogger<WebhookStorage>.Instance);
-        
+
         var item = new
         {
             Name = "Test",
@@ -252,7 +252,7 @@ public class WebhookStorageAdvancedTests
             Value = 42,
             OptionalField = (int?)null
         };
-        
+
         var context = StorageContext.Create("TestSpider");
 
         // Act
@@ -261,7 +261,7 @@ public class WebhookStorageAdvancedTests
         // Assert
         capturedRequest.Should().NotBeNull();
         var content = await capturedRequest!.Content!.ReadAsStringAsync();
-        
+
         content.Should().Contain("Name");
         content.Should().Contain("Value");
         // NullValueHandling.Ignore should exclude null properties
@@ -281,7 +281,7 @@ public class WebhookStorageAdvancedTests
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
         var storage = new WebhookStorage(_httpClient, WebhookUrl, NullLogger<WebhookStorage>.Instance);
-        
+
         // Note: Anonymous types don't allow circular references, so we test that serialization works
         var item = new { Name = "Test", Id = 1 };
         var context = StorageContext.Create("TestSpider");

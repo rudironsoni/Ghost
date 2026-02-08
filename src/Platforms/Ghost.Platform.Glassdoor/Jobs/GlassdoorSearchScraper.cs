@@ -376,13 +376,13 @@ public sealed class GlassdoorSearchScraper : IDisposable
                         '[class*="JobCard"]',
                         '[class*="jobCard"]'
                     ];
-                    
+
                     let jobElements = [];
                     for (const selector of selectors) {
                         jobElements = document.querySelectorAll(selector);
                         if (jobElements.length > 0) break;
                     }
-                    
+
                     if (jobElements.length === 0) return jobs;
 
                     jobElements.forEach(el => {
@@ -396,13 +396,13 @@ public sealed class GlassdoorSearchScraper : IDisposable
                                 'a[data-test="job-link"]',
                                 'a[data-test="job-title-link"]'
                             ];
-                            
+
                             let titleEl = null;
                             for (const sel of titleSelectors) {
                                 titleEl = el.querySelector(sel);
                                 if (titleEl && titleEl.textContent.trim()) break;
                             }
-                            
+
                             const companySelectors = [
                                 '[data-test="employer-name"]',
                                 '.employerName',
@@ -410,33 +410,33 @@ public sealed class GlassdoorSearchScraper : IDisposable
                                 '.employer',
                                 '[data-test="employer"]'
                             ];
-                            
+
                             let companyEl = null;
                             for (const sel of companySelectors) {
                                 companyEl = el.querySelector(sel);
                                 if (companyEl && companyEl.textContent.trim()) break;
                             }
-                            
+
                             const locationSelectors = [
                                 '[data-test="job-location"]',
                                 '.jobLocation',
                                 '.location',
                                 '[data-test="location"]'
                             ];
-                            
+
                             let locationEl = null;
                             for (const sel of locationSelectors) {
                                 locationEl = el.querySelector(sel);
                                 if (locationEl && locationEl.textContent.trim()) break;
                             }
-                            
+
                             const linkSelectors = [
                                 'a[href*="/job-listing/"]',
                                 'a[href*="/job/"]',
                                 'a[data-test="job-title-link"]',
                                 'a[data-test="job-link"]'
                             ];
-                            
+
                             let linkEl = null;
                             for (const sel of linkSelectors) {
                                 linkEl = el.querySelector(sel);
@@ -447,7 +447,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                             const company = companyEl?.textContent?.trim() || '';
                             const location = locationEl?.textContent?.trim() || '';
                             const url = linkEl?.href || '';
-                            const jobId = linkEl?.href?.match(/\/job-listing\/([^\/\?]+)/)?.[1] || 
+                            const jobId = linkEl?.href?.match(/\/job-listing\/([^\/\?]+)/)?.[1] ||
                                          linkEl?.href?.match(/\/job\/([^\/\?]+)/)?.[1] || '';
 
                             if (title && company) {
@@ -457,7 +457,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                             // Silently continue
                         }
                     });
-                    
+
                     return jobs;
                 }
             """;

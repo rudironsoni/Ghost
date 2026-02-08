@@ -12,7 +12,7 @@ if (doc.RootElement.ValueKind == JsonValueKind.Array)
     Console.WriteLine($"Root is array with {doc.RootElement.GetArrayLength()} elements");
     var first = doc.RootElement[0];
     Console.WriteLine($"First element kind: {first.ValueKind}");
-    
+
     if (first.TryGetProperty("data", out var data))
     {
         Console.WriteLine("Found data property");

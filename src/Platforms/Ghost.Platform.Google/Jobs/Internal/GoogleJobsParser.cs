@@ -136,7 +136,7 @@ public static class GoogleJobsParser
                     try
                     {
                         // Move past the key to find the start of the JSON array
-                        var jsonStart = keyIndex + widgetKey.Length + 3; // +3 for ":" 
+                        var jsonStart = keyIndex + widgetKey.Length + 3; // +3 for ":"
                         if (jsonStart >= html.Length) break;
 
                         // Skip whitespace

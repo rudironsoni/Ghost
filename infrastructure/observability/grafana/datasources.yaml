@@ -13,7 +13,7 @@ data:
         orgId: 1
       - name: Loki
         orgId: 1
-    
+
     datasources:
     # Primary Prometheus datasource
     - name: Prometheus
@@ -35,7 +35,7 @@ data:
         exemplarTraceIdDestinations:
           - name: traceID
             datasourceUid: tempo
-    
+
     # Loki for logs
     - name: Loki
       type: loki
@@ -57,7 +57,7 @@ data:
             matcherRegex: "caller=([^\\s]+)"
             name: Caller
             url: ""
-    
+
     # Tempo for distributed tracing (optional)
     # - name: Tempo
     #   type: tempo
@@ -86,7 +86,7 @@ data:
     #       enabled: true
     #     lokiSearch:
     #       datasourceUid: loki
-    
+
     # PostgreSQL for direct database queries
     - name: PostgreSQL-Ghost
       type: postgres
@@ -107,7 +107,7 @@ data:
         maxOpenConns: 10
         maxIdleConns: 10
         connMaxLifetime: 14400
-    
+
     # Redis datasource (if using redis-datasource plugin)
     # - name: Redis
     #   type: redis-datasource
@@ -123,7 +123,7 @@ data:
     #     timeout: 10
     #     pingInterval: 0
     #     pipelineWindow: 0
-    
+
     # Alertmanager datasource
     - name: Alertmanager
       type: alertmanager

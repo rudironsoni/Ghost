@@ -173,7 +173,7 @@ public class RequestQueueTests
     {
         // Arrange
         var queue = new InMemoryRequestQueue();
-        
+
         var requests = new[]
         {
             ("low1", 1),
@@ -332,7 +332,7 @@ public class RequestQueueTests
         // Act
         await queue.EnqueueAsync(CreateRequest(url));
         await Task.Delay(TimeSpan.FromSeconds(1)); // Simulate time passing
-        
+
         // In real implementation, check if expired items are cleaned up
         var contains = await queue.ContainsAsync(url);
 
@@ -354,11 +354,11 @@ public class RequestQueueTests
 
         // Act
         var enqueueTasks = Enumerable.Range(0, enqueueCount)
-            .Select(i => Task.Run(async () => 
+            .Select(i => Task.Run(async () =>
                 await queue.EnqueueAsync(CreateRequest($"https://example.com/{i}"))));
 
         var dequeueTasks = Enumerable.Range(0, dequeueCount)
-            .Select(i => Task.Run(async () => 
+            .Select(i => Task.Run(async () =>
                 await queue.DequeueAsync()));
 
         await Task.WhenAll(enqueueTasks.Concat(dequeueTasks));

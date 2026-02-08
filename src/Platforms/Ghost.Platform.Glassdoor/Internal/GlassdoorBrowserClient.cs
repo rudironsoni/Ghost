@@ -412,9 +412,9 @@ public sealed class GlassdoorBrowserClient : IDisposable
             var script = """
                 () => {
                     const jobs = [];
-                    
+
                     console.log('=== Starting job extraction ===');
-                    
+
                     // Try multiple selector strategies for Glassdoor's evolving DOM structure
                     const selectors = [
                         'li.react-job-listing',
@@ -435,10 +435,10 @@ public sealed class GlassdoorBrowserClient : IDisposable
                         'li[class*="JobsList"]',
                         'div[class*="JobCard"]'
                     ];
-                    
+
                     let jobElements = [];
                     let usedSelector = null;
-                    
+
                     for (const selector of selectors) {
                         jobElements = document.querySelectorAll(selector);
                         if (jobElements.length > 0) {
@@ -447,7 +447,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                             break;
                         }
                     }
-                    
+
                     if (jobElements.length === 0) {
                         console.log('No job elements found with any selector');
                         return { jobs: [], debug: { usedSelector, elementCount: 0, bodyLength: document.body.innerHTML.length } };
@@ -474,13 +474,13 @@ public sealed class GlassdoorBrowserClient : IDisposable
                                 'a[class*="job-title"]',
                                 'div[class*="jobTitle"] a'
                             ];
-                            
+
                             let titleEl = null;
                             for (const sel of titleSelectors) {
                                 titleEl = el.querySelector(sel);
                                 if (titleEl && titleEl.textContent.trim()) break;
                             }
-                            
+
                             // Try multiple company selector patterns
                             const companySelectors = [
                                 '[data-test="employer-name"]',
@@ -496,13 +496,13 @@ public sealed class GlassdoorBrowserClient : IDisposable
                                 'span[class*="EmployerProfile"]',
                                 'div[class*="employer"] span'
                             ];
-                            
+
                             let companyEl = null;
                             for (const sel of companySelectors) {
                                 companyEl = el.querySelector(sel);
                                 if (companyEl && companyEl.textContent.trim()) break;
                             }
-                            
+
                             // Try multiple location selector patterns
                             const locationSelectors = [
                                 '[data-test="job-location"]',
@@ -514,13 +514,13 @@ public sealed class GlassdoorBrowserClient : IDisposable
                                 'span[class*="location"]',
                                 'div[class*="location"]'
                             ];
-                            
+
                             let locationEl = null;
                             for (const sel of locationSelectors) {
                                 locationEl = el.querySelector(sel);
                                 if (locationEl && locationEl.textContent.trim()) break;
                             }
-                            
+
                             // Try salary selectors
                             const salarySelectors = [
                                 '[data-test="job-salary"]',
@@ -530,13 +530,13 @@ public sealed class GlassdoorBrowserClient : IDisposable
                                 '.JobCard_salaryEstimate__2pN6s',
                                 '[class*="salary"]'
                             ];
-                            
+
                             let salaryEl = null;
                             for (const sel of salarySelectors) {
                                 salaryEl = el.querySelector(sel);
                                 if (salaryEl && salaryEl.textContent.trim()) break;
                             }
-                            
+
                             // Try link selectors
                             const linkSelectors = [
                                 'a[href*="/job-listing/"]',
@@ -546,7 +546,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                                 'a.JobCard_jobTitle__GLz9d',
                                 'a[class*="jobTitle"]'
                             ];
-                            
+
                             let linkEl = null;
                             for (const sel of linkSelectors) {
                                 linkEl = el.querySelector(sel);
@@ -558,7 +558,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                             const location = locationEl?.textContent?.trim() || '';
                             const salary = salaryEl?.textContent?.trim() || '';
                             const url = linkEl?.href || '';
-                            const jobId = linkEl?.href?.match(/\/job-listing\/([^\/\?]+)/)?.[1] || 
+                            const jobId = linkEl?.href?.match(/\/job-listing\/([^\/\?]+)/)?.[1] ||
                                          linkEl?.href?.match(/\/job\/([^\/\?]+)/)?.[1] || '';
 
                             console.log(`Job ${index}: title="${title}", company="${company}", location="${location}"`);
@@ -579,16 +579,16 @@ public sealed class GlassdoorBrowserClient : IDisposable
                             console.error(`Error extracting job ${index}:`, e);
                         }
                     });
-                    
+
                     console.log(`Total jobs extracted: ${jobs.length}`);
 
-                    return { 
-                        jobs, 
-                        debug: { 
-                            usedSelector, 
-                            elementCount: jobElements.length, 
-                            bodyLength: document.body.innerHTML.length 
-                        } 
+                    return {
+                        jobs,
+                        debug: {
+                            usedSelector,
+                            elementCount: jobElements.length,
+                            bodyLength: document.body.innerHTML.length
+                        }
                     };
                 }
             """;

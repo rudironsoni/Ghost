@@ -265,7 +265,7 @@ public class JavaScriptAdapterFullTests
         // Arrange
         var adapter = new JavaScriptAdapter(_mockLogger.Object);
         var request = new Request("https://httpbin.org/html");
-        
+
         await adapter.ExtractAsync(request);
 
         // Act

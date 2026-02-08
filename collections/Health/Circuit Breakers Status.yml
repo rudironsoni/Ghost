@@ -16,7 +16,7 @@ runtime:
         test("Status code is 200", function() {
           expect(res.status).to.equal(200);
         });
-        
+
         test("Response has circuitBreakers array", function() {
           expect(res.body).to.have.property("circuitBreakers");
           expect(res.body.circuitBreakers).to.be.an("array");
@@ -24,9 +24,9 @@ runtime:
 
 docs: |-
   ## Circuit Breakers Status
-  
+
   Returns health status of all circuit breakers.
-  
+
   ### Response Example (200 OK)
   ```json
   {

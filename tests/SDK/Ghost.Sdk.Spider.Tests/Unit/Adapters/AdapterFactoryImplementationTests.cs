@@ -161,8 +161,8 @@ public class AdapterFactoryImplementationTests
         {
             return Task.FromResult(new Response
             {
-                Content = new ContentResult 
-                { 
+                Content = new ContentResult
+                {
                     Content = "<html></html>",
                     ContentType = ContentType.Html
                 },

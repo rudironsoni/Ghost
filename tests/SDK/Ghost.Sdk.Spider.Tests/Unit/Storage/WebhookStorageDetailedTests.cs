@@ -71,7 +71,7 @@ public class WebhookStorageDetailedTests
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
         var storage = new WebhookStorage(_httpClient, WebhookUrl);
-        
+
         var complexItem = new
         {
             Id = 123,
@@ -113,7 +113,7 @@ public class WebhookStorageDetailedTests
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
         var storage = new WebhookStorage(_httpClient, WebhookUrl);
-        
+
         var items = Enumerable.Range(1, 1000)
             .Select(i => new { Id = i, Name = $"Item {i}", Data = $"Data {i}" })
             .ToArray();
@@ -248,7 +248,7 @@ public class WebhookStorageDetailedTests
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
         var storage = new WebhookStorage(_httpClient, WebhookUrl);
-        
+
         var item = new
         {
             Text = "Text with \"quotes\" and \n newlines and \t tabs",

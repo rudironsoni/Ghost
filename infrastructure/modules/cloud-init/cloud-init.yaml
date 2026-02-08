@@ -31,14 +31,14 @@ runcmd:
   - apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
   - systemctl enable docker
   - systemctl start docker
-  
+
   # Install Docker Compose standalone
   - curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - chmod +x /usr/local/bin/docker-compose
-  
+
   # Create docker group and add ubuntu user
   - usermod -aG docker ubuntu || true
-  
+
   # Setup UFW firewall
   - ufw --force enable
   - ufw allow 22/tcp
@@ -47,7 +47,7 @@ runcmd:
   - ufw allow 8080/tcp
   - ufw allow 9090/tcp
   - ufw allow 3000/tcp
-  
+
   # Create working directory
   - mkdir -p /opt/ghost-platform
   - chown -R ubuntu:ubuntu /opt/ghost-platform

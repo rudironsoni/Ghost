@@ -8,7 +8,7 @@ falco:
     kind: ebpf
     ebpf:
       leastPrivileged: true
-  
+
   # Resource limits
   resources:
     requests:
@@ -17,28 +17,28 @@ falco:
     limits:
       cpu: 1000m
       memory: 1Gi
-  
+
   # Falco rules files
   rulesFiles:
     - /etc/falco/falco_rules.yaml
     - /etc/falco/falco_rules.local.yaml
     - /etc/falco/k8s_audit_rules.yaml
     - /etc/falco/rules.d
-  
+
   # Load additional rules from ConfigMap
   rulesFilesDir: /etc/falco/rules.d
-  
+
   # Rule priorities to load
   priority: DEBUG
-  
+
   # Buffering
   bufferedOutputs: true
-  
+
   # Output channels
   outputs:
     rate: 1
     maxBurst: 1000
-  
+
   # System calls to monitor
   syscallEventDrops:
     actions:
@@ -46,7 +46,7 @@ falco:
       - alert
     rate: 0.03333
     maxBurst: 10
-  
+
   # Metadata enrichment
   metadata:
     enabled: true
@@ -85,13 +85,13 @@ programOutput:
 # Kubernetes Audit Events
 kubernetesAudit:
   enabled: true
-  
+
   # K8s API server audit webhook
   webhook:
     enabled: true
     address: 0.0.0.0
     port: 9765
-  
+
   # Audit log file
   auditLog:
     enabled: true
@@ -102,9 +102,9 @@ kubernetesAudit:
 # Falco Sidekick (for routing alerts)
 falcosidekick:
   enabled: true
-  
+
   replicas: 2
-  
+
   # Resource limits
   resources:
     requests:
@@ -113,7 +113,7 @@ falcosidekick:
     limits:
       cpu: 500m
       memory: 512Mi
-  
+
   # Outputs configuration
   config:
     # Slack integration
@@ -125,22 +125,22 @@ falcosidekick:
       outputformat: "all"
       minimumpriority: "warning"
       messageformat: "A security event has been detected"
-    
+
     # Microsoft Teams
     teams:
       webhookurl: ""
       minimumpriority: "warning"
-    
+
     # PagerDuty
     pagerduty:
       routingkey: ""
       minimumpriority: "critical"
-    
+
     # Datadog
     datadog:
       apikey: ""
       minimumpriority: "warning"
-    
+
     # Elasticsearch
     elasticsearch:
       hostport: "https://elasticsearch.ghost.internal:9200"
@@ -149,26 +149,26 @@ falcosidekick:
       minimumpriority: "info"
       username: "falco"
       password: ""
-    
+
     # AWS Security Hub
     aws:
       securityhub:
         accountid: "123456789012"
         region: "us-east-1"
         minimumpriority: "high"
-    
+
     # Custom webhook
     webhook:
       address: "https://security.ghost.internal/webhook/falco"
       minimumpriority: "warning"
-    
+
     # CloudWatch Logs
     cloudwatch:
       loggroup: "/aws/falco/ghost"
       logstream: "falco-events"
       region: "us-east-1"
       minimumpriority: "warning"
-  
+
   # Web UI
   webui:
     enabled: true
@@ -176,7 +176,7 @@ falcosidekick:
     service:
       type: ClusterIP
       port: 2802
-    
+
     # Redis for session storage
     redis:
       enabled: true
@@ -203,24 +203,24 @@ daemonset:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 1
-  
+
   # Annotations
   annotations: {}
-  
+
   # Pod priority
   priorityClassName: system-node-critical
-  
+
   # Node selector
   nodeSelector:
     kubernetes.io/os: linux
-  
+
   # Tolerations
   tolerations:
     - effect: NoSchedule
       key: node-role.kubernetes.io/master
     - effect: NoSchedule
       key: node-role.kubernetes.io/control-plane
-  
+
   # Security context
   securityContext:
     privileged: true
@@ -255,13 +255,13 @@ extraVolumeMounts:
 metrics:
   enabled: true
   interval: 30s
-  
+
   # Prometheus exporter
   serviceMonitor:
     enabled: true
     labels:
       prometheus: kube-prometheus
-  
+
   # Grafana dashboard
   grafanaDashboard:
     enabled: true
@@ -292,7 +292,7 @@ initContainer:
     registry: docker.io
     repository: falcosecurity/falco-driver-loader
     tag: "0.36.2"
-  
+
   resources:
     requests:
       cpu: 100m
@@ -309,12 +309,12 @@ siem:
     url: ""
     token: ""
     index: "falco"
-  
+
   # Sumo Logic
   sumologic:
     enabled: false
     url: ""
-  
+
   # Azure Sentinel
   azure:
     sentinel:
@@ -326,7 +326,7 @@ siem:
 timeouts:
   # Falco startup timeout
   startup: 60s
-  
+
   # Driver loading timeout
   driverLoading: 300s
 
@@ -348,33 +348,33 @@ data:
     NOTICE: low
     INFORMATIONAL: info
     DEBUG: debug
-  
+
   # Response playbooks
   response-playbooks.yaml: |
     # Automated response actions for Falco alerts
-    
+
     critical:
       - notify: security-team
       - create: incident-ticket
       - execute: isolation-script
       - log: audit-trail
-    
+
     high:
       - notify: on-call-engineer
       - create: investigation-task
       - log: audit-trail
-    
+
     medium:
       - notify: team-channel
       - log: audit-trail
-    
+
     low:
       - log: audit-trail
-  
+
   # Suppression rules
   suppressions.yaml: |
     # Suppress false positives
-    
+
     # Known behavior - Ghost content uploads
     - rule: Write below binary dir
       condition: >
@@ -382,7 +382,7 @@ data:
           container.image.repository = "ghost" and
           fd.name startswith /var/lib/ghost/content/
         )
-    
+
     # Known behavior - Database backups
     - rule: DB program spawned process
       condition: >

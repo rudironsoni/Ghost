@@ -2,7 +2,7 @@
 
 ################################################################################
 # Canary Rollout Script
-# 
+#
 # Automates gradual canary rollout with health checks, metrics monitoring,
 # and automatic rollback on failure.
 #
@@ -171,7 +171,7 @@ check_health() {
         local response=$(curl -s -w "\n%{http_code}" \
             --max-time "${HEALTH_CHECK_TIMEOUT}" \
             "${endpoint}" 2>/dev/null || echo "error")
-        
+
         local http_code=$(echo "${response}" | tail -n1)
         local body=$(echo "${response}" | head -n-1)
 
@@ -181,7 +181,7 @@ check_health() {
         fi
 
         log_warn "Health check failed (HTTP ${http_code}), attempt ${attempt}/${HEALTH_CHECK_RETRIES}"
-        
+
         if [ ${attempt} -lt ${HEALTH_CHECK_RETRIES} ]; then
             sleep 5
         fi
@@ -337,9 +337,9 @@ EOF
 
 rollback() {
     local reason="${1:-Unknown reason}"
-    
+
     log_error "INITIATING EMERGENCY ROLLBACK: ${reason}"
-    
+
     if ${DRY_RUN}; then
         log_info "[DRY RUN] Would perform rollback"
         return 1
@@ -358,7 +358,7 @@ rollback() {
 
 confirm() {
     local prompt="$1"
-    
+
     if ${SKIP_CONFIRM}; then
         log_info "${prompt} (auto-confirmed)"
         return 0
@@ -445,7 +445,7 @@ rollout_stage() {
         log_info "[DRY RUN] Would query metrics for error rate"
     fi
     local error_rate=$(get_error_rate)
-    
+
     if ! check_error_threshold "${error_rate}"; then
         return $(rollback "Error rate threshold exceeded at ${percentage}%")
     fi

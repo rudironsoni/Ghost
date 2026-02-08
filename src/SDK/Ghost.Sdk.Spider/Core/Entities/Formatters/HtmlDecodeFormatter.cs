@@ -15,7 +15,7 @@ namespace Ghost.Sdk.Spider.Core.Entities.Formatters;
 /// var formatter = new HtmlDecodeFormatter();
 /// var decoded = formatter.Format("&amp;lt;div&amp;gt;Hello &amp;amp; goodbye&amp;lt;/div&amp;gt;");
 /// // Returns: "&lt;div&gt;Hello &amp; goodbye&lt;/div&gt;"
-/// 
+///
 /// var decoded2 = formatter.Format("Price: &amp;pound;99.99");
 /// // Returns: "Price: £99.99"
 /// </code>

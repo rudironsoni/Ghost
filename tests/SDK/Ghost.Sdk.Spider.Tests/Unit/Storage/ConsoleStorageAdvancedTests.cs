@@ -66,7 +66,7 @@ public class ConsoleStorageAdvancedTests
         // Assert
         result.Success.Should().BeTrue();
         var output = _consoleOutput.ToString();
-        
+
         output.Should().Contain("ComplexSpider");
         output.Should().Contain("https://example.com");
         output.Should().Contain("Complex Item");
@@ -95,7 +95,7 @@ public class ConsoleStorageAdvancedTests
         // Assert
         result.Success.Should().BeTrue();
         var output = _consoleOutput.ToString();
-        
+
         output.Should().Contain("Quoted");
         output.Should().Contain("Line1");
         output.Should().Contain("Special:");
@@ -143,7 +143,7 @@ public class ConsoleStorageAdvancedTests
         // Assert
         result.Success.Should().BeTrue();
         var output = _consoleOutput.ToString();
-        
+
         output.Should().Contain("2024-03-01 09:00:00");
         output.Should().Contain("Created");
         output.Should().Contain("Modified");
@@ -171,7 +171,7 @@ public class ConsoleStorageAdvancedTests
         // Assert
         result.Success.Should().BeTrue();
         result.ItemsStored.Should().Be(2);
-        
+
         var output = _consoleOutput.ToString();
         output.Should().Contain("test-batch-123");
         output.Should().Contain("BatchHeaderSpider");
@@ -190,7 +190,7 @@ public class ConsoleStorageAdvancedTests
 
         // Assert
         var output = _consoleOutput.ToString();
-        
+
         // Should contain separator lines
         var lines = output.Split(Environment.NewLine);
         lines.Should().Contain(line => line.StartsWith("=") && line.Length >= 80);
@@ -247,7 +247,7 @@ public class ConsoleStorageAdvancedTests
         // Assert
         result.Success.Should().BeTrue();
         var output = _consoleOutput.ToString();
-        
+
         output.Should().Contain("42");
         output.Should().Contain("9876543210");
         output.Should().Contain("3.14159");
@@ -272,7 +272,7 @@ public class ConsoleStorageAdvancedTests
         // Assert
         result.Success.Should().BeTrue();
         var output = _consoleOutput.ToString();
-        
+
         output.Should().Contain("IsActive");
         output.Should().Contain("IsDeleted");
     }
@@ -295,7 +295,7 @@ public class ConsoleStorageAdvancedTests
         // Assert
         result.Success.Should().BeTrue();
         var output = _consoleOutput.ToString();
-        
+
         output.Should().Contain("one");
         output.Should().Contain("three");
     }
@@ -319,7 +319,7 @@ public class ConsoleStorageAdvancedTests
         // Assert
         result.Success.Should().BeTrue();
         result.ItemsStored.Should().Be(50);
-        
+
         var output = _consoleOutput.ToString();
         output.Should().Contain("Items: 50");
         output.Should().Contain("Item1");

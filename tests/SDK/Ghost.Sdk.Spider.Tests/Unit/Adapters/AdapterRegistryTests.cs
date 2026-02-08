@@ -98,7 +98,7 @@ public class AdapterRegistryTests
         // Assert
         var htmlAdapters = _registry.GetAdaptersByContentType(ContentType.Html);
         var xmlAdapters = _registry.GetAdaptersByContentType(ContentType.Xml);
-        
+
         htmlAdapters.Should().Contain(typeof(StaticHtmlAdapter));
         xmlAdapters.Should().Contain(typeof(StaticHtmlAdapter));
     }
@@ -343,7 +343,7 @@ public class AdapterRegistryTests
         // Assert
         var htmlAdapters = _registry.GetAdaptersByContentType(ContentType.Html);
         // Should only contain built-in adapters, not our test adapter
-        var hasTestAdapter = htmlAdapters.Any(t => t == typeof(StaticHtmlAdapter) 
+        var hasTestAdapter = htmlAdapters.Any(t => t == typeof(StaticHtmlAdapter)
             && _registry.GetAdapterType("TestAdapter") != null);
         hasTestAdapter.Should().BeFalse();
     }

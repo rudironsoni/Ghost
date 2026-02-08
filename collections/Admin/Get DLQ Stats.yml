@@ -16,16 +16,16 @@ runtime:
         test("Status code is 200", function() {
           expect(res.status).to.equal(200);
         });
-        
+
         test("Response has activeCount", function() {
           expect(res.body).to.have.property("activeCount");
         });
 
 docs: |-
   ## Get DLQ Stats
-  
+
   Get Dead Letter Queue statistics.
-  
+
   ### Response Example (200 OK)
   ```json
   {

@@ -62,11 +62,11 @@ try
     Console.WriteLine("Getting CSRF token...");
     var token = await apiClient.GetCsrfTokenAsync();
     Console.WriteLine($"CSRF Token acquired: {!string.IsNullOrEmpty(token)}\n");
-    
+
     // Search using API
     Console.WriteLine("Calling Glassdoor API...");
     var jsonResponse = await apiClient.SearchAsync(criteria.Query ?? "", criteria.Location, token);
-    
+
     if (string.IsNullOrEmpty(jsonResponse))
     {
         Console.WriteLine("⚠ API returned empty response\n");
@@ -74,21 +74,21 @@ try
     else
     {
         Console.WriteLine($"✓ API returned {jsonResponse.Length} bytes\n");
-        
+
         // Debug: Check JSON structure
         Console.WriteLine($"First 500 chars of response: {jsonResponse.Substring(0, Math.Min(500, jsonResponse.Length))}\n");
-        
+
         // Parse the response
         var jobs = GlassdoorJobParser.ParseSearchResponse(jsonResponse);
-        
+
         Console.WriteLine($"\n=== RESULTS: Found {jobs.Count} jobs ===\n");
-        
+
         int count = 0;
         foreach (var job in jobs)
         {
             count++;
             if (count > 5) break; // Limit to 5 for display
-            
+
             Console.WriteLine($"Job #{count}:");
             Console.WriteLine($"  Title: {job.Title ?? "N/A"}");
             Console.WriteLine($"  Company: {job.Company ?? "N/A"}");
@@ -98,7 +98,7 @@ try
             Console.WriteLine($"  Salary: {job.Salary ?? "N/A"}");
             Console.WriteLine();
         }
-        
+
         // Summary
         Console.WriteLine("=== VERIFICATION ===");
         Console.WriteLine($"✓ Total jobs scraped: {jobs.Count}");
@@ -106,7 +106,7 @@ try
         Console.WriteLine($"✓ Using Ghost.Sdk.Spider: YES (via GlassdoorBrowserClient)");
         Console.WriteLine($"✓ Real data from Glassdoor: {(jobs.Count > 0 ? "YES" : "NO")}");
         Console.WriteLine($"✓ GlassdoorJobParser extraction: {(jobs.Count > 0 && !string.IsNullOrEmpty(jobs[0].Title) ? "WORKING" : "FAILED")}");
-        
+
         Environment.Exit(jobs.Count > 0 ? 0 : 1);
     }
 }

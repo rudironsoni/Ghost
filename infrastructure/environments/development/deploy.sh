@@ -92,10 +92,10 @@ print_info() {
 
 check_dependencies() {
   print_header "Checking Dependencies"
-  
+
   local deps=("terraform" "aws" "jq" "ssh")
   local missing=()
-  
+
   for dep in "${deps[@]}"; do
     if command -v "$dep" &> /dev/null; then
       print_success "$dep is installed"
@@ -104,7 +104,7 @@ check_dependencies() {
       missing+=("$dep")
     fi
   done
-  
+
   if [ ${#missing[@]} -ne 0 ]; then
     echo ""
     print_error "Missing dependencies: ${missing[*]}"
@@ -115,7 +115,7 @@ check_dependencies() {
     echo "  - jq: https://stedolan.github.io/jq/"
     exit 1
   fi
-  
+
   # Check AWS credentials
   if aws sts get-caller-identity &> /dev/null; then
     print_success "AWS credentials configured"
@@ -134,7 +134,7 @@ check_dependencies() {
 
 terraform_init() {
   print_header "Initializing Terraform"
-  
+
   if [ -d ".terraform" ]; then
     print_info "Terraform already initialized"
   else
@@ -145,38 +145,38 @@ terraform_init() {
 
 terraform_plan() {
   print_header "Planning Infrastructure Changes"
-  
+
   terraform plan -out=tfplan
   print_success "Plan generated"
 }
 
 terraform_apply() {
   print_header "Applying Infrastructure Changes"
-  
+
   if [ "$AUTO_APPROVE" = true ]; then
     terraform apply -auto-approve tfplan
   else
     echo ""
     echo -e "${YELLOW}Review the plan above. Do you want to apply these changes?${NC}"
     read -p "Type 'yes' to continue: " confirm
-    
+
     if [ "$confirm" != "yes" ]; then
       print_warning "Deployment cancelled"
       exit 0
     fi
-    
+
     terraform apply tfplan
   fi
-  
+
   # Clean up plan file
   rm -f tfplan
-  
+
   print_success "Infrastructure deployed"
 }
 
 terraform_destroy() {
   print_header "Destroying Infrastructure"
-  
+
   echo ""
   echo -e "${RED}⚠️  WARNING: This will destroy ALL infrastructure!${NC}"
   echo -e "${RED}   - EC2 instances${NC}"
@@ -184,56 +184,56 @@ terraform_destroy() {
   echo -e "${RED}   - ElastiCache cluster${NC}"
   echo -e "${RED}   - All networking components${NC}"
   echo ""
-  
+
   if [ "$AUTO_APPROVE" = true ]; then
     print_warning "Auto-destroying in 5 seconds... Press Ctrl+C to cancel"
     sleep 5
     terraform destroy -auto-approve
   else
     read -p "Type 'yes' to DESTROY everything: " confirm
-    
+
     if [ "$confirm" != "yes" ]; then
       print_warning "Destruction cancelled"
       exit 0
     fi
-    
+
     terraform destroy
   fi
-  
+
   print_success "Infrastructure destroyed"
   exit 0
 }
 
 save_outputs() {
   print_header "Saving Outputs"
-  
+
   # Save all outputs to JSON
   terraform output -json > outputs.json
   chmod 600 outputs.json
   print_success "Outputs saved to outputs.json"
-  
+
   # Extract key information
   K3S_IP=$(terraform output -raw k3s_public_ip)
   SSH_KEY=$(terraform output -raw ssh_private_key_path | grep -o '[^:]*$' | xargs)
-  
+
   print_info "k3s Public IP: $K3S_IP"
   print_info "SSH Key: $SSH_KEY"
 }
 
 wait_for_instance() {
   print_header "Waiting for k3s Instance"
-  
+
   INSTANCE_ID=$(terraform output -raw k3s_instance_id)
   print_info "Instance ID: $INSTANCE_ID"
-  
+
   print_info "Waiting for instance to be running..."
   aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
   print_success "Instance is running"
-  
+
   print_info "Waiting for status checks..."
   aws ec2 wait instance-status-ok --instance-ids "$INSTANCE_ID"
   print_success "Instance is healthy"
-  
+
   # Wait a bit more for cloud-init to complete
   print_info "Waiting for cloud-init to complete (60 seconds)..."
   sleep 60
@@ -242,10 +242,10 @@ wait_for_instance() {
 
 test_connectivity() {
   print_header "Testing Connectivity"
-  
+
   K3S_IP=$(terraform output -raw k3s_public_ip)
   SSH_KEY=$(terraform output -raw ssh_private_key_path | grep -o '[^:]*$' | xargs)
-  
+
   # Test SSH
   print_info "Testing SSH connection..."
   if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i "$SSH_KEY" ec2-user@"$K3S_IP" "echo 'SSH OK'" &> /dev/null; then
@@ -254,7 +254,7 @@ test_connectivity() {
     print_error "SSH connection failed"
     return 1
   fi
-  
+
   # Test k3s
   print_info "Testing k3s..."
   if ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" ec2-user@"$K3S_IP" "kubectl get nodes" &> /dev/null; then
@@ -262,7 +262,7 @@ test_connectivity() {
   else
     print_warning "k3s might still be initializing"
   fi
-  
+
   # Test database
   print_info "Testing database connection..."
   DB_HOST=$(terraform output -raw db_address)
@@ -275,21 +275,21 @@ test_connectivity() {
 
 get_kubeconfig() {
   print_header "Getting Kubeconfig"
-  
+
   K3S_IP=$(terraform output -raw k3s_public_ip)
   SSH_KEY=$(terraform output -raw ssh_private_key_path | grep -o '[^:]*$' | xargs)
-  
+
   mkdir -p .kube
-  
+
   print_info "Fetching kubeconfig from k3s node..."
   ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" ec2-user@"$K3S_IP" \
     "sudo cat /etc/rancher/k3s/k3s.yaml" > .kube/config.tmp
-  
+
   # Replace 127.0.0.1 with public IP
   sed "s/127.0.0.1/$K3S_IP/" .kube/config.tmp > kubeconfig.yaml
   rm .kube/config.tmp
   chmod 600 kubeconfig.yaml
-  
+
   print_success "Kubeconfig saved to kubeconfig.yaml"
   echo ""
   print_info "To use kubectl:"
@@ -299,10 +299,10 @@ get_kubeconfig() {
 
 show_next_steps() {
   print_header "Deployment Complete! 🎉"
-  
+
   K3S_IP=$(terraform output -raw k3s_public_ip)
   SSH_KEY=$(terraform output -raw ssh_private_key_path | grep -o '[^:]*$' | xargs)
-  
+
   echo ""
   echo -e "${GREEN}Your Ghost Platform development environment is ready!${NC}"
   echo ""
@@ -346,7 +346,7 @@ show_next_steps() {
 
 main() {
   clear
-  
+
   echo ""
   echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════╗${NC}"
   echo -e "${BLUE}║                                                                   ║${NC}"
@@ -354,42 +354,42 @@ main() {
   echo -e "${BLUE}║                                                                   ║${NC}"
   echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════╝${NC}"
   echo ""
-  
+
   # Handle destroy
   if [ "$DESTROY" = true ]; then
     terraform_destroy
   fi
-  
+
   # Check dependencies
   check_dependencies
-  
+
   # Initialize Terraform
   terraform_init
-  
+
   # Plan changes
   terraform_plan
-  
+
   # Stop here if plan-only
   if [ "$PLAN_ONLY" = true ]; then
     print_info "Plan-only mode. Exiting without apply."
     exit 0
   fi
-  
+
   # Apply changes
   terraform_apply
-  
+
   # Save outputs
   save_outputs
-  
+
   # Wait for instance to be ready
   wait_for_instance
-  
+
   # Test connectivity
   test_connectivity || true  # Don't fail if tests fail
-  
+
   # Get kubeconfig
   get_kubeconfig || print_warning "Could not fetch kubeconfig (try again later)"
-  
+
   # Show next steps
   show_next_steps
 }

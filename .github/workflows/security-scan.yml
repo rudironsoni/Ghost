@@ -100,9 +100,9 @@ jobs:
           echo "" >> vulnerability-report.md
           echo "## NuGet Package Vulnerabilities" >> vulnerability-report.md
           echo "" >> vulnerability-report.md
-          
+
           dotnet list Ghost.sln package --vulnerable --include-transitive > vuln-output.txt 2>&1
-          
+
           if grep -q "has the following vulnerable packages" vuln-output.txt; then
             echo "⚠️ VULNERABLE DEPENDENCIES FOUND" >> vulnerability-report.md
             echo "" >> vulnerability-report.md
@@ -114,7 +114,7 @@ jobs:
             echo "✅ No vulnerable packages found" >> vulnerability-report.md
             echo "has_vulnerabilities=false" >> $GITHUB_OUTPUT
           fi
-          
+
           cat vulnerability-report.md
 
       - name: Upload Vulnerability Report
@@ -131,7 +131,7 @@ jobs:
           script: |
             const fs = require('fs');
             const report = fs.readFileSync('vulnerability-report.md', 'utf8');
-            
+
             // Check if an open issue already exists
             const issues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -139,11 +139,11 @@ jobs:
               state: 'open',
               labels: 'security,dependencies'
             });
-            
-            const existingIssue = issues.data.find(issue => 
+
+            const existingIssue = issues.data.find(issue =>
               issue.title.includes('Vulnerable Dependencies Detected')
             );
-            
+
             if (existingIssue) {
               // Update existing issue
               await github.rest.issues.createComment({
@@ -179,19 +179,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: |
             title = "Ghost Security Scan"
-            
+
             [[rules]]
             description = "Generic API Key"
             regex = '''(?i)(api[_-]?key|apikey)[\s]*[:=][\s]*['"]?[a-zA-Z0-9]{32,}['"]?'''
-            
+
             [[rules]]
             description = "Generic Secret"
             regex = '''(?i)(secret|password|passwd|pwd)[\s]*[:=][\s]*['"]?[^\s'"]{8,}['"]?'''
-            
+
             [[rules]]
             description = "GitHub Token"
             regex = '''ghp_[0-9a-zA-Z]{36}'''
-            
+
             [[rules]]
             description = "NuGet API Key"
             regex = '''oy2[a-z0-9]{43}'''
@@ -315,9 +315,9 @@ jobs:
           echo "" >> license-report.md
           echo "## Package Licenses" >> license-report.md
           echo "" >> license-report.md
-          
+
           dotnet list Ghost.sln package --include-transitive > packages.txt
-          
+
           echo "\`\`\`" >> license-report.md
           cat packages.txt >> license-report.md
           echo "\`\`\`" >> license-report.md
@@ -341,34 +341,34 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Scan Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           echo "### Scan Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [[ "${{ needs.codeql-sast.result }}" == "success" ]]; then
             echo "✅ **CodeQL SAST:** Passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **CodeQL SAST:** Failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [[ "${{ needs.dependency-vulnerability-scan.result }}" == "success" ]]; then
             echo "✅ **Dependency Scan:** Passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ **Dependency Scan:** Issues Found" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [[ "${{ needs.secret-detection.result }}" == "success" ]]; then
             echo "✅ **Secret Detection:** Passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **Secret Detection:** Failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [[ "${{ needs.sbom-generation.result }}" == "success" ]]; then
             echo "✅ **SBOM Generation:** Passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **SBOM Generation:** Failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [[ "${{ needs.license-compliance.result }}" == "success" ]]; then
             echo "✅ **License Compliance:** Passed" >> $GITHUB_STEP_SUMMARY
           else

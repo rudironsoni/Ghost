@@ -10,14 +10,14 @@ metadata:
     description: "Block creation of privileged containers in Ghost environments"
 spec:
   enforcementAction: deny
-  
+
   match:
     kinds:
       - apiGroups: [""]
         kinds: ["Pod"]
       - apiGroups: ["apps"]
         kinds: ["Deployment", "StatefulSet", "DaemonSet"]
-    
+
     # Allow privileged containers only in system namespaces
     excludedNamespaces:
       - kube-system
@@ -32,14 +32,14 @@ metadata:
     description: "Block use of host PID, IPC, and network namespaces"
 spec:
   enforcementAction: deny
-  
+
   match:
     kinds:
       - apiGroups: [""]
         kinds: ["Pod"]
       - apiGroups: ["apps"]
         kinds: ["Deployment", "StatefulSet", "DaemonSet"]
-    
+
     excludedNamespaces:
       - kube-system
 
@@ -52,14 +52,14 @@ metadata:
     description: "Require containers to use read-only root filesystem"
 spec:
   enforcementAction: warn  # Warn initially, can be changed to deny
-  
+
   match:
     kinds:
       - apiGroups: [""]
         kinds: ["Pod"]
       - apiGroups: ["apps"]
         kinds: ["Deployment", "StatefulSet"]
-    
+
     namespaceSelector:
       matchLabels:
         environment: production
@@ -73,14 +73,14 @@ metadata:
     description: "Prevent containers from escalating privileges"
 spec:
   enforcementAction: deny
-  
+
   match:
     kinds:
       - apiGroups: [""]
         kinds: ["Pod"]
       - apiGroups: ["apps"]
         kinds: ["Deployment", "StatefulSet", "DaemonSet"]
-    
+
     excludedNamespaces:
       - kube-system
 
@@ -93,14 +93,14 @@ metadata:
     description: "Require containers to run as non-root user"
 spec:
   enforcementAction: deny
-  
+
   match:
     kinds:
       - apiGroups: [""]
         kinds: ["Pod"]
       - apiGroups: ["apps"]
         kinds: ["Deployment", "StatefulSet", "DaemonSet"]
-    
+
     excludedNamespaces:
       - kube-system
       - kube-public
@@ -114,17 +114,17 @@ metadata:
     description: "Block mounting host filesystem paths"
 spec:
   enforcementAction: deny
-  
+
   match:
     kinds:
       - apiGroups: [""]
         kinds: ["Pod"]
       - apiGroups: ["apps"]
         kinds: ["Deployment", "StatefulSet", "DaemonSet"]
-    
+
     excludedNamespaces:
       - kube-system
-  
+
   parameters:
     # Empty list means no host paths are allowed
     allowedHostPaths: []
@@ -203,17 +203,17 @@ metadata:
     description: "Drop all capabilities and allow only specific ones"
 spec:
   enforcementAction: deny
-  
+
   match:
     kinds:
       - apiGroups: [""]
         kinds: ["Pod"]
       - apiGroups: ["apps"]
         kinds: ["Deployment", "StatefulSet", "DaemonSet"]
-    
+
     excludedNamespaces:
       - kube-system
-  
+
   parameters:
     # Only these capabilities can be added
     allowedCapabilities:
@@ -221,7 +221,7 @@ spec:
       - "CHOWN"             # Change file ownership
       - "SETGID"            # Set GID
       - "SETUID"            # Set UID
-    
+
     # These capabilities MUST be dropped
     requiredDropCapabilities:
       - "ALL"
@@ -286,18 +286,18 @@ metadata:
     description: "Prevent containers from binding to host ports"
 spec:
   enforcementAction: deny
-  
+
   match:
     kinds:
       - apiGroups: [""]
         kinds: ["Pod"]
       - apiGroups: ["apps"]
         kinds: ["Deployment", "StatefulSet", "DaemonSet"]
-    
+
     excludedNamespaces:
       - kube-system
       - ingress-nginx
-  
+
   parameters:
     # Empty list means no host ports are allowed
     allowedHostPorts: []
@@ -358,18 +358,18 @@ metadata:
     description: "Require RuntimeDefault or Localhost seccomp profile"
 spec:
   enforcementAction: warn  # Start with warn, move to deny after validation
-  
+
   match:
     kinds:
       - apiGroups: [""]
         kinds: ["Pod"]
       - apiGroups: ["apps"]
         kinds: ["Deployment", "StatefulSet"]
-    
+
     namespaceSelector:
       matchLabels:
         environment: production
-  
+
   parameters:
     allowedProfiles:
       - "RuntimeDefault"
@@ -385,9 +385,9 @@ metadata:
 data:
   best-practices.yaml: |
     # Ghost Application Security Context Best Practices
-    
+
     ## Recommended Security Context for Ghost Pods
-    
+
     ```yaml
     securityContext:
       # Pod-level settings
@@ -398,7 +398,7 @@ data:
       fsGroupChangePolicy: "OnRootMismatch"
       seccompProfile:
         type: RuntimeDefault
-      
+
       # Container-level settings
       containers:
       - name: ghost
@@ -414,79 +414,79 @@ data:
               - NET_BIND_SERVICE  # Only if binding to port < 1024
           seccompProfile:
             type: RuntimeDefault
-        
+
         # Use tmpfs for writable directories
         volumeMounts:
         - name: tmp
           mountPath: /tmp
         - name: cache
           mountPath: /var/cache/ghost
-      
+
       volumes:
       - name: tmp
         emptyDir: {}
       - name: cache
         emptyDir: {}
     ```
-    
+
     ## Security Policies Enforced
-    
+
     1. **No Privileged Containers**
        - privileged: false (enforced)
-    
+
     2. **No Host Namespaces**
        - hostPID: false (enforced)
        - hostIPC: false (enforced)
        - hostNetwork: false (enforced)
-    
+
     3. **No Host Ports**
        - Do not use hostPort
        - Use Services and Ingress instead
-    
+
     4. **No Host Path Volumes**
        - Do not mount host filesystem
        - Use PVCs, ConfigMaps, Secrets, or emptyDir
-    
+
     5. **Run as Non-Root**
        - runAsNonRoot: true (enforced)
        - runAsUser: >= 1000 (recommended)
-    
+
     6. **Read-Only Root Filesystem**
        - readOnlyRootFilesystem: true (recommended)
        - Use volumes for writable directories
-    
+
     7. **Drop All Capabilities**
        - capabilities.drop: [ALL] (enforced)
        - Only add required capabilities
-    
+
     8. **No Privilege Escalation**
        - allowPrivilegeEscalation: false (enforced)
-    
+
     9. **Seccomp Profile**
        - Use RuntimeDefault or Localhost profile
-    
+
     ## Exceptions
-    
+
     System namespaces are excluded from some policies:
     - kube-system: System components may need elevated privileges
     - kube-public: Public cluster information
     - ingress-nginx: Ingress controller may bind to host ports
-    
+
     ## Testing Security Context
-    
+
     ```bash
     # View pod security context
     kubectl get pod <pod-name> -n ghost-production -o jsonpath='{.spec.securityContext}' | jq
-    
+
     # Check for violations
     kubectl get constraints
-    
+
     # Describe a violation
     kubectl describe k8spspprivilegedcontainer block-privileged-containers
     ```
-    
+
     ## Common Issues and Solutions
-    
+
     ### Issue: Ghost needs to write files
     **Solution**: Use read-only root filesystem with volumes
     ```yaml
@@ -496,21 +496,21 @@ data:
     - name: content
       mountPath: /var/lib/ghost/content
     ```
-    
+
     ### Issue: Running on port 80/443
     **Solution**: Add NET_BIND_SERVICE capability OR run on port > 1024
     ```yaml
     # Option 1: Add capability
     capabilities:
       add: ["NET_BIND_SERVICE"]
-    
+
     # Option 2: Use high port (recommended)
     containerPort: 2368
     service:
       port: 80
       targetPort: 2368
     ```
-    
+
     ### Issue: File permissions on mounted volumes
     **Solution**: Set fsGroup
     ```yaml

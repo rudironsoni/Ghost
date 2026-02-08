@@ -9,11 +9,11 @@ services:
     image: ghost-scraper:stable
     container_name: ghost-stable
     restart: always
-    
+
     # Port mapping: 5000 internal to host port
     ports:
       - "5000:5000"
-    
+
     # Environment variables for production
     environment:
       - ENVIRONMENT=production
@@ -24,7 +24,7 @@ services:
       - REQUEST_TIMEOUT=30000
       - RETRY_ATTEMPTS=3
       - CACHE_TTL=3600
-    
+
     # Health check configuration
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
@@ -32,11 +32,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    
+
     # Volume for logs
     volumes:
       - logs:/var/log/ghost
-    
+
     # Resource limits
     deploy:
       resources:
@@ -46,18 +46,18 @@ services:
         reservations:
           cpus: '1.0'
           memory: 512M
-    
+
     # Network configuration
     networks:
       - ghost-network
-    
+
     # Logging configuration
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
-    
+
     # Dependencies
     depends_on:
       - nginx
@@ -67,11 +67,11 @@ services:
     image: ghost-scraper:canary
     container_name: ghost-canary
     restart: always
-    
+
     # Port mapping: 5001 internal (not directly exposed)
     ports:
       - "5001:5001"
-    
+
     # Environment variables (same as stable, but with canary version indicator)
     environment:
       - ENVIRONMENT=production
@@ -84,7 +84,7 @@ services:
       - CACHE_TTL=3600
       - CANARY_VERSION=true
       - VERSION_TAG=canary
-    
+
     # Health check configuration
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
@@ -92,11 +92,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    
+
     # Volume for logs (shared logs volume)
     volumes:
       - logs:/var/log/ghost
-    
+
     # Resource limits (slightly lower for canary)
     deploy:
       resources:
@@ -106,18 +106,18 @@ services:
         reservations:
           cpus: '0.5'
           memory: 256M
-    
+
     # Network configuration
     networks:
       - ghost-network
-    
+
     # Logging configuration
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
-    
+
     # Dependencies
     depends_on:
       - nginx
@@ -127,12 +127,12 @@ services:
     image: nginx:alpine
     container_name: ghost-nginx
     restart: always
-    
+
     # Port mapping: 80 (HTTP) and 443 (HTTPS)
     ports:
       - "80:80"
       - "443:443"
-    
+
     # Mount nginx configuration
     volumes:
       # Configuration file
@@ -141,7 +141,7 @@ services:
       - ./certs:/etc/nginx/certs:ro
       # Nginx logs
       - logs:/var/log/nginx
-    
+
     # Health check configuration
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
@@ -149,7 +149,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-    
+
     # Resource limits
     deploy:
       resources:
@@ -159,18 +159,18 @@ services:
         reservations:
           cpus: '0.5'
           memory: 256M
-    
+
     # Network configuration
     networks:
       - ghost-network
-    
+
     # Logging configuration
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
-    
+
     # Dependencies - nginx depends on both ghost services
     depends_on:
       ghost-stable:

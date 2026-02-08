@@ -19,5 +19,5 @@ runtime:
 
 docs: |-
   ## Detailed Health Report
-  
+
   Returns comprehensive health information including platforms and proxy status.

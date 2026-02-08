@@ -32,12 +32,12 @@ runtime:
         test("Status code is 200", function() {
           expect(res.status).to.equal(200);
         });
-        
+
         test("Response has jobs array", function() {
           expect(res.body).to.have.property("jobs");
           expect(res.body.jobs).to.be.an("array");
         });
-        
+
         test("Response has success flag", function() {
           expect(res.body).to.have.property("success");
           expect(res.body.success).to.be.a("boolean");
@@ -45,9 +45,9 @@ runtime:
 
 docs: |-
   ## Search Jobs
-  
+
   Search for jobs across multiple job platforms.
-  
+
   ### Request Body
   | Field | Type | Description |
   |-------|------|-------------|
@@ -59,7 +59,7 @@ docs: |-
   | postedDate | string | PastDay, PastWeek, PastMonth, AnyTime |
   | maxResults | integer | Maximum number of results (default 25) |
   | sources | array | Platforms to search: LinkedIn, Indeed, Glassdoor, Google |
-  
+
   ### Response Example (200 OK)
   ```json
   {

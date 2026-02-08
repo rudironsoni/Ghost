@@ -14,7 +14,7 @@ namespace Ghost.Sdk.Spider.Core.Entities.Formatters;
 /// <code>
 /// var formatter = new ReplaceFormatter { OldValue = "foo", NewValue = "bar" };
 /// var result = formatter.Format("foo is foo"); // Returns "bar is bar"
-/// 
+///
 /// var regexFormatter = new ReplaceFormatter { OldValue = "\\d+", NewValue = "X" };
 /// var result2 = regexFormatter.Format("Item 123"); // Returns "Item X"
 /// </code>

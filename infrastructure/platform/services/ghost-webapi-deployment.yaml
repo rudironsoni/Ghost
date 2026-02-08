@@ -18,18 +18,18 @@ metadata:
 spec:
   replicas: 3
   revisionHistoryLimit: 10
-  
+
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
-  
+
   selector:
     matchLabels:
       app.kubernetes.io/name: ghost-webapi
       app.kubernetes.io/component: api
-  
+
   template:
     metadata:
       labels:
@@ -44,11 +44,11 @@ spec:
         prometheus.io/path: "/metrics"
         checksum/config: "{{ include (print $.Template.BasePath \"/configmap.yaml\") . | sha256sum }}"
         checksum/secret: "{{ include (print $.Template.BasePath \"/secret.yaml\") . | sha256sum }}"
-    
+
     spec:
       # Service Account
       serviceAccountName: ghost-webapi
-      
+
       # Security Context (Pod level)
       securityContext:
         runAsNonRoot: true
@@ -57,7 +57,7 @@ spec:
         fsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
-      
+
       # Affinity Rules
       affinity:
         podAntiAffinity:
@@ -81,7 +81,7 @@ spec:
                 values:
                 - m5.large
                 - m5.xlarge
-      
+
       # Topology Spread Constraints
       topologySpreadConstraints:
       - maxSkew: 1
@@ -90,7 +90,7 @@ spec:
         labelSelector:
           matchLabels:
             app.kubernetes.io/name: ghost-webapi
-      
+
       # Init Containers
       initContainers:
       - name: wait-for-database
@@ -122,13 +122,13 @@ spec:
             drop:
             - ALL
           readOnlyRootFilesystem: true
-      
+
       # Main Container
       containers:
       - name: ghost-webapi
         image: ghost-webapi:latest # Replace with actual image
         imagePullPolicy: Always
-        
+
         # Ports
         ports:
         - name: http
@@ -137,7 +137,7 @@ spec:
         - name: metrics
           containerPort: 9090
           protocol: TCP
-        
+
         # Environment Variables
         env:
         - name: ASPNETCORE_ENVIRONMENT
@@ -160,14 +160,14 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        
+
         # Environment from ConfigMap
         envFrom:
         - configMapRef:
             name: ghost-config
         - secretRef:
             name: ghost-secrets
-        
+
         # Resource Limits
         resources:
           requests:
@@ -178,7 +178,7 @@ spec:
             cpu: 1000m
             memory: 2Gi
             ephemeral-storage: 2Gi
-        
+
         # Security Context (Container level)
         securityContext:
           allowPrivilegeEscalation: false
@@ -188,7 +188,7 @@ spec:
           readOnlyRootFilesystem: true
           runAsNonRoot: true
           runAsUser: 1000
-        
+
         # Health Checks
         livenessProbe:
           httpGet:
@@ -200,7 +200,7 @@ spec:
           timeoutSeconds: 5
           successThreshold: 1
           failureThreshold: 3
-        
+
         readinessProbe:
           httpGet:
             path: /health/ready
@@ -211,7 +211,7 @@ spec:
           timeoutSeconds: 3
           successThreshold: 1
           failureThreshold: 3
-        
+
         startupProbe:
           httpGet:
             path: /health/startup
@@ -222,7 +222,7 @@ spec:
           timeoutSeconds: 3
           successThreshold: 1
           failureThreshold: 30
-        
+
         # Volume Mounts
         volumeMounts:
         - name: tmp
@@ -234,7 +234,7 @@ spec:
         - name: config-volume
           mountPath: /app/config
           readOnly: true
-      
+
       # Volumes
       volumes:
       - name: tmp
@@ -250,7 +250,7 @@ spec:
         configMap:
           name: ghost-config
           defaultMode: 0444
-      
+
       # DNS Configuration
       dnsPolicy: ClusterFirst
       dnsConfig:
@@ -258,7 +258,7 @@ spec:
         - name: ndots
           value: "2"
         - name: edns0
-      
+
       # Termination Grace Period
       terminationGracePeriodSeconds: 30
 ---

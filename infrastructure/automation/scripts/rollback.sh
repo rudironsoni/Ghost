@@ -203,12 +203,12 @@ get_rollback_info() {
         # Get previous successful deployment
         TARGET_REVISION=$(helm history ghost -n "$NAMESPACE" -o json | \
             jq -r '[.[] | select(.status == "deployed" or .status == "superseded")] | sort_by(.revision) | reverse | .[1].revision // empty')
-        
+
         if [[ -z "$TARGET_REVISION" ]]; then
             log_error "No previous successful deployment found"
             exit 1
         fi
-        
+
         log_info "Rolling back to previous revision: $TARGET_REVISION"
     fi
 }
@@ -226,7 +226,7 @@ confirm_rollback() {
     log_warning "Current Revision: $CURRENT_REVISION"
     log_warning "Target Revision: ${TARGET_REVISION:-backup}"
     log_warning "=========================================="
-    
+
     read -p "Are you sure you want to rollback? (yes/no): " -r
     if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]; then
         log_info "Rollback cancelled by user"
@@ -245,7 +245,7 @@ create_snapshot() {
     helm get values ghost -n "$NAMESPACE" -o yaml > "${snapshot_dir}/values.yaml"
     helm get manifest ghost -n "$NAMESPACE" > "${snapshot_dir}/manifests.yaml"
     kubectl get all -n "$NAMESPACE" -o yaml > "${snapshot_dir}/resources.yaml"
-    
+
     # Save pod logs
     for pod in $(kubectl get pods -n "$NAMESPACE" -l app=ghost -o jsonpath='{.items[*].metadata.name}'); do
         kubectl logs "$pod" -n "$NAMESPACE" --all-containers=true > "${snapshot_dir}/logs-${pod}.txt" 2>/dev/null || true
@@ -260,13 +260,13 @@ helm_rollback() {
     log_info "Performing Helm rollback to revision $TARGET_REVISION..."
 
     local helm_cmd="helm rollback ghost $TARGET_REVISION -n $NAMESPACE --wait --timeout ${ROLLBACK_TIMEOUT}s"
-    
+
     if [[ "$DRY_RUN" == "true" ]]; then
         helm_cmd="$helm_cmd --dry-run"
     fi
 
     log_info "Executing: $helm_cmd"
-    
+
     if eval "$helm_cmd" 2>&1 | tee -a "$LOG_FILE"; then
         log_success "Helm rollback completed"
     else
@@ -280,7 +280,7 @@ backup_rollback() {
     log_info "Performing backup-based rollback to $TARGET_BACKUP..."
 
     local backup_dir="${PROJECT_ROOT}/backups/${ENVIRONMENT}/${TARGET_BACKUP}"
-    
+
     if [[ ! -d "$backup_dir" ]]; then
         log_error "Backup directory not found: $backup_dir"
         exit 1
@@ -304,7 +304,7 @@ backup_rollback() {
     fi
 
     log_info "Executing backup restore..."
-    
+
     if eval "$helm_cmd" 2>&1 | tee -a "$LOG_FILE"; then
         log_success "Backup restore completed"
     else
@@ -318,25 +318,25 @@ restore_database() {
     log_info "Checking for database backup to restore..."
 
     local db_backup_path=""
-    
+
     if [[ -n "$TARGET_BACKUP" ]]; then
         # Find database backup matching timestamp
         if command -v aws &> /dev/null; then
             db_backup_path=$(aws s3 ls "s3://ghost-backups/${ENVIRONMENT}/database/" | \
                 grep "$TARGET_BACKUP" | awk '{print $4}' | head -1)
-            
+
             if [[ -n "$db_backup_path" ]]; then
                 log_warning "Database backup found: $db_backup_path"
                 read -p "Do you want to restore the database backup? (yes/no): " -r
-                
+
                 if [[ $REPLY =~ ^[Yy][Ee][Ss]$ ]]; then
                     log_info "Downloading database backup..."
                     aws s3 cp "s3://ghost-backups/${ENVIRONMENT}/database/${db_backup_path}" "/tmp/db-restore.sql"
-                    
+
                     # Get MySQL credentials
                     local mysql_password=$(kubectl get secret ghost-mysql-secret -n "$NAMESPACE" -o jsonpath='{.data.mysql-password}' | base64 -d)
                     local mysql_host=$(kubectl get service ghost-mysql -n "$NAMESPACE" -o jsonpath='{.spec.clusterIP}')
-                    
+
                     log_info "Restoring database..."
                     kubectl run mysql-restore \
                         --image=mysql:8.0 \
@@ -344,7 +344,7 @@ restore_database() {
                         -n "$NAMESPACE" \
                         --env="MYSQL_PWD=${mysql_password}" \
                         -- mysql -h "${mysql_host}" -u ghost ghost_production < "/tmp/db-restore.sql"
-                    
+
                     rm -f "/tmp/db-restore.sql"
                     log_success "Database restored successfully"
                 else
@@ -387,7 +387,7 @@ verify_rollback() {
     # HTTP health check
     log_info "Running HTTP health check..."
     local service_ip=$(kubectl get service ghost-service -n "$NAMESPACE" -o jsonpath='{.spec.clusterIP}')
-    
+
     if kubectl run health-check --image=curlimages/curl:latest --rm -i --restart=Never -n "$NAMESPACE" \
         -- curl -f -s "http://${service_ip}:2368/ghost/api/v3/admin/site/" &> /dev/null; then
         log_success "HTTP health check passed"
@@ -411,7 +411,7 @@ send_notification() {
     if [[ -n "${SLACK_WEBHOOK_URL:-}" ]]; then
         local color="warning"
         local emoji=":back:"
-        
+
         if [[ "$status" == "critical" ]]; then
             color="danger"
             emoji=":rotating_light:"
@@ -419,7 +419,7 @@ send_notification() {
             color="good"
             emoji=":white_check_mark:"
         fi
-        
+
         curl -X POST "$SLACK_WEBHOOK_URL" \
             -H 'Content-Type: application/json' \
             -d "{
@@ -441,14 +441,14 @@ send_notification() {
 # Cleanup old rollback snapshots
 cleanup_old_snapshots() {
     log_info "Cleaning up old rollback snapshots..."
-    
+
     local backup_base_dir="${PROJECT_ROOT}/backups/${ENVIRONMENT}"
-    
+
     if [[ -d "$backup_base_dir" ]]; then
         # Keep only last 10 snapshots
         find "$backup_base_dir" -maxdepth 1 -type d -name "pre-rollback-*" | \
             sort -r | tail -n +11 | xargs rm -rf 2>/dev/null || true
-        
+
         log_success "Snapshot cleanup completed"
     fi
 }
@@ -496,15 +496,15 @@ main() {
             log_success "Environment: $ENVIRONMENT"
             log_success "Revision: ${TARGET_REVISION:-backup}"
             log_success "=========================================="
-            
+
             send_notification "success" "Rollback completed successfully"
-            
+
             cleanup_old_snapshots
             exit 0
         else
             log_error "Rollback verification failed"
             log_error "Manual intervention required!"
-            
+
             send_notification "critical" "Rollback verification failed - manual intervention required"
             exit 1
         fi

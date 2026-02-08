@@ -20,7 +20,7 @@ public class StrategyRouterTests
     public void RegisterStrategy_WithValidStrategy_ShouldRegister()
     {
         // Arrange
-        Func<StrategyContext, CancellationToken, Task<ExtractionResult>> strategy = 
+        Func<StrategyContext, CancellationToken, Task<ExtractionResult>> strategy =
             (ctx, ct) => Task.FromResult(ExtractionResult.CreateSuccess(new { test = "data" }, "TestStrategy", TimeSpan.Zero));
 
         // Act
@@ -35,7 +35,7 @@ public class StrategyRouterTests
     public void RegisterStrategy_WithNullName_ShouldThrow()
     {
         // Arrange
-        Func<StrategyContext, CancellationToken, Task<ExtractionResult>> strategy = 
+        Func<StrategyContext, CancellationToken, Task<ExtractionResult>> strategy =
             (ctx, ct) => Task.FromResult(ExtractionResult.CreateSuccess(new { }, "Test", TimeSpan.Zero));
 
         // Act & Assert
@@ -79,7 +79,7 @@ public class StrategyRouterTests
         // Arrange
         _router.RegisterStrategy("FailStrategy", (ctx, ct) =>
             Task.FromResult(ExtractionResult.CreateFailure("Failed", "FailStrategy", TimeSpan.Zero)));
-        
+
         _router.RegisterStrategy("SuccessStrategy", (ctx, ct) =>
             Task.FromResult(ExtractionResult.CreateSuccess(new { value = 42 }, "SuccessStrategy", TimeSpan.Zero)));
 
@@ -105,7 +105,7 @@ public class StrategyRouterTests
         // Arrange
         _router.RegisterStrategy("Fail1", (ctx, ct) =>
             Task.FromResult(ExtractionResult.CreateFailure("Error 1", "Fail1", TimeSpan.Zero)));
-        
+
         _router.RegisterStrategy("Fail2", (ctx, ct) =>
             Task.FromResult(ExtractionResult.CreateFailure("Error 2", "Fail2", TimeSpan.Zero)));
 
@@ -171,7 +171,7 @@ public class StrategyRouterTests
         // Arrange
         _router.RegisterStrategy("Strategy1", (ctx, ct) =>
             Task.FromResult(ExtractionResult.CreateSuccess(new { step = 1 }, "Strategy1", TimeSpan.Zero)));
-        
+
         _router.RegisterStrategy("Strategy2", (ctx, ct) =>
             Task.FromResult(ExtractionResult.CreateSuccess(new { step = 2 }, "Strategy2", TimeSpan.Zero)));
 
@@ -209,10 +209,10 @@ public class StrategyRouterTests
         // Arrange
         _router.RegisterStrategy("SuccessStrategy", (ctx, ct) =>
             Task.FromResult(ExtractionResult.CreateSuccess(new { step = 1 }, "SuccessStrategy", TimeSpan.Zero)));
-        
+
         _router.RegisterStrategy("FailStrategy", (ctx, ct) =>
             Task.FromResult(ExtractionResult.CreateFailure("Error", "FailStrategy", TimeSpan.Zero)));
-        
+
         _router.RegisterStrategy("NeverExecuted", (ctx, ct) =>
             Task.FromResult(ExtractionResult.CreateSuccess(new { step = 3 }, "NeverExecuted", TimeSpan.Zero)));
 

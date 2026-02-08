@@ -95,14 +95,14 @@ public class ConsentManagerService
             new[] { "[data-cookiefirst-action], #cookiefirst, '#cf-root'" },
             new[] { "[data-cookiefirst-action='accept']", "#cf-accept", "[data-cf-action='accept']" }
         ),
-        
+
         // Osano
         new ConsentManagerDefinition(
             "osano",
             new[] { ".osano-cm-window", "#osano-cm" },
             new[] { ".osano-cm-accept-all", ".osano-cm-btn-accept-all" }
         ),
-        
+
         // Generic - accept all buttons (fallback)
         new ConsentManagerDefinition(
             "generic-accept",
@@ -124,7 +124,7 @@ public class ConsentManagerService
                 "button[title*='Accept' i]", "button[title*='Aceptar' i]"
             }
         ),
-        
+
         // Generic - iframe-based consent
         new ConsentManagerDefinition(
             "generic-iframe",

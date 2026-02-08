@@ -27,19 +27,19 @@ runtime:
         test("Status code is 200", function() {
           expect(res.status).to.equal(200);
         });
-        
+
         test("Response is array", function() {
           expect(res.body).to.be.an('array');
         });
 
 docs: |-
   ## Boolean Search - OR Operator
-  
+
   Tests LinkedIn's OR operator which finds jobs containing ANY of the keywords.
-  
+
   ### Query
   `developer OR programmer OR coder`
-  
+
   ### Expected Behavior
   - Returns jobs containing at least one of: "developer", "programmer", OR "coder"
   - Broadens search results compared to AND operator

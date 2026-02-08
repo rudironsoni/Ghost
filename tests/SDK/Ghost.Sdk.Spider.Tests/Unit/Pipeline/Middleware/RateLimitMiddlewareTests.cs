@@ -23,7 +23,7 @@ public class RateLimitMiddlewareTests
         };
         var middleware = new RateLimitMiddleware(config);
         var stateBox = new SpiderStateBox();
-        
+
         var request = new Request
         {
             RequestId = "test-request",
@@ -31,7 +31,7 @@ public class RateLimitMiddlewareTests
             Method = "GET",
             Timeout = TimeSpan.FromSeconds(30)
         };
-        
+
         var context = new PipelineContext
         {
             StateBox = stateBox,
@@ -257,7 +257,7 @@ public class RateLimitMiddlewareTests
         var middleware = new RateLimitMiddleware(config);
 
         var stateBox = new SpiderStateBox();
-        
+
         // Act - Should allow 3 requests in burst
         for (int i = 0; i < 3; i++)
         {

@@ -84,8 +84,8 @@ public class FormatterImplementationTests
         public void Format_WithReplacement_ReplacesPattern()
         {
             // Arrange
-            var formatter = new RegexFormatter 
-            { 
+            var formatter = new RegexFormatter
+            {
                 Pattern = @"(\d{3})-(\d{3})-(\d{4})",
                 Replacement = "($1) $2-$3"
             };
@@ -101,8 +101,8 @@ public class FormatterImplementationTests
         public void Format_WithExtraction_ExtractsMatch()
         {
             // Arrange
-            var formatter = new RegexFormatter 
-            { 
+            var formatter = new RegexFormatter
+            {
                 Pattern = @"\d{3}-\d{3}-\d{4}"
             };
 
@@ -117,8 +117,8 @@ public class FormatterImplementationTests
         public void Format_WithCaptureGroup_ExtractsGroup()
         {
             // Arrange
-            var formatter = new RegexFormatter 
-            { 
+            var formatter = new RegexFormatter
+            {
                 Pattern = @"\$(\d+\.\d+)",
                 Group = 1
             };
@@ -134,8 +134,8 @@ public class FormatterImplementationTests
         public void Format_WithIgnoreCase_MatchesCaseInsensitive()
         {
             // Arrange
-            var formatter = new RegexFormatter 
-            { 
+            var formatter = new RegexFormatter
+            {
                 Pattern = "hello",
                 Replacement = "goodbye",
                 IgnoreCase = true
@@ -166,8 +166,8 @@ public class FormatterImplementationTests
         public void Format_WithInputFormat_ParsesCustomFormat()
         {
             // Arrange
-            var formatter = new DateTimeFormatter 
-            { 
+            var formatter = new DateTimeFormatter
+            {
                 InputFormat = "MM/dd/yyyy",
                 OutputFormat = "yyyy-MM-dd"
             };
@@ -183,8 +183,8 @@ public class FormatterImplementationTests
         public void Format_WithDefaultParsing_ParsesStandardFormat()
         {
             // Arrange
-            var formatter = new DateTimeFormatter 
-            { 
+            var formatter = new DateTimeFormatter
+            {
                 OutputFormat = "yyyy-MM-dd"
             };
 
@@ -199,8 +199,8 @@ public class FormatterImplementationTests
         public void Format_WithDateTime_FormatsDateTime()
         {
             // Arrange
-            var formatter = new DateTimeFormatter 
-            { 
+            var formatter = new DateTimeFormatter
+            {
                 OutputFormat = "MM/dd/yyyy"
             };
             var date = new DateTime(2024, 12, 25);
@@ -216,8 +216,8 @@ public class FormatterImplementationTests
         public void Format_WithInvalidDate_ReturnsOriginal()
         {
             // Arrange
-            var formatter = new DateTimeFormatter 
-            { 
+            var formatter = new DateTimeFormatter
+            {
                 InputFormat = "yyyy-MM-dd"
             };
 
@@ -232,8 +232,8 @@ public class FormatterImplementationTests
         public void Format_WithInvalidCulture_HandlesGracefully()
         {
             // Arrange
-            var formatter = new DateTimeFormatter 
-            { 
+            var formatter = new DateTimeFormatter
+            {
                 Culture = "invalid-culture",
                 OutputFormat = "yyyy-MM-dd"
             };
@@ -267,9 +267,9 @@ public class FormatterImplementationTests
         public void Format_WithMultipleDecode_DecodesMultipleTimes()
         {
             // Arrange
-            var formatter = new HtmlDecodeFormatter 
-            { 
-                DecodeMultipleTimes = true 
+            var formatter = new HtmlDecodeFormatter
+            {
+                DecodeMultipleTimes = true
             };
 
             // Act
@@ -349,8 +349,8 @@ public class FormatterImplementationTests
         public void Format_WithCulture_UsesCultureFormatting()
         {
             // Arrange
-            var formatter = new StringFormatter 
-            { 
+            var formatter = new StringFormatter
+            {
                 FormatString = "{0:N2}",
                 Culture = "de-DE"
             };
@@ -380,8 +380,8 @@ public class FormatterImplementationTests
         public void Format_WithSimpleReplace_ReplacesText()
         {
             // Arrange
-            var formatter = new ReplaceFormatter 
-            { 
+            var formatter = new ReplaceFormatter
+            {
                 OldValue = "old",
                 NewValue = "new"
             };
@@ -397,8 +397,8 @@ public class FormatterImplementationTests
         public void Format_WithIgnoreCase_ReplacesCaseInsensitive()
         {
             // Arrange
-            var formatter = new ReplaceFormatter 
-            { 
+            var formatter = new ReplaceFormatter
+            {
                 OldValue = "hello",
                 NewValue = "goodbye",
                 IgnoreCase = true
@@ -415,8 +415,8 @@ public class FormatterImplementationTests
         public void Format_WithMultipleOccurrences_ReplacesAll()
         {
             // Arrange
-            var formatter = new ReplaceFormatter 
-            { 
+            var formatter = new ReplaceFormatter
+            {
                 OldValue = "a",
                 NewValue = "o"
             };
@@ -449,9 +449,9 @@ public class FormatterImplementationTests
         public void Format_WithMultipleDecode_DecodesMultipleTimes()
         {
             // Arrange
-            var formatter = new UrlDecodeFormatter 
-            { 
-                DecodeMultipleTimes = true 
+            var formatter = new UrlDecodeFormatter
+            {
+                DecodeMultipleTimes = true
             };
 
             // Act
@@ -494,8 +494,8 @@ public class FormatterImplementationTests
             // Arrange
             var trimFormatter = new TrimFormatter();
             var upperFormatter = new StringFormatter { FormatString = "{0}" };
-            var replaceFormatter = new ReplaceFormatter 
-            { 
+            var replaceFormatter = new ReplaceFormatter
+            {
                 OldValue = "HELLO",
                 NewValue = "GOODBYE"
             };

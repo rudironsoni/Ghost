@@ -165,7 +165,7 @@ public class JavaScriptAdapterMockTests
         // Act & Assert
         await adapter.Invoking(a => a.DisposeAsync().AsTask())
             .Should().NotThrowAsync();
-        
+
         await adapter.Invoking(a => a.DisposeAsync().AsTask())
             .Should().NotThrowAsync();
     }

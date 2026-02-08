@@ -19,5 +19,5 @@ runtime:
 
 docs: |-
   ## Get Metrics (JSON)
-  
+
   Returns all metrics in JSON format.

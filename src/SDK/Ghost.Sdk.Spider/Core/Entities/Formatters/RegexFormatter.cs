@@ -12,16 +12,16 @@ namespace Ghost.Sdk.Spider.Core.Entities.Formatters;
 /// <example>
 /// <code>
 /// // Extract phone number
-/// var extractor = new RegexFormatter 
-/// { 
+/// var extractor = new RegexFormatter
+/// {
 ///     Pattern = @"\d{3}-\d{3}-\d{4}",
-///     Group = 0 
+///     Group = 0
 /// };
 /// var phone = extractor.Format("Call us at 555-123-4567"); // Returns "555-123-4567"
-/// 
+///
 /// // Replace using capture groups
-/// var replacer = new RegexFormatter 
-/// { 
+/// var replacer = new RegexFormatter
+/// {
 ///     Pattern = @"(\d{3})-(\d{3})-(\d{4})",
 ///     Replacement = "($1) $2-$3"
 /// };

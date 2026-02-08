@@ -19,8 +19,8 @@ runtime:
 
 docs: |-
   ## Circuit Breaker by Platform
-  
+
   Returns health status of a specific circuit breaker.
-  
+
   ### Path Parameters
   - `platform` - Platform name (LinkedIn, Indeed, Glassdoor, Google)

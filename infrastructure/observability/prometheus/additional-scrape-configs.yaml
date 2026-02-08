@@ -18,7 +18,7 @@ stringData:
         target_label: instance
       - target_label: __address__
         replacement: postgres-exporter.production.svc.cluster.local:9187
-    
+
     # Redis Exporter
     - job_name: 'redis-exporter'
       static_configs:
@@ -27,7 +27,7 @@ stringData:
       relabel_configs:
       - source_labels: [__address__]
         target_label: instance
-    
+
     # RabbitMQ Exporter
     - job_name: 'rabbitmq-exporter'
       static_configs:
@@ -40,7 +40,7 @@ stringData:
       - source_labels: [__name__]
         regex: 'rabbitmq_.*'
         action: keep
-    
+
     # Elasticsearch Exporter (if used)
     - job_name: 'elasticsearch-exporter'
       static_configs:
@@ -49,7 +49,7 @@ stringData:
       relabel_configs:
       - source_labels: [__address__]
         target_label: instance
-    
+
     # Blackbox Exporter for endpoint monitoring
     - job_name: 'blackbox-http'
       metrics_path: /probe
@@ -67,7 +67,7 @@ stringData:
         target_label: instance
       - target_label: __address__
         replacement: blackbox-exporter.monitoring.svc.cluster.local:9115
-    
+
     # Blackbox Exporter for TCP monitoring
     - job_name: 'blackbox-tcp'
       metrics_path: /probe
@@ -85,7 +85,7 @@ stringData:
         target_label: instance
       - target_label: __address__
         replacement: blackbox-exporter.monitoring.svc.cluster.local:9115
-    
+
     # Custom application metrics endpoints
     - job_name: 'ghost-batch-jobs'
       kubernetes_sd_configs:
@@ -120,7 +120,7 @@ stringData:
       - source_labels: [__meta_kubernetes_pod_name]
         action: replace
         target_label: pod
-    
+
     # Backup job monitoring
     - job_name: 'backup-jobs'
       static_configs:
@@ -133,7 +133,7 @@ stringData:
       - source_labels: [__name__]
         regex: 'backup_.*'
         action: keep
-    
+
     # Federation from other Prometheus instances (if applicable)
     # - job_name: 'federate'
     #   scrape_interval: 15s

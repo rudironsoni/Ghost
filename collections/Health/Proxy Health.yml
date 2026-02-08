@@ -19,5 +19,5 @@ runtime:
 
 docs: |-
   ## Proxy Health
-  
+
   Returns health status of proxy infrastructure.

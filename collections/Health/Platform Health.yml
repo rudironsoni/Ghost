@@ -19,5 +19,5 @@ runtime:
 
 docs: |-
   ## Platform Health
-  
+
   Returns health status of all job platform scrapers.

@@ -30,7 +30,7 @@ public class TriggerManagerTests
     {
         // Arrange
         var scheduleIds = new List<string>();
-        
+
         _mockScheduler
             .Setup(s => s.ScheduleCronAsync(It.IsAny<string>(), It.IsAny<SpiderBase>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string name, SpiderBase spider, string cron, CancellationToken ct) => $"schedule-{scheduleIds.Count + 1}");
@@ -52,7 +52,7 @@ public class TriggerManagerTests
     {
         // Arrange
         var scheduleId = "schedule-123";
-        
+
         _mockScheduler
             .Setup(s => s.UnscheduleAsync(scheduleId, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -68,11 +68,11 @@ public class TriggerManagerTests
     {
         // Arrange
         var scheduleId = "schedule-456";
-        
+
         _mockScheduler
             .Setup(s => s.PauseAsync(scheduleId, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        
+
         _mockScheduler
             .Setup(s => s.ResumeAsync(scheduleId, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -91,10 +91,10 @@ public class TriggerManagerTests
         var spiderName = "TestSpider";
         var scheduleId = "schedule-duplicate";
         var callCount = 0;
-        
+
         _mockScheduler
             .Setup(s => s.ScheduleCronAsync(spiderName, It.IsAny<SpiderBase>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() => 
+            .ReturnsAsync(() =>
             {
                 callCount++;
                 return scheduleId;
@@ -115,7 +115,7 @@ public class TriggerManagerTests
     {
         // Arrange
         var scheduleIds = new[] { "schedule-1", "schedule-2", "schedule-3" };
-        
+
         foreach (var id in scheduleIds)
         {
             _mockScheduler
@@ -141,7 +141,7 @@ public class TriggerManagerTests
             new() { ScheduleId = "2", SpiderName = "Spider2", ScheduleType = "Interval" },
             new() { ScheduleId = "3", SpiderName = "Spider3", ScheduleType = "Once" }
         };
-        
+
         _mockScheduler
             .Setup(s => s.GetSchedulesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedSchedules);
@@ -160,7 +160,7 @@ public class TriggerManagerTests
         // Arrange
         var spiderName = "ImmediateSpider";
         var scheduleId = "schedule-immediate";
-        
+
         _mockScheduler
             .Setup(s => s.ScheduleIntervalAsync(
                 spiderName,

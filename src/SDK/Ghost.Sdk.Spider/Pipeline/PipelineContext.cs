@@ -29,7 +29,7 @@ namespace Ghost.Sdk.Spider.Pipeline;
 ///     CancellationToken = cancellationToken,
 ///     StateBox = spiderState
 /// };
-/// 
+///
 /// await pipeline.ExecuteAsync(context);
 /// </code>
 /// </example>
@@ -66,7 +66,7 @@ public readonly struct PipelineContext
     /// - Timeout policies
     /// - Spider shutdown
     /// - Resource exhaustion
-    /// 
+    ///
     /// Middleware should respect cancellation tokens and throw OperationCanceledException
     /// when cancellation is requested.
     /// </remarks>

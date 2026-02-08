@@ -16,30 +16,30 @@
   <ItemGroup>
     <!-- Browser Automation -->
     <PackageReference Include="Patchright" />
-    
+
     <!-- Configuration -->
     <PackageReference Include="YamlDotNet" />
     <PackageReference Include="Newtonsoft.Json" />
-    
+
     <!-- JSON Processing -->
     <PackageReference Include="JsonPath.Net" />
     <PackageReference Include="JMESPath.NET" />
-    
+
     <!-- Scheduling -->
     <PackageReference Include="Quartz" />
     <PackageReference Include="Quartz.Extensions.Hosting" />
-    
+
     <!-- Resilience -->
     <PackageReference Include="Polly" />
     <PackageReference Include="Polly.Extensions.Http" />
-    
+
     <!-- HTML Parsing -->
     <PackageReference Include="HtmlAgilityPack" />
     <PackageReference Include="AngleSharp" />
-    
+
     <!-- Validation -->
     <PackageReference Include="FluentValidation" />
-    
+
     <!-- Extensions -->
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
@@ -48,12 +48,12 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
-    
+
     <!-- Storage -->
     <PackageReference Include="Npgsql" />
     <PackageReference Include="Elasticsearch.Net" />
     <PackageReference Include="NEST" />
-    
+
     <!-- Caching/Distributed -->
     <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>

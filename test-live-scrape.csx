@@ -39,15 +39,15 @@ public class GoogleJobsScraper
     public async Task<List<GoogleJobsEntity>> ScrapeJobsAsync(string query, string location, int maxResults, CancellationToken ct)
     {
         var jobs = new List<GoogleJobsEntity>();
-        
+
         try
         {
             // Build Google search URL for jobs
             var searchQuery = Uri.EscapeDataString($"{query} jobs {location}".Trim());
             var url = $"https://www.google.com/search?q={searchQuery}&ibp=htl;jobs";
-            
+
             _logger.LogInformation("Scraping Google Jobs from: {Url}", url);
-            
+
             // Set headers to mimic real browser
             var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
@@ -55,20 +55,20 @@ public class GoogleJobsScraper
             request.Headers.Add("Accept-Language", "en-US,en;q=0.9");
             request.Headers.Add("Accept-Encoding", "gzip, deflate, br");
             request.Headers.Add("Referer", "https://www.google.com/");
-            
+
             var response = await _httpClient.SendAsync(request, ct);
             var html = await response.Content.ReadAsStringAsync(ct);
-            
+
             _logger.LogInformation("Received {Length} bytes of HTML", html.Length);
-            
+
             // Save HTML for debugging
             await File.WriteAllTextAsync("/tmp/google-jobs-response.html", html);
             Console.WriteLine($"HTML saved to /tmp/google-jobs-response.html");
-            
+
             // Parse HTML
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
-            
+
             // Try to find job data in JSON-LD scripts (most reliable)
             var jsonLdScripts = doc.DocumentNode.SelectNodes("//script[@type='application/ld+json']");
             if (jsonLdScripts != null)
@@ -95,14 +95,14 @@ public class GoogleJobsScraper
                     }
                 }
             }
-            
+
             // Fallback: Extract from HTML structure
             if (jobs.Count == 0)
             {
                 Console.WriteLine("No JSON-LD jobs found, trying HTML extraction...");
                 jobs = ExtractJobsFromHtml(doc, maxResults);
             }
-            
+
             _logger.LogInformation("Successfully scraped {Count} jobs from Google", jobs.Count);
             return jobs;
         }
@@ -112,7 +112,7 @@ public class GoogleJobsScraper
             return jobs;
         }
     }
-    
+
     private GoogleJobsEntity? ParseJsonLdJob(string json)
     {
         try
@@ -122,7 +122,7 @@ public class GoogleJobsScraper
             var company = ExtractJsonValue(json, "\"name\":");
             var description = ExtractJsonValue(json, "\"description\":");
             var location = ExtractJsonValue(json, "\"addressLocality\":");
-            
+
             if (!string.IsNullOrEmpty(title))
             {
                 return new GoogleJobsEntity
@@ -135,31 +135,31 @@ public class GoogleJobsScraper
             }
         }
         catch { }
-        
+
         return null;
     }
-    
+
     private string? ExtractJsonValue(string json, string key)
     {
         var idx = json.IndexOf(key, StringComparison.OrdinalIgnoreCase);
         if (idx < 0) return null;
-        
+
         var start = idx + key.Length;
         while (start < json.Length && (json[start] == '"' || json[start] == ' ' || json[start] == ':'))
             start++;
-        
+
         if (start >= json.Length) return null;
-        
+
         var end = json.IndexOf("\"", start);
         if (end < 0) return null;
-        
+
         return json[start..end].Replace("\\n", " ").Replace("\\", "");
     }
-    
+
     private List<GoogleJobsEntity> ExtractJobsFromHtml(HtmlDocument doc, int maxResults)
     {
         var jobs = new List<GoogleJobsEntity>();
-        
+
         // Multiple selector strategies for Google's changing layout
         var selectors = new[]
         {
@@ -172,7 +172,7 @@ public class GoogleJobsScraper
             "//div[contains(@class, 'job-listing')]",
             "//div[contains(@class, 'job-title')]//ancestor::div[contains(@class, 'job')]"
         };
-        
+
         foreach (var selector in selectors)
         {
             var nodes = doc.DocumentNode.SelectNodes(selector);
@@ -192,7 +192,7 @@ public class GoogleJobsScraper
                     }
                     catch { }
                 }
-                
+
                 if (jobs.Count > 0) break;
             }
             else
@@ -200,10 +200,10 @@ public class GoogleJobsScraper
                 Console.WriteLine($"Selector '{selector}' found no nodes");
             }
         }
-        
+
         return jobs;
     }
-    
+
     private GoogleJobsEntity? ExtractJobFromNode(HtmlNode node)
     {
         try
@@ -212,7 +212,7 @@ public class GoogleJobsScraper
             var company = node.SelectSingleNode(".//div[contains(@class, 'company')]|.//span[contains(@class, 'company')]|.//div[contains(@class, 'employer')]")?.InnerText?.Trim();
             var location = node.SelectSingleNode(".//div[contains(@class, 'location')]|.//span[contains(@class, 'location')]|.//div[contains(@class, 'city')]")?.InnerText?.Trim();
             var description = node.SelectSingleNode(".//div[contains(@class, 'description')]|.//div[contains(@class, 'summary')]|.//span[contains(@class, 'snippet')]")?.InnerText?.Trim();
-            
+
             if (!string.IsNullOrEmpty(title))
             {
                 return new GoogleJobsEntity
@@ -225,14 +225,14 @@ public class GoogleJobsScraper
             }
         }
         catch { }
-        
+
         return null;
     }
 }
 
 // Main execution
 var services = new ServiceCollection();
-services.AddLogging(builder => 
+services.AddLogging(builder =>
 {
     builder.AddConsole();
     builder.SetMinimumLevel(LogLevel.Information);

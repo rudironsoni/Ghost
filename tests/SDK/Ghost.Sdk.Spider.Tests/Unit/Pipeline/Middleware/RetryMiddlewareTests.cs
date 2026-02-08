@@ -37,7 +37,7 @@ public class RetryMiddlewareTests
         var middleware = new RetryMiddleware(new Dictionary<string, object>());
         var context = CreateContext();
         var callCount = 0;
-        
+
         PipelineDelegate next = _ =>
         {
             callCount++;
@@ -64,7 +64,7 @@ public class RetryMiddlewareTests
         var middleware = new RetryMiddleware(config);
         var context = CreateContext();
         var callCount = 0;
-        
+
         PipelineDelegate next = _ =>
         {
             callCount++;
@@ -95,7 +95,7 @@ public class RetryMiddlewareTests
         var middleware = new RetryMiddleware(config);
         var context = CreateContext();
         var callCount = 0;
-        
+
         PipelineDelegate next = _ =>
         {
             callCount++;
@@ -118,7 +118,7 @@ public class RetryMiddlewareTests
         var middleware = new RetryMiddleware(new Dictionary<string, object>());
         var context = CreateContext();
         var callCount = 0;
-        
+
         PipelineDelegate next = _ =>
         {
             callCount++;
@@ -147,7 +147,7 @@ public class RetryMiddlewareTests
         var middleware = new RetryMiddleware(config);
         var context = CreateContext();
         var callCount = 0;
-        
+
         PipelineDelegate next = _ =>
         {
             callCount++;
@@ -177,7 +177,7 @@ public class RetryMiddlewareTests
         var middleware = new RetryMiddleware(config);
         var context = CreateContext();
         var callCount = 0;
-        
+
         PipelineDelegate next = _ =>
         {
             callCount++;
@@ -205,7 +205,7 @@ public class RetryMiddlewareTests
         var middleware = new RetryMiddleware(config);
         var context = CreateContext();
         var callCount = 0;
-        
+
         PipelineDelegate next = _ =>
         {
             callCount++;
@@ -239,7 +239,7 @@ public class RetryMiddlewareTests
         var callCount = 0;
         var startTime = DateTime.UtcNow;
         var delays = new List<TimeSpan>();
-        
+
         PipelineDelegate next = _ =>
         {
             if (callCount > 0)
@@ -281,7 +281,7 @@ public class RetryMiddlewareTests
         var middleware = new RetryMiddleware(config);
         var context = CreateContext();
         var callCount = 0;
-        
+
         PipelineDelegate next = _ =>
         {
             callCount++;
@@ -320,7 +320,7 @@ public class RetryMiddlewareTests
         var middleware = new RetryMiddleware(config);
         var context = CreateContext();
         var callCount = 0;
-        
+
         PipelineDelegate next = _ =>
         {
             callCount++;

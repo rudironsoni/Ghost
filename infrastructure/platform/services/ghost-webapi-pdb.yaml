@@ -13,15 +13,15 @@ metadata:
 spec:
   # Minimum number of pods that must be available during disruption
   minAvailable: 2
-  
+
   # Alternative: Maximum number of pods that can be unavailable
   # maxUnavailable: 1
-  
+
   selector:
     matchLabels:
       app.kubernetes.io/name: ghost-webapi
       app.kubernetes.io/component: api
-  
+
   # Unhealthy pod eviction policy (Kubernetes 1.26+)
   unhealthyPodEvictionPolicy: IfHealthyBudget
 ---
@@ -41,7 +41,7 @@ spec:
 #     description: "Strict PDB for critical periods with higher availability requirements"
 # spec:
 #   minAvailable: 3 # Require more pods to be available
-#   
+#
 #   selector:
 #     matchLabels:
 #       app.kubernetes.io/name: ghost-webapi

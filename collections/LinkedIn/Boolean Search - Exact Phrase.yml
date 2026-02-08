@@ -27,19 +27,19 @@ runtime:
         test("Status code is 200", function() {
           expect(res.status).to.equal(200);
         });
-        
+
         test("Response is array", function() {
           expect(res.body).to.be.an('array');
         });
 
 docs: |-
   ## Boolean Search - Exact Phrase
-  
+
   Tests LinkedIn's exact phrase search using quotation marks.
-  
+
   ### Query
   `"machine learning"`
-  
+
   ### Expected Behavior
   - Returns jobs containing the exact phrase "machine learning" together
   - Without quotes: finds jobs with "machine" OR "learning" separately

@@ -7,7 +7,7 @@ fullnameOverride: ghost-prometheus
 ## Prometheus Configuration
 prometheus:
   enabled: true
-  
+
   prometheusSpec:
     # Resource requests and limits
     resources:
@@ -17,11 +17,11 @@ prometheus:
       limits:
         cpu: 2000m
         memory: 4Gi
-    
+
     # Data retention
     retention: 30d
     retentionSize: "45GB"
-    
+
     # Storage configuration
     storageSpec:
       volumeClaimTemplate:
@@ -31,38 +31,38 @@ prometheus:
           resources:
             requests:
               storage: 50Gi
-    
+
     # Scrape interval
     scrapeInterval: 30s
     evaluationInterval: 30s
-    
+
     # ServiceMonitor selector
     serviceMonitorSelector:
       matchLabels:
         prometheus: ghost-monitoring
-    
+
     # Pod monitor selector
     podMonitorSelector:
       matchLabels:
         prometheus: ghost-monitoring
-    
+
     # Rule selector
     ruleSelector:
       matchLabels:
         prometheus: ghost-monitoring
-    
+
     # Additional scrape configs
     additionalScrapeConfigsSecret:
       enabled: true
       name: additional-scrape-configs
       key: prometheus-additional.yaml
-    
+
     # External labels for federation/remote write
     externalLabels:
       cluster: ghost-production
       environment: production
       region: us-east-1
-    
+
     # Remote write (optional - for long-term storage)
     # remoteWrite:
     #   - url: "https://prometheus-remote-storage.example.com/api/v1/write"
@@ -73,10 +73,10 @@ prometheus:
     #       password:
     #         name: remote-write-credentials
     #         key: password
-    
+
     # High availability
     replicas: 2
-    
+
     # Pod anti-affinity
     affinity:
       podAntiAffinity:
@@ -92,7 +92,7 @@ prometheus:
 ## Alertmanager Configuration
 alertmanager:
   enabled: true
-  
+
   alertmanagerSpec:
     resources:
       requests:
@@ -101,7 +101,7 @@ alertmanager:
       limits:
         cpu: 500m
         memory: 512Mi
-    
+
     storage:
       volumeClaimTemplate:
         spec:
@@ -110,9 +110,9 @@ alertmanager:
           resources:
             requests:
               storage: 10Gi
-    
+
     replicas: 3
-    
+
     # Config from secret
     configSecret: alertmanager-config
 
@@ -123,7 +123,7 @@ grafana:
 ## Prometheus Operator
 prometheusOperator:
   enabled: true
-  
+
   resources:
     requests:
       cpu: 100m
@@ -131,7 +131,7 @@ prometheusOperator:
     limits:
       cpu: 500m
       memory: 512Mi
-  
+
   # Create default service monitors
   serviceMonitor:
     selfMonitor: true
@@ -142,7 +142,7 @@ kubeStateMetrics:
 
 nodeExporter:
   enabled: true
-  
+
   resources:
     requests:
       cpu: 100m
@@ -184,7 +184,7 @@ defaultRules:
 global:
   rbac:
     create: true
-  
+
   ## Reference to one or more secrets for image pull
   # imagePullSecrets:
   #   - name: registry-credentials

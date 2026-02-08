@@ -50,7 +50,7 @@ jobs:
         id: version
         run: |
           git fetch --tags --force
-          
+
           if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
             # Triggered by tag push
             TAG="${GITHUB_REF#refs/tags/}"
@@ -60,7 +60,7 @@ jobs:
             latest=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "v0.0.0")
             version=${latest#v}
             IFS='.' read -r major minor patch <<< "$version"
-            
+
             bump="${{ github.event.inputs.bump }}"
             case "$bump" in
               major)
@@ -76,19 +76,19 @@ jobs:
                 patch=$((patch + 1))
                 ;;
             esac
-            
+
             VERSION="${major}.${minor}.${patch}"
             TAG="v${VERSION}"
           fi
-          
+
           # Add build number
           BUILD_VERSION="${VERSION}.${{ github.run_id }}"
-          
+
           # Add prerelease suffix if requested
           if [[ "${{ github.event.inputs.prerelease }}" == "true" ]]; then
             BUILD_VERSION="${VERSION}-alpha.${{ github.run_id }}"
           fi
-          
+
           echo "version=${BUILD_VERSION}" >> $GITHUB_OUTPUT
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "Package version: ${BUILD_VERSION}"
@@ -98,18 +98,18 @@ jobs:
         id: changelog
         run: |
           git fetch --tags --force
-          
+
           # Get the previous tag
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          
+
           if [ -z "$PREVIOUS_TAG" ]; then
             COMMITS=$(git log --pretty=format:"- %s (%h)" HEAD)
           else
             COMMITS=$(git log --pretty=format:"- %s (%h)" ${PREVIOUS_TAG}..HEAD)
           fi
-          
+
           CHANGELOG="## Changes\n\n${COMMITS}"
-          
+
           # Save to file for multi-line output
           echo -e "$CHANGELOG" > changelog.txt
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
@@ -125,7 +125,7 @@ jobs:
           GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
         run: |
           TAG="${{ steps.version.outputs.tag }}"
-          
+
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
             echo "⚠️ Tag $TAG already exists, skipping creation"
           else
@@ -324,7 +324,7 @@ jobs:
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
           IMAGE_URL="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.calculate-version.outputs.version }}"
-          
+
           if [ -n "$COSIGN_PRIVATE_KEY" ]; then
             echo "Signing container image: $IMAGE_URL"
             echo "$COSIGN_PRIVATE_KEY" > cosign.key
@@ -363,26 +363,26 @@ jobs:
           name: Release ${{ needs.calculate-version.outputs.tag }}
           body: |
             # Ghost Framework Release ${{ needs.calculate-version.outputs.tag }}
-            
+
             ${{ needs.calculate-version.outputs.changelog }}
-            
+
             ## 📦 NuGet Packages
-            
+
             Published to NuGet.org:
             - Ghost.Core
             - Ghost.Contracts
             - Ghost.Platforms.*
             - Ghost.Hosting
             - Ghost.Sdk
-            
+
             ## 🐳 Docker Image
-            
+
             ```bash
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.calculate-version.outputs.version }}
             ```
-            
+
             ## 📋 SBOM
-            
+
             Software Bill of Materials (SBOM) attached to this release.
           draft: false
           prerelease: ${{ github.event.inputs.prerelease == 'true' }}
@@ -405,13 +405,13 @@ jobs:
           echo "**Version:** ${{ needs.calculate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "**Tag:** ${{ needs.calculate-version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [[ "${{ needs.publish-nuget.result }}" == "success" ]]; then
             echo "✅ NuGet packages published" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ NuGet publishing failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [[ "${{ needs.create-github-release.result }}" == "success" ]]; then
             echo "✅ GitHub release created" >> $GITHUB_STEP_SUMMARY
           else

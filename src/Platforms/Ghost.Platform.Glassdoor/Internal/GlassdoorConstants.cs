@@ -13,22 +13,22 @@ public static class GlassdoorConstants
     /// </summary>
     public const string JobSearchQuery = """
         query JobSearchResultsQuery(
-            $keyword: String, 
-            $locationId: Int, 
-            $locationType: LocationTypeEnum, 
-            $numJobsToShow: Int!, 
-            $pageCursor: String, 
+            $keyword: String,
+            $locationId: Int,
+            $locationType: LocationTypeEnum,
+            $numJobsToShow: Int!,
+            $pageCursor: String,
             $pageNumber: Int
         ) {
             jobListings(
                 contextHolder: {
                     searchParams: {
-                        keyword: $keyword, 
-                        locationId: $locationId, 
-                        locationType: $locationType, 
-                        numPerPage: $numJobsToShow, 
-                        pageCursor: $pageCursor, 
-                        pageNumber: $pageNumber, 
+                        keyword: $keyword,
+                        locationId: $locationId,
+                        locationType: $locationType,
+                        numPerPage: $numJobsToShow,
+                        pageCursor: $pageCursor,
+                        pageNumber: $pageNumber,
                         searchType: SR
                     }
                 }
@@ -71,18 +71,18 @@ public static class GlassdoorConstants
     /// </summary>
     public const string JobSearchQueryMinimal = """
         query JobSearchResultsQuery(
-            $keyword: String, 
-            $locationId: Int, 
-            $locationType: LocationTypeEnum, 
+            $keyword: String,
+            $locationId: Int,
+            $locationType: LocationTypeEnum,
             $numJobsToShow: Int!
         ) {
             jobListings(
                 contextHolder: {
                     searchParams: {
-                        keyword: $keyword, 
-                        locationId: $locationId, 
-                        locationType: $locationType, 
-                        numPerPage: $numJobsToShow, 
+                        keyword: $keyword,
+                        locationId: $locationId,
+                        locationType: $locationType,
+                        numPerPage: $numJobsToShow,
                         searchType: SR
                     }
                 }

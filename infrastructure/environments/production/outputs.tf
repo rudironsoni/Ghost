@@ -439,35 +439,35 @@ output "next_steps" {
   value = <<-EOT
     1. Configure kubectl:
        ${module.eks.cluster_id != "" ? "aws eks update-kubeconfig --region ${data.aws_region.current.name} --name ${module.eks.cluster_id}" : ""}
-    
+
     2. Retrieve database password from AWS Secrets Manager
-    
+
     3. Deploy Kubernetes applications:
        - Install Cluster Autoscaler
        - Install AWS Load Balancer Controller
        - Deploy Ghost application
        - Configure Ingress
-    
+
     4. Configure DNS:
        - Create Route53 hosted zone
        - Point domain to ALB: ${module.alb.lb_dns_name}
-    
+
     5. Set up monitoring:
        - Configure CloudWatch dashboards
        - Set up alerts for critical metrics
        - Enable Container Insights for EKS
-    
+
     6. Security hardening:
        - Rotate database passwords
        - Configure pod security policies
        - Enable GuardDuty
        - Review Security Hub findings
-    
+
     7. Cost optimization:
        - Purchase Reserved Instances
        - Set up billing alerts
        - Review Trusted Advisor recommendations
-    
+
     8. Disaster Recovery:
        - Document recovery procedures
        - Schedule DR testing

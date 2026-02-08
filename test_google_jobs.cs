@@ -18,22 +18,22 @@ public class TestGoogleJobs
 
         var httpClient = new HttpClient();
         httpClient.Timeout = TimeSpan.FromSeconds(30);
-        
+
         var logger = NullLogger<GoogleJobsApiClient>.Instance;
         var options = new GoogleJobsOptions();
-        
+
         var client = new GoogleJobsApiClient(httpClient, options, logger);
-        
+
         Console.WriteLine("Fetching jobs for 'software engineer' in 'San Francisco'...");
         Console.WriteLine();
-        
+
         try
         {
             var jobs = await client.SearchAsync("software engineer", "San Francisco");
-            
+
             Console.WriteLine($"Found {jobs.Count} jobs:");
             Console.WriteLine();
-            
+
             foreach (var job in jobs.Take(10))
             {
                 Console.WriteLine($"Title: {job.Title}");
@@ -46,14 +46,14 @@ public class TestGoogleJobs
                 }
                 if (!string.IsNullOrEmpty(job.Description))
                 {
-                    var desc = job.Description.Length > 100 
-                        ? job.Description.Substring(0, 100) + "..." 
+                    var desc = job.Description.Length > 100
+                        ? job.Description.Substring(0, 100) + "..."
                         : job.Description;
                     Console.WriteLine($"Description: {desc}");
                 }
                 Console.WriteLine();
             }
-            
+
             Console.WriteLine("SUCCESS: Direct HTML scraping works!");
             Console.WriteLine($"Total jobs found: {jobs.Count}");
         }

@@ -6,14 +6,14 @@ target:
   startUrls:
     - https://example.com
     - https://example.org
-  
+
 options:
   maxConcurrency: 5
   maxRequests: 100
   timeout: 30s
   requestDelay: 1s
   userAgent: "Ghost.Sdk.Spider/1.0 (Test)"
-  
+
 extractors:
   - name: mainContent
     selector: .content
@@ -30,12 +30,12 @@ extractors:
         formatters:
           - type: Trim
           - type: HtmlDecode
-          
+
 storage:
   type: Console
   options:
     prettyPrint: true
-    
+
 scheduling:
   enabled: false
   cronExpression: "0 0 * * *"

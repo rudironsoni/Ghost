@@ -9,21 +9,21 @@ loki:
   # Configuration as code
   config: |
     auth_enabled: false
-    
+
     server:
       http_listen_port: 3100
       grpc_listen_port: 9095
       log_level: info
-      
+
     distributor:
       ring:
         kvstore:
           store: memberlist
-    
+
     memberlist:
       join_members:
         - ghost-loki-memberlist
-    
+
     ingester:
       lifecycler:
         ring:
@@ -39,7 +39,7 @@ loki:
         enabled: true
         dir: /loki/wal
         replay_memory_ceiling: 4GB
-    
+
     schema_config:
       configs:
         - from: 2024-01-01
@@ -49,13 +49,13 @@ loki:
           index:
             prefix: loki_index_
             period: 24h
-    
+
     storage_config:
       boltdb_shipper:
         active_index_directory: /loki/index
         cache_location: /loki/cache
         shared_store: s3
-      
+
       aws:
         s3: s3://us-east-1/ghost-loki-chunks
         s3forcepathstyle: true
@@ -64,11 +64,11 @@ loki:
         # insecure: true
         # access_key_id: ${AWS_ACCESS_KEY_ID}
         # secret_access_key: ${AWS_SECRET_ACCESS_KEY}
-      
+
       # Alternative: filesystem storage for testing
       # filesystem:
       #   directory: /loki/chunks
-    
+
     compactor:
       working_directory: /loki/compactor
       shared_store: s3
@@ -76,7 +76,7 @@ loki:
       retention_enabled: true
       retention_delete_delay: 2h
       retention_delete_worker_count: 150
-    
+
     limits_config:
       enforce_metric_name: false
       reject_old_samples: true
@@ -96,7 +96,7 @@ loki:
       per_stream_rate_limit: 3MB
       per_stream_rate_limit_burst: 15MB
       cardinality_limit: 100000
-    
+
     chunk_store_config:
       max_look_back_period: 744h
       chunk_cache_config:
@@ -107,7 +107,7 @@ loki:
           consistent_hash: true
           host: memcached.monitoring.svc.cluster.local
           service: memcached
-    
+
     query_range:
       align_queries_with_step: true
       max_retries: 5
@@ -119,15 +119,15 @@ loki:
             host: memcached.monitoring.svc.cluster.local
             service: memcached
             timeout: 500ms
-    
+
     frontend:
       log_queries_longer_than: 5s
       compress_responses: true
       max_outstanding_per_tenant: 2048
-    
+
     query_scheduler:
       max_outstanding_requests_per_tenant: 2048
-    
+
     ruler:
       storage:
         type: local
@@ -140,14 +140,14 @@ loki:
           store: memberlist
       enable_api: true
       enable_alertmanager_v2: true
-  
+
   # Structured config (alternative to config string)
   structuredConfig: {}
 
 ## Components configuration
 ingester:
   replicas: 3
-  
+
   resources:
     requests:
       cpu: 500m
@@ -155,12 +155,12 @@ ingester:
     limits:
       cpu: 2000m
       memory: 4Gi
-  
+
   persistence:
     enabled: true
     size: 50Gi
     storageClassName: fast-ssd
-  
+
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -171,7 +171,7 @@ ingester:
 
 distributor:
   replicas: 3
-  
+
   resources:
     requests:
       cpu: 250m
@@ -179,7 +179,7 @@ distributor:
     limits:
       cpu: 1000m
       memory: 2Gi
-  
+
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -192,7 +192,7 @@ distributor:
 
 querier:
   replicas: 3
-  
+
   resources:
     requests:
       cpu: 500m
@@ -200,7 +200,7 @@ querier:
     limits:
       cpu: 2000m
       memory: 4Gi
-  
+
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -213,7 +213,7 @@ querier:
 
 queryFrontend:
   replicas: 2
-  
+
   resources:
     requests:
       cpu: 250m
@@ -225,7 +225,7 @@ queryFrontend:
 gateway:
   enabled: true
   replicas: 2
-  
+
   resources:
     requests:
       cpu: 100m
@@ -233,7 +233,7 @@ gateway:
     limits:
       cpu: 500m
       memory: 512Mi
-  
+
   ingress:
     enabled: true
     ingressClassName: nginx
@@ -249,7 +249,7 @@ gateway:
 
 compactor:
   enabled: true
-  
+
   resources:
     requests:
       cpu: 250m
@@ -257,7 +257,7 @@ compactor:
     limits:
       cpu: 1000m
       memory: 2Gi
-  
+
   persistence:
     enabled: true
     size: 10Gi
@@ -266,7 +266,7 @@ compactor:
 ruler:
   enabled: true
   replicas: 2
-  
+
   resources:
     requests:
       cpu: 100m
@@ -274,7 +274,7 @@ ruler:
     limits:
       cpu: 500m
       memory: 512Mi
-  
+
   persistence:
     enabled: true
     size: 10Gi
@@ -283,7 +283,7 @@ ruler:
 indexGateway:
   enabled: true
   replicas: 2
-  
+
   resources:
     requests:
       cpu: 250m
@@ -291,7 +291,7 @@ indexGateway:
     limits:
       cpu: 1000m
       memory: 2Gi
-  
+
   persistence:
     enabled: true
     size: 50Gi
@@ -300,7 +300,7 @@ indexGateway:
 ## Memcached for caching
 memcached:
   enabled: true
-  
+
   resources:
     requests:
       cpu: 100m

@@ -25,10 +25,10 @@ public class PostgreSqlStorageTests
         _mockConnection = new Mock<IDbConnection>();
         _mockCommand = new Mock<IDbCommand>();
         _mockTransaction = new Mock<IDbTransaction>();
-        
+
         _mockConnection.Setup(c => c.CreateCommand()).Returns(_mockCommand.Object);
         _mockConnection.Setup(c => c.BeginTransaction()).Returns(_mockTransaction.Object);
-        
+
         _config = new PostgreSqlConfiguration
         {
             Schema = "public",
@@ -303,7 +303,7 @@ public class PostgreSqlStorageTests
         // Arrange
         var storage = new MockPostgreSqlStorage(_mockConnection.Object, _config);
         _mockCommand.Setup(c => c.ExecuteNonQuery()).Throws(new InvalidOperationException("Connection lost"));
-        
+
         var item = new { Id = 1 };
         var context = StorageContext.Create("TestSpider");
 
@@ -334,28 +334,28 @@ public class PostgreSqlStorageTests
         public Task InitializeAsync(CancellationToken cancellationToken = default)
         {
             _connection.Open();
-            
+
             if (_config.AutoCreateTable)
             {
                 var command = _connection.CreateCommand();
                 command.CommandText = $"CREATE TABLE IF NOT EXISTS {_config.Schema}.{_config.TableName} (data jsonb)";
                 // Simulated - would execute in real implementation
             }
-            
+
             return Task.CompletedTask;
         }
 
         public Task<StorageResult> StoreAsync<T>(T item, StorageContext context, CancellationToken cancellationToken = default)
         {
             var startTime = DateTimeOffset.UtcNow;
-            
+
             try
             {
                 var command = _connection.CreateCommand();
                 command.CommandText = context.UpdateOnConflict
                     ? $"INSERT INTO {_config.Schema}.{context.TableName ?? _config.TableName} VALUES (@data) ON CONFLICT DO UPDATE"
                     : $"INSERT INTO {_config.Schema}.{context.TableName ?? _config.TableName} VALUES (@data)";
-                
+
                 var rowsAffected = command.ExecuteNonQuery();
                 return Task.FromResult(StorageResult.CreateSuccess(rowsAffected, DateTimeOffset.UtcNow - startTime));
             }
@@ -369,23 +369,23 @@ public class PostgreSqlStorageTests
         {
             var startTime = DateTimeOffset.UtcNow;
             var itemList = items.ToList();
-            
+
             if (itemList.Count == 0)
             {
                 return Task.FromResult(StorageResult.CreateSuccess(0, DateTimeOffset.UtcNow - startTime));
             }
-            
+
             var transaction = _connection.BeginTransaction();
-            
+
             try
             {
                 var command = _connection.CreateCommand();
                 command.Transaction = transaction;
                 command.CommandText = $"INSERT INTO {_config.Schema}.{context.TableName ?? _config.TableName} VALUES (@data)";
-                
+
                 var rowsAffected = command.ExecuteNonQuery();
                 transaction.Commit();
-                
+
                 return Task.FromResult(StorageResult.CreateSuccess(itemList.Count, DateTimeOffset.UtcNow - startTime));
             }
             catch (Exception ex)
