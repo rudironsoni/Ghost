@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Ghost.Platform.OpenAI</RootNamespace>
     <Description>Ghost OpenAI/ChatGPT platform integration</Description>
     <ImplicitUsings>enable</ImplicitUsings>

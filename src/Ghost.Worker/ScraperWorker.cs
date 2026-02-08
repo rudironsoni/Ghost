@@ -7,13 +7,41 @@ namespace Ghost.Worker;
 /// <summary>
 /// Worker that pulls scraping jobs from Redis queue and executes them.
 /// </summary>
-public sealed class ScraperWorker : BackgroundService
+public sealed partial class ScraperWorker : BackgroundService
 {
     private readonly ILogger<ScraperWorker> _logger;
     private readonly IConnectionMultiplexer _redis;
     private readonly IServiceProvider _serviceProvider;
     private readonly WorkerConfiguration _config;
     private readonly SemaphoreSlim _concurrencyLimiter;
+
+    // LoggerMessage delegates for high-performance logging
+    [LoggerMessage(Level = LogLevel.Information, Message = "Ghost Worker {WorkerId} starting on node {NodeName} with max concurrency {MaxConcurrency}")]
+    private partial void LogWorkerStarting(string workerId, string nodeName, int maxConcurrency);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Processing job {JobId} for platform {Platform}, query: {Query}")]
+    private partial void LogProcessingJob(string jobId, string platform, string query);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Completed job {JobId} in {DurationMs}ms, found {ResultCount} results")]
+    private partial void LogJobCompleted(string jobId, double durationMs, int resultCount);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Worker stopping due to cancellation")]
+    private partial void LogWorkerStopping();
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Ghost Worker {WorkerId} stopping")]
+    private partial void LogWorkerShutdown(string workerId);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Unhandled error processing job")]
+    private partial void LogUnhandledJobError(Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Error in worker loop")]
+    private partial void LogWorkerLoopError(Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to process job {JobId} after {DurationMs}ms")]
+    private partial void LogJobFailed(Exception ex, string jobId, double durationMs);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Stored {Count} results for job {JobId}")]
+    private partial void LogResultsStored(int count, string jobId);
 
     public ScraperWorker(
         ILogger<ScraperWorker> logger,
@@ -30,12 +58,7 @@ public sealed class ScraperWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation(
-            "Ghost Worker {WorkerId} starting on node {NodeName} with max concurrency {MaxConcurrency}",
-            _config.WorkerId,
-            _config.NodeName,
-            _config.MaxConcurrentJobs
-        );
+        LogWorkerStarting(_config.WorkerId, _config.NodeName, _config.MaxConcurrentJobs);
 
         var db = _redis.GetDatabase();
         var queueKey = _config.RedisQueueKey;
@@ -67,7 +90,7 @@ public sealed class ScraperWorker : BackgroundService
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Unhandled error processing job");
+                        LogUnhandledJobError(ex);
                     }
                     finally
                     {
@@ -77,17 +100,17 @@ public sealed class ScraperWorker : BackgroundService
             }
             catch (OperationCanceledException)
             {
-                _logger.LogInformation("Worker stopping due to cancellation");
+                LogWorkerStopping();
                 break;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in worker loop");
+                LogWorkerLoopError(ex);
                 await Task.Delay(1000, stoppingToken); // Brief pause before retry
             }
         }
 
-        _logger.LogInformation("Ghost Worker {WorkerId} stopping", _config.WorkerId);
+        LogWorkerShutdown(_config.WorkerId);
     }
 
     private async Task ProcessJobAsync(string jobJson, CancellationToken cancellationToken)
@@ -102,12 +125,7 @@ public sealed class ScraperWorker : BackgroundService
             var jobRequest = JsonConvert.DeserializeObject<JobRequest>(jobJson)!;
 
             jobId = jobRequest.JobId;
-            _logger.LogInformation(
-                "Processing job {JobId} for platform {Platform}, query: {Query}",
-                jobRequest.JobId,
-                jobRequest.Platform,
-                jobRequest.SearchQuery
-            );
+            LogProcessingJob(jobRequest.JobId, jobRequest.Platform, jobRequest.SearchQuery);
 
             // Update job status to processing
             await UpdateJobStatusAsync(jobRequest.JobId, JobStatus.Processing, cancellationToken);
@@ -133,22 +151,12 @@ public sealed class ScraperWorker : BackgroundService
             await UpdateJobStatusAsync(jobRequest.JobId, JobStatus.Completed, cancellationToken);
 
             var duration = DateTimeOffset.UtcNow - startTime;
-            _logger.LogInformation(
-                "Completed job {JobId} in {Duration}ms, found {ResultCount} results",
-                jobRequest.JobId,
-                duration.TotalMilliseconds,
-                results.Count
-            );
+            LogJobCompleted(jobRequest.JobId, duration.TotalMilliseconds, results.Count);
         }
         catch (Exception ex)
         {
             var duration = DateTimeOffset.UtcNow - startTime;
-            _logger.LogError(
-                ex,
-                "Failed to process job {JobId} after {Duration}ms",
-                jobId,
-                duration.TotalMilliseconds
-            );
+            LogJobFailed(ex, jobId, duration.TotalMilliseconds);
 
             // Update job status to failed
             await UpdateJobStatusAsync(jobId, JobStatus.Failed, cancellationToken, ex.Message);
@@ -179,7 +187,7 @@ public sealed class ScraperWorker : BackgroundService
         var resultsJson = JsonConvert.SerializeObject(results);
         await db.StringSetAsync(resultsKey, resultsJson, TimeSpan.FromHours(_config.ResultsExpirationHours));
 
-        _logger.LogDebug("Stored {Count} results for job {JobId}", results.Count, jobId);
+        LogResultsStored(results.Count, jobId);
     }
 
     private async Task UpdateJobStatusAsync(
