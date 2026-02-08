@@ -17,13 +17,13 @@ public class CMPDatabaseTests
     }
 
     [Fact]
-    public void GetAllConfigs_ReturnsAtLeast10Configs()
+    public void GetAllConfigs_ReturnsAtLeast25Configs()
     {
         // Act
         var configs = CMPDatabase.GetAllConfigs();
 
         // Assert
-        Assert.True(configs.Count >= 10, $"Expected at least 10 CMP configs, but found {configs.Count}");
+        Assert.True(configs.Count >= 25, $"Expected at least 25 CMP configs, but found {configs.Count}");
     }
 
     [Theory]
