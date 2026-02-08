@@ -118,3 +118,7 @@ dotnet_naming_symbols.async_methods.required_modifiers = async
 
 dotnet_naming_style.end_with_async.required_suffix = Async
 dotnet_naming_style.end_with_async.capitalization = pascal_case
+
+# Test files - allow underscores in method names (xUnit convention)
+[tests/**/*.cs]
+dotnet_diagnostic.CA1707.severity = none
