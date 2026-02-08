@@ -10,7 +10,7 @@ metadata:
     description: "Enforce required labels on all Ghost application resources"
 spec:
   enforcementAction: deny
-  
+
   match:
     kinds:
       - apiGroups: [""]
@@ -21,14 +21,14 @@ spec:
         kinds: ["Job", "CronJob"]
       - apiGroups: ["networking.k8s.io"]
         kinds: ["Ingress", "NetworkPolicy"]
-    
+
     # Exclude system namespaces
     excludedNamespaces:
       - kube-system
       - kube-public
       - kube-node-lease
       - gatekeeper-system
-  
+
   parameters:
     labels:
       # Application identification
@@ -38,12 +38,12 @@ spec:
       - "app.kubernetes.io/component"
       - "app.kubernetes.io/part-of"
       - "app.kubernetes.io/managed-by"
-      
+
       # Environment and ownership
       - "environment"
       - "team"
       - "owner"
-      
+
       # Cost allocation
       - "cost-center"
       - "project"
@@ -58,16 +58,16 @@ metadata:
     description: "Additional required labels for production environment"
 spec:
   enforcementAction: deny
-  
+
   match:
     kinds:
       - apiGroups: ["apps"]
         kinds: ["Deployment", "StatefulSet"]
-    
+
     namespaceSelector:
       matchLabels:
         environment: production
-  
+
   parameters:
     labels:
       # Standard labels
@@ -75,7 +75,7 @@ spec:
       - "app.kubernetes.io/version"
       - "environment"
       - "team"
-      
+
       # Production-specific
       - "backup-policy"
       - "data-classification"
@@ -138,18 +138,18 @@ metadata:
     description: "Ensure labels have valid values from allowed list"
 spec:
   enforcementAction: deny
-  
+
   match:
     kinds:
       - apiGroups: ["apps"]
         kinds: ["Deployment", "StatefulSet", "DaemonSet"]
       - apiGroups: [""]
         kinds: ["Service"]
-    
+
     excludedNamespaces:
       - kube-system
       - kube-public
-  
+
   parameters:
     labels:
       # Environment must be one of these
@@ -159,7 +159,7 @@ spec:
           - "staging"
           - "development"
           - "test"
-      
+
       # SLA tier
       - key: "sla-tier"
         allowedValues:
@@ -167,7 +167,7 @@ spec:
           - "high"
           - "medium"
           - "low"
-      
+
       # Data classification
       - key: "data-classification"
         allowedValues:
@@ -175,14 +175,14 @@ spec:
           - "internal"
           - "confidential"
           - "restricted"
-      
+
       # Backup policy
       - key: "backup-policy"
         allowedValues:
           - "daily"
           - "weekly"
           - "none"
-      
+
       # Team
       - key: "team"
         allowedValues:
@@ -191,7 +191,7 @@ spec:
           - "data"
           - "security"
           - "devops"
-      
+
       # Managed by
       - key: "app.kubernetes.io/managed-by"
         allowedValues:
@@ -211,9 +211,9 @@ metadata:
 data:
   standards.yaml: |
     # Ghost Application Label Standards
-    
+
     ## Required Labels (All Resources)
-    
+
     ### Kubernetes Recommended Labels
     - app.kubernetes.io/name: Application name (e.g., "ghost")
     - app.kubernetes.io/instance: Unique instance name (e.g., "ghost-production")
@@ -221,30 +221,30 @@ data:
     - app.kubernetes.io/component: Component role (e.g., "frontend", "api", "admin")
     - app.kubernetes.io/part-of: Larger application (e.g., "ghost-platform")
     - app.kubernetes.io/managed-by: Tool managing the resource (e.g., "Helm", "ArgoCD")
-    
+
     ### Custom Labels
     - environment: Deployment environment (production|staging|development|test)
     - team: Owning team (platform|product|data|security|devops)
     - owner: Team email or Slack channel (e.g., "platform-team@ghost.com")
     - cost-center: Cost allocation code (e.g., "CC-1234")
     - project: Project or initiative (e.g., "ghost-v5-migration")
-    
+
     ## Production-Only Labels
-    
+
     - backup-policy: Backup frequency (daily|weekly|none)
     - data-classification: Data sensitivity (public|internal|confidential|restricted)
     - compliance-scope: Compliance requirements (soc2|gdpr|hipaa|pci|none)
     - sla-tier: Service level (critical|high|medium|low)
-    
+
     ## Optional Labels
-    
+
     - monitoring: Enable monitoring (true|false)
     - logging: Log retention days (7|30|90|365)
     - alert-channel: Slack channel for alerts (e.g., "#ghost-alerts")
     - runbook: Link to runbook (e.g., "https://wiki.ghost.com/runbooks/ghost-app")
-    
+
     ## Example: Complete Label Set
-    
+
     ```yaml
     metadata:
       labels:
@@ -255,39 +255,39 @@ data:
         app.kubernetes.io/component: frontend
         app.kubernetes.io/part-of: ghost-platform
         app.kubernetes.io/managed-by: Helm
-        
+
         # Custom required
         environment: production
         team: platform
         owner: platform-team@ghost.com
         cost-center: CC-1234
         project: ghost-v5
-        
+
         # Production specific
         backup-policy: daily
         data-classification: confidential
         compliance-scope: soc2
         sla-tier: critical
-        
+
         # Optional
         monitoring: "true"
         logging: "90"
         alert-channel: "#ghost-prod-alerts"
         runbook: "https://wiki.ghost.com/runbooks/ghost"
     ```
-    
+
     ## Label Validation
-    
+
     Labels are enforced by OPA Gatekeeper. Invalid resources will be rejected.
-    
+
     View violations:
     ```bash
     kubectl get k8srequiredlabels -A
     kubectl get k8slabelvalues -A
     ```
-    
+
     ## Exceptions
-    
+
     To request an exception:
     1. Create ticket in Jira (PROJECT-SEC)
     2. Provide justification

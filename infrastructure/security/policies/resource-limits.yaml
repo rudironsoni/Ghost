@@ -10,14 +10,14 @@ metadata:
     description: "Enforce resource requests and limits on all containers"
 spec:
   enforcementAction: deny
-  
+
   match:
     kinds:
       - apiGroups: [""]
         kinds: ["Pod"]
       - apiGroups: ["apps"]
         kinds: ["Deployment", "StatefulSet", "DaemonSet"]
-    
+
     excludedNamespaces:
       - kube-system
       - kube-public
@@ -120,15 +120,15 @@ metadata:
     description: "Ensure resource limits are not excessively higher than requests"
 spec:
   enforcementAction: deny
-  
+
   match:
     kinds:
       - apiGroups: ["apps"]
         kinds: ["Deployment", "StatefulSet", "DaemonSet"]
-    
+
     excludedNamespaces:
       - kube-system
-  
+
   parameters:
     # Limit should not be more than 4x the request
     maxCpuRatio: 4.0
@@ -214,16 +214,16 @@ metadata:
     description: "Enforce minimum resource allocations in production"
 spec:
   enforcementAction: deny
-  
+
   match:
     kinds:
       - apiGroups: ["apps"]
         kinds: ["Deployment", "StatefulSet"]
-    
+
     namespaceSelector:
       matchLabels:
         environment: production
-  
+
   parameters:
     minCpuRequest: "100m"
     minMemoryRequest: "128Mi"
@@ -306,15 +306,15 @@ metadata:
     description: "Prevent single containers from consuming excessive resources"
 spec:
   enforcementAction: deny
-  
+
   match:
     kinds:
       - apiGroups: ["apps"]
         kinds: ["Deployment", "StatefulSet", "DaemonSet"]
-    
+
     excludedNamespaces:
       - kube-system
-  
+
   parameters:
     maxCpuLimit: "4000m"      # 4 CPU cores
     maxMemoryLimit: "16Gi"    # 16 GB RAM
@@ -329,76 +329,76 @@ metadata:
 data:
   guidelines.yaml: |
     # Ghost Application Resource Guidelines
-    
+
     ## Resource Requirements by Component
-    
+
     ### Ghost Frontend (Node.js)
     - CPU Request: 500m
     - CPU Limit: 1000m
     - Memory Request: 512Mi
     - Memory Limit: 1Gi
-    
+
     ### Ghost Admin (Node.js)
     - CPU Request: 250m
     - CPU Limit: 500m
     - Memory Request: 256Mi
     - Memory Limit: 512Mi
-    
+
     ### MySQL Database
     - CPU Request: 1000m
     - CPU Limit: 2000m
     - Memory Request: 2Gi
     - Memory Limit: 4Gi
-    
+
     ### Redis Cache
     - CPU Request: 250m
     - CPU Limit: 500m
     - Memory Request: 512Mi
     - Memory Limit: 1Gi
-    
+
     ### Nginx Proxy
     - CPU Request: 100m
     - CPU Limit: 200m
     - Memory Request: 64Mi
     - Memory Limit: 128Mi
-    
+
     ## Resource Ratios
-    
+
     - CPU Limit should be 1.5x-2x the request
     - Memory Limit should be 1.5x-2x the request
     - Never exceed 4x ratio (enforced by policy)
-    
+
     ## Minimum Requirements
-    
+
     All containers must specify:
     - CPU request >= 100m
     - Memory request >= 128Mi
     - CPU limit >= 200m
     - Memory limit >= 256Mi
-    
+
     ## Maximum Limits
-    
+
     Single container limits:
     - CPU limit <= 4 cores (4000m)
     - Memory limit <= 16Gi
-    
+
     ## Best Practices
-    
+
     1. Set requests based on average usage
     2. Set limits to 2x peak usage
     3. Monitor actual usage with Prometheus
     4. Adjust based on metrics
     5. Use HPA for horizontal scaling
-    
+
     ## Testing Resource Limits
-    
+
     ```bash
     # Check current usage
     kubectl top pods -n ghost-production
-    
+
     # View resource requests/limits
     kubectl describe pod <pod-name> -n ghost-production
-    
+
     # Check OPA violations
     kubectl get k8srequiredresources
     kubectl get k8sresourceratios

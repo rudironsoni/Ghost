@@ -124,7 +124,7 @@ public sealed class LinkedInSocialClient : ISocialClient
     {
         try
         {
-            // Selectors for "see more" buttons. 
+            // Selectors for "see more" buttons.
             // container scope if provided, otherwise page scope.
             var selector = ".inline-show-more-text__button, button[aria-label*='see more']";
             IReadOnlyList<IElement> buttons;

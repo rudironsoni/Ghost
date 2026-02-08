@@ -150,7 +150,7 @@ public class ReconnectionPolicyTests
         // Assert - Should have variation (not all the same)
         var uniqueDelays = delays.Distinct().Count();
         uniqueDelays.Should().BeGreaterThan(1);
-        
+
         // All delays should be within jitter range (75% - 125% of base)
         foreach (var delay in delays)
         {

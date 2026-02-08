@@ -19,8 +19,8 @@ runtime:
 
 docs: |-
   ## Get DLQ Jobs
-  
+
   Get jobs from the Dead Letter Queue.
-  
+
   ### Query Parameters
   - `count` - Number of jobs to retrieve (max 100, default 10)

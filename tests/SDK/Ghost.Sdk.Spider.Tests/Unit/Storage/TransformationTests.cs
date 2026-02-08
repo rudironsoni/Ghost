@@ -225,7 +225,7 @@ public class TransformationTests
         var composite = new CompositeTransformation();
         composite.AddTransformation(new CleanHtmlTransformation());
         composite.AddTransformation(new NormalizeTransformation());
-        
+
         var item = new
         {
             Title = "<h1>  TEST TITLE  </h1>"
@@ -311,7 +311,7 @@ public class TransformationTests
     private static Dictionary<string, object> GetProperties(object obj)
     {
         var dict = new Dictionary<string, object>();
-        
+
         // Handle ExpandoObject
         if (obj is IDictionary<string, object> expando)
         {
@@ -321,7 +321,7 @@ public class TransformationTests
             }
             return dict;
         }
-        
+
         // Handle regular objects
         foreach (var prop in obj.GetType().GetProperties())
         {
@@ -336,7 +336,7 @@ public class TransformationTests
         {
             var result = new Dictionary<string, object>();
             var inputDict = GetProperties(item);
-            
+
             foreach (var kvp in inputDict)
             {
                 if (kvp.Value is string str)
@@ -389,7 +389,7 @@ public class TransformationTests
         {
             var result = new Dictionary<string, object>();
             var inputDict = GetProperties(item);
-            
+
             foreach (var kvp in inputDict)
             {
                 if (kvp.Value is string str)
@@ -527,7 +527,7 @@ public class TransformationTests
                 var baseUri = new Uri(baseUrl);
                 return $"{baseUri.Scheme}://{baseUri.Host}{url}";
             }
-            
+
             // Remove UTM parameters except id
             var uri = new Uri(url);
             var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
@@ -536,7 +536,7 @@ public class TransformationTests
             {
                 filteredQuery["id"] = query["id"];
             }
-            
+
             // Properly serialize the query string
             var queryString = string.Empty;
             if (filteredQuery.Count > 0)
@@ -551,13 +551,13 @@ public class TransformationTests
                 }
                 queryString = string.Join("&", items);
             }
-            
+
             // Normalize scheme and host to lowercase, preserve path case
             var builder = new UriBuilder(uri);
             builder.Scheme = builder.Scheme.ToLowerInvariant();
             builder.Host = builder.Host.ToLowerInvariant();
             builder.Query = queryString;
-            
+
             return builder.Uri.ToString();
         }
     }

@@ -29,7 +29,7 @@ public class Program
         });
 
         var logger = loggerFactory.CreateLogger<GoogleJobsApiClient>();
-        
+
         // Create HttpClient with proper configuration
         var handler = new HttpClientHandler
         {
@@ -37,7 +37,7 @@ public class Program
             MaxAutomaticRedirections = 5,
             UseCookies = true
         };
-        
+
         var httpClient = new HttpClient(handler)
         {
             Timeout = TimeSpan.FromSeconds(30)
@@ -72,7 +72,7 @@ public class Program
 
             Console.WriteLine("📋 First 5 jobs:");
             Console.WriteLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
+
             int count = 0;
             foreach (var job in jobs.Take(5))
             {
@@ -83,15 +83,15 @@ public class Program
                 Console.WriteLine($"  🏢 Company:  {job.Company ?? "N/A"}");
                 Console.WriteLine($"  📍 Location: {job.Location ?? "N/A"}");
                 Console.WriteLine($"  🌐 Source:   {job.Source ?? "N/A"}");
-                
+
                 if (!string.IsNullOrEmpty(job.Description))
                 {
-                    var desc = job.Description.Length > 100 
-                        ? job.Description.Substring(0, 100) + "..." 
+                    var desc = job.Description.Length > 100
+                        ? job.Description.Substring(0, 100) + "..."
                         : job.Description;
                     Console.WriteLine($"  📄 Summary:  {desc}");
                 }
-                
+
                 if (!string.IsNullOrEmpty(job.Url))
                 {
                     Console.WriteLine($"  🔗 URL:      {job.Url}");

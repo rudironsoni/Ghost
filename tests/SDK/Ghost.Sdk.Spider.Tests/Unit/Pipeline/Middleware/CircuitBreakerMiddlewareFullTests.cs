@@ -43,7 +43,7 @@ public class CircuitBreakerMiddlewareFullTests
 
         // Fail twice within sampling window
         PipelineDelegate failingNext = _ => throw new HttpRequestException("Test failure");
-        
+
         for (int i = 0; i < 2; i++)
         {
             try
@@ -96,7 +96,7 @@ public class CircuitBreakerMiddlewareFullTests
         };
 
         // Act - Run multiple concurrent requests
-        var tasks = Enumerable.Range(0, 10).Select(_ => 
+        var tasks = Enumerable.Range(0, 10).Select(_ =>
             middleware.InvokeAsync(CreateContext(), next));
         await Task.WhenAll(tasks);
 
@@ -248,7 +248,7 @@ public class CircuitBreakerMiddlewareFullTests
         await middleware.InvokeAsync(context, _ => Task.CompletedTask);
         try { await middleware.InvokeAsync(context, _ => throw new Exception("F2")); } catch { }
         try { await middleware.InvokeAsync(context, _ => throw new Exception("F3")); } catch { }
-        
+
         // Circuit should still be closed (only 3 failures, need 4)
         var finalCallSucceeded = false;
         await middleware.InvokeAsync(context, _ =>

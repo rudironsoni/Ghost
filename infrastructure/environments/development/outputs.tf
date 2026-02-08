@@ -240,7 +240,7 @@ output "estimated_monthly_cost" {
     - CloudWatch logs: $2-5
     ----------------------------------------
     Total estimated: $${var.use_self_hosted_rabbitmq ? "40-60" : "70-90"}/month
-    
+
     Note: Costs can be further reduced with:
     - Auto-shutdown during off-hours (enabled: ${var.enable_auto_shutdown})
     - Reserved instances for production
@@ -289,36 +289,36 @@ output "getting_started" {
   description = "Quick start instructions"
   value = <<-EOT
     🚀 Ghost Platform Development Environment Ready!
-    
+
     1. Connect to k3s node:
        ${ssh_command.value}
-    
+
     2. Get kubeconfig:
        sudo cat /etc/rancher/k3s/k3s.yaml > kubeconfig.yaml
        # Replace 127.0.0.1 with ${aws_instance.k3s.public_ip} in kubeconfig.yaml
-    
+
     3. Set KUBECONFIG locally:
        export KUBECONFIG=./kubeconfig.yaml
        kubectl get nodes
-    
+
     4. Deploy Ghost Platform:
        kubectl apply -k ../../platform/base
        kubectl apply -k ../../platform/services
-    
+
     5. Access services:
        - Ghost: http://${aws_instance.k3s.public_ip}
        - RabbitMQ Console: ${var.use_self_hosted_rabbitmq ? "http://localhost:15672" : aws_mq_broker.main[0].instances[0].console_url}
-    
+
     6. View sensitive outputs:
        terraform output -json | jq '.connection_info.value'
        terraform output db_password
-    
+
     📝 Important Notes:
     - Auto-shutdown is ${var.enable_auto_shutdown ? "ENABLED" : "DISABLED"}
     - Using ${var.use_spot_instances ? "SPOT" : "ON-DEMAND"} instances
     - Estimated monthly cost: $${var.use_self_hosted_rabbitmq ? "40-60" : "70-90"}
     - This is a DEVELOPMENT environment - not production-ready!
-    
+
     📚 Documentation: See infrastructure/docs/
   EOT
 }

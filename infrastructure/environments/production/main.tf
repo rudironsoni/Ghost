@@ -96,16 +96,16 @@ module "security_groups" {
 
   # ALB Security Group
   alb_ingress_cidrs = var.alb_ingress_cidrs
-  
+
   # EKS Security Group
   eks_cluster_name = "${var.project_name}-${local.environment}"
-  
+
   # RDS Security Group
   rds_allowed_security_groups = [module.eks.cluster_security_group_id]
-  
+
   # ElastiCache Security Group
   elasticache_allowed_security_groups = [module.eks.cluster_security_group_id]
-  
+
   # Amazon MQ Security Group
   mq_allowed_security_groups = [module.eks.cluster_security_group_id]
 
@@ -146,7 +146,7 @@ module "eks" {
       name           = "primary-node-group"
       instance_types = var.eks_node_instance_types
       capacity_type  = "ON_DEMAND" # Reserved instances for production
-      
+
       min_size     = var.eks_node_min_size
       max_size     = var.eks_node_max_size
       desired_size = var.eks_node_desired_size
@@ -197,7 +197,7 @@ module "eks" {
       name           = "highmem-node-group"
       instance_types = var.eks_highmem_instance_types
       capacity_type  = "ON_DEMAND"
-      
+
       min_size     = 1
       max_size     = 5
       desired_size = 2
@@ -353,7 +353,7 @@ module "rds_replica" {
 
   identifier             = "${var.project_name}-${local.environment}-replica"
   replicate_source_db    = module.rds.db_instance_id
-  
+
   # Replica configuration
   instance_class         = var.rds_replica_instance_class
   allocated_storage      = var.rds_allocated_storage
@@ -529,7 +529,7 @@ module "alb" {
       backend_protocol = "HTTP"
       backend_port     = 80
       target_type      = "ip"
-      
+
       health_check = {
         enabled             = true
         interval            = 30

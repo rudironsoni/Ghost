@@ -18,9 +18,9 @@ try
 {
     // Test Entity Extraction directly
     Console.WriteLine("Testing LinkedInJobEntity extraction...\n");
-    
+
     var parser = new EntityParser();
-    
+
     // Sample LinkedIn job HTML (simplified)
     var sampleHtml = """
     <html>
@@ -37,17 +37,17 @@ try
     </body>
     </html>
     """;
-    
+
     var context = new ExtractionContext
     {
         Content = sampleHtml,
         SourceUrl = "https://www.linkedin.com/jobs/view/123456",
         Timestamp = DateTime.UtcNow
     };
-    
+
     Console.WriteLine("Parsing LinkedInJobEntity from sample HTML...");
     var entity = parser.ParseSingle<LinkedInJobEntity>(context);
-    
+
     if (entity != null)
     {
         Console.WriteLine("\n✓ Entity Extraction Successful!");
@@ -60,18 +60,18 @@ try
     {
         Console.WriteLine("\n✗ Entity extraction returned null");
     }
-    
+
     Console.WriteLine("\n=== Test Results ===");
     Console.WriteLine("✓ Ghost.Platform.LinkedIn builds successfully");
     Console.WriteLine("✓ Ghost.Sdk.Spider EntityParser working");
     Console.WriteLine("✓ LinkedInJobEntity can be instantiated");
     Console.WriteLine("✓ Migration to Ghost.Sdk.Spider complete");
-    
+
     Console.WriteLine("\nNOTE: Full browser-based scraping requires:");
     Console.WriteLine("  - Playwright browser installation");
     Console.WriteLine("  - Ghost.IBrowserSession implementation");
     Console.WriteLine("  - Network connectivity to LinkedIn");
-    
+
     Console.WriteLine("\n=== Test Complete ===");
 }
 catch (Exception ex)

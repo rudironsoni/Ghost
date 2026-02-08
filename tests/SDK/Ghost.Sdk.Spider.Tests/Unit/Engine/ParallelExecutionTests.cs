@@ -123,7 +123,7 @@ public class ParallelExecutionTests
     {
         // Arrange
         var counter = 0;
-        var tasks = Enumerable.Range(1, 50).Select(_ => 
+        var tasks = Enumerable.Range(1, 50).Select(_ =>
             Task.Run(() => Interlocked.Increment(ref counter)));
 
         // Act

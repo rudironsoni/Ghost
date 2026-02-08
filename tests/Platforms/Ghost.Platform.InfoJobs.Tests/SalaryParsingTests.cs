@@ -112,7 +112,7 @@ public class SalaryParsingTests
         // Assert
         mappings.Should().NotBeEmpty();
         mappings.Should().ContainKeys(
-            "jornada completa", "jornada parcial", "prácticas", 
+            "jornada completa", "jornada parcial", "prácticas",
             "temporal", "indefinido", "freelance");
     }
 }

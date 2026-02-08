@@ -230,26 +230,26 @@ jobs:
         run: |
           echo "# Stability Test Analysis" > stability-report.md
           echo "" >> stability-report.md
-          
+
           # Count passed/failed runs
           TOTAL_RUNS=10
           PASSED=$(grep -r "Passed!" **/TestResults/stability-run-*.trx 2>/dev/null | wc -l || echo "0")
           FAILED=$(grep -r "Failed!" **/TestResults/stability-run-*.trx 2>/dev/null | wc -l || echo "0")
-          
+
           PASS_RATE=$((PASSED * 100 / TOTAL_RUNS))
-          
+
           echo "**Total Runs:** $TOTAL_RUNS" >> stability-report.md
           echo "**Passed:** $PASSED" >> stability-report.md
           echo "**Failed:** $FAILED" >> stability-report.md
           echo "**Pass Rate:** $PASS_RATE%" >> stability-report.md
           echo "" >> stability-report.md
-          
+
           if [ $PASS_RATE -lt 90 ]; then
             echo "⚠️ **WARNING:** Pass rate below 90% - tests may be flaky" >> stability-report.md
           else
             echo "✅ Tests are stable" >> stability-report.md
           fi
-          
+
           cat stability-report.md
 
       - name: Upload Stability Results
@@ -333,7 +333,7 @@ jobs:
           # Extract line coverage percentage
           COVERAGE=$(grep "Line coverage:" ./coverage-report/Summary.txt | grep -oP '\d+\.\d+%' | grep -oP '\d+')
           echo "Coverage: ${COVERAGE}%"
-          
+
           if [ "$COVERAGE" -lt 80 ]; then
             echo "⚠️ Code coverage (${COVERAGE}%) is below threshold (80%)"
             exit 1
@@ -351,34 +351,34 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Build Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           echo "### Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [[ "${{ needs.full-integration-tests.result }}" == "success" ]]; then
             echo "✅ **Integration Tests:** Passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **Integration Tests:** Failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [[ "${{ needs.e2e-full-suite.result }}" == "success" ]]; then
             echo "✅ **E2E Tests:** Passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **E2E Tests:** Failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [[ "${{ needs.performance-benchmarks.result }}" == "success" ]]; then
             echo "✅ **Performance Benchmarks:** Passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ **Performance Benchmarks:** Issues Found" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [[ "${{ needs.stability-tests.result }}" == "success" ]]; then
             echo "✅ **Stability Tests:** Passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ **Stability Tests:** Issues Found" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [[ "${{ needs.code-coverage.result }}" == "success" ]]; then
             echo "✅ **Code Coverage:** Passed" >> $GITHUB_STEP_SUMMARY
           else
@@ -396,23 +396,23 @@ jobs:
               state: 'open',
               labels: 'nightly-build,automated'
             });
-            
-            const existingIssue = issues.data.find(issue => 
+
+            const existingIssue = issues.data.find(issue =>
               issue.title.includes('Nightly Build Failure')
             );
-            
+
             const body = `## 🌙 Nightly Build Failure
-            
+
             **Date:** ${new Date().toISOString()}
             **Run:** ${context.runId}
-            
+
             ### Failed Jobs
-            
+
             ${context.payload.jobs.filter(j => j.conclusion === 'failure').map(j => `- ❌ ${j.name}`).join('\n')}
-            
+
             [View Workflow Run](${context.payload.workflow_run.html_url})
             `;
-            
+
             if (existingIssue) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,

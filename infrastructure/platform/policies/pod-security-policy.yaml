@@ -17,14 +17,14 @@ spec:
   # Privilege and Access Controls
   privileged: false
   allowPrivilegeEscalation: false
-  
+
   # Required to prevent escalations
   requiredDropCapabilities:
   - ALL
-  
+
   # Allow specific capabilities if needed
   allowedCapabilities: []
-  
+
   # Volumes
   volumes:
   - 'configMap'
@@ -33,44 +33,44 @@ spec:
   - 'secret'
   - 'downwardAPI'
   - 'persistentVolumeClaim'
-  
+
   # Host Namespaces
   hostNetwork: false
   hostIPC: false
   hostPID: false
-  
+
   # Host Ports
   hostPorts:
   - min: 0
     max: 0 # No host ports allowed
-  
+
   # SELinux
   seLinux:
     rule: RunAsAny
-  
+
   # User and Group
   runAsUser:
     rule: MustRunAsNonRoot
-  
+
   supplementalGroups:
     rule: MustRunAs
     ranges:
     - min: 1000
       max: 65535
-  
+
   fsGroup:
     rule: MustRunAs
     ranges:
     - min: 1000
       max: 65535
-  
+
   # Read-only root filesystem
   readOnlyRootFilesystem: true
-  
+
   # Proc Mount
   allowedProcMountTypes:
   - Default
-  
+
   # Forbidden Sysctls
   forbiddenSysctls:
   - '*'
@@ -135,11 +135,11 @@ metadata:
     # Enforce restricted security standard
     pod-security.kubernetes.io/enforce: restricted
     pod-security.kubernetes.io/enforce-version: latest
-    
+
     # Audit mode for restricted standard
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/audit-version: latest
-    
+
     # Warn mode for restricted standard
     pod-security.kubernetes.io/warn: restricted
     pod-security.kubernetes.io/warn-version: latest

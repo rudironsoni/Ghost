@@ -205,7 +205,7 @@ public class AdapterFactoryTests
         // Arrange
         // Register multiple adapters for the same content type
         _registry.Register<StaticHtmlAdapter>("StaticHtml2", ContentType.StaticHtml);
-        
+
         var request = TestData.CreateRequest("https://example.com");
         request.ExpectedContentType = ContentType.StaticHtml;
 

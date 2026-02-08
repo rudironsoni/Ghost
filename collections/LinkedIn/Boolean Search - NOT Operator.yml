@@ -27,19 +27,19 @@ runtime:
         test("Status code is 200", function() {
           expect(res.status).to.equal(200);
         });
-        
+
         test("Response is array", function() {
           expect(res.body).to.be.an('array');
         });
 
 docs: |-
   ## Boolean Search - NOT Operator
-  
+
   Tests LinkedIn's NOT operator which excludes jobs containing specific keywords.
-  
+
   ### Query
   `manager NOT assistant`
-  
+
   ### Expected Behavior
   - Returns jobs containing "manager" but EXCLUDING those with "assistant"
   - Use NOT to filter out unwanted roles (e.g., exclude junior/entry-level positions)

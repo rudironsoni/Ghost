@@ -15,11 +15,11 @@ namespace Ghost.Sdk.Spider.Core.Entities.Formatters;
 /// // Add currency formatting
 /// var currencyFormatter = new StringFormatter { FormatString = "${0:N2}" };
 /// var price = currencyFormatter.Format(1234.5); // Returns "$1,234.50"
-/// 
+///
 /// // Add prefix
 /// var prefixFormatter = new StringFormatter { FormatString = "Item: {0}" };
 /// var item = prefixFormatter.Format("Widget"); // Returns "Item: Widget"
-/// 
+///
 /// // Format percentage
 /// var percentFormatter = new StringFormatter { FormatString = "{0:P1}" };
 /// var percent = percentFormatter.Format(0.755); // Returns "75.5%"

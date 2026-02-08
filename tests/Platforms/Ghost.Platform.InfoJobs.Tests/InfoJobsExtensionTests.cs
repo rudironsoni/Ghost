@@ -17,7 +17,7 @@ public class InfoJobsExtensionTests
         };
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(inMemory).Build();
         var services = new ServiceCollection();
-        
+
         var ext = new Ghost.Platform.InfoJobs.InfoJobsExtension();
         ext.ConfigureServices(services, configuration);
 

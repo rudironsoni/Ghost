@@ -39,7 +39,7 @@ public static class ShadowDOMHelper
                             // Try direct query first
                             const element = root.querySelector(selector);
                             if (element) return element;
-                            
+
                             // Recursively search shadow roots
                             const allElements = root.querySelectorAll('*');
                             for (const el of allElements) {{
@@ -50,14 +50,14 @@ public static class ShadowDOMHelper
                             }}
                             return null;
                         }};
-                        
+
                         const element = findInShadow(document, '{selector.Replace("'", "\\'")}');
                         if (!element) return false;
-                        
+
                         // Check visibility
                         const style = window.getComputedStyle(element);
-                        return style.display !== 'none' && 
-                               style.visibility !== 'hidden' && 
+                        return style.display !== 'none' &&
+                               style.visibility !== 'hidden' &&
                                style.opacity !== '0' &&
                                element.offsetWidth > 0 &&
                                element.offsetHeight > 0;
@@ -105,7 +105,7 @@ public static class ShadowDOMHelper
                         const findInShadow = (root, selector) => {{
                             const element = root.querySelector(selector);
                             if (element) return element;
-                            
+
                             const allElements = root.querySelectorAll('*');
                             for (const el of allElements) {{
                                 if (el.shadowRoot) {{
@@ -115,7 +115,7 @@ public static class ShadowDOMHelper
                             }}
                             return null;
                         }};
-                        
+
                         const element = findInShadow(document, '{selector.Replace("'", "\\'")}');
                         if (element) {{
                             element.click();

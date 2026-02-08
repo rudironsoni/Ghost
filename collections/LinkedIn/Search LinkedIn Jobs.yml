@@ -31,9 +31,9 @@ runtime:
 
 docs: |-
   ## Search LinkedIn Jobs
-  
+
   Search LinkedIn jobs using Ghost.Sdk.Spider entity extraction.
-  
+
   ### Request Body
   | Field | Type | Description |
   |-------|------|-------------|

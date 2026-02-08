@@ -306,7 +306,7 @@ public class StealthMiddlewareTests
         // Assert - Should preserve existing headers
         request.Headers["Accept"].Should().Be("application/json");
         request.Headers["Accept-Language"].Should().Be("fr-FR");
-        
+
         // But should add missing headers
         request.Headers.Should().ContainKey("User-Agent");
         request.Headers.Should().ContainKey("Accept-Encoding");

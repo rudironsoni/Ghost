@@ -17,10 +17,10 @@ public class GoogleExtensionTests
         };
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(inMemory).Build();
         var services = new ServiceCollection();
-        
+
         // Mock required services
         services.AddSingleton(Substitute.For<Ghost.IBrowserSession>());
-        
+
         var ext = new Ghost.Platform.Google.GoogleExtension();
         ext.ConfigureServices(services, configuration);
 

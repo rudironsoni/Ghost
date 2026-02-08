@@ -16,15 +16,15 @@ spec:
     # CPU Limits
     requests.cpu: "20"
     limits.cpu: "40"
-    
+
     # Memory Limits
     requests.memory: 40Gi
     limits.memory: 80Gi
-    
+
     # Ephemeral Storage
     requests.ephemeral-storage: 50Gi
     limits.ephemeral-storage: 100Gi
-  
+
   # Scope selectors (optional)
   scopeSelector:
     matchExpressions:
@@ -50,33 +50,33 @@ spec:
   hard:
     # Pods
     pods: "50"
-    
+
     # Services
     services: "20"
     services.loadbalancers: "5"
     services.nodeports: "5"
-    
+
     # Storage
     persistentvolumeclaims: "20"
     requests.storage: 500Gi
-    
+
     # Secrets and ConfigMaps
     secrets: "50"
     configmaps: "50"
-    
+
     # ReplicationControllers and ReplicaSets
     replicationcontrollers: "20"
-    
+
     # Deployments
     count/deployments.apps: "20"
-    
+
     # StatefulSets
     count/statefulsets.apps: "10"
-    
+
     # Jobs
     count/jobs.batch: "50"
     count/cronjobs.batch: "10"
-    
+
     # Ingresses
     count/ingresses.networking.k8s.io: "10"
 ---
@@ -97,15 +97,15 @@ spec:
     # Total storage across all classes
     persistentvolumeclaims: "20"
     requests.storage: 500Gi
-    
+
     # SSD Storage Class
     ghost-ssd.storageclass.storage.k8s.io/persistentvolumeclaims: "10"
     ghost-ssd.storageclass.storage.k8s.io/requests.storage: 200Gi
-    
+
     # Standard Storage Class
     ghost-standard.storageclass.storage.k8s.io/persistentvolumeclaims: "15"
     ghost-standard.storageclass.storage.k8s.io/requests.storage: 300Gi
-    
+
     # Backup Storage Class
     ghost-backup.storageclass.storage.k8s.io/persistentvolumeclaims: "5"
     ghost-backup.storageclass.storage.k8s.io/requests.storage: 1Ti
@@ -145,7 +145,7 @@ spec:
       cpu: 4
       memory: 4
       ephemeral-storage: 2
-  
+
   # Pod-level limits
   - type: Pod
     max:
@@ -156,7 +156,7 @@ spec:
       cpu: 100m
       memory: 128Mi
       ephemeral-storage: 1Gi
-  
+
   # PersistentVolumeClaim limits
   - type: PersistentVolumeClaim
     max:

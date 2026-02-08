@@ -5,7 +5,7 @@
 terraform {
   cloud {
     organization = "ghost-platform"
-    
+
     workspaces {
       name = "ghost-development"
     }
@@ -20,7 +20,7 @@ terraform {
 #     region         = "us-east-1"
 #     encrypt        = true
 #     dynamodb_table = "ghost-terraform-locks"
-#     
+#
 #     # Enable versioning on the S3 bucket for state history
 #     # Create DynamoDB table for state locking:
 #     # aws dynamodb create-table \

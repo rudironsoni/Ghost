@@ -26,7 +26,7 @@ public class ElasticsearchStorageTests
             NumberOfShards = 1,
             NumberOfReplicas = 0
         };
-        
+
         _mockClient = new MockElasticsearchClient();
     }
 

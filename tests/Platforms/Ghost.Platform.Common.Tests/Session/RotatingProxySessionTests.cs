@@ -39,14 +39,14 @@ public class RotatingProxySessionTests
     [Fact]
     public void Constructor_ShouldThrowWhenProxyProviderIsNull()
     {
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             new RotatingProxySession(null!, _mockHttpClient.Object, _options));
     }
 
     [Fact]
     public void Constructor_ShouldThrowWhenHttpClientIsNull()
     {
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             new RotatingProxySession(_mockProxyProvider.Object, null!, _options));
     }
 
@@ -75,11 +75,11 @@ public class RotatingProxySessionTests
         // Arrange
         var retryResponse = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
         var successResponse = new HttpResponseMessage(HttpStatusCode.OK);
-        
+
         var callCount = 0;
         _mockHttpClient
             .Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() => 
+            .ReturnsAsync(() =>
             {
                 callCount++;
                 return callCount == 1 ? retryResponse : successResponse;

@@ -59,7 +59,7 @@ public class PipelineTests
 
         // Act & Assert
         context.IsCancellationRequested.Should().BeFalse();
-        
+
         cts.Cancel();
         context.IsCancellationRequested.Should().BeTrue();
     }
@@ -70,7 +70,7 @@ public class PipelineTests
         // Arrange
         using var cts = new CancellationTokenSource();
         cts.Cancel();
-        
+
         var context = new PipelineContext
         {
             Request = new object(),

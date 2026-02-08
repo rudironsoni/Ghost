@@ -15,11 +15,11 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: ghost-webapi
-  
+
   # Replica limits
   minReplicas: 3
   maxReplicas: 20
-  
+
   # Scaling behavior
   behavior:
     scaleDown:
@@ -42,7 +42,7 @@ spec:
         value: 4 # Or scale up by 4 pods
         periodSeconds: 30
       selectPolicy: Max # Use the policy that scales up the most
-  
+
   # Metrics
   metrics:
   # CPU-based scaling
@@ -52,7 +52,7 @@ spec:
       target:
         type: Utilization
         averageUtilization: 70 # Target 70% CPU utilization
-  
+
   # Memory-based scaling
   - type: Resource
     resource:
@@ -60,7 +60,7 @@ spec:
       target:
         type: Utilization
         averageUtilization: 80 # Target 80% memory utilization
-  
+
   # Custom metric: Request rate (requires Prometheus adapter)
   - type: Pods
     pods:
@@ -69,7 +69,7 @@ spec:
       target:
         type: AverageValue
         averageValue: "1000" # 1000 requests per second per pod
-  
+
   # Custom metric: Response time (requires Prometheus adapter)
   - type: Pods
     pods:
@@ -78,7 +78,7 @@ spec:
       target:
         type: AverageValue
         averageValue: "500m" # 500ms average response time
-  
+
   # External metric: Queue depth (for message processing)
   # - type: External
   #   external:
@@ -107,11 +107,11 @@ spec:
 #     apiVersion: apps/v1
 #     kind: Deployment
 #     name: ghost-webapi
-#   
+#
 #   # Update mode: Off, Initial, Recreate, Auto
 #   updatePolicy:
 #     updateMode: "Auto"
-#   
+#
 #   # Resource policy
 #   resourcePolicy:
 #     containerPolicies:

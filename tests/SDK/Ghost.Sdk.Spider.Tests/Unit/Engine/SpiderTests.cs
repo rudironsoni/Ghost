@@ -132,7 +132,7 @@ public class SpiderTests
         // Arrange
         var options = new SpiderOptions();
         options.AllowedDomains.Add("example.com");
-        
+
         var spider = new ConfigurableTestSpider(options: options);
         var context = new SpiderExecutionContext("TestSpider", new SpiderOptions());
 
@@ -151,7 +151,7 @@ public class SpiderTests
         // Arrange
         var options = new SpiderOptions();
         options.ExcludePatterns.Add(@".*/admin/.*");
-        
+
         var spider = new ConfigurableTestSpider(options: options);
         var context = new SpiderExecutionContext("TestSpider", new SpiderOptions());
 
@@ -217,7 +217,7 @@ public class SpiderTests
         // Arrange
         var customOptions = new SpiderOptions();
         customOptions.AllowedDomains.Add("example.com");
-        
+
         var spider = new ConfigurableTestSpider(options: customOptions);
 
         // Assert

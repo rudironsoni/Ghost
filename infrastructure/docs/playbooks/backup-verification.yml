@@ -17,7 +17,7 @@
     verification_db: "ghost_verify"
     verification_dir: "/tmp/backup-verify"
     retention_days: 30
-    
+
   pre_tasks:
     - name: Display backup verification information
       debug:
@@ -430,21 +430,21 @@
               ghost_backup_count{type="postgres"} {{ postgres_backups.files | length }}
               ghost_backup_count{type="redis"} {{ redis_backups.files | length }}
               ghost_backup_count{type="data"} {{ data_backups.files | length }}
-              
+
               # TYPE ghost_backup_size_bytes gauge
               ghost_backup_size_bytes{type="postgres"} {{ postgres_backups.files | map(attribute='size') | sum }}
               ghost_backup_size_bytes{type="redis"} {{ redis_backups.files | map(attribute='size') | sum }}
               ghost_backup_size_bytes{type="data"} {{ data_backups.files | map(attribute='size') | sum }}
-              
+
               # TYPE ghost_backup_age_hours gauge
               ghost_backup_newest_age_hours {{ backup_stats.newest_backup_age_hours }}
               ghost_backup_oldest_age_hours {{ backup_stats.oldest_backup_age_hours }}
-              
+
               # TYPE ghost_backup_verification_status gauge
               ghost_backup_verification_status{type="postgres"} {{ 1 if pg_integrity_check is defined and pg_integrity_check.rc == 0 else 0 }}
               ghost_backup_verification_status{type="redis"} {{ 1 if redis_dbsize is defined else 0 }}
               ghost_backup_verification_status{type="data"} {{ 1 if data_integrity_check is defined and data_integrity_check.rc == 0 else 0 }}
-              
+
               # TYPE ghost_backup_verification_timestamp gauge
               ghost_backup_verification_timestamp {{ ansible_date_time.epoch }}
             body_format: raw

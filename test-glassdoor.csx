@@ -54,15 +54,15 @@ Console.WriteLine($"Max results: {criteria.MaxResults}\n");
 try
 {
     var jobs = await client.SearchJobsAsync(criteria);
-    
+
     Console.WriteLine($"\n=== RESULTS: Found {jobs.Count} jobs ===\n");
-    
+
     int count = 0;
     foreach (var job in jobs)
     {
         count++;
         if (count > 5) break; // Limit to 5 for display
-        
+
         Console.WriteLine($"Job #{count}:");
         Console.WriteLine($"  Title: {job.Title ?? "N/A"}");
         Console.WriteLine($"  Company: {job.Company ?? "N/A"}");
@@ -72,7 +72,7 @@ try
         Console.WriteLine($"  Salary: {job.Salary ?? "N/A"}");
         Console.WriteLine();
     }
-    
+
     // Summary
     Console.WriteLine("=== VERIFICATION ===");
     Console.WriteLine($"✓ Total jobs scraped: {jobs.Count}");

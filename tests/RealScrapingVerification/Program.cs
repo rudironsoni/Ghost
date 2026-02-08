@@ -54,13 +54,13 @@ try
     var googleHttp = httpFactory.CreateClient();
     var googleLogger = loggerFactory.CreateLogger<GoogleJobClient>();
     var googleApiLogger = loggerFactory.CreateLogger<Ghost.Platform.Google.Jobs.Internal.GoogleJobsApiClient>();
-    
+
     var googleApi = new Ghost.Platform.Google.Jobs.Internal.GoogleJobsApiClient(
-        googleHttp, 
+        googleHttp,
         googleOptions,
         googleApiLogger
     );
-    
+
     var googleClient = new GoogleJobClient(
         googleApi,
         googleLogger,
@@ -75,7 +75,7 @@ try
     };
 
     var googleJobs = await googleClient.SearchJobsAsync(googleCriteria, ct);
-    
+
     Console.WriteLine($"✓ Google Jobs: Found {googleJobs.Count} jobs");
     foreach (var job in googleJobs)
     {
@@ -103,11 +103,11 @@ try
     var glassdoorHttp = httpFactory.CreateClient();
     var glassdoorClientLogger = loggerFactory.CreateLogger<GlassdoorJobClient>();
     var glassdoorApiLogger = loggerFactory.CreateLogger<Ghost.Platform.Glassdoor.Internal.GlassdoorApiClient>();
-    
+
     var glassdoorApi = new Ghost.Platform.Glassdoor.Internal.GlassdoorApiClient(
         glassdoorHttp
     );
-    
+
     // Note: GlassdoorJobClient requires browser client for full functionality
     // For this test, we'll use the API client directly
     var glassdoorClient = new GlassdoorJobClient(
@@ -125,7 +125,7 @@ try
     };
 
     var glassdoorJobs = await glassdoorClient.SearchJobsAsync(glassdoorCriteria, ct);
-    
+
     Console.WriteLine($"✓ Glassdoor: Found {glassdoorJobs.Count} jobs");
     foreach (var job in glassdoorJobs)
     {

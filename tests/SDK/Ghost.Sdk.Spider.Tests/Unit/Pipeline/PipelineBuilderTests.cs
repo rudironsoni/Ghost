@@ -116,7 +116,7 @@ public class PipelineBuilderTests
     public void Use_WithDelegate_ShouldCreateInlineMiddleware()
     {
         // Arrange
-        Func<PipelineContext, PipelineDelegate, Task> middlewareFunc = 
+        Func<PipelineContext, PipelineDelegate, Task> middlewareFunc =
             async (ctx, next) => await next(ctx);
 
         // Act
@@ -202,7 +202,7 @@ public class PipelineBuilderTests
         // Arrange
         var middleware1 = new Mock<IPipelineMiddleware>().Object;
         var middleware2 = new Mock<IPipelineMiddleware>().Object;
-        
+
         _builder.Use(middleware1, MiddlewareConfiguration.WithName("Enabled"));
         _builder.Use(middleware2, new MiddlewareConfiguration { Enabled = false, Name = "Disabled" });
 
@@ -234,13 +234,13 @@ public class PipelineBuilderTests
     {
         // Arrange & Act
         _builder.Count.Should().Be(0);
-        
+
         _builder.Use(new Mock<IPipelineMiddleware>().Object);
         _builder.Count.Should().Be(1);
-        
+
         _builder.Use(new Mock<IPipelineMiddleware>().Object);
         _builder.Count.Should().Be(2);
-        
+
         _builder.Clear();
         _builder.Count.Should().Be(0);
     }

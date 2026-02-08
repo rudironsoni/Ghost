@@ -38,7 +38,7 @@ public class MockAdapter : IContentAdapter
     public Task<Response> ExtractAsync(Request request, AdapterOptions options, CancellationToken cancellationToken = default)
     {
         ReceivedRequests.Add(request);
-        return ExtractFunc?.Invoke(request, options, cancellationToken) 
+        return ExtractFunc?.Invoke(request, options, cancellationToken)
             ?? Task.FromResult(CreateDefaultResponse(request));
     }
 
@@ -99,7 +99,7 @@ public static class MockAdapterFactory
             .ReturnsAsync((Request req, CancellationToken ct) => CreateResponse(req, responseContent, statusCode, name));
 
         mock.Setup(a => a.ExtractAsync(It.IsAny<Request>(), It.IsAny<AdapterOptions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Request req, AdapterOptions opts, CancellationToken ct) => 
+            .ReturnsAsync((Request req, AdapterOptions opts, CancellationToken ct) =>
                 CreateResponse(req, responseContent, statusCode, name));
 
         return mock;

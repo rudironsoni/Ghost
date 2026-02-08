@@ -33,7 +33,7 @@ provider "aws" {
 
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
-  
+
   common_tags = merge(
     {
       Environment  = var.environment

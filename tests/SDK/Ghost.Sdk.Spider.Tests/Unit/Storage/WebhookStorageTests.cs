@@ -311,7 +311,7 @@ public class WebhookStorageTests
         capturedRequest!.Method.Should().Be(HttpMethod.Post);
         capturedRequest.RequestUri.Should().Be(WebhookUrl);
         capturedRequest.Content.Should().NotBeNull();
-        
+
         var content = await capturedRequest.Content!.ReadAsStringAsync();
         content.Should().Contain("TestSpider");
         content.Should().Contain("https://example.com");

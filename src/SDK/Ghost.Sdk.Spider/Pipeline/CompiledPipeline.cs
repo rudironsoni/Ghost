@@ -26,7 +26,7 @@ namespace Ghost.Sdk.Spider.Pipeline;
 /// <example>
 /// <code>
 /// var pipeline = builder.Build();
-/// 
+///
 /// var context = new PipelineContext
 /// {
 ///     Request = request,
@@ -34,7 +34,7 @@ namespace Ghost.Sdk.Spider.Pipeline;
 ///     CancellationToken = cancellationToken,
 ///     StateBox = stateBox
 /// };
-/// 
+///
 /// await pipeline.ExecuteAsync(context);
 /// </code>
 /// </example>

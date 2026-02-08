@@ -30,75 +30,75 @@ runcmd:
   # ============================================================================
   # SYSTEM SETUP
   # ============================================================================
-  
+
   # Set hostname
   - hostnamectl set-hostname ${project}-${environment}-k3s
-  
+
   # Configure timezone
   - timedatectl set-timezone UTC
-  
+
   # ============================================================================
   # DOCKER SETUP
   # ============================================================================
-  
+
   # Start and enable Docker
   - systemctl enable docker
   - systemctl start docker
-  
+
   # Add ec2-user to docker group
   - usermod -aG docker ec2-user
-  
+
   # Install docker-compose
   - curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - chmod +x /usr/local/bin/docker-compose
-  
+
   # ============================================================================
   # K3S INSTALLATION
   # ============================================================================
-  
+
   # Install k3s (lightweight Kubernetes)
   - curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode 644
-  
+
   # Wait for k3s to be ready
   - until kubectl get nodes; do sleep 5; done
-  
+
   # Configure kubectl for ec2-user
   - mkdir -p /home/ec2-user/.kube
   - cp /etc/rancher/k3s/k3s.yaml /home/ec2-user/.kube/config
   - chown -R ec2-user:ec2-user /home/ec2-user/.kube
-  
+
   # ============================================================================
   # HELM INSTALLATION
   # ============================================================================
-  
+
   # Install Helm
   - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-  
+
   # ============================================================================
   # ENVIRONMENT VARIABLES SETUP
   # ============================================================================
-  
+
   # Create environment file with service connections
   - |
     cat > /etc/environment.d/ghost.conf <<EOF
     ENVIRONMENT=${environment}
     PROJECT=${project}
-    
+
     # Database
     DB_HOST=${db_host}
     DB_PORT=${db_port}
     DB_NAME=${db_name}
     DB_USER=${db_username}
-    
+
     # Redis
     REDIS_HOST=${redis_host}
     REDIS_PORT=${redis_port}
-    
+
     # RabbitMQ
     MQ_HOST=${mq_host}
     MQ_USER=${mq_username}
     EOF
-  
+
   # Create secrets file (restricted permissions)
   - |
     cat > /etc/ghost-secrets.env <<EOF
@@ -106,16 +106,16 @@ runcmd:
     MQ_PASSWORD=${mq_password}
     EOF
   - chmod 600 /etc/ghost-secrets.env
-  
+
   # ============================================================================
   # SELF-HOSTED RABBITMQ (if not using Amazon MQ)
   # ============================================================================
-  
+
   # Deploy RabbitMQ on k3s
   - |
     if [ "${mq_host}" = "localhost" ]; then
       kubectl create namespace rabbitmq
-      
+
       # Create RabbitMQ ConfigMap
       cat <<EOYAML | kubectl apply -f -
     apiVersion: v1
@@ -213,11 +213,11 @@ runcmd:
         app: rabbitmq
     EOYAML
     fi
-  
+
   # ============================================================================
   # CLOUDWATCH AGENT CONFIGURATION
   # ============================================================================
-  
+
   - |
     cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<EOF
     {
@@ -284,30 +284,30 @@ runcmd:
       }
     }
     EOF
-  
+
   # Start CloudWatch agent
   - /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
-  
+
   # ============================================================================
   # INSTALL KUBECTL PLUGINS
   # ============================================================================
-  
+
   # Install kubectx and kubens
   - git clone https://github.com/ahmetb/kubectx /opt/kubectx
   - ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
   - ln -s /opt/kubectx/kubens /usr/local/bin/kubens
-  
+
   # ============================================================================
   # SYSTEM TUNING
   # ============================================================================
-  
+
   # Increase file descriptor limits
   - |
     cat >> /etc/security/limits.conf <<EOF
     * soft nofile 65536
     * hard nofile 65536
     EOF
-  
+
   # Kernel parameter tuning for k3s
   - |
     cat >> /etc/sysctl.d/99-k3s.conf <<EOF
@@ -317,49 +317,49 @@ runcmd:
     vm.swappiness = 0
     EOF
   - sysctl -p /etc/sysctl.d/99-k3s.conf
-  
+
   # ============================================================================
   # MOTD (Message of the Day)
   # ============================================================================
-  
+
   - |
     cat > /etc/motd <<'EOF'
-    
+
     ╔═══════════════════════════════════════════════════════════════════╗
     ║                                                                   ║
     ║              👻 Ghost Platform - Development Environment          ║
     ║                                                                   ║
     ╚═══════════════════════════════════════════════════════════════════╝
-    
+
     Environment: ${environment}
     Node Type: k3s single-node cluster
-    
+
     Quick Commands:
     ---------------
     kubectl get nodes                    # Check cluster status
     kubectl get pods -A                  # View all pods
     kubectl get svc -A                   # View all services
     helm list -A                         # List Helm releases
-    
+
     Service Connections:
     -------------------
     Database:  ${db_host}:${db_port}
     Redis:     ${redis_host}:${redis_port}
     RabbitMQ:  ${mq_host}
-    
+
     Useful Paths:
     ------------
     Kubeconfig:     /etc/rancher/k3s/k3s.yaml
     Environment:    /etc/environment.d/ghost.conf
     Secrets:        /etc/ghost-secrets.env (restricted)
-    
+
     Documentation:
     -------------
     Infrastructure: /home/ec2-user/Ghost/infrastructure/docs
     Platform:       /home/ec2-user/Ghost/infrastructure/platform
-    
+
     ⚠️  This is a DEVELOPMENT environment - not for production use!
-    
+
     EOF
 
 write_files:
@@ -370,44 +370,44 @@ write_files:
       [Unit]
       Description=Ghost Platform Health Check
       After=network.target k3s.service
-      
+
       [Service]
       Type=oneshot
       ExecStart=/usr/local/bin/ghost-health-check.sh
-      
+
       [Install]
       WantedBy=multi-user.target
-  
+
   - path: /usr/local/bin/ghost-health-check.sh
     permissions: '0755'
     content: |
       #!/bin/bash
       # Simple health check script
-      
+
       echo "=== Ghost Platform Health Check ==="
       echo "Timestamp: $(date)"
-      
+
       # Check k3s
       if systemctl is-active --quiet k3s; then
         echo "✓ k3s is running"
       else
         echo "✗ k3s is NOT running"
       fi
-      
+
       # Check Docker
       if systemctl is-active --quiet docker; then
         echo "✓ Docker is running"
       else
         echo "✗ Docker is NOT running"
       fi
-      
+
       # Check database connectivity
       if pg_isready -h ${db_host} -p ${db_port} -U ${db_username} > /dev/null 2>&1; then
         echo "✓ Database is reachable"
       else
         echo "✗ Database is NOT reachable"
       fi
-      
+
       # Check disk usage
       DISK_USAGE=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//')
       if [ "$DISK_USAGE" -lt 80 ]; then
@@ -415,12 +415,12 @@ write_files:
       else
         echo "⚠ Disk usage is high ($DISK_USAGE%)"
       fi
-      
+
       echo "==================================="
 
 final_message: |
   Ghost Platform k3s node is ready!
-  
+
   Connect via: ssh ec2-user@$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
-  
+
   Check status: kubectl get nodes

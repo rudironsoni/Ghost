@@ -3,7 +3,7 @@
 
 terraform {
   required_version = ">= 1.5.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -52,23 +52,23 @@ module "eks" {
   eks_managed_node_groups = {
     main = {
       name = "${var.cluster_name}-main"
-      
+
       instance_types = var.instance_types
       capacity_type  = var.capacity_type
-      
+
       min_size     = var.min_size
       max_size     = var.max_size
       desired_size = var.desired_size
-      
+
       disk_size = var.disk_size
-      
+
       labels = {
         Environment = var.environment
         NodeGroup   = "main"
       }
-      
+
       tags = local.common_tags
-      
+
       # Taints for spot instances
       taints = var.capacity_type == "SPOT" ? [
         {

@@ -20,7 +20,7 @@ const BASE_URL = __ENV.BASE_URL || 'http://localhost:5000';
 
 export default function () {
   const platform = Math.random() > 0.5 ? 'linkedin' : 'indeed';
-  const queries = ['software-engineer', 'data-scientist', 'product-manager', 'devops', 'frontend-developer', 
+  const queries = ['software-engineer', 'data-scientist', 'product-manager', 'devops', 'frontend-developer',
                    'backend-developer', 'full-stack', 'machine-learning', 'ux-designer', 'mobile-developer'];
   const query = queries[Math.floor(Math.random() * queries.length)];
   const locations = ['remote', 'san-francisco', 'new-york', 'london', 'berlin', 'singapore', 'amsterdam', 'toronto'];

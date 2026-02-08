@@ -243,7 +243,7 @@ public class SpiderEngineTests
         // Arrange
         var options = new SpiderOptions { MaxConcurrency = 3 };
         var spider = new TestSpider();
-        
+
         var concurrentCount = 0;
         var maxConcurrentObserved = 0;
         var lockObject = new object();
@@ -298,7 +298,7 @@ public class SpiderEngineTests
             .ToList();
 
         // Act
-        var tasks = requests.Select(r => Task.Run(() => 
+        var tasks = requests.Select(r => Task.Run(() =>
         {
             // Simulate request processing
             return new Response(new ContentResult
@@ -361,7 +361,7 @@ public class SpiderEngineTests
         // Arrange
         var options = new SpiderOptions { MaxRequests = 10 };
         var spider = new ConfigurableTestSpider(options: options);
-        
+
         var result = new SpiderResult
         {
             SpiderName = "ConfigurableTestSpider",
@@ -387,7 +387,7 @@ public class SpiderEngineTests
         // Arrange
         var configurableSpider = new ConfigurableTestSpider();
         var exception = new Exception("Test error");
-        
+
         var result = SpiderResult.CreateFailure("ConfigurableTestSpider", "Test error", exception, DateTimeOffset.UtcNow);
 
         _mockEngine.Setup(e => e.StartAsync(configurableSpider, It.IsAny<CancellationToken>()))
@@ -472,7 +472,7 @@ public class SpiderEngineTests
     {
         // Arrange
         var context = new SpiderExecutionContext("TestSpider", new SpiderOptions());
-        
+
         _mockEngine.Setup(e => e.GetCurrentContext()).Returns(context);
 
         // Act
@@ -592,7 +592,7 @@ public class SpiderEngineTests
         var spider = new ConfigurableTestSpider(options: options);
 
         var startTime = DateTimeOffset.UtcNow;
-        
+
         // Simulate processing 3 requests with delay
         for (int i = 0; i < 3; i++)
         {

@@ -289,7 +289,7 @@ stages:
                         -l app=ghost \
                         -n $(namespace) \
                         --timeout=300s
-                      
+
                       kubectl run test-pod \
                         --image=curlimages/curl:latest \
                         --rm -i --restart=Never \
@@ -363,7 +363,7 @@ stages:
                         -l app=ghost \
                         -n $(namespace) \
                         --timeout=300s
-                      
+
                       $(Build.SourcesDirectory)/infrastructure/automation/scripts/test-deployment.sh staging
 
                 - task: PublishBuildArtifacts@1
@@ -380,7 +380,7 @@ stages:
   - stage: DeployProduction
     displayName: 'Deploy to Production'
     condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq('${{ parameters.environment }}', 'production')))
-    dependsOn: 
+    dependsOn:
       - BuildAndScan
       - DeployStaging
     jobs:
@@ -422,7 +422,7 @@ stages:
                     script: |
                       # Label current deployment as blue
                       kubectl label deployment ghost-production version=blue -n $(namespace) --overwrite || true
-                      
+
                       # Deploy green version
                       helm upgrade --install ghost-production-green \
                         $(helmChartPath) \
@@ -443,7 +443,7 @@ stages:
                         -l app=ghost,deployment=green \
                         -n $(namespace) \
                         --timeout=300s
-                      
+
                       $(Build.SourcesDirectory)/infrastructure/automation/scripts/test-deployment.sh production green
 
                 - task: Bash@3
@@ -454,7 +454,7 @@ stages:
                       kubectl patch service ghost-service \
                         -n $(namespace) \
                         -p '{"spec":{"selector":{"deployment":"green"}}}'
-                      
+
                       # Monitor for 60 seconds
                       sleep 60
 
@@ -499,7 +499,7 @@ stages:
                         "environment": "production"
                       }
                       EOF
-                      
+
                       az storage blob upload \
                         --account-name ghoststorage \
                         --container-name deployments \
@@ -525,7 +525,7 @@ stages:
                           -l app=ghost \
                           -n $(namespace) \
                           --timeout=300s
-                        
+
                         $(Build.SourcesDirectory)/infrastructure/automation/scripts/test-deployment.sh production
 
   # ================================

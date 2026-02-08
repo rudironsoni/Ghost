@@ -354,7 +354,7 @@ public class ExecutionContextTests
         // Arrange
         var optionsWithLimit = new SpiderOptions { MaxRequests = 5 };
         var context = new SpiderExecutionContext("TestSpider", optionsWithLimit);
-        
+
         for (int i = 0; i < 5; i++)
         {
             context.IncrementRequestsProcessed();
@@ -373,7 +373,7 @@ public class ExecutionContextTests
         // Arrange
         var optionsWithLimit = new SpiderOptions { MaxRequests = 5 };
         var context = new SpiderExecutionContext("TestSpider", optionsWithLimit);
-        
+
         for (int i = 0; i < 10; i++)
         {
             context.IncrementRequestsProcessed();
@@ -538,7 +538,7 @@ public class ExecutionContextTests
         context.RequestsSucceeded.Should().Be(45);
         context.RequestsFailed.Should().Be(5);
         context.ItemsExtracted.Should().BeGreaterThan(0);
-        
+
         var stats = context.GetStatistics();
         Convert.ToDouble(stats["SuccessRate"]).Should().BeGreaterThan(0.8);
     }

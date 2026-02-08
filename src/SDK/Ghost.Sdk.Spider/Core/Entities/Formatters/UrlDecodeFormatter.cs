@@ -15,7 +15,7 @@ namespace Ghost.Sdk.Spider.Core.Entities.Formatters;
 /// var formatter = new UrlDecodeFormatter();
 /// var decoded = formatter.Format("Hello%20World%21");
 /// // Returns: "Hello World!"
-/// 
+///
 /// var decoded2 = formatter.Format("search%3Fq%3Dc%23%20programming");
 /// // Returns: "search?q=c# programming"
 /// </code>

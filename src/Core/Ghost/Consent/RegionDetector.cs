@@ -135,7 +135,7 @@ public static class RegionDetector
             var hasCcpa = await page.EvaluateAsync<bool>(@"
                 () => {
                     const ccpaElements = document.querySelectorAll('[data-ccpa], [data-cmp-ccpa]');
-                    const ccpaLinks = Array.from(document.querySelectorAll('a')).some(a => 
+                    const ccpaLinks = Array.from(document.querySelectorAll('a')).some(a =>
                         a.textContent?.toLowerCase().includes('do not sell')
                     );
                     return ccpaElements.length > 0 || ccpaLinks;

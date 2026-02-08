@@ -67,7 +67,7 @@ grafana.ini:
   server:
     root_url: https://grafana.ghost.example.com
     serve_from_sub_path: false
-  
+
   database:
     type: postgres
     host: postgres.production.svc.cluster.local:5432
@@ -75,7 +75,7 @@ grafana.ini:
     user: grafana
     password: $__file{/etc/secrets/db-password}
     ssl_mode: require
-  
+
   security:
     admin_user: admin
     admin_password: $__file{/etc/secrets/admin-password}
@@ -84,19 +84,19 @@ grafana.ini:
     cookie_secure: true
     cookie_samesite: strict
     strict_transport_security: true
-  
+
   auth:
     disable_login_form: false
     oauth_auto_login: false
-  
+
   auth.anonymous:
     enabled: false
-  
+
   # LDAP/SSO integration
   # auth.ldap:
   #   enabled: true
   #   config_file: /etc/grafana/ldap.toml
-  
+
   # auth.generic_oauth:
   #   enabled: true
   #   name: OAuth
@@ -107,28 +107,28 @@ grafana.ini:
   #   auth_url: https://oauth.example.com/authorize
   #   token_url: https://oauth.example.com/token
   #   api_url: https://oauth.example.com/userinfo
-  
+
   users:
     allow_sign_up: false
     auto_assign_org: true
     auto_assign_org_role: Viewer
-  
+
   log:
     mode: console
     level: info
-  
+
   metrics:
     enabled: true
     basic_auth_username: prometheus
     basic_auth_password: $__file{/etc/secrets/metrics-password}
-  
+
   alerting:
     enabled: true
     execute_alerts: true
-  
+
   unified_alerting:
     enabled: true
-  
+
   feature_toggles:
     enable: publicDashboards
 
@@ -151,7 +151,7 @@ datasources:
         disableRecordingRules: false
         customQueryParameters: ""
       editable: false
-    
+
     - name: Loki
       type: loki
       access: proxy
@@ -164,7 +164,7 @@ datasources:
             name: TraceID
             url: "$${__value.raw}"
       editable: false
-    
+
     # - name: Tempo
     #   type: tempo
     #   access: proxy
@@ -177,7 +177,7 @@ datasources:
     #       filterBySpanID: true
     #       tags: ['job', 'instance', 'pod', 'namespace']
     #   editable: false
-    
+
     - name: PostgreSQL
       type: postgres
       access: proxy
@@ -206,7 +206,7 @@ dashboardProviders:
       allowUiUpdates: true
       options:
         path: /var/lib/grafana/dashboards/default
-    
+
     - name: 'infrastructure'
       orgId: 1
       folder: 'Infrastructure'
@@ -216,7 +216,7 @@ dashboardProviders:
       allowUiUpdates: true
       options:
         path: /var/lib/grafana/dashboards/infrastructure
-    
+
     - name: 'application'
       orgId: 1
       folder: 'Application'
@@ -280,7 +280,7 @@ sidecar:
     provider:
       allowUiUpdates: true
       foldersFromFilesStructure: true
-  
+
   datasources:
     enabled: true
     label: grafana_datasource

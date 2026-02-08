@@ -5,7 +5,7 @@
 operator:
   # Replicas for HA
   replicas: 2
-  
+
   # Resource limits
   resources:
     requests:
@@ -14,7 +14,7 @@ operator:
     limits:
       cpu: 500m
       memory: 512Mi
-  
+
   # Metrics
   metricsPort: 8080
 
@@ -25,14 +25,14 @@ trivy:
     repository: ghcr.io/aquasecurity/trivy
     tag: "0.48.0"
     pullPolicy: IfNotPresent
-  
+
   # Trivy server mode for caching
   serverEnabled: true
-  
+
   # Storage for vulnerability database
   storageSize: 5Gi
   storageClassName: gp3
-  
+
   # Resource limits for scan jobs
   resources:
     requests:
@@ -41,22 +41,22 @@ trivy:
     limits:
       cpu: 1000m
       memory: 2Gi
-  
+
   # Severity levels to report
   severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
-  
+
   # Vulnerability database
   dbRepository: ghcr.io/aquasecurity/trivy-db
-  
+
   # Java DB for JAR/WAR scanning
   javaDbRepository: ghcr.io/aquasecurity/trivy-java-db
-  
+
   # Timeout for scans
   timeout: 5m0s
-  
+
   # Ignore unfixed vulnerabilities
   ignoreUnfixed: false
-  
+
   # Offline scan mode (use cached DB)
   offlineScan: false
 
@@ -64,57 +64,57 @@ trivy:
 vulnerabilityReports:
   # Enable vulnerability scanning
   enabled: true
-  
+
   # Scan on schedule
   scanJobsInSameNamespace: true
-  
+
   # Scan job timeout
   scanJobTimeout: 5m
-  
+
   # Delete scan jobs after completion
   deleteAfterCompletion: true
-  
+
   # TTL for completed scan jobs
   ttlSecondsAfterFinished: 3600
-  
+
   # Concurrent scan limit
   scanJobsConcurrentLimit: 3
 
 # Configuration Audit (k8s misconfigurations)
 configAuditReports:
   enabled: true
-  
+
   # Scan on schedule
   schedule: "0 */6 * * *"  # Every 6 hours
-  
+
   # Scan workloads
   scanWorkloads: true
 
 # Exposed Secret Scanning
 exposedSecretReports:
   enabled: true
-  
+
   # Scan for exposed secrets in images
   scanWorkloads: true
 
 # RBAC Assessment
 rbacAssessmentReports:
   enabled: true
-  
+
   # Scan RBAC resources
   schedule: "0 0 * * *"  # Daily
 
 # Infrastructure Assessment (Node scanning)
 infraAssessmentReports:
   enabled: true
-  
+
   # Scan nodes for compliance
   schedule: "0 2 * * 0"  # Weekly on Sunday at 2 AM
 
 # Compliance Reports
 complianceReports:
   enabled: true
-  
+
   # Compliance standards
   standards:
     - nsa
@@ -125,7 +125,7 @@ complianceReports:
 # Cluster Compliance
 clusterComplianceReports:
   enabled: true
-  
+
   # Schedule for compliance scans
   schedule: "0 3 * * 0"  # Weekly on Sunday at 3 AM
 
@@ -133,14 +133,14 @@ clusterComplianceReports:
 targets:
   # Target namespaces
   namespaces: "ghost-production,ghost-staging"
-  
+
   # Exclude namespaces
   excludeNamespaces: "kube-system,kube-public,kube-node-lease"
 
 # Metrics and Monitoring
 metrics:
   enabled: true
-  
+
   # Service monitor for Prometheus
   serviceMonitor:
     enabled: true
@@ -151,7 +151,7 @@ metrics:
 # Webhooks for notifications
 webhooks:
   enabled: true
-  
+
   # Webhook endpoints
   endpoints:
     # Slack notifications
@@ -163,7 +163,7 @@ webhooks:
       severities:
         - CRITICAL
         - HIGH
-    
+
     # Custom webhook for security team
     - name: security-dashboard
       url: "https://security.ghost.internal/webhook/trivy"
@@ -180,10 +180,10 @@ webhooks:
 policy:
   # Block deployments with critical vulnerabilities
   enforcementEnabled: false  # Start with false, enable after testing
-  
+
   # Severity threshold for blocking
   severityThreshold: CRITICAL
-  
+
   # Maximum allowed vulnerabilities by severity
   maxAllowedBySeverity:
     CRITICAL: 0
@@ -194,7 +194,7 @@ policy:
 imageScanning:
   # Automatic scanning on image push
   enabled: true
-  
+
   # Scan private registries
   privateRegistries:
     - name: ecr
@@ -204,7 +204,7 @@ imageScanning:
       passwordSecret:
         name: ecr-credentials
         key: password
-    
+
     - name: ghcr
       url: "ghcr.io"
       username: ghost
@@ -215,7 +215,7 @@ imageScanning:
 # Node agent for runtime scanning
 nodeAgent:
   enabled: true
-  
+
   # Resource limits
   resources:
     requests:
@@ -259,7 +259,7 @@ exceptions:
     - id: CVE-2023-12345
       reason: "False positive - not exploitable in our configuration"
       expiry: "2026-12-31"
-    
+
     - id: CVE-2023-67890
       reason: "Vendor patch not available, mitigation in place"
       expiry: "2026-06-30"
@@ -269,11 +269,11 @@ reporting:
   # Generate HTML reports
   html:
     enabled: true
-    
+
   # Generate JSON reports
   json:
     enabled: true
-  
+
   # Store reports in S3
   storage:
     s3:
@@ -311,19 +311,19 @@ data:
     UNKNOWN:
       - Allow deployment
       - Review manually
-  
+
   # Scan policy
   scan-policy.yaml: |
     # Scan all workloads in production namespace
     production:
       schedule: "0 */6 * * *"  # Every 6 hours
       severity: CRITICAL,HIGH,MEDIUM
-      
+
     # Scan staging less frequently
     staging:
       schedule: "0 0 * * *"  # Daily
       severity: CRITICAL,HIGH
-    
+
     # Scan development on-demand
     development:
       schedule: manual

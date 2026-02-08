@@ -1,6 +1,6 @@
 <Project>
   <!-- Ghost Monorepo - Global Build Properties -->
-  
+
   <PropertyGroup>
     <!-- Lockstep versioning - all packages share same version -->
     <GhostVersion>1.0.0</GhostVersion>

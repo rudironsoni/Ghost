@@ -219,13 +219,13 @@ public class WebSocketAdapterMockTests
 
         // Act & Assert
         buffer.Count.Should().Be(0);
-        
+
         buffer.Add(WebSocketMessage.CreateText("msg1"));
         buffer.Count.Should().Be(1);
-        
+
         buffer.Add(WebSocketMessage.CreateText("msg2"));
         buffer.Count.Should().Be(2);
-        
+
         buffer.Clear();
         buffer.Count.Should().Be(0);
     }
@@ -338,10 +338,10 @@ public class WebSocketAdapterMockTests
 
         // Act & Assert
         buffer.IsEmpty.Should().BeTrue();
-        
+
         buffer.Add(WebSocketMessage.CreateText("msg"));
         buffer.IsEmpty.Should().BeFalse();
-        
+
         buffer.Clear();
         buffer.IsEmpty.Should().BeTrue();
     }

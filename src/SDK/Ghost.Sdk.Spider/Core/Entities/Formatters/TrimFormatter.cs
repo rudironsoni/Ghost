@@ -11,7 +11,7 @@ namespace Ghost.Sdk.Spider.Core.Entities.Formatters;
 /// <code>
 /// var formatter = new TrimFormatter();
 /// var result = formatter.Format("  hello  "); // Returns "hello"
-/// 
+///
 /// var customFormatter = new TrimFormatter { TrimChars = ",.;", TrimStart = true };
 /// var result2 = customFormatter.Format(",,,hello..."); // Returns "hello..."
 /// </code>

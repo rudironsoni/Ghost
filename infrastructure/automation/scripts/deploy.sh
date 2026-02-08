@@ -68,7 +68,7 @@ OPTIONS:
 EXAMPLES:
     $0 -e production -v v1.2.3 -s bluegreen
     $0 --environment staging --version latest --dry-run
-    
+
 ENVIRONMENT VARIABLES:
     KUBECONFIG              Path to kubeconfig file
     DEPLOYMENT_TIMEOUT      Deployment timeout in seconds (default: 900)
@@ -202,10 +202,10 @@ backup_deployment() {
     if helm list -n "$NAMESPACE" | grep -q "ghost"; then
         helm get values ghost -n "$NAMESPACE" -o yaml > "${backup_dir}/values.yaml"
         helm get manifest ghost -n "$NAMESPACE" > "${backup_dir}/manifests.yaml"
-        
+
         # Store current image version
         kubectl get deployment -n "$NAMESPACE" -l app=ghost -o jsonpath='{.items[0].spec.template.spec.containers[0].image}' > "${backup_dir}/current-image.txt"
-        
+
         log_success "Backup created at: $backup_dir"
         echo "$backup_dir" > /tmp/ghost-last-backup
     else
@@ -218,11 +218,11 @@ backup_database() {
     log_info "Creating database backup..."
 
     local backup_name="ghost-db-backup-$(date +%Y%m%d-%H%M%S)"
-    
+
     # Get MySQL credentials from secret
     local mysql_password=$(kubectl get secret ghost-mysql-secret -n "$NAMESPACE" -o jsonpath='{.data.mysql-password}' | base64 -d)
     local mysql_host=$(kubectl get service ghost-mysql -n "$NAMESPACE" -o jsonpath='{.spec.clusterIP}')
-    
+
     # Create backup pod
     kubectl run mysql-backup \
         --image=mysql:8.0 \
@@ -230,7 +230,7 @@ backup_database() {
         -n "$NAMESPACE" \
         --env="MYSQL_PWD=${mysql_password}" \
         -- mysqldump -h "${mysql_host}" -u ghost ghost_production > "/tmp/${backup_name}.sql" 2>> "$LOG_FILE" || true
-    
+
     # Upload to S3 or backup storage
     if command -v aws &> /dev/null; then
         aws s3 cp "/tmp/${backup_name}.sql" "s3://ghost-backups/${ENVIRONMENT}/database/${backup_name}.sql"
@@ -238,7 +238,7 @@ backup_database() {
     else
         log_warning "AWS CLI not found, database backup saved locally only"
     fi
-    
+
     rm -f "/tmp/${backup_name}.sql"
 }
 
@@ -288,25 +288,25 @@ deploy_bluegreen() {
         # Health check on new deployment
         if health_check "$new_color"; then
             log_info "Switching traffic to $new_color deployment..."
-            
+
             # Update service selector
             kubectl patch service ghost-service -n "$NAMESPACE" \
                 -p "{\"spec\":{\"selector\":{\"version\":\"${new_color}\"}}}"
-            
+
             # Mark new deployment as active
             kubectl label deployment "ghost-${new_color}" -n "$NAMESPACE" active=true --overwrite
             kubectl label deployment "ghost-${current_color}" -n "$NAMESPACE" active=false --overwrite 2>/dev/null || true
-            
+
             log_success "Traffic switched to $new_color deployment"
-            
+
             # Wait before cleanup
             log_info "Waiting 60 seconds before cleaning up old deployment..."
             sleep 60
-            
+
             # Cleanup old deployment
             helm delete "ghost-${current_color}" -n "$NAMESPACE" 2>/dev/null || true
             kubectl delete deployment "ghost-${current_color}" -n "$NAMESPACE" --ignore-not-found=true
-            
+
             log_success "Old $current_color deployment cleaned up"
         else
             log_error "Health check failed for $new_color deployment"
@@ -320,7 +320,7 @@ deploy_canary() {
     log_info "Executing canary deployment..."
 
     local canary_weight="${CANARY_WEIGHT:-10}"
-    
+
     # Deploy canary
     helm upgrade --install ghost-canary \
         "${PROJECT_ROOT}/infrastructure/automation/templates/helm-chart" \
@@ -340,11 +340,11 @@ deploy_canary() {
         # Monitor canary
         log_info "Monitoring canary deployment for 5 minutes..."
         sleep 300
-        
+
         if health_check "canary"; then
             log_info "Canary healthy, proceeding with full rollout..."
             deploy_rolling
-            
+
             # Cleanup canary
             helm delete ghost-canary -n "$NAMESPACE"
             log_success "Canary deployment successful and cleaned up"
@@ -371,7 +371,7 @@ health_check() {
 
         if [[ $ready_pods -eq $total_pods ]] && [[ $total_pods -gt 0 ]]; then
             log_info "All pods ready ($ready_pods/$total_pods)"
-            
+
             # HTTP health check
             local service_ip=$(kubectl get service ghost-service -n "$NAMESPACE" -o jsonpath='{.spec.clusterIP}')
             if kubectl run health-check --image=curlimages/curl:latest --rm -i --restart=Never -n "$NAMESPACE" \
@@ -399,10 +399,10 @@ rollback_deployment() {
 
     if [[ -f /tmp/ghost-last-backup ]]; then
         local backup_dir=$(cat /tmp/ghost-last-backup)
-        
+
         if [[ -f "${backup_dir}/values.yaml" ]]; then
             log_info "Restoring from backup: $backup_dir"
-            
+
             helm upgrade --install ghost \
                 "${PROJECT_ROOT}/infrastructure/automation/templates/helm-chart" \
                 --namespace "$NAMESPACE" \
@@ -410,7 +410,7 @@ rollback_deployment() {
                 --wait \
                 --timeout 600s \
                 --force
-            
+
             log_success "Rollback completed successfully"
         else
             log_error "Backup files not found"
@@ -430,7 +430,7 @@ send_notification() {
     if [[ -n "${SLACK_WEBHOOK_URL:-}" ]]; then
         local color=$([[ "$status" == "success" ]] && echo "good" || echo "danger")
         local emoji=$([[ "$status" == "success" ]] && echo ":rocket:" || echo ":x:")
-        
+
         curl -X POST "$SLACK_WEBHOOK_URL" \
             -H 'Content-Type: application/json' \
             -d "{
@@ -486,23 +486,23 @@ main() {
     # Post-deployment verification
     if [[ "$DRY_RUN" == "false" ]]; then
         log_info "Running post-deployment verification..."
-        
+
         if health_check; then
             log_success "=========================================="
             log_success "Deployment completed successfully!"
             log_success "Environment: $ENVIRONMENT"
             log_success "Version: $VERSION"
             log_success "=========================================="
-            
+
             send_notification "success" "Deployment completed successfully"
             exit 0
         else
             log_error "Post-deployment verification failed"
-            
+
             if [[ "${ROLLBACK_ON_FAILURE:-true}" == "true" ]]; then
                 rollback_deployment
             fi
-            
+
             send_notification "failure" "Deployment failed and was rolled back"
             exit 1
         fi

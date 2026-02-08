@@ -85,7 +85,7 @@ public class GlassdoorJobParserTests
 
         var list = GlassdoorJobParser.ParseSearchResponse(json);
         list.Should().HaveCount(2);
-        
+
          var firstJob = list[0];
          firstJob.Title.Should().Be("Software Engineer");
          firstJob.Company.Should().Be("Tech Corp");

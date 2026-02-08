@@ -97,7 +97,7 @@ public class DistributedLockTests
         // Act & Assert
         await lockObj.WaitAsync();
         var secondAcquire = await lockObj.WaitAsync(TimeSpan.FromMilliseconds(100));
-        
+
         secondAcquire.Should().BeFalse(); // Cannot acquire same lock twice
 
         // Cleanup
@@ -133,7 +133,7 @@ public class DistributedLockTests
 
         // Act & Assert
         var act = () => lockObj.Release();
-        
+
         act.Should().Throw<SemaphoreFullException>();
     }
 
@@ -162,7 +162,7 @@ public class DistributedLockTests
         });
 
         await otherTaskStarted.Task;
-        
+
         var secondTask = Task.Run(async () =>
         {
             var acquired = await lockObj.WaitAsync(TimeSpan.FromMilliseconds(100));

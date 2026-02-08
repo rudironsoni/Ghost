@@ -19,12 +19,12 @@ runtime:
 
 docs: |-
   ## Get Social Profile
-  
+
   Get LinkedIn social profile by ID.
-  
+
   ### Path Parameters
   - `profileId` - Profile ID (e.g., "john-doe")
-  
+
   ### Response Example (200 OK)
   ```json
   {

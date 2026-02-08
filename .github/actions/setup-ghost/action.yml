@@ -59,7 +59,7 @@ runs:
         echo "- **OS:** $(uname -s)" >> $GITHUB_STEP_SUMMARY
         echo "- **.NET Version:** $(dotnet --version)" >> $GITHUB_STEP_SUMMARY
         echo "- **NuGet Cache Hit:** ${{ steps.cache-nuget.outputs.cache-hit }}" >> $GITHUB_STEP_SUMMARY
-        
+
         if [ "${{ inputs.install-playwright }}" == "true" ]; then
           echo "- **Playwright:** Installed (${{ inputs.playwright-browsers }})" >> $GITHUB_STEP_SUMMARY
         fi

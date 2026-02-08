@@ -152,8 +152,8 @@ public class XSocialClientTests
             _composerMock.Object,
             null);
 
-        var request = new CreatePostRequest 
-        { 
+        var request = new CreatePostRequest
+        {
             Content = "Test content",
             MediaUrls = new[] { "/path/to/image.jpg" }
         };

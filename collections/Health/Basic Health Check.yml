@@ -19,9 +19,9 @@ runtime:
 
 docs: |-
   ## Basic Health Check
-  
+
   Returns the health status of the application.
-  
+
   ### Response Example (200 OK)
   ```json
   {

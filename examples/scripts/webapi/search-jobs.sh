@@ -9,12 +9,12 @@ API_URL="http://localhost:5000"
 call_api() {
     local endpoint="$1"
     local data="$2"
-    
+
     echo "=== Calling: $endpoint ==="
     echo "Request:"
     echo "$data" | jq .
     echo ""
-    
+
     echo "Response:"
     curl -s -X POST "$API_URL$endpoint" \
         -H "Content-Type: application/json" \

@@ -21,11 +21,11 @@ spec:
   sessionAffinityConfig:
     clientIP:
       timeoutSeconds: 10800 # 3 hours
-  
+
   selector:
     app.kubernetes.io/name: ghost-webapi
     app.kubernetes.io/component: api
-  
+
   ports:
   - name: http
     protocol: TCP
@@ -35,7 +35,7 @@ spec:
     protocol: TCP
     port: 9090
     targetPort: metrics
-  
+
   # IP Family Policy (for dual-stack support)
   ipFamilyPolicy: PreferDualStack
   ipFamilies:
@@ -58,11 +58,11 @@ metadata:
 spec:
   type: ClusterIP
   clusterIP: None # Headless service
-  
+
   selector:
     app.kubernetes.io/name: ghost-webapi
     app.kubernetes.io/component: api
-  
+
   ports:
   - name: http
     protocol: TCP
@@ -72,7 +72,7 @@ spec:
     protocol: TCP
     port: 9090
     targetPort: metrics
-  
+
   publishNotReadyAddresses: true # Include not-ready pods in DNS
 ---
 # Optional: LoadBalancer service for direct external access (cloud environments)
@@ -101,11 +101,11 @@ spec:
 #   sessionAffinityConfig:
 #     clientIP:
 #       timeoutSeconds: 10800
-#   
+#
 #   selector:
 #     app.kubernetes.io/name: ghost-webapi
 #     app.kubernetes.io/component: api
-#   
+#
 #   ports:
 #   - name: https
 #     protocol: TCP
@@ -132,11 +132,11 @@ spec:
 #     description: "Ghost WebAPI NodePort service for testing"
 # spec:
 #   type: NodePort
-#   
+#
 #   selector:
 #     app.kubernetes.io/name: ghost-webapi
 #     app.kubernetes.io/component: api
-#   
+#
 #   ports:
 #   - name: http
 #     protocol: TCP

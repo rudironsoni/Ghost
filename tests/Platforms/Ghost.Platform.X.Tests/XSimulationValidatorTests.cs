@@ -184,7 +184,7 @@ public class XSimulationValidatorTests
         try
         {
             File.WriteAllText(tempFile, "test");
-            
+
             var request = new CreatePostRequest
             {
                 Content = "Test content",
@@ -250,7 +250,7 @@ public class XSimulationValidatorTests
         try
         {
             File.WriteAllText(tempFile, "test image content");
-            
+
             var request = new CreatePostRequest
             {
                 Content = "Test content",
@@ -378,7 +378,7 @@ public class XSimulationValidatorTests
     public async Task GeneratePreviewAsync_ThreadContent_ReturnsMultiTweetPreview()
     {
         // Arrange
-        var content = string.Join(" ", Enumerable.Range(1, 10).Select(i => 
+        var content = string.Join(" ", Enumerable.Range(1, 10).Select(i =>
             $"This is a very long sentence number {i} that will create a thread."));
         var request = new CreatePostRequest { Content = content };
 
@@ -441,7 +441,7 @@ public class XSimulationValidatorTests
     public async Task SimulatePostAsync_LongContent_IncludesThreadWarning()
     {
         // Arrange
-        var content = string.Join(" ", Enumerable.Range(1, 10).Select(i => 
+        var content = string.Join(" ", Enumerable.Range(1, 10).Select(i =>
             $"This is sentence {i} that makes a thread with many parts."));
         var request = new CreatePostRequest { Content = content };
 

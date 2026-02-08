@@ -185,7 +185,7 @@ ghostConfig:
     level: "info"
     transports:
       - "stdout"
-  
+
 ## Environment variables from secrets
 envFrom:
   - secretRef:
@@ -217,13 +217,13 @@ mysql:
     username: "ghost"
     password: ""  # Set via secret
     existingSecret: "ghost-mysql-secret"
-  
+
   primary:
     persistence:
       enabled: true
       size: 100Gi
       storageClass: "gp3-encrypted"
-    
+
     resources:
       limits:
         cpu: 2000m
@@ -231,7 +231,7 @@ mysql:
       requests:
         cpu: 1000m
         memory: 2Gi
-    
+
     configuration: |-
       [mysqld]
       max_connections=500
@@ -242,7 +242,7 @@ mysql:
       slow_query_log=1
       slow_query_log_file=/var/log/mysql/slow.log
       long_query_time=2
-  
+
   metrics:
     enabled: true
     serviceMonitor:
@@ -252,18 +252,18 @@ mysql:
 redis:
   enabled: true
   architecture: standalone
-  
+
   auth:
     enabled: true
     existingSecret: "ghost-redis-secret"
     existingSecretPasswordKey: "redis-password"
-  
+
   master:
     persistence:
       enabled: true
       size: 20Gi
       storageClass: "gp3"
-    
+
     resources:
       limits:
         cpu: 1000m
@@ -271,7 +271,7 @@ redis:
       requests:
         cpu: 500m
         memory: 1Gi
-  
+
   metrics:
     enabled: true
     serviceMonitor:
@@ -287,14 +287,14 @@ configMap:
 ## Monitoring configuration
 monitoring:
   enabled: true
-  
+
   serviceMonitor:
     enabled: true
     interval: 30s
     scrapeTimeout: 10s
     labels:
       release: prometheus
-  
+
   prometheusRule:
     enabled: true
     labels:
@@ -308,7 +308,7 @@ monitoring:
         annotations:
           summary: "Ghost instance is down"
           description: "Ghost instance {{ $labels.instance }} has been down for more than 5 minutes"
-      
+
       - alert: GhostHighMemory
         expr: container_memory_usage_bytes{pod=~"ghost-.*"} / container_spec_memory_limit_bytes{pod=~"ghost-.*"} > 0.9
         for: 5m
@@ -317,7 +317,7 @@ monitoring:
         annotations:
           summary: "Ghost high memory usage"
           description: "Ghost pod {{ $labels.pod }} is using more than 90% of its memory limit"
-      
+
       - alert: GhostHighCPU
         expr: rate(container_cpu_usage_seconds_total{pod=~"ghost-.*"}[5m]) > 0.8
         for: 5m
@@ -333,7 +333,7 @@ networkPolicy:
   policyTypes:
     - Ingress
     - Egress
-  
+
   ingress:
     - from:
         - namespaceSelector:
@@ -342,7 +342,7 @@ networkPolicy:
       ports:
         - protocol: TCP
           port: 2368
-  
+
   egress:
     - to:
         - podSelector:

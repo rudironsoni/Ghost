@@ -19,33 +19,33 @@ runtime:
         test("Status code is 200", function() {
           expect(res.status).to.equal(200);
         });
-        
+
         test("Response is text/plain", function() {
           expect(res.headers["content-type"]).to.include("text/plain");
         });
 
 docs: |-
   ## Get Metrics (Prometheus)
-  
+
   Returns metrics in Prometheus exposition format.
-  
+
   ### Response Example (200 OK)
   ```
   # HELP ghost_scrape_attempts Total number of scrape attempts
   # TYPE ghost_scrape_attempts counter
   ghost_scrape_attempts{platform="LinkedIn"} 125
   ghost_scrape_attempts{platform="Indeed"} 89
-  
+
   # HELP ghost_scrape_successes Total number of successful scrapes
   # TYPE ghost_scrape_successes counter
   ghost_scrape_successes{platform="LinkedIn"} 120
   ghost_scrape_successes{platform="Indeed"} 85
-  
+
   # HELP ghost_scrape_failures Total number of failed scrapes
   # TYPE ghost_scrape_failures counter
   ghost_scrape_failures{platform="LinkedIn"} 5
   ghost_scrape_failures{platform="Indeed"} 4
-  
+
   # HELP ghost_circuit_breaker_state Circuit breaker state (0=Closed, 1=HalfOpen, 2=Open)
   # TYPE ghost_circuit_breaker_state gauge
   ghost_circuit_breaker_state{platform="LinkedIn"} 0

@@ -45,7 +45,7 @@ public class GraphQLAdapterTests
         // Arrange
         const string query = "{ user(id: 1) { id name email } }";
         var graphQLRequest = new GraphQLRequest(query);
-        
+
         var mockResponse = new
         {
             data = new
@@ -96,7 +96,7 @@ public class GraphQLAdapterTests
         // Arrange
         const string mutation = "mutation { createUser(name: \"Jane\", email: \"jane@example.com\") { id name } }";
         var graphQLRequest = new GraphQLRequest(mutation);
-        
+
         var mockResponse = new
         {
             data = new
@@ -151,7 +151,7 @@ public class GraphQLAdapterTests
             { "userId", 42 }
         };
         var graphQLRequest = new GraphQLRequest(query, variables);
-        
+
         var mockResponse = new
         {
             data = new
@@ -202,7 +202,7 @@ public class GraphQLAdapterTests
             { "input", new { title = "New Post", content = "Content here", tags = new[] { "tag1", "tag2" } } }
         };
         var graphQLRequest = new GraphQLRequest(query, variables);
-        
+
         var mockResponse = new
         {
             data = new
@@ -256,7 +256,7 @@ public class GraphQLAdapterTests
                 }
             }";
         var graphQLRequest = new GraphQLRequest(introspectionQuery);
-        
+
         var mockResponse = new
         {
             data = new
@@ -319,7 +319,7 @@ public class GraphQLAdapterTests
                 }
             }";
         var graphQLRequest = new GraphQLRequest(query);
-        
+
         var mockResponse = new
         {
             data = new
@@ -394,7 +394,7 @@ public class GraphQLAdapterTests
             { "after", "cursor123" }
         };
         var graphQLRequest = new GraphQLRequest(query, variables);
-        
+
         var mockResponse = new
         {
             data = new
@@ -465,7 +465,7 @@ public class GraphQLAdapterTests
             { "limit", 10 }
         };
         var graphQLRequest = new GraphQLRequest(query, variables);
-        
+
         var mockResponse = new
         {
             data = new
@@ -516,7 +516,7 @@ public class GraphQLAdapterTests
         // Arrange
         const string query = "{ user(id: 999) { id name } }";
         var graphQLRequest = new GraphQLRequest(query);
-        
+
         var mockResponse = new
         {
             data = (object?)null,
@@ -567,7 +567,7 @@ public class GraphQLAdapterTests
         // Arrange
         const string query = "{ user(id: 1) { id name posts { id title } } }";
         var graphQLRequest = new GraphQLRequest(query);
-        
+
         var mockResponse = new
         {
             data = new
@@ -746,7 +746,7 @@ public class GraphQLAdapterTests
         // Arrange
         const string query = "{ user(id: 1) { id } }";
         var graphQLRequest = new GraphQLRequest(query);
-        
+
         var mockResponse = new
         {
             data = new { user = new { id = 1 } },

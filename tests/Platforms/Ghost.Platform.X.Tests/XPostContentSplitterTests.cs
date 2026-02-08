@@ -122,7 +122,7 @@ public class XPostContentSplitterTests
             {
                 var lastChar = trimmed[^1];
                 // Part should end with punctuation, a complete word, or be continued with "..."
-                var endsProperly = char.IsPunctuation(lastChar) || 
+                var endsProperly = char.IsPunctuation(lastChar) ||
                                    lastChar == ')' || // Thread numbering
                                    part.EndsWith("...", StringComparison.Ordinal) || // Truncated
                                    result.Count == 1; // Single part

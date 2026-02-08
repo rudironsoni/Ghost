@@ -39,7 +39,7 @@ public class StoragePipelineTests
         var storage1 = new MockStorage();
         var storage2 = new MockStorage();
         var storage3 = new MockStorage();
-        
+
         var pipeline = new StoragePipeline();
         pipeline.AddStorage(storage1);
         pipeline.AddStorage(storage2);
@@ -65,7 +65,7 @@ public class StoragePipelineTests
         var successStorage1 = new MockStorage();
         var failingStorage = new MockStorage { ShouldFail = true };
         var successStorage2 = new MockStorage();
-        
+
         var pipeline = new StoragePipeline { ContinueOnError = true };
         pipeline.AddStorage(successStorage1);
         pipeline.AddStorage(failingStorage);
@@ -94,13 +94,13 @@ public class StoragePipelineTests
             // Transform by adding a timestamp field
             dynamic transformed = new System.Dynamic.ExpandoObject();
             var dict = (IDictionary<string, object>)transformed;
-            
+
             foreach (var prop in item.GetType().GetProperties())
             {
                 dict[prop.Name] = prop.GetValue(item)!;
             }
             dict["TransformedAt"] = DateTime.UtcNow;
-            
+
             return Task.FromResult<object>(transformed);
         });
         pipeline.AddStorage(mockStorage);
@@ -168,7 +168,7 @@ public class StoragePipelineTests
         // Arrange
         var mockStorage = new MockStorage();
         var pipeline = new StoragePipeline();
-        
+
         // Filter: only store items with Value > 50
         pipeline.AddFilter((item, ctx) =>
         {
@@ -241,7 +241,7 @@ public class StoragePipelineTests
         // Arrange
         var mockStorage = new MockStorage();
         var pipeline = new StoragePipeline();
-        
+
         pipeline.AddValidator((item, ctx) =>
         {
             dynamic? dynamicItem = item;

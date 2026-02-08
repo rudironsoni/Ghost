@@ -21,7 +21,7 @@ url_encode() {
     local string="$1"
     local encoded=""
     local pos c o
-    
+
     for (( pos=0; pos<${#string}; pos++ )); do
         c=${string:$pos:1}
         case "$c" in
@@ -89,10 +89,10 @@ for JOB_ID in $UNIQUE_JOB_IDS; do
     if [ $INDEX -gt 5 ]; then
         break
     fi
-    
+
     echo "  Scraping job $INDEX/5 (ID: $JOB_ID)..."
     JOB_URL="https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${JOB_ID}"
-    
+
     curl -s -L \
         -H "User-Agent: $USER_AGENT" \
         -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8" \
@@ -102,25 +102,25 @@ for JOB_ID in $UNIQUE_JOB_IDS; do
         --max-time 30 \
         -o "linkedin-job-detail-${INDEX}.html" \
         "$JOB_URL"
-    
+
     if [ -f "linkedin-job-detail-${INDEX}.html" ]; then
         FILE_SIZE=$(stat -c%s "linkedin-job-detail-${INDEX}.html" 2>/dev/null || stat -f%z "linkedin-job-detail-${INDEX}.html" 2>/dev/null || echo "0")
         echo "    Saved: linkedin-job-detail-${INDEX}.html (${FILE_SIZE} bytes)"
-        
+
         # Extract basic info
         TITLE=$(grep -oP '<h1[^>]*class="[^"]*top-card-layout__title[^"]*"[^>]*>\K[^<]+' "linkedin-job-detail-${INDEX}.html" | head -1 | tr -d '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' || echo "N/A")
         if [ "$TITLE" = "N/A" ]; then
             TITLE=$(grep -oP '<h1[^>]*>\K[^<]+' "linkedin-job-detail-${INDEX}.html" | head -1 | tr -d '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' || echo "N/A")
         fi
-        
+
         echo "    Title: $TITLE"
     else
         echo "    ERROR: Failed to save job details"
     fi
-    
+
     # Be nice to LinkedIn
     sleep 2
-    
+
     INDEX=$((INDEX + 1))
 done
 

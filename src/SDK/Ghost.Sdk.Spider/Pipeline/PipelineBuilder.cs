@@ -224,7 +224,7 @@ public sealed class PipelineBuilder
     /// <example>
     /// <code>
     /// var pipeline = builder.Build();
-    /// 
+    ///
     /// // The builder can be reused
     /// builder.Use(new AdditionalMiddleware());
     /// var pipeline2 = builder.Build();

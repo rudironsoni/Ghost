@@ -298,7 +298,7 @@ public class ProxyRotationMiddlewareTests
             RequestId = 4,
             CancellationToken = CancellationToken.None
         };
-        
+
         await middleware.InvokeAsync(finalContext, async (ctx) =>
         {
             await Task.CompletedTask;

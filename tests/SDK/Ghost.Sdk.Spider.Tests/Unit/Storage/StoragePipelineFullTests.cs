@@ -52,27 +52,27 @@ public class StoragePipelineFullTests
         // Arrange
         var mockStorage = new MockStorage();
         var pipeline = new StoragePipeline();
-        
+
         var transformationOrder = new List<int>();
-        
+
         pipeline.AddTransformation((item, ctx) =>
         {
             transformationOrder.Add(1);
             return Task.FromResult<object>(item);
         });
-        
+
         pipeline.AddTransformation((item, ctx) =>
         {
             transformationOrder.Add(2);
             return Task.FromResult<object>(item);
         });
-        
+
         pipeline.AddTransformation((item, ctx) =>
         {
             transformationOrder.Add(3);
             return Task.FromResult<object>(item);
         });
-        
+
         pipeline.AddStorage(mockStorage);
 
         var item = new { Name = "Test" };
@@ -91,19 +91,19 @@ public class StoragePipelineFullTests
         // Arrange
         var mockStorage = new MockStorage();
         var pipeline = new StoragePipeline();
-        
+
         pipeline.AddFilter((item, ctx) =>
         {
             dynamic? dynamicItem = item;
             return Task.FromResult(dynamicItem?.Value > 10);
         });
-        
+
         pipeline.AddFilter((item, ctx) =>
         {
             dynamic? dynamicItem = item;
             return Task.FromResult(dynamicItem?.Value < 100);
         });
-        
+
         pipeline.AddStorage(mockStorage);
 
         var context = StorageContext.Create("MultiFilterSpider");
@@ -167,7 +167,7 @@ public class StoragePipelineFullTests
         var storage1 = new MockStorage();
         var storage2 = new MockStorage { ShouldFail = true };
         var storage3 = new MockStorage();
-        
+
         var pipeline = new StoragePipeline { ContinueOnError = true };
         pipeline.AddStorage(storage1);
         pipeline.AddStorage(storage2);
@@ -275,7 +275,7 @@ public class StoragePipelineFullTests
         var context = StorageContext.Create("ConcurrentSpider");
 
         // Act
-        var tasks = Enumerable.Range(1, 20).Select(i => 
+        var tasks = Enumerable.Range(1, 20).Select(i =>
             pipeline.StoreAsync(new { Id = i }, context));
         var results = await Task.WhenAll(tasks);
 
@@ -290,7 +290,7 @@ public class StoragePipelineFullTests
         // Arrange
         var mockStorage = new MockStorage();
         var pipeline = new StoragePipeline();
-        
+
         pipeline.AddValidator((item, ctx) =>
         {
             dynamic? dynamicItem = item;
@@ -323,7 +323,7 @@ public class StoragePipelineFullTests
         // Arrange
         var mockStorage = new MockStorage();
         var pipeline = new StoragePipeline();
-        
+
         pipeline.AddValidator((item, ctx) =>
         {
             dynamic? dynamicItem = item;
@@ -333,7 +333,7 @@ public class StoragePipelineFullTests
                 ErrorMessage = "Name is required"
             });
         });
-        
+
         pipeline.AddValidator((item, ctx) =>
         {
             dynamic? dynamicItem = item;
@@ -343,7 +343,7 @@ public class StoragePipelineFullTests
                 ErrorMessage = "Value must be positive"
             });
         });
-        
+
         pipeline.AddStorage(mockStorage);
 
         var context = StorageContext.Create("MultiValidatorSpider");

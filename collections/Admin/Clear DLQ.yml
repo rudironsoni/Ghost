@@ -16,7 +16,7 @@ runtime:
         test("Status code is 200", function() {
           expect(res.status).to.equal(200);
         });
-        
+
         test("Response confirms clearance", function() {
           expect(res.body).to.have.property("message");
           expect(res.body.message).to.include("cleared");
@@ -24,9 +24,9 @@ runtime:
 
 docs: |-
   ## Clear DLQ
-  
+
   Clear all jobs from the Dead Letter Queue.
-  
+
   ### Response Example (200 OK)
   ```json
   {
