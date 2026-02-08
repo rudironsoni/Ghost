@@ -83,6 +83,12 @@ secrets.json
 .env
 .env.*
 !.env.example
+.secrets
+
+## act (local GitHub Actions testing)
+# .actrc can contain user-specific paths or tokens
+# Commit .actrc.example instead if team sharing is needed
+.actrc.local
 
 
 ## Patchright/Playwright
