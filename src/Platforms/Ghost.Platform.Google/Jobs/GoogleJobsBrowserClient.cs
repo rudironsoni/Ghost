@@ -84,7 +84,10 @@ public sealed class GoogleJobsBrowserClient : IAsyncDisposable
         await RestoreSessionIfAvailableAsync(ct);
 
         // Create or reuse page
-        _currentPage ??= await _context.NewPageAsync();
+        if (_currentPage == null)
+        {
+            _currentPage = await _context.NewPageAsync();
+        }
 
         try
         {
@@ -103,7 +106,7 @@ public sealed class GoogleJobsBrowserClient : IAsyncDisposable
             }
             else
             {
-                await _currentPage.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 30000 });
+                await _currentPage.GotoAsync(url, new() { WaitUntil = Playwright.WaitUntilState.NetworkIdle, Timeout = 30000 });
                 await Task.Delay(TimeSpan.FromSeconds(3), ct); // Manual delay if no behavior service
             }
 
