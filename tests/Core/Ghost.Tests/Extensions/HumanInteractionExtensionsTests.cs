@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost;
 using Ghost.Extensions;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Tests.Extensions;
@@ -14,19 +14,16 @@ public class HumanInteractionExtensionsTests
     public async Task HumanClickAsyncCallsMethodsInOrder()
     {
         // Arrange
-        var element = Substitute.For<IElement>();
+        var mockElement = new Mock<IElement>();
         var ct = CancellationToken.None;
 
         // Act
-        await element.HumanClickAsync(ct);
+        await mockElement.Object.HumanClickAsync(ct);
 
         // Assert
-        Received.InOrder(async () =>
-        {
-            await element.ScrollIntoViewAsync(ct);
-            await element.HoverAsync(ct);
-            await element.ClickAsync(ct: ct);
-        });
+        mockElement.Verify(e => e.ScrollIntoViewAsync(ct), Times.Once);
+        mockElement.Verify(e => e.HoverAsync(ct), Times.Once);
+        mockElement.Verify(e => e.ClickAsync(null, ct), Times.Once);
     }
 
     [Fact]

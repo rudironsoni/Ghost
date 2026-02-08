@@ -1,16 +1,15 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.Contracts;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Comprehensive tests for Request and Response classes.
 /// </summary>
-[TestFixture]
 public class RequestResponseComprehensiveTests
 {
-    [Test]
+    [Fact]
     public void Request_Constructor_WithUrl_ShouldSetUrl()
     {
         // Arrange & Act
@@ -23,8 +22,7 @@ public class RequestResponseComprehensiveTests
         request.Metadata.Should().NotBeNull();
     }
 
-    [Test]
-
+    [Fact]
     public void Request_SetMethod_ShouldWork()
     {
         // Arrange
@@ -37,7 +35,7 @@ public class RequestResponseComprehensiveTests
         request.Method.Should().Be("POST");
     }
 
-    [Test]
+    [Fact]
     public void Request_SetBody_ShouldWork()
     {
         // Arrange
@@ -50,7 +48,7 @@ public class RequestResponseComprehensiveTests
         request.Body.Should().Be("{\"key\":\"value\"}");
     }
 
-    [Test]
+    [Fact]
     public void Request_AddHeaders_ShouldWork()
     {
         // Arrange
@@ -65,7 +63,7 @@ public class RequestResponseComprehensiveTests
         request.Headers["Authorization"].Should().Be("Bearer token");
     }
 
-    [Test]
+    [Fact]
     public void Request_AddMetadata_ShouldWork()
     {
         // Arrange
@@ -80,7 +78,7 @@ public class RequestResponseComprehensiveTests
         request.Metadata["Priority"].Should().Be(10);
     }
 
-    [Test]
+    [Fact]
     public void Request_SetTimeout_ShouldWork()
     {
         // Arrange
@@ -93,7 +91,7 @@ public class RequestResponseComprehensiveTests
         request.Timeout.Should().Be(TimeSpan.FromSeconds(60));
     }
 
-    [Test]
+    [Fact]
     public void Request_SetExpectedContentType_ShouldWork()
     {
         // Arrange
@@ -106,7 +104,7 @@ public class RequestResponseComprehensiveTests
         request.ExpectedContentType.Should().Be(ContentType.GraphQL);
     }
 
-    [Test]
+    [Fact]
     public void Request_DefaultExpectedContentType_ShouldBeUnknown()
     {
         // Arrange & Act
@@ -116,7 +114,7 @@ public class RequestResponseComprehensiveTests
         request.ExpectedContentType.Should().Be(ContentType.Unknown);
     }
 
-    [Test]
+    [Fact]
     public void Response_Constructor_WithContentResult_ShouldSetProperties()
     {
         // Arrange
@@ -136,7 +134,7 @@ public class RequestResponseComprehensiveTests
         response.Content.Success.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Response_SetStatusCode_ShouldWork()
     {
         // Arrange
@@ -150,7 +148,7 @@ public class RequestResponseComprehensiveTests
         response.StatusCode.Should().Be(200);
     }
 
-    [Test]
+    [Fact]
     public void Response_SetIsSuccess_ShouldWork()
     {
         // Arrange
@@ -164,7 +162,7 @@ public class RequestResponseComprehensiveTests
         response.IsSuccess.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Response_SetFinalUrl_ShouldWork()
     {
         // Arrange
@@ -178,7 +176,7 @@ public class RequestResponseComprehensiveTests
         response.FinalUrl.Should().Be("https://example.com/final");
     }
 
-    [Test]
+    [Fact]
     public void Response_Duration_ShouldCalculateCorrectly()
     {
         // Arrange
@@ -194,7 +192,7 @@ public class RequestResponseComprehensiveTests
         response.Duration.Should().BeCloseTo(TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(10));
     }
 
-    [Test]
+    [Fact]
     public void Response_AddHeaders_ShouldWork()
     {
         // Arrange
@@ -210,7 +208,7 @@ public class RequestResponseComprehensiveTests
         response.Headers["Server"].Should().Be("nginx");
     }
 
-    [Test]
+    [Fact]
     public void Response_AddMetadata_ShouldWork()
     {
         // Arrange
@@ -226,7 +224,7 @@ public class RequestResponseComprehensiveTests
         response.Metadata["ExtractedItems"].Should().Be(42);
     }
 
-    [Test]
+    [Fact]
     public void ContentResult_CreateSuccess_ShouldSetProperties()
     {
         // Act
@@ -239,7 +237,7 @@ public class RequestResponseComprehensiveTests
         result.Error.Should().BeNullOrEmpty();
     }
 
-    [Test]
+    [Fact]
     public void ContentResult_CreateFailure_ShouldSetProperties()
     {
         // Act
@@ -251,7 +249,7 @@ public class RequestResponseComprehensiveTests
         result.ContentType.Should().Be(ContentType.StaticHtml);
     }
 
-    [Test]
+    [Fact]
     public void ContentResult_SetContentLength_ShouldWork()
     {
         // Arrange
@@ -265,7 +263,7 @@ public class RequestResponseComprehensiveTests
         result.ContentLength.Should().Be(12);
     }
 
-    [Test]
+    [Fact]
     public void ContentResult_SetMimeType_ShouldWork()
     {
         // Arrange
@@ -278,7 +276,7 @@ public class RequestResponseComprehensiveTests
         result.MimeType.Should().Be("application/json");
     }
 
-    [Test]
+    [Fact]
     public void ContentResult_SetEncoding_ShouldWork()
     {
         // Arrange
@@ -291,7 +289,7 @@ public class RequestResponseComprehensiveTests
         result.Encoding.Should().Be("utf-8");
     }
 
-    [Test]
+    [Fact]
     public void ContentResult_SetExtractedAt_ShouldWork()
     {
         // Arrange
@@ -305,7 +303,7 @@ public class RequestResponseComprehensiveTests
         result.ExtractedAt.Should().Be(now);
     }
 
-    [Test]
+    [Fact]
     public void ContentType_Enum_ShouldHaveCorrectValues()
     {
         // Act & Assert
@@ -315,7 +313,7 @@ public class RequestResponseComprehensiveTests
         ContentType.GraphQL.Should().Be(ContentType.GraphQL);
         ContentType.WebSocket.Should().Be(ContentType.WebSocket);
     }
-    [Test]
+    [Fact]
 
     public void Response_SetAdapterName_ShouldWork()
     {
@@ -330,7 +328,7 @@ public class RequestResponseComprehensiveTests
         response.AdapterName.Should().Be("StaticHtml");
     }
 
-    [Test]
+    [Fact]
     public void Response_SetReasonPhrase_ShouldWork()
     {
         // Arrange
@@ -344,7 +342,7 @@ public class RequestResponseComprehensiveTests
         response.ReasonPhrase.Should().Be("OK");
     }
 
-    [Test]
+    [Fact]
     public void Response_SetError_ShouldWork()
     {
         // Arrange
@@ -358,7 +356,7 @@ public class RequestResponseComprehensiveTests
         response.Error.Should().Be("Custom error message");
     }
 
-    [Test]
+    [Fact]
     public void Response_SetException_ShouldWork()
     {
         // Arrange

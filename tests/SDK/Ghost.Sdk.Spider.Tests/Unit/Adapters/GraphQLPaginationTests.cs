@@ -5,7 +5,7 @@ using Ghost.Sdk.Spider.Adapters.GraphQL;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json;
-using NUnit.Framework;
+using Xunit;
 using System.Net;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
@@ -13,10 +13,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 /// <summary>
 /// Unit tests for GraphQL pagination functionality.
 /// </summary>
-[TestFixture]
 public class GraphQLPaginationTests
 {
-    [Test]
+    [Fact]
     public void GraphQLRequest_ShouldSerializeCorrectly()
     {
         // Arrange
@@ -43,7 +42,7 @@ public class GraphQLPaginationTests
         deserialized.Variables.Should().ContainKey("after");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_WithData_ShouldDeserializeCorrectly()
     {
         // Arrange
@@ -65,7 +64,7 @@ public class GraphQLPaginationTests
         response.Errors.Should().BeNullOrEmpty();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_WithErrors_ShouldDeserializeCorrectly()
     {
         // Arrange
@@ -90,7 +89,7 @@ public class GraphQLPaginationTests
         response.Errors[0].Path.Should().HaveCount(2);
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_WithExtensions_ShouldDeserializeCorrectly()
     {
         // Arrange
@@ -114,7 +113,7 @@ public class GraphQLPaginationTests
         response.Extensions.Should().ContainKey("tracing");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLError_ShouldContainAllProperties()
     {
         // Arrange
@@ -144,7 +143,7 @@ public class GraphQLPaginationTests
         deserialized.Extensions.Should().ContainKey("code");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLRequest_WithoutVariables_ShouldBeValid()
     {
         // Arrange
@@ -161,7 +160,7 @@ public class GraphQLPaginationTests
         request.Variables.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLRequest_WithComplexVariables_ShouldSerializeCorrectly()
     {
         // Arrange
@@ -189,7 +188,7 @@ public class GraphQLPaginationTests
         deserialized!.Variables.Should().ContainKey("input");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_WithNestedData_ShouldDeserializeCorrectly()
     {
         // Arrange
@@ -223,7 +222,7 @@ public class GraphQLPaginationTests
         response!.Data.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLError_WithoutOptionalFields_ShouldBeValid()
     {
         // Arrange
@@ -243,7 +242,7 @@ public class GraphQLPaginationTests
         deserialized.Path.Should().BeNullOrEmpty();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLErrorLocation_ShouldHaveLineAndColumn()
     {
         // Arrange

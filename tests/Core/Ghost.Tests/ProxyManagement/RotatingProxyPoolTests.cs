@@ -5,7 +5,7 @@ using FluentAssertions;
 using Ghost.Abstractions;
 using Ghost.ProxyManagement;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Tests.ProxyManagement;
@@ -16,12 +16,12 @@ public sealed class RotatingProxyPoolTests
     public async Task GetNextProxyAsync_WithEmptyPool_ReturnsNull()
     {
         // Arrange
-        var scraper = Substitute.For<IProxySource>();
-        scraper.FetchProxiesAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(Array.Empty<ProxyInfo>() as System.Collections.Generic.IEnumerable<ProxyInfo>));
+        var mockScraper = new Mock<IProxySource>();
+        mockScraper.Setup(s => s.FetchProxiesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<ProxyInfo>() as System.Collections.Generic.IEnumerable<ProxyInfo>);
 
         var healthChecker = new FreeProxyHealthChecker(NullLogger<FreeProxyHealthChecker>.Instance);
-        var pool = new RotatingProxyPool(scraper, healthChecker, NullLogger<RotatingProxyPool>.Instance);
+        var pool = new RotatingProxyPool(mockScraper.Object, healthChecker, NullLogger<RotatingProxyPool>.Instance);
 
         // Act
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
@@ -35,12 +35,12 @@ public sealed class RotatingProxyPoolTests
     public async Task HealthyProxyCount_InitiallyZero()
     {
         // Arrange
-        var scraper = Substitute.For<IProxySource>();
-        scraper.FetchProxiesAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(Array.Empty<ProxyInfo>() as System.Collections.Generic.IEnumerable<ProxyInfo>));
+        var mockScraper = new Mock<IProxySource>();
+        mockScraper.Setup(s => s.FetchProxiesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<ProxyInfo>() as System.Collections.Generic.IEnumerable<ProxyInfo>);
 
         var healthChecker = new FreeProxyHealthChecker(NullLogger<FreeProxyHealthChecker>.Instance);
-        var pool = new RotatingProxyPool(scraper, healthChecker, NullLogger<RotatingProxyPool>.Instance);
+        var pool = new RotatingProxyPool(mockScraper.Object, healthChecker, NullLogger<RotatingProxyPool>.Instance);
 
         // Act & Assert
         pool.HealthyProxyCount.Should().Be(0);
@@ -50,9 +50,9 @@ public sealed class RotatingProxyPoolTests
     public async Task ReportProxyResultAsync_WithNullProxy_ThrowsArgumentNullException()
     {
         // Arrange
-        var scraper = Substitute.For<IProxySource>();
+        var mockScraper = new Mock<IProxySource>();
         var healthChecker = new FreeProxyHealthChecker(NullLogger<FreeProxyHealthChecker>.Instance);
-        var pool = new RotatingProxyPool(scraper, healthChecker, NullLogger<RotatingProxyPool>.Instance);
+        var pool = new RotatingProxyPool(mockScraper.Object, healthChecker, NullLogger<RotatingProxyPool>.Instance);
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(
@@ -63,9 +63,9 @@ public sealed class RotatingProxyPoolTests
     public void GetAllProxies_InitiallyEmpty()
     {
         // Arrange
-        var scraper = Substitute.For<IProxySource>();
+        var mockScraper = new Mock<IProxySource>();
         var healthChecker = new FreeProxyHealthChecker(NullLogger<FreeProxyHealthChecker>.Instance);
-        var pool = new RotatingProxyPool(scraper, healthChecker, NullLogger<RotatingProxyPool>.Instance);
+        var pool = new RotatingProxyPool(mockScraper.Object, healthChecker, NullLogger<RotatingProxyPool>.Instance);
 
         // Act
         var proxies = pool.GetAllProxies();

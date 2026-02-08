@@ -3,17 +3,16 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Ghost.Sdk.Spider.Pipeline.Middleware;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline.Middleware;
 
 /// <summary>
 /// Comprehensive tests for CircuitBreakerMiddleware covering edge cases and state transitions.
 /// </summary>
-[TestFixture]
 public class CircuitBreakerMiddlewareFullTests
 {
-    [Test]
+    [Fact]
     public void Constructor_WithTimeSpanTimeout_ShouldInitialize()
     {
         // Arrange & Act
@@ -27,7 +26,7 @@ public class CircuitBreakerMiddlewareFullTests
         middleware.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithSamplingWindow_ShouldTrackRecentFailures()
     {
         // Arrange - Use dictionary config like other tests
@@ -78,7 +77,7 @@ public class CircuitBreakerMiddlewareFullTests
         nextCalled.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_MultipleConcurrentRequests_ShouldHandleCorrectly()
     {
         // Arrange
@@ -104,7 +103,7 @@ public class CircuitBreakerMiddlewareFullTests
         successCount.Should().Be(10);
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_SuccessAfterPartialFailures_ShouldResetCounter()
     {
         // Arrange
@@ -141,7 +140,7 @@ public class CircuitBreakerMiddlewareFullTests
         finalCallSucceeded.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_HalfOpenWithPartialSuccesses_ShouldRequireAllSuccesses()
     {
         // Arrange
@@ -184,7 +183,7 @@ public class CircuitBreakerMiddlewareFullTests
         nextCalled.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_ExceptionPreservesStackTrace_ShouldRethrow()
     {
         // Arrange
@@ -201,7 +200,7 @@ public class CircuitBreakerMiddlewareFullTests
             .WithMessage("Original error");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_RapidFailuresWithinSamplingWindow_ShouldOpenCircuit()
     {
         // Arrange
@@ -230,7 +229,7 @@ public class CircuitBreakerMiddlewareFullTests
             .WithMessage("*Circuit breaker is open*");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_MixedSuccessAndFailure_ShouldTrackCorrectly()
     {
         // Arrange
@@ -261,7 +260,7 @@ public class CircuitBreakerMiddlewareFullTests
         finalCallSucceeded.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_CircuitOpensAndReopens_ShouldCycleCorrectly()
     {
         // Arrange
@@ -301,7 +300,7 @@ public class CircuitBreakerMiddlewareFullTests
         finalSuccess.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_LastFailureTimeIsTracked_ShouldIncludeInErrorMessage()
     {
         // Arrange

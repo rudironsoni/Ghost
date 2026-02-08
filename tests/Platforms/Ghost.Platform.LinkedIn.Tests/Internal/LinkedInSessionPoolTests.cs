@@ -6,7 +6,7 @@ using FluentAssertions;
 using Ghost.Core;
 using Ghost.Platform.LinkedIn.Internal;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Platform.LinkedIn.Tests.Internal;
@@ -19,7 +19,7 @@ public class LinkedInSessionPoolTests
         var kernel = CreateKernelSubstitute();
         var options = new LinkedInSessionPoolOptions { MaxSize = 0, WarmCount = 0 };
 
-        var act = () => new LinkedInSessionPool(kernel, options, NullLogger<LinkedInSessionPool>.Instance);
+        var act = () => new LinkedInSessionPool(kernel.Object, options, NullLogger<LinkedInSessionPool>.Instance);
 
         act.Should().Throw<ArgumentOutOfRangeException>();
     }
@@ -29,15 +29,15 @@ public class LinkedInSessionPoolTests
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s1");
-        kernel.NewSessionAsync(Arg.Any<SessionOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(session));
+        kernel.Setup(k => k.NewSessionAsync(It.IsAny<SessionOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session.Object);
 
         var options = new LinkedInSessionPoolOptions { MaxSize = 2, WarmCount = 0 };
-        var pool = new LinkedInSessionPool(kernel, options, NullLogger<LinkedInSessionPool>.Instance);
+        var pool = new LinkedInSessionPool(kernel.Object, options, NullLogger<LinkedInSessionPool>.Instance);
 
         var acquired = await pool.AcquireAsync(CancellationToken.None);
 
-        acquired.Should().BeSameAs(session);
+        acquired.Should().BeSameAs(session.Object);
         pool.GetMetrics().TotalCreated.Should().Be(1);
     }
 
@@ -47,10 +47,11 @@ public class LinkedInSessionPoolTests
         var kernel = CreateKernelSubstitute();
         var session1 = CreateSession("cap-1");
         var session2 = CreateSession("cap-2");
-        kernel.NewSessionAsync(Arg.Any<SessionOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(session1), Task.FromResult(session2));
+        kernel.SetupSequence(k => k.NewSessionAsync(It.IsAny<SessionOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session1.Object)
+            .ReturnsAsync(session2.Object);
 
-        var pool = new LinkedInSessionPool(kernel, new LinkedInSessionPoolOptions { MaxSize = 1, WarmCount = 0 }, NullLogger<LinkedInSessionPool>.Instance);
+        var pool = new LinkedInSessionPool(kernel.Object, new LinkedInSessionPoolOptions { MaxSize = 1, WarmCount = 0 }, NullLogger<LinkedInSessionPool>.Instance);
         var first = await pool.AcquireAsync(CancellationToken.None);
         var second = await pool.AcquireAsync(CancellationToken.None);
 
@@ -59,7 +60,7 @@ public class LinkedInSessionPoolTests
 
         var metrics = pool.GetMetrics();
         metrics.AvailableCount.Should().Be(1);
-        await session2.Received().DisposeAsync();
+        session2.Verify(s => s.DisposeAsync(), Times.Once);
     }
 
     [Fact]
@@ -67,10 +68,10 @@ public class LinkedInSessionPoolTests
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s2");
-        kernel.NewSessionAsync(Arg.Any<SessionOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(session));
+        kernel.Setup(k => k.NewSessionAsync(It.IsAny<SessionOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session.Object);
 
-        var pool = new LinkedInSessionPool(kernel, new LinkedInSessionPoolOptions { MaxSize = 2, WarmCount = 0 }, NullLogger<LinkedInSessionPool>.Instance);
+        var pool = new LinkedInSessionPool(kernel.Object, new LinkedInSessionPoolOptions { MaxSize = 2, WarmCount = 0 }, NullLogger<LinkedInSessionPool>.Instance);
 
         var acquired = await pool.AcquireAsync(CancellationToken.None);
         pool.Release(acquired);
@@ -85,10 +86,10 @@ public class LinkedInSessionPoolTests
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s3");
-        kernel.NewSessionAsync(Arg.Any<SessionOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(session));
+        kernel.Setup(k => k.NewSessionAsync(It.IsAny<SessionOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session.Object);
 
-        var pool = new LinkedInSessionPool(kernel, new LinkedInSessionPoolOptions { MaxSize = 1, WarmCount = 0 }, NullLogger<LinkedInSessionPool>.Instance);
+        var pool = new LinkedInSessionPool(kernel.Object, new LinkedInSessionPoolOptions { MaxSize = 1, WarmCount = 0 }, NullLogger<LinkedInSessionPool>.Instance);
 
         var first = await pool.AcquireAsync(CancellationToken.None);
         pool.Release(first);
@@ -102,11 +103,11 @@ public class LinkedInSessionPoolTests
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s4");
-        var pool = new LinkedInSessionPool(kernel, new LinkedInSessionPoolOptions { MaxSize = 1, WarmCount = 0 }, NullLogger<LinkedInSessionPool>.Instance);
+        var pool = new LinkedInSessionPool(kernel.Object, new LinkedInSessionPoolOptions { MaxSize = 1, WarmCount = 0 }, NullLogger<LinkedInSessionPool>.Instance);
 
-        pool.Release(session);
+        pool.Release(session.Object);
 
-        await session.Received(1).DisposeAsync();
+        session.Verify(s => s.DisposeAsync(), Times.Once);
     }
 
     [Fact]
@@ -114,8 +115,8 @@ public class LinkedInSessionPoolTests
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s5");
-        kernel.NewSessionAsync(Arg.Any<SessionOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(session));
+        kernel.Setup(k => k.NewSessionAsync(It.IsAny<SessionOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session.Object);
 
         var options = new LinkedInSessionPoolOptions
         {
@@ -125,14 +126,14 @@ public class LinkedInSessionPoolTests
             MaxLifetime = TimeSpan.FromMinutes(5)
         };
 
-        var pool = new LinkedInSessionPool(kernel, options, NullLogger<LinkedInSessionPool>.Instance);
+        var pool = new LinkedInSessionPool(kernel.Object, options, NullLogger<LinkedInSessionPool>.Instance);
         var acquired = await pool.AcquireAsync(CancellationToken.None);
         pool.Release(acquired);
 
         await Task.Delay(10);
         await pool.PruneAsync(CancellationToken.None);
 
-        await session.Received().DisposeAsync();
+        session.Verify(s => s.DisposeAsync(), Times.Once);
         pool.GetMetrics().AvailableCount.Should().Be(0);
     }
 
@@ -141,8 +142,8 @@ public class LinkedInSessionPoolTests
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s6");
-        kernel.NewSessionAsync(Arg.Any<SessionOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(session));
+        kernel.Setup(k => k.NewSessionAsync(It.IsAny<SessionOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session.Object);
 
         var options = new LinkedInSessionPoolOptions
         {
@@ -152,14 +153,14 @@ public class LinkedInSessionPoolTests
             MaxIdleTime = TimeSpan.FromMinutes(5)
         };
 
-        var pool = new LinkedInSessionPool(kernel, options, NullLogger<LinkedInSessionPool>.Instance);
+        var pool = new LinkedInSessionPool(kernel.Object, options, NullLogger<LinkedInSessionPool>.Instance);
         var acquired = await pool.AcquireAsync(CancellationToken.None);
 
         await Task.Delay(10);
         await pool.PruneAsync(CancellationToken.None);
         pool.Release(acquired);
 
-        await session.Received().DisposeAsync();
+        session.Verify(s => s.DisposeAsync(), Times.Once);
     }
 
     [Fact]
@@ -167,31 +168,31 @@ public class LinkedInSessionPoolTests
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s7", isConnected: false);
-        kernel.NewSessionAsync(Arg.Any<SessionOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(session));
+        kernel.Setup(k => k.NewSessionAsync(It.IsAny<SessionOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session.Object);
 
-        var pool = new LinkedInSessionPool(kernel, new LinkedInSessionPoolOptions { MaxSize = 1, WarmCount = 0 }, NullLogger<LinkedInSessionPool>.Instance);
+        var pool = new LinkedInSessionPool(kernel.Object, new LinkedInSessionPoolOptions { MaxSize = 1, WarmCount = 0 }, NullLogger<LinkedInSessionPool>.Instance);
         var acquired = await pool.AcquireAsync(CancellationToken.None);
         pool.Release(acquired);
 
-        await session.Received().DisposeAsync();
+        session.Verify(s => s.DisposeAsync(), Times.Once);
     }
 
     [Fact]
     public async Task WarmupAsyncCreatesUpToRemainingCapacity()
     {
         var kernel = CreateKernelSubstitute();
-        var sessions = new Queue<IBrowserSession>(new[]
+        var sessions = new Queue<Mock<IBrowserSession>>(new[]
         {
             CreateSession("w1"),
             CreateSession("w2"),
             CreateSession("w3")
         });
-        kernel.NewSessionAsync(Arg.Any<SessionOptions>(), Arg.Any<CancellationToken>())
-            .Returns(_ => Task.FromResult(sessions.Dequeue()));
+        kernel.Setup(k => k.NewSessionAsync(It.IsAny<SessionOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => sessions.Dequeue().Object);
 
         var options = new LinkedInSessionPoolOptions { MaxSize = 2, WarmCount = 0 };
-        var pool = new LinkedInSessionPool(kernel, options, NullLogger<LinkedInSessionPool>.Instance);
+        var pool = new LinkedInSessionPool(kernel.Object, options, NullLogger<LinkedInSessionPool>.Instance);
 
         await pool.WarmupAsync(5, CancellationToken.None);
 
@@ -205,10 +206,10 @@ public class LinkedInSessionPoolTests
     {
         var kernel = CreateKernelSubstitute();
         var session = CreateSession("s8");
-        kernel.NewSessionAsync(Arg.Any<SessionOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(session));
+        kernel.Setup(k => k.NewSessionAsync(It.IsAny<SessionOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session.Object);
 
-        var pool = new LinkedInSessionPool(kernel, new LinkedInSessionPoolOptions { MaxSize = 1, WarmCount = 0 }, NullLogger<LinkedInSessionPool>.Instance);
+        var pool = new LinkedInSessionPool(kernel.Object, new LinkedInSessionPoolOptions { MaxSize = 1, WarmCount = 0 }, NullLogger<LinkedInSessionPool>.Instance);
 
         await pool.AcquireAsync(CancellationToken.None);
         var metrics = pool.GetMetrics();
@@ -217,19 +218,19 @@ public class LinkedInSessionPoolTests
         metrics.AverageAcquisitionTime.Should().BeGreaterOrEqualTo(TimeSpan.Zero);
     }
 
-    private static IBrowserSession CreateSession(string id, bool isConnected = true)
+    private static Mock<IBrowserSession> CreateSession(string id, bool isConnected = true)
     {
-        var session = Substitute.For<IBrowserSession>();
-        session.SessionId.Returns(id);
-        session.IsConnected.Returns(isConnected);
+        var session = new Mock<IBrowserSession>();
+        session.Setup(s => s.SessionId).Returns(id);
+        session.Setup(s => s.IsConnected).Returns(isConnected);
 #pragma warning disable CA2012
-        session.DisposeAsync().Returns(_ => new ValueTask(Task.CompletedTask));
+        session.Setup(s => s.DisposeAsync()).Returns(new ValueTask(Task.CompletedTask));
 #pragma warning restore CA2012
         return session;
     }
 
-    private static IGhostKernel CreateKernelSubstitute()
+    private static Mock<IGhostKernel> CreateKernelSubstitute()
     {
-        return Substitute.For<IGhostKernel>();
+        return new Mock<IGhostKernel>();
     }
 }

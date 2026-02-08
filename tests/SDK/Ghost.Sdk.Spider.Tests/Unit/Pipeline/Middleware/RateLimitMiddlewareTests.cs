@@ -1,16 +1,15 @@
 using FluentAssertions;
+using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Ghost.Sdk.Spider.Pipeline.Middleware;
-using Ghost.Sdk.Spider.Adapters.Contracts;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline.Middleware;
 
-[TestFixture]
 public class RateLimitMiddlewareTests
 {
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithinLimit_ShouldExecuteImmediately()
     {
         // Arrange
@@ -57,7 +56,7 @@ public class RateLimitMiddlewareTests
         elapsed.Should().BeLessThan(TimeSpan.FromSeconds(1)); // Should be almost instant
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_ExceedingLimit_ShouldWait()
     {
         // Arrange
@@ -114,7 +113,7 @@ public class RateLimitMiddlewareTests
         elapsed.Should().BeGreaterThan(TimeSpan.FromMilliseconds(500)); // Should wait
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_ExceedingLimitNoWait_ShouldThrow()
     {
         // Arrange
@@ -162,11 +161,11 @@ public class RateLimitMiddlewareTests
         };
 
         // Act & Assert
-        Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await middleware.InvokeAsync(context2, ctx => Task.CompletedTask));
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_PerDomain_ShouldRateLimitSeparately()
     {
         // Arrange
@@ -223,14 +222,14 @@ public class RateLimitMiddlewareTests
         elapsed.Should().BeLessThan(TimeSpan.FromMilliseconds(500)); // Should be fast (different domain)
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithNullConfiguration_ShouldThrow()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new RateLimitMiddleware(null!));
+        _ = Assert.Throws<ArgumentNullException>(() => new RateLimitMiddleware(null!));
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithEmptyConfiguration_ShouldUseDefaults()
     {
         // Arrange
@@ -243,7 +242,7 @@ public class RateLimitMiddlewareTests
         middleware.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithCustomCapacity_ShouldRespectCapacity()
     {
         // Arrange
@@ -296,7 +295,7 @@ public class RateLimitMiddlewareTests
         };
 
         // Assert
-        Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await middleware.InvokeAsync(context4, ctx => Task.CompletedTask));
     }
 }

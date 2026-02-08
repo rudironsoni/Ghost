@@ -1,6 +1,6 @@
 using Ghost.Consent;
 using Microsoft.Playwright;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Tests.Consent;
@@ -24,12 +24,12 @@ public class ShadowDOMHelperTests
     public async Task FindInShadowDOMAsync_WithNullSelector_ThrowsArgumentNullException()
     {
         // Arrange
-        var page = Substitute.For<IPage>();
+        var mockPage = new Mock<IPage>();
 
         // Act & Assert
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await ShadowDOMHelper.FindInShadowDOMAsync(page, null));
+            async () => await ShadowDOMHelper.FindInShadowDOMAsync(mockPage.Object, null));
 #pragma warning restore CS8625
     }
 
@@ -50,12 +50,12 @@ public class ShadowDOMHelperTests
     public async Task ClickInShadowDOMAsync_WithNullSelector_ThrowsArgumentNullException()
     {
         // Arrange
-        var page = Substitute.For<IPage>();
+        var mockPage = new Mock<IPage>();
 
         // Act & Assert
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await ShadowDOMHelper.ClickInShadowDOMAsync(page, null));
+            async () => await ShadowDOMHelper.ClickInShadowDOMAsync(mockPage.Object, null));
 #pragma warning restore CS8625
     }
 
@@ -76,12 +76,12 @@ public class ShadowDOMHelperTests
     public async Task GetShadowRootCountAsync_WithError_ReturnsZero()
     {
         // Arrange
-        var page = Substitute.For<IPage>();
-        page.EvaluateAsync<int>(Arg.Any<string>())
-            .Returns(Task.FromException<int>(new InvalidOperationException("Test error")));
+        var mockPage = new Mock<IPage>();
+        mockPage.Setup(p => p.EvaluateAsync<int>(It.IsAny<string>()))
+            .ThrowsAsync(new InvalidOperationException("Test error"));
 
         // Act
-        var count = await ShadowDOMHelper.GetShadowRootCountAsync(page);
+        var count = await ShadowDOMHelper.GetShadowRootCountAsync(mockPage.Object);
 
         // Assert
         Assert.Equal(0, count);
@@ -91,14 +91,14 @@ public class ShadowDOMHelperTests
     public async Task FindInShadowDOMAsync_WhenPiercingSelectorFails_ReturnsFalse()
     {
         // Arrange
-        var page = Substitute.For<IPage>();
-        page.QuerySelectorAsync(Arg.Any<string>())
-            .Returns(Task.FromResult<IElement?>(null));
-        page.EvaluateAsync<bool>(Arg.Any<string>())
-            .Returns(Task.FromException<bool>(new InvalidOperationException("Test error")));
+        var mockPage = new Mock<IPage>();
+        mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>()))
+            .ReturnsAsync((IElement?)null);
+        mockPage.Setup(p => p.EvaluateAsync<bool>(It.IsAny<string>()))
+            .ThrowsAsync(new InvalidOperationException("Test error"));
 
         // Act
-        var result = await ShadowDOMHelper.FindInShadowDOMAsync(page, ".test");
+        var result = await ShadowDOMHelper.FindInShadowDOMAsync(mockPage.Object, ".test");
 
         // Assert
         Assert.False(result);
@@ -108,14 +108,14 @@ public class ShadowDOMHelperTests
     public async Task ClickInShadowDOMAsync_WhenPiercingSelectorFails_ReturnsFalse()
     {
         // Arrange
-        var page = Substitute.For<IPage>();
-        page.QuerySelectorAsync(Arg.Any<string>())
-            .Returns(Task.FromResult<IElement?>(null));
-        page.EvaluateAsync<bool>(Arg.Any<string>())
-            .Returns(Task.FromException<bool>(new InvalidOperationException("Test error")));
+        var mockPage = new Mock<IPage>();
+        mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>()))
+            .ReturnsAsync((IElement?)null);
+        mockPage.Setup(p => p.EvaluateAsync<bool>(It.IsAny<string>()))
+            .ThrowsAsync(new InvalidOperationException("Test error"));
 
         // Act
-        var result = await ShadowDOMHelper.ClickInShadowDOMAsync(page, ".test");
+        var result = await ShadowDOMHelper.ClickInShadowDOMAsync(mockPage.Object, ".test");
 
         // Assert
         Assert.False(result);

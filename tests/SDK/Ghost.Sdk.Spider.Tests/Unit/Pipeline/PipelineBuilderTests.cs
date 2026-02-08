@@ -3,22 +3,20 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline;
 
-[TestFixture]
 public class PipelineBuilderTests
 {
-    private PipelineBuilder _builder = null!;
+    private readonly PipelineBuilder _builder;
 
-    [SetUp]
-    public void Setup()
+    public PipelineBuilderTests()
     {
         _builder = new PipelineBuilder();
     }
 
-    [Test]
+    [Fact]
     public void Use_WithMiddleware_ShouldAddToBuilder()
     {
         // Arrange
@@ -31,14 +29,14 @@ public class PipelineBuilderTests
         _builder.Count.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void Use_WithNullMiddleware_ShouldThrow()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => _builder.Use((IPipelineMiddleware)null!));
     }
 
-    [Test]
+    [Fact]
     public void Use_WithMultipleMiddleware_ShouldPreserveOrder()
     {
         // Arrange
@@ -56,7 +54,7 @@ public class PipelineBuilderTests
         _builder.Count.Should().Be(3);
     }
 
-    [Test]
+    [Fact]
     public void Use_WithConfiguration_ShouldStoreConfiguration()
     {
         // Arrange
@@ -70,7 +68,7 @@ public class PipelineBuilderTests
         _builder.Count.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void Use_WithName_ShouldSetName()
     {
         // Arrange
@@ -83,7 +81,7 @@ public class PipelineBuilderTests
         _builder.Count.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void Use_WithFactory_ShouldCreateMiddleware()
     {
         // Arrange
@@ -102,7 +100,7 @@ public class PipelineBuilderTests
         _builder.Count.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void Use_WithFactoryReturningNull_ShouldThrow()
     {
         // Arrange
@@ -112,7 +110,7 @@ public class PipelineBuilderTests
         Assert.Throws<ArgumentNullException>(() => _builder.Use(factory));
     }
 
-    [Test]
+    [Fact]
     public void Use_WithDelegate_ShouldCreateInlineMiddleware()
     {
         // Arrange
@@ -126,7 +124,7 @@ public class PipelineBuilderTests
         _builder.Count.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void Remove_WithExistingName_ShouldRemoveMiddleware()
     {
         // Arrange
@@ -141,7 +139,7 @@ public class PipelineBuilderTests
         _builder.Count.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void Remove_WithNonExistentName_ShouldNotThrow()
     {
         // Arrange
@@ -155,7 +153,7 @@ public class PipelineBuilderTests
         _builder.Count.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void Clear_ShouldRemoveAllMiddleware()
     {
         // Arrange
@@ -171,7 +169,7 @@ public class PipelineBuilderTests
         _builder.Count.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public void Build_WithMiddleware_ShouldReturnCompiledPipeline()
     {
         // Arrange
@@ -189,14 +187,14 @@ public class PipelineBuilderTests
         pipeline.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Build_WithNoMiddleware_ShouldThrow()
     {
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() => _builder.Build());
     }
 
-    [Test]
+    [Fact]
     public void Build_WithDisabledMiddleware_ShouldExcludeThem()
     {
         // Arrange
@@ -213,7 +211,7 @@ public class PipelineBuilderTests
         pipeline.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Clone_ShouldCreateIndependentCopy()
     {
         // Arrange
@@ -229,7 +227,7 @@ public class PipelineBuilderTests
         clone.Count.Should().Be(2);
     }
 
-    [Test]
+    [Fact]
     public void Count_ShouldReflectNumberOfMiddleware()
     {
         // Arrange & Act
@@ -245,7 +243,7 @@ public class PipelineBuilderTests
         _builder.Count.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public void Use_FluentInterface_ShouldAllowChaining()
     {
         // Arrange
@@ -262,7 +260,7 @@ public class PipelineBuilderTests
         _builder.Count.Should().Be(3);
     }
 
-    [Test]
+    [Fact]
     public async Task Build_ExecutePipeline_ShouldInvokeMiddleware()
     {
         // Arrange

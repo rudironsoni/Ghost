@@ -7,7 +7,7 @@ using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Platform.LinkedIn.Tests;
@@ -17,22 +17,21 @@ public class LinkedInJobClientParallelTests
     [Fact]
     public async Task SearchJobsParallelAsyncYieldsJobsFromGuestPages()
     {
-        var session = Substitute.For<IBrowserSession>();
-        var firstPage = Substitute.For<IPage>();
-        var secondPage = Substitute.For<IPage>();
+        var session = new Mock<IBrowserSession>();
+        var firstPage = new Mock<IPage>();
+        var secondPage = new Mock<IPage>();
 
-        session.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(firstPage), Task.FromResult(secondPage));
+        session.SetupSequence(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(firstPage.Object)
+            .ReturnsAsync(secondPage.Object);
 
-        firstPage.GetContentAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(BuildHtml("123", "456", 50)));
-        secondPage.GetContentAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(BuildHtml("789", null, 50)));
+        firstPage.Setup(p => p.GetContentAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BuildHtml("123", "456", 50));
+        secondPage.Setup(p => p.GetContentAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BuildHtml("789", null, 50));
 
-        var jsAdapter = Substitute.For<JavaScriptAdapter>();
-        var entityParser = Substitute.For<EntityParser>();
         var options = Options.Create(new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.GuestApi });
-        var client = new LinkedInJobClient(session, options, NullLogger<LinkedInJobClient>.Instance, jsAdapter, entityParser);
+        var client = new LinkedInJobClient(session.Object, options, NullLogger<LinkedInJobClient>.Instance, new JavaScriptAdapter(), new EntityParser());
 
         var criteria = new JobSearchCriteria { Query = "dev", Location = "remote", MaxResults = 50 };
         var count = 0;

@@ -2,7 +2,7 @@ using System;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Platform.OpenAI.Tests;
@@ -22,10 +22,10 @@ public class OpenAIExtensionTests
     {
         var ext = new OpenAIExtension();
         var services = new ServiceCollection();
-        var config = Substitute.For<IConfiguration>();
-        var section = Substitute.For<IConfigurationSection>();
-        config.GetSection(Arg.Any<string>()).Returns(section);
-        Action act = () => ext.ConfigureServices(services, config);
+        var configMock = new Mock<IConfiguration>();
+        var sectionMock = new Mock<IConfigurationSection>();
+        configMock.Setup(c => c.GetSection(It.IsAny<string>())).Returns(sectionMock.Object);
+        Action act = () => ext.ConfigureServices(services, configMock.Object);
         act.Should().NotThrow();
     }
 }

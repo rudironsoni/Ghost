@@ -1,10 +1,12 @@
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Ghost;
 using Ghost.Contracts.Inference;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NSubstitute;
+using Microsoft.Playwright;
+using Moq;
 using Xunit;
 
 namespace Ghost.Platform.OpenAI.Tests;
@@ -14,16 +16,16 @@ public class OpenAIClientTests
     [Fact]
     public async Task CompleteAsyncReturnsTextWhenPageEvaluates()
     {
-        var mockSession = Substitute.For<IBrowserSession>();
-        var mockPage = Substitute.For<IPage>();
-        mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(mockPage));
+        var mockSession = new Mock<IBrowserSession>();
+        var mockPage = new Mock<IPage>();
+        mockSession.Setup(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockPage.Object);
 
-        mockPage.EvaluateAsync<string>(Arg.Any<string>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult("response text"));
+        mockPage.Setup(p => p.EvaluateAsync<string>(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("response text");
 
-        var logger = Substitute.For<ILogger<OpenAIClient>>();
-        var client = new OpenAIClient(mockSession, Options.Create(new OpenAIOptions()), logger);
+        var loggerMock = new Mock<ILogger<OpenAIClient>>();
+        var client = new OpenAIClient(mockSession.Object, Options.Create(new OpenAIOptions()), loggerMock.Object);
         var resp = await client.CompleteAsync(new InferenceRequest { Messages = new[] { new InferenceMessage { Content = "prompt" } } }, CancellationToken.None);
         resp.Content.Should().Be("response text");
     }
@@ -31,16 +33,16 @@ public class OpenAIClientTests
     [Fact]
     public async Task StreamAsyncCallsHandler()
     {
-        var mockSession = Substitute.For<IBrowserSession>();
-        var mockPage = Substitute.For<IPage>();
-        mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(mockPage));
+        var mockSession = new Mock<IBrowserSession>();
+        var mockPage = new Mock<IPage>();
+        mockSession.Setup(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockPage.Object);
 
-        mockPage.EvaluateAsync<string>(Arg.Any<string>(), Arg.Any<object?>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult("stream chunk"));
+        mockPage.Setup(p => p.EvaluateAsync<string>(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("stream chunk");
 
-        var logger = Substitute.For<ILogger<OpenAIClient>>();
-        var client = new OpenAIClient(mockSession, Options.Create(new OpenAIOptions()), logger);
+        var loggerMock = new Mock<ILogger<OpenAIClient>>();
+        var client = new OpenAIClient(mockSession.Object, Options.Create(new OpenAIOptions()), loggerMock.Object);
         var invoked = false;
         await foreach (var _ in client.StreamAsync(new InferenceRequest { Messages = new[] { new InferenceMessage { Content = "prompt" } } }, CancellationToken.None))
         {

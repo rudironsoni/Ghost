@@ -2,7 +2,7 @@ using FluentAssertions;
 using Ghost.Platform.LinkedIn.Tests.Migration;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Engine;
-using NUnit.Framework;
+using Xunit;
 using ExecutionContext = Ghost.Sdk.Spider.Engine.ExecutionContext;
 
 namespace Ghost.Platform.LinkedIn.Tests;
@@ -11,25 +11,23 @@ namespace Ghost.Platform.LinkedIn.Tests;
 /// Tests for LinkedInSpider using Ghost.Sdk.Spider framework.
 /// Validates the full spider pipeline with JavaScriptAdapter integration.
 /// </summary>
-[TestFixture]
 public class LinkedInSpiderTests
 {
-    private LinkedInSpider _spider = null!;
+    private readonly LinkedInSpider _spider;
 
-    [SetUp]
-    public void Setup()
+    public LinkedInSpiderTests()
     {
         _spider = new LinkedInSpider();
     }
 
-    [Test]
+    [Fact]
     public void NameShouldReturnLinkedInJobSpider()
     {
         // Assert
         _spider.Name.Should().Be("LinkedInJobSpider");
     }
 
-    [Test]
+    [Fact]
     public void GetStartUrlsShouldReturnLinkedInUrls()
     {
         // Act
@@ -40,14 +38,14 @@ public class LinkedInSpiderTests
         urls.Should().Contain(u => u.Contains("linkedin.com/jobs"));
     }
 
-    [Test]
+    [Fact]
     public void OptionsShouldHaveLinkedInDomain()
     {
         // Assert
         _spider.Options.AllowedDomains.Should().Contain("linkedin.com");
     }
 
-    [Test]
+    [Fact]
     public void OptionsShouldExcludeAdminPages()
     {
         // Assert
@@ -55,7 +53,7 @@ public class LinkedInSpiderTests
         _spider.Options.ExcludePatterns.Should().Contain(@".*/logout.*");
     }
 
-    [Test]
+    [Fact]
     public void OptionsShouldHaveReasonableDefaults()
     {
         // Assert
@@ -64,7 +62,7 @@ public class LinkedInSpiderTests
         _spider.Options.RequestDelay.Should().Be(TimeSpan.FromSeconds(1));
     }
 
-    [Test]
+    [Fact]
     public async Task ProcessResponseAsyncWithValidJobPageShouldExtractJob()
     {
         // Arrange
@@ -86,7 +84,7 @@ public class LinkedInSpiderTests
         job.Company.Should().Be("Stripe");
     }
 
-    [Test]
+    [Fact]
     public async Task ProcessResponseAsyncWithMultipleJobPagesShouldExtractAllJobs()
     {
         // Arrange
@@ -107,7 +105,7 @@ public class LinkedInSpiderTests
         _spider.ExtractedJobs.Should().Contain(j => j.Company == "Microsoft");
     }
 
-    [Test]
+    [Fact]
     public async Task ProcessResponseAsyncWithInvalidJobShouldNotExtract()
     {
         // Arrange - Job without required fields
@@ -126,7 +124,7 @@ public class LinkedInSpiderTests
         _spider.ExtractedJobs.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public async Task ProcessResponseAsyncWithNonHtmlResponseShouldNotProcess()
     {
         // Arrange
@@ -144,7 +142,7 @@ public class LinkedInSpiderTests
         _spider.ExtractedJobs.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public async Task ProcessResponseAsyncWithFailedResponseShouldNotProcess()
     {
         // Arrange
@@ -164,7 +162,7 @@ public class LinkedInSpiderTests
         _spider.ExtractedJobs.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public async Task OnStartAsyncShouldClearExtractedJobs()
     {
         // Arrange
@@ -184,7 +182,7 @@ public class LinkedInSpiderTests
         _spider.ExtractedJobs.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public async Task OnCompleteAsyncShouldBeCallable()
     {
         // Arrange
@@ -204,7 +202,7 @@ public class LinkedInSpiderTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public async Task OnErrorAsyncShouldHandleException()
     {
         // Arrange
@@ -218,7 +216,7 @@ public class LinkedInSpiderTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFollowUrlWithJobViewUrlShouldReturnTrue()
     {
         // Arrange
@@ -232,7 +230,7 @@ public class LinkedInSpiderTests
         shouldFollow.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFollowUrlWithJobSearchUrlShouldReturnTrue()
     {
         // Arrange
@@ -246,7 +244,7 @@ public class LinkedInSpiderTests
         shouldFollow.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFollowUrlWithNonJobUrlShouldReturnFalse()
     {
         // Arrange
@@ -260,7 +258,7 @@ public class LinkedInSpiderTests
         shouldFollow.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFollowUrlWithAdminUrlShouldReturnFalse()
     {
         // Arrange
@@ -274,7 +272,7 @@ public class LinkedInSpiderTests
         shouldFollow.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFollowUrlWithLogoutUrlShouldReturnFalse()
     {
         // Arrange
@@ -288,7 +286,7 @@ public class LinkedInSpiderTests
         shouldFollow.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFollowUrlWithNonLinkedInDomainShouldReturnFalse()
     {
         // Arrange
@@ -302,7 +300,7 @@ public class LinkedInSpiderTests
         shouldFollow.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFollowUrlWithInvalidUrlShouldReturnFalse()
     {
         // Arrange
@@ -316,7 +314,7 @@ public class LinkedInSpiderTests
         shouldFollow.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFollowUrlWithNullUrlShouldReturnFalse()
     {
         // Arrange
@@ -329,7 +327,7 @@ public class LinkedInSpiderTests
         shouldFollow.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task ProcessResponseAsyncWithRealFixturesShouldExtractValidJobs()
     {
         // Arrange
@@ -362,7 +360,7 @@ public class LinkedInSpiderTests
         _spider.ExtractedJobs.Should().OnlyContain(j => j.Validate());
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractedJobsShouldBeReadOnly()
     {
         // Arrange

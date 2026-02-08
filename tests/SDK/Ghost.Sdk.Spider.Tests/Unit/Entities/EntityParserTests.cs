@@ -1,15 +1,14 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Entities;
 
-[TestFixture]
 public class EntityParserTests
 {
 
-    [Test]
+    [Fact]
     public async Task Parse_WithXPathSelector_ShouldExtractEntities()
     {
         // Arrange
@@ -29,7 +28,7 @@ public class EntityParserTests
         results.Should().HaveCountGreaterThan(0);
     }
 
-    [Test]
+    [Fact]
     public async Task Parse_WithCssSelector_ShouldExtractMultipleEntities()
     {
         // Arrange
@@ -50,7 +49,7 @@ public class EntityParserTests
         results.All(r => r.Id != null).Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task Parse_WithComplexHtml_ShouldExtractAllFields()
     {
         // Arrange
@@ -72,7 +71,7 @@ public class EntityParserTests
         firstArticle.AuthorId.Should().HaveValue();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithInvalidHtml_ShouldReturnEmptyList()
     {
         // Arrange
@@ -90,7 +89,7 @@ public class EntityParserTests
         results.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithEmptyContent_ShouldReturnEmptyList()
     {
         // Arrange
@@ -108,7 +107,7 @@ public class EntityParserTests
         results.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void ParseSingle_ShouldExtractSingleEntity()
     {
         // Arrange
@@ -130,7 +129,7 @@ public class EntityParserTests
         result.Id.Should().NotBeNullOrEmpty();
     }
 
-    [Test]
+    [Fact]
     public void ParseSingle_WithNoMatches_ShouldReturnNull()
     {
         // Arrange
@@ -148,7 +147,7 @@ public class EntityParserTests
         result.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void Parse_ShouldSetBaseProperties()
     {
         // Arrange
@@ -175,7 +174,7 @@ public class EntityParserTests
         }
     }
 
-    [Test]
+    [Fact]
     public async Task Parse_WithAttributeSelector_ShouldExtractAttribute()
     {
         // Arrange
@@ -195,7 +194,7 @@ public class EntityParserTests
         results.First().Price.Should().NotBeNullOrEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithTypeConversion_ShouldConvertToCorrectType()
     {
         // Arrange
@@ -217,7 +216,7 @@ public class EntityParserTests
         firstProduct.ProductId.Should().BeGreaterThan(0);
     }
 
-    [Test]
+    [Fact]
     public async Task Parse_WithJsonContent_ShouldExtractFromJson()
     {
         // Arrange
@@ -240,7 +239,7 @@ public class EntityParserTests
         firstItem.Value.Should().HaveValue();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithValidation_ShouldOnlyReturnValidEntities()
     {
         // Arrange

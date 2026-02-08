@@ -3,14 +3,13 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Ghost.Sdk.Spider.Pipeline.Middleware;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline.Middleware;
 
-[TestFixture]
 public class RetryMiddlewareTests
 {
-    [Test]
+    [Fact]
     public void Constructor_WithNullConfiguration_ShouldThrow()
     {
         // Act
@@ -20,7 +19,7 @@ public class RetryMiddlewareTests
         act.Should().Throw<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithEmptyConfiguration_ShouldUseDefaults()
     {
         // Arrange & Act
@@ -30,7 +29,7 @@ public class RetryMiddlewareTests
         middleware.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_OnFirstSuccess_ShouldNotRetry()
     {
         // Arrange
@@ -51,7 +50,7 @@ public class RetryMiddlewareTests
         callCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_OnTransientFailure_ShouldRetry()
     {
         // Arrange
@@ -82,7 +81,7 @@ public class RetryMiddlewareTests
         callCount.Should().Be(2);
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WhenAllRetriesFail_ShouldThrowAggregateException()
     {
         // Arrange
@@ -111,7 +110,7 @@ public class RetryMiddlewareTests
         callCount.Should().Be(3); // Initial + 2 retries
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_OnCancellation_ShouldNotRetry()
     {
         // Arrange
@@ -133,7 +132,7 @@ public class RetryMiddlewareTests
         callCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_OnTimeoutException_WithRetryOnTimeout_ShouldRetry()
     {
         // Arrange
@@ -165,7 +164,7 @@ public class RetryMiddlewareTests
         callCount.Should().Be(2);
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_OnInvalidOperationException_ShouldNotRetry()
     {
         // Arrange
@@ -192,7 +191,7 @@ public class RetryMiddlewareTests
         callCount.Should().Be(1); // No retries
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithCustomMaxRetries_ShouldRespect()
     {
         // Arrange
@@ -223,7 +222,7 @@ public class RetryMiddlewareTests
         callCount.Should().Be(4);
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithBackoffMultiplier_ShouldIncreaseDelay()
     {
         // Arrange
@@ -266,7 +265,7 @@ public class RetryMiddlewareTests
         delays[1].Should().BeGreaterThan(delays[0]);
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithMaxDelay_ShouldCapDelay()
     {
         // Arrange
@@ -307,7 +306,7 @@ public class RetryMiddlewareTests
         totalTime.Should().BeLessThan(TimeSpan.FromSeconds(10));
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_OnSuccess_ShouldIncrementRetryCount()
     {
         // Arrange

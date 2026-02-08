@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Xunit;
-using NSubstitute;
+using Moq;
 
 namespace Ghost.Platform.Google.Tests;
 
@@ -19,7 +19,7 @@ public class GoogleExtensionTests
         var services = new ServiceCollection();
 
         // Mock required services
-        services.AddSingleton(Substitute.For<Ghost.IBrowserSession>());
+        services.AddSingleton(new Mock<Ghost.IBrowserSession>().Object);
 
         var ext = new Ghost.Platform.Google.GoogleExtension();
         ext.ConfigureServices(services, configuration);

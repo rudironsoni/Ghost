@@ -3,14 +3,13 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Ghost.Sdk.Spider.Pipeline.Middleware;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline.Middleware;
 
-[TestFixture]
 public class StealthMiddlewareTests
 {
-    [Test]
+    [Fact]
     public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
     {
         // Act
@@ -20,7 +19,7 @@ public class StealthMiddlewareTests
         act.Should().Throw<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithEmptyConfiguration_ShouldUseDefaults()
     {
         // Arrange
@@ -33,7 +32,7 @@ public class StealthMiddlewareTests
         middleware.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithCustomUserAgents_ShouldInitialize()
     {
         // Arrange
@@ -53,7 +52,7 @@ public class StealthMiddlewareTests
         middleware.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithFingerprintingEnabled_ShouldApplyHeaders()
     {
         // Arrange
@@ -100,7 +99,7 @@ public class StealthMiddlewareTests
         request.Metadata["StealthApplied"].Should().Be(true);
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithFingerprintingDisabled_ShouldNotApplyHeaders()
     {
         // Arrange
@@ -136,7 +135,7 @@ public class StealthMiddlewareTests
         request.Metadata.Should().NotContainKey("StealthApplied");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithRandomDelayEnabled_ShouldDelay()
     {
         // Arrange
@@ -176,7 +175,7 @@ public class StealthMiddlewareTests
         stopwatch.ElapsedMilliseconds.Should().BeGreaterOrEqualTo(100);
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithRandomDelayDisabled_ShouldNotDelay()
     {
         // Arrange
@@ -214,7 +213,7 @@ public class StealthMiddlewareTests
         stopwatch.ElapsedMilliseconds.Should().BeLessThan(50);
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithMultipleRequests_ShouldRotateUserAgents()
     {
         // Arrange
@@ -268,7 +267,7 @@ public class StealthMiddlewareTests
         userAgents[5].Should().Be("Agent3");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_ShouldNotOverrideExistingHeaders()
     {
         // Arrange
@@ -312,7 +311,7 @@ public class StealthMiddlewareTests
         request.Headers.Should().ContainKey("Accept-Encoding");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_ShouldStoreUserAgentInMetadata()
     {
         // Arrange
@@ -348,7 +347,7 @@ public class StealthMiddlewareTests
         request.Metadata["UserAgent"].Should().Be(request.Headers["User-Agent"]);
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithNullRequest_ShouldCallNextMiddleware()
     {
         // Arrange
@@ -378,7 +377,7 @@ public class StealthMiddlewareTests
         nextCalled.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithCancellationToken_ShouldRespectCancellation()
     {
         // Arrange
@@ -419,7 +418,7 @@ public class StealthMiddlewareTests
         await act.Should().ThrowAsync<OperationCanceledException>();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithDefaultUserAgents_ShouldUseCommonBrowsers()
     {
         // Arrange
@@ -454,7 +453,7 @@ public class StealthMiddlewareTests
         request.Headers["User-Agent"].Should().Contain("Mozilla/5.0");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithAllFeaturesEnabled_ShouldApplyAllStealthTechniques()
     {
         // Arrange

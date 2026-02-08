@@ -2,14 +2,13 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Compilation;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline;
 
-[TestFixture]
 public class PipelineExecutionTests
 {
-    [Test]
+    [Fact]
     public async Task Build_WithMultipleMiddleware_ExecutesInOrder()
     {
         // Arrange
@@ -54,7 +53,7 @@ public class PipelineExecutionTests
         );
     }
 
-    [Test]
+    [Fact]
     public async Task Build_WithMiddleware_ModifiesStateBox()
     {
         // Arrange
@@ -88,7 +87,7 @@ public class PipelineExecutionTests
         stateBox.Properties["key2"].Should().Be("value2");
     }
 
-    [Test]
+    [Fact]
     public async Task Build_WithMiddlewareThatShortCircuits_StopsExecution()
     {
         // Arrange
@@ -127,7 +126,7 @@ public class PipelineExecutionTests
         executionOrder.Should().NotContain("Third-NotCalled");
     }
 
-    [Test]
+    [Fact]
     public void Build_WithEmptyPipeline_ThrowsInvalidOperationException()
     {
         // Arrange
@@ -141,7 +140,7 @@ public class PipelineExecutionTests
             .WithMessage("*at least one middleware*");
     }
 
-    [Test]
+    [Fact]
     public async Task Build_WithSingleMiddleware_ExecutesMiddleware()
     {
         // Arrange
@@ -168,7 +167,7 @@ public class PipelineExecutionTests
         executed.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task Build_WithFactoryMiddleware_CreatesAndExecutes()
     {
         // Arrange
@@ -191,7 +190,7 @@ public class PipelineExecutionTests
         executed.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task Build_WithNamedMiddleware_ExecutesSuccessfully()
     {
         // Arrange
@@ -214,7 +213,7 @@ public class PipelineExecutionTests
         executed.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task Build_WithConfiguredMiddleware_ExecutesSuccessfully()
     {
         // Arrange
@@ -240,7 +239,7 @@ public class PipelineExecutionTests
         executed.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void StateBox_Properties_StoresAndRetrievesValues()
     {
         // Arrange
@@ -257,7 +256,7 @@ public class PipelineExecutionTests
         stateBox.Properties["bool"].Should().Be(true);
     }
 
-    [Test]
+    [Fact]
     public void StateBox_IncrementRequestCount_IncrementsCounter()
     {
         // Arrange

@@ -3,18 +3,17 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Ghost.Sdk.Spider.Pipeline.Middleware;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline.Middleware;
 
-[TestFixture]
 public class CircuitBreakerMiddlewareTests
 {
     private const int DefaultFailureThreshold = 5;
     private const int DefaultSuccessThreshold = 2;
     private const int DefaultTimeout = 60;
 
-    [Test]
+    [Fact]
     public void Constructor_WithNullConfiguration_ShouldThrow()
     {
         // Act
@@ -24,7 +23,7 @@ public class CircuitBreakerMiddlewareTests
         act.Should().Throw<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithEmptyConfiguration_ShouldUseDefaults()
     {
         // Arrange & Act
@@ -34,7 +33,7 @@ public class CircuitBreakerMiddlewareTests
         middleware.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WhenCircuitClosed_ShouldExecuteNext()
     {
         // Arrange
@@ -54,7 +53,7 @@ public class CircuitBreakerMiddlewareTests
         nextCalled.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_AfterMultipleFailures_ShouldOpenCircuit()
     {
         // Arrange
@@ -87,7 +86,7 @@ public class CircuitBreakerMiddlewareTests
             .WithMessage("*Circuit breaker is open*");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WhenCircuitOpen_AfterTimeout_ShouldTransitionToHalfOpen()
     {
         // Arrange
@@ -133,7 +132,7 @@ public class CircuitBreakerMiddlewareTests
         nextCalled.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_InHalfOpenState_AfterSuccesses_ShouldCloseCircuit()
     {
         // Arrange
@@ -182,7 +181,7 @@ public class CircuitBreakerMiddlewareTests
         finalCallSucceeded.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_InHalfOpenState_OnFailure_ShouldReopenCircuit()
     {
         // Arrange
@@ -230,7 +229,7 @@ public class CircuitBreakerMiddlewareTests
             .WithMessage("*Circuit breaker is open*");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithCustomThresholds_ShouldRespectConfiguration()
     {
         // Arrange
@@ -262,7 +261,7 @@ public class CircuitBreakerMiddlewareTests
             .WithMessage("*Circuit breaker is open*");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithSamplingWindow_ShouldForgetOldFailures()
     {
         // Arrange
@@ -299,7 +298,7 @@ public class CircuitBreakerMiddlewareTests
         await middleware.InvokeAsync(context, successNext);
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_InClosedState_OnSuccess_ShouldResetFailureCount()
     {
         // Arrange

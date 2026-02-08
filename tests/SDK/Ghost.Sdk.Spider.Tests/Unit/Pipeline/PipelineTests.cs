@@ -2,21 +2,19 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline;
 
 /// <summary>
 /// Comprehensive tests for Pipeline components.
 /// </summary>
-[TestFixture]
 public class PipelineTests
 {
-    private Mock<IPipelineMiddleware> _mockMiddleware1 = null!;
-    private Mock<IPipelineMiddleware> _mockMiddleware2 = null!;
+    private readonly Mock<IPipelineMiddleware> _mockMiddleware1;
+    private readonly Mock<IPipelineMiddleware> _mockMiddleware2;
 
-    [SetUp]
-    public void Setup()
+    public PipelineTests()
     {
         _mockMiddleware1 = new Mock<IPipelineMiddleware>();
         _mockMiddleware2 = new Mock<IPipelineMiddleware>();
@@ -28,7 +26,7 @@ public class PipelineTests
             .Returns<PipelineContext, PipelineDelegate>(async (ctx, next) => await next(ctx));
     }
 
-    [Test]
+    [Fact]
     public void PipelineContext_WithRequiredProperties_ShouldInitialize()
     {
         // Act
@@ -45,7 +43,7 @@ public class PipelineTests
         context.CancellationToken.Should().Be(CancellationToken.None);
     }
 
-    [Test]
+    [Fact]
     public void PipelineContext_IsCancellationRequested_ShouldReturnCorrectValue()
     {
         // Arrange
@@ -64,7 +62,7 @@ public class PipelineTests
         context.IsCancellationRequested.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void PipelineContext_ThrowIfCancellationRequested_WhenCancelled_ShouldThrow()
     {
         // Arrange
@@ -85,7 +83,7 @@ public class PipelineTests
         act.Should().Throw<OperationCanceledException>();
     }
 
-    [Test]
+    [Fact]
     public void PipelineContext_ThrowIfCancellationRequested_WhenNotCancelled_ShouldNotThrow()
     {
         // Arrange
@@ -103,7 +101,7 @@ public class PipelineTests
         act.Should().NotThrow();
     }
 
-    [Test]
+    [Fact]
     public void PipelineContext_GetRequestAs_WithMatchingType_ShouldReturnRequest()
     {
         // Arrange
@@ -122,7 +120,7 @@ public class PipelineTests
         result.Should().Be(request);
     }
 
-    [Test]
+    [Fact]
     public void PipelineContext_GetRequestAs_WithNonMatchingType_ShouldReturnNull()
     {
         // Arrange
@@ -141,7 +139,7 @@ public class PipelineTests
         result.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void PipelineContext_WithStateBox_ShouldRetainReference()
     {
         // Arrange
@@ -158,7 +156,7 @@ public class PipelineTests
         context.StateBox.Should().BeSameAs(stateBox);
     }
 
-    [Test]
+    [Fact]
     public void PipelineContext_WithoutStateBox_ShouldBeNull()
     {
         // Arrange
@@ -173,7 +171,7 @@ public class PipelineTests
         context.StateBox.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void MiddlewareConfiguration_DefaultValues_ShouldBeCorrect()
     {
         // Arrange & Act
@@ -184,7 +182,7 @@ public class PipelineTests
         config.Name.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void MiddlewareConfiguration_WithCustomValues_ShouldRetain()
     {
         // Arrange & Act
@@ -199,7 +197,7 @@ public class PipelineTests
         config.Enabled.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void PipelineDelegate_ShouldBeInvocable()
     {
         // Arrange
@@ -224,7 +222,7 @@ public class PipelineTests
         executed.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task PipelineDelegate_ShouldChain()
     {
         // Arrange
@@ -256,7 +254,7 @@ public class PipelineTests
         executionOrder.Should().Equal("Step2", "Step1");
     }
 
-    [Test]
+    [Fact]
     public void SpiderStateBox_ShouldInitialize()
     {
         // Act
@@ -266,14 +264,14 @@ public class PipelineTests
         stateBox.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void PipelineContext_IsStruct_ShouldBeValueType()
     {
         // Assert
         typeof(PipelineContext).IsValueType.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void PipelineContext_WithDifferentRequests_ShouldBeIndependent()
     {
         // Arrange

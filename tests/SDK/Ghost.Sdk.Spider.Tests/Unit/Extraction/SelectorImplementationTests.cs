@@ -1,17 +1,15 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Extraction.Selectors;
-using NUnit.Framework;
+using Xunit;
 using System.Text.RegularExpressions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 
-[TestFixture]
 public class SelectorImplementationTests
 {
-    [TestFixture]
     public class XPathSelectorTests
     {
-        [Test]
+        [Fact]
         public void Select_WithBasicXPath_ReturnsAllMatches()
         {
             // Arrange
@@ -27,7 +25,7 @@ public class SelectorImplementationTests
             results[1].Should().Be("Text 2");
         }
 
-        [Test]
+        [Fact]
         public void Select_WithAttributeSelector_ReturnsAttributeValues()
         {
             // Arrange
@@ -42,7 +40,7 @@ public class SelectorImplementationTests
             results[0].Should().Be("http://example.com");
         }
 
-        [Test]
+        [Fact]
         public void SelectFirst_ReturnsFirstMatch()
         {
             // Arrange
@@ -56,7 +54,7 @@ public class SelectorImplementationTests
             result.Should().Be("First");
         }
 
-        [Test]
+        [Fact]
         public void Select_WithEmptyContent_ReturnsEmptyList()
         {
             // Arrange
@@ -69,7 +67,7 @@ public class SelectorImplementationTests
             results.Should().BeEmpty();
         }
 
-        [Test]
+        [Fact]
         public void Validate_WithValidXPath_ReturnsTrue()
         {
             // Arrange
@@ -83,10 +81,9 @@ public class SelectorImplementationTests
         }
     }
 
-    [TestFixture]
     public class CssSelectorTests
     {
-        [Test]
+        [Fact]
         public void Select_WithBasicCss_ReturnsAllMatches()
         {
             // Arrange
@@ -102,7 +99,7 @@ public class SelectorImplementationTests
             results[1].Should().Be("Item 2");
         }
 
-        [Test]
+        [Fact]
         public void Select_WithAttributeSelector_ReturnsAttributeValues()
         {
             // Arrange
@@ -117,7 +114,7 @@ public class SelectorImplementationTests
             results[0].Should().Be("image.jpg");
         }
 
-        [Test]
+        [Fact]
         public void SelectFirst_ReturnsFirstMatch()
         {
             // Arrange
@@ -131,7 +128,7 @@ public class SelectorImplementationTests
             result.Should().Be("First");
         }
 
-        [Test]
+        [Fact]
         public void Select_WithComplexSelector_ReturnsMatches()
         {
             // Arrange
@@ -146,7 +143,7 @@ public class SelectorImplementationTests
             results[0].Should().Be("Nested");
         }
 
-        [Test]
+        [Fact]
         public void Validate_WithValidCss_ReturnsTrue()
         {
             // Arrange
@@ -160,10 +157,9 @@ public class SelectorImplementationTests
         }
     }
 
-    [TestFixture]
     public class RegexSelectorTests
     {
-        [Test]
+        [Fact]
         public void Select_WithSimplePattern_ReturnsAllMatches()
         {
             // Arrange
@@ -179,7 +175,7 @@ public class SelectorImplementationTests
             results[1].Should().Be("another@test.com");
         }
 
-        [Test]
+        [Fact]
         public void Select_WithCaptureGroup_ReturnsGroupValue()
         {
             // Arrange
@@ -195,7 +191,7 @@ public class SelectorImplementationTests
             results[1].Should().Be("49.99");
         }
 
-        [Test]
+        [Fact]
         public void SelectFirst_ReturnsFirstMatch()
         {
             // Arrange
@@ -209,7 +205,7 @@ public class SelectorImplementationTests
             result.Should().Be("123");
         }
 
-        [Test]
+        [Fact]
         public void Select_WithCaseInsensitive_MatchesIgnoringCase()
         {
             // Arrange
@@ -223,7 +219,7 @@ public class SelectorImplementationTests
             results.Should().HaveCount(3);
         }
 
-        [Test]
+        [Fact]
         public void Validate_WithValidPattern_ReturnsTrue()
         {
             // Arrange
@@ -237,10 +233,9 @@ public class SelectorImplementationTests
         }
     }
 
-    [TestFixture]
     public class JsonPathSelectorTests
     {
-        [Test]
+        [Fact]
         public void Select_WithBasicPath_ReturnsAllMatches()
         {
             // Arrange
@@ -257,7 +252,7 @@ public class SelectorImplementationTests
             results[2].Should().Contain("item3");
         }
 
-        [Test]
+        [Fact]
         public void Select_WithNestedPath_ReturnsValue()
         {
             // Arrange
@@ -272,7 +267,7 @@ public class SelectorImplementationTests
             results[0].Should().Contain("John");
         }
 
-        [Test]
+        [Fact]
         public void SelectFirst_ReturnsFirstMatch()
         {
             // Arrange
@@ -287,7 +282,7 @@ public class SelectorImplementationTests
             result.Should().Contain("1");
         }
 
-        [Test]
+        [Fact]
         public void Select_WithArrayFilter_ReturnsFilteredItems()
         {
             // Arrange
@@ -301,7 +296,7 @@ public class SelectorImplementationTests
             results.Should().HaveCount(2);
         }
 
-        [Test]
+        [Fact]
         public void Select_WithInvalidJson_ReturnsEmptyList()
         {
             // Arrange
@@ -314,7 +309,7 @@ public class SelectorImplementationTests
             results.Should().BeEmpty();
         }
 
-        [Test]
+        [Fact]
         public void Validate_WithValidPath_ReturnsTrue()
         {
             // Arrange
@@ -328,10 +323,9 @@ public class SelectorImplementationTests
         }
     }
 
-    [TestFixture]
     public class JmesPathSelectorTests
     {
-        [Test]
+        [Fact]
         public void Select_WithBasicExpression_ReturnsValue()
         {
             // Arrange
@@ -346,7 +340,7 @@ public class SelectorImplementationTests
             results[0].Should().Contain("John");
         }
 
-        [Test]
+        [Fact]
         public void Select_WithArrayProjection_ReturnsAllValues()
         {
             // Arrange
@@ -360,7 +354,7 @@ public class SelectorImplementationTests
             results.Should().HaveCount(2);
         }
 
-        [Test]
+        [Fact]
         public void SelectFirst_ReturnsFirstMatch()
         {
             // Arrange
@@ -374,7 +368,7 @@ public class SelectorImplementationTests
             result.Should().NotBeNull();
         }
 
-        [Test]
+        [Fact]
         public void Select_WithInvalidJson_ReturnsEmptyList()
         {
             // Arrange
@@ -387,7 +381,7 @@ public class SelectorImplementationTests
             results.Should().BeEmpty();
         }
 
-        [Test]
+        [Fact]
         public void Validate_WithValidExpression_ReturnsTrue()
         {
             // Arrange

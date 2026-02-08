@@ -1,14 +1,13 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Extraction.Selectors;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 
-[TestFixture]
 public class JsonPathSelectorTests
 {
-    [Test]
+    [Fact]
     public void Select_WithSimplePath_ShouldReturnValue()
     {
         // Arrange
@@ -23,7 +22,7 @@ public class JsonPathSelectorTests
         results[0].Should().Contain("Test Item");
     }
 
-    [Test]
+    [Fact]
     public void Select_WithArrayPath_ShouldReturnArrayItems()
     {
         // Arrange
@@ -37,7 +36,7 @@ public class JsonPathSelectorTests
         results.Should().HaveCount(3);
     }
 
-    [Test]
+    [Fact]
     public void Select_WithNestedPath_ShouldReturnNestedValue()
     {
         // Arrange
@@ -52,7 +51,7 @@ public class JsonPathSelectorTests
         results[0].Should().Contain("2026-01-01");
     }
 
-    [Test]
+    [Fact]
     public async Task Select_WithComplexNesting_ShouldWork()
     {
         // Arrange
@@ -69,7 +68,7 @@ public class JsonPathSelectorTests
         results[2].Should().Contain("Item Three");
     }
 
-    [Test]
+    [Fact]
     public void SelectFirst_ShouldReturnFirstMatch()
     {
         // Arrange
@@ -84,7 +83,7 @@ public class JsonPathSelectorTests
         result.Should().Contain("tag1");
     }
 
-    [Test]
+    [Fact]
     public void SelectFirst_WithNoMatches_ShouldReturnNull()
     {
         // Arrange
@@ -98,7 +97,7 @@ public class JsonPathSelectorTests
         result.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void Select_WithEmptyContent_ShouldReturnEmptyList()
     {
         // Arrange
@@ -111,7 +110,7 @@ public class JsonPathSelectorTests
         results.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Select_WithInvalidJson_ShouldReturnEmptyList()
     {
         // Arrange
@@ -125,7 +124,7 @@ public class JsonPathSelectorTests
         results.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Select_WithFilterExpression_ShouldReturnFilteredResults()
     {
         // Arrange
@@ -139,7 +138,7 @@ public class JsonPathSelectorTests
         results.Should().HaveCount(2);
     }
 
-    [Test]
+    [Fact]
     public async Task Select_WithDeepNesting_ShouldExtractCorrectly()
     {
         // Arrange
@@ -155,7 +154,7 @@ public class JsonPathSelectorTests
         results[1].Should().Contain("ORD-002");
     }
 
-    [Test]
+    [Fact]
     public async Task Select_WithRecursiveDescent_ShouldFindAllMatches()
     {
         // Arrange
@@ -169,7 +168,7 @@ public class JsonPathSelectorTests
         results.Should().NotBeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithValidPath_ShouldReturnTrue()
     {
         // Arrange
@@ -182,21 +181,21 @@ public class JsonPathSelectorTests
         isValid.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithNullExpression_ShouldThrow()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new JsonPathSelector(null!));
+        var exception = Assert.Throws<ArgumentNullException>(() => new JsonPathSelector(null!));
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithEmptyExpression_ShouldThrow()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new JsonPathSelector(""));
+        var exception = Assert.Throws<ArgumentNullException>(() => new JsonPathSelector(""));
     }
 
-    [Test]
+    [Fact]
     public void Expression_ShouldReturnConstructorValue()
     {
         // Arrange
@@ -207,7 +206,7 @@ public class JsonPathSelectorTests
         selector.Expression.Should().Be(expression);
     }
 
-    [Test]
+    [Fact]
     public void Select_WithRootPath_ShouldReturnWholeDocument()
     {
         // Arrange
@@ -223,7 +222,7 @@ public class JsonPathSelectorTests
         results[0].Should().Contain("value");
     }
 
-    [Test]
+    [Fact]
     public void Select_WithArrayIndex_ShouldReturnSpecificElement()
     {
         // Arrange

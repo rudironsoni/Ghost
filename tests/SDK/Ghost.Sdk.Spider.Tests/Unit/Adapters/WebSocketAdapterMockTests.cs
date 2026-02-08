@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.WebSocket;
-using NUnit.Framework;
+using Xunit;
 using System.Net.WebSockets;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
@@ -8,10 +8,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 /// <summary>
 /// Unit tests for WebSocket adapter components with mocked dependencies.
 /// </summary>
-[TestFixture]
 public class WebSocketAdapterMockTests
 {
-    [Test]
+    [Fact]
     public void WebSocketMessage_ShouldHaveCorrectProperties()
     {
         // Arrange & Act
@@ -28,7 +27,7 @@ public class WebSocketAdapterMockTests
         message.ReceivedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(1));
     }
 
-    [Test]
+    [Fact]
     public void WebSocketMessage_CreateText_ShouldWork()
     {
         // Act
@@ -40,7 +39,7 @@ public class WebSocketAdapterMockTests
         message.MessageType.Should().Be(WebSocketMessageType.Text);
     }
 
-    [Test]
+    [Fact]
     public void WebSocketMessage_CreateBinary_ShouldWork()
     {
         // Arrange
@@ -55,7 +54,7 @@ public class WebSocketAdapterMockTests
         message.MessageType.Should().Be(WebSocketMessageType.Binary);
     }
 
-    [Test]
+    [Fact]
     public void WebSocketMessage_IsClose_ShouldWorkCorrectly()
     {
         // Arrange
@@ -70,7 +69,7 @@ public class WebSocketAdapterMockTests
         message.IsBinary.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void HeartbeatOptions_ShouldHaveDefaultValues()
     {
         // Arrange & Act
@@ -82,7 +81,7 @@ public class WebSocketAdapterMockTests
         options.Message.Should().Be("ping");
     }
 
-    [Test]
+    [Fact]
     public void HeartbeatOptions_ShouldAllowCustomization()
     {
         // Arrange & Act
@@ -99,7 +98,7 @@ public class WebSocketAdapterMockTests
         options.Message.Should().Be("PING");
     }
 
-    [Test]
+    [Fact]
     public void ReconnectionPolicy_ShouldHaveDefaultValues()
     {
         // Arrange & Act
@@ -113,7 +112,7 @@ public class WebSocketAdapterMockTests
         policy.BackoffMultiplier.Should().Be(2.0);
     }
 
-    [Test]
+    [Fact]
     public void ReconnectionPolicy_CalculateDelay_ShouldUseExponentialBackoff()
     {
         // Arrange
@@ -138,7 +137,7 @@ public class WebSocketAdapterMockTests
         delay10.Should().Be(TimeSpan.FromSeconds(60)); // Capped at max
     }
 
-    [Test]
+    [Fact]
     public void ReconnectionPolicy_Disabled_ShouldNotReconnect()
     {
         // Act
@@ -148,7 +147,7 @@ public class WebSocketAdapterMockTests
         policy.Enabled.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void ReconnectionPolicy_Aggressive_ShouldHaveUnlimitedAttempts()
     {
         // Act
@@ -159,7 +158,7 @@ public class WebSocketAdapterMockTests
         policy.Enabled.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void MessageBuffer_ShouldStoreAndRetrieveMessages()
     {
         // Arrange
@@ -178,7 +177,7 @@ public class WebSocketAdapterMockTests
         messages[1].Content.Should().Be("msg2");
     }
 
-    [Test]
+    [Fact]
     public void MessageBuffer_Flush_ShouldRemoveMessages()
     {
         // Arrange
@@ -195,7 +194,7 @@ public class WebSocketAdapterMockTests
         buffer.IsEmpty.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void MessageBuffer_Clear_ShouldRemoveAllMessages()
     {
         // Arrange
@@ -211,7 +210,7 @@ public class WebSocketAdapterMockTests
         buffer.IsEmpty.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void MessageBuffer_Count_ShouldReflectMessageCount()
     {
         // Arrange
@@ -230,7 +229,7 @@ public class WebSocketAdapterMockTests
         buffer.Count.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public void MessageBuffer_ShouldFlush_WhenCountThresholdReached()
     {
         // Arrange
@@ -247,7 +246,7 @@ public class WebSocketAdapterMockTests
         shouldFlush2.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void MessageBuffer_ToJsonArray_ShouldSerializeMessages()
     {
         // Arrange
@@ -263,7 +262,7 @@ public class WebSocketAdapterMockTests
         json.Should().Contain("\"id\":2");
     }
 
-    [Test]
+    [Fact]
     public void MessageBuffer_GetStatistics_ShouldReturnCorrectData()
     {
         // Arrange
@@ -279,7 +278,7 @@ public class WebSocketAdapterMockTests
         age.Should().BeGreaterOrEqualTo(TimeSpan.Zero);
     }
 
-    [Test]
+    [Fact]
     public void MessageBuffer_AddNull_ShouldThrowArgumentNullException()
     {
         // Arrange
@@ -290,7 +289,7 @@ public class WebSocketAdapterMockTests
             .Should().Throw<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public void ReconnectionPolicy_Validate_WithValidSettings_ShouldNotThrow()
     {
         // Arrange
@@ -300,7 +299,7 @@ public class WebSocketAdapterMockTests
         policy.Invoking(p => p.Validate()).Should().NotThrow();
     }
 
-    [Test]
+    [Fact]
     public void ReconnectionPolicy_Validate_WithInvalidMaxAttempts_ShouldThrow()
     {
         // Arrange
@@ -315,7 +314,7 @@ public class WebSocketAdapterMockTests
             .WithMessage("*MaxAttempts*");
     }
 
-    [Test]
+    [Fact]
     public void ReconnectionPolicy_Validate_WithInvalidBackoffMultiplier_ShouldThrow()
     {
         // Arrange
@@ -330,7 +329,7 @@ public class WebSocketAdapterMockTests
             .WithMessage("*BackoffMultiplier*");
     }
 
-    [Test]
+    [Fact]
     public void MessageBuffer_IsEmpty_ShouldReflectState()
     {
         // Arrange

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
-using NUnit.Framework;
+using Xunit;
 using System.Net;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
@@ -13,26 +13,23 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 /// <summary>
 /// Comprehensive unit tests for GraphQL adapter.
 /// </summary>
-[TestFixture]
-public class GraphQLAdapterComprehensiveTests
+public class GraphQLAdapterComprehensiveTests : IDisposable
 {
-    private Mock<HttpMessageHandler> _mockHandler = null!;
-    private HttpClient _httpClient = null!;
+    private readonly Mock<HttpMessageHandler> _mockHandler;
+    private readonly HttpClient _httpClient;
 
-    [SetUp]
-    public void SetUp()
+    public GraphQLAdapterComprehensiveTests()
     {
         _mockHandler = new Mock<HttpMessageHandler>();
         _httpClient = new HttpClient(_mockHandler.Object);
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         _httpClient?.Dispose();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLAdapter_Properties_ShouldBeCorrect()
     {
         // Arrange
@@ -44,7 +41,7 @@ public class GraphQLAdapterComprehensiveTests
         adapter.IsAvailable.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLAdapter_Constructor_WithNullHttpClient_ShouldThrow()
     {
         // Act & Assert
@@ -52,7 +49,7 @@ public class GraphQLAdapterComprehensiveTests
             .Should().Throw<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public async Task GraphQLAdapter_CanHandle_WithNullRequest_ShouldReturnFalse()
     {
         // Arrange
@@ -65,7 +62,7 @@ public class GraphQLAdapterComprehensiveTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task GraphQLAdapter_CanHandle_WithGraphQLContentType_ShouldReturnTrue()
     {
         // Arrange
@@ -82,7 +79,7 @@ public class GraphQLAdapterComprehensiveTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task GraphQLAdapter_CanHandle_WithGraphQLInUrl_ShouldReturnTrue()
     {
         // Arrange
@@ -96,7 +93,7 @@ public class GraphQLAdapterComprehensiveTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task GraphQLAdapter_CanHandle_WithGraphQLHeader_ShouldReturnTrue()
     {
         // Arrange
@@ -113,7 +110,7 @@ public class GraphQLAdapterComprehensiveTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task GraphQLAdapter_CanHandle_WithRegularUrl_ShouldReturnFalse()
     {
         // Arrange
@@ -127,7 +124,7 @@ public class GraphQLAdapterComprehensiveTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task GraphQLAdapter_Extract_WithNullRequest_ShouldThrowArgumentNullException()
     {
         // Arrange
@@ -138,7 +135,7 @@ public class GraphQLAdapterComprehensiveTests
             .Should().ThrowAsync<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public async Task GraphQLAdapter_Extract_WithNullOptions_ShouldThrowArgumentNullException()
     {
         // Arrange
@@ -150,7 +147,7 @@ public class GraphQLAdapterComprehensiveTests
             .Should().ThrowAsync<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public async Task GraphQLAdapter_Extract_WithQueryInBody_ShouldSucceed()
     {
         // Arrange
@@ -187,7 +184,7 @@ public class GraphQLAdapterComprehensiveTests
         response.AdapterName.Should().Be("GraphQL");
     }
 
-    [Test]
+    [Fact]
     public async Task GraphQLAdapter_Extract_WithQueryInMetadata_ShouldSucceed()
     {
         // Arrange
@@ -222,7 +219,7 @@ public class GraphQLAdapterComprehensiveTests
         response.IsSuccess.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task GraphQLAdapter_Extract_WithGraphQLErrors_ShouldReturnError()
     {
         // Arrange
@@ -261,7 +258,7 @@ public class GraphQLAdapterComprehensiveTests
         response.Content.Error.Should().Contain("GraphQL errors");
     }
 
-    [Test]
+    [Fact]
     public async Task GraphQLAdapter_Extract_WithNoQuery_ShouldThrowInvalidOperationException()
     {
         // Arrange
@@ -277,7 +274,7 @@ public class GraphQLAdapterComprehensiveTests
         response.Error.Should().Contain("query");
     }
 
-    [Test]
+    [Fact]
     public async Task GraphQLAdapter_Extract_WithHttpError_ShouldReturnError()
     {
         // Arrange
@@ -304,7 +301,7 @@ public class GraphQLAdapterComprehensiveTests
         response.Error.Should().Contain("HTTP request failed");
     }
 
-    [Test]
+    [Fact]
     public async Task GraphQLAdapter_Extract_WithExtensions_ShouldIncludeInMetadata()
     {
         // Arrange
@@ -340,7 +337,7 @@ public class GraphQLAdapterComprehensiveTests
         response.Metadata.Should().ContainKey("GraphQL.Extensions");
     }
 
-    [Test]
+    [Fact]
     public async Task GraphQLAdapter_Extract_WithCustomHeaders_ShouldIncludeThem()
     {
         // Arrange
@@ -373,7 +370,7 @@ public class GraphQLAdapterComprehensiveTests
         capturedRequest!.Headers.Should().Contain(h => h.Key == "Authorization");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLAdapter_WithLogger_ShouldNotThrow()
     {
         // Arrange

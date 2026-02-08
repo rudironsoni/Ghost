@@ -7,7 +7,7 @@ using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Platform.LinkedIn.Tests;
@@ -17,18 +17,16 @@ public class LinkedInJobClientTests
     [Fact]
     public async Task SearchJobsAsyncReturnsEnumerable()
     {
-        var mockSession = Substitute.For<IBrowserSession>();
-        var mockPage = Substitute.For<IPage>();
-        mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(mockPage));
-        mockPage.QuerySelectorAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IElement?>(null));
+        var mockSession = new Mock<IBrowserSession>();
+        var mockPage = new Mock<IPage>();
+        mockSession.Setup(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockPage.Object);
+        mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IElement?)null);
 
-        var logger = Substitute.For<ILogger<LinkedInJobClient>>();
-        var jsAdapter = Substitute.For<JavaScriptAdapter>();
-        var entityParser = Substitute.For<EntityParser>();
+        var logger = new Mock<ILogger<LinkedInJobClient>>();
         var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
-        var client = new LinkedInJobClient(mockSession, Options.Create(opts), logger, jsAdapter, entityParser);
+        var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), logger.Object, new JavaScriptAdapter(), new EntityParser());
         var jobs = await client.SearchJobsAsync(new JobSearchCriteria { Query = "developer" }, CancellationToken.None);
         jobs.Should().BeAssignableTo<System.Collections.Generic.IEnumerable<JobListing>>();
     }
@@ -36,18 +34,16 @@ public class LinkedInJobClientTests
     [Fact]
     public async Task ApplyAsyncReturnsFalseWhenNoApplyButton()
     {
-        var mockSession = Substitute.For<IBrowserSession>();
-        var mockPage = Substitute.For<IPage>();
-        mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(mockPage));
-        mockPage.QuerySelectorAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IElement?>(null));
+        var mockSession = new Mock<IBrowserSession>();
+        var mockPage = new Mock<IPage>();
+        mockSession.Setup(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockPage.Object);
+        mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IElement?)null);
 
-        var logger = Substitute.For<ILogger<LinkedInJobClient>>();
-        var jsAdapter = Substitute.For<JavaScriptAdapter>();
-        var entityParser = Substitute.For<EntityParser>();
+        var logger = new Mock<ILogger<LinkedInJobClient>>();
         var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
-        var client = new LinkedInJobClient(mockSession, Options.Create(opts), logger, jsAdapter, entityParser);
+        var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), logger.Object, new JavaScriptAdapter(), new EntityParser());
         var result = await client.ApplyAsync("job:1", new ApplicationDetails { ApplicantName = "Test", ApplicantEmail = "a@b.com" }, CancellationToken.None);
         result.Should().BeNull();
     }
@@ -56,14 +52,12 @@ public class LinkedInJobClientTests
     public async Task GetJobDetailsBrowserAsyncSetsProxyTimezoneWhenConfigured()
     {
         // Arrange
-        var mockSession = Substitute.For<IBrowserSession>();
-        var mockPage = Substitute.For<IPage>();
+        var mockSession = new Mock<IBrowserSession>();
+        var mockPage = new Mock<IPage>();
 
-        mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(mockPage));
+        mockSession.Setup(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockPage.Object);
 
-        var jsAdapter = Substitute.For<JavaScriptAdapter>();
-        var entityParser = Substitute.For<EntityParser>();
         var opts = new LinkedInOptions
         {
             TimezoneId = "Europe/Madrid",
@@ -71,39 +65,37 @@ public class LinkedInJobClientTests
             ScrapingStrategy = JobScrapingStrategy.BrowserPage
         };
 
-        var client = new LinkedInJobClient(mockSession, Options.Create(opts), null!, jsAdapter, entityParser);
+        var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), null!, new JavaScriptAdapter(), new EntityParser());
 
         // Act
         await client.GetJobDetailsAsync("123");
 
         // Assert
-        await mockSession.Received().NewPageAsync(Arg.Is<PageOptions>(p =>
+        mockSession.Verify(s => s.NewPageAsync(It.Is<PageOptions>(p =>
             p.TimezoneId == "Europe/Madrid" &&
             p.Locale == "es-ES"
-        ), Arg.Any<CancellationToken>());
+        ), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task GetJobDetailsBrowserAsyncDetectsEasyApply()
     {
         // Arrange
-        var mockSession = Substitute.For<IBrowserSession>();
-        var mockPage = Substitute.For<IPage>();
+        var mockSession = new Mock<IBrowserSession>();
+        var mockPage = new Mock<IPage>();
 
-        mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(mockPage));
+        mockSession.Setup(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockPage.Object);
 
-        var mockBtn = Substitute.For<IElement>();
-        mockBtn.GetTextContentAsync(Arg.Any<CancellationToken>()).Returns("Easy Apply");
+        var mockBtn = new Mock<IElement>();
+        mockBtn.Setup(b => b.GetTextContentAsync(It.IsAny<CancellationToken>())).ReturnsAsync("Easy Apply");
 
         // Mock query selector to return the button
-        mockPage.QuerySelectorAsync(Arg.Is<string>(s => s.Contains("jobs-apply-button") || s.Contains("jobs-s-apply")), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IElement?>(mockBtn));
+        mockPage.Setup(p => p.QuerySelectorAsync(It.Is<string>(s => s.Contains("jobs-apply-button") || s.Contains("jobs-s-apply")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockBtn.Object);
 
-        var jsAdapter = Substitute.For<JavaScriptAdapter>();
-        var entityParser = Substitute.For<EntityParser>();
         var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
-        var client = new LinkedInJobClient(mockSession, Options.Create(opts), null!, jsAdapter, entityParser);
+        var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), null!, new JavaScriptAdapter(), new EntityParser());
 
         // Act
         var result = await client.GetJobDetailsAsync("123");

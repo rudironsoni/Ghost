@@ -1,7 +1,7 @@
 using Ghost.Consent;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Tests.Consent;
@@ -66,10 +66,10 @@ public class ConsentHandlerTests
     {
         // Arrange
         var handler = new ConsentHandler();
-        var page = Substitute.For<IPage>();
+        var mockPage = new Mock<IPage>();
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() => handler.AcceptConsentAsync(page, null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => handler.AcceptConsentAsync(mockPage.Object, null!));
     }
 
     [Fact]
@@ -87,12 +87,12 @@ public class ConsentHandlerTests
     {
         // Arrange
         var handler = new ConsentHandler();
-        var page = Substitute.For<IPage>();
-        page.Url.Returns("https://example.com");
-        page.QuerySelectorAsync(Arg.Any<string>()).Returns(Task.FromResult<IElement?>(null));
+        var mockPage = new Mock<IPage>();
+        mockPage.Setup(p => p.Url).Returns("https://example.com");
+        mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>())).ReturnsAsync((IElement?)null);
 
         // Act
-        var result = await handler.DetectCMPAsync(page);
+        var result = await handler.DetectCMPAsync(mockPage.Object);
 
         // Assert
         Assert.Null(result);
@@ -103,10 +103,10 @@ public class ConsentHandlerTests
     {
         // Arrange
         var handler = new ConsentHandler();
-        var page = Substitute.For<IPage>();
+        var mockPage = new Mock<IPage>();
 
         // Act
-        var result = await handler.AcceptConsentAsync(page, "unknown-cmp");
+        var result = await handler.AcceptConsentAsync(mockPage.Object, "unknown-cmp");
 
         // Assert
         Assert.False(result);
@@ -117,12 +117,12 @@ public class ConsentHandlerTests
     {
         // Arrange
         var handler = new ConsentHandler();
-        var page = Substitute.For<IPage>();
-        page.Url.Returns("https://example.com");
-        page.QuerySelectorAsync(Arg.Any<string>()).Returns(Task.FromResult<IElement?>(null));
+        var mockPage = new Mock<IPage>();
+        mockPage.Setup(p => p.Url).Returns("https://example.com");
+        mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>())).ReturnsAsync((IElement?)null);
 
         // Act
-        var result = await handler.HandleConsentAsync(page);
+        var result = await handler.HandleConsentAsync(mockPage.Object);
 
         // Assert
         Assert.False(result);

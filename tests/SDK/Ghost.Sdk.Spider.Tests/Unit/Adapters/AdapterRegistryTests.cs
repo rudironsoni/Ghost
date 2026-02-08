@@ -1,25 +1,23 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Adapters.Contracts;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Comprehensive tests for AdapterRegistry covering registration and discovery.
 /// </summary>
-[TestFixture]
 public class AdapterRegistryTests
 {
-    private AdapterRegistry _registry = null!;
+    private readonly AdapterRegistry _registry;
 
-    [SetUp]
-    public void Setup()
+    public AdapterRegistryTests()
     {
         _registry = new AdapterRegistry();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_ShouldRegisterBuiltInAdapters()
     {
         // Assert
@@ -28,7 +26,7 @@ public class AdapterRegistryTests
         _registry.IsRegistered("GraphQL").Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Register_WithValidAdapter_ShouldRegisterSuccessfully()
     {
         // Act
@@ -38,7 +36,7 @@ public class AdapterRegistryTests
         _registry.IsRegistered("TestAdapter").Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Register_WithNullType_ShouldThrowArgumentNullException()
     {
         // Act
@@ -48,7 +46,7 @@ public class AdapterRegistryTests
         act.Should().Throw<ArgumentNullException>().WithParameterName("adapterType");
     }
 
-    [Test]
+    [Fact]
     public void Register_WithNullName_ShouldThrowArgumentException()
     {
         // Act
@@ -58,7 +56,7 @@ public class AdapterRegistryTests
         act.Should().Throw<ArgumentException>();
     }
 
-    [Test]
+    [Fact]
     public void Register_WithEmptyName_ShouldThrowArgumentException()
     {
         // Act
@@ -68,7 +66,7 @@ public class AdapterRegistryTests
         act.Should().Throw<ArgumentException>();
     }
 
-    [Test]
+    [Fact]
     public void Register_WithWhitespaceName_ShouldThrowArgumentException()
     {
         // Act
@@ -78,7 +76,7 @@ public class AdapterRegistryTests
         act.Should().Throw<ArgumentException>();
     }
 
-    [Test]
+    [Fact]
     public void Register_WithNonAdapterType_ShouldThrowArgumentException()
     {
         // Act
@@ -89,7 +87,7 @@ public class AdapterRegistryTests
             .WithMessage("*does not implement IContentAdapter*");
     }
 
-    [Test]
+    [Fact]
     public void Register_WithMultipleContentTypes_ShouldRegisterForAll()
     {
         // Act
@@ -103,7 +101,7 @@ public class AdapterRegistryTests
         xmlAdapters.Should().Contain(typeof(StaticHtmlAdapter));
     }
 
-    [Test]
+    [Fact]
     public void Register_SameNameTwice_ShouldOverwrite()
     {
         // Arrange
@@ -117,7 +115,7 @@ public class AdapterRegistryTests
         adapterType.Should().Be(typeof(GraphQLAdapter));
     }
 
-    [Test]
+    [Fact]
     public void GetAdapterType_WithExistingName_ShouldReturnType()
     {
         // Arrange
@@ -130,7 +128,7 @@ public class AdapterRegistryTests
         result.Should().Be(typeof(StaticHtmlAdapter));
     }
 
-    [Test]
+    [Fact]
     public void GetAdapterType_WithNonExistingName_ShouldReturnNull()
     {
         // Act
@@ -140,7 +138,7 @@ public class AdapterRegistryTests
         result.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void GetAdapterType_WithNullName_ShouldThrowArgumentException()
     {
         // Act
@@ -150,7 +148,7 @@ public class AdapterRegistryTests
         act.Should().Throw<ArgumentException>();
     }
 
-    [Test]
+    [Fact]
     public void GetAdapterType_WithEmptyName_ShouldThrowArgumentException()
     {
         // Act
@@ -160,7 +158,7 @@ public class AdapterRegistryTests
         act.Should().Throw<ArgumentException>();
     }
 
-    [Test]
+    [Fact]
     public void GetAdapterType_IsCaseInsensitive()
     {
         // Arrange
@@ -176,7 +174,7 @@ public class AdapterRegistryTests
         result2.Should().Be(result3);
     }
 
-    [Test]
+    [Fact]
     public void GetAdaptersByContentType_WithMatchingType_ShouldReturnAdapters()
     {
         // Arrange
@@ -189,7 +187,7 @@ public class AdapterRegistryTests
         result.Should().Contain(typeof(StaticHtmlAdapter));
     }
 
-    [Test]
+    [Fact]
     public void GetAdaptersByContentType_WithNoMatchingType_ShouldReturnEmpty()
     {
         // Act
@@ -199,7 +197,7 @@ public class AdapterRegistryTests
         result.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void GetAdaptersByContentType_WithMultipleAdapters_ShouldReturnAll()
     {
         // Arrange
@@ -213,7 +211,7 @@ public class AdapterRegistryTests
         result.Should().HaveCountGreaterOrEqualTo(2);
     }
 
-    [Test]
+    [Fact]
     public void GetAllAdapterTypes_ShouldReturnAllRegisteredTypes()
     {
         // Arrange
@@ -227,7 +225,7 @@ public class AdapterRegistryTests
         result.Should().Contain(typeof(StaticHtmlAdapter));
     }
 
-    [Test]
+    [Fact]
     public void GetAllAdapterTypes_WithDuplicateRegistrations_ShouldReturnDistinct()
     {
         // Arrange
@@ -242,7 +240,7 @@ public class AdapterRegistryTests
         staticHtmlCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void IsRegistered_WithExistingAdapter_ShouldReturnTrue()
     {
         // Arrange
@@ -255,7 +253,7 @@ public class AdapterRegistryTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void IsRegistered_WithNonExistingAdapter_ShouldReturnFalse()
     {
         // Act
@@ -265,7 +263,7 @@ public class AdapterRegistryTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void IsRegistered_WithNullName_ShouldThrowArgumentException()
     {
         // Act
@@ -275,7 +273,7 @@ public class AdapterRegistryTests
         act.Should().Throw<ArgumentException>();
     }
 
-    [Test]
+    [Fact]
     public void IsRegistered_WithEmptyName_ShouldThrowArgumentException()
     {
         // Act
@@ -285,7 +283,7 @@ public class AdapterRegistryTests
         act.Should().Throw<ArgumentException>();
     }
 
-    [Test]
+    [Fact]
     public void IsRegistered_IsCaseInsensitive()
     {
         // Arrange
@@ -297,7 +295,7 @@ public class AdapterRegistryTests
         _registry.IsRegistered("TESTADAPTER").Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Unregister_WithExistingAdapter_ShouldReturnTrue()
     {
         // Arrange
@@ -311,7 +309,7 @@ public class AdapterRegistryTests
         _registry.IsRegistered("TestAdapter").Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Unregister_WithNonExistingAdapter_ShouldReturnFalse()
     {
         // Act
@@ -321,7 +319,7 @@ public class AdapterRegistryTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Unregister_WithNullName_ShouldThrowArgumentException()
     {
         // Act
@@ -331,7 +329,7 @@ public class AdapterRegistryTests
         act.Should().Throw<ArgumentException>();
     }
 
-    [Test]
+    [Fact]
     public void Unregister_ShouldRemoveFromContentTypeMappings()
     {
         // Arrange
@@ -348,7 +346,7 @@ public class AdapterRegistryTests
         hasTestAdapter.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void DiscoverAdapters_WithValidAssembly_ShouldDiscoverAdapters()
     {
         // Arrange
@@ -362,7 +360,7 @@ public class AdapterRegistryTests
         count.Should().BeGreaterThan(0);
     }
 
-    [Test]
+    [Fact]
     public void DiscoverAdapters_WithNullAssembly_ShouldThrowArgumentNullException()
     {
         // Act
@@ -372,7 +370,7 @@ public class AdapterRegistryTests
         act.Should().Throw<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public void DiscoverAdapters_ShouldNotRegisterAbstractTypes()
     {
         // Arrange
@@ -387,7 +385,7 @@ public class AdapterRegistryTests
         allTypes.Should().AllSatisfy(t => t.IsAbstract.Should().BeFalse());
     }
 
-    [Test]
+    [Fact]
     public void Register_ThreadSafety_ShouldHandleConcurrentRegistrations()
     {
         // Arrange
@@ -412,7 +410,7 @@ public class AdapterRegistryTests
         }
     }
 
-    [Test]
+    [Fact]
     public void GetAdaptersByContentType_ShouldReturnSnapshot()
     {
         // Arrange - Register two different adapter types for HTML

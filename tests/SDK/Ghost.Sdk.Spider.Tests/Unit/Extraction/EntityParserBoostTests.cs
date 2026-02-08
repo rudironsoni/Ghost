@@ -1,18 +1,17 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 
 /// <summary>
 /// Additional comprehensive tests for EntityParser to boost coverage to 80%.
 /// </summary>
-[TestFixture]
 public class EntityParserBoostTests
 {
 
-    [Test]
+    [Fact]
     public void Parse_WithNullContent_ShouldReturnEmptyList()
     {
         // Arrange
@@ -30,7 +29,7 @@ public class EntityParserBoostTests
         results.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithWhitespaceContent_ShouldReturnEmptyList()
     {
         // Arrange
@@ -48,7 +47,7 @@ public class EntityParserBoostTests
         results.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void ParseSingle_WithMultipleMatches_ShouldReturnFirstMatch()
     {
         // Arrange
@@ -80,7 +79,7 @@ public class EntityParserBoostTests
         result.Title.Should().Be("First Product");
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithNumericConversion_ShouldConvertCorrectly()
     {
         // Arrange
@@ -111,7 +110,7 @@ public class EntityParserBoostTests
         product.ProductId.Should().Be(12345);
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithDateTimeConversion_ShouldParseDateTime()
     {
         // Arrange
@@ -139,7 +138,7 @@ public class EntityParserBoostTests
         results.Should().NotBeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithListOfStrings_ShouldReturnList()
     {
         // Arrange
@@ -168,7 +167,7 @@ public class EntityParserBoostTests
         results.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithEmptyStringValue_ShouldHandleGracefully()
     {
         // Arrange
@@ -196,7 +195,7 @@ public class EntityParserBoostTests
         results.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithMalformedHtml_ShouldHandleGracefully()
     {
         // Arrange
@@ -216,7 +215,7 @@ public class EntityParserBoostTests
         results.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithSpecialCharacters_ShouldPreserveCharacters()
     {
         // Arrange
@@ -244,7 +243,7 @@ public class EntityParserBoostTests
         results.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithNestedElements_ShouldExtractCorrectly()
     {
         // Arrange
@@ -276,7 +275,7 @@ public class EntityParserBoostTests
         results.Should().NotBeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithAttributeExtraction_ShouldExtractAttributeValues()
     {
         // Arrange
@@ -303,7 +302,7 @@ public class EntityParserBoostTests
         results.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithDefaultValues_ShouldUseDefaults()
     {
         // Arrange
@@ -330,7 +329,7 @@ public class EntityParserBoostTests
         results.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithValidationFailure_ShouldExcludeInvalidEntities()
     {
         // Arrange
@@ -358,7 +357,7 @@ public class EntityParserBoostTests
         results.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithMultipleEntityTypes_ShouldHandlePolymorphism()
     {
         // Arrange
@@ -384,7 +383,7 @@ public class EntityParserBoostTests
         articles.Should().NotBeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithUnicodeContent_ShouldPreserveUnicode()
     {
         // Arrange
@@ -412,7 +411,7 @@ public class EntityParserBoostTests
         results.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void ParseSingle_WithEmptyContent_ShouldReturnNull()
     {
         // Arrange
@@ -430,7 +429,7 @@ public class EntityParserBoostTests
         result.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithJsonPathSelector_ShouldExtractFromJson()
     {
         // Arrange
@@ -455,7 +454,7 @@ public class EntityParserBoostTests
         results.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithComplexNestedJson_ShouldNavigateStructure()
     {
         // Arrange
@@ -487,7 +486,7 @@ public class EntityParserBoostTests
         results.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithInvalidJson_ShouldReturnEmptyList()
     {
         // Arrange
@@ -507,7 +506,7 @@ public class EntityParserBoostTests
         results.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithNullableTypes_ShouldHandleNullValues()
     {
         // Arrange
@@ -535,7 +534,7 @@ public class EntityParserBoostTests
         results.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithLargeContent_ShouldHandleEfficiently()
     {
         // Arrange

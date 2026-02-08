@@ -5,7 +5,7 @@ using Ghost.Sdk.Spider.Adapters.GraphQL;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Moq.Protected;
-using NUnit.Framework;
+using Xunit;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
@@ -15,56 +15,53 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 /// <summary>
 /// Comprehensive tests for GraphQLAdapter ExtractAsync method.
 /// </summary>
-[TestFixture]
-public class GraphQLAdapterExtractTests
+public class GraphQLAdapterExtractTests : IDisposable
 {
-    private Mock<HttpMessageHandler> _httpMessageHandlerMock = null!;
-    private HttpClient _httpClient = null!;
-    private GraphQLAdapter _adapter = null!;
+    private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
+    private readonly HttpClient _httpClient;
+    private readonly GraphQLAdapter _adapter;
 
-    [SetUp]
-    public void Setup()
+    public GraphQLAdapterExtractTests()
     {
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         _httpClient = new HttpClient(_httpMessageHandlerMock.Object);
         _adapter = new GraphQLAdapter(_httpClient, NullLogger<GraphQLAdapter>.Instance);
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         _httpClient?.Dispose();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithNullHttpClient_ShouldThrowArgumentNullException()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => new GraphQLAdapter(null!));
     }
 
-    [Test]
+    [Fact]
     public void Name_ShouldReturnGraphQL()
     {
         // Assert
         _adapter.Name.Should().Be("GraphQL");
     }
 
-    [Test]
+    [Fact]
     public void ContentType_ShouldReturnGraphQL()
     {
         // Assert
         _adapter.ContentType.Should().Be(ContentType.GraphQL);
     }
 
-    [Test]
+    [Fact]
     public void IsAvailable_ShouldReturnTrue()
     {
         // Assert
         _adapter.IsAvailable.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithNullRequest_ShouldReturnFalse()
     {
         // Act
@@ -74,7 +71,7 @@ public class GraphQLAdapterExtractTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithGraphQLContentType_ShouldReturnTrue()
     {
         // Arrange
@@ -90,7 +87,7 @@ public class GraphQLAdapterExtractTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithGraphQLInUrl_ShouldReturnTrue()
     {
         // Arrange
@@ -103,7 +100,7 @@ public class GraphQLAdapterExtractTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithGraphQLHeader_ShouldReturnTrue()
     {
         // Arrange
@@ -122,7 +119,7 @@ public class GraphQLAdapterExtractTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithoutGraphQLIndicators_ShouldReturnFalse()
     {
         // Arrange
@@ -135,7 +132,7 @@ public class GraphQLAdapterExtractTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void ExtractAsync_WithNullRequest_ShouldThrowArgumentNullException()
     {
         // Act & Assert
@@ -143,7 +140,7 @@ public class GraphQLAdapterExtractTests
             await _adapter.ExtractAsync(null!, new GraphQLAdapterOptions()));
     }
 
-    [Test]
+    [Fact]
     public void ExtractAsync_WithNullOptions_ShouldThrowArgumentNullException()
     {
         // Arrange
@@ -154,7 +151,7 @@ public class GraphQLAdapterExtractTests
             await _adapter.ExtractAsync(request, null!));
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithBodyContainingQuery_ShouldExecuteSuccessfully()
     {
         // Arrange
@@ -181,7 +178,7 @@ public class GraphQLAdapterExtractTests
         response.Content.Content.Should().Contain("users");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithQueryInMetadata_ShouldExecuteSuccessfully()
     {
         // Arrange
@@ -208,7 +205,7 @@ public class GraphQLAdapterExtractTests
         response.Content.Content.Should().Contain("posts");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithVariablesInMetadata_ShouldIncludeThem()
     {
         // Arrange
@@ -235,7 +232,7 @@ public class GraphQLAdapterExtractTests
         response.IsSuccess.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithOperationNameInMetadata_ShouldIncludeIt()
     {
         // Arrange
@@ -262,7 +259,7 @@ public class GraphQLAdapterExtractTests
         response.IsSuccess.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithGraphQLErrors_ShouldSetErrorInContentResult()
     {
         // Arrange
@@ -289,7 +286,7 @@ public class GraphQLAdapterExtractTests
         response.Content.Error.Should().Contain("Field 'invalid' doesn't exist");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithMultipleGraphQLErrors_ShouldConcatenateThem()
     {
         // Arrange
@@ -319,7 +316,7 @@ public class GraphQLAdapterExtractTests
         response.Content.Error.Should().Contain("Error 3");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithExtensionsInResponse_ShouldAddToMetadata()
     {
         // Arrange
@@ -348,7 +345,7 @@ public class GraphQLAdapterExtractTests
         response.Metadata.Should().ContainKey("GraphQL.Extensions");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithRequestHeaders_ShouldIncludeThem()
     {
         // Arrange
@@ -372,7 +369,7 @@ public class GraphQLAdapterExtractTests
         response.IsSuccess.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithResponseHeaders_ShouldCopyToResponse()
     {
         // Arrange
@@ -398,7 +395,7 @@ public class GraphQLAdapterExtractTests
         response.Headers["X-Response-Header"].Should().Be("test-value");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithNoQueryProvided_ShouldReturnError()
     {
         // Arrange
@@ -416,7 +413,7 @@ public class GraphQLAdapterExtractTests
         response.Error.Should().Contain("No GraphQL query provided");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithInvalidJsonBody_ShouldReturnError()
     {
         // Arrange
@@ -433,7 +430,7 @@ public class GraphQLAdapterExtractTests
         response.Error.Should().Contain("JSON parsing error");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithHttpRequestException_ShouldReturnError()
     {
         // Arrange
@@ -457,7 +454,7 @@ public class GraphQLAdapterExtractTests
         response.Error.Should().Contain("HTTP request failed");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithInvalidGraphQLResponse_ShouldReturnError()
     {
         // Arrange
@@ -476,7 +473,7 @@ public class GraphQLAdapterExtractTests
         response.Error.Should().Contain("JSON parsing error");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_ShouldSetCorrectContentType()
     {
         // Arrange
@@ -496,7 +493,7 @@ public class GraphQLAdapterExtractTests
         response.Content.MimeType.Should().Be("application/json");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_ShouldSetTimestamps()
     {
         // Arrange
@@ -521,7 +518,7 @@ public class GraphQLAdapterExtractTests
         response.Duration.Should().BeGreaterThanOrEqualTo(TimeSpan.Zero);
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_ShouldSetAdapterName()
     {
         // Arrange
@@ -540,7 +537,7 @@ public class GraphQLAdapterExtractTests
         response.AdapterName.Should().Be("GraphQL");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithSuccessStatusCodeButGraphQLErrors_ShouldSetIsSuccessFalse()
     {
         // Arrange
@@ -565,7 +562,7 @@ public class GraphQLAdapterExtractTests
         response.IsSuccess.Should().BeFalse(); // GraphQL errors make it unsuccessful
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithTimeout_ShouldRespectRequestTimeout()
     {
         // Arrange
@@ -593,7 +590,7 @@ public class GraphQLAdapterExtractTests
         response.IsSuccess.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_ShouldSetStatusCodeAndReasonPhrase()
     {
         // Arrange
@@ -619,7 +616,7 @@ public class GraphQLAdapterExtractTests
         response.ReasonPhrase.Should().Be("OK");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_ShouldSetFinalUrl()
     {
         // Arrange
