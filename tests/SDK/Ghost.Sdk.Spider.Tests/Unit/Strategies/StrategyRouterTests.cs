@@ -286,7 +286,7 @@ public class StrategyRouterTests
     }
 
     [Test]
-    public void ResetMetrics_ShouldClearMetrics()
+    public async Task ResetMetrics_ShouldClearMetrics()
     {
         // Arrange
         _router.RegisterStrategy("TestStrategy", (ctx, ct) =>
@@ -299,7 +299,7 @@ public class StrategyRouterTests
             ContentType = "text/html"
         };
 
-        _router.ExecuteAsync(context).Wait();
+        await _router.ExecuteAsync(context);
 
         // Act
         _router.ResetMetrics();

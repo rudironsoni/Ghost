@@ -476,7 +476,7 @@ public class MessageBufferTests
     }
 
     [Test]
-    public void MessageBuffer_ConcurrentAdds_ShouldHandleThreadSafely()
+    public async Task MessageBuffer_ConcurrentAdds_ShouldHandleThreadSafely()
     {
         // Arrange
         var buffer = new MessageBuffer(maxMessageCount: 1000);
@@ -495,7 +495,7 @@ public class MessageBufferTests
             }));
         }
 
-        Task.WaitAll(tasks.ToArray());
+        await Task.WhenAll(tasks);
 
         // Assert
         buffer.Count.Should().Be(100);
