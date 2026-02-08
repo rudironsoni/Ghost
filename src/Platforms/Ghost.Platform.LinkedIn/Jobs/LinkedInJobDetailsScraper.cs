@@ -45,6 +45,9 @@ public sealed class LinkedInJobDetailsScraper : IDisposable
     private static readonly Action<ILogger, string, string, Exception?> s_logDetailExtracted =
         LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(4, nameof(GetJobDetailsAsync)), "Extracted job: title='{Title}', company='{Company}'");
 
+    private static readonly Action<ILogger, string, Exception?> s_logDetailsFetchFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(5, nameof(GetJobDetailsAsync)), "Failed to fetch LinkedIn job details for jobId={JobId}");
+
     public LinkedInJobDetailsScraper(
         LinkedInSessionPool sessionPool,
         IOptions<LinkedInOptions> options,
@@ -154,7 +157,7 @@ public sealed class LinkedInJobDetailsScraper : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to fetch LinkedIn job details for jobId={JobId}", jobId);
+            s_logDetailsFetchFailed(_logger, jobId, ex);
             throw;
         }
         finally

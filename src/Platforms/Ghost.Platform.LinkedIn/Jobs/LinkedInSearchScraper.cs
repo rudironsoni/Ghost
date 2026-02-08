@@ -126,7 +126,7 @@ public sealed class LinkedInSearchScraper : IJobScraper, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "LinkedIn search failed");
+            s_logSearchFailed(_logger, ex);
             throw;
         }
         finally
@@ -296,7 +296,7 @@ public sealed class LinkedInSearchScraper : IJobScraper, IDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to parse job node");
+                s_logJobNodeParseFailed(_logger, ex);
             }
         }
 
