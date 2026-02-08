@@ -14,11 +14,16 @@ namespace Ghost.ProxyManagement;
 /// Provides geographic filtering and IP geolocation for proxies.
 /// Uses ip-api.com free tier for geolocation (45 requests/minute).
 /// </summary>
-public sealed class ProxyGeographicFilter
+public sealed class ProxyGeographicFilter : IDisposable
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<ProxyGeographicFilter> _logger;
     private readonly SemaphoreSlim _rateLimitSemaphore;
+
+    private static readonly JsonSerializerOptions s_jsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     private static readonly Action<ILogger, string, string, string, Exception?> s_logGeolocationSuccess =
         LoggerMessage.Define<string, string, string>(LogLevel.Debug, new EventId(1, "GeolocationSuccess"),
@@ -46,7 +51,7 @@ public sealed class ProxyGeographicFilter
     /// <summary>
     /// Filters proxies by country code (e.g., "US", "GB", "DE").
     /// </summary>
-    public IEnumerable<ProxyInfo> FilterByCountry(IEnumerable<ProxyInfo> proxies, string countryCode)
+    public static IEnumerable<ProxyInfo> FilterByCountry(IEnumerable<ProxyInfo> proxies, string countryCode)
     {
         ArgumentNullException.ThrowIfNull(proxies);
         if (string.IsNullOrWhiteSpace(countryCode))
@@ -65,7 +70,7 @@ public sealed class ProxyGeographicFilter
     /// <summary>
     /// Filters proxies by city name.
     /// </summary>
-    public IEnumerable<ProxyInfo> FilterByCity(IEnumerable<ProxyInfo> proxies, string city)
+    public static IEnumerable<ProxyInfo> FilterByCity(IEnumerable<ProxyInfo> proxies, string city)
     {
         ArgumentNullException.ThrowIfNull(proxies);
         if (string.IsNullOrWhiteSpace(city))
@@ -95,10 +100,7 @@ public sealed class ProxyGeographicFilter
             var url = $"http://ip-api.com/json/{ipAddress}?fields=status,message,country,countryCode,region,regionName,city,lat,lon,timezone,isp,query";
             var response = await _httpClient.GetStringAsync(url, ct).ConfigureAwait(false);
 
-            var geolocation = JsonSerializer.Deserialize<IpApiResponse>(response, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var geolocation = JsonSerializer.Deserialize<IpApiResponse>(response, s_jsonOptions);
 
             if (geolocation == null || geolocation.Status != "success")
             {
@@ -197,6 +199,14 @@ public sealed class ProxyGeographicFilter
                 _rateLimitSemaphore.Release();
             }
         }
+    }
+
+    /// <summary>
+    /// Disposes the resources used by the filter.
+    /// </summary>
+    public void Dispose()
+    {
+        _rateLimitSemaphore?.Dispose();
     }
 }
 

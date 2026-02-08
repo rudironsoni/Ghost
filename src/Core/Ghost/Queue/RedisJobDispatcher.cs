@@ -6,24 +6,56 @@ using StackExchange.Redis;
 namespace Ghost.Queue;
 
 /// <summary>
-/// Redis-based job queue implementation
+/// Redis-based job dispatcher implementation
 /// </summary>
-public sealed class RedisJobQueue : IJobQueue, IAsyncDisposable
+public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
 {
     private readonly RedisQueueOptions _options;
-    private readonly ILogger<RedisJobQueue> _logger;
-    private readonly IConnectionMultiplexer _redis;
+    private readonly ILogger<RedisJobDispatcher> _logger;
+    private readonly ConnectionMultiplexer _redis;
     private readonly IDatabase _db;
 
-    private readonly JsonSerializerOptions _jsonOptions = new()
+    private static readonly JsonSerializerOptions s_jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
         WriteIndented = false
     };
 
-    public RedisJobQueue(
+    private static readonly Action<ILogger, string, string, Exception?> s_jobEnqueued =
+        LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(1, "JobEnqueued"),
+            "Enqueued job {JobId} with priority {Priority}");
+
+    private static readonly Action<ILogger, string, string, Exception?> s_jobDequeued =
+        LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(2, "JobDequeued"),
+            "Dequeued job {JobId} for worker {WorkerId}");
+
+    private static readonly Action<ILogger, string, Exception?> s_jobCompleted =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(3, "JobCompleted"),
+            "Completed job {JobId} successfully");
+
+    private static readonly Action<ILogger, string, Exception?> s_jobNotFound =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(4, "JobNotFound"),
+            "Failed job {JobId} not found in active queue");
+
+    private static readonly Action<ILogger, string, int, string, Exception?> s_jobMovedToDead =
+        LoggerMessage.Define<string, int, string>(LogLevel.Error, new EventId(5, "JobMovedToDead"),
+            "Job {JobId} moved to dead letter queue after {RetryCount} retries. Error: {Error}");
+
+    private static readonly Action<ILogger, string, int, int, double, string, Exception?> s_jobRetryScheduled =
+        LoggerMessage.Define<string, int, int, double, string>(LogLevel.Warning, new EventId(6, "JobRetryScheduled"),
+            "Job {JobId} failed, retry {RetryCount}/{MaxRetries} scheduled in {Delay} minutes. Error: {Error}");
+
+    private static readonly Action<ILogger, string, Exception?> s_queueInitialized =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(7, "QueueInitialized"),
+            "Redis job queue initialized with connection: {Connection}");
+
+    private static readonly Action<ILogger, Exception?> s_queueDisposed =
+        LoggerMessage.Define(LogLevel.Information, new EventId(8, "QueueDisposed"),
+            "Redis job queue disposed");
+
+    public RedisJobDispatcher(
         IOptions<RedisQueueOptions> options,
-        ILogger<RedisJobQueue> logger)
+        ILogger<RedisJobDispatcher> logger)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(logger);
@@ -34,8 +66,7 @@ public sealed class RedisJobQueue : IJobQueue, IAsyncDisposable
         _redis = ConnectionMultiplexer.Connect(_options.ConnectionString);
         _db = _redis.GetDatabase(_options.Database);
 
-        _logger.LogInformation("Redis job queue initialized with connection: {Connection}",
-            _options.ConnectionString);
+        s_queueInitialized(_logger, _options.ConnectionString, null);
     }
 
     /// <inheritdoc />
@@ -48,14 +79,14 @@ public sealed class RedisJobQueue : IJobQueue, IAsyncDisposable
         job.RetryCount = 0;
 
         var key = GetPendingKey(job.Priority);
-        var jobJson = JsonSerializer.Serialize(job, _jsonOptions);
+        var jobJson = JsonSerializer.Serialize(job, s_jsonOptions);
 
         // Use current timestamp as score for FIFO within priority
         var score = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         await _db.SortedSetAddAsync(key, jobJson, score);
 
-        _logger.LogDebug("Enqueued job {JobId} with priority {Priority}", job.Id, job.Priority);
+        s_jobEnqueued(_logger, job.Id, job.Priority.ToString(), null);
 
         return job.Id;
     }
@@ -82,7 +113,7 @@ public sealed class RedisJobQueue : IJobQueue, IAsyncDisposable
             if (!removed)
                 continue; // Another worker got it first
 
-            var job = JsonSerializer.Deserialize<Job>(entry.Element.ToString(), _jsonOptions);
+            var job = JsonSerializer.Deserialize<Job>(entry.Element.ToString(), s_jsonOptions);
             if (job == null)
                 continue;
 
@@ -91,10 +122,10 @@ public sealed class RedisJobQueue : IJobQueue, IAsyncDisposable
 
             // Add to active jobs
             var activeKey = GetActiveKey(workerId);
-            var jobJson = JsonSerializer.Serialize(job, _jsonOptions);
+            var jobJson = JsonSerializer.Serialize(job, s_jsonOptions);
             await _db.HashSetAsync(activeKey, job.Id, jobJson);
 
-            _logger.LogDebug("Dequeued job {JobId} for worker {WorkerId}", job.Id, workerId);
+            s_jobDequeued(_logger, job.Id, workerId, null);
 
             return job;
         }
@@ -117,20 +148,20 @@ public sealed class RedisJobQueue : IJobQueue, IAsyncDisposable
 
         // Add to completed jobs
         var completedKey = GetCompletedKey();
-        var resultJson = JsonSerializer.Serialize(result, _jsonOptions);
+        var resultJson = JsonSerializer.Serialize(result, s_jsonOptions);
         await _db.ListLeftPushAsync(completedKey, resultJson);
 
         // Trim completed list to max size
         await _db.ListTrimAsync(completedKey, 0, _options.MaxCompletedHistory - 1);
 
-        _logger.LogInformation("Completed job {JobId} successfully", jobId);
+        s_jobCompleted(_logger, jobId, null);
     }
 
     /// <inheritdoc />
-    public async Task FailAsync(string jobId, Exception error, CancellationToken cancellationToken = default)
+    public async Task FailAsync(string jobId, Exception exception, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(jobId);
-        ArgumentNullException.ThrowIfNull(error);
+        ArgumentNullException.ThrowIfNull(exception);
 
         // Get job from active queue
         Job? job = null;
@@ -144,7 +175,7 @@ public sealed class RedisJobQueue : IJobQueue, IAsyncDisposable
             var jobJson = await _db.HashGetAsync(key, jobId);
             if (!jobJson.IsNullOrEmpty)
             {
-                job = JsonSerializer.Deserialize<Job>(jobJson.ToString(), _jsonOptions);
+                job = JsonSerializer.Deserialize<Job>(jobJson.ToString(), s_jsonOptions);
                 workerId = key.ToString().Split(':').Last();
                 break;
             }
@@ -152,12 +183,12 @@ public sealed class RedisJobQueue : IJobQueue, IAsyncDisposable
 
         if (job == null)
         {
-            _logger.LogWarning("Failed job {JobId} not found in active queue", jobId);
+            s_jobNotFound(_logger, jobId, null);
             return;
         }
 
         job.RetryCount++;
-        job.LastError = error.Message;
+        job.LastError = exception.Message;
         job.LastAttemptAt = DateTime.UtcNow;
 
         // Remove from active jobs
@@ -168,11 +199,10 @@ public sealed class RedisJobQueue : IJobQueue, IAsyncDisposable
         {
             // Move to dead letter queue
             var deadKey = GetDeadKey();
-            var jobJson = JsonSerializer.Serialize(job, _jsonOptions);
+            var jobJson = JsonSerializer.Serialize(job, s_jsonOptions);
             await _db.ListLeftPushAsync(deadKey, jobJson);
 
-            _logger.LogError("Job {JobId} moved to dead letter queue after {RetryCount} retries. Error: {Error}",
-                jobId, job.RetryCount, error.Message);
+            s_jobMovedToDead(_logger, jobId, job.RetryCount, exception.Message, null);
         }
         else
         {
@@ -182,11 +212,10 @@ public sealed class RedisJobQueue : IJobQueue, IAsyncDisposable
 
             // Re-enqueue with delay (using score as timestamp)
             var key = GetPendingKey(job.Priority);
-            var jobJson = JsonSerializer.Serialize(job, _jsonOptions);
+            var jobJson = JsonSerializer.Serialize(job, s_jsonOptions);
             await _db.SortedSetAddAsync(key, jobJson, retryAt);
 
-            _logger.LogWarning("Job {JobId} failed, retry {RetryCount}/{MaxRetries} scheduled in {Delay} minutes. Error: {Error}",
-                jobId, job.RetryCount, job.MaxRetries, delayMinutes, error.Message);
+            s_jobRetryScheduled(_logger, jobId, job.RetryCount, job.MaxRetries, delayMinutes, exception.Message, null);
         }
 
         // Store failure details
@@ -195,8 +224,8 @@ public sealed class RedisJobQueue : IJobQueue, IAsyncDisposable
         {
             new("job_id", jobId),
             new("retry_count", job.RetryCount),
-            new("error", error.Message),
-            new("stack_trace", error.StackTrace ?? ""),
+            new("error", exception.Message),
+            new("stack_trace", exception.StackTrace ?? ""),
             new("failed_at", DateTimeOffset.UtcNow.ToUnixTimeSeconds())
         });
         await _db.KeyExpireAsync(failedKey, TimeSpan.FromDays(7)); // Keep for 7 days
@@ -256,6 +285,6 @@ public sealed class RedisJobQueue : IJobQueue, IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         await _redis.DisposeAsync();
-        _logger.LogInformation("Redis job queue disposed");
+        s_queueDisposed(_logger, null);
     }
 }

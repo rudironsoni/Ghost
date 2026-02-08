@@ -15,6 +15,16 @@ public sealed class NopeCHAProvider : ICaptchaProvider
 
     public string Name => "NopeCHA";
 
+    // LoggerMessage delegates for performance
+    private static readonly Action<ILogger, CaptchaType, Exception?> _logAttemptingSolve =
+        LoggerMessage.Define<CaptchaType>(LogLevel.Information, new EventId(1, "AttemptingSolve"), "Attempting to solve {CaptchaType} CAPTCHA using NopeCHA extension");
+
+    private static readonly Action<ILogger, Exception?> _logExtensionNotConfigured =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(2, "ExtensionNotConfigured"), "NopeCHA extension path not configured");
+
+    private static readonly Action<ILogger, string, Exception?> _logExtensionNotFound =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(3, "ExtensionNotFound"), "NopeCHA extension not found at {Path}");
+
     public NopeCHAProvider(
         ILogger<NopeCHAProvider> logger,
         string? extensionPath = null,
@@ -47,7 +57,7 @@ public sealed class NopeCHAProvider : ICaptchaProvider
             throw new NotSupportedException($"NopeCHA does not support {challenge.Type} CAPTCHA type");
         }
 
-        _logger.LogInformation("Attempting to solve {CaptchaType} CAPTCHA using NopeCHA extension", challenge.Type);
+        _logAttemptingSolve(_logger, challenge.Type, null);
 
         // Note: In a real implementation, this would:
         // 1. Launch browser with NopeCHA extension loaded
@@ -73,13 +83,13 @@ public sealed class NopeCHAProvider : ICaptchaProvider
     {
         if (string.IsNullOrEmpty(_extensionPath))
         {
-            _logger.LogWarning("NopeCHA extension path not configured");
+            _logExtensionNotConfigured(_logger, null);
             return false;
         }
 
         if (!Directory.Exists(_extensionPath))
         {
-            _logger.LogWarning("NopeCHA extension not found at {Path}", _extensionPath);
+            _logExtensionNotFound(_logger, _extensionPath, null);
             return false;
         }
 

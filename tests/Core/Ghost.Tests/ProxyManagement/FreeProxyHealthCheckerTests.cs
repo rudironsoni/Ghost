@@ -79,11 +79,8 @@ public sealed class FreeProxyHealthCheckerTests
     [Fact]
     public void CalculateSuccessRate_WithValidData_ReturnsCorrectRate()
     {
-        // Arrange
-        var checker = new FreeProxyHealthChecker(NullLogger<FreeProxyHealthChecker>.Instance);
-
         // Act
-        var successRate = checker.CalculateSuccessRate(totalRequests: 100, successfulRequests: 85);
+        var successRate = FreeProxyHealthChecker.CalculateSuccessRate(totalRequests: 100, successfulRequests: 85);
 
         // Assert
         successRate.Should().Be(0.85);
@@ -92,11 +89,8 @@ public sealed class FreeProxyHealthCheckerTests
     [Fact]
     public void CalculateSuccessRate_WithZeroRequests_ReturnsZero()
     {
-        // Arrange
-        var checker = new FreeProxyHealthChecker(NullLogger<FreeProxyHealthChecker>.Instance);
-
         // Act
-        var successRate = checker.CalculateSuccessRate(totalRequests: 0, successfulRequests: 0);
+        var successRate = FreeProxyHealthChecker.CalculateSuccessRate(totalRequests: 0, successfulRequests: 0);
 
         // Assert
         successRate.Should().Be(0.0);

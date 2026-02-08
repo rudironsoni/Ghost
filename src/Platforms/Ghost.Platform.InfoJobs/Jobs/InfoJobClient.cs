@@ -25,8 +25,11 @@ public sealed class InfoJobClient : Ghost.Abstractions.IJobScraper
         return _api.SearchAsync(criteria.Query ?? string.Empty, criteria.Location ?? string.Empty, ct);
     }
 
-    public Task<JobListing> GetJobDetailsAsync(string jobId, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    public async Task<JobListing> GetJobDetailsAsync(string jobId, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(jobId);
+        return await _api.GetJobDetailsAsync(jobId, ct);
+    }
 
     public Task<JobApplication> ApplyAsync(string jobId, ApplicationDetails details, CancellationToken ct = default)
         => throw new NotImplementedException();

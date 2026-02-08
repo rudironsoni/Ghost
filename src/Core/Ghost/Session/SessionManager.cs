@@ -16,7 +16,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
     private readonly SessionManagerOptions _options;
     private readonly ILogger<SessionManager> _logger;
     private readonly byte[] _encryptionKey;
-    private readonly IConnectionMultiplexer? _redis;
+    private readonly ConnectionMultiplexer? _redis;
     private readonly IDatabase? _redisDb;
     private bool _disposed;
 
@@ -25,6 +25,58 @@ public sealed class SessionManager : ISessionManager, IDisposable
         WriteIndented = false,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
+
+    // LoggerMessage delegates for performance
+    private static readonly Action<ILogger, Exception?> _logInitializedRedis =
+        LoggerMessage.Define(LogLevel.Information, new EventId(1, "InitializedRedis"), "SessionManager initialized with Redis backend");
+
+    private static readonly Action<ILogger, string, Exception?> _logInitializedFileSystem =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(2, "InitializedFileSystem"), "SessionManager initialized with FileSystem backend at {Path}");
+
+    private static readonly Action<ILogger, string, string, Exception?> _logSessionSaved =
+        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(3, "SessionSaved"), "Saved session {SessionId} for platform {Platform}");
+
+    private static readonly Action<ILogger, string, string, Exception?> _logSessionSaveFailed =
+        LoggerMessage.Define<string, string>(LogLevel.Error, new EventId(4, "SessionSaveFailed"), "Failed to save session {SessionId} for platform {Platform}");
+
+    private static readonly Action<ILogger, string, Exception?> _logNoSessionFound =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(5, "NoSessionFound"), "No valid session found for platform {Platform}");
+
+    private static readonly Action<ILogger, int, string, Exception?> _logRestoredCookies =
+        LoggerMessage.Define<int, string>(LogLevel.Debug, new EventId(6, "RestoredCookies"), "Restored {Count} cookies for session {SessionId}");
+
+    private static readonly Action<ILogger, string, string, Exception?> _logSessionRestored =
+        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(7, "SessionRestored"), "Restored session {SessionId} for platform {Platform}");
+
+    private static readonly Action<ILogger, string, string, Exception?> _logSessionRestoreFailed =
+        LoggerMessage.Define<string, string>(LogLevel.Error, new EventId(8, "SessionRestoreFailed"), "Failed to restore session {SessionId} for platform {Platform}");
+
+    private static readonly Action<ILogger, string, Exception?> _logSessionLoadDeserializeFailed =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(9, "SessionLoadDeserializeFailed"), "Failed to deserialize session for platform {Platform}");
+
+    private static readonly Action<ILogger, string, string, Exception?> _logSessionExpired =
+        LoggerMessage.Define<string, string>(LogLevel.Warning, new EventId(10, "SessionExpired"), "Session {SessionId} for platform {Platform} has expired");
+
+    private static readonly Action<ILogger, string, Exception?> _logSessionLoadFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(11, "SessionLoadFailed"), "Failed to load session for platform {Platform}");
+
+    private static readonly Action<ILogger, string, Exception?> _logSessionDeleted =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(12, "SessionDeleted"), "Deleted session(s) for platform {Platform}");
+
+    private static readonly Action<ILogger, string, Exception?> _logSessionDeleteFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(13, "SessionDeleteFailed"), "Failed to delete session for platform {Platform}");
+
+    private static readonly Action<ILogger, string, Exception?> _logSessionListFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(14, "SessionListFailed"), "Failed to list sessions for platform {Platform}");
+
+    private static readonly Action<ILogger, Exception?> _logRedisHandlesExpiry =
+        LoggerMessage.Define(LogLevel.Information, new EventId(15, "RedisHandlesExpiry"), "Redis backend handles expiry automatically");
+
+    private static readonly Action<ILogger, int, Exception?> _logCleanedExpiredSessions =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(16, "CleanedExpiredSessions"), "Cleaned up {Count} expired sessions");
+
+    private static readonly Action<ILogger, Exception?> _logCleanupFailed =
+        LoggerMessage.Define(LogLevel.Error, new EventId(17, "CleanupFailed"), "Failed to cleanup expired sessions");
 
     public SessionManager(IOptions<SessionManagerOptions> options, ILogger<SessionManager>? logger = null)
     {
@@ -52,13 +104,13 @@ public sealed class SessionManager : ISessionManager, IDisposable
 
             _redis = ConnectionMultiplexer.Connect(_options.RedisConnectionString);
             _redisDb = _redis.GetDatabase();
-            _logger.LogInformation("SessionManager initialized with Redis backend");
+            _logInitializedRedis(_logger, null);
         }
         else
         {
             // Ensure storage directory exists for filesystem backend
             Directory.CreateDirectory(_options.StoragePath);
-            _logger.LogInformation("SessionManager initialized with FileSystem backend at {Path}", _options.StoragePath);
+            _logInitializedFileSystem(_logger, _options.StoragePath, null);
         }
     }
 
@@ -136,12 +188,12 @@ public sealed class SessionManager : ISessionManager, IDisposable
                 await SaveToFileSystemAsync(platform, id, json, ct);
             }
 
-            _logger.LogInformation("Saved session {SessionId} for platform {Platform}", id, platform);
+            _logSessionSaved(_logger, id, platform, null);
             return id;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to save session {SessionId} for platform {Platform}", id, platform);
+            _logSessionSaveFailed(_logger, id, platform, ex);
             throw;
         }
     }
@@ -158,7 +210,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
         var session = await LoadSessionAsync(platform, sessionId, ct);
         if (session == null)
         {
-            _logger.LogWarning("No valid session found for platform {Platform}", platform);
+            _logNoSessionFound(_logger, platform, null);
             return false;
         }
 
@@ -180,19 +232,19 @@ public sealed class SessionManager : ISessionManager, IDisposable
                 }).ToList();
 
                 await context.AddCookiesAsync(cookiesToAdd);
-                _logger.LogDebug("Restored {Count} cookies for session {SessionId}", session.Cookies.Count, session.SessionId);
+                _logRestoredCookies(_logger, session.Cookies.Count, session.SessionId, null);
             }
 
             // Note: Restoring localStorage and sessionStorage requires page-level injection
             // This will be done via AddInitScriptAsync when a page is created
             // Store the session data in context for later use
 
-            _logger.LogInformation("Restored session {SessionId} for platform {Platform}", session.SessionId, platform);
+            _logSessionRestored(_logger, session.SessionId, platform, null);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to restore session {SessionId} for platform {Platform}", session.SessionId, platform);
+            _logSessionRestoreFailed(_logger, session.SessionId, platform, ex);
             throw;
         }
     }
@@ -238,14 +290,14 @@ public sealed class SessionManager : ISessionManager, IDisposable
 
             if (session == null)
             {
-                _logger.LogWarning("Failed to deserialize session for platform {Platform}", platform);
+                _logSessionLoadDeserializeFailed(_logger, platform, null);
                 return null;
             }
 
             // Check if expired
             if (session.IsExpired())
             {
-                _logger.LogWarning("Session {SessionId} for platform {Platform} has expired", session.SessionId, platform);
+                _logSessionExpired(_logger, session.SessionId, platform, null);
                 await DeleteSessionAsync(platform, session.SessionId, ct);
                 return null;
             }
@@ -254,7 +306,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to load session for platform {Platform}", platform);
+            _logSessionLoadFailed(_logger, platform, ex);
             return null;
         }
     }
@@ -274,11 +326,11 @@ public sealed class SessionManager : ISessionManager, IDisposable
                 await DeleteFromFileSystemAsync(platform, sessionId, ct);
             }
 
-            _logger.LogInformation("Deleted session(s) for platform {Platform}", platform);
+            _logSessionDeleted(_logger, platform, null);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to delete session for platform {Platform}", platform);
+            _logSessionDeleteFailed(_logger, platform, ex);
             throw;
         }
     }
@@ -300,7 +352,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to list sessions for platform {Platform}", platform);
+            _logSessionListFailed(_logger, platform, ex);
             return new List<string>();
         }
     }
@@ -314,7 +366,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
             if (_options.Backend == SessionStorageBackend.Redis)
             {
                 // Redis handles expiry automatically
-                _logger.LogInformation("Redis backend handles expiry automatically");
+                _logRedisHandlesExpiry(_logger, null);
                 return 0;
             }
             else
@@ -336,12 +388,12 @@ public sealed class SessionManager : ISessionManager, IDisposable
                     }
                 }
 
-                _logger.LogInformation("Cleaned up {Count} expired sessions", count);
+                _logCleanedExpiredSessions(_logger, count, null);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to cleanup expired sessions");
+            _logCleanupFailed(_logger, ex);
         }
 
         return count;

@@ -9,7 +9,6 @@ public sealed class CaptchaService
 {
     private readonly ILogger<CaptchaService> _logger;
     private readonly IEnumerable<ICaptchaProvider> _providers;
-    private readonly CaptchaMetrics _metrics;
 
     public CaptchaService(
         ILogger<CaptchaService> logger,
@@ -17,13 +16,35 @@ public sealed class CaptchaService
     {
         _logger = logger;
         _providers = providers;
-        _metrics = new CaptchaMetrics();
+        Metrics = new CaptchaMetrics();
     }
 
     /// <summary>
     /// Gets current metrics for CAPTCHA solving success rates
     /// </summary>
-    public CaptchaMetrics Metrics => _metrics;
+    public CaptchaMetrics Metrics { get; }
+
+    // LoggerMessage delegates for performance
+    private static readonly Action<ILogger, CaptchaType, int, Exception?> _logAttemptingSolve =
+        LoggerMessage.Define<CaptchaType, int>(LogLevel.Information, new EventId(1, "AttemptingSolve"), "Attempting to solve {CaptchaType} CAPTCHA with {ProviderCount} providers");
+
+    private static readonly Action<ILogger, string, CaptchaType, Exception?> _logSkippingProvider =
+        LoggerMessage.Define<string, CaptchaType>(LogLevel.Debug, new EventId(2, "SkippingProvider"), "Skipping {Provider} - does not support {CaptchaType}");
+
+    private static readonly Action<ILogger, string, Exception?> _logProviderNotAvailable =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(3, "ProviderNotAvailable"), "{Provider} is not available, trying next provider");
+
+    private static readonly Action<ILogger, string, CaptchaType, Exception?> _logTryingProvider =
+        LoggerMessage.Define<string, CaptchaType>(LogLevel.Information, new EventId(4, "TryingProvider"), "Trying {Provider} for {CaptchaType}");
+
+    private static readonly Action<ILogger, string, CaptchaType, Exception?> _logProviderSuccess =
+        LoggerMessage.Define<string, CaptchaType>(LogLevel.Information, new EventId(5, "ProviderSuccess"), "{Provider} successfully solved {CaptchaType} CAPTCHA");
+
+    private static readonly Action<ILogger, string, CaptchaType, string, Exception?> _logProviderFailure =
+        LoggerMessage.Define<string, CaptchaType, string>(LogLevel.Warning, new EventId(6, "ProviderFailure"), "{Provider} failed to solve {CaptchaType} CAPTCHA: {Message}");
+
+    private static readonly Action<ILogger, int, CaptchaType, Exception?> _logAllProvidersFailed =
+        LoggerMessage.Define<int, CaptchaType>(LogLevel.Error, new EventId(7, "AllProvidersFailed"), "All {ProviderCount} providers failed to solve {CaptchaType} CAPTCHA");
 
     /// <summary>
     /// Solves a CAPTCHA challenge using the fallback chain:
@@ -37,10 +58,7 @@ public sealed class CaptchaService
     {
         ArgumentNullException.ThrowIfNull(challenge);
 
-        _logger.LogInformation(
-            "Attempting to solve {CaptchaType} CAPTCHA with {ProviderCount} providers",
-            challenge.Type,
-            _providers.Count());
+        _logAttemptingSolve(_logger, challenge.Type, _providers.Count(), null);
 
         var errors = new List<Exception>();
 
@@ -48,56 +66,40 @@ public sealed class CaptchaService
         {
             if (!provider.CanSolve(challenge.Type))
             {
-                _logger.LogDebug(
-                    "Skipping {Provider} - does not support {CaptchaType}",
-                    provider.Name,
-                    challenge.Type);
+                _logSkippingProvider(_logger, provider.Name, challenge.Type, null);
                 continue;
             }
 
             if (!await provider.IsAvailableAsync(cancellationToken))
             {
-                _logger.LogWarning(
-                    "{Provider} is not available, trying next provider",
-                    provider.Name);
+                _logProviderNotAvailable(_logger, provider.Name, null);
                 continue;
             }
 
             try
             {
-                _logger.LogInformation("Trying {Provider} for {CaptchaType}", provider.Name, challenge.Type);
+                _logTryingProvider(_logger, provider.Name, challenge.Type, null);
 
                 var solution = await provider.SolveAsync(challenge, cancellationToken);
 
-                _metrics.RecordSuccess(provider.Name, challenge.Type);
+                Metrics.RecordSuccess(provider.Name, challenge.Type);
 
-                _logger.LogInformation(
-                    "{Provider} successfully solved {CaptchaType} CAPTCHA",
-                    provider.Name,
-                    challenge.Type);
+                _logProviderSuccess(_logger, provider.Name, challenge.Type, null);
 
                 return solution;
             }
             catch (Exception ex)
             {
-                _metrics.RecordFailure(provider.Name, challenge.Type);
+                Metrics.RecordFailure(provider.Name, challenge.Type);
 
-                _logger.LogWarning(
-                    ex,
-                    "{Provider} failed to solve {CaptchaType} CAPTCHA: {Message}",
-                    provider.Name,
-                    challenge.Type,
-                    ex.Message);
+                _logProviderFailure(_logger, provider.Name, challenge.Type, ex.Message, ex);
 
                 errors.Add(ex);
             }
         }
 
         // All providers failed
-        _logger.LogError(
-            "All {ProviderCount} providers failed to solve {CaptchaType} CAPTCHA",
-            _providers.Count(),
-            challenge.Type);
+        _logAllProvidersFailed(_logger, _providers.Count(), challenge.Type, null);
 
         throw new AggregateException(
             $"Failed to solve {challenge.Type} CAPTCHA with {_providers.Count()} providers",
@@ -125,11 +127,12 @@ public sealed class CaptchaMetrics
     {
         lock (_lock)
         {
-            if (!_providerMetrics.ContainsKey(providerName))
+            if (!_providerMetrics.TryGetValue(providerName, out var metrics))
             {
-                _providerMetrics[providerName] = new ProviderMetrics();
+                metrics = new ProviderMetrics();
+                _providerMetrics[providerName] = metrics;
             }
-            _providerMetrics[providerName].Successes++;
+            metrics.Successes++;
         }
     }
 
@@ -137,11 +140,12 @@ public sealed class CaptchaMetrics
     {
         lock (_lock)
         {
-            if (!_providerMetrics.ContainsKey(providerName))
+            if (!_providerMetrics.TryGetValue(providerName, out var metrics))
             {
-                _providerMetrics[providerName] = new ProviderMetrics();
+                metrics = new ProviderMetrics();
+                _providerMetrics[providerName] = metrics;
             }
-            _providerMetrics[providerName].Failures++;
+            metrics.Failures++;
         }
     }
 

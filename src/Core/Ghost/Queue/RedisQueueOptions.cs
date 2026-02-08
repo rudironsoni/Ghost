@@ -13,7 +13,7 @@ public sealed class RedisQueueOptions
     /// <summary>
     /// Redis database number
     /// </summary>
-    public int Database { get; set; } = 0;
+    public int Database { get; set; }
 
     /// <summary>
     /// Queue key prefix
