@@ -153,8 +153,7 @@ jobs:
         run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
 
       - name: Install Patchright Browsers
-        run: pwsh ~/.nuget/packages/patchright/*/playwright.ps1 install chromium --with-deps
-        shell: bash
+        run: pwsh ~/.nuget/packages/patchright/*/buildTransitive/playwright.ps1 install chromium --with-deps
 
       - name: Run Integration Tests
         run: |
@@ -211,8 +210,7 @@ jobs:
         run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
 
       - name: Install Patchright Browsers
-        run: pwsh ~/.nuget/packages/patchright/*/playwright.ps1 install chromium --with-deps
-        shell: bash
+        run: pwsh ~/.nuget/packages/patchright/*/buildTransitive/playwright.ps1 install chromium --with-deps
 
       - name: Run E2E Tests (Shard ${{ matrix.shard }})
         run: |
