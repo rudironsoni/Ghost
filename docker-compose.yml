@@ -1,5 +1,6 @@
 services:
   ghost-webapi:
+    image: ghost-webapi:latest
     build:
       context: .
       dockerfile: src/Ghost.WebApi/Dockerfile

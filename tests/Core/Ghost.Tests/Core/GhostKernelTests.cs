@@ -13,8 +13,9 @@ public class GhostKernelTests
 {
     private static GhostKernel CreateKernel(IPlaywright playwright, IBrowser browser, bool useStealth = false)
     {
-        var ctor = typeof(GhostKernel).GetConstructor(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic, null, new[] { typeof(IPlaywright), typeof(IBrowser), typeof(int), typeof(bool), typeof(string) }, null)!;
-        return (GhostKernel)ctor.Invoke(new object[] { playwright, browser, 1, useStealth, "Chromium" });
+        // Get the private constructor (there's only one)
+        var ctor = typeof(GhostKernel).GetConstructors(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)[0];
+        return (GhostKernel)ctor.Invoke(new object?[] { playwright, browser, 1, useStealth, "Chromium", null });
     }
     [Fact]
     public async Task NewSessionAsyncUsesOptionsToCreateContext()
@@ -43,8 +44,8 @@ public class GhostKernelTests
     public void ConstructorNullBrowserThrowsArgumentNullException()
     {
         var playwright = Substitute.For<IPlaywright>();
-        var ctor = typeof(GhostKernel).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(IPlaywright), typeof(IBrowser), typeof(int), typeof(bool), typeof(string) }, null)!;
-        Action act = () => ctor.Invoke(new object?[] { playwright, null, 10, true, "Chromium" });
+        var ctor = typeof(GhostKernel).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)[0];
+        Action act = () => ctor.Invoke(new object?[] { playwright, null, 10, true, "Chromium", null });
         act.Should().Throw<TargetInvocationException>().WithInnerException<ArgumentNullException>();
     }
 
