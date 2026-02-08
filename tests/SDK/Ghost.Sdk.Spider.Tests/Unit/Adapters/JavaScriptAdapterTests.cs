@@ -4,25 +4,23 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Comprehensive tests for JavaScriptAdapter covering browser automation scenarios.
 /// </summary>
-[TestFixture]
 public class JavaScriptAdapterTests
 {
-    private Mock<ILogger<JavaScriptAdapter>> _mockLogger = null!;
+    private readonly Mock<ILogger<JavaScriptAdapter>> _mockLogger;
 
-    [SetUp]
-    public void Setup()
+    public JavaScriptAdapterTests()
     {
         _mockLogger = new Mock<ILogger<JavaScriptAdapter>>();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithLogger_ShouldInitialize()
     {
         // Arrange & Act
@@ -35,7 +33,7 @@ public class JavaScriptAdapterTests
         adapter.IsAvailable.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithoutLogger_ShouldInitialize()
     {
         // Arrange & Act
@@ -46,7 +44,7 @@ public class JavaScriptAdapterTests
         adapter.Name.Should().Be("JavaScript");
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithValidHttpUrl_ShouldReturnTrue()
     {
         // Arrange
@@ -63,7 +61,7 @@ public class JavaScriptAdapterTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithHttpsUrl_ShouldReturnTrue()
     {
         // Arrange
@@ -77,7 +75,7 @@ public class JavaScriptAdapterTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithInvalidUrl_ShouldReturnFalse()
     {
         // Arrange
@@ -91,7 +89,7 @@ public class JavaScriptAdapterTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithNullRequest_ShouldReturnFalse()
     {
         // Arrange
@@ -104,7 +102,7 @@ public class JavaScriptAdapterTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithFtpUrl_ShouldReturnFalse()
     {
         // Arrange
@@ -118,7 +116,7 @@ public class JavaScriptAdapterTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithExpectedContentTypeHtml_ShouldReturnFalse()
     {
         // Arrange
@@ -135,7 +133,7 @@ public class JavaScriptAdapterTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithExpectedContentTypeUnknown_ShouldReturnTrue()
     {
         // Arrange
@@ -152,7 +150,7 @@ public class JavaScriptAdapterTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void ExtractAsync_WithNullRequest_ShouldThrowArgumentNullException()
     {
         // Arrange
@@ -165,7 +163,7 @@ public class JavaScriptAdapterTests
         act.Should().ThrowAsync<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public void ExtractAsync_WithNullOptions_ShouldThrowArgumentNullException()
     {
         // Arrange
@@ -179,7 +177,7 @@ public class JavaScriptAdapterTests
         act.Should().ThrowAsync<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public async Task DisposeAsync_WhenBrowserNotInitialized_ShouldComplete()
     {
         // Arrange
@@ -192,7 +190,7 @@ public class JavaScriptAdapterTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public async Task DisposeAsync_CalledTwice_ShouldNotThrow()
     {
         // Arrange
@@ -206,7 +204,7 @@ public class JavaScriptAdapterTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public void Properties_ShouldReturnExpectedValues()
     {
         // Arrange
@@ -218,7 +216,7 @@ public class JavaScriptAdapterTests
         adapter.IsAvailable.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithCancellationToken_ShouldNotThrow()
     {
         // Arrange
@@ -233,7 +231,7 @@ public class JavaScriptAdapterTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithFileUrl_ShouldReturnFalse()
     {
         // Arrange
@@ -247,7 +245,7 @@ public class JavaScriptAdapterTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Adapter_ShouldImplementIContentAdapter()
     {
         // Arrange

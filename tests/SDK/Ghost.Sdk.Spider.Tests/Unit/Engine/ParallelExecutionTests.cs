@@ -2,7 +2,7 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Engine;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using System.Collections.Concurrent;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
@@ -10,18 +10,16 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 /// <summary>
 /// Tests for parallel execution capabilities
 /// </summary>
-[TestFixture]
 public class ParallelExecutionTests
 {
-    private Mock<ISpiderEngine> _mockEngine = null!;
+    private Mock<ISpiderEngine> _mockEngine;
 
-    [SetUp]
-    public void Setup()
+    public ParallelExecutionTests()
     {
         _mockEngine = new Mock<ISpiderEngine>();
     }
 
-    [Test]
+    [Fact]
     public async Task ParallelExecution_ProcessesMultipleRequestsConcurrently()
     {
         // Arrange
@@ -47,7 +45,7 @@ public class ParallelExecutionTests
         result.Success.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ParallelExecution_RespectsConcurrencyLimit()
     {
         // Arrange
@@ -91,7 +89,7 @@ public class ParallelExecutionTests
         maxConcurrent.Should().BeLessThanOrEqualTo(2);
     }
 
-    [Test]
+    [Fact]
     public async Task ParallelExecution_HandlesPartialFailures()
     {
         // Arrange
@@ -118,7 +116,7 @@ public class ParallelExecutionTests
         result.RequestsFailed.Should().Be(2);
     }
 
-    [Test]
+    [Fact]
     public async Task ParallelExecution_ThreadSafeCounters()
     {
         // Arrange
@@ -133,7 +131,7 @@ public class ParallelExecutionTests
         counter.Should().Be(50);
     }
 
-    [Test]
+    [Fact]
     public async Task ParallelExecution_HandlesSlowRequests()
     {
         // Arrange
@@ -159,7 +157,7 @@ public class ParallelExecutionTests
         result.RequestsProcessed.Should().Be(5);
     }
 
-    [Test]
+    [Fact]
     public async Task ParallelExecution_DistributesWorkEvenly()
     {
         // Arrange
@@ -175,7 +173,7 @@ public class ParallelExecutionTests
         threadIds.Distinct().Should().HaveCountGreaterThan(1); // Used multiple threads
     }
 
-    [Test]
+    [Fact]
     public async Task ParallelExecution_PropagatesExceptionsCorrectly()
     {
         // Arrange
@@ -190,7 +188,7 @@ public class ParallelExecutionTests
             .Should().ThrowAsync<ArgumentException>();
     }
 
-    [Test]
+    [Fact]
     public async Task ParallelExecution_ContinuesAfterException()
     {
         // Arrange

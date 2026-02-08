@@ -3,25 +3,23 @@ using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Additional comprehensive tests for JavaScriptAdapter covering edge cases and error scenarios.
 /// </summary>
-[TestFixture]
 public class JavaScriptAdapterFullTests
 {
-    private Mock<ILogger<JavaScriptAdapter>> _mockLogger = null!;
+    private readonly Mock<ILogger<JavaScriptAdapter>> _mockLogger;
 
-    [SetUp]
-    public void Setup()
+    public JavaScriptAdapterFullTests()
     {
         _mockLogger = new Mock<ILogger<JavaScriptAdapter>>();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithDefaultOptions_ShouldUseDefaults()
     {
         // Arrange
@@ -36,7 +34,7 @@ public class JavaScriptAdapterFullTests
         response.AdapterName.Should().Be("JavaScript");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithJavaScriptAdapterOptions_ShouldAcceptOptions()
     {
         // Arrange
@@ -56,7 +54,7 @@ public class JavaScriptAdapterFullTests
         response.AdapterName.Should().Be("JavaScript");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithCustomHeaders_ShouldApplyHeaders()
     {
         // Arrange
@@ -78,7 +76,7 @@ public class JavaScriptAdapterFullTests
         response.IsSuccess.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithSslValidationDisabled_ShouldIgnoreSslErrors()
     {
         // Arrange
@@ -97,7 +95,7 @@ public class JavaScriptAdapterFullTests
         await act.Should().NotThrowAsync<System.Net.Http.HttpRequestException>();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithInvalidUrl_ShouldReturnErrorResponse()
     {
         // Arrange
@@ -117,7 +115,7 @@ public class JavaScriptAdapterFullTests
         response.Error.Should().NotBeNullOrEmpty();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithTimeout_ShouldRespectTimeout()
     {
         // Arrange
@@ -141,7 +139,7 @@ public class JavaScriptAdapterFullTests
         response.IsSuccess.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithHttpUrlAndUnknownContentType_ShouldReturnTrue()
     {
         // Arrange
@@ -158,7 +156,7 @@ public class JavaScriptAdapterFullTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithDataUrl_ShouldReturnFalse()
     {
         // Arrange
@@ -172,7 +170,7 @@ public class JavaScriptAdapterFullTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithWebSocketUrl_ShouldReturnFalse()
     {
         // Arrange
@@ -186,7 +184,7 @@ public class JavaScriptAdapterFullTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithEmptyUrl_ShouldReturnError()
     {
         // Arrange
@@ -202,7 +200,7 @@ public class JavaScriptAdapterFullTests
         response.IsSuccess.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithCustomUserAgent_ShouldSetUserAgent()
     {
         // Arrange
@@ -225,7 +223,7 @@ public class JavaScriptAdapterFullTests
         }
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithRedirect_ShouldFollowAndSetFinalUrl()
     {
         // Arrange
@@ -247,7 +245,7 @@ public class JavaScriptAdapterFullTests
         }
     }
 
-    [Test]
+    [Fact]
     public void Properties_ShouldHaveCorrectValues()
     {
         // Arrange
@@ -259,7 +257,7 @@ public class JavaScriptAdapterFullTests
         adapter.IsAvailable.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task DisposeAsync_AfterExtraction_ShouldCleanup()
     {
         // Arrange
@@ -275,7 +273,7 @@ public class JavaScriptAdapterFullTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_MultipleSequentialRequests_ShouldReusesBrowser()
     {
         // Arrange
@@ -294,7 +292,7 @@ public class JavaScriptAdapterFullTests
         response2.AdapterName.Should().Be("JavaScript");
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithMailtoUrl_ShouldReturnFalse()
     {
         // Arrange

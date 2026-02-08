@@ -1,24 +1,22 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Strategies;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Strategies;
 
 /// <summary>
 /// Additional comprehensive tests for ConditionEvaluator to increase coverage.
 /// </summary>
-[TestFixture]
 public class ConditionEvaluatorAdditionalTests
 {
-    private ConditionEvaluator _evaluator = null!;
+    private readonly ConditionEvaluator _evaluator;
 
-    [SetUp]
-    public void Setup()
+    public ConditionEvaluatorAdditionalTests()
     {
         _evaluator = new ConditionEvaluator();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithElapsedTimeCondition_WhenTimeElapsed_ShouldReturnTrue()
     {
         // Arrange
@@ -45,7 +43,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithElapsedTimeCondition_WithIntegerSeconds_ShouldWork()
     {
         // Arrange
@@ -72,7 +70,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithElapsedTimeCondition_WithDoubleSeconds_ShouldWork()
     {
         // Arrange
@@ -99,7 +97,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithTimeoutCondition_WithErrorMessageContainingTimeout_ShouldReturnTrue()
     {
         // Arrange
@@ -126,7 +124,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithTimeoutCondition_WithNoAttempts_ShouldReturnFalse()
     {
         // Arrange
@@ -144,7 +142,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithStatusCodeCondition_WithNoStatusCode_ShouldReturnFalse()
     {
         // Arrange
@@ -171,7 +169,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithStatusCodeCondition_WithNoValue_ShouldReturnFalse()
     {
         // Arrange
@@ -198,7 +196,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithElementNotFoundCondition_WithSelectorNotFound_ShouldReturnTrue()
     {
         // Arrange
@@ -225,7 +223,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithAnyFailedCondition_WithNoAttempts_ShouldReturnFalse()
     {
         // Arrange
@@ -243,7 +241,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithAnyFailedCondition_WithAllSuccessful_ShouldReturnFalse()
     {
         // Arrange
@@ -265,7 +263,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithAllFailedCondition_WithNoAttempts_ShouldReturnFalse()
     {
         // Arrange
@@ -283,7 +281,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithAllFailedCondition_WithSomeSuccessful_ShouldReturnFalse()
     {
         // Arrange
@@ -305,7 +303,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithContentMatchCondition_WithEmptyContent_ShouldReturnFalse()
     {
         // Arrange
@@ -332,7 +330,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithContentMatchCondition_WithNullValue_ShouldReturnFalse()
     {
         // Arrange
@@ -359,7 +357,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithPreviousSuccessCondition_WithNoAttempts_ShouldReturnFalse()
     {
         // Arrange
@@ -377,7 +375,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithPreviousSuccessCondition_WithPreviousFailed_ShouldReturnFalse()
     {
         // Arrange
@@ -398,7 +396,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithPreviousFailedCondition_WithNoAttempts_ShouldReturnFalse()
     {
         // Arrange
@@ -416,7 +414,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithRetryCountCondition_WithNoValue_ShouldReturnFalse()
     {
         // Arrange
@@ -443,7 +441,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithRetryCountCondition_WithLessThanOperator_ShouldWork()
     {
         // Arrange
@@ -470,7 +468,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithCustomCondition_WithNoField_ShouldReturnFalse()
     {
         // Arrange
@@ -496,7 +494,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithCustomCondition_WithFieldInParameters_ShouldWork()
     {
         // Arrange
@@ -527,7 +525,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithCustomCondition_WithNoValue_AndFieldExists_ShouldReturnTrue()
     {
         // Arrange
@@ -557,7 +555,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithInOperator_WhenValueInCollection_ShouldReturnTrue()
     {
         // Arrange
@@ -588,7 +586,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithNotInOperator_WhenValueNotInCollection_ShouldReturnTrue()
     {
         // Arrange
@@ -619,7 +617,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithNotEqualsOperator_WhenValuesDifferent_ShouldReturnTrue()
     {
         // Arrange
@@ -650,7 +648,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithLessThanOrEqualOperator_ShouldWork()
     {
         // Arrange
@@ -681,7 +679,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithUnknownConditionType_ShouldReturnFalse()
     {
         // Arrange
@@ -702,7 +700,7 @@ public class ConditionEvaluatorAdditionalTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithMixedAndOrOperators_ShouldEvaluateCorrectly()
     {
         // Arrange

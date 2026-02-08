@@ -2,25 +2,23 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Configuration;
 using Ghost.Sdk.Spider.Configuration.Compiler;
 using Ghost.Sdk.Spider.Configuration.Models;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Configuration;
 
 /// <summary>
 /// Comprehensive tests for ConfigurationCompiler covering YAML and JSON compilation.
 /// </summary>
-[TestFixture]
 public class ConfigurationCompilerTests
 {
-    private ConfigurationCompiler _compiler = null!;
+    private readonly ConfigurationCompiler _compiler;
 
-    [SetUp]
-    public void Setup()
+    public ConfigurationCompilerTests()
     {
         _compiler = new ConfigurationCompiler();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_ShouldInitialize()
     {
         // Arrange & Act
@@ -30,7 +28,7 @@ public class ConfigurationCompilerTests
         compiler.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void CompileFromYaml_WithValidYaml_ShouldSucceed()
     {
         // Arrange
@@ -58,7 +56,7 @@ extraction:
         result.Errors.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void CompileFromYaml_WithEmptyString_ShouldFail()
     {
         // Act
@@ -71,7 +69,7 @@ extraction:
         result.Errors.Should().Contain(e => e.Contains("empty"));
     }
 
-    [Test]
+    [Fact]
     public void CompileFromYaml_WithNullString_ShouldFail()
     {
         // Act
@@ -82,7 +80,7 @@ extraction:
         result.Configuration.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void CompileFromYaml_WithWhitespaceOnly_ShouldFail()
     {
         // Act
@@ -93,7 +91,7 @@ extraction:
         result.Configuration.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void CompileFromYaml_WithInvalidYaml_ShouldFail()
     {
         // Arrange
@@ -113,7 +111,7 @@ name: TestSpider
         result.Errors.Should().Contain(e => e.Contains("YAML") || e.Contains("parsing"));
     }
 
-    [Test]
+    [Fact]
     public void CompileFromJson_WithValidJson_ShouldSucceed()
     {
         // Arrange
@@ -145,7 +143,7 @@ name: TestSpider
         result.Configuration!.Name.Should().Be("TestSpider");
     }
 
-    [Test]
+    [Fact]
     public void CompileFromJson_WithEmptyString_ShouldFail()
     {
         // Act
@@ -157,7 +155,7 @@ name: TestSpider
         result.Errors.Should().NotBeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void CompileFromJson_WithNullString_ShouldFail()
     {
         // Act
@@ -168,7 +166,7 @@ name: TestSpider
         result.Configuration.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void CompileFromJson_WithInvalidJson_ShouldFail()
     {
         // Arrange
@@ -184,7 +182,7 @@ name: TestSpider
         result.Errors.Should().Contain(e => e.Contains("JSON") || e.Contains("parsing"));
     }
 
-    [Test]
+    [Fact]
     public void CompileFromJson_WithCommentsAndTrailingCommas_ShouldSucceed()
     {
         // Arrange
@@ -206,7 +204,7 @@ name: TestSpider
         result.Configuration.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void CompileFromYaml_WithCamelCaseProperties_ShouldDeserialize()
     {
         // Arrange
@@ -226,7 +224,7 @@ target:
         result.Configuration.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void CompileFromJson_WithCaseInsensitiveProperties_ShouldDeserialize()
     {
         // Arrange
@@ -247,7 +245,7 @@ target:
         result.Configuration!.Name.Should().Be("TestSpider");
     }
 
-    [Test]
+    [Fact]
     public void CompileFromYaml_WithUnmatchedProperties_ShouldIgnoreThem()
     {
         // Arrange
@@ -269,7 +267,7 @@ anotherUnknown: 123
         result.Configuration.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void CompileFromYaml_WithComplexNestedStructure_ShouldDeserialize()
     {
         // Arrange
@@ -304,7 +302,7 @@ extraction:
         result.Configuration.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void CompileFromJson_WithComplexNestedStructure_ShouldDeserialize()
     {
         // Arrange
@@ -333,7 +331,7 @@ extraction:
         result.Configuration.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithValidConfiguration_ShouldReturnValid()
     {
         // Arrange
@@ -356,7 +354,7 @@ extraction:
         result.IsValid.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void ConfigurationCompilationResult_Success_ShouldHaveCorrectProperties()
     {
         // Arrange
@@ -375,7 +373,7 @@ extraction:
         result.Errors.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void ConfigurationCompilationResult_FailureWithString_ShouldHaveCorrectProperties()
     {
         // Act
@@ -388,7 +386,7 @@ extraction:
         result.Errors.First().Should().Be("Test error");
     }
 
-    [Test]
+    [Fact]
     public void ConfigurationCompilationResult_FailureWithMultipleErrors_ShouldHaveAll()
     {
         // Arrange

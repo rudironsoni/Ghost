@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Scheduling.Contracts;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using SpiderBase = Ghost.Sdk.Spider.Engine.Spider;
 using SpiderOptions = Ghost.Sdk.Spider.Engine.SpiderOptions;
 
@@ -10,14 +10,12 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Scheduling;
 /// <summary>
 /// Tests for trigger management and scheduling coordination
 /// </summary>
-[TestFixture]
 public class TriggerManagerTests
 {
-    private Mock<IScheduler> _mockScheduler = null!;
-    private Mock<SpiderBase> _mockSpider = null!;
+    private Mock<IScheduler> _mockScheduler;
+    private Mock<SpiderBase> _mockSpider;
 
-    [SetUp]
-    public void Setup()
+    public TriggerManagerTests()
     {
         _mockScheduler = new Mock<IScheduler>();
         _mockSpider = new Mock<SpiderBase>();
@@ -25,7 +23,7 @@ public class TriggerManagerTests
         _mockSpider.Setup(s => s.Options).Returns(new SpiderOptions());
     }
 
-    [Test]
+    [Fact]
     public async Task TriggerManager_ScheduleMultipleTriggers_ShouldTrackAll()
     {
         // Arrange
@@ -47,7 +45,7 @@ public class TriggerManagerTests
         scheduleIds.Should().OnlyContain(id => id.StartsWith("schedule-"));
     }
 
-    [Test]
+    [Fact]
     public async Task TriggerManager_UnscheduleById_ShouldRemoveTrigger()
     {
         // Arrange
@@ -63,7 +61,7 @@ public class TriggerManagerTests
         _mockScheduler.Verify(s => s.UnscheduleAsync(scheduleId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task TriggerManager_PauseAndResume_ShouldWorkCorrectly()
     {
         // Arrange
@@ -84,7 +82,7 @@ public class TriggerManagerTests
             .Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public async Task TriggerManager_ScheduleWithSameId_ShouldReplace()
     {
         // Arrange
@@ -110,7 +108,7 @@ public class TriggerManagerTests
         callCount.Should().Be(2);
     }
 
-    [Test]
+    [Fact]
     public async Task TriggerManager_PauseMultiple_ShouldSucceed()
     {
         // Arrange
@@ -131,7 +129,7 @@ public class TriggerManagerTests
         }
     }
 
-    [Test]
+    [Fact]
     public async Task TriggerManager_GetSchedules_ShouldReturnAll()
     {
         // Arrange
@@ -154,7 +152,7 @@ public class TriggerManagerTests
         schedules.Select(s => s.SpiderName).Should().Contain(new[] { "Spider1", "Spider2", "Spider3" });
     }
 
-    [Test]
+    [Fact]
     public async Task TriggerManager_ScheduleImmediate_ShouldExecuteImmediately()
     {
         // Arrange

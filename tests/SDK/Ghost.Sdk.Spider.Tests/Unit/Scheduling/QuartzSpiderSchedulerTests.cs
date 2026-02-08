@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Scheduling.Contracts;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Quartz;
 using Quartz.Impl;
 using SpiderBase = Ghost.Sdk.Spider.Engine.Spider;
@@ -15,14 +15,12 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Scheduling;
 /// Note: These tests assume a QuartzSpiderScheduler implementation exists.
 /// If not implemented yet, they serve as specification tests.
 /// </summary>
-[TestFixture]
 public class QuartzSpiderSchedulerTests
 {
-    private Mock<SpiderScheduler> _mockScheduler = null!;
-    private Mock<SpiderBase> _mockSpider = null!;
+    private Mock<SpiderScheduler> _mockScheduler;
+    private Mock<SpiderBase> _mockSpider;
 
-    [SetUp]
-    public void Setup()
+    public QuartzSpiderSchedulerTests()
     {
         _mockScheduler = new Mock<SpiderScheduler>();
         _mockSpider = new Mock<SpiderBase>();
@@ -30,7 +28,7 @@ public class QuartzSpiderSchedulerTests
         _mockSpider.Setup(s => s.Options).Returns(new SpiderOptions());
     }
 
-    [Test]
+    [Fact]
     public async Task ScheduleCronAsync_WithValidExpression_ShouldReturnScheduleId()
     {
         // Arrange
@@ -50,7 +48,7 @@ public class QuartzSpiderSchedulerTests
         _mockScheduler.Verify(s => s.ScheduleCronAsync(spiderName, It.IsAny<SpiderBase>(), cronExpression, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task ScheduleCronAsync_WithInvalidExpression_ShouldThrow()
     {
         // Arrange
@@ -68,7 +66,7 @@ public class QuartzSpiderSchedulerTests
         await act.Should().ThrowAsync<ArgumentException>().WithMessage("Invalid cron expression");
     }
 
-    [Test]
+    [Fact]
     public async Task ScheduleIntervalAsync_WithValidInterval_ShouldReturnScheduleId()
     {
         // Arrange
@@ -87,7 +85,7 @@ public class QuartzSpiderSchedulerTests
         scheduleId.Should().Be(expectedScheduleId);
     }
 
-    [Test]
+    [Fact]
     public async Task ScheduleIntervalAsync_WithStartDelay_ShouldScheduleWithDelay()
     {
         // Arrange
@@ -108,7 +106,7 @@ public class QuartzSpiderSchedulerTests
         _mockScheduler.Verify(s => s.ScheduleIntervalAsync(spiderName, _mockSpider.Object, interval, startDelay, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task ScheduleOnceAsync_WithFutureTime_ShouldReturnScheduleId()
     {
         // Arrange
@@ -127,7 +125,7 @@ public class QuartzSpiderSchedulerTests
         scheduleId.Should().Be(expectedScheduleId);
     }
 
-    [Test]
+    [Fact]
     public async Task ScheduleOnceAsync_WithPastTime_ShouldThrow()
     {
         // Arrange
@@ -145,7 +143,7 @@ public class QuartzSpiderSchedulerTests
         await act.Should().ThrowAsync<ArgumentException>();
     }
 
-    [Test]
+    [Fact]
     public async Task TriggerNowAsync_ShouldReturnExecutionId()
     {
         // Arrange
@@ -163,7 +161,7 @@ public class QuartzSpiderSchedulerTests
         executionId.Should().Be(expectedExecutionId);
     }
 
-    [Test]
+    [Fact]
     public async Task UnscheduleAsync_WithValidScheduleId_ShouldComplete()
     {
         // Arrange
@@ -180,7 +178,7 @@ public class QuartzSpiderSchedulerTests
         _mockScheduler.Verify(s => s.UnscheduleAsync(scheduleId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task UnscheduleAsync_WithInvalidScheduleId_ShouldThrow()
     {
         // Arrange
@@ -197,7 +195,7 @@ public class QuartzSpiderSchedulerTests
         await act.Should().ThrowAsync<KeyNotFoundException>();
     }
 
-    [Test]
+    [Fact]
     public async Task PauseAsync_WithValidScheduleId_ShouldComplete()
     {
         // Arrange
@@ -214,7 +212,7 @@ public class QuartzSpiderSchedulerTests
         _mockScheduler.Verify(s => s.PauseAsync(scheduleId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task ResumeAsync_WithValidScheduleId_ShouldComplete()
     {
         // Arrange
@@ -231,7 +229,7 @@ public class QuartzSpiderSchedulerTests
         _mockScheduler.Verify(s => s.ResumeAsync(scheduleId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task GetSchedulesAsync_ShouldReturnAllSchedules()
     {
         // Arrange
@@ -253,7 +251,7 @@ public class QuartzSpiderSchedulerTests
         schedules.Should().BeEquivalentTo(expectedSchedules);
     }
 
-    [Test]
+    [Fact]
     public async Task GetScheduleAsync_WithExistingSchedule_ShouldReturnScheduleInfo()
     {
         // Arrange
@@ -284,7 +282,7 @@ public class QuartzSpiderSchedulerTests
         info.ExecutionCount.Should().Be(5);
     }
 
-    [Test]
+    [Fact]
     public async Task GetScheduleAsync_WithNonExistentSchedule_ShouldReturnNull()
     {
         // Arrange
@@ -301,7 +299,7 @@ public class QuartzSpiderSchedulerTests
         info.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task CancellationToken_ShouldPropagate()
     {
         // Arrange
@@ -319,7 +317,7 @@ public class QuartzSpiderSchedulerTests
         await act.Should().ThrowAsync<OperationCanceledException>();
     }
 
-    [Test]
+    [Fact]
     public void CronExpression_Validation_Examples()
     {
         // Test various cron expressions for validity
@@ -343,7 +341,7 @@ public class QuartzSpiderSchedulerTests
         }
     }
 
-    [Test]
+    [Fact]
     public async Task DistributedLocking_MultipleInstances_ShouldNotRunConcurrently()
     {
         // Arrange
@@ -364,7 +362,7 @@ public class QuartzSpiderSchedulerTests
         await secondExecution.Should().ThrowAsync<InvalidOperationException>();
     }
 
-    [Test]
+    [Fact]
     public async Task ScheduleInfo_Metadata_ShouldStoreCustomData()
     {
         // Arrange

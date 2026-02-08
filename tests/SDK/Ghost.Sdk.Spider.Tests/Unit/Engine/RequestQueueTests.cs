@@ -1,19 +1,18 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Engine.Queue;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 
 /// <summary>
 /// Comprehensive tests for request queue implementations.
 /// </summary>
-[TestFixture]
 public class RequestQueueTests
 {
     #region InMemoryRequestQueue Tests (Additional to existing)
 
-    [Test]
+    [Fact]
     public async Task InMemoryQueue_WithHighPriority_ShouldDequeueFirst()
     {
         // Arrange
@@ -33,7 +32,7 @@ public class RequestQueueTests
         third!.Url.Should().Be("https://example.com/low");
     }
 
-    [Test]
+    [Fact]
     public async Task InMemoryQueue_WithNegativePriority_ShouldHandleCorrectly()
     {
         // Arrange
@@ -53,7 +52,7 @@ public class RequestQueueTests
         third!.Url.Should().Be("https://example.com/negative");
     }
 
-    [Test]
+    [Fact]
     public async Task InMemoryQueue_LargeBatchEnqueue_ShouldHandleEfficiently()
     {
         // Arrange
@@ -73,7 +72,7 @@ public class RequestQueueTests
         enqueueTime.Should().BeLessThan(TimeSpan.FromSeconds(5)); // Should be fast
     }
 
-    [Test]
+    [Fact]
     public async Task InMemoryQueue_LargeBatchDequeue_ShouldHandleEfficiently()
     {
         // Arrange
@@ -97,7 +96,7 @@ public class RequestQueueTests
         dequeueTime.Should().BeLessThan(TimeSpan.FromSeconds(5)); // Should be fast
     }
 
-    [Test]
+    [Fact]
     public async Task InMemoryQueue_WithMetadata_ShouldPreserveMetadata()
     {
         // Arrange
@@ -117,7 +116,7 @@ public class RequestQueueTests
         dequeued.Metadata["depth"].Should().Be(3);
     }
 
-    [Test]
+    [Fact]
     public async Task InMemoryQueue_AfterClear_ShouldAllowReuse()
     {
         // Arrange
@@ -139,7 +138,7 @@ public class RequestQueueTests
 
     #region Queue Ordering Tests
 
-    [Test]
+    [Fact]
     public async Task Queue_FIFO_WithSamePriority_ShouldMaintainOrder()
     {
         // Arrange
@@ -168,7 +167,7 @@ public class RequestQueueTests
         dequeuedUrls.Should().Contain(urls);
     }
 
-    [Test]
+    [Fact]
     public async Task Queue_WithMixedPriorities_ShouldOrderCorrectly()
     {
         // Arrange
@@ -211,7 +210,7 @@ public class RequestQueueTests
 
     #region Duplicate Detection Tests
 
-    [Test]
+    [Fact]
     public async Task Queue_DuplicateDetection_CaseInsensitive_ShouldDetect()
     {
         // Arrange
@@ -227,7 +226,7 @@ public class RequestQueueTests
         queue.Count.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task Queue_DuplicateWithQueryParams_ShouldTreatAsDifferent()
     {
         // Arrange
@@ -243,7 +242,7 @@ public class RequestQueueTests
         queue.Count.Should().Be(2); // Different URLs
     }
 
-    [Test]
+    [Fact]
     public async Task Queue_DuplicateWithFragment_ShouldTreatAsDifferent()
     {
         // Arrange
@@ -259,7 +258,7 @@ public class RequestQueueTests
         queue.Count.Should().Be(2); // Different URLs
     }
 
-    [Test]
+    [Fact]
     public async Task Queue_ContainsAsync_AfterMultipleOperations_ShouldBeAccurate()
     {
         // Arrange
@@ -287,7 +286,7 @@ public class RequestQueueTests
 
     #region RedisRequestQueue Mock Tests
 
-    [Test]
+    [Fact]
     public async Task RedisQueue_ShouldSupportDistributedDeduplication()
     {
         // Note: This is a mock test since RedisRequestQueue may not be implemented
@@ -305,7 +304,7 @@ public class RequestQueueTests
         isDuplicate.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task RedisQueue_ShouldPersistAcrossInstances()
     {
         // Arrange
@@ -322,7 +321,7 @@ public class RequestQueueTests
         existsInQueue2.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task RedisQueue_WithExpiration_ShouldCleanupOldItems()
     {
         // Arrange
@@ -344,7 +343,7 @@ public class RequestQueueTests
 
     #region Thread Safety Tests
 
-    [Test]
+    [Fact]
     public async Task Queue_ConcurrentEnqueueDequeue_ShouldMaintainConsistency()
     {
         // Arrange
@@ -367,7 +366,7 @@ public class RequestQueueTests
         queue.Count.Should().Be(enqueueCount - dequeueCount);
     }
 
-    [Test]
+    [Fact]
     public async Task Queue_ConcurrentContains_ShouldBeThreadSafe()
     {
         // Arrange

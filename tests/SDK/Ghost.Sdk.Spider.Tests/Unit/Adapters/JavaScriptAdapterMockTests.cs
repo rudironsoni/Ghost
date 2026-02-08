@@ -4,17 +4,16 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Unit tests for JavaScriptAdapter with mocked Playwright dependencies.
 /// </summary>
-[TestFixture]
 public class JavaScriptAdapterMockTests
 {
-    [Test]
+    [Fact]
     public void Name_ShouldReturnJavaScript()
     {
         // Arrange
@@ -24,7 +23,7 @@ public class JavaScriptAdapterMockTests
         adapter.Name.Should().Be("JavaScript");
     }
 
-    [Test]
+    [Fact]
     public void ContentType_ShouldReturnJavaScript()
     {
         // Arrange
@@ -34,7 +33,7 @@ public class JavaScriptAdapterMockTests
         adapter.ContentType.Should().Be(ContentType.JavaScript);
     }
 
-    [Test]
+    [Fact]
     public void IsAvailable_ShouldReturnTrue()
     {
         // Arrange
@@ -44,7 +43,7 @@ public class JavaScriptAdapterMockTests
         adapter.IsAvailable.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithHttpUrl_ShouldReturnTrue()
     {
         // Arrange
@@ -58,7 +57,7 @@ public class JavaScriptAdapterMockTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithNullRequest_ShouldReturnFalse()
     {
         // Arrange
@@ -71,7 +70,7 @@ public class JavaScriptAdapterMockTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithInvalidUrl_ShouldReturnFalse()
     {
         // Arrange
@@ -85,7 +84,7 @@ public class JavaScriptAdapterMockTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithFtpScheme_ShouldReturnFalse()
     {
         // Arrange
@@ -99,7 +98,7 @@ public class JavaScriptAdapterMockTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithJavaScriptContentType_ShouldReturnTrue()
     {
         // Arrange
@@ -116,7 +115,7 @@ public class JavaScriptAdapterMockTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithNonJavaScriptContentType_ShouldReturnFalse()
     {
         // Arrange
@@ -133,7 +132,7 @@ public class JavaScriptAdapterMockTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithNullRequest_ShouldThrowArgumentNullException()
     {
         // Arrange
@@ -144,7 +143,7 @@ public class JavaScriptAdapterMockTests
             .Should().ThrowAsync<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithNullOptions_ShouldThrowArgumentNullException()
     {
         // Arrange
@@ -156,7 +155,7 @@ public class JavaScriptAdapterMockTests
             .Should().ThrowAsync<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public async Task DisposeAsync_WhenCalledMultipleTimes_ShouldNotThrow()
     {
         // Arrange
@@ -170,7 +169,7 @@ public class JavaScriptAdapterMockTests
             .Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithLogger_ShouldNotThrow()
     {
         // Arrange
@@ -181,7 +180,7 @@ public class JavaScriptAdapterMockTests
         adapter.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithoutLogger_ShouldNotThrow()
     {
         // Act & Assert

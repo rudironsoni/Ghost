@@ -1,16 +1,15 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.GraphQL.Schema;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Comprehensive tests for GraphQL Schema classes.
 /// </summary>
-[TestFixture]
 public class GraphQLSchemaTests
 {
-    [Test]
+    [Fact]
     public void GraphQLSchema_DefaultConstructor_ShouldInitialize()
     {
         // Act
@@ -25,7 +24,7 @@ public class GraphQLSchemaTests
         schema.Directives.Should().NotBeNull().And.BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLSchema_FindType_WithExistingType_ShouldReturnType()
     {
         // Arrange
@@ -46,7 +45,7 @@ public class GraphQLSchemaTests
         type!.Name.Should().Be("User");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLSchema_FindType_WithNonExistingType_ShouldReturnNull()
     {
         // Arrange
@@ -65,7 +64,7 @@ public class GraphQLSchemaTests
         type.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLSchema_GetQueryFields_WithQueryType_ShouldReturnFields()
     {
         // Arrange
@@ -92,7 +91,7 @@ public class GraphQLSchemaTests
         fields.Should().Contain(f => f.Name == "posts");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLSchema_GetQueryFields_WithNoQueryType_ShouldReturnEmptyList()
     {
         // Arrange
@@ -105,7 +104,7 @@ public class GraphQLSchemaTests
         fields.Should().NotBeNull().And.BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLSchema_GetMutationFields_WithMutationType_ShouldReturnFields()
     {
         // Arrange
@@ -131,7 +130,7 @@ public class GraphQLSchemaTests
         fields.Should().Contain(f => f.Name == "createUser");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLSchema_GetMutationFields_WithNoMutationType_ShouldReturnEmptyList()
     {
         // Arrange
@@ -144,7 +143,7 @@ public class GraphQLSchemaTests
         fields.Should().NotBeNull().And.BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLSchema_GetSubscriptionFields_WithSubscriptionType_ShouldReturnFields()
     {
         // Arrange
@@ -169,7 +168,7 @@ public class GraphQLSchemaTests
         fields[0].Name.Should().Be("messageAdded");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLSchema_GetSubscriptionFields_WithNoSubscriptionType_ShouldReturnEmptyList()
     {
         // Arrange
@@ -182,7 +181,7 @@ public class GraphQLSchemaTests
         fields.Should().NotBeNull().And.BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLSchema_CreateIntrospectionQuery_ShouldReturnValidQuery()
     {
         // Act
@@ -198,7 +197,7 @@ public class GraphQLSchemaTests
         query.Should().Contain("TypeRef");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_GetNamedTypeName_WithNamedType_ShouldReturnName()
     {
         // Arrange
@@ -211,7 +210,7 @@ public class GraphQLSchemaTests
         name.Should().Be("String");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_GetNamedTypeName_WithListOfNamedType_ShouldReturnInnerName()
     {
         // Arrange
@@ -228,7 +227,7 @@ public class GraphQLSchemaTests
         name.Should().Be("String");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_GetNamedTypeName_WithNonNullOfList_ShouldReturnInnerName()
     {
         // Arrange
@@ -249,7 +248,7 @@ public class GraphQLSchemaTests
         name.Should().Be("String");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_IsScalar_WithScalarType_ShouldReturnTrue()
     {
         // Arrange
@@ -262,7 +261,7 @@ public class GraphQLSchemaTests
         isScalar.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_IsScalar_WithObjectType_ShouldReturnFalse()
     {
         // Arrange
@@ -275,7 +274,7 @@ public class GraphQLSchemaTests
         isScalar.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_IsObject_WithObjectType_ShouldReturnTrue()
     {
         // Arrange
@@ -288,7 +287,7 @@ public class GraphQLSchemaTests
         isObject.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_IsList_WithListType_ShouldReturnTrue()
     {
         // Arrange
@@ -301,7 +300,7 @@ public class GraphQLSchemaTests
         isList.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_IsNonNull_WithNonNullType_ShouldReturnTrue()
     {
         // Arrange
@@ -314,7 +313,7 @@ public class GraphQLSchemaTests
         isNonNull.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_FindField_WithExistingField_ShouldReturnField()
     {
         // Arrange
@@ -336,7 +335,7 @@ public class GraphQLSchemaTests
         field!.Name.Should().Be("name");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_FindField_WithNonExistingField_ShouldReturnNull()
     {
         // Arrange
@@ -356,7 +355,7 @@ public class GraphQLSchemaTests
         field.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_ToString_WithNamedType_ShouldReturnName()
     {
         // Arrange
@@ -369,7 +368,7 @@ public class GraphQLSchemaTests
         str.Should().Be("String");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_ToString_WithListType_ShouldIncludeOfType()
     {
         // Arrange
@@ -387,7 +386,7 @@ public class GraphQLSchemaTests
         str.Should().Contain("String");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLField_HasArguments_WithArguments_ShouldReturnTrue()
     {
         // Arrange
@@ -408,7 +407,7 @@ public class GraphQLSchemaTests
         hasArgs.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLField_HasArguments_WithNoArguments_ShouldReturnFalse()
     {
         // Arrange
@@ -425,7 +424,7 @@ public class GraphQLSchemaTests
         hasArgs.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLField_FindArgument_WithExistingArgument_ShouldReturnArgument()
     {
         // Arrange
@@ -448,7 +447,7 @@ public class GraphQLSchemaTests
         arg!.Name.Should().Be("id");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLField_FindArgument_WithNonExistingArgument_ShouldReturnNull()
     {
         // Arrange
@@ -469,7 +468,7 @@ public class GraphQLSchemaTests
         arg.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLField_ToString_WithoutArguments_ShouldShowNameAndType()
     {
         // Arrange
@@ -487,7 +486,7 @@ public class GraphQLSchemaTests
         str.Should().NotContain("(");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLField_ToString_WithArguments_ShouldShowArgumentNames()
     {
         // Arrange
@@ -509,7 +508,7 @@ public class GraphQLSchemaTests
         str.Should().Contain("(id)");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLDirective_ShouldHaveNameAndLocations()
     {
         // Arrange & Act
@@ -526,7 +525,7 @@ public class GraphQLSchemaTests
         directive.Locations.Should().HaveCount(2);
     }
 
-    [Test]
+    [Fact]
     public void GraphQLEnumValue_ShouldHaveProperties()
     {
         // Arrange & Act
@@ -543,7 +542,7 @@ public class GraphQLSchemaTests
         enumValue.IsDeprecated.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLEnumValue_Deprecated_ShouldHaveReason()
     {
         // Arrange & Act
@@ -559,7 +558,7 @@ public class GraphQLSchemaTests
         enumValue.DeprecationReason.Should().Be("Use NEW_STATUS instead");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLInputValue_ShouldHaveTypeAndDefaultValue()
     {
         // Arrange & Act
@@ -577,7 +576,7 @@ public class GraphQLSchemaTests
         inputValue.DefaultValue.Should().Be("10");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_WithInterfaces_ShouldRetainThem()
     {
         // Arrange
@@ -597,7 +596,7 @@ public class GraphQLSchemaTests
         type.Interfaces.Should().Contain(i => i.Name == "Node");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_WithPossibleTypes_ShouldRetainThem()
     {
         // Arrange
@@ -617,7 +616,7 @@ public class GraphQLSchemaTests
         type.PossibleTypes.Should().Contain(t => t.Name == "User");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_WithEnumValues_ShouldRetainThem()
     {
         // Arrange
@@ -638,7 +637,7 @@ public class GraphQLSchemaTests
         type.EnumValues.Should().Contain(e => e.Name == "ACTIVE");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLType_WithInputFields_ShouldRetainThem()
     {
         // Arrange
@@ -658,7 +657,7 @@ public class GraphQLSchemaTests
         type.InputFields.Should().Contain(f => f.Name == "name");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLField_WithDeprecation_ShouldHaveReasonAndFlag()
     {
         // Arrange & Act

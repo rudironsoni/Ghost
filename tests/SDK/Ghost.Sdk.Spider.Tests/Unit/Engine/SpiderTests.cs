@@ -1,15 +1,14 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Engine;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
-using NUnit.Framework;
+using Xunit;
 using SpiderExecutionContext = Ghost.Sdk.Spider.Engine.ExecutionContext;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 
-[TestFixture]
 public class SpiderTests
 {
-    [Test]
+    [Fact]
     public void GetStartUrls_ShouldReturnConfiguredUrls()
     {
         // Arrange
@@ -23,7 +22,7 @@ public class SpiderTests
         urls.Should().BeEquivalentTo(expectedUrls);
     }
 
-    [Test]
+    [Fact]
     public async Task ProcessResponseAsync_ShouldBeInvoked()
     {
         // Arrange
@@ -39,7 +38,7 @@ public class SpiderTests
         spider.ProcessedResponses[0].Should().BeSameAs(response);
     }
 
-    [Test]
+    [Fact]
     public async Task OnStartAsync_ShouldBeCallable()
     {
         // Arrange
@@ -53,7 +52,7 @@ public class SpiderTests
         spider.OnStartCalled.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task OnCompleteAsync_ShouldBeCallable()
     {
         // Arrange
@@ -68,7 +67,7 @@ public class SpiderTests
         spider.OnCompleteCalled.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task OnErrorAsync_ShouldCaptureException()
     {
         // Arrange
@@ -84,7 +83,7 @@ public class SpiderTests
         spider.ErrorsReceived[0].Should().BeSameAs(exception);
     }
 
-    [Test]
+    [Fact]
     public void ShouldFollowUrl_WithValidUrl_ShouldReturnTrue()
     {
         // Arrange
@@ -98,7 +97,7 @@ public class SpiderTests
         shouldFollow.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFollowUrl_WithNullUrl_ShouldReturnFalse()
     {
         // Arrange
@@ -112,7 +111,7 @@ public class SpiderTests
         shouldFollow.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFollowUrl_WithInvalidUrl_ShouldReturnFalse()
     {
         // Arrange
@@ -126,7 +125,7 @@ public class SpiderTests
         shouldFollow.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFollowUrl_WithAllowedDomains_ShouldFilterByDomain()
     {
         // Arrange
@@ -145,7 +144,7 @@ public class SpiderTests
         shouldFollowDisallowed.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFollowUrl_WithExcludePatterns_ShouldFilterByPattern()
     {
         // Arrange
@@ -164,7 +163,7 @@ public class SpiderTests
         shouldFollowAdmin.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFollowUrl_WithCustomLogic_ShouldUseCustomLogic()
     {
         // Arrange
@@ -181,7 +180,7 @@ public class SpiderTests
         shouldFollow2.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task ProcessResponseAsync_WithCallback_ShouldInvokeCallback()
     {
         // Arrange
@@ -201,7 +200,7 @@ public class SpiderTests
         callbackInvoked.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Name_ShouldReturnSpiderName()
     {
         // Arrange
@@ -211,7 +210,7 @@ public class SpiderTests
         spider.Name.Should().Be("MyCustomSpider");
     }
 
-    [Test]
+    [Fact]
     public void Options_ShouldReturnSpiderOptions()
     {
         // Arrange

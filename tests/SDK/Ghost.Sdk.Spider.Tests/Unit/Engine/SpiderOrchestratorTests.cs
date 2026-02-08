@@ -2,7 +2,7 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Engine;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using SpiderExecutionContext = Ghost.Sdk.Spider.Engine.ExecutionContext;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
@@ -10,14 +10,12 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 /// <summary>
 /// Tests for spider orchestration and coordination
 /// </summary>
-[TestFixture]
 public class SpiderOrchestratorTests
 {
-    private Mock<ISpiderEngine> _mockEngine = null!;
-    private SpiderOptions _options = null!;
+    private Mock<ISpiderEngine> _mockEngine;
+    private SpiderOptions _options;
 
-    [SetUp]
-    public void Setup()
+    public SpiderOrchestratorTests()
     {
         _mockEngine = new Mock<ISpiderEngine>();
         _options = new SpiderOptions
@@ -28,7 +26,7 @@ public class SpiderOrchestratorTests
         };
     }
 
-    [Test]
+    [Fact]
     public async Task Orchestrator_ExecutesSpiderLifecycle()
     {
         // Arrange
@@ -57,7 +55,7 @@ public class SpiderOrchestratorTests
         result.RequestsProcessed.Should().Be(2);
     }
 
-    [Test]
+    [Fact]
     public async Task Orchestrator_HandlesEmptyStartUrls()
     {
         // Arrange
@@ -83,7 +81,7 @@ public class SpiderOrchestratorTests
         result.RequestsProcessed.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public async Task Orchestrator_PropagatesErrors()
     {
         // Arrange
@@ -107,7 +105,7 @@ public class SpiderOrchestratorTests
         result.Error.Should().Contain("error");
     }
 
-    [Test]
+    [Fact]
     public async Task Orchestrator_RespectsMaxRequests()
     {
         // Arrange
@@ -131,7 +129,7 @@ public class SpiderOrchestratorTests
         result.RequestsProcessed.Should().Be(3);
     }
 
-    [Test]
+    [Fact]
     public async Task Orchestrator_HandlesCancellation()
     {
         // Arrange
@@ -146,7 +144,7 @@ public class SpiderOrchestratorTests
             .Should().ThrowAsync<OperationCanceledException>();
     }
 
-    [Test]
+    [Fact]
     public async Task Orchestrator_TracksStatistics()
     {
         // Arrange
@@ -175,7 +173,7 @@ public class SpiderOrchestratorTests
         result.ItemsExtracted.Should().Be(20);
     }
 
-    [Test]
+    [Fact]
     public async Task Orchestrator_HandlesEngineFailure()
     {
         // Arrange
@@ -189,7 +187,7 @@ public class SpiderOrchestratorTests
             .Should().ThrowAsync<HttpRequestException>();
     }
 
-    [Test]
+    [Fact]
     public async Task Orchestrator_SupportsExecutionContext()
     {
         // Arrange

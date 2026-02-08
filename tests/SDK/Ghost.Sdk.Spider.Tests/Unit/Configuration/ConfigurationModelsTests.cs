@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Configuration;
 using Ghost.Sdk.Spider.Configuration.Models;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Configuration;
 
@@ -9,10 +9,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Configuration;
 /// Comprehensive tests for configuration model DTOs.
 /// Tests property getters/setters and default values.
 /// </summary>
-[TestFixture]
 public class ConfigurationModelsTests
 {
-    [Test]
+    [Fact]
     public void SpiderConfiguration_ShouldInitializeWithDefaults()
     {
         // Act
@@ -36,7 +35,7 @@ public class ConfigurationModelsTests
         config.Metadata.Should().NotBeNull().And.BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void SpiderConfiguration_Properties_ShouldGetAndSet()
     {
         // Arrange
@@ -57,7 +56,7 @@ public class ConfigurationModelsTests
         config.Tags.Should().Contain("test-tag");
     }
 
-    [Test]
+    [Fact]
     public void TargetConfiguration_ShouldInitializeWithDefaults()
     {
         // Act
@@ -76,7 +75,7 @@ public class ConfigurationModelsTests
         config.Authentication.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void TargetConfiguration_Properties_ShouldGetAndSet()
     {
         // Arrange
@@ -97,7 +96,7 @@ public class ConfigurationModelsTests
         config.Headers["X-Custom"].Should().Be("value");
     }
 
-    [Test]
+    [Fact]
     public void AuthenticationConfiguration_ShouldInitializeWithDefaults()
     {
         // Act
@@ -112,7 +111,7 @@ public class ConfigurationModelsTests
         config.OAuth2.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void AuthenticationConfiguration_Properties_ShouldGetAndSet()
     {
         // Arrange
@@ -133,7 +132,7 @@ public class ConfigurationModelsTests
         config.Cookies["sessionId"].Should().Be("abc123");
     }
 
-    [Test]
+    [Fact]
     public void OAuth2Configuration_ShouldInitializeWithDefaults()
     {
         // Act
@@ -146,7 +145,7 @@ public class ConfigurationModelsTests
         config.Scopes.Should().NotBeNull().And.BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void OAuth2Configuration_Properties_ShouldGetAndSet()
     {
         // Arrange
@@ -166,7 +165,7 @@ public class ConfigurationModelsTests
         config.Scopes.Should().Contain(new[] { "read", "write" });
     }
 
-    [Test]
+    [Fact]
     public void LimitsConfiguration_ShouldInitializeWithDefaults()
     {
         // Act
@@ -188,7 +187,7 @@ public class ConfigurationModelsTests
         config.ResourceBlocking.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void LimitsConfiguration_Properties_ShouldGetAndSet()
     {
         // Arrange
@@ -211,7 +210,7 @@ public class ConfigurationModelsTests
         config.RequestTimeoutSeconds.Should().Be(60);
     }
 
-    [Test]
+    [Fact]
     public void ResourceBlockingConfiguration_ShouldInitializeWithDefaults()
     {
         // Act
@@ -225,7 +224,7 @@ public class ConfigurationModelsTests
         config.BlockedUrlPatterns.Should().NotBeNull().And.BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void ResourceBlockingConfiguration_Properties_ShouldGetAndSet()
     {
         // Arrange
@@ -246,7 +245,7 @@ public class ConfigurationModelsTests
         config.BlockedUrlPatterns.Should().Contain("*/ads/*");
     }
 
-    [Test]
+    [Fact]
     public void MonitoringConfiguration_ShouldInitializeWithDefaults()
     {
         // Act
@@ -263,7 +262,7 @@ public class ConfigurationModelsTests
         config.Alerts.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void MonitoringConfiguration_Properties_ShouldGetAndSet()
     {
         // Arrange
@@ -282,7 +281,7 @@ public class ConfigurationModelsTests
         config.MetricsExportIntervalSeconds.Should().Be(120);
     }
 
-    [Test]
+    [Fact]
     public void LoggingConfiguration_ShouldInitializeWithDefaults()
     {
         // Act
@@ -296,7 +295,7 @@ public class ConfigurationModelsTests
         config.Enrichers.Should().NotBeNull().And.BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void LoggingConfiguration_Properties_ShouldGetAndSet()
     {
         // Arrange
@@ -317,7 +316,7 @@ public class ConfigurationModelsTests
         config.Enrichers.Should().Contain("CustomEnricher");
     }
 
-    [Test]
+    [Fact]
     public void TelemetryConfiguration_ShouldInitializeWithDefaults()
     {
         // Act
@@ -330,7 +329,7 @@ public class ConfigurationModelsTests
         config.CustomAttributes.Should().NotBeNull().And.BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void TelemetryConfiguration_Properties_ShouldGetAndSet()
     {
         // Arrange
@@ -349,7 +348,7 @@ public class ConfigurationModelsTests
         config.CustomAttributes["service.name"].Should().Be("spider");
     }
 
-    [Test]
+    [Fact]
     public void HealthCheckConfiguration_ShouldInitializeWithDefaults()
     {
         // Act
@@ -362,7 +361,7 @@ public class ConfigurationModelsTests
         config.CustomChecks.Should().NotBeNull().And.BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void HealthCheckConfiguration_Properties_ShouldGetAndSet()
     {
         // Arrange
@@ -381,7 +380,7 @@ public class ConfigurationModelsTests
         config.CustomChecks.Should().Contain("DatabaseCheck");
     }
 
-    [Test]
+    [Fact]
     public void AlertConfiguration_ShouldInitializeWithDefaults()
     {
         // Act
@@ -392,7 +391,7 @@ public class ConfigurationModelsTests
         config.Rules.Should().NotBeNull().And.BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void AlertConfiguration_Properties_ShouldGetAndSet()
     {
         // Arrange
@@ -413,7 +412,7 @@ public class ConfigurationModelsTests
         config.Rules[0].Name.Should().Be("HighErrorRate");
     }
 
-    [Test]
+    [Fact]
     public void AlertRuleConfiguration_ShouldInitializeWithDefaults()
     {
         // Act
@@ -427,7 +426,7 @@ public class ConfigurationModelsTests
         config.Metadata.Should().NotBeNull().And.BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void AlertRuleConfiguration_Properties_ShouldGetAndSet()
     {
         // Arrange
@@ -449,7 +448,7 @@ public class ConfigurationModelsTests
         config.Metadata["owner"].Should().Be("team-a");
     }
 
-    [Test]
+    [Fact]
     public void NavigationConfiguration_CanBeAssigned()
     {
         // Arrange
@@ -463,7 +462,7 @@ public class ConfigurationModelsTests
         spiderConfig.Navigation.Should().BeSameAs(navConfig);
     }
 
-    [Test]
+    [Fact]
     public void StrategiesConfiguration_CanBeAssigned()
     {
         // Arrange
@@ -477,7 +476,7 @@ public class ConfigurationModelsTests
         spiderConfig.Strategies.Should().BeSameAs(stratConfig);
     }
 
-    [Test]
+    [Fact]
     public void PipelineConfiguration_CanBeAssigned()
     {
         // Arrange
@@ -491,7 +490,7 @@ public class ConfigurationModelsTests
         spiderConfig.Pipeline.Should().BeSameAs(pipelineConfig);
     }
 
-    [Test]
+    [Fact]
     public void StorageConfiguration_CanBeAssigned()
     {
         // Arrange
@@ -505,7 +504,7 @@ public class ConfigurationModelsTests
         spiderConfig.Storage.Should().BeSameAs(storageConfig);
     }
 
-    [Test]
+    [Fact]
     public void ScheduleConfiguration_CanBeAssigned()
     {
         // Arrange
@@ -519,7 +518,7 @@ public class ConfigurationModelsTests
         spiderConfig.Schedule.Should().BeSameAs(scheduleConfig);
     }
 
-    [Test]
+    [Fact]
     public void ExtractionConfiguration_CanBeAssigned()
     {
         // Arrange
@@ -533,7 +532,7 @@ public class ConfigurationModelsTests
         spiderConfig.Extraction.Should().BeSameAs(extractionConfig);
     }
 
-    [Test]
+    [Fact]
     public void SpiderConfiguration_Metadata_ShouldSupportMultipleTypes()
     {
         // Arrange
@@ -553,7 +552,7 @@ public class ConfigurationModelsTests
         config.Metadata["dictValue"].Should().BeOfType<Dictionary<string, string>>();
     }
 
-    [Test]
+    [Fact]
     public void LimitsConfiguration_BlockedContentTypes_ShouldContainDefaultValues()
     {
         // Act
@@ -569,7 +568,7 @@ public class ConfigurationModelsTests
         });
     }
 
-    [Test]
+    [Fact]
     public void AuthenticationConfiguration_WithOAuth2_ShouldWork()
     {
         // Arrange
@@ -593,7 +592,7 @@ public class ConfigurationModelsTests
         config.OAuth2.Scopes.Should().HaveCount(2);
     }
 
-    [Test]
+    [Fact]
     public void TargetConfiguration_WithAuthentication_ShouldWork()
     {
         // Arrange
@@ -614,7 +613,7 @@ public class ConfigurationModelsTests
         config.Authentication.Password.Should().Be("pass");
     }
 
-    [Test]
+    [Fact]
     public void MonitoringConfiguration_WithAllSubconfigurations_ShouldWork()
     {
         // Arrange

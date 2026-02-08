@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Adapters.Contracts;
-using NUnit.Framework;
+using Xunit;
 using System.Net.Http;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
@@ -9,13 +9,11 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 /// <summary>
 /// Comprehensive tests for HttpRequestBuilder class.
 /// </summary>
-[TestFixture]
 public class HttpRequestBuilderTests
 {
-    private StaticHtmlAdapterOptions _options = null!;
+    private readonly StaticHtmlAdapterOptions _options;
 
-    [SetUp]
-    public void Setup()
+    public HttpRequestBuilderTests()
     {
         _options = new StaticHtmlAdapterOptions
         {
@@ -34,14 +32,14 @@ public class HttpRequestBuilderTests
         };
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithNullRequest_ShouldThrowArgumentNullException()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => new HttpRequestBuilder(null!, _options));
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithNullOptions_ShouldThrowArgumentNullException()
     {
         // Arrange
@@ -51,7 +49,7 @@ public class HttpRequestBuilderTests
         Assert.Throws<ArgumentNullException>(() => new HttpRequestBuilder(request, null!));
     }
 
-    [Test]
+    [Fact]
     public void Build_WithSimpleGetRequest_ShouldCreateHttpRequestMessage()
     {
         // Arrange
@@ -67,7 +65,7 @@ public class HttpRequestBuilderTests
         httpRequest.RequestUri.Should().Be(new Uri("https://example.com"));
     }
 
-    [Test]
+    [Fact]
     public void Build_WithInvalidUrl_ShouldThrowInvalidOperationException()
     {
         // Arrange
@@ -78,7 +76,7 @@ public class HttpRequestBuilderTests
         Assert.Throws<InvalidOperationException>(() => builder.Build());
     }
 
-    [Test]
+    [Fact]
     public void Build_WithPostMethod_ShouldSetCorrectHttpMethod()
     {
         // Arrange
@@ -92,7 +90,7 @@ public class HttpRequestBuilderTests
         httpRequest.Method.Should().Be(HttpMethod.Post);
     }
 
-    [Test]
+    [Fact]
     public void Build_WithPutMethod_ShouldSetCorrectHttpMethod()
     {
         // Arrange
@@ -106,7 +104,7 @@ public class HttpRequestBuilderTests
         httpRequest.Method.Should().Be(HttpMethod.Put);
     }
 
-    [Test]
+    [Fact]
     public void Build_WithDeleteMethod_ShouldSetCorrectHttpMethod()
     {
         // Arrange
@@ -120,7 +118,7 @@ public class HttpRequestBuilderTests
         httpRequest.Method.Should().Be(HttpMethod.Delete);
     }
 
-    [Test]
+    [Fact]
     public void Build_WithPatchMethod_ShouldSetCorrectHttpMethod()
     {
         // Arrange
@@ -134,7 +132,7 @@ public class HttpRequestBuilderTests
         httpRequest.Method.Should().Be(HttpMethod.Patch);
     }
 
-    [Test]
+    [Fact]
     public void Build_WithCustomMethod_ShouldCreateCustomHttpMethod()
     {
         // Arrange
@@ -148,7 +146,7 @@ public class HttpRequestBuilderTests
         httpRequest.Method.Method.Should().Be("CUSTOM");
     }
 
-    [Test]
+    [Fact]
     public void Build_ShouldIncludeUserAgentFromOptions()
     {
         // Arrange
@@ -162,7 +160,7 @@ public class HttpRequestBuilderTests
         httpRequest.Headers.UserAgent.ToString().Should().Contain("TestAgent/1.0");
     }
 
-    [Test]
+    [Fact]
     public void Build_ShouldIncludeAcceptHeaderFromOptions()
     {
         // Arrange
@@ -176,7 +174,7 @@ public class HttpRequestBuilderTests
         httpRequest.Headers.Accept.ToString().Should().Contain("text/html");
     }
 
-    [Test]
+    [Fact]
     public void Build_ShouldIncludeCustomHeadersFromOptions()
     {
         // Arrange
@@ -190,7 +188,7 @@ public class HttpRequestBuilderTests
         httpRequest.Headers.GetValues("X-Custom-Header").Should().Contain("CustomValue");
     }
 
-    [Test]
+    [Fact]
     public void Build_WithRequestHeaders_ShouldOverrideDefaultHeaders()
     {
         // Arrange
@@ -210,7 +208,7 @@ public class HttpRequestBuilderTests
         httpRequest.Headers.GetValues("X-Custom-Header").Should().Contain("OverriddenValue");
     }
 
-    [Test]
+    [Fact]
     public void Build_WithCookies_ShouldSetCookieHeader()
     {
         // Arrange
@@ -225,7 +223,7 @@ public class HttpRequestBuilderTests
         httpRequest.Headers.GetValues("Cookie").First().Should().Contain("sessionId=abc123");
     }
 
-    [Test]
+    [Fact]
     public void Build_WithRequestCookies_ShouldMergeWithOptionsCookies()
     {
         // Arrange
@@ -250,7 +248,7 @@ public class HttpRequestBuilderTests
         cookieHeader.Should().Contain("requestCookie=xyz789");
     }
 
-    [Test]
+    [Fact]
     public void Build_WithRefererInMetadata_ShouldSetRefererHeader()
     {
         // Arrange
@@ -270,7 +268,7 @@ public class HttpRequestBuilderTests
         httpRequest.Headers.Referrer.Should().Be(new Uri("https://referrer.com"));
     }
 
-    [Test]
+    [Fact]
     public void Build_WithQueryParametersInUrl_ShouldPreserveThem()
     {
         // Arrange
@@ -285,7 +283,7 @@ public class HttpRequestBuilderTests
         httpRequest.RequestUri.Query.Should().Contain("param2=value2");
     }
 
-    [Test]
+    [Fact]
     public void Build_WithQueryParametersInMetadata_ShouldAppendToUrl()
     {
         // Arrange
@@ -310,7 +308,7 @@ public class HttpRequestBuilderTests
         httpRequest.RequestUri.Query.Should().Contain("key2=value2");
     }
 
-    [Test]
+    [Fact]
     public void Build_WithBothUrlAndMetadataQueryParams_ShouldMergeThem()
     {
         // Arrange
@@ -334,7 +332,7 @@ public class HttpRequestBuilderTests
         httpRequest.RequestUri.Query.Should().Contain("new=param");
     }
 
-    [Test]
+    [Fact]
     public void Build_WithPostAndBody_ShouldSetContentAsJson()
     {
         // Arrange
@@ -353,7 +351,7 @@ public class HttpRequestBuilderTests
         httpRequest.Content!.Headers.ContentType!.MediaType.Should().Be("application/json");
     }
 
-    [Test]
+    [Fact]
     public void Build_WithPostAndXmlContentType_ShouldSetContentAsXml()
     {
         // Arrange
@@ -376,7 +374,7 @@ public class HttpRequestBuilderTests
         httpRequest.Content!.Headers.ContentType!.MediaType.Should().Be("application/xml");
     }
 
-    [Test]
+    [Fact]
     public void Build_WithPostAndFormData_ShouldSetFormUrlEncodedContent()
     {
         // Arrange
@@ -403,7 +401,7 @@ public class HttpRequestBuilderTests
         httpRequest.Content!.Headers.ContentType!.MediaType.Should().Be("application/x-www-form-urlencoded");
     }
 
-    [Test]
+    [Fact]
     public void Build_WithGetMethod_ShouldNotSetContent()
     {
         // Arrange
@@ -421,7 +419,7 @@ public class HttpRequestBuilderTests
         httpRequest.Content.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void Build_WithHeadMethod_ShouldNotSetContent()
     {
         // Arrange
@@ -439,7 +437,7 @@ public class HttpRequestBuilderTests
         httpRequest.Content.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void Build_WithContentTypeInMetadata_ShouldUseItForContent()
     {
         // Arrange
@@ -461,7 +459,7 @@ public class HttpRequestBuilderTests
         httpRequest.Content!.Headers.ContentType!.MediaType.Should().Be("text/plain");
     }
 
-    [Test]
+    [Fact]
     public void Build_WithAcceptLanguageHeader_ShouldIncludeIt()
     {
         // Arrange
@@ -477,7 +475,7 @@ public class HttpRequestBuilderTests
         acceptLanguage.Should().Contain("en-US");
     }
 
-    [Test]
+    [Fact]
     public void Build_WithAcceptEncodingHeader_ShouldIncludeIt()
     {
         // Arrange
@@ -493,7 +491,7 @@ public class HttpRequestBuilderTests
         acceptEncoding.Should().Contain("gzip");
     }
 
-    [Test]
+    [Fact]
     public void Build_WithLowercaseMethod_ShouldMapCorrectly()
     {
         // Arrange
@@ -507,7 +505,7 @@ public class HttpRequestBuilderTests
         httpRequest.Method.Should().Be(HttpMethod.Post);
     }
 
-    [Test]
+    [Fact]
     public void Build_WithMixedCaseMethod_ShouldMapCorrectly()
     {
         // Arrange

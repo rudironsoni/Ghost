@@ -1,21 +1,19 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Strategies;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Strategies;
 
-[TestFixture]
 public class ConditionEvaluatorTests
 {
-    private ConditionEvaluator _evaluator = null!;
+    private readonly ConditionEvaluator _evaluator;
 
-    [SetUp]
-    public void Setup()
+    public ConditionEvaluatorTests()
     {
         _evaluator = new ConditionEvaluator();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithEmptyConditions_ShouldReturnTrue()
     {
         // Arrange
@@ -30,7 +28,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithAlwaysCondition_ShouldReturnTrue()
     {
         // Arrange
@@ -48,7 +46,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithNegatedAlwaysCondition_ShouldReturnFalse()
     {
         // Arrange
@@ -66,7 +64,7 @@ public class ConditionEvaluatorTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithTimeoutCondition_WhenTimeoutOccurred_ShouldReturnTrue()
     {
         // Arrange
@@ -93,7 +91,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithStatusCodeCondition_WhenMatches_ShouldReturnTrue()
     {
         // Arrange
@@ -120,7 +118,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithStatusCodeGreaterThan_ShouldWork()
     {
         // Arrange
@@ -147,7 +145,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithElementNotFoundCondition_WhenFound_ShouldReturnTrue()
     {
         // Arrange
@@ -174,7 +172,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithAnyFailedCondition_WhenAnyFailed_ShouldReturnTrue()
     {
         // Arrange
@@ -196,7 +194,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithAllFailedCondition_WhenAllFailed_ShouldReturnTrue()
     {
         // Arrange
@@ -218,7 +216,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithContentMatchCondition_WhenMatches_ShouldReturnTrue()
     {
         // Arrange
@@ -245,7 +243,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithPreviousSuccessCondition_WhenPreviousSucceeded_ShouldReturnTrue()
     {
         // Arrange
@@ -266,7 +264,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithPreviousFailedCondition_WhenPreviousFailed_ShouldReturnTrue()
     {
         // Arrange
@@ -287,7 +285,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithRetryCountCondition_WhenMatches_ShouldReturnTrue()
     {
         // Arrange
@@ -314,7 +312,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithCustomCondition_WhenStateMatches_ShouldReturnTrue()
     {
         // Arrange
@@ -345,7 +343,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithAndOperator_ShouldCombineCorrectly()
     {
         // Arrange
@@ -380,7 +378,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithOrOperator_ShouldCombineCorrectly()
     {
         // Arrange
@@ -414,7 +412,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithRegexOperator_ShouldMatch()
     {
         // Arrange
@@ -441,7 +439,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithStartsWithOperator_ShouldMatch()
     {
         // Arrange
@@ -468,7 +466,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithEndsWithOperator_ShouldMatch()
     {
         // Arrange
@@ -495,7 +493,7 @@ public class ConditionEvaluatorTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Evaluate_WithNotContainsOperator_ShouldMatch()
     {
         // Arrange

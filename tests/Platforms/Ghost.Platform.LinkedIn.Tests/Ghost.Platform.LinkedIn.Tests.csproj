@@ -16,11 +16,8 @@
   <ItemGroup>
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
-    <PackageReference Include="NUnit" />
-    <PackageReference Include="NUnit3TestAdapter" />
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="NSubstitute" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Fixtures\**\*">
