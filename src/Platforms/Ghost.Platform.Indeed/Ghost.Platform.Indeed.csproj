@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Ghost.Platform.Indeed</RootNamespace>
     <Description>Ghost Indeed platform integration</Description>
     <ImplicitUsings>enable</ImplicitUsings>
