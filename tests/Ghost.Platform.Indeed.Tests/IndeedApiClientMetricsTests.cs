@@ -148,14 +148,14 @@ public class IndeedApiClientMetricsTests
             Task.FromResult<ProxyInfo?>(null);
     }
 
-        private sealed class NoopHandler : HttpMessageHandler
+private sealed class NoopHandler : HttpMessageHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+        Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {
-            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-                Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent("{\"data\":{\"jobSearch\":{\"pageInfo\":{\"nextCursor\":null,\"hasNextPage\":false}}}}")
-                });
-        }
+            Content = new StringContent("{\"data\":{\"jobSearch\":{\"pageInfo\":{\"nextCursor\":null,\"hasNextPage\":false}}}}")
+        });
+}
 
     private sealed class ResponseHandler : HttpMessageHandler
     {

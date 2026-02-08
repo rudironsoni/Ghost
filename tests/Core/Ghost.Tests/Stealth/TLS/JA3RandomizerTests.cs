@@ -125,14 +125,17 @@ public class JA3RandomizerTests
     {
         // Arrange
         var randomizer = new JA3Randomizer();
-        const int count = 10;
+        const int count = 100;
 
         // Act
         var profiles = randomizer.GenerateMultipleProfiles(count);
         var hashes = profiles.Select(p => p.ToJA3Hash()).ToList();
+        var uniqueCount = hashes.Distinct().Count();
 
-        // Assert - Most should be unique (allow some collisions due to randomization)
-        hashes.Distinct().Should().HaveCountGreaterThan(count / 2);
+        // Assert - Test statistical distribution: expect >95% unique hashes
+        var uniqueRatio = uniqueCount / (double)count;
+        uniqueRatio.Should().BeGreaterThan(0.95,
+            $"Expected >95% unique hashes from random generation, got {uniqueRatio:P2} ({uniqueCount}/{count} unique)");
     }
 
     [Fact]
