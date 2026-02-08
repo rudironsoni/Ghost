@@ -15,8 +15,8 @@ public class MouseMimicryTests
         var mockMouse = new Mock<IMouse>();
         var moveCallCount = 0;
 
-        mockMouse.Setup(m => m.MoveAsync(It.IsAny<float>(), It.IsAny<float>()))
-            .Callback(() => moveCallCount++)
+        mockMouse.Setup(m => m.MoveAsync(It.IsAny<float>(), It.IsAny<float>(), It.IsAny<MouseMoveOptions>()))
+            .Callback<float, float, MouseMoveOptions>((x, y, opts) => moveCallCount++)
             .Returns(Task.CompletedTask);
 
         // Act
@@ -38,7 +38,7 @@ public class MouseMimicryTests
         await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, 0, 0);
 
         // Assert
-        mockMouse.Verify(m => m.MoveAsync(It.IsAny<float>(), It.IsAny<float>()), Times.Never);
+        mockMouse.Verify(m => m.MoveAsync(It.IsAny<float>(), It.IsAny<float>(), It.IsAny<MouseMoveOptions>()), Times.Never);
     }
 
     [Fact]
@@ -52,8 +52,8 @@ public class MouseMimicryTests
         var lastX = 0f;
         var lastY = 0f;
 
-        mockMouse.Setup(m => m.MoveAsync(It.IsAny<float>(), It.IsAny<float>()))
-            .Callback<float, float>((x, y) =>
+        mockMouse.Setup(m => m.MoveAsync(It.IsAny<float>(), It.IsAny<float>(), It.IsAny<MouseMoveOptions>()))
+            .Callback<float, float, MouseMoveOptions>((x, y, opts) =>
             {
                 lastX = x;
                 lastY = y;
