@@ -1,0 +1,54 @@
+# Pre-commit hooks for Ghost project
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+repos:
+  - repo: local
+    hooks:
+      # C# code formatting check
+      - id: dotnet-format-check
+        name: Check C# formatting
+        entry: dotnet format Ghost.sln --verify-no-changes --verbosity diagnostic
+        language: system
+        pass_filenames: false
+        files: '\.(cs|csproj|sln)$'
+        stages: [pre-commit]
+
+      # Build the solution (catches compilation errors)
+      - id: dotnet-build
+        name: Build solution
+        entry: dotnet build Ghost.sln --configuration Release --no-restore --warnaserror
+        language: system
+        pass_filenames: false
+        files: '\.(cs|csproj|sln)$'
+        stages: [pre-commit]
+
+      # Run quick unit tests (skip Integration and E2E tests)
+      - id: dotnet-test-quick
+        name: Quick unit tests
+        entry: dotnet test Ghost.sln --configuration Release --filter "FullyQualifiedName!~Integration&FullyQualifiedName!~E2E" --no-build --no-restore
+        language: system
+        pass_filenames: false
+        files: '\.(cs|csproj)$'
+        stages: [pre-commit]
+
+  # Standard pre-commit hooks for file hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.(md|txt)$'
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: ['--unsafe']  # Allow custom YAML tags
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+# Global settings
+default_stages: [pre-commit]
+fail_fast: false  # Run all hooks even if one fails
