@@ -134,7 +134,7 @@ public class RegionDetectorTests
     {
         // Arrange
         var page = Substitute.For<IPage>();
-        page.GetContentAsync().Returns(Task.FromException<string>(new Exception("Test error")));
+        page.GetContentAsync().Returns(Task.FromException<string>(new InvalidOperationException("Test error")));
 
         // Act
         var result = await RegionDetector.DetectRegulationAsync(page);

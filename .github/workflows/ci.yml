@@ -25,6 +25,8 @@ permissions:
   contents: read
   packages: write
   security-events: write
+  actions: read
+  id-token: write
 
 jobs:
   build:

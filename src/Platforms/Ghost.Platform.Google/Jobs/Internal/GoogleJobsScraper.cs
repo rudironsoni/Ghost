@@ -110,7 +110,7 @@ public class GoogleJobsScraper
         }
     }
 
-    private GoogleJobsEntity? ParseJsonLdJob(string json)
+    private static GoogleJobsEntity? ParseJsonLdJob(string json)
     {
         try
         {
@@ -136,7 +136,7 @@ public class GoogleJobsScraper
         return null;
     }
 
-    private string? ExtractJsonValue(string json, string key)
+    private static string? ExtractJsonValue(string json, string key)
     {
         var idx = json.IndexOf(key, StringComparison.OrdinalIgnoreCase);
         if (idx < 0) return null;
@@ -147,13 +147,13 @@ public class GoogleJobsScraper
 
         if (start >= json.Length) return null;
 
-        var end = json.IndexOf("\"", start);
+        var end = json.IndexOf('\"', start);
         if (end < 0) return null;
 
         return json[start..end].Replace("\\n", " ").Replace("\\", "");
     }
 
-    private List<GoogleJobsEntity> ExtractJobsFromHtml(HtmlDocument doc, int maxResults)
+    private static List<GoogleJobsEntity> ExtractJobsFromHtml(HtmlDocument doc, int maxResults)
     {
         var jobs = new List<GoogleJobsEntity>();
 
@@ -196,7 +196,7 @@ public class GoogleJobsScraper
         return jobs;
     }
 
-    private GoogleJobsEntity? ExtractJobFromNode(HtmlNode node)
+    private static GoogleJobsEntity? ExtractJobFromNode(HtmlNode node)
     {
         try
         {
