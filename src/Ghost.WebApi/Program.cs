@@ -8,6 +8,7 @@ using Ghost.WebApi.Features.Admin;
 using Ghost.WebApi.Features.Health;
 using Ghost.WebApi.Features.Jobs;
 using Ghost.WebApi.Features.LinkedIn;
+using Ghost.WebApi.Metrics;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging.Abstractions;
 // Removed unused reflection/disk/culture usings after replacing dynamic loader with
@@ -50,6 +51,7 @@ builder.Services.AddHealthChecks()
     .AddCheck("ghost-webapi", () => HealthCheckResult.Healthy("Ghost WebAPI is running"));
 builder.Services.AddGhostResilience(builder.Configuration);
 builder.Services.AddGhostMonitoring(builder.Configuration);
+builder.Services.AddRedisQueueMetrics();
 builder.Services.AddHttpClient();
 builder.Services.Configure<Ghost.Core.ProxyOptions>(builder.Configuration.GetSection("Ghost:Proxy"));
 builder.Services.AddSingleton<Ghost.Abstractions.IProxyProvider, Ghost.Services.RotatingProxyProvider>();
@@ -155,6 +157,9 @@ builder.Services.AddScoped<Ghost.Contracts.Jobs.IJobClient, Ghost.Core.Services.
 
 var app = builder.Build();
 
+// Add correlation ID middleware (must be early in pipeline)
+app.UseCorrelationId();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -172,6 +177,7 @@ app.MapDetailedHealth();
 app.MapCircuitBreakerHealth();
 app.MapDlqEndpoints();
 app.MapMetricsEndpoints();
+app.MapRedisQueueMetricsEndpoint();
 app.MapHealthChecks("/health");
 
 app.Run();
