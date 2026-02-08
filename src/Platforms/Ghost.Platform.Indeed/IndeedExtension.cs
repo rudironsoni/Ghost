@@ -56,7 +56,34 @@ public class IndeedExtension : Ghost.Hosting.IExtension
             throw new InvalidOperationException("IndeedApiClient requires IProxyProvider or ISessionOrchestrator to be registered.");
         });
 
-        services.AddScoped<IndeedJobClient>();
+        // Register scrapers (require browser session)
+        services.AddScoped<Jobs.IndeedSearchScraper>(sp =>
+        {
+            var apiClient = sp.GetRequiredService<IndeedApiClient>();
+            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.IndeedSearchScraper>>();
+            var browserSession = sp.GetService<IBrowserSession>();
+            return new Jobs.IndeedSearchScraper(apiClient, logger, browserSession);
+        });
+
+        services.AddScoped<Jobs.IndeedJobDetailsScraper>(sp =>
+        {
+            var browserSession = sp.GetService<IBrowserSession>()
+                ?? throw new InvalidOperationException("IndeedJobDetailsScraper requires IBrowserSession to be registered.");
+
+            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.IndeedJobDetailsScraper>>();
+            var jsonLdExtractor = sp.GetService<Ghost.Abstractions.IJsonLdExtractor>();
+            return new Jobs.IndeedJobDetailsScraper(browserSession, logger, jsonLdExtractor);
+        });
+
+        services.AddScoped<IndeedJobClient>(sp =>
+        {
+            var apiClient = sp.GetRequiredService<IndeedApiClient>();
+            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<IndeedJobClient>>();
+            var searchScraper = sp.GetService<Jobs.IndeedSearchScraper>();
+            var detailsScraper = sp.GetService<Jobs.IndeedJobDetailsScraper>();
+            return new IndeedJobClient(apiClient, logger, searchScraper, detailsScraper);
+        });
+
         // register as both IJobScraper and IJobClient for backward compatibility
         services.AddScoped<Ghost.Abstractions.IJobScraper>(sp => sp.GetRequiredService<IndeedJobClient>());
         services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => sp.GetRequiredService<IndeedJobClient>());
