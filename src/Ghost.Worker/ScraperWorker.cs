@@ -113,7 +113,7 @@ public sealed class ScraperWorker : BackgroundService
             await UpdateJobStatusAsync(jobRequest.JobId, JobStatus.Processing, cancellationToken);
 
             // Resolve the appropriate job client for the platform
-            var jobClient = ResolveJobClient(jobRequest.Platform) 
+            var jobClient = ResolveJobClient(jobRequest.Platform)
                 ?? throw new NotSupportedException($"Platform {jobRequest.Platform} is not supported");
 
             // Execute scraping with platform-specific criteria
