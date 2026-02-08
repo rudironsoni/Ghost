@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Storage.Contracts;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
@@ -8,10 +8,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// Contract tests for IStorage implementations.
 /// These tests ensure all storage implementations follow the interface contract.
 /// </summary>
-[TestFixture]
 public class IStorageContractTests
 {
-    [Test]
+    [Fact]
     public async Task MockStorage_ShouldImplementIStorage()
     {
         // Arrange
@@ -29,7 +28,7 @@ public class IStorageContractTests
         result.Success.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task Storage_StoreAsync_ShouldAcceptCancellationToken()
     {
         // Arrange
@@ -45,7 +44,7 @@ public class IStorageContractTests
         result.Success.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task Storage_StoreBatchAsync_ShouldHandleEmptyList()
     {
         // Arrange
@@ -61,7 +60,7 @@ public class IStorageContractTests
         result.ItemsStored.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public async Task Storage_InitializeAsync_ShouldBeCancellable()
     {
         // Arrange
@@ -73,7 +72,7 @@ public class IStorageContractTests
         await storage.InitializeAsync(cts.Token);
     }
 
-    [Test]
+    [Fact]
     public async Task Storage_LifecycleOperations_ShouldSucceed()
     {
         // Arrange

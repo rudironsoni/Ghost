@@ -2,7 +2,7 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Storage.Contracts;
 using Ghost.Sdk.Spider.Storage.Sinks;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using System.Net;
 using System.Net.Http;
 
@@ -11,10 +11,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// <summary>
 /// Comprehensive tests for storage sinks including WebhookStorage and ConsoleStorage.
 /// </summary>
-[TestFixture]
 public class StorageSinksTests
 {
-    [Test]
+    [Fact]
     public async Task ConsoleStorage_StoreAsync_ShouldSucceed()
     {
         // Arrange
@@ -36,7 +35,7 @@ public class StorageSinksTests
         result.Error.Should().BeNullOrEmpty();
     }
 
-    [Test]
+    [Fact]
     public async Task ConsoleStorage_StoreBatchAsync_ShouldSucceed()
     {
         // Arrange
@@ -62,7 +61,7 @@ public class StorageSinksTests
         result.ItemsStored.Should().Be(3);
     }
 
-    [Test]
+    [Fact]
     public async Task ConsoleStorage_InitializeAsync_ShouldSucceed()
     {
         // Arrange
@@ -75,7 +74,7 @@ public class StorageSinksTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public async Task ConsoleStorage_FlushAsync_ShouldSucceed()
     {
         // Arrange
@@ -88,7 +87,7 @@ public class StorageSinksTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public async Task ConsoleStorage_CloseAsync_ShouldSucceed()
     {
         // Arrange
@@ -101,7 +100,7 @@ public class StorageSinksTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public void ConsoleStorage_Properties_ShouldReturnExpectedValues()
     {
         // Arrange
@@ -112,7 +111,7 @@ public class StorageSinksTests
         storage.IsAvailable.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ConsoleStorage_WithNullItem_ShouldHandleGracefully()
     {
         // Arrange
@@ -131,7 +130,7 @@ public class StorageSinksTests
         // Behavior may vary - either succeed with warning or fail gracefully
     }
 
-    [Test]
+    [Fact]
     public async Task ConsoleStorage_WithEmptyBatch_ShouldHandleGracefully()
     {
         // Arrange
@@ -152,7 +151,7 @@ public class StorageSinksTests
         result.ItemsStored.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public async Task ConsoleStorage_WithCancellation_ShouldRespectToken()
     {
         // Arrange
@@ -174,7 +173,7 @@ public class StorageSinksTests
         await act.Should().NotThrowAsync<NullReferenceException>();
     }
 
-    [Test]
+    [Fact]
     public void StorageResult_CreateSuccess_ShouldHaveCorrectProperties()
     {
         // Arrange
@@ -191,7 +190,7 @@ public class StorageSinksTests
         result.Exception.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void StorageResult_CreateFailure_ShouldHaveCorrectProperties()
     {
         // Arrange
@@ -210,7 +209,7 @@ public class StorageSinksTests
         result.Exception.Should().Be(exception);
     }
 
-    [Test]
+    [Fact]
     public void StorageResult_Metadata_ShouldBeInitialized()
     {
         // Act
@@ -221,7 +220,7 @@ public class StorageSinksTests
         result.Metadata.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void StorageResult_Metadata_ShouldAllowAddingValues()
     {
         // Arrange
@@ -237,7 +236,7 @@ public class StorageSinksTests
         result.Metadata["key2"].Should().Be(123);
     }
 
-    [Test]
+    [Fact]
     public void StorageContext_ShouldAllowCreation()
     {
         // Arrange & Act
@@ -257,7 +256,7 @@ public class StorageSinksTests
         context.Metadata.Should().ContainKey("key1");
     }
 
-    [Test]
+    [Fact]
     public async Task ConsoleStorage_MultipleCalls_ShouldAccumulateItems()
     {
         // Arrange
@@ -279,7 +278,7 @@ public class StorageSinksTests
         result3.Success.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ConsoleStorage_WithComplexObject_ShouldSerialize()
     {
         // Arrange
@@ -314,7 +313,7 @@ public class StorageSinksTests
         result.ItemsStored.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void ConsoleStorage_IsThreadSafe_ShouldHandleConcurrentCalls()
     {
         // Arrange
@@ -339,7 +338,7 @@ public class StorageSinksTests
         tasks.Should().AllSatisfy(t => t.Result.Success.Should().BeTrue());
     }
 
-    [Test]
+    [Fact]
     public async Task StorageResult_WithLongDuration_ShouldCapture()
     {
         // Arrange

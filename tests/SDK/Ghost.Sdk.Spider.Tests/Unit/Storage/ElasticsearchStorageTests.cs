@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Configuration.Models;
 using Ghost.Sdk.Spider.Storage.Contracts;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
@@ -9,14 +9,12 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// Tests for Elasticsearch storage implementation using mocking.
 /// These tests verify the expected behavior of Elasticsearch storage without requiring a real cluster.
 /// </summary>
-[TestFixture]
 public class ElasticsearchStorageTests
 {
-    private ElasticsearchConfiguration _config = null!;
-    private MockElasticsearchClient _mockClient = null!;
+    private readonly ElasticsearchConfiguration _config;
+    private readonly MockElasticsearchClient _mockClient;
 
-    [SetUp]
-    public void Setup()
+    public ElasticsearchStorageTests()
     {
         _config = new ElasticsearchConfiguration
         {
@@ -30,7 +28,7 @@ public class ElasticsearchStorageTests
         _mockClient = new MockElasticsearchClient();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithValidConfiguration_ShouldCreate()
     {
         // Arrange & Act
@@ -41,7 +39,7 @@ public class ElasticsearchStorageTests
         storage.Name.Should().Be("Elasticsearch");
     }
 
-    [Test]
+    [Fact]
     public void IsAvailable_WithHealthyCluster_ShouldReturnTrue()
     {
         // Arrange
@@ -55,7 +53,7 @@ public class ElasticsearchStorageTests
         isAvailable.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void IsAvailable_WithUnhealthyCluster_ShouldReturnFalse()
     {
         // Arrange
@@ -69,7 +67,7 @@ public class ElasticsearchStorageTests
         isAvailable.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task InitializeAsync_WithAutoCreateIndex_ShouldCreateIndex()
     {
         // Arrange
@@ -83,7 +81,7 @@ public class ElasticsearchStorageTests
         _mockClient.CreatedIndexName.Should().Be("spider-data");
     }
 
-    [Test]
+    [Fact]
     public async Task InitializeAsync_WithExistingIndex_ShouldNotRecreate()
     {
         // Arrange
@@ -97,7 +95,7 @@ public class ElasticsearchStorageTests
         _mockClient.IndexCreated.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_ShouldIndexDocument()
     {
         // Arrange
@@ -124,7 +122,7 @@ public class ElasticsearchStorageTests
         _mockClient.IndexedDocuments.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_ShouldBulkIndex()
     {
         // Arrange
@@ -151,7 +149,7 @@ public class ElasticsearchStorageTests
         _mockClient.IndexedDocuments.Should().Be(3);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithCustomIndex_ShouldUseCorrectIndex()
     {
         // Arrange
@@ -171,7 +169,7 @@ public class ElasticsearchStorageTests
         _mockClient.LastUsedIndex.Should().Be("custom-index");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithUpdate_ShouldUpdateDocument()
     {
         // Arrange
@@ -191,7 +189,7 @@ public class ElasticsearchStorageTests
         _mockClient.UpdatedDocuments.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_WithPartialFailure_ShouldReportFailures()
     {
         // Arrange
@@ -213,7 +211,7 @@ public class ElasticsearchStorageTests
         result.Error.Should().Contain("partial");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithMappingConflict_ShouldReturnFailure()
     {
         // Arrange
@@ -230,7 +228,7 @@ public class ElasticsearchStorageTests
         result.Error.Should().Contain("mapping");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_WithEmptyList_ShouldSucceed()
     {
         // Arrange
@@ -246,7 +244,7 @@ public class ElasticsearchStorageTests
         result.ItemsStored.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public async Task FlushAsync_ShouldRefreshIndex()
     {
         // Arrange
@@ -259,7 +257,7 @@ public class ElasticsearchStorageTests
         _mockClient.IndexRefreshed.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CloseAsync_ShouldDisposeClient()
     {
         // Arrange
@@ -272,7 +270,7 @@ public class ElasticsearchStorageTests
         _mockClient.IsDisposed.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithNestedObject_ShouldIndexCorrectly()
     {
         // Arrange
@@ -300,7 +298,7 @@ public class ElasticsearchStorageTests
         result.Success.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithArrayFields_ShouldIndexCorrectly()
     {
         // Arrange
@@ -320,7 +318,7 @@ public class ElasticsearchStorageTests
         result.Success.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_WithLargeBatch_ShouldHandleCorrectly()
     {
         // Arrange
@@ -342,7 +340,7 @@ public class ElasticsearchStorageTests
         result.ItemsStored.Should().Be(1000);
     }
 
-    [Test]
+    [Fact]
     public async Task InitializeAsync_WithAuthentication_ShouldConnect()
     {
         // Arrange
@@ -358,7 +356,7 @@ public class ElasticsearchStorageTests
         _mockClient.AuthenticationUsed.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithTimestamp_ShouldIncludeTimestamp()
     {
         // Arrange

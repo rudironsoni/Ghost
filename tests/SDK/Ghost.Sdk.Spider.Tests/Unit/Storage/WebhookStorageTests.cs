@@ -4,34 +4,31 @@ using Ghost.Sdk.Spider.Storage.Sinks;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Moq.Protected;
-using NUnit.Framework;
+using Xunit;
 using System.Net;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
-[TestFixture]
-public class WebhookStorageTests
+public class WebhookStorageTests : IDisposable
 {
-    private Mock<HttpMessageHandler> _httpMessageHandler = null!;
-    private HttpClient _httpClient = null!;
-    private WebhookStorage _storage = null!;
+    private readonly Mock<HttpMessageHandler> _httpMessageHandler;
+    private readonly HttpClient _httpClient;
+    private readonly WebhookStorage _storage;
     private const string WebhookUrl = "https://webhook.example.com/receive";
 
-    [SetUp]
-    public void Setup()
+    public WebhookStorageTests()
     {
         _httpMessageHandler = new Mock<HttpMessageHandler>();
         _httpClient = new HttpClient(_httpMessageHandler.Object);
         _storage = new WebhookStorage(_httpClient, WebhookUrl, NullLogger<WebhookStorage>.Instance);
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         _httpClient.Dispose();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithNullHttpClient_ShouldThrow()
     {
         // Act
@@ -42,7 +39,7 @@ public class WebhookStorageTests
             .WithParameterName("httpClient");
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithNullWebhookUrl_ShouldThrow()
     {
         // Act
@@ -53,7 +50,7 @@ public class WebhookStorageTests
             .WithParameterName("webhookUrl");
     }
 
-    [Test]
+    [Fact]
     public void Name_ShouldReturnWebhook()
     {
         // Act
@@ -63,7 +60,7 @@ public class WebhookStorageTests
         name.Should().Be("Webhook");
     }
 
-    [Test]
+    [Fact]
     public void IsAvailable_WithValidUrl_ShouldReturnTrue()
     {
         // Act
@@ -73,7 +70,7 @@ public class WebhookStorageTests
         isAvailable.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void IsAvailable_WithEmptyUrl_ShouldReturnFalse()
     {
         // Arrange
@@ -86,7 +83,7 @@ public class WebhookStorageTests
         isAvailable.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task InitializeAsync_ShouldComplete()
     {
         // Act
@@ -96,7 +93,7 @@ public class WebhookStorageTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithSuccessResponse_ShouldReturnSuccess()
     {
         // Arrange
@@ -129,7 +126,7 @@ public class WebhookStorageTests
         result.Duration.Should().BeGreaterThan(TimeSpan.Zero);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithErrorResponse_ShouldReturnFailure()
     {
         // Arrange
@@ -162,7 +159,7 @@ public class WebhookStorageTests
         result.Error.Should().Contain("Server Error");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithException_ShouldReturnFailure()
     {
         // Arrange
@@ -191,7 +188,7 @@ public class WebhookStorageTests
         result.Exception.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_WithSuccessResponse_ShouldReturnSuccess()
     {
         // Arrange
@@ -229,7 +226,7 @@ public class WebhookStorageTests
         result.ItemsStored.Should().Be(3);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_WithEmptyList_ShouldSucceed()
     {
         // Arrange
@@ -260,7 +257,7 @@ public class WebhookStorageTests
         result.ItemsStored.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public async Task FlushAsync_ShouldComplete()
     {
         // Act
@@ -270,7 +267,7 @@ public class WebhookStorageTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public async Task CloseAsync_ShouldComplete()
     {
         // Act
@@ -280,7 +277,7 @@ public class WebhookStorageTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_ShouldSendCorrectPayload()
     {
         // Arrange

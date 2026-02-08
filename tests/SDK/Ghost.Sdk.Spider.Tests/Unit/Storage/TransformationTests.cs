@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Storage.Contracts;
-using NUnit.Framework;
+using Xunit;
 using System.Text.RegularExpressions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
@@ -9,10 +9,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// Tests for data transformation operations in the storage pipeline.
 /// These tests verify various transformation strategies applied before storage.
 /// </summary>
-[TestFixture]
 public class TransformationTests
 {
-    [Test]
+    [Fact]
     public async Task NormalizeTransformation_ShouldTrimAndLowercase()
     {
         // Arrange
@@ -34,7 +33,7 @@ public class TransformationTests
         resultDict["Description"].Should().Be("description with spaces");
     }
 
-    [Test]
+    [Fact]
     public async Task FilterTransformation_WithPredicate_ShouldFilterCorrectly()
     {
         // Arrange
@@ -57,7 +56,7 @@ public class TransformationTests
         result2.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task EnrichmentTransformation_ShouldAddMetadata()
     {
         // Arrange
@@ -81,7 +80,7 @@ public class TransformationTests
         resultDict["_spider"].Should().Be("EnrichSpider");
     }
 
-    [Test]
+    [Fact]
     public async Task CleanHtmlTransformation_ShouldRemoveHtmlTags()
     {
         // Arrange
@@ -103,7 +102,7 @@ public class TransformationTests
         resultDict["Description"].Should().Be("This is a test description.");
     }
 
-    [Test]
+    [Fact]
     public async Task PriceNormalizationTransformation_ShouldNormalizePrices()
     {
         // Arrange
@@ -125,7 +124,7 @@ public class TransformationTests
         resultDict["OriginalPrice"].Should().Be(99.99m);
     }
 
-    [Test]
+    [Fact]
     public async Task DateNormalizationTransformation_ShouldNormalizeDates()
     {
         // Arrange
@@ -147,7 +146,7 @@ public class TransformationTests
         resultDict.Should().ContainKey("ModifiedDate");
     }
 
-    [Test]
+    [Fact]
     public async Task GeocodeTransformation_ShouldAddCoordinates()
     {
         // Arrange
@@ -171,7 +170,7 @@ public class TransformationTests
         resultDict["Longitude"].Should().Be(-122.0856);
     }
 
-    [Test]
+    [Fact]
     public async Task UrlNormalizationTransformation_ShouldNormalizeUrls()
     {
         // Arrange
@@ -197,7 +196,7 @@ public class TransformationTests
         resultDict["ImageUrl"].Should().Be("https://example.com/images/product.jpg");
     }
 
-    [Test]
+    [Fact]
     public async Task DeduplicationTransformation_ShouldDetectDuplicates()
     {
         // Arrange
@@ -218,7 +217,7 @@ public class TransformationTests
         result3.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CompositeTransformation_ShouldApplyMultipleTransformations()
     {
         // Arrange
@@ -241,7 +240,7 @@ public class TransformationTests
         resultDict["Title"].Should().Be("test title");
     }
 
-    [Test]
+    [Fact]
     public async Task ValidationTransformation_ShouldValidateRequiredFields()
     {
         // Arrange
@@ -260,7 +259,7 @@ public class TransformationTests
         result2.Errors.Should().Contain(e => e.Contains("Price"));
     }
 
-    [Test]
+    [Fact]
     public async Task TruncateTransformation_ShouldTruncateLongFields()
     {
         // Arrange
@@ -282,7 +281,7 @@ public class TransformationTests
         resultDict["ShortField"].Should().Be("Short");
     }
 
-    [Test]
+    [Fact]
     public async Task DefaultValueTransformation_ShouldSetDefaults()
     {
         // Arrange

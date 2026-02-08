@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Storage.Contracts;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
@@ -9,10 +9,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// These tests verify the pipeline pattern for storage operations including
 /// transformation, validation, and multi-storage scenarios.
 /// </summary>
-[TestFixture]
 public class StoragePipelineTests
 {
-    [Test]
+    [Fact]
     public async Task Pipeline_WithSingleStorage_ShouldStore()
     {
         // Arrange
@@ -32,7 +31,7 @@ public class StoragePipelineTests
         mockStorage.StoreCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithMultipleStorages_ShouldStoreToAll()
     {
         // Arrange
@@ -58,7 +57,7 @@ public class StoragePipelineTests
         storage3.StoreCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithFailingStorage_ShouldContinueToOthers()
     {
         // Arrange
@@ -83,7 +82,7 @@ public class StoragePipelineTests
         successStorage2.StoreCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithTransformation_ShouldTransformBeforeStore()
     {
         // Arrange
@@ -117,7 +116,7 @@ public class StoragePipelineTests
         mockStorage.LastStoredItem.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithBatch_ShouldBatchStore()
     {
         // Arrange
@@ -146,7 +145,7 @@ public class StoragePipelineTests
         mockStorage.BatchStoreCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithEmptyPipeline_ShouldReturnSuccess()
     {
         // Arrange
@@ -162,7 +161,7 @@ public class StoragePipelineTests
         result.ItemsStored.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithFilter_ShouldFilterItems()
     {
         // Arrange
@@ -189,7 +188,7 @@ public class StoragePipelineTests
         mockStorage.StoreCount.Should().Be(1); // Only second item stored
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithMetricsCollection_ShouldCollectMetrics()
     {
         // Arrange
@@ -214,7 +213,7 @@ public class StoragePipelineTests
         metrics.FailureCount.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithCancellation_ShouldCancelGracefully()
     {
         // Arrange
@@ -235,7 +234,7 @@ public class StoragePipelineTests
         await act.Should().ThrowAsync<OperationCanceledException>();
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithValidation_ShouldValidateBeforeStore()
     {
         // Arrange
@@ -266,7 +265,7 @@ public class StoragePipelineTests
         mockStorage.StoreCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_Initialization_ShouldInitializeAllStorages()
     {
         // Arrange
@@ -284,7 +283,7 @@ public class StoragePipelineTests
         storage2.IsInitialized.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_Flush_ShouldFlushAllStorages()
     {
         // Arrange
@@ -302,7 +301,7 @@ public class StoragePipelineTests
         storage2.IsFlushed.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_Close_ShouldCloseAllStorages()
     {
         // Arrange

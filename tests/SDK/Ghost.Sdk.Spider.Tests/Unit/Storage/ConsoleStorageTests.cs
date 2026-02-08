@@ -2,20 +2,18 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Storage.Contracts;
 using Ghost.Sdk.Spider.Storage.Sinks;
 using Microsoft.Extensions.Logging.Abstractions;
-using NUnit.Framework;
+using Xunit;
 using System.Text;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
-[TestFixture]
-public class ConsoleStorageTests
+public class ConsoleStorageTests : IDisposable
 {
-    private ConsoleStorage _storage = null!;
-    private StringWriter _consoleOutput = null!;
-    private TextWriter _originalOutput = null!;
+    private readonly ConsoleStorage _storage;
+    private readonly StringWriter _consoleOutput;
+    private readonly TextWriter _originalOutput;
 
-    [SetUp]
-    public void Setup()
+    public ConsoleStorageTests()
     {
         _storage = new ConsoleStorage(NullLogger<ConsoleStorage>.Instance);
         _consoleOutput = new StringWriter();
@@ -23,14 +21,13 @@ public class ConsoleStorageTests
         Console.SetOut(_consoleOutput);
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         Console.SetOut(_originalOutput);
         _consoleOutput.Dispose();
     }
 
-    [Test]
+    [Fact]
     public void Name_ShouldReturnConsole()
     {
         // Act
@@ -40,7 +37,7 @@ public class ConsoleStorageTests
         name.Should().Be("Console");
     }
 
-    [Test]
+    [Fact]
     public void IsAvailable_ShouldReturnTrue()
     {
         // Act
@@ -50,7 +47,7 @@ public class ConsoleStorageTests
         isAvailable.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task InitializeAsync_ShouldComplete()
     {
         // Act
@@ -60,7 +57,7 @@ public class ConsoleStorageTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_ShouldWriteToConsole()
     {
         // Arrange
@@ -87,7 +84,7 @@ public class ConsoleStorageTests
         output.Should().Contain("42");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_ShouldWriteAllItems()
     {
         // Arrange
@@ -121,7 +118,7 @@ public class ConsoleStorageTests
         output.Should().Contain("Item3");
     }
 
-    [Test]
+    [Fact]
     public async Task FlushAsync_ShouldComplete()
     {
         // Act
@@ -131,7 +128,7 @@ public class ConsoleStorageTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public async Task CloseAsync_ShouldComplete()
     {
         // Act
@@ -141,7 +138,7 @@ public class ConsoleStorageTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithNullValues_ShouldHandle()
     {
         // Arrange
@@ -161,7 +158,7 @@ public class ConsoleStorageTests
         result.Success.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_WithEmptyList_ShouldSucceed()
     {
         // Arrange

@@ -1,16 +1,15 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Storage.Contracts;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
 /// <summary>
 /// Tests for StorageContext class and its factory methods.
 /// </summary>
-[TestFixture]
 public class StorageContextTests
 {
-    [Test]
+    [Fact]
     public void Create_WithSpiderName_ShouldCreateContext()
     {
         // Arrange
@@ -32,7 +31,7 @@ public class StorageContextTests
         context.UniqueKeys.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Create_WithSpiderNameAndSourceUrl_ShouldCreateContext()
     {
         // Arrange
@@ -49,7 +48,7 @@ public class StorageContextTests
         context.Timestamp.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(1));
     }
 
-    [Test]
+    [Fact]
     public void Context_WithMetadata_ShouldStoreMetadata()
     {
         // Arrange
@@ -71,7 +70,7 @@ public class StorageContextTests
         context.Metadata["cached"].Should().Be(false);
     }
 
-    [Test]
+    [Fact]
     public void Context_WithTags_ShouldStoreTags()
     {
         // Arrange
@@ -88,7 +87,7 @@ public class StorageContextTests
         context.Tags.Should().Contain("active");
     }
 
-    [Test]
+    [Fact]
     public void Context_WithTableName_ShouldStoreTableName()
     {
         // Arrange
@@ -103,7 +102,7 @@ public class StorageContextTests
         context.TableName.Should().Be(tableName);
     }
 
-    [Test]
+    [Fact]
     public void Context_WithBatchId_ShouldStoreBatchId()
     {
         // Arrange
@@ -118,7 +117,7 @@ public class StorageContextTests
         context.BatchId.Should().Be(batchId);
     }
 
-    [Test]
+    [Fact]
     public void Context_UpdateOnConflict_ShouldDefaultToFalse()
     {
         // Arrange
@@ -131,7 +130,7 @@ public class StorageContextTests
         context.UpdateOnConflict.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Context_WithUpdateOnConflict_ShouldStoreValue()
     {
         // Arrange
@@ -149,7 +148,7 @@ public class StorageContextTests
         context.UniqueKeys.Should().Contain("url");
     }
 
-    [Test]
+    [Fact]
     public void Context_Timestamp_ShouldBeUtc()
     {
         // Act
@@ -160,7 +159,7 @@ public class StorageContextTests
         context.Timestamp.Offset.Should().Be(TimeSpan.Zero);
     }
 
-    [Test]
+    [Fact]
     public void Context_WithAllProperties_ShouldStoreAllValues()
     {
         // Arrange
