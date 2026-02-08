@@ -3,17 +3,16 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Ghost.Sdk.Spider.Pipeline.Middleware;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline.Middleware;
 
 /// <summary>
 /// Comprehensive tests for StealthMiddleware covering edge cases and stealth techniques.
 /// </summary>
-[TestFixture]
 public class StealthMiddlewareFullTests
 {
-    [Test]
+    [Fact]
     public void Constructor_WithEmptyUserAgentList_ShouldUseDefaults()
     {
         // Arrange & Act
@@ -27,7 +26,7 @@ public class StealthMiddlewareFullTests
         middleware.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithSingleUserAgent_ShouldReuseSameAgent()
     {
         // Arrange
@@ -58,7 +57,7 @@ public class StealthMiddlewareFullTests
         userAgents.Should().AllBe("SingleAgent/1.0");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithRequestTypeOtherThanRequest_ShouldHandleGracefully()
     {
         // Arrange
@@ -87,7 +86,7 @@ public class StealthMiddlewareFullTests
         nextCalled.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithExtremeDelayValues_ShouldHandleCorrectly()
     {
         // Arrange
@@ -112,7 +111,7 @@ public class StealthMiddlewareFullTests
         stopwatch.ElapsedMilliseconds.Should().BeLessThan(50);
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithAllSecFetchHeaders_ShouldApplyAll()
     {
         // Arrange
@@ -135,7 +134,7 @@ public class StealthMiddlewareFullTests
         request.Headers["Sec-Fetch-User"].Should().Be("?1");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithPresetSecFetchHeaders_ShouldNotOverride()
     {
         // Arrange
@@ -159,7 +158,7 @@ public class StealthMiddlewareFullTests
         request.Headers["Sec-Fetch-Mode"].Should().Be("cors");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_ConcurrentRequests_ShouldRotateUserAgentsSafely()
     {
         // Arrange
@@ -193,7 +192,7 @@ public class StealthMiddlewareFullTests
         userAgents.Should().OnlyContain(ua => ua == "Agent1" || ua == "Agent2" || ua == "Agent3");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithMatchTimezoneEnabled_ShouldInitialize()
     {
         // Arrange
@@ -219,7 +218,7 @@ public class StealthMiddlewareFullTests
         nextCalled.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithCompleteCustomConfiguration_ShouldApplyAll()
     {
         // Arrange
@@ -248,7 +247,7 @@ public class StealthMiddlewareFullTests
         stopwatch.ElapsedMilliseconds.Should().BeGreaterOrEqualTo(10);
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithVeryLargeUserAgentList_ShouldRotateCorrectly()
     {
         // Arrange
@@ -283,7 +282,7 @@ public class StealthMiddlewareFullTests
         userAgents[104].Should().Be("Agent5");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithAllHeadersPreset_ShouldOnlySetUserAgent()
     {
         // Arrange

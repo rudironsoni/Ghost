@@ -6,7 +6,7 @@ using FluentAssertions;
 using Ghost.Contracts.Social;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Platform.LinkedIn.Tests;
@@ -16,15 +16,15 @@ public class LinkedInSocialClientTests
     [Fact]
     public async Task GetProfileAsyncReturnsDefaultWhenNoElementFound()
     {
-        var mockSession = Substitute.For<IBrowserSession>();
-        var mockPage = Substitute.For<IPage>();
-        mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(mockPage));
-        mockPage.QuerySelectorAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IElement?>(null));
+        var mockSession = new Mock<IBrowserSession>();
+        var mockPage = new Mock<IPage>();
+        mockSession.Setup(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockPage.Object);
+        mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IElement?)null);
 
-        var logger = Substitute.For<ILogger<LinkedInSocialClient>>();
-        var client = new LinkedInSocialClient(mockSession, Options.Create(new LinkedInOptions()), logger);
+        var logger = new Mock<ILogger<LinkedInSocialClient>>();
+        var client = new LinkedInSocialClient(mockSession.Object, Options.Create(new LinkedInOptions()), logger.Object);
         var profile = await client.GetProfileAsync("urn:li:person:123", CancellationToken.None);
         profile.Should().NotBeNull();
     }
@@ -32,15 +32,15 @@ public class LinkedInSocialClientTests
     [Fact]
     public async Task SearchProfilesAsyncReturnsListOnSuccess()
     {
-        var mockSession = Substitute.For<IBrowserSession>();
-        var mockPage = Substitute.For<IPage>();
-        mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(mockPage));
-        mockPage.QuerySelectorAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IElement?>(null));
+        var mockSession = new Mock<IBrowserSession>();
+        var mockPage = new Mock<IPage>();
+        mockSession.Setup(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockPage.Object);
+        mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IElement?)null);
 
-        var logger = Substitute.For<ILogger<LinkedInSocialClient>>();
-        var client = new LinkedInSocialClient(mockSession, Options.Create(new LinkedInOptions()), logger);
+        var logger = new Mock<ILogger<LinkedInSocialClient>>();
+        var client = new LinkedInSocialClient(mockSession.Object, Options.Create(new LinkedInOptions()), logger.Object);
         var results = await client.SearchProfilesAsync(new ProfileSearchCriteria { Query = "engineer" }, CancellationToken.None);
         results.Should().BeAssignableTo<IEnumerable<SocialProfile>>();
     }

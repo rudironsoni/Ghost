@@ -1,16 +1,15 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.WebSocket;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Comprehensive tests for ReconnectionPolicy covering all configuration scenarios.
 /// </summary>
-[TestFixture]
 public class ReconnectionPolicyTests
 {
-    [Test]
+    [Fact]
     public void Constructor_DefaultValues_ShouldInitializeCorrectly()
     {
         // Arrange & Act
@@ -28,7 +27,7 @@ public class ReconnectionPolicyTests
         policy.ConnectionTimeout.Should().Be(TimeSpan.FromSeconds(30));
     }
 
-    [Test]
+    [Fact]
     public void Disabled_ShouldCreateDisabledPolicy()
     {
         // Arrange & Act
@@ -38,7 +37,7 @@ public class ReconnectionPolicyTests
         policy.Enabled.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Default_ShouldCreateDefaultPolicy()
     {
         // Arrange & Act
@@ -50,7 +49,7 @@ public class ReconnectionPolicyTests
         policy.UseExponentialBackoff.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Aggressive_ShouldCreateAggressivePolicy()
     {
         // Arrange & Act
@@ -65,7 +64,7 @@ public class ReconnectionPolicyTests
         policy.UseJitter.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void CalculateDelay_WithExponentialBackoff_ShouldIncreaseExponentially()
     {
         // Arrange
@@ -91,7 +90,7 @@ public class ReconnectionPolicyTests
         delay3.Should().Be(TimeSpan.FromSeconds(8));
     }
 
-    [Test]
+    [Fact]
     public void CalculateDelay_WithMaxDelayCap_ShouldNotExceedMaxDelay()
     {
         // Arrange
@@ -111,7 +110,7 @@ public class ReconnectionPolicyTests
         delay10.Should().Be(TimeSpan.FromSeconds(10));
     }
 
-    [Test]
+    [Fact]
     public void CalculateDelay_WithoutExponentialBackoff_ShouldReturnConstantDelay()
     {
         // Arrange
@@ -133,7 +132,7 @@ public class ReconnectionPolicyTests
         delay10.Should().Be(TimeSpan.FromSeconds(5));
     }
 
-    [Test]
+    [Fact]
     public void CalculateDelay_WithJitter_ShouldAddVariation()
     {
         // Arrange
@@ -158,7 +157,7 @@ public class ReconnectionPolicyTests
         }
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithValidConfiguration_ShouldNotThrow()
     {
         // Arrange
@@ -179,7 +178,7 @@ public class ReconnectionPolicyTests
         act.Should().NotThrow();
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithNegativeMaxAttempts_ShouldThrow()
     {
         // Arrange
@@ -197,7 +196,7 @@ public class ReconnectionPolicyTests
             .WithMessage("*MaxAttempts*");
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithZeroMaxAttempts_ShouldThrow()
     {
         // Arrange
@@ -215,7 +214,7 @@ public class ReconnectionPolicyTests
             .WithMessage("*MaxAttempts*");
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithNegativeInitialDelay_ShouldThrow()
     {
         // Arrange
@@ -233,7 +232,7 @@ public class ReconnectionPolicyTests
             .WithMessage("*InitialDelay*");
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithZeroInitialDelay_ShouldThrow()
     {
         // Arrange
@@ -251,7 +250,7 @@ public class ReconnectionPolicyTests
             .WithMessage("*InitialDelay*");
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithMaxDelayLessThanInitialDelay_ShouldThrow()
     {
         // Arrange
@@ -270,7 +269,7 @@ public class ReconnectionPolicyTests
             .WithMessage("*MaxDelay*");
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithBackoffMultiplierLessThanOne_ShouldThrow()
     {
         // Arrange
@@ -288,7 +287,7 @@ public class ReconnectionPolicyTests
             .WithMessage("*BackoffMultiplier*");
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithBackoffMultiplierEqualToOne_ShouldThrow()
     {
         // Arrange
@@ -306,7 +305,7 @@ public class ReconnectionPolicyTests
             .WithMessage("*BackoffMultiplier*");
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithNegativeConnectionTimeout_ShouldThrow()
     {
         // Arrange
@@ -324,7 +323,7 @@ public class ReconnectionPolicyTests
             .WithMessage("*ConnectionTimeout*");
     }
 
-    [Test]
+    [Fact]
     public void Validate_WhenDisabled_ShouldNotValidate()
     {
         // Arrange
@@ -342,7 +341,7 @@ public class ReconnectionPolicyTests
         act.Should().NotThrow();
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithUnlimitedAttempts_ShouldNotThrow()
     {
         // Arrange
@@ -359,7 +358,7 @@ public class ReconnectionPolicyTests
         act.Should().NotThrow();
     }
 
-    [Test]
+    [Fact]
     public void Properties_ShouldBeSettable()
     {
         // Arrange
@@ -388,7 +387,7 @@ public class ReconnectionPolicyTests
         policy.ConnectionTimeout.Should().Be(TimeSpan.FromSeconds(60));
     }
 
-    [Test]
+    [Fact]
     public void CalculateDelay_WithHighBackoffMultiplier_ShouldGrowRapidly()
     {
         // Arrange

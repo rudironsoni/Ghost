@@ -1,7 +1,7 @@
 using Ghost.Session;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Tests.Session;
@@ -21,7 +21,7 @@ public sealed class SessionManagerTests
         });
 
         var manager = new SessionManager(options);
-        var context = Substitute.For<IBrowserContext>();
+        var mockContext = new Mock<IBrowserContext>();
 
         var cookies = new List<BrowserContextCookiesResult>
         {
@@ -38,11 +38,11 @@ public sealed class SessionManagerTests
             }
         };
 
-        context.CookiesAsync().Returns(cookies);
-        context.StorageStateAsync().Returns("{\"cookies\":[],\"origins\":[]}");
+        mockContext.Setup(c => c.CookiesAsync()).ReturnsAsync(cookies);
+        mockContext.Setup(c => c.StorageStateAsync()).ReturnsAsync("{\"cookies\":[],\"origins\":[]}");
 
         // Act
-        var sessionId = await manager.SaveSessionAsync(context, "TestPlatform");
+        var sessionId = await manager.SaveSessionAsync(mockContext.Object, "TestPlatform");
 
         // Assert
         Assert.NotNull(sessionId);
@@ -72,12 +72,12 @@ public sealed class SessionManagerTests
         });
 
         var manager = new SessionManager(options);
-        var context = Substitute.For<IBrowserContext>();
+        var mockContext = new Mock<IBrowserContext>();
 
-        context.CookiesAsync().Returns(new List<BrowserContextCookiesResult>());
-        context.StorageStateAsync().Returns("{\"cookies\":[],\"origins\":[]}");
+        mockContext.Setup(c => c.CookiesAsync()).ReturnsAsync(new List<BrowserContextCookiesResult>());
+        mockContext.Setup(c => c.StorageStateAsync()).ReturnsAsync("{\"cookies\":[],\"origins\":[]}");
 
-        var sessionId = await manager.SaveSessionAsync(context, "TestPlatform");
+        var sessionId = await manager.SaveSessionAsync(mockContext.Object, "TestPlatform");
 
         // Act
         var session = await manager.LoadSessionAsync("TestPlatform", sessionId);
@@ -108,12 +108,12 @@ public sealed class SessionManagerTests
         });
 
         var manager = new SessionManager(options);
-        var context = Substitute.For<IBrowserContext>();
+        var mockContext = new Mock<IBrowserContext>();
 
-        context.CookiesAsync().Returns(new List<BrowserContextCookiesResult>());
-        context.StorageStateAsync().Returns("{\"cookies\":[],\"origins\":[]}");
+        mockContext.Setup(c => c.CookiesAsync()).ReturnsAsync(new List<BrowserContextCookiesResult>());
+        mockContext.Setup(c => c.StorageStateAsync()).ReturnsAsync("{\"cookies\":[],\"origins\":[]}");
 
-        var sessionId = await manager.SaveSessionAsync(context, "TestPlatform");
+        var sessionId = await manager.SaveSessionAsync(mockContext.Object, "TestPlatform");
 
         // Wait for session to expire
         await Task.Delay(10);
@@ -142,12 +142,12 @@ public sealed class SessionManagerTests
         });
 
         var manager = new SessionManager(options);
-        var context = Substitute.For<IBrowserContext>();
+        var mockContext = new Mock<IBrowserContext>();
 
-        context.CookiesAsync().Returns(new List<BrowserContextCookiesResult>());
-        context.StorageStateAsync().Returns("{\"cookies\":[],\"origins\":[]}");
+        mockContext.Setup(c => c.CookiesAsync()).ReturnsAsync(new List<BrowserContextCookiesResult>());
+        mockContext.Setup(c => c.StorageStateAsync()).ReturnsAsync("{\"cookies\":[],\"origins\":[]}");
 
-        var sessionId = await manager.SaveSessionAsync(context, "TestPlatform");
+        var sessionId = await manager.SaveSessionAsync(mockContext.Object, "TestPlatform");
 
         // Act
         await manager.DeleteSessionAsync("TestPlatform", sessionId);

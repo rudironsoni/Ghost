@@ -5,7 +5,7 @@ using FluentAssertions;
 using Ghost.Core;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Playwright;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Hosting.Tests;
@@ -21,35 +21,35 @@ public class GhostKernelHostedServiceTests
     [Fact]
     public async Task StopAsyncCallsDisposeAsyncOnKernel()
     {
-        var playwright = Substitute.For<IPlaywright>();
-        var browser = Substitute.For<IBrowser>();
+        var playwrightMock = new Mock<IPlaywright>();
+        var browserMock = new Mock<IBrowser>();
 
-        var kernel = CreateKernel(playwright, browser);
+        var kernel = CreateKernel(playwrightMock.Object, browserMock.Object);
 
-        var lifetime = Substitute.For<IHostApplicationLifetime>();
+        var lifetimeMock = new Mock<IHostApplicationLifetime>();
 
-        var service = new GhostKernelHostedService(kernel, lifetime);
+        var service = new GhostKernelHostedService(kernel, lifetimeMock.Object);
 
         await service.StopAsync(CancellationToken.None);
 
         // kernel.DisposeAsync will close browser and dispose playwright; verify browser closed/disposed
-        await browser.Received().CloseAsync();
-        await browser.Received().DisposeAsync();
-        playwright.Received().Dispose();
+        browserMock.Verify(b => b.CloseAsync(), Times.Once);
+        browserMock.Verify(b => b.DisposeAsync(), Times.Once);
+        playwrightMock.Verify(p => p.Dispose(), Times.Once);
     }
 
     [Fact]
     public async Task ApplicationStoppingCancellationTriggersKernelDisposeAsync()
     {
-        var playwright = Substitute.For<IPlaywright>();
-        var browser = Substitute.For<IBrowser>();
-        var kernel = CreateKernel(playwright, browser);
+        var playwrightMock = new Mock<IPlaywright>();
+        var browserMock = new Mock<IBrowser>();
+        var kernel = CreateKernel(playwrightMock.Object, browserMock.Object);
 
-        var lifetime = Substitute.For<IHostApplicationLifetime>();
+        var lifetimeMock = new Mock<IHostApplicationLifetime>();
         var cts = new CancellationTokenSource();
-        lifetime.ApplicationStopping.Returns(cts.Token);
+        lifetimeMock.Setup(l => l.ApplicationStopping).Returns(cts.Token);
 
-        var service = new GhostKernelHostedService(kernel, lifetime);
+        var service = new GhostKernelHostedService(kernel, lifetimeMock.Object);
 
         // Cancel the token to simulate application stopping
         cts.Cancel();
@@ -64,8 +64,8 @@ public class GhostKernelHostedServiceTests
         // GhostKernel.Dispose() calls DisposeAsync().GetAwaiter().GetResult().
         // So this should work.
 
-        await browser.Received().CloseAsync();
-        await browser.Received().DisposeAsync();
-        playwright.Received().Dispose();
+        browserMock.Verify(b => b.CloseAsync(), Times.Once);
+        browserMock.Verify(b => b.DisposeAsync(), Times.Once);
+        playwrightMock.Verify(p => p.Dispose(), Times.Once);
     }
 }

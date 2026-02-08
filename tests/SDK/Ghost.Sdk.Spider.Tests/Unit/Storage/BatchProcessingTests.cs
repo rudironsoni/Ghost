@@ -3,7 +3,7 @@ using Ghost.Sdk.Spider.Storage.Contracts;
 using Ghost.Sdk.Spider.Storage.Sinks;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using System.Collections.Concurrent;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
@@ -11,10 +11,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// <summary>
 /// Tests for batch processing edge cases and performance scenarios
 /// </summary>
-[TestFixture]
 public class BatchProcessingTests
 {
-    [Test]
+    [Fact]
     public async Task BatchProcessing_WithConcurrentBatches_ShouldHandleThreadSafely()
     {
         // Arrange
@@ -45,7 +44,7 @@ public class BatchProcessingTests
         results.Sum(r => r.ItemsStored).Should().Be(500); // 10 batches * 50 items
     }
 
-    [Test]
+    [Fact]
     public async Task BatchProcessing_WithEmptyBatch_ShouldSucceed()
     {
         // Arrange
@@ -67,7 +66,7 @@ public class BatchProcessingTests
         result.ItemsStored.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public async Task BatchProcessing_WithSingleItem_ShouldProcessCorrectly()
     {
         // Arrange
@@ -89,7 +88,7 @@ public class BatchProcessingTests
         result.ItemsStored.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task BatchProcessing_WithLargeBatch_ShouldComplete()
     {
         // Arrange
@@ -125,7 +124,7 @@ public class BatchProcessingTests
         elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10));
     }
 
-    [Test]
+    [Fact]
     public async Task BatchProcessing_WithDuplicateItems_ShouldProcessAll()
     {
         // Arrange
@@ -155,7 +154,7 @@ public class BatchProcessingTests
         result.ItemsStored.Should().Be(5); // All items stored, including duplicates
     }
 
-    [Test]
+    [Fact]
     public async Task BatchProcessing_WithMixedTypes_ShouldHandleGracefully()
     {
         // Arrange
@@ -183,7 +182,7 @@ public class BatchProcessingTests
         result.ItemsStored.Should().Be(3);
     }
 
-    [Test]
+    [Fact]
     public async Task BatchProcessing_WithNullItems_ShouldSkipNulls()
     {
         // Arrange
@@ -214,7 +213,7 @@ public class BatchProcessingTests
         result.ItemsStored.Should().Be(3);
     }
 
-    [Test]
+    [Fact]
     public async Task BatchProcessing_SequentialBatches_ShouldMaintainOrder()
     {
         // Arrange

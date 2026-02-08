@@ -1,13 +1,12 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Extraction.Selectors;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 
-[TestFixture]
 public class CssSelectorTests
 {
-    [Test]
+    [Fact]
     public void Select_WithValidCssSelector_ShouldReturnMatches()
     {
         // Arrange
@@ -30,7 +29,7 @@ public class CssSelectorTests
         results[1].Should().Be("Item 2");
     }
 
-    [Test]
+    [Fact]
     public void Select_WithAttribute_ShouldExtractAttributeValue()
     {
         // Arrange
@@ -52,7 +51,7 @@ public class CssSelectorTests
         results[1].Should().Be("2");
     }
 
-    [Test]
+    [Fact]
     public void SelectFirst_ShouldReturnFirstMatch()
     {
         // Arrange
@@ -73,7 +72,7 @@ public class CssSelectorTests
         result.Should().Be("First");
     }
 
-    [Test]
+    [Fact]
     public void SelectFirst_WithNoMatches_ShouldReturnNull()
     {
         // Arrange
@@ -87,7 +86,7 @@ public class CssSelectorTests
         result.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void Select_WithEmptyContent_ShouldReturnEmptyList()
     {
         // Arrange
@@ -100,7 +99,7 @@ public class CssSelectorTests
         results.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Select_WithComplexSelector_ShouldWork()
     {
         // Arrange
@@ -126,7 +125,7 @@ public class CssSelectorTests
         results[1].Should().Be("Title 2");
     }
 
-    [Test]
+    [Fact]
     public void Select_WithIdSelector_ShouldWork()
     {
         // Arrange
@@ -147,7 +146,7 @@ public class CssSelectorTests
         results[0].Should().Be("Main Title");
     }
 
-    [Test]
+    [Fact]
     public void Select_WithAttributeSelector_ShouldWork()
     {
         // Arrange
@@ -168,7 +167,7 @@ public class CssSelectorTests
         results[0].Should().Be("Item 1");
     }
 
-    [Test]
+    [Fact]
     public void Select_WithPseudoSelector_ShouldWork()
     {
         // Arrange
@@ -191,7 +190,7 @@ public class CssSelectorTests
         results[0].Should().Be("First");
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithValidSelector_ShouldReturnTrue()
     {
         // Arrange
@@ -204,7 +203,7 @@ public class CssSelectorTests
         isValid.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithInvalidSelector_ShouldReturnFalse()
     {
         // Arrange
@@ -217,14 +216,14 @@ public class CssSelectorTests
         isValid.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithNullExpression_ShouldThrow()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new CssSelector(null!));
+        var exception = Assert.Throws<ArgumentNullException>(() => new CssSelector(null!));
     }
 
-    [Test]
+    [Fact]
     public void Expression_ShouldReturnConstructorValue()
     {
         // Arrange
@@ -235,7 +234,7 @@ public class CssSelectorTests
         selector.Expression.Should().Be(expression);
     }
 
-    [Test]
+    [Fact]
     public void Select_WithHrefAttribute_ShouldExtractUrl()
     {
         // Arrange

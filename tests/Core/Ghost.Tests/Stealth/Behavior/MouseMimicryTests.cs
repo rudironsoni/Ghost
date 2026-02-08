@@ -1,6 +1,6 @@
 using Ghost.Stealth.Behavior;
 using Microsoft.Playwright;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Tests.Stealth.Behavior;
@@ -12,14 +12,15 @@ public class MouseMimicryTests
     {
         // Arrange
         var mouseMimicry = new MouseMimicry();
-        var mockMouse = Substitute.For<IMouse>();
+        var mockMouse = new Mock<IMouse>();
         var moveCallCount = 0;
 
-        mockMouse.When(x => x.MoveAsync(Arg.Any<float>(), Arg.Any<float>()))
-            .Do(_ => moveCallCount++);
+        mockMouse.Setup(m => m.MoveAsync(It.IsAny<float>(), It.IsAny<float>()))
+            .Callback(() => moveCallCount++)
+            .Returns(Task.CompletedTask);
 
         // Act
-        await mouseMimicry.MoveHumanLikeAsync(mockMouse, 500, 500);
+        await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, 500, 500);
 
         // Assert
         // Should make 20-51 move calls (20-50 steps + final position)
@@ -31,13 +32,13 @@ public class MouseMimicryTests
     {
         // Arrange
         var mouseMimicry = new MouseMimicry();
-        var mockMouse = Substitute.For<IMouse>();
+        var mockMouse = new Mock<IMouse>();
 
         // Act
-        await mouseMimicry.MoveHumanLikeAsync(mockMouse, 0, 0);
+        await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, 0, 0);
 
         // Assert
-        await mockMouse.DidNotReceive().MoveAsync(Arg.Any<float>(), Arg.Any<float>());
+        mockMouse.Verify(m => m.MoveAsync(It.IsAny<float>(), It.IsAny<float>()), Times.Never);
     }
 
     [Fact]
@@ -45,21 +46,22 @@ public class MouseMimicryTests
     {
         // Arrange
         var mouseMimicry = new MouseMimicry();
-        var mockMouse = Substitute.For<IMouse>();
+        var mockMouse = new Mock<IMouse>();
         var targetX = 500f;
         var targetY = 500f;
         var lastX = 0f;
         var lastY = 0f;
 
-        mockMouse.When(x => x.MoveAsync(Arg.Any<float>(), Arg.Any<float>()))
-            .Do(x =>
+        mockMouse.Setup(m => m.MoveAsync(It.IsAny<float>(), It.IsAny<float>()))
+            .Callback<float, float>((x, y) =>
             {
-                lastX = (float)x[0];
-                lastY = (float)x[1];
-            });
+                lastX = x;
+                lastY = y;
+            })
+            .Returns(Task.CompletedTask);
 
         // Act
-        await mouseMimicry.MoveHumanLikeAsync(mockMouse, targetX, targetY);
+        await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, targetX, targetY);
 
         // Assert - last position should be close to target
         Assert.InRange(lastX, targetX - 1, targetX + 1);

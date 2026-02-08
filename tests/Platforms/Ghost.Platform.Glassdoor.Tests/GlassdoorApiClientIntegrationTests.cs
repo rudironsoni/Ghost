@@ -4,7 +4,7 @@ using System.Text;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
-using NSubstitute;
+using Moq;
 using Xunit;
 using Ghost.Platform.Glassdoor.Internal;
 
@@ -23,7 +23,7 @@ public class GlassdoorApiClientIntegrationTests
     {
         _httpMessageHandler = new MockHttpMessageHandler();
         _httpClient = new HttpClient(_httpMessageHandler);
-        _logger = Substitute.For<ILogger<GlassdoorApiClient>>();
+        _logger = new Mock<ILogger<GlassdoorApiClient>>().Object;
     }
 
     [Fact]

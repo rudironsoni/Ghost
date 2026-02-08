@@ -1,14 +1,13 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Entities;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Entities;
 
-[TestFixture]
 public class EntityBaseTests
 {
-    [Test]
+    [Fact]
     public void GetMetadata_ShouldReturnEntityMetadata()
     {
         // Act
@@ -21,7 +20,7 @@ public class EntityBaseTests
         metadata.Properties.Should().NotBeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void GetMetadata_ShouldIncludeAllAnnotatedProperties()
     {
         // Act
@@ -34,7 +33,7 @@ public class EntityBaseTests
         metadata.Properties.Should().Contain(p => p.PropertyInfo.Name == nameof(TestProduct.Description));
     }
 
-    [Test]
+    [Fact]
     public void GetMetadata_ShouldIncludeValueSelector()
     {
         // Act
@@ -46,7 +45,7 @@ public class EntityBaseTests
         titleProperty.ValueSelector.Expression.Should().Be(".product-name");
     }
 
-    [Test]
+    [Fact]
     public void Validate_ShouldReturnTrueForValidEntity()
     {
         // Arrange
@@ -64,7 +63,7 @@ public class EntityBaseTests
         isValid.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Clone_ShouldCreateNewInstanceWithSameValues()
     {
         // Arrange
@@ -93,7 +92,7 @@ public class EntityBaseTests
         clone.ProductId.Should().Be(original.ProductId);
     }
 
-    [Test]
+    [Fact]
     public void Clone_ShouldCreateIndependentInstance()
     {
         // Arrange
@@ -108,7 +107,7 @@ public class EntityBaseTests
         clone.Title.Should().Be("Modified");
     }
 
-    [Test]
+    [Fact]
     public void EntityBase_ShouldInitializeBaseProperties()
     {
         // Arrange & Act
@@ -125,7 +124,7 @@ public class EntityBaseTests
         product.ExtractedAt.Should().Be(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
     }
 
-    [Test]
+    [Fact]
     public void GetMetadata_ForEntityWithoutEntitySelector_ShouldHaveNullEntitySelector()
     {
         // Act
@@ -136,7 +135,7 @@ public class EntityBaseTests
         metadata.Properties.Should().NotBeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void GetMetadata_ShouldIncludeFormatters()
     {
         // Act
@@ -148,7 +147,7 @@ public class EntityBaseTests
         priceProperty.Formatters.Should().HaveCountGreaterThanOrEqualTo(1);
     }
 
-    [Test]
+    [Fact]
     public void GetMetadata_ShouldCacheMetadataForSameType()
     {
         // Act

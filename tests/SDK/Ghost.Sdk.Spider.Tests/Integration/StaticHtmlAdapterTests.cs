@@ -2,7 +2,7 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Microsoft.Extensions.Logging.Abstractions;
-using NUnit.Framework;
+using Xunit;
 using WireMock.Server;
 using WireMockRequest = WireMock.RequestBuilders.Request;
 using WireMockResponse = WireMock.ResponseBuilders.Response;
@@ -12,23 +12,20 @@ namespace Ghost.Sdk.Spider.Tests.Integration;
 /// <summary>
 /// Integration tests for StaticHtmlAdapter using WireMock.Net for HTTP mocking.
 /// </summary>
-[TestFixture]
-public class StaticHtmlAdapterTests
+public class StaticHtmlAdapterTests : IDisposable
 {
-    private WireMockServer _server = null!;
-    private HttpClient _httpClient = null!;
-    private StaticHtmlAdapter _adapter = null!;
+    private readonly WireMockServer _server;
+    private readonly HttpClient _httpClient;
+    private readonly StaticHtmlAdapter _adapter;
 
-    [SetUp]
-    public void Setup()
+    public StaticHtmlAdapterTests()
     {
         _server = WireMockServer.Start();
         _httpClient = new HttpClient { BaseAddress = new Uri(_server.Url!) };
         _adapter = new StaticHtmlAdapter(_httpClient, NullLogger<StaticHtmlAdapter>.Instance);
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         _httpClient.Dispose();
         _server.Stop();
@@ -37,7 +34,7 @@ public class StaticHtmlAdapterTests
 
     #region HTTP GET Requests
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithSimpleGetRequest_ShouldReturnHtmlContent()
     {
         // Arrange
@@ -70,7 +67,7 @@ public class StaticHtmlAdapterTests
         response.Duration.Should().BeGreaterThan(TimeSpan.Zero);
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithQueryParameters_ShouldSendCorrectUrl()
     {
         // Arrange
@@ -105,7 +102,7 @@ public class StaticHtmlAdapterTests
 
     #region Custom Headers
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithCustomHeaders_ShouldSendHeaders()
     {
         // Arrange
@@ -140,7 +137,7 @@ public class StaticHtmlAdapterTests
         response.Content.Content.Should().Be("Authenticated");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithAuthorizationHeader_ShouldAuthenticate()
     {
         // Arrange
@@ -177,7 +174,7 @@ public class StaticHtmlAdapterTests
 
     #region Cookie Handling
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithCookies_ShouldSendCookieHeader()
     {
         // Arrange
@@ -215,7 +212,7 @@ public class StaticHtmlAdapterTests
         response.Content.Content.Should().Be("Session active");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithSetCookieResponse_ShouldReceiveCookies()
     {
         // Arrange
@@ -247,7 +244,7 @@ public class StaticHtmlAdapterTests
 
     #region Timeout Handling
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithSlowResponse_ShouldTimeout()
     {
         // Arrange
@@ -275,7 +272,7 @@ public class StaticHtmlAdapterTests
         response.Error.Should().Contain("timed out");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithCancellationToken_ShouldCancelRequest()
     {
         // Arrange
@@ -309,7 +306,7 @@ public class StaticHtmlAdapterTests
 
     #region Redirect Following
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithSingleRedirect_ShouldFollowRedirect()
     {
         // Arrange
@@ -342,7 +339,7 @@ public class StaticHtmlAdapterTests
         response.FinalUrl.Should().Contain("/target");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithMultipleRedirects_ShouldFollowChain()
     {
         // Arrange
@@ -385,7 +382,7 @@ public class StaticHtmlAdapterTests
 
     #region Compression (gzip/deflate)
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithGzipCompression_ShouldDecompress()
     {
         // Arrange
@@ -413,7 +410,7 @@ public class StaticHtmlAdapterTests
         response.Content.Content.Should().NotBeEmpty();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithDeflateCompression_ShouldDecompress()
     {
         // Arrange
@@ -445,7 +442,7 @@ public class StaticHtmlAdapterTests
 
     #region Error Handling
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_With404NotFound_ShouldReturnErrorResponse()
     {
         // Arrange
@@ -473,7 +470,7 @@ public class StaticHtmlAdapterTests
         response.Content.Success.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_With500ServerError_ShouldReturnErrorResponse()
     {
         // Arrange
@@ -500,7 +497,7 @@ public class StaticHtmlAdapterTests
         response.StatusCode.Should().Be(500);
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithInvalidUrl_ShouldReturnErrorResponse()
     {
         // Arrange
@@ -525,7 +522,7 @@ public class StaticHtmlAdapterTests
 
     #region POST Requests
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithPostRequest_ShouldSendBodyAndHeaders()
     {
         // Arrange
@@ -561,7 +558,7 @@ public class StaticHtmlAdapterTests
         response.Content.Content.Should().Contain("token");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithFormDataPost_ShouldSendFormData()
     {
         // Arrange
@@ -600,7 +597,7 @@ public class StaticHtmlAdapterTests
 
     #region Connection Reuse
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithMultipleRequests_ShouldReuseConnection()
     {
         // Arrange
@@ -635,7 +632,7 @@ public class StaticHtmlAdapterTests
 
     #region Response Headers
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithResponseHeaders_ShouldCaptureHeaders()
     {
         // Arrange
@@ -669,7 +666,7 @@ public class StaticHtmlAdapterTests
 
     #region Content Type Detection
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithJsonContentType_ShouldDetectContentType()
     {
         // Arrange
@@ -696,7 +693,7 @@ public class StaticHtmlAdapterTests
         response.Content.MimeType.Should().Be("application/json");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithXmlContentType_ShouldDetectContentType()
     {
         // Arrange

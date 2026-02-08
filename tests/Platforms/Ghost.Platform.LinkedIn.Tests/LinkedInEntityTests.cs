@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Ghost.Platform.LinkedIn.Tests.Migration;
 using Ghost.Sdk.Spider.Core.Extraction;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Platform.LinkedIn.Tests;
 
@@ -9,11 +9,10 @@ namespace Ghost.Platform.LinkedIn.Tests;
 /// Tests for LinkedInJobEntity extraction using Ghost.Sdk.Spider.
 /// Validates that the migration from platform-specific scraping to Spider SDK works correctly.
 /// </summary>
-[TestFixture]
 public class LinkedInEntityTests
 {
 
-    [Test]
+    [Fact]
     public async Task ParseWithTestJobFixtureShouldExtractAllFields()
     {
         // Arrange
@@ -40,7 +39,7 @@ public class LinkedInEntityTests
         result.Industries.Should().Be("Financial Services and Technology");
     }
 
-    [Test]
+    [Fact]
     public async Task ParseWithTestJobFixtureShouldExtractUrls()
     {
         // Arrange
@@ -62,7 +61,7 @@ public class LinkedInEntityTests
         result.CompanyLogoUrl.Should().Contain("stripe_logo.png");
     }
 
-    [Test]
+    [Fact]
     public async Task ParseWithTestJobFixtureShouldExtractDescription()
     {
         // Arrange
@@ -84,7 +83,7 @@ public class LinkedInEntityTests
         result.Description.Should().Contain("payment infrastructure");
     }
 
-    [Test]
+    [Fact]
     public async Task ParseWithTestJobFixtureShouldExtractApplicantCount()
     {
         // Arrange
@@ -104,7 +103,7 @@ public class LinkedInEntityTests
         result!.ApplicantCount.Should().Be("200");
     }
 
-    [Test]
+    [Fact]
     public async Task ParseWithTestJobFixtureShouldSetBaseProperties()
     {
         // Arrange
@@ -128,7 +127,7 @@ public class LinkedInEntityTests
         result.Id.Should().NotBeNullOrEmpty();
     }
 
-    [Test]
+    [Fact]
     public async Task ParseWithTestJobFixtureShouldPassValidation()
     {
         // Arrange
@@ -148,7 +147,7 @@ public class LinkedInEntityTests
         result!.Validate().Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ParseWithRealFixture1ShouldExtractTitle()
     {
         // Arrange
@@ -169,7 +168,7 @@ public class LinkedInEntityTests
         result.Company.Should().NotBeNullOrEmpty();
     }
 
-    [Test]
+    [Fact]
     public async Task ParseWithRealFixture2ShouldExtractAllRequiredFields()
     {
         // Arrange
@@ -191,7 +190,7 @@ public class LinkedInEntityTests
         result.Validate().Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ParseWithRealFixture3ShouldHandleOptionalFields()
     {
         // Arrange
@@ -216,7 +215,7 @@ public class LinkedInEntityTests
         }
     }
 
-    [Test]
+    [Fact]
     public void ParseWithEmptyContentShouldReturnNull()
     {
         // Arrange
@@ -234,7 +233,7 @@ public class LinkedInEntityTests
         result.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void ParseWithInvalidHtmlShouldReturnNull()
     {
         // Arrange
@@ -252,7 +251,7 @@ public class LinkedInEntityTests
         result.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void TrimFormatterShouldRemoveWhitespace()
     {
         // Arrange - Create HTML with extra whitespace
@@ -288,7 +287,7 @@ public class LinkedInEntityTests
         result.Company.Should().Be("Test Company");
     }
 
-    [Test]
+    [Fact]
     public void RegexFormatterShouldExtractNumericValues()
     {
         // Arrange - HTML with applicant text
@@ -316,7 +315,7 @@ public class LinkedInEntityTests
         result!.ApplicantCount.Should().Be("500");
     }
 
-    [Test]
+    [Fact]
     public void ValidateWithMissingTitleShouldReturnFalse()
     {
         // Arrange
@@ -332,7 +331,7 @@ public class LinkedInEntityTests
         isValid.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void ValidateWithMissingCompanyShouldReturnFalse()
     {
         // Arrange
@@ -348,7 +347,7 @@ public class LinkedInEntityTests
         isValid.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void ValidateWithBothRequiredFieldsShouldReturnTrue()
     {
         // Arrange
@@ -365,7 +364,7 @@ public class LinkedInEntityTests
         isValid.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void GetMetadataShouldReturnEntityConfiguration()
     {
         // Act

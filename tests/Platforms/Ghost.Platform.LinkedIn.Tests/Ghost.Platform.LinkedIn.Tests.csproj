@@ -16,7 +16,7 @@
   <ItemGroup>
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
-    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Moq" />
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
   </ItemGroup>

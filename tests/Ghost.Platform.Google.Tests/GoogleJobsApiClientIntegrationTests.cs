@@ -4,7 +4,7 @@ using System.Text;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
-using NSubstitute;
+using Moq;
 using Xunit;
 using Ghost.Platform.Google.Jobs;
 using Ghost.Platform.Google.Jobs.Internal;
@@ -26,7 +26,7 @@ public class GoogleJobsApiClientIntegrationTests
     {
         _httpMessageHandler = new MockHttpMessageHandler();
         _httpClient = new HttpClient(_httpMessageHandler);
-        _logger = Substitute.For<ILogger<GoogleJobsApiClient>>();
+        _logger = new Mock<ILogger<GoogleJobsApiClient>>().Object;
         _options = new GoogleJobsOptions();
     }
 

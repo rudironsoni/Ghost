@@ -4,7 +4,7 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Adapters.GraphQL;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
-using NUnit.Framework;
+using Xunit;
 using WireMock.Server;
 using WireMockRequest = WireMock.RequestBuilders.Request;
 using WireMockResponse = WireMock.ResponseBuilders.Response;
@@ -14,23 +14,20 @@ namespace Ghost.Sdk.Spider.Tests.Integration;
 /// <summary>
 /// Integration tests for GraphQLAdapter using WireMock.Net for HTTP mocking.
 /// </summary>
-[TestFixture]
-public class GraphQLAdapterTests
+public class GraphQLAdapterTests : IDisposable
 {
-    private WireMockServer _server = null!;
-    private HttpClient _httpClient = null!;
-    private GraphQLAdapter _adapter = null!;
+    private readonly WireMockServer _server;
+    private readonly HttpClient _httpClient;
+    private readonly GraphQLAdapter _adapter;
 
-    [SetUp]
-    public void Setup()
+    public GraphQLAdapterTests()
     {
         _server = WireMockServer.Start();
         _httpClient = new HttpClient();
         _adapter = new GraphQLAdapter(_httpClient, NullLogger<GraphQLAdapter>.Instance);
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         _httpClient.Dispose();
         _server.Stop();
@@ -39,7 +36,7 @@ public class GraphQLAdapterTests
 
     #region Query Execution
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithSimpleQuery_ShouldExecuteSuccessfully()
     {
         // Arrange
@@ -90,7 +87,7 @@ public class GraphQLAdapterTests
         response.AdapterName.Should().Be("GraphQL");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithMutation_ShouldExecuteSuccessfully()
     {
         // Arrange
@@ -141,7 +138,7 @@ public class GraphQLAdapterTests
 
     #region Variable Substitution
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithVariables_ShouldSubstituteCorrectly()
     {
         // Arrange
@@ -192,7 +189,7 @@ public class GraphQLAdapterTests
         response.Content.Content.Should().Contain("Variable User");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithComplexVariables_ShouldSerializeCorrectly()
     {
         // Arrange
@@ -242,7 +239,7 @@ public class GraphQLAdapterTests
 
     #region Schema Introspection
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithIntrospectionQuery_ShouldReturnSchema()
     {
         // Arrange
@@ -302,7 +299,7 @@ public class GraphQLAdapterTests
         response.Content.Content.Should().Contain("SCALAR");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithTypeIntrospection_ShouldReturnTypeInfo()
     {
         // Arrange
@@ -368,7 +365,7 @@ public class GraphQLAdapterTests
 
     #region Relay Pagination
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithRelayPagination_ShouldHandleConnectionsAndEdges()
     {
         // Arrange
@@ -445,7 +442,7 @@ public class GraphQLAdapterTests
         response.Content.Content.Should().Contain("endCursor");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithOffsetPagination_ShouldHandleOffsetAndLimit()
     {
         // Arrange
@@ -510,7 +507,7 @@ public class GraphQLAdapterTests
 
     #region Error Handling
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithGraphQLErrors_ShouldReturnErrorResponse()
     {
         // Arrange
@@ -561,7 +558,7 @@ public class GraphQLAdapterTests
         response.Content.Error.Should().Contain("User not found");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithPartialErrors_ShouldReturnPartialData()
     {
         // Arrange
@@ -618,7 +615,7 @@ public class GraphQLAdapterTests
         response.Content.Error.Should().Contain("Failed to fetch posts");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithHttpError_ShouldReturnErrorResponse()
     {
         // Arrange
@@ -652,7 +649,7 @@ public class GraphQLAdapterTests
         response.Error.Should().NotBeNullOrEmpty();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithInvalidJsonResponse_ShouldReturnErrorResponse()
     {
         // Arrange
@@ -691,7 +688,7 @@ public class GraphQLAdapterTests
 
     #region Headers and Authentication
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithAuthenticationHeader_ShouldSendToken()
     {
         // Arrange
@@ -740,7 +737,7 @@ public class GraphQLAdapterTests
 
     #region Extensions
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithResponseExtensions_ShouldCaptureExtensions()
     {
         // Arrange
@@ -793,7 +790,7 @@ public class GraphQLAdapterTests
 
     #region CanHandle
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithGraphQLContentType_ShouldReturnTrue()
     {
         // Arrange
@@ -813,7 +810,7 @@ public class GraphQLAdapterTests
         canHandle.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithGraphQLUrlPath_ShouldReturnTrue()
     {
         // Arrange

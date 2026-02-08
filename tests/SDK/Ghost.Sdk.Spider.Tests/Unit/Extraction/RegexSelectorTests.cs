@@ -1,14 +1,13 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Extraction.Selectors;
-using NUnit.Framework;
+using Xunit;
 using System.Text.RegularExpressions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 
-[TestFixture]
 public class RegexSelectorTests
 {
-    [Test]
+    [Fact]
     public void Select_WithPattern_ShouldReturnMatches()
     {
         // Arrange
@@ -25,7 +24,7 @@ public class RegexSelectorTests
         results[2].Should().Be("789");
     }
 
-    [Test]
+    [Fact]
     public void Select_WithGroup_ShouldExtractGroup()
     {
         // Arrange
@@ -41,7 +40,7 @@ public class RegexSelectorTests
         results[1].Should().Be("5.00");
     }
 
-    [Test]
+    [Fact]
     public void SelectFirst_ShouldReturnFirstMatch()
     {
         // Arrange
@@ -55,7 +54,7 @@ public class RegexSelectorTests
         result.Should().Be("123");
     }
 
-    [Test]
+    [Fact]
     public void SelectFirst_WithNoMatches_ShouldReturnNull()
     {
         // Arrange
@@ -69,7 +68,7 @@ public class RegexSelectorTests
         result.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void Select_WithEmptyContent_ShouldReturnEmptyList()
     {
         // Arrange
@@ -82,7 +81,7 @@ public class RegexSelectorTests
         results.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Select_WithEmailPattern_ShouldExtractEmails()
     {
         // Arrange
@@ -98,7 +97,7 @@ public class RegexSelectorTests
         results[1].Should().Be("sales@example.org");
     }
 
-    [Test]
+    [Fact]
     public void Select_WithUrlPattern_ShouldExtractUrls()
     {
         // Arrange
@@ -114,7 +113,7 @@ public class RegexSelectorTests
         results[1].Should().Be("http://test.org");
     }
 
-    [Test]
+    [Fact]
     public void Select_WithCaseInsensitiveOption_ShouldMatchCaseInsensitively()
     {
         // Arrange
@@ -129,7 +128,7 @@ public class RegexSelectorTests
         results.Should().AllSatisfy(r => r.ToLower().Should().Be("test"));
     }
 
-    [Test]
+    [Fact]
     public void Select_WithMultilineOption_ShouldMatchAcrossLines()
     {
         // Arrange
@@ -143,7 +142,7 @@ public class RegexSelectorTests
         results.Should().HaveCount(3);
     }
 
-    [Test]
+    [Fact]
     public void Select_WithNamedGroups_ShouldExtractByGroupIndex()
     {
         // Arrange
@@ -159,7 +158,7 @@ public class RegexSelectorTests
         results[1].Should().Be("100");
     }
 
-    [Test]
+    [Fact]
     public void Select_WithInvalidGroup_ShouldReturnEmptyList()
     {
         // Arrange
@@ -173,7 +172,7 @@ public class RegexSelectorTests
         results.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithValidPattern_ShouldReturnTrue()
     {
         // Arrange
@@ -186,29 +185,29 @@ public class RegexSelectorTests
         isValid.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithInvalidPattern_ShouldReturnFalse()
     {
         // This won't compile due to constructor validation, so we test the behavior
         // by checking that invalid patterns throw on construction
-        Assert.Pass("Invalid regex patterns throw at construction time");
+        // xUnit doesn't have Assert.Pass, so we just return (test passes by not throwing)
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithNullPattern_ShouldThrow()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new RegexSelector(null!));
+        var exception = Assert.Throws<ArgumentNullException>(() => new RegexSelector(null!));
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithEmptyPattern_ShouldThrow()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new RegexSelector(""));
+        var exception = Assert.Throws<ArgumentNullException>(() => new RegexSelector(""));
     }
 
-    [Test]
+    [Fact]
     public void Expression_ShouldReturnConstructorPattern()
     {
         // Arrange
@@ -219,7 +218,7 @@ public class RegexSelectorTests
         selector.Expression.Should().Be(pattern);
     }
 
-    [Test]
+    [Fact]
     public void Group_ShouldReturnConstructorGroup()
     {
         // Arrange
@@ -229,7 +228,7 @@ public class RegexSelectorTests
         selector.Group.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void Select_WithComplexPattern_ShouldWork()
     {
         // Arrange

@@ -1,20 +1,20 @@
 using FluentAssertions;
 using Ghost.Stealth.TLS;
 using Microsoft.Extensions.Logging;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Tests.Stealth.TLS;
 
 public class TLSFingerprintServiceTests
 {
-    private readonly ILogger<TLSFingerprintService> _logger;
+    private readonly Mock<ILogger<TLSFingerprintService>> _mockLogger;
     private readonly TLSFingerprintService _service;
 
     public TLSFingerprintServiceTests()
     {
-        _logger = Substitute.For<ILogger<TLSFingerprintService>>();
-        _service = new TLSFingerprintService(_logger);
+        _mockLogger = new Mock<ILogger<TLSFingerprintService>>();
+        _service = new TLSFingerprintService(_mockLogger.Object);
     }
 
     [Fact]

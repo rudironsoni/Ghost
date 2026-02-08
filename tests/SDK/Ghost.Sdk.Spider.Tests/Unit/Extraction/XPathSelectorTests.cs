@@ -1,13 +1,12 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Extraction.Selectors;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 
-[TestFixture]
 public class XPathSelectorTests
 {
-    [Test]
+    [Fact]
     public void Select_WithValidXPath_ShouldReturnMatches()
     {
         // Arrange
@@ -30,7 +29,7 @@ public class XPathSelectorTests
         results[1].Should().Contain("Item 2");
     }
 
-    [Test]
+    [Fact]
     public void Select_WithAttribute_ShouldExtractAttributeValue()
     {
         // Arrange
@@ -52,7 +51,7 @@ public class XPathSelectorTests
         results[1].Should().Be("2");
     }
 
-    [Test]
+    [Fact]
     public void SelectFirst_ShouldReturnFirstMatch()
     {
         // Arrange
@@ -73,7 +72,7 @@ public class XPathSelectorTests
         result.Should().Contain("First");
     }
 
-    [Test]
+    [Fact]
     public void SelectFirst_WithNoMatches_ShouldReturnNull()
     {
         // Arrange
@@ -87,7 +86,7 @@ public class XPathSelectorTests
         result.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void Select_WithEmptyContent_ShouldReturnEmptyList()
     {
         // Arrange
@@ -100,7 +99,7 @@ public class XPathSelectorTests
         results.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Select_WithComplexXPath_ShouldWork()
     {
         // Arrange
@@ -126,7 +125,7 @@ public class XPathSelectorTests
         results[1].Should().Be("Title 2");
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithValidXPath_ShouldReturnTrue()
     {
         // Arrange
@@ -139,7 +138,7 @@ public class XPathSelectorTests
         isValid.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Validate_WithInvalidXPath_ShouldReturnFalse()
     {
         // Arrange
@@ -152,14 +151,14 @@ public class XPathSelectorTests
         isValid.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithNullExpression_ShouldThrow()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new XPathSelector(null!));
+        var exception = Assert.Throws<ArgumentNullException>(() => new XPathSelector(null!));
     }
 
-    [Test]
+    [Fact]
     public void Expression_ShouldReturnConstructorValue()
     {
         // Arrange
@@ -170,7 +169,7 @@ public class XPathSelectorTests
         selector.Expression.Should().Be(expression);
     }
 
-    [Test]
+    [Fact]
     public void Select_WithNestedElements_ShouldExtractInnerText()
     {
         // Arrange

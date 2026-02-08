@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
-using NUnit.Framework;
+using Xunit;
 using System.Net;
 
 namespace Ghost.Sdk.Spider.Tests.Integration;
@@ -14,28 +14,25 @@ namespace Ghost.Sdk.Spider.Tests.Integration;
 /// <summary>
 /// Comprehensive tests for GraphQL pagination scenarios including Relay-style cursor pagination.
 /// </summary>
-[TestFixture]
-public class GraphQLPaginationTests
+public class GraphQLPaginationTests : IDisposable
 {
-    private Mock<ILogger<GraphQLAdapter>> _mockLogger = null!;
-    private Mock<HttpMessageHandler> _mockHttpHandler = null!;
-    private HttpClient _httpClient = null!;
+    private readonly Mock<ILogger<GraphQLAdapter>> _mockLogger;
+    private readonly Mock<HttpMessageHandler> _mockHttpHandler;
+    private readonly HttpClient _httpClient;
 
-    [SetUp]
-    public void Setup()
+    public GraphQLPaginationTests()
     {
         _mockLogger = new Mock<ILogger<GraphQLAdapter>>();
         _mockHttpHandler = new Mock<HttpMessageHandler>();
         _httpClient = new HttpClient(_mockHttpHandler.Object);
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         _httpClient.Dispose();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithRelayStylePagination_ShouldHandlePageInfo()
     {
         // Arrange
@@ -86,7 +83,7 @@ public class GraphQLPaginationTests
         response.Content.Content.Should().Contain("hasNextPage");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithCursorBasedPagination_ShouldSupportAfterParameter()
     {
         // Arrange
@@ -127,7 +124,7 @@ public class GraphQLPaginationTests
         response.IsSuccess.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithOffsetBasedPagination_ShouldSupportLimitOffset()
     {
         // Arrange
@@ -172,7 +169,7 @@ public class GraphQLPaginationTests
         response.Content.Content.Should().Contain("totalCount");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithPageNumberPagination_ShouldSupportPageAndPageSize()
     {
         // Arrange
@@ -220,7 +217,7 @@ public class GraphQLPaginationTests
         response.IsSuccess.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithEmptyPage_ShouldReturnEmptyData()
     {
         // Arrange
@@ -258,7 +255,7 @@ public class GraphQLPaginationTests
         response.IsSuccess.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithMultiplePaginatedFields_ShouldHandleComplex()
     {
         // Arrange
@@ -308,7 +305,7 @@ public class GraphQLPaginationTests
         response.Content.Content.Should().Contain("posts");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithPartialErrorsInPagination_ShouldHandleGracefully()
     {
         // Arrange
@@ -353,7 +350,7 @@ public class GraphQLPaginationTests
         response.Content.Error.Should().Contain("deprecated");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithInfiniteScrollPattern_ShouldSupportContinuousLoading()
     {
         // Arrange

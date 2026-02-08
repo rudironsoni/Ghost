@@ -3,20 +3,18 @@ using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
-[TestFixture]
-public class AdapterFactoryImplementationTests
+public class AdapterFactoryImplementationTests : IDisposable
 {
-    private AdapterRegistry _registry = null!;
-    private IServiceProvider _serviceProvider = null!;
-    private ILogger<AdapterFactory> _logger = null!;
-    private AdapterFactory _factory = null!;
+    private readonly AdapterRegistry _registry;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<AdapterFactory> _logger;
+    private readonly AdapterFactory _factory;
 
-    [SetUp]
-    public void Setup()
+    public AdapterFactoryImplementationTests()
     {
         _registry = new AdapterRegistry();
         var services = new ServiceCollection();
@@ -26,8 +24,7 @@ public class AdapterFactoryImplementationTests
         _factory = new AdapterFactory(_registry, _serviceProvider, _logger);
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         if (_serviceProvider is IDisposable disposable)
         {
@@ -35,7 +32,7 @@ public class AdapterFactoryImplementationTests
         }
     }
 
-    [Test]
+    [Fact]
     public void Registry_RegisterAdapter_StoresAdapterType()
     {
         // Arrange & Act
@@ -47,7 +44,7 @@ public class AdapterFactoryImplementationTests
         adapterType.Should().Be(typeof(TestAdapter));
     }
 
-    [Test]
+    [Fact]
     public void Registry_RegisterAdapterWithMultipleContentTypes_StoresForAllTypes()
     {
         // Arrange & Act
@@ -61,7 +58,7 @@ public class AdapterFactoryImplementationTests
         jsonAdapters.Should().Contain(typeof(TestAdapter));
     }
 
-    [Test]
+    [Fact]
     public void Registry_GetAdapterType_WithInvalidName_ReturnsNull()
     {
         // Act
@@ -71,7 +68,7 @@ public class AdapterFactoryImplementationTests
         adapterType.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void Registry_GetAdaptersByContentType_WithNoAdapters_ReturnsEmpty()
     {
         // Act
@@ -81,7 +78,7 @@ public class AdapterFactoryImplementationTests
         adapters.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Registry_GetAllAdapterTypes_ReturnsAllRegistered()
     {
         // Arrange
@@ -95,7 +92,7 @@ public class AdapterFactoryImplementationTests
         allAdapters.Should().HaveCountGreaterOrEqualTo(2);
     }
 
-    [Test]
+    [Fact]
     public void Registry_RegisterWithInvalidType_ThrowsException()
     {
         // Act & Assert
@@ -103,7 +100,7 @@ public class AdapterFactoryImplementationTests
             _registry.Register(typeof(string), "InvalidAdapter", ContentType.Html));
     }
 
-    [Test]
+    [Fact]
     public void Registry_RegisterWithCaseInsensitiveName_RetrievesCaseInsensitive()
     {
         // Arrange
@@ -118,7 +115,7 @@ public class AdapterFactoryImplementationTests
         adapterType2.Should().Be(typeof(TestAdapter));
     }
 
-    [Test]
+    [Fact]
     public void Registry_RegisterMultipleTimes_OverwritesPreviousRegistration()
     {
         // Arrange
@@ -132,7 +129,7 @@ public class AdapterFactoryImplementationTests
         adapterType.Should().Be(typeof(TestAdapter));
     }
 
-    [Test]
+    [Fact]
     public void Registry_BuiltInAdapters_AreRegistered()
     {
         // Arrange

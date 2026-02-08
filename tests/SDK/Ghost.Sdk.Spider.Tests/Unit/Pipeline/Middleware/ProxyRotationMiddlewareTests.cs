@@ -3,16 +3,14 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Ghost.Sdk.Spider.Pipeline.Middleware;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline.Middleware;
 
-[TestFixture]
 
-[TestFixture]
 public class ProxyRotationMiddlewareTests
 {
-    [Test]
+    [Fact]
     public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
     {
         // Act
@@ -22,7 +20,7 @@ public class ProxyRotationMiddlewareTests
         act.Should().Throw<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithEmptyProxyList_ShouldThrowInvalidOperationException()
     {
         // Arrange
@@ -39,7 +37,7 @@ public class ProxyRotationMiddlewareTests
             .WithMessage("*non-empty ProxyList*");
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithoutProxyList_ShouldThrowInvalidOperationException()
     {
         // Arrange
@@ -53,7 +51,7 @@ public class ProxyRotationMiddlewareTests
             .WithMessage("*ProxyList*");
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithValidProxyList_ShouldInitialize()
     {
         // Arrange
@@ -69,7 +67,7 @@ public class ProxyRotationMiddlewareTests
         middleware.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithRoundRobinStrategy_ShouldRotateProxies()
     {
         // Arrange
@@ -121,7 +119,7 @@ public class ProxyRotationMiddlewareTests
         selectedProxies[5].Should().Be("http://proxy3.com:8080");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithRandomStrategy_ShouldSelectFromAvailableProxies()
     {
         // Arrange
@@ -167,7 +165,7 @@ public class ProxyRotationMiddlewareTests
         selectedProxies.Count.Should().BeGreaterOrEqualTo(2); // At least 2 different proxies used
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithSuccessfulRequest_ShouldMarkProxyAsHealthy()
     {
         // Arrange
@@ -203,7 +201,7 @@ public class ProxyRotationMiddlewareTests
         request.Metadata["Proxy"].Should().Be("http://proxy1.com:8080");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithFailedRequest_ShouldMarkProxyAsUnhealthy()
     {
         // Arrange
@@ -238,7 +236,7 @@ public class ProxyRotationMiddlewareTests
         request.Metadata.Should().ContainKey("Proxy");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithMultipleFailures_ShouldMarkProxyUnhealthy()
     {
         // Arrange
@@ -308,7 +306,7 @@ public class ProxyRotationMiddlewareTests
         finalRequest.Metadata["Proxy"].Should().Be("http://proxy2.com:8080");
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_WithNullRequest_ShouldCallNextMiddleware()
     {
         // Arrange
@@ -337,7 +335,7 @@ public class ProxyRotationMiddlewareTests
         nextCalled.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task InvokeAsync_ShouldStoreProxyEndpointInMetadata()
     {
         // Arrange

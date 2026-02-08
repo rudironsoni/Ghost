@@ -2,15 +2,14 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Entities;
 using Ghost.Sdk.Spider.Core.Entities.Attributes;
 using Ghost.Sdk.Spider.Core.Extraction;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 
-[TestFixture]
 public class EntityParserImplementationTests
 {
 
-    [Test]
+    [Fact]
     public void Parse_WithXPathSelector_ExtractsMultipleProducts()
     {
         // Arrange
@@ -36,7 +35,7 @@ public class EntityParserImplementationTests
         results[1].Price.Should().Be("$200");
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithCssSelector_ExtractsMultipleArticles()
     {
         // Arrange
@@ -62,7 +61,7 @@ public class EntityParserImplementationTests
         results[1].Author.Should().Be("Jane");
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithHtmlRegexSelector_ExtractsEmail()
     {
         // Arrange - Regex works with HTML elements for entity selection
@@ -82,7 +81,7 @@ public class EntityParserImplementationTests
         results[0].Email.Should().Be("test@example.com");
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithJsonPathSelector_ExtractsJsonData()
     {
         // Arrange
@@ -106,7 +105,7 @@ public class EntityParserImplementationTests
         results[1].Age.Should().Be(25);
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithNestedSelectors_ExtractsNestedData()
     {
         // Arrange
@@ -136,7 +135,7 @@ public class EntityParserImplementationTests
         results[0].Stock.Should().Be("In Stock");
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithAttributeExtraction_ExtractsAttributes()
     {
         // Arrange
@@ -160,7 +159,7 @@ public class EntityParserImplementationTests
         results[0].Text.Should().Be("Link Text");
     }
 
-    [Test]
+    [Fact]
     public void ParseSingle_WithEntitySelector_ReturnsFirstMatch()
     {
         // Arrange
@@ -183,7 +182,7 @@ public class EntityParserImplementationTests
         result!.Name.Should().Be("First");
     }
 
-    [Test]
+    [Fact]
     public void ParseSingle_WithNoMatches_ReturnsNull()
     {
         // Arrange
@@ -202,7 +201,7 @@ public class EntityParserImplementationTests
         result.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithTypeConversion_ConvertsToInt()
     {
         // Arrange
@@ -222,7 +221,7 @@ public class EntityParserImplementationTests
         results[0].Count.Should().Be(42);
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithTypeConversion_ConvertsToDecimal()
     {
         // Arrange
@@ -242,7 +241,7 @@ public class EntityParserImplementationTests
         results[0].Price.Should().Be(99.99m);
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithTypeConversion_ConvertsToBoolean()
     {
         // Arrange
@@ -262,7 +261,7 @@ public class EntityParserImplementationTests
         results[0].Available.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithDefaultValue_UsesDefaultWhenNotFound()
     {
         // Arrange
@@ -283,7 +282,7 @@ public class EntityParserImplementationTests
         results[0].Description.Should().Be("No description");
     }
 
-    [Test]
+    [Fact]
     public void Parse_WithMultiValueSelector_ReturnsListOfStrings()
     {
         // Arrange
@@ -310,7 +309,7 @@ public class EntityParserImplementationTests
         results[0].Tags.Should().Contain(new[] { "Tag1", "Tag2", "Tag3" });
     }
 
-    [Test]
+    [Fact]
     public void Parse_SetsEntityMetadata_CorrectlyForAllEntities()
     {
         // Arrange

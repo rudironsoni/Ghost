@@ -3,37 +3,34 @@ using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
 using Microsoft.Extensions.Logging.Abstractions;
-using NUnit.Framework;
+using Xunit;
 using WireMockRequest = WireMock.RequestBuilders.Request;
 using WireMockResponse = WireMock.ResponseBuilders.Response;
 using WireMock.Server;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
-[TestFixture]
-public class StaticHtmlAdapterTests
+public class StaticHtmlAdapterTests : IDisposable
 {
-    private WireMockServer _server = null!;
-    private HttpClient _httpClient = null!;
-    private StaticHtmlAdapter _adapter = null!;
+    private readonly WireMockServer _server;
+    private readonly HttpClient _httpClient;
+    private readonly StaticHtmlAdapter _adapter;
 
-    [SetUp]
-    public void Setup()
+    public StaticHtmlAdapterTests()
     {
         _server = WireMockServer.Start();
         _httpClient = new HttpClient { BaseAddress = new Uri(_server.Url!) };
         _adapter = new StaticHtmlAdapter(_httpClient, NullLogger<StaticHtmlAdapter>.Instance);
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         _httpClient.Dispose();
         _server.Stop();
         _server.Dispose();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithSuccessfulResponse_ShouldReturnResponse()
     {
         // Arrange
@@ -56,7 +53,7 @@ public class StaticHtmlAdapterTests
         response.Content.Content.Should().Contain("Test Content");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_With404_ShouldReturnErrorResponse()
     {
         // Arrange
@@ -75,7 +72,7 @@ public class StaticHtmlAdapterTests
         response.StatusCode.Should().Be(404);
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithCustomHeaders_ShouldSendHeaders()
     {
         // Arrange
@@ -98,7 +95,7 @@ public class StaticHtmlAdapterTests
         response.IsSuccess.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithPostRequest_ShouldSendBody()
     {
         // Arrange
@@ -123,7 +120,7 @@ public class StaticHtmlAdapterTests
         response.IsSuccess.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithTimeout_ShouldThrowTimeout()
     {
         // Arrange
@@ -146,7 +143,7 @@ public class StaticHtmlAdapterTests
         response.Error.Should().Contain("timed out");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithCancellation_ShouldCancelRequest()
     {
         // Arrange
@@ -169,7 +166,7 @@ public class StaticHtmlAdapterTests
         response.Error.Should().Contain("canceled");
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithHttpUrl_ShouldReturnTrue()
     {
         // Arrange
@@ -182,7 +179,7 @@ public class StaticHtmlAdapterTests
         canHandle.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task CanHandleAsync_WithNonHttpUrl_ShouldReturnFalse()
     {
         // Arrange
@@ -195,28 +192,28 @@ public class StaticHtmlAdapterTests
         canHandle.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Name_ShouldBeStaticHtml()
     {
         // Assert
         _adapter.Name.Should().Be("StaticHtml");
     }
 
-    [Test]
+    [Fact]
     public void ContentType_ShouldBeStaticHtml()
     {
         // Assert
         _adapter.ContentType.Should().Be(ContentType.StaticHtml);
     }
 
-    [Test]
+    [Fact]
     public void IsAvailable_ShouldBeTrue()
     {
         // Assert
         _adapter.IsAvailable.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithRedirect_ShouldFollowRedirect()
     {
         // Arrange
@@ -243,7 +240,7 @@ public class StaticHtmlAdapterTests
         response.Content.Content.Should().Contain("Final Content");
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithGzipEncoding_ShouldDecompress()
     {
         // Arrange
@@ -264,7 +261,7 @@ public class StaticHtmlAdapterTests
         response.IsSuccess.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ExtractAsync_WithMultipleRequests_ShouldReuseConnection()
     {
         // Arrange

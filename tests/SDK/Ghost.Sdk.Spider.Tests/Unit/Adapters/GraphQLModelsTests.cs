@@ -1,16 +1,15 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.GraphQL;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Comprehensive tests for GraphQL request and response models.
 /// </summary>
-[TestFixture]
 public class GraphQLModelsTests
 {
-    [Test]
+    [Fact]
     public void GraphQLRequest_DefaultConstructor_ShouldInitialize()
     {
         // Act
@@ -24,7 +23,7 @@ public class GraphQLModelsTests
         request.Extensions.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLRequest_WithQuery_ShouldInitialize()
     {
         // Arrange
@@ -39,7 +38,7 @@ public class GraphQLModelsTests
         request.Variables.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLRequest_WithQueryAndVariables_ShouldInitialize()
     {
         // Arrange
@@ -54,7 +53,7 @@ public class GraphQLModelsTests
         request.Variables.Should().BeEquivalentTo(variables);
     }
 
-    [Test]
+    [Fact]
     public void GraphQLRequest_CreateQuery_ShouldReturnRequest()
     {
         // Arrange
@@ -68,7 +67,7 @@ public class GraphQLModelsTests
         request.Query.Should().Be(query);
     }
 
-    [Test]
+    [Fact]
     public void GraphQLRequest_CreateMutation_ShouldReturnRequest()
     {
         // Arrange
@@ -82,7 +81,7 @@ public class GraphQLModelsTests
         request.Query.Should().Be(mutation);
     }
 
-    [Test]
+    [Fact]
     public void GraphQLRequest_WithVariable_ShouldAddVariable()
     {
         // Arrange
@@ -98,7 +97,7 @@ public class GraphQLModelsTests
         request.Variables!["limit"].Should().Be(10);
     }
 
-    [Test]
+    [Fact]
     public void GraphQLRequest_WithMultipleVariables_ShouldAddAll()
     {
         // Arrange
@@ -116,7 +115,7 @@ public class GraphQLModelsTests
         request.Variables["search"].Should().Be("test");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLRequest_WithVariable_ShouldOverwriteExisting()
     {
         // Arrange
@@ -130,7 +129,7 @@ public class GraphQLModelsTests
         request.Variables!["id"].Should().Be("456");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLRequest_WithOperationName_ShouldSetName()
     {
         // Arrange
@@ -144,7 +143,7 @@ public class GraphQLModelsTests
         request.OperationName.Should().Be("GetUsers");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLRequest_WithExtension_ShouldAddExtension()
     {
         // Arrange
@@ -159,7 +158,7 @@ public class GraphQLModelsTests
         request.Extensions.Should().ContainKey("persistedQuery");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLRequest_WithMultipleExtensions_ShouldAddAll()
     {
         // Arrange
@@ -173,7 +172,7 @@ public class GraphQLModelsTests
         request.Extensions.Should().HaveCount(2);
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_DefaultConstructor_ShouldInitialize()
     {
         // Act
@@ -186,7 +185,7 @@ public class GraphQLModelsTests
         response.Extensions.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_HasErrors_WithErrors_ShouldReturnTrue()
     {
         // Arrange
@@ -202,7 +201,7 @@ public class GraphQLModelsTests
         response.HasErrors.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_HasErrors_WithoutErrors_ShouldReturnFalse()
     {
         // Arrange
@@ -212,7 +211,7 @@ public class GraphQLModelsTests
         response.HasErrors.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_HasErrors_WithEmptyList_ShouldReturnFalse()
     {
         // Arrange
@@ -225,7 +224,7 @@ public class GraphQLModelsTests
         response.HasErrors.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_IsSuccess_WithDataAndNoErrors_ShouldReturnTrue()
     {
         // Arrange
@@ -238,7 +237,7 @@ public class GraphQLModelsTests
         response.IsSuccess.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_IsSuccess_WithDataAndErrors_ShouldReturnFalse()
     {
         // Arrange
@@ -252,7 +251,7 @@ public class GraphQLModelsTests
         response.IsSuccess.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_IsSuccess_WithNoData_ShouldReturnFalse()
     {
         // Arrange
@@ -262,7 +261,7 @@ public class GraphQLModelsTests
         response.IsSuccess.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_HasPartialData_WithDataAndErrors_ShouldReturnTrue()
     {
         // Arrange
@@ -276,7 +275,7 @@ public class GraphQLModelsTests
         response.HasPartialData.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_HasPartialData_WithOnlyData_ShouldReturnFalse()
     {
         // Arrange
@@ -289,7 +288,7 @@ public class GraphQLModelsTests
         response.HasPartialData.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_HasPartialData_WithOnlyErrors_ShouldReturnFalse()
     {
         // Arrange
@@ -302,7 +301,7 @@ public class GraphQLModelsTests
         response.HasPartialData.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_GetErrorMessage_WithErrors_ShouldConcatenate()
     {
         // Arrange
@@ -323,7 +322,7 @@ public class GraphQLModelsTests
         errorMessage.Should().Be("Error 1; Error 2; Error 3");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_GetErrorMessage_WithoutErrors_ShouldReturnEmpty()
     {
         // Arrange
@@ -336,7 +335,7 @@ public class GraphQLModelsTests
         errorMessage.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_Success_ShouldCreateSuccessResponse()
     {
         // Arrange
@@ -352,7 +351,7 @@ public class GraphQLModelsTests
         response.HasErrors.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_ErrorWithErrors_ShouldCreateErrorResponse()
     {
         // Arrange
@@ -372,7 +371,7 @@ public class GraphQLModelsTests
         response.IsSuccess.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_ErrorWithMessage_ShouldCreateErrorResponse()
     {
         // Arrange
@@ -388,7 +387,7 @@ public class GraphQLModelsTests
         response.HasErrors.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void GraphQLRequest_FluentAPI_ShouldChainCorrectly()
     {
         // Act
@@ -405,7 +404,7 @@ public class GraphQLModelsTests
         request.Extensions.Should().ContainKey("tracing");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLError_ShouldHaveMessage()
     {
         // Act
@@ -415,7 +414,7 @@ public class GraphQLModelsTests
         error.Message.Should().Be("Test error");
     }
 
-    [Test]
+    [Fact]
     public void GraphQLResponse_WithExtensions_ShouldRetainThem()
     {
         // Arrange

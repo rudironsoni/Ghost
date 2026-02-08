@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
-using NSubstitute;
+using Moq;
 using Xunit;
 using Ghost.Platform.Google.Jobs.Internal;
 using Ghost.Contracts.Jobs;
@@ -16,7 +16,7 @@ public class GoogleJobsParserIntegrationTests
 
     public GoogleJobsParserIntegrationTests()
     {
-        _logger = Substitute.For<ILogger>();
+        _logger = new Mock<ILogger>().Object;
     }
 
     [Fact]

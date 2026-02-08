@@ -5,19 +5,17 @@ using Ghost.Sdk.Spider.Tests.TestHelpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
-[TestFixture]
-public class AdapterFactoryTests
+public class AdapterFactoryTests : IDisposable
 {
-    private ServiceProvider _serviceProvider = null!;
-    private AdapterRegistry _registry = null!;
-    private AdapterFactory _factory = null!;
+    private readonly ServiceProvider _serviceProvider;
+    private readonly AdapterRegistry _registry;
+    private readonly AdapterFactory _factory;
 
-    [SetUp]
-    public void Setup()
+    public AdapterFactoryTests()
     {
         var services = new ServiceCollection();
         services.AddSingleton<HttpClient>();
@@ -30,13 +28,12 @@ public class AdapterFactoryTests
         _factory = new AdapterFactory(_registry, _serviceProvider, NullLogger<AdapterFactory>.Instance);
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         _serviceProvider.Dispose();
     }
 
-    [Test]
+    [Fact]
     public async Task CreateAdapterAsync_WithHttpRequest_ShouldReturnStaticHtmlAdapter()
     {
         // Arrange
@@ -50,16 +47,15 @@ public class AdapterFactoryTests
         adapter.Should().BeOfType<StaticHtmlAdapter>();
     }
 
-    [Test]
+    [Fact]
     public async Task CreateAdapterAsync_WithNullRequest_ShouldThrow()
     {
         // Act & Assert
-        await Assert.ThatAsync(
-            async () => await _factory.CreateAdapterAsync(null!),
-            Throws.TypeOf<ArgumentNullException>());
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            async () => await _factory.CreateAdapterAsync(null!));
     }
 
-    [Test]
+    [Fact]
     public async Task CreateAdapterAsync_WithNoSuitableAdapter_ShouldReturnNull()
     {
         // Arrange
@@ -72,7 +68,7 @@ public class AdapterFactoryTests
         adapter.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task CreateAdapterAsync_WithAdapterPreference_ShouldUsePreferredAdapter()
     {
         // Arrange
@@ -87,7 +83,7 @@ public class AdapterFactoryTests
         adapter!.Name.Should().Be("StaticHtml");
     }
 
-    [Test]
+    [Fact]
     public async Task CreateAdapterAsync_WithInvalidPreference_ShouldFallback()
     {
         // Arrange
@@ -101,7 +97,7 @@ public class AdapterFactoryTests
         adapter.Should().NotBeNull(); // Should fallback to any suitable adapter
     }
 
-    [Test]
+    [Fact]
     public async Task CreateAdapterAsync_WithExpectedContentType_ShouldReturnMatchingAdapter()
     {
         // Arrange
@@ -116,7 +112,7 @@ public class AdapterFactoryTests
         adapter!.ContentType.Should().Be(ContentType.StaticHtml);
     }
 
-    [Test]
+    [Fact]
     public void CreateAdapterByName_WithValidName_ShouldReturnAdapter()
     {
         // Act
@@ -127,7 +123,7 @@ public class AdapterFactoryTests
         adapter!.Name.Should().Be("StaticHtml");
     }
 
-    [Test]
+    [Fact]
     public void CreateAdapterByName_WithInvalidName_ShouldReturnNull()
     {
         // Act
@@ -137,21 +133,21 @@ public class AdapterFactoryTests
         adapter.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void CreateAdapterByName_WithNullName_ShouldThrow()
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => _factory.CreateAdapterByName(null!));
     }
 
-    [Test]
+    [Fact]
     public void CreateAdapterByName_WithEmptyName_ShouldThrow()
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => _factory.CreateAdapterByName(""));
     }
 
-    [Test]
+    [Fact]
     public void CreateAdaptersByContentType_WithValidType_ShouldReturnAdapters()
     {
         // Act
@@ -162,7 +158,7 @@ public class AdapterFactoryTests
         adapters.Should().Contain(a => a.ContentType == ContentType.StaticHtml);
     }
 
-    [Test]
+    [Fact]
     public void CreateAdaptersByContentType_WithNoMatchingType_ShouldReturnEmpty()
     {
         // Act
@@ -172,7 +168,7 @@ public class AdapterFactoryTests
         adapters.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void GetAllAvailableAdapters_ShouldReturnAllRegisteredAdapters()
     {
         // Act
@@ -183,7 +179,7 @@ public class AdapterFactoryTests
         adapters.Should().AllSatisfy(a => a.IsAvailable.Should().BeTrue());
     }
 
-    [Test]
+    [Fact]
     public async Task CreateAdapterAsync_WithCancellation_ShouldRespectCancellation()
     {
         // Arrange
@@ -199,7 +195,7 @@ public class AdapterFactoryTests
         adapter.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task CreateAdapterAsync_WithMultipleMatchingAdapters_ShouldReturnFirst()
     {
         // Arrange

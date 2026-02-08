@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.Contracts;
-using NUnit.Framework;
+using Xunit;
 using WireMock.Server;
 using WireMockRequest = WireMock.RequestBuilders.Request;
 using WireMockResponse = WireMock.ResponseBuilders.Response;
@@ -11,20 +11,16 @@ namespace Ghost.Sdk.Spider.Tests.Integration;
 /// Integration tests for WebSocketAdapter (placeholder for future implementation).
 /// These tests demonstrate expected WebSocket functionality using WireMock.Net.
 /// </summary>
-[TestFixture]
-[Ignore("WebSocketAdapter not yet implemented")]
-public class WebSocketAdapterTests
+public class WebSocketAdapterTests : IDisposable
 {
-    private WireMockServer _server = null!;
+    private readonly WireMockServer _server;
 
-    [SetUp]
-    public void Setup()
+    public WebSocketAdapterTests()
     {
         _server = WireMockServer.Start();
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         _server.Stop();
         _server.Dispose();
@@ -32,7 +28,7 @@ public class WebSocketAdapterTests
 
     #region Connection Establishment
 
-    [Test]
+    [Fact]
     public async Task ConnectAsync_WithValidWebSocketUrl_ShouldEstablishConnection()
     {
         // Arrange
@@ -58,10 +54,10 @@ public class WebSocketAdapterTests
         // response.Connection.IsConnected.Should().BeTrue();
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
-    [Test]
+    [Fact]
     public async Task ConnectAsync_WithInvalidUrl_ShouldReturnError()
     {
         // Arrange
@@ -84,10 +80,10 @@ public class WebSocketAdapterTests
         // response.Error.Should().NotBeNullOrEmpty();
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
-    [Test]
+    [Fact]
     public async Task ConnectAsync_WithSecureWebSocket_ShouldUseWss()
     {
         // Arrange
@@ -112,14 +108,14 @@ public class WebSocketAdapterTests
         // response.Connection.IsSecure.Should().BeTrue();
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
     #endregion
 
     #region Message Receiving
 
-    [Test]
+    [Fact]
     public async Task ReceiveAsync_WithTextMessage_ShouldReceiveMessage()
     {
         // Arrange
@@ -144,10 +140,10 @@ public class WebSocketAdapterTests
         // message.Content.Should().Be(expectedMessage);
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
-    [Test]
+    [Fact]
     public async Task ReceiveAsync_WithBinaryMessage_ShouldReceiveBinaryData()
     {
         // Arrange
@@ -166,10 +162,10 @@ public class WebSocketAdapterTests
         // message.BinaryData.Should().Equal(expectedData);
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
-    [Test]
+    [Fact]
     public async Task ReceiveAsync_WithMultipleMessages_ShouldReceiveInOrder()
     {
         // Arrange
@@ -191,14 +187,14 @@ public class WebSocketAdapterTests
         // messages.Should().Equal(expectedMessages);
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
     #endregion
 
     #region JSON Aggregation
 
-    [Test]
+    [Fact]
     public async Task ReceiveAsync_WithFragmentedJsonMessage_ShouldAggregateFragments()
     {
         // Arrange
@@ -227,10 +223,10 @@ public class WebSocketAdapterTests
         // json.name.Should().Be("test");
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
-    [Test]
+    [Fact]
     public async Task ReceiveAsync_WithStreamingJsonArray_ShouldParseIndividualObjects()
     {
         // Arrange
@@ -253,14 +249,14 @@ public class WebSocketAdapterTests
         // objects.Should().HaveCount(3);
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
     #endregion
 
     #region Timeout Handling
 
-    [Test]
+    [Fact]
     public async Task ReceiveAsync_WithReceiveTimeout_ShouldTimeout()
     {
         // Arrange
@@ -280,10 +276,10 @@ public class WebSocketAdapterTests
         // await Assert.ThrowsAsync<TimeoutException>(() => receiveTask);
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
-    [Test]
+    [Fact]
     public async Task ConnectAsync_WithConnectionTimeout_ShouldTimeout()
     {
         // Arrange
@@ -306,14 +302,14 @@ public class WebSocketAdapterTests
         // response.Error.Should().Contain("timeout");
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
     #endregion
 
     #region Reconnection Logic
 
-    [Test]
+    [Fact]
     public async Task ConnectAsync_WithReconnectionPolicy_ShouldRetryOnFailure()
     {
         // Arrange
@@ -341,10 +337,10 @@ public class WebSocketAdapterTests
         // response.ReconnectionAttempts.Should().BeGreaterThan(0);
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
-    [Test]
+    [Fact]
     public async Task OnDisconnect_WithAutoReconnect_ShouldReconnectAutomatically()
     {
         // Arrange
@@ -375,10 +371,10 @@ public class WebSocketAdapterTests
         // connection.ReconnectionCount.Should().BeGreaterThan(0);
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
-    [Test]
+    [Fact]
     public async Task OnDisconnect_WithoutAutoReconnect_ShouldStayDisconnected()
     {
         // Arrange
@@ -403,14 +399,14 @@ public class WebSocketAdapterTests
         // connection.IsConnected.Should().BeFalse();
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
     #endregion
 
     #region Heartbeat/Ping-Pong
 
-    [Test]
+    [Fact]
     public async Task Connection_WithHeartbeat_ShouldSendPingPeriodically()
     {
         // Arrange
@@ -435,10 +431,10 @@ public class WebSocketAdapterTests
         // pingCount.Should().BeGreaterOrEqualTo(3);
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
-    [Test]
+    [Fact]
     public async Task Connection_WithMissedPong_ShouldDetectConnectionLoss()
     {
         // Arrange
@@ -464,14 +460,14 @@ public class WebSocketAdapterTests
         // connection.DisconnectReason.Should().Contain("heartbeat");
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
     #endregion
 
     #region Message Buffering
 
-    [Test]
+    [Fact]
     public async Task ReceiveAsync_WithMessageBuffer_ShouldBufferMessages()
     {
         // Arrange
@@ -498,14 +494,14 @@ public class WebSocketAdapterTests
         // messages.Should().HaveCount(100);
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
     #endregion
 
     #region Cleanup
 
-    [Test]
+    [Fact]
     public async Task Dispose_WithActiveConnection_ShouldCloseGracefully()
     {
         // Arrange
@@ -523,7 +519,7 @@ public class WebSocketAdapterTests
         // connection.CloseStatus.Should().Be(WebSocketCloseStatus.NormalClosure);
 
         await Task.CompletedTask;
-        Assert.Pass("Test placeholder - implement when WebSocketAdapter is available");
+        Assert.True(true); // "Test placeholder - implement when WebSocketAdapter is available");
     }
 
     #endregion

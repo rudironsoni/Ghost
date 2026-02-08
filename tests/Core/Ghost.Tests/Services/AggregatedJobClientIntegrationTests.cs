@@ -8,7 +8,7 @@ using Ghost.Abstractions;
 using Ghost.Contracts.Jobs;
 using Ghost.Core.Services;
 using Microsoft.Extensions.Logging;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Core.Tests.Services;
@@ -18,37 +18,38 @@ namespace Ghost.Core.Tests.Services;
 /// </summary>
 public class AggregatedJobClientIntegrationTests
 {
-    private readonly ILogger<AggregatedJobClient> _logger;
-    private readonly IDeduplicationService _dedupe;
+    private readonly Mock<ILogger<AggregatedJobClient>> _mockLogger;
+    private readonly Mock<IDeduplicationService> _mockDedupe;
 
     public AggregatedJobClientIntegrationTests()
     {
-        _logger = Substitute.For<ILogger<AggregatedJobClient>>();
-        _dedupe = Substitute.For<IDeduplicationService>();
-        _dedupe.GenerateId(Arg.Any<string>(), Arg.Any<string>()).Returns(x => $"{x.ArgAt<string>(0)}-{x.ArgAt<string>(1)}");
+        _mockLogger = new Mock<ILogger<AggregatedJobClient>>();
+        _mockDedupe = new Mock<IDeduplicationService>();
+        _mockDedupe.Setup(d => d.GenerateId(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns<string, string>((title, company) => $"{title}-{company}");
     }
 
     [Fact]
     public async Task SearchJobsAsyncReturnsJobsWhenAllScrapersSucceed()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "1", Title = "Software Engineer", Company = "Company A", Source = "Google" }
             });
 
-        var scraper2 = Substitute.For<IJobScraper>();
-        scraper2.PlatformName.Returns("Glassdoor");
-        scraper2.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper2 = new Mock<IJobScraper>();
+        mockScraper2.Setup(s => s.PlatformName).Returns("Glassdoor");
+        mockScraper2.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "2", Title = "Data Scientist", Company = "Company B", Source = "Glassdoor" }
             });
 
-        var client = new AggregatedJobClient(new[] { scraper1, scraper2 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object, mockScraper2.Object }, _mockDedupe.Object, _mockLogger.Object);
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
@@ -65,23 +66,23 @@ public class AggregatedJobClientIntegrationTests
     public async Task SearchJobsAsyncDeduplicatesJobsWhenSameJobFromMultipleSources()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "1", Title = "Software Engineer", Company = "Company A", Source = "Google" }
             });
 
-        var scraper2 = Substitute.For<IJobScraper>();
-        scraper2.PlatformName.Returns("Glassdoor");
-        scraper2.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper2 = new Mock<IJobScraper>();
+        mockScraper2.Setup(s => s.PlatformName).Returns("Glassdoor");
+        mockScraper2.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "2", Title = "Software Engineer", Company = "Company A", Source = "Glassdoor" }
             });
 
-        var client = new AggregatedJobClient(new[] { scraper1, scraper2 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object, mockScraper2.Object }, _mockDedupe.Object, _mockLogger.Object);
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
@@ -97,17 +98,17 @@ public class AggregatedJobClientIntegrationTests
     public async Task SearchJobsAsyncReturnsEmptyWhenAllScrapersFail()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromException<IReadOnlyList<JobListing>>(new HttpRequestException("Network error")));
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Network error"));
 
-        var scraper2 = Substitute.For<IJobScraper>();
-        scraper2.PlatformName.Returns("Glassdoor");
-        scraper2.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromException<IReadOnlyList<JobListing>>(new HttpRequestException("Network error")));
+        var mockScraper2 = new Mock<IJobScraper>();
+        mockScraper2.Setup(s => s.PlatformName).Returns("Glassdoor");
+        mockScraper2.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Network error"));
 
-        var client = new AggregatedJobClient(new[] { scraper1, scraper2 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object, mockScraper2.Object }, _mockDedupe.Object, _mockLogger.Object);
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
@@ -122,20 +123,20 @@ public class AggregatedJobClientIntegrationTests
     public async Task SearchJobsAsyncReturnsPartialResultsWhenSomeScrapersFail()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "1", Title = "Software Engineer", Company = "Company A", Source = "Google" }
             });
 
-        var scraper2 = Substitute.For<IJobScraper>();
-        scraper2.PlatformName.Returns("Glassdoor");
-        scraper2.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromException<IReadOnlyList<JobListing>>(new HttpRequestException("Network error")));
+        var mockScraper2 = new Mock<IJobScraper>();
+        mockScraper2.Setup(s => s.PlatformName).Returns("Glassdoor");
+        mockScraper2.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Network error"));
 
-        var client = new AggregatedJobClient(new[] { scraper1, scraper2 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object, mockScraper2.Object }, _mockDedupe.Object, _mockLogger.Object);
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
@@ -151,23 +152,23 @@ public class AggregatedJobClientIntegrationTests
     public async Task SearchJobsAsyncFiltersBySourcesWhenSourcesSpecified()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "1", Title = "Software Engineer", Company = "Company A", Source = "Google" }
             });
 
-        var scraper2 = Substitute.For<IJobScraper>();
-        scraper2.PlatformName.Returns("Glassdoor");
-        scraper2.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper2 = new Mock<IJobScraper>();
+        mockScraper2.Setup(s => s.PlatformName).Returns("Glassdoor");
+        mockScraper2.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "2", Title = "Data Scientist", Company = "Company B", Source = "Glassdoor" }
             });
 
-        var client = new AggregatedJobClient(new[] { scraper1, scraper2 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object, mockScraper2.Object }, _mockDedupe.Object, _mockLogger.Object);
         var criteria = new JobSearchCriteria
         {
             Query = "software engineer",
@@ -181,31 +182,31 @@ public class AggregatedJobClientIntegrationTests
         result.Should().NotBeNull();
         result.Count.Should().Be(1);
         result[0].Source.Should().Be("Google");
-        await scraper1.Received(1).SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>());
-        await scraper2.DidNotReceive().SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>());
+        mockScraper1.Verify(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()), Times.Once);
+        mockScraper2.Verify(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task SearchJobsAsyncRunsAllScrapersWhenNoSourcesSpecified()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "1", Title = "Software Engineer", Company = "Company A", Source = "Google" }
             });
 
-        var scraper2 = Substitute.For<IJobScraper>();
-        scraper2.PlatformName.Returns("Glassdoor");
-        scraper2.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper2 = new Mock<IJobScraper>();
+        mockScraper2.Setup(s => s.PlatformName).Returns("Glassdoor");
+        mockScraper2.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "2", Title = "Data Scientist", Company = "Company B", Source = "Glassdoor" }
             });
 
-        var client = new AggregatedJobClient(new[] { scraper1, scraper2 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object, mockScraper2.Object }, _mockDedupe.Object, _mockLogger.Object);
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
@@ -213,15 +214,15 @@ public class AggregatedJobClientIntegrationTests
 
         // Assert
         result.Count.Should().Be(2);
-        await scraper1.Received(1).SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>());
-        await scraper2.Received(1).SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>());
+        mockScraper1.Verify(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()), Times.Once);
+        mockScraper2.Verify(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task SearchJobsAsyncHandlesEmptyScraperList()
     {
         // Arrange
-        var client = new AggregatedJobClient(Enumerable.Empty<IJobScraper>(), _dedupe, _logger);
+        var client = new AggregatedJobClient(Enumerable.Empty<IJobScraper>(), _mockDedupe.Object, _mockLogger.Object);
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
@@ -236,12 +237,12 @@ public class AggregatedJobClientIntegrationTests
     public async Task SearchJobsAsyncHandlesNullCriteria()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>());
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>());
 
-        var client = new AggregatedJobClient(new[] { scraper1 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object }, _mockDedupe.Object, _mockLogger.Object);
 
         // Act
         var result = await client.SearchJobsAsync(null!);
@@ -255,12 +256,12 @@ public class AggregatedJobClientIntegrationTests
     public async Task SearchJobsAsyncRespectsCancellationToken()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromException<IReadOnlyList<JobListing>>(new OperationCanceledException()));
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new OperationCanceledException());
 
-        var client = new AggregatedJobClient(new[] { scraper1 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object }, _mockDedupe.Object, _mockLogger.Object);
         var cts = new CancellationTokenSource();
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
@@ -276,33 +277,33 @@ public class AggregatedJobClientIntegrationTests
     public async Task SearchJobsAsyncLogsScraperFailures()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromException<IReadOnlyList<JobListing>>(new HttpRequestException("Network error")));
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Network error"));
 
-        var client = new AggregatedJobClient(new[] { scraper1 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object }, _mockDedupe.Object, _mockLogger.Object);
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
         await client.SearchJobsAsync(criteria);
 
         // Assert
-        _logger.Received().Log(
+        _mockLogger.Verify(l => l.Log(
             LogLevel.Warning,
-            Arg.Any<EventId>(),
-            Arg.Any<object>(),
-            Arg.Any<Exception>(),
-            Arg.Any<Func<object, Exception?, string>>());
+            It.IsAny<EventId>(),
+            It.IsAny<object>(),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<object, Exception?, string>>()), Times.AtLeastOnce);
     }
 
     [Fact]
     public async Task SearchJobsAsyncRunsScrapersInParallel()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
             .Returns(Task.Run(async () =>
             {
                 await Task.Delay(200);
@@ -312,9 +313,9 @@ public class AggregatedJobClientIntegrationTests
                 } as IReadOnlyList<JobListing>;
             }));
 
-        var scraper2 = Substitute.For<IJobScraper>();
-        scraper2.PlatformName.Returns("Glassdoor");
-        scraper2.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
+        var mockScraper2 = new Mock<IJobScraper>();
+        mockScraper2.Setup(s => s.PlatformName).Returns("Glassdoor");
+        mockScraper2.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
             .Returns(Task.Run(async () =>
             {
                 await Task.Delay(200);
@@ -324,7 +325,7 @@ public class AggregatedJobClientIntegrationTests
                 } as IReadOnlyList<JobListing>;
             }));
 
-        var client = new AggregatedJobClient(new[] { scraper1, scraper2 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object, mockScraper2.Object }, _mockDedupe.Object, _mockLogger.Object);
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
@@ -340,20 +341,20 @@ public class AggregatedJobClientIntegrationTests
     public async Task SearchJobsWithErrorsAsyncReturnsStructuredErrorsWhenScrapersFail()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromException<IReadOnlyList<JobListing>>(new HttpRequestException("Network error")));
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Network error"));
 
-        var scraper2 = Substitute.For<IJobScraper>();
-        scraper2.PlatformName.Returns("Glassdoor");
-        scraper2.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper2 = new Mock<IJobScraper>();
+        mockScraper2.Setup(s => s.PlatformName).Returns("Glassdoor");
+        mockScraper2.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "1", Title = "Software Engineer", Company = "Company A", Source = "Glassdoor" }
             });
 
-        var client = new AggregatedJobClient(new[] { scraper1, scraper2 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object, mockScraper2.Object }, _mockDedupe.Object, _mockLogger.Object);
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
@@ -376,17 +377,17 @@ public class AggregatedJobClientIntegrationTests
     public async Task SearchJobsWithErrorsAsyncReturnsUnsuccessfulWhenAllScrapersFail()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromException<IReadOnlyList<JobListing>>(new HttpRequestException("Network error")));
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Network error"));
 
-        var scraper2 = Substitute.For<IJobScraper>();
-        scraper2.PlatformName.Returns("Glassdoor");
-        scraper2.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromException<IReadOnlyList<JobListing>>(new HttpRequestException("Network error")));
+        var mockScraper2 = new Mock<IJobScraper>();
+        mockScraper2.Setup(s => s.PlatformName).Returns("Glassdoor");
+        mockScraper2.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Network error"));
 
-        var client = new AggregatedJobClient(new[] { scraper1, scraper2 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object, mockScraper2.Object }, _mockDedupe.Object, _mockLogger.Object);
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
@@ -404,15 +405,15 @@ public class AggregatedJobClientIntegrationTests
     public async Task SearchJobsWithErrorsAsyncIncludesExecutionTime()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "1", Title = "Software Engineer", Company = "Company A", Source = "Google" }
             });
 
-        var client = new AggregatedJobClient(new[] { scraper1 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object }, _mockDedupe.Object, _mockLogger.Object);
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
@@ -428,12 +429,12 @@ public class AggregatedJobClientIntegrationTests
     public async Task SearchJobsWithErrorsAsyncIncludesCriteriaInMetadata()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>());
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>());
 
-        var client = new AggregatedJobClient(new[] { scraper1 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object }, _mockDedupe.Object, _mockLogger.Object);
         var criteria = new JobSearchCriteria
         {
             Query = "software engineer",
@@ -456,10 +457,10 @@ public class AggregatedJobClientIntegrationTests
     public async Task GetJobDetailsAsyncReturnsDetailsWhenScraperSucceeds()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.GetJobDetailsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new JobListing
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.GetJobDetailsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobListing
             {
                 Id = "1",
                 Title = "Software Engineer",
@@ -467,7 +468,7 @@ public class AggregatedJobClientIntegrationTests
                 Description = "A great job opportunity"
             });
 
-        var client = new AggregatedJobClient(new[] { scraper1 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object }, _mockDedupe.Object, _mockLogger.Object);
 
         // Act
         var result = await client.GetJobDetailsAsync("1");
@@ -482,22 +483,22 @@ public class AggregatedJobClientIntegrationTests
     public async Task GetJobDetailsAsyncTriesMultipleScrapersUntilOneSucceeds()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.GetJobDetailsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new JobListing { Id = "1", Title = "" });
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.GetJobDetailsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobListing { Id = "1", Title = "" });
 
-        var scraper2 = Substitute.For<IJobScraper>();
-        scraper2.PlatformName.Returns("Glassdoor");
-        scraper2.GetJobDetailsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new JobListing
+        var mockScraper2 = new Mock<IJobScraper>();
+        mockScraper2.Setup(s => s.PlatformName).Returns("Glassdoor");
+        mockScraper2.Setup(s => s.GetJobDetailsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JobListing
             {
                 Id = "1",
                 Title = "Software Engineer",
                 Company = "Company A"
             });
 
-        var client = new AggregatedJobClient(new[] { scraper1, scraper2 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object, mockScraper2.Object }, _mockDedupe.Object, _mockLogger.Object);
 
         // Act
         var result = await client.GetJobDetailsAsync("1");
@@ -505,20 +506,20 @@ public class AggregatedJobClientIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Title.Should().Be("Software Engineer");
-        await scraper1.Received(1).GetJobDetailsAsync("1", Arg.Any<CancellationToken>());
-        await scraper2.Received(1).GetJobDetailsAsync("1", Arg.Any<CancellationToken>());
+        mockScraper1.Verify(s => s.GetJobDetailsAsync("1", It.IsAny<CancellationToken>()), Times.Once);
+        mockScraper2.Verify(s => s.GetJobDetailsAsync("1", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task GetJobDetailsAsyncReturnsEmptyJobWhenAllScrapersFail()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.GetJobDetailsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromException<JobListing>(new HttpRequestException("Network error")));
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.GetJobDetailsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Network error"));
 
-        var client = new AggregatedJobClient(new[] { scraper1 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object }, _mockDedupe.Object, _mockLogger.Object);
 
         // Act
         var result = await client.GetJobDetailsAsync("1");
@@ -533,7 +534,7 @@ public class AggregatedJobClientIntegrationTests
     public void PlatformNameReturnsAggregated()
     {
         // Arrange
-        var client = new AggregatedJobClient(Enumerable.Empty<IJobScraper>(), _dedupe, _logger);
+        var client = new AggregatedJobClient(Enumerable.Empty<IJobScraper>(), _mockDedupe.Object, _mockLogger.Object);
 
         // Act
         var platformName = client.PlatformName;
@@ -546,23 +547,23 @@ public class AggregatedJobClientIntegrationTests
     public async Task SearchJobsAsyncHandlesCaseInsensitiveSourceFiltering()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "1", Title = "Software Engineer", Company = "Company A", Source = "Google" }
             });
 
-        var scraper2 = Substitute.For<IJobScraper>();
-        scraper2.PlatformName.Returns("Glassdoor");
-        scraper2.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper2 = new Mock<IJobScraper>();
+        mockScraper2.Setup(s => s.PlatformName).Returns("Glassdoor");
+        mockScraper2.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "2", Title = "Data Scientist", Company = "Company B", Source = "Glassdoor" }
             });
 
-        var client = new AggregatedJobClient(new[] { scraper1, scraper2 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object, mockScraper2.Object }, _mockDedupe.Object, _mockLogger.Object);
         var criteria = new JobSearchCriteria
         {
             Query = "software engineer",
@@ -575,39 +576,39 @@ public class AggregatedJobClientIntegrationTests
         // Assert
         result.Count.Should().Be(1);
         result[0].Source.Should().Be("Google");
-        await scraper1.Received(1).SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>());
-        await scraper2.DidNotReceive().SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>());
+        mockScraper1.Verify(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()), Times.Once);
+        mockScraper2.Verify(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task SearchJobsAsyncHandlesMultipleSources()
     {
         // Arrange
-        var scraper1 = Substitute.For<IJobScraper>();
-        scraper1.PlatformName.Returns("Google");
-        scraper1.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper1 = new Mock<IJobScraper>();
+        mockScraper1.Setup(s => s.PlatformName).Returns("Google");
+        mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "1", Title = "Software Engineer", Company = "Company A", Source = "Google" }
             });
 
-        var scraper2 = Substitute.For<IJobScraper>();
-        scraper2.PlatformName.Returns("Glassdoor");
-        scraper2.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper2 = new Mock<IJobScraper>();
+        mockScraper2.Setup(s => s.PlatformName).Returns("Glassdoor");
+        mockScraper2.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "2", Title = "Data Scientist", Company = "Company B", Source = "Glassdoor" }
             });
 
-        var scraper3 = Substitute.For<IJobScraper>();
-        scraper3.PlatformName.Returns("LinkedIn");
-        scraper3.SearchJobsAsync(Arg.Any<JobSearchCriteria>(), Arg.Any<CancellationToken>())
-            .Returns(new List<JobListing>
+        var mockScraper3 = new Mock<IJobScraper>();
+        mockScraper3.Setup(s => s.PlatformName).Returns("LinkedIn");
+        mockScraper3.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JobListing>
             {
                 new() { Id = "3", Title = "Product Manager", Company = "Company C", Source = "LinkedIn" }
             });
 
-        var client = new AggregatedJobClient(new[] { scraper1, scraper2, scraper3 }, _dedupe, _logger);
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object, mockScraper2.Object, mockScraper3.Object }, _mockDedupe.Object, _mockLogger.Object);
         var criteria = new JobSearchCriteria
         {
             Query = "software engineer",

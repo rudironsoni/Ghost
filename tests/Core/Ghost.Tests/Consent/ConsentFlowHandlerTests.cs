@@ -1,6 +1,6 @@
 using Ghost.Consent;
 using Microsoft.Playwright;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Tests.Consent;
@@ -44,13 +44,13 @@ public class ConsentFlowHandlerTests
     {
         // Arrange
         var handler = new ConsentFlowHandler();
-        var page = Substitute.For<IPage>();
+        var mockPage = new Mock<IPage>();
         CMPConfig? config = null;
 
         // Act & Assert
 #pragma warning disable CS8604 // Possible null reference argument
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await handler.ExecuteMultiStepFlowAsync(page, config));
+            async () => await handler.ExecuteMultiStepFlowAsync(mockPage.Object, config));
 #pragma warning restore CS8604
     }
 
@@ -59,7 +59,7 @@ public class ConsentFlowHandlerTests
     {
         // Arrange
         var handler = new ConsentFlowHandler();
-        var page = Substitute.For<IPage>();
+        var mockPage = new Mock<IPage>();
         var config = new CMPConfig
         {
             Name = "test",
@@ -70,7 +70,7 @@ public class ConsentFlowHandlerTests
         };
 
         // Act
-        var result = await handler.ExecuteMultiStepFlowAsync(page, config);
+        var result = await handler.ExecuteMultiStepFlowAsync(mockPage.Object, config);
 
         // Assert
         Assert.False(result);
@@ -81,7 +81,7 @@ public class ConsentFlowHandlerTests
     {
         // Arrange
         var handler = new ConsentFlowHandler();
-        var page = Substitute.For<IPage>();
+        var mockPage = new Mock<IPage>();
         var config = new CMPConfig
         {
             Name = "test",
@@ -92,7 +92,7 @@ public class ConsentFlowHandlerTests
         };
 
         // Act
-        var result = await handler.ExecuteMultiStepFlowAsync(page, config);
+        var result = await handler.ExecuteMultiStepFlowAsync(mockPage.Object, config);
 
         // Assert
         Assert.False(result);
@@ -115,12 +115,12 @@ public class ConsentFlowHandlerTests
     public async Task DetectElementAsync_WithNullSelector_ThrowsArgumentNullException()
     {
         // Arrange
-        var page = Substitute.For<IPage>();
+        var mockPage = new Mock<IPage>();
 
         // Act & Assert
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await ConsentFlowHandler.DetectElementAsync(page, null));
+            async () => await ConsentFlowHandler.DetectElementAsync(mockPage.Object, null));
 #pragma warning restore CS8625
     }
 
@@ -128,11 +128,11 @@ public class ConsentFlowHandlerTests
     public async Task DetectElementAsync_WhenElementNotFound_ReturnsFalse()
     {
         // Arrange
-        var page = Substitute.For<IPage>();
-        page.QuerySelectorAsync(Arg.Any<string>()).Returns(Task.FromResult<IElement?>(null));
+        var mockPage = new Mock<IPage>();
+        mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>())).ReturnsAsync((IElement?)null);
 
         // Act
-        var result = await ConsentFlowHandler.DetectElementAsync(page, ".not-found", checkShadowDOM: false);
+        var result = await ConsentFlowHandler.DetectElementAsync(mockPage.Object, ".not-found", checkShadowDOM: false);
 
         // Assert
         Assert.False(result);
@@ -143,8 +143,8 @@ public class ConsentFlowHandlerTests
     {
         // Arrange
         var handler = new ConsentFlowHandler();
-        var page = Substitute.For<IPage>();
-        page.QuerySelectorAsync(Arg.Any<string>()).Returns(Task.FromResult<IElement?>(null));
+        var mockPage = new Mock<IPage>();
+        mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>())).ReturnsAsync((IElement?)null);
 
         var config = new CMPConfig
         {
@@ -156,7 +156,7 @@ public class ConsentFlowHandlerTests
         };
 
         // Act
-        var result = await handler.ExecuteMultiStepFlowAsync(page, config);
+        var result = await handler.ExecuteMultiStepFlowAsync(mockPage.Object, config);
 
         // Assert
         Assert.False(result);

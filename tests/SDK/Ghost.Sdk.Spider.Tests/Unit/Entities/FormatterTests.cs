@@ -1,17 +1,15 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Entities.Formatters;
-using NUnit.Framework;
+using Xunit;
 using System.Web;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Entities;
 
-[TestFixture]
 public class FormatterTests
 {
-    [TestFixture]
     public class TrimFormatterTests
     {
-        [Test]
+        [Fact]
         public void Format_WithWhitespace_ShouldTrim()
         {
             // Arrange
@@ -25,7 +23,7 @@ public class FormatterTests
             result.Should().Be("test value");
         }
 
-        [Test]
+        [Fact]
         public void Format_WithNull_ShouldReturnNull()
         {
             // Arrange
@@ -38,7 +36,7 @@ public class FormatterTests
             result.Should().BeNull();
         }
 
-        [Test]
+        [Fact]
         public void Format_WithNonString_ShouldReturnOriginal()
         {
             // Arrange
@@ -53,10 +51,9 @@ public class FormatterTests
         }
     }
 
-    [TestFixture]
     public class HtmlDecodeFormatterTests
     {
-        [Test]
+        [Fact]
         public void Format_WithHtmlEntities_ShouldDecode()
         {
             // Arrange
@@ -70,7 +67,7 @@ public class FormatterTests
             result.Should().Be("Test & Value <tag>");
         }
 
-        [Test]
+        [Fact]
         public void Format_WithNull_ShouldReturnNull()
         {
             // Arrange
@@ -83,7 +80,7 @@ public class FormatterTests
             result.Should().BeNull();
         }
 
-        [Test]
+        [Fact]
         public void Format_WithNumericEntity_ShouldDecode()
         {
             // Arrange
@@ -98,10 +95,9 @@ public class FormatterTests
         }
     }
 
-    [TestFixture]
     public class UrlDecodeFormatterTests
     {
-        [Test]
+        [Fact]
         public void Format_WithUrlEncoded_ShouldDecode()
         {
             // Arrange
@@ -115,7 +111,7 @@ public class FormatterTests
             result.Should().Be("Hello World!");
         }
 
-        [Test]
+        [Fact]
         public void Format_WithNull_ShouldReturnNull()
         {
             // Arrange
@@ -128,7 +124,7 @@ public class FormatterTests
             result.Should().BeNull();
         }
 
-        [Test]
+        [Fact]
         public void Format_WithSpecialCharacters_ShouldDecode()
         {
             // Arrange
@@ -143,10 +139,9 @@ public class FormatterTests
         }
     }
 
-    [TestFixture]
     public class ReplaceFormatterTests
     {
-        [Test]
+        [Fact]
         public void Format_WithPattern_ShouldReplace()
         {
             // Arrange
@@ -160,7 +155,7 @@ public class FormatterTests
             result.Should().Be("This is new text");
         }
 
-        [Test]
+        [Fact]
         public void Format_WithRegexPattern_ShouldReplaceAll()
         {
             // Arrange
@@ -174,7 +169,7 @@ public class FormatterTests
             result.Should().Be("Item X costs X");
         }
 
-        [Test]
+        [Fact]
         public void Format_WithNull_ShouldReturnNull()
         {
             // Arrange
@@ -187,7 +182,7 @@ public class FormatterTests
             result.Should().BeNull();
         }
 
-        [Test]
+        [Fact]
         public void Validate_WithoutPattern_ShouldThrow()
         {
             // Arrange
@@ -198,10 +193,9 @@ public class FormatterTests
         }
     }
 
-    [TestFixture]
     public class RegexFormatterTests
     {
-        [Test]
+        [Fact]
         public void Format_WithMatchingPattern_ShouldExtractMatch()
         {
             // Arrange
@@ -215,7 +209,7 @@ public class FormatterTests
             result.Should().Be("123");
         }
 
-        [Test]
+        [Fact]
         public void Format_WithGroup_ShouldExtractGroup()
         {
             // Arrange
@@ -229,7 +223,7 @@ public class FormatterTests
             result.Should().Be("45");
         }
 
-        [Test]
+        [Fact]
         public void Format_WithNoMatch_ShouldReturnOriginal()
         {
             // Arrange
@@ -243,7 +237,7 @@ public class FormatterTests
             result.Should().Be("No numbers here");
         }
 
-        [Test]
+        [Fact]
         public void Format_WithNull_ShouldReturnNull()
         {
             // Arrange
@@ -256,7 +250,7 @@ public class FormatterTests
             result.Should().BeNull();
         }
 
-        [Test]
+        [Fact]
         public void Validate_WithInvalidPattern_ShouldThrow()
         {
             // Arrange
@@ -267,10 +261,9 @@ public class FormatterTests
         }
     }
 
-    [TestFixture]
     public class DateTimeFormatterTests
     {
-        [Test]
+        [Fact]
         public void Format_WithValidDateTime_ShouldParse()
         {
             // Arrange
@@ -287,7 +280,7 @@ public class FormatterTests
             ((DateTime)result!).Day.Should().Be(15);
         }
 
-        [Test]
+        [Fact]
         public void Format_WithCustomFormatString_ShouldParseCorrectly()
         {
             // Arrange
@@ -304,7 +297,7 @@ public class FormatterTests
             ((DateTime)result!).Day.Should().Be(4);
         }
 
-        [Test]
+        [Fact]
         public void Format_WithInvalidDate_ShouldReturnOriginal()
         {
             // Arrange
@@ -318,7 +311,7 @@ public class FormatterTests
             result.Should().Be("not a date");
         }
 
-        [Test]
+        [Fact]
         public void Format_WithNull_ShouldReturnNull()
         {
             // Arrange
@@ -332,10 +325,9 @@ public class FormatterTests
         }
     }
 
-    [TestFixture]
     public class StringFormatterTests
     {
-        [Test]
+        [Fact]
         public void Format_WithLowerCase_ShouldConvertToLowerCase()
         {
             // Arrange
@@ -349,7 +341,7 @@ public class FormatterTests
             result.Should().Be("test value");
         }
 
-        [Test]
+        [Fact]
         public void Format_WithUpperCase_ShouldConvertToUpperCase()
         {
             // Arrange
@@ -363,7 +355,7 @@ public class FormatterTests
             result.Should().Be("TEST VALUE");
         }
 
-        [Test]
+        [Fact]
         public void Format_WithCapitalize_ShouldCapitalizeFirstLetter()
         {
             // Arrange
@@ -378,7 +370,7 @@ public class FormatterTests
             result.Should().Be("Test value");
         }
 
-        [Test]
+        [Fact]
         public void Format_WithNull_ShouldReturnNull()
         {
             // Arrange
@@ -392,10 +384,9 @@ public class FormatterTests
         }
     }
 
-    [TestFixture]
     public class FormatterChainTests
     {
-        [Test]
+        [Fact]
         public void MultipleFormatters_ShouldApplyInOrder()
         {
             // Arrange
@@ -411,7 +402,7 @@ public class FormatterTests
             result2.Should().Be("&test&");
         }
 
-        [Test]
+        [Fact]
         public void FormatterOrder_ShouldBeRespected()
         {
             // Arrange
@@ -428,7 +419,7 @@ public class FormatterTests
             formatter1.Order.Should().BeLessThan(formatter2.Order);
         }
 
-        [Test]
+        [Fact]
         public void Formatter_ToString_ShouldReturnDescription()
         {
             // Arrange

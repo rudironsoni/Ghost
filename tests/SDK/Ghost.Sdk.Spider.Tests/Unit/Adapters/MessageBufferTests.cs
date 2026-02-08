@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.WebSocket;
-using NUnit.Framework;
+using Xunit;
 using System.Net.WebSockets;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
@@ -8,10 +8,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 /// <summary>
 /// Comprehensive tests for MessageBuffer class.
 /// </summary>
-[TestFixture]
 public class MessageBufferTests
 {
-    [Test]
+    [Fact]
     public void Constructor_WithValidMaxMessageCount_ShouldInitialize()
     {
         // Act
@@ -23,7 +22,7 @@ public class MessageBufferTests
         buffer.IsEmpty.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithValidMaxWaitTime_ShouldInitialize()
     {
         // Act
@@ -34,21 +33,21 @@ public class MessageBufferTests
         buffer.IsEmpty.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithBothZero_ShouldThrowArgumentException()
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => new MessageBuffer(maxMessageCount: 0, maxWaitTime: TimeSpan.Zero));
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithNegativeMaxMessageCount_ShouldThrowArgumentException()
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => new MessageBuffer(maxMessageCount: -1));
     }
 
-    [Test]
+    [Fact]
     public void Add_WithValidMessage_ShouldIncreaseCount()
     {
         // Arrange
@@ -63,7 +62,7 @@ public class MessageBufferTests
         buffer.IsEmpty.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void Add_WithNullMessage_ShouldThrowArgumentNullException()
     {
         // Arrange
@@ -73,7 +72,7 @@ public class MessageBufferTests
         Assert.Throws<ArgumentNullException>(() => buffer.Add(null!));
     }
 
-    [Test]
+    [Fact]
     public void Add_MultipleMessages_ShouldIncreaseCount()
     {
         // Arrange
@@ -91,7 +90,7 @@ public class MessageBufferTests
         buffer.Count.Should().Be(3);
     }
 
-    [Test]
+    [Fact]
     public void Peek_WithMessages_ShouldReturnMessagesWithoutRemoving()
     {
         // Arrange
@@ -111,7 +110,7 @@ public class MessageBufferTests
         messages[1].Content.Should().Be("test2");
     }
 
-    [Test]
+    [Fact]
     public void Peek_WithEmptyBuffer_ShouldReturnEmptyArray()
     {
         // Arrange
@@ -124,7 +123,7 @@ public class MessageBufferTests
         messages.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Flush_WithMessages_ShouldReturnAndRemoveAll()
     {
         // Arrange
@@ -143,7 +142,7 @@ public class MessageBufferTests
         buffer.IsEmpty.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Flush_WithEmptyBuffer_ShouldReturnEmptyArray()
     {
         // Arrange
@@ -157,7 +156,7 @@ public class MessageBufferTests
         buffer.IsEmpty.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFlush_WithMaxMessageCountReached_ShouldReturnTrue()
     {
         // Arrange
@@ -172,7 +171,7 @@ public class MessageBufferTests
         shouldFlush.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFlush_WithLessThanMaxMessages_ShouldReturnFalse()
     {
         // Arrange
@@ -186,7 +185,7 @@ public class MessageBufferTests
         shouldFlush.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFlush_WithEmptyBuffer_ShouldReturnFalse()
     {
         // Arrange
@@ -199,7 +198,7 @@ public class MessageBufferTests
         shouldFlush.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void ShouldFlush_WithMaxWaitTimeExceeded_ShouldReturnTrue()
     {
         // Arrange
@@ -214,7 +213,7 @@ public class MessageBufferTests
         shouldFlush.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void ToJsonArray_WithTextMessages_WithoutMetadata_ShouldReturnJsonArray()
     {
         // Arrange
@@ -232,7 +231,7 @@ public class MessageBufferTests
         json.Should().Contain("2");
     }
 
-    [Test]
+    [Fact]
     public void ToJsonArray_WithTextMessages_WithMetadata_ShouldIncludeMetadata()
     {
         // Arrange
@@ -250,7 +249,7 @@ public class MessageBufferTests
         json.Should().Contain("isComplete");
     }
 
-    [Test]
+    [Fact]
     public void ToJsonArray_WithEmptyBuffer_ShouldReturnEmptyArray()
     {
         // Arrange
@@ -263,7 +262,7 @@ public class MessageBufferTests
         json.Should().Be("[]");
     }
 
-    [Test]
+    [Fact]
     public void ToJsonArray_WithNonJsonTextMessage_ShouldIncludeAsString()
     {
         // Arrange
@@ -277,7 +276,7 @@ public class MessageBufferTests
         json.Should().Contain("plain text message");
     }
 
-    [Test]
+    [Fact]
     public void ToJsonArray_WithBinaryMessage_ShouldIncludeBase64()
     {
         // Arrange
@@ -293,7 +292,7 @@ public class MessageBufferTests
         json.Should().Contain(Convert.ToBase64String(binaryData));
     }
 
-    [Test]
+    [Fact]
     public void ToJsonArray_ShouldNotRemoveMessages()
     {
         // Arrange
@@ -307,7 +306,7 @@ public class MessageBufferTests
         buffer.Count.Should().Be(1); // Messages should still be there
     }
 
-    [Test]
+    [Fact]
     public void FlushToJsonArray_WithMessages_ShouldReturnJsonAndClearBuffer()
     {
         // Arrange
@@ -324,7 +323,7 @@ public class MessageBufferTests
         buffer.IsEmpty.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void FlushToJsonArray_WithMetadata_ShouldIncludeMetadataAndClearBuffer()
     {
         // Arrange
@@ -340,7 +339,7 @@ public class MessageBufferTests
         buffer.IsEmpty.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Clear_WithMessages_ShouldRemoveAllMessages()
     {
         // Arrange
@@ -357,7 +356,7 @@ public class MessageBufferTests
         buffer.IsEmpty.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Clear_WithEmptyBuffer_ShouldNotThrow()
     {
         // Arrange
@@ -370,7 +369,7 @@ public class MessageBufferTests
         buffer.IsEmpty.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void GetStatistics_WithMessages_ShouldReturnCorrectStats()
     {
         // Arrange
@@ -388,7 +387,7 @@ public class MessageBufferTests
         age.Should().BeGreaterThanOrEqualTo(TimeSpan.Zero);
     }
 
-    [Test]
+    [Fact]
     public void GetStatistics_WithEmptyBuffer_ShouldReturnZeroStats()
     {
         // Arrange
@@ -403,7 +402,7 @@ public class MessageBufferTests
         age.Should().Be(TimeSpan.Zero);
     }
 
-    [Test]
+    [Fact]
     public void WebSocketMessage_CreateText_ShouldSetPropertiesCorrectly()
     {
         // Act
@@ -418,7 +417,7 @@ public class MessageBufferTests
         message.Size.Should().Be(5);
     }
 
-    [Test]
+    [Fact]
     public void WebSocketMessage_CreateBinary_ShouldSetPropertiesCorrectly()
     {
         // Arrange
@@ -435,7 +434,7 @@ public class MessageBufferTests
         message.Size.Should().Be(3);
     }
 
-    [Test]
+    [Fact]
     public void WebSocketMessage_Constructor_WithString_ShouldInitialize()
     {
         // Act
@@ -446,7 +445,7 @@ public class MessageBufferTests
         message.MessageType.Should().Be(WebSocketMessageType.Text);
     }
 
-    [Test]
+    [Fact]
     public void WebSocketMessage_Constructor_WithBytes_ShouldInitialize()
     {
         // Arrange
@@ -461,7 +460,7 @@ public class MessageBufferTests
         message.Content.Should().Be(Convert.ToBase64String(data));
     }
 
-    [Test]
+    [Fact]
     public void WebSocketMessage_ToString_ShouldReturnFormattedString()
     {
         // Arrange
@@ -475,7 +474,7 @@ public class MessageBufferTests
         str.Should().Contain("bytes");
     }
 
-    [Test]
+    [Fact]
     public async Task MessageBuffer_ConcurrentAdds_ShouldHandleThreadSafely()
     {
         // Arrange
@@ -501,7 +500,7 @@ public class MessageBufferTests
         buffer.Count.Should().Be(100);
     }
 
-    [Test]
+    [Fact]
     public void ShouldFlush_WithOnlyMaxMessageCount_AndTimeZero_ShouldWork()
     {
         // Arrange
@@ -517,7 +516,7 @@ public class MessageBufferTests
         shouldFlush.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Add_FirstMessage_ShouldResetTimestamp()
     {
         // Arrange
@@ -535,7 +534,7 @@ public class MessageBufferTests
         shouldFlush.Should().BeFalse(); // Time should be reset
     }
 
-    [Test]
+    [Fact]
     public void WebSocketMessage_DefaultConstructor_ShouldInitializeDefaults()
     {
         // Act
@@ -548,7 +547,7 @@ public class MessageBufferTests
         message.ReceivedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(1));
     }
 
-    [Test]
+    [Fact]
     public void WebSocketMessage_IsClose_WithCloseMessageType_ShouldReturnTrue()
     {
         // Arrange
@@ -563,7 +562,7 @@ public class MessageBufferTests
         message.IsBinary.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void MessageBuffer_FlushResetsTimestamp()
     {
         // Arrange

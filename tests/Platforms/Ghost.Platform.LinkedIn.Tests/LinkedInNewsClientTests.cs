@@ -4,7 +4,7 @@ using FluentAssertions;
 using Ghost.Contracts.News;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Platform.LinkedIn.Tests;
@@ -14,15 +14,15 @@ public class LinkedInNewsClientTests
     [Fact]
     public async Task GetArticlesAsyncReturnsEnumerable()
     {
-        var mockSession = Substitute.For<IBrowserSession>();
-        var mockPage = Substitute.For<IPage>();
-        mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(mockPage));
-        mockPage.QuerySelectorAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IElement?>(null));
+        var mockSession = new Mock<IBrowserSession>();
+        var mockPage = new Mock<IPage>();
+        mockSession.Setup(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockPage.Object);
+        mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IElement?)null);
 
-        var logger = Substitute.For<ILogger<LinkedInNewsClient>>();
-        var client = new LinkedInNewsClient(mockSession, Options.Create(new LinkedInOptions()), logger);
+        var logger = new Mock<ILogger<LinkedInNewsClient>>();
+        var client = new LinkedInNewsClient(mockSession.Object, Options.Create(new LinkedInOptions()), logger.Object);
         var list = await client.GetArticlesAsync(null, CancellationToken.None);
         list.Should().BeAssignableTo<System.Collections.Generic.IEnumerable<NewsArticle>>();
     }
@@ -30,15 +30,15 @@ public class LinkedInNewsClientTests
     [Fact]
     public async Task SearchAsyncReturnsEnumerable()
     {
-        var mockSession = Substitute.For<IBrowserSession>();
-        var mockPage = Substitute.For<IPage>();
-        mockSession.NewPageAsync(Arg.Any<PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(mockPage));
-        mockPage.QuerySelectorAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IElement?>(null));
+        var mockSession = new Mock<IBrowserSession>();
+        var mockPage = new Mock<IPage>();
+        mockSession.Setup(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockPage.Object);
+        mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IElement?)null);
 
-        var logger = Substitute.For<ILogger<LinkedInNewsClient>>();
-        var client = new LinkedInNewsClient(mockSession, Options.Create(new LinkedInOptions()), logger);
+        var logger = new Mock<ILogger<LinkedInNewsClient>>();
+        var client = new LinkedInNewsClient(mockSession.Object, Options.Create(new LinkedInOptions()), logger.Object);
         var results = await client.SearchAsync("AI", new NewsSearchOptions { MaxResults = 10 }, CancellationToken.None);
         results.Should().BeAssignableTo<System.Collections.Generic.IEnumerable<NewsArticle>>();
     }

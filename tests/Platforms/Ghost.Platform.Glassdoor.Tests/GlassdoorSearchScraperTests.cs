@@ -3,7 +3,7 @@ using Ghost.Core;
 using Ghost.Platform.Glassdoor.Jobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace Ghost.Platform.Glassdoor.Tests;
@@ -16,14 +16,14 @@ public sealed class GlassdoorSearchScraperTests
 
     public GlassdoorSearchScraperTests()
     {
-        _kernel = Substitute.For<GhostKernel>();
+        _kernel = new Mock<GhostKernel>().Object;
         _options = Options.Create(new GlassdoorOptions
         {
             Enabled = true,
             ProxyEnabled = false,
             Strategy = JobSearchStrategy.BrowserOnly
         });
-        _logger = Substitute.For<ILogger<GlassdoorSearchScraper>>();
+        _logger = new Mock<ILogger<GlassdoorSearchScraper>>().Object;
     }
 
     [Fact]

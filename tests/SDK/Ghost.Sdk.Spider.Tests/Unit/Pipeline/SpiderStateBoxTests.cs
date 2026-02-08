@@ -1,21 +1,19 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Pipeline;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline;
 
-[TestFixture]
 public class SpiderStateBoxTests
 {
-    private SpiderStateBox _stateBox = null!;
+    private readonly SpiderStateBox _stateBox;
 
-    [SetUp]
-    public void Setup()
+    public SpiderStateBoxTests()
     {
         _stateBox = new SpiderStateBox();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_InitializesAllCountersToZero()
     {
         // Arrange & Act
@@ -28,7 +26,7 @@ public class SpiderStateBoxTests
         stateBox.RetryCount.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public void IncrementRequestCount_IncrementsCounter()
     {
         // Act
@@ -39,7 +37,7 @@ public class SpiderStateBoxTests
         _stateBox.RequestCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void IncrementRequestCount_MultipleIncrements_IncrementsCorrectly()
     {
         // Act
@@ -52,7 +50,7 @@ public class SpiderStateBoxTests
         _stateBox.RequestCount.Should().Be(3);
     }
 
-    [Test]
+    [Fact]
     public void IncrementSuccessCount_IncrementsCounter()
     {
         // Act
@@ -63,7 +61,7 @@ public class SpiderStateBoxTests
         _stateBox.SuccessCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void IncrementErrorCount_IncrementsCounter()
     {
         // Act
@@ -74,7 +72,7 @@ public class SpiderStateBoxTests
         _stateBox.ErrorCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void IncrementRetryCount_IncrementsCounter()
     {
         // Act
@@ -85,7 +83,7 @@ public class SpiderStateBoxTests
         _stateBox.RetryCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void ResetCounters_ResetsAllCountersToZero()
     {
         // Arrange
@@ -104,7 +102,7 @@ public class SpiderStateBoxTests
         _stateBox.RetryCount.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public void SetValue_StoresValueInProperties()
     {
         // Act
@@ -115,7 +113,7 @@ public class SpiderStateBoxTests
         _stateBox.Properties["test_key"].Should().Be("test_value");
     }
 
-    [Test]
+    [Fact]
     public void SetValue_WithDifferentTypes_StoresCorrectly()
     {
         // Act
@@ -129,7 +127,7 @@ public class SpiderStateBoxTests
         _stateBox.Properties["bool_key"].Should().Be(true);
     }
 
-    [Test]
+    [Fact]
     public void TryGetValue_WithExistingKey_ReturnsTrue()
     {
         // Arrange
@@ -143,7 +141,7 @@ public class SpiderStateBoxTests
         value.Should().Be("test_value");
     }
 
-    [Test]
+    [Fact]
     public void TryGetValue_WithMissingKey_ReturnsFalse()
     {
         // Act
@@ -154,7 +152,7 @@ public class SpiderStateBoxTests
         value.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void TryGetValue_WithWrongType_ReturnsFalse()
     {
         // Arrange
@@ -168,7 +166,7 @@ public class SpiderStateBoxTests
         value.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public void GetValueOrDefault_WithExistingKey_ReturnsValue()
     {
         // Arrange
@@ -181,7 +179,7 @@ public class SpiderStateBoxTests
         result.Should().Be("test_value");
     }
 
-    [Test]
+    [Fact]
     public void GetValueOrDefault_WithMissingKey_ReturnsDefault()
     {
         // Act
@@ -191,7 +189,7 @@ public class SpiderStateBoxTests
         result.Should().Be("default");
     }
 
-    [Test]
+    [Fact]
     public void GetValueOrDefault_WithNoDefaultSpecified_ReturnsTypeDefault()
     {
         // Act
@@ -201,7 +199,7 @@ public class SpiderStateBoxTests
         result.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public void ClearProperties_RemovesAllProperties()
     {
         // Arrange
@@ -216,7 +214,7 @@ public class SpiderStateBoxTests
         _stateBox.Properties.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void ClearProperties_DoesNotAffectCounters()
     {
         // Arrange
@@ -232,7 +230,7 @@ public class SpiderStateBoxTests
         _stateBox.SuccessCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void Reset_ClearsPropertiesAndCounters()
     {
         // Arrange
@@ -254,7 +252,7 @@ public class SpiderStateBoxTests
         _stateBox.Properties.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Properties_IsThreadSafe_ConcurrentAccess()
     {
         // Arrange
@@ -280,7 +278,7 @@ public class SpiderStateBoxTests
         _stateBox.Properties.Count.Should().Be(1000);
     }
 
-    [Test]
+    [Fact]
     public void Counters_AreThreadSafe_ConcurrentIncrements()
     {
         // Arrange
@@ -305,7 +303,7 @@ public class SpiderStateBoxTests
         _stateBox.RequestCount.Should().Be(10000);
     }
 
-    [Test]
+    [Fact]
     public void SetValue_WithComplexObject_StoresCorrectly()
     {
         // Arrange
@@ -320,7 +318,7 @@ public class SpiderStateBoxTests
         retrieved.Should().BeEquivalentTo(complexObject);
     }
 
-    [Test]
+    [Fact]
     public void SetValue_OverwritesExistingKey()
     {
         // Arrange
