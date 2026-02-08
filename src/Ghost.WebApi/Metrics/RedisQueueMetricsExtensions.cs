@@ -19,13 +19,13 @@ public static class RedisQueueMetricsExtensions
     public static IServiceCollection AddRedisQueueMetrics(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        
+
         // Register as singleton first so it can be injected into the endpoint
         services.AddSingleton<RedisQueueMetricsService>();
-        
+
         // Then register as hosted service using the same singleton instance
         services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<RedisQueueMetricsService>());
-        
+
         return services;
     }
 
