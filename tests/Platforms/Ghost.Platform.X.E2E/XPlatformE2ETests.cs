@@ -69,11 +69,14 @@ public class XPlatformE2ETests : IClassFixture<GhostKernelFixture>
         var page = await _session.NewPageAsync();
         await using (page)
         {
-            // Act - Check navigator.webdriver is undefined (stealth mode indicator)
+            // Act - Check navigator.webdriver is undefined or false (stealth mode indicator)
             var webdriver = await page.EvaluateAsync<object>("() => navigator.webdriver");
 
-            // Assert
-            Assert.Null(webdriver);
+            // Assert - Patchright stealth mode sets webdriver to false or undefined
+            // Both indicate successful stealth mode (not detected as automation)
+            Assert.True(
+                webdriver == null || (webdriver is bool b && !b),
+                $"navigator.webdriver should be null or false in stealth mode, but was: {webdriver}");
         }
     }
 
