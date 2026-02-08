@@ -12,13 +12,6 @@ public sealed class RedisQueueMetricsService : BackgroundService
     private readonly IJobDispatcher _dispatcher;
     private readonly ILogger<RedisQueueMetricsService> _logger;
     private readonly TimeSpan _pollInterval = TimeSpan.FromSeconds(15);
-
-    private int _pendingCount;
-    private int _activeCount;
-    private int _completedCount;
-    private int _deadCount;
-    private DateTime _lastUpdate = DateTime.UtcNow;
-
     private static readonly Action<ILogger, int, int, int, int, Exception?> s_metricsUpdated =
         LoggerMessage.Define<int, int, int, int>(
             LogLevel.Debug,
@@ -30,6 +23,18 @@ public sealed class RedisQueueMetricsService : BackgroundService
             LogLevel.Error,
             new EventId(2, "MetricsPollError"),
             "Error polling Redis queue metrics");
+
+    private static readonly Action<ILogger, double, Exception?> s_serviceStarting =
+        LoggerMessage.Define<double>(
+            LogLevel.Information,
+            new EventId(3, "ServiceStarting"),
+            "Redis queue metrics service starting, polling every {Interval} seconds");
+
+    private static readonly Action<ILogger, Exception?> s_serviceStopped =
+        LoggerMessage.Define(
+            LogLevel.Information,
+            new EventId(4, "ServiceStopped"),
+            "Redis queue metrics service stopped");
 
     public RedisQueueMetricsService(
         IJobDispatcher dispatcher,
@@ -45,31 +50,31 @@ public sealed class RedisQueueMetricsService : BackgroundService
     /// <summary>
     /// Gets the current pending queue count.
     /// </summary>
-    public int PendingCount => _pendingCount;
+    public int PendingCount { get; private set; }
 
     /// <summary>
     /// Gets the current active jobs count.
     /// </summary>
-    public int ActiveCount => _activeCount;
+    public int ActiveCount { get; private set; }
 
     /// <summary>
     /// Gets the current completed jobs count.
     /// </summary>
-    public int CompletedCount => _completedCount;
+    public int CompletedCount { get; private set; }
 
     /// <summary>
     /// Gets the current dead letter queue count.
     /// </summary>
-    public int DeadCount => _deadCount;
+    public int DeadCount { get; private set; }
 
     /// <summary>
     /// Gets the timestamp of the last metrics update.
     /// </summary>
-    public DateTime LastUpdate => _lastUpdate;
+    public DateTime LastUpdate { get; private set; } = DateTime.UtcNow;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Redis queue metrics service starting, polling every {Interval} seconds", _pollInterval.TotalSeconds);
+        s_serviceStarting(_logger, _pollInterval.TotalSeconds, null);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -90,17 +95,17 @@ public sealed class RedisQueueMetricsService : BackgroundService
             }
         }
 
-        _logger.LogInformation("Redis queue metrics service stopped");
+        s_serviceStopped(_logger, null);
     }
 
     private async Task UpdateMetricsAsync(CancellationToken cancellationToken)
     {
-        _pendingCount = await _dispatcher.GetPendingCountAsync(cancellationToken);
-        _activeCount = await _dispatcher.GetActiveCountAsync(cancellationToken);
-        _completedCount = await _dispatcher.GetCompletedCountAsync(cancellationToken);
-        _deadCount = await _dispatcher.GetDeadCountAsync(cancellationToken);
-        _lastUpdate = DateTime.UtcNow;
+        PendingCount = await _dispatcher.GetPendingCountAsync(cancellationToken);
+        ActiveCount = await _dispatcher.GetActiveCountAsync(cancellationToken);
+        CompletedCount = await _dispatcher.GetCompletedCountAsync(cancellationToken);
+        DeadCount = await _dispatcher.GetDeadCountAsync(cancellationToken);
+        LastUpdate = DateTime.UtcNow;
 
-        s_metricsUpdated(_logger, _pendingCount, _activeCount, _completedCount, _deadCount, null);
+        s_metricsUpdated(_logger, PendingCount, ActiveCount, CompletedCount, DeadCount, null);
     }
 }

@@ -1,6 +1,7 @@
 using Ghost.Abstractions;
 using Ghost.Core;
 using Ghost.Hosting;
+using Ghost.Hosting.WebApi;
 using Ghost.Monitoring;
 using Ghost.Resilience;
 using Ghost.Utilities;
