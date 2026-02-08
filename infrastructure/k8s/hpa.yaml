@@ -35,13 +35,15 @@ spec:
         averageUtilization: 80
   # Scale based on custom metric (Redis queue depth)
   # Note: Requires Prometheus Adapter or KEDA for custom metrics
+  # Metric exposed at /api/metrics/redis-queue
   - type: External
     external:
       metric:
-        name: redis_queue_length
+        name: ghost_redis_queue_length
         selector:
           matchLabels:
-            queue: ghost_jobs_queue
+            queue_name: pending
+            priority: all
       target:
         type: AverageValue
         averageValue: "100" # Target 100 jobs per worker
@@ -88,6 +90,9 @@ spec:
   - port: metrics
     interval: 30s
     path: /metrics
+  - port: metrics
+    interval: 30s
+    path: /api/metrics/redis-queue
 
 ---
 # PrometheusRule for alerting on scaling issues
@@ -106,7 +111,7 @@ spec:
     interval: 30s
     rules:
     - alert: GhostWorkerHighQueueDepth
-      expr: redis_list_length{key="ghost:jobs:queue"} > 1000
+      expr: ghost_redis_queue_length{queue_name="pending",priority="all"} > 1000
       for: 5m
       labels:
         severity: warning

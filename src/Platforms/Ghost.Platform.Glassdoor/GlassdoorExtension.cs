@@ -52,6 +52,17 @@ public sealed class GlassdoorExtension : Ghost.Hosting.IExtension
             return new Internal.GlassdoorBrowserClient(kernel, options, logger, proxyProvider: null);
         });
 
+        // Register heavy stealth browser scraper with optional proxy support
+        services.AddScoped<Jobs.GlassdoorSearchScraper>(sp =>
+        {
+            var kernel = sp.GetRequiredService<GhostKernel>();
+            var options = sp.GetRequiredService<IOptions<GlassdoorOptions>>();
+            var logger = sp.GetRequiredService<ILogger<Jobs.GlassdoorSearchScraper>>();
+            var proxyProvider = sp.GetService<IProxyProvider>();
+            // Proxy provider is optional - scraper will use it only if ProxyEnabled is true
+            return new Jobs.GlassdoorSearchScraper(kernel, options, logger, proxyProvider);
+        });
+
         // Register GlassdoorJobClient and expose it as both IJobScraper and IJobClient
         // IJobScraper is used by AggregatedJobClient, IJobClient for backward compatibility
         services.AddScoped<GlassdoorJobClient>();

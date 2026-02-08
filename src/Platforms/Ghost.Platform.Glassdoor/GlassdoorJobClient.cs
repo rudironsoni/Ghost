@@ -98,6 +98,7 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
     }
     private readonly Internal.GlassdoorApiClient _api;
     private readonly Internal.GlassdoorBrowserClient _browserClient;
+    private readonly Jobs.GlassdoorSearchScraper _searchScraper;
     private readonly GlassdoorOptions _options;
     private readonly ILogger<GlassdoorJobClient> _logger;
 
@@ -131,11 +132,13 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
     public GlassdoorJobClient(
         Internal.GlassdoorApiClient api,
         Internal.GlassdoorBrowserClient browserClient,
+        Jobs.GlassdoorSearchScraper searchScraper,
         IOptions<GlassdoorOptions> options,
         ILogger<GlassdoorJobClient> logger)
     {
         _api = api;
         _browserClient = browserClient;
+        _searchScraper = searchScraper;
         _options = options.Value;
         _logger = logger;
     }
@@ -192,6 +195,24 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
     {
         s_logSearchStarting(_logger, criteria.Query, criteria.Location, null);
 
+        // Handle BrowserOnly strategy - skip API entirely
+        if (_options.Strategy == JobSearchStrategy.BrowserOnly && _options.Enabled)
+        {
+            s_logBrowserFallbackStarting(_logger, null);
+            try
+            {
+                var browserJobs = await _searchScraper.SearchAsync(criteria, criteria.MaxResults > 0 ? criteria.MaxResults : 20, ct).ConfigureAwait(false);
+                s_logBrowserResult(_logger, browserJobs.Count, null);
+                s_logFinalResult(_logger, browserJobs.Count, null);
+                return browserJobs;
+            }
+            catch (Exception ex)
+            {
+                s_logRefreshSessionFailed(_logger, ex);
+                return Array.Empty<JobListing>();
+            }
+        }
+
         // Primary attempt: try GraphQL API using current CSRF token
         var currentToken = _csrfToken;
         s_logApiCsrfToken(_logger, currentToken != null, null);
@@ -236,7 +257,8 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
             s_logBrowserFallbackStarting(_logger, null);
             try
             {
-                jobs = (List<JobListing>)await _browserClient.SearchAsync(criteria, criteria.MaxResults > 0 ? criteria.MaxResults : 20, ct).ConfigureAwait(false);
+                // Use heavy stealth scraper instead of legacy browser client
+                jobs = (List<JobListing>)await _searchScraper.SearchAsync(criteria, criteria.MaxResults > 0 ? criteria.MaxResults : 20, ct).ConfigureAwait(false);
                 s_logBrowserResult(_logger, jobs.Count, null);
             }
             catch (Exception ex)
