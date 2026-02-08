@@ -1,22 +1,20 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Configuration;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Configuration;
 
-[TestFixture]
 public class ConfigurationLoaderTests
 {
-    private ConfigurationLoader _loader = null!;
+    private readonly ConfigurationLoader _loader;
 
-    [SetUp]
-    public void Setup()
+    public ConfigurationLoaderTests()
     {
         _loader = new ConfigurationLoader();
     }
 
-    [Test]
+    [Fact]
     public async Task LoadFromFileAsync_WithValidYamlFile_ShouldLoad()
     {
         // Arrange
@@ -30,7 +28,7 @@ public class ConfigurationLoaderTests
         config.Name.Should().NotBeNullOrEmpty();
     }
 
-    [Test]
+    [Fact]
     public async Task LoadFromFileAsync_WithValidJsonFile_ShouldLoad()
     {
         // Arrange
@@ -44,27 +42,26 @@ public class ConfigurationLoaderTests
         config.Name.Should().NotBeNullOrEmpty();
     }
 
-    [Test]
+    [Fact]
     public async Task LoadFromFileAsync_WithNonExistentFile_ShouldThrow()
     {
         // Arrange
         var filePath = "nonexistent-config.yaml";
 
         // Act & Assert
-        await Assert.ThatAsync(
-            async () => await _loader.LoadFromFileAsync(filePath),
-            Throws.TypeOf<FileNotFoundException>());
+        await Assert.ThrowsAsync<FileNotFoundException>(
+            async () => await _loader.LoadFromFileAsync(filePath));
     }
 
-    [Test]
-    public void LoadFromFileAsync_WithNullPath_ShouldThrow()
+    [Fact]
+    public async Task LoadFromFileAsync_WithNullPath_ShouldThrow()
     {
         // Act & Assert
-        Assert.ThrowsAsync<ArgumentNullException>(
+        await Assert.ThrowsAsync<ArgumentNullException>(
             async () => await _loader.LoadFromFileAsync(null!));
     }
 
-    [Test]
+    [Fact]
     public async Task LoadFromFileAsync_WithUnsupportedFormat_ShouldThrow()
     {
         // Arrange
@@ -74,9 +71,8 @@ public class ConfigurationLoaderTests
         try
         {
             // Act & Assert
-            await Assert.ThatAsync(
-                async () => await _loader.LoadFromFileAsync(tempFile),
-                Throws.TypeOf<InvalidOperationException>());
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await _loader.LoadFromFileAsync(tempFile));
         }
         finally
         {
@@ -84,7 +80,7 @@ public class ConfigurationLoaderTests
         }
     }
 
-    [Test]
+    [Fact]
     public void LoadFromYaml_WithValidContent_ShouldLoad()
     {
         // Arrange
@@ -109,7 +105,7 @@ limits:
         config.Version.Should().Be("1.0.0");
     }
 
-    [Test]
+    [Fact]
     public void LoadFromJson_WithValidContent_ShouldLoad()
     {
         // Arrange
@@ -138,7 +134,7 @@ limits:
         config.Version.Should().Be("1.0.0");
     }
 
-    [Test]
+    [Fact]
     public void LoadFromYaml_WithInvalidContent_ShouldThrow()
     {
         // Arrange
@@ -151,7 +147,7 @@ targets: [invalid yaml structure
         Assert.Throws<InvalidOperationException>(() => _loader.LoadFromYaml(invalidYaml));
     }
 
-    [Test]
+    [Fact]
     public void LoadFromJson_WithInvalidContent_ShouldThrow()
     {
         // Arrange
@@ -161,7 +157,7 @@ targets: [invalid yaml structure
         Assert.Throws<InvalidOperationException>(() => _loader.LoadFromJson(invalidJson));
     }
 
-    [Test]
+    [Fact]
     public async Task TryLoadFromFile_WithValidFile_ShouldReturnTrue()
     {
         // Arrange
@@ -176,7 +172,7 @@ targets: [invalid yaml structure
         errors.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void TryLoadFromFile_WithInvalidFile_ShouldReturnFalse()
     {
         // Arrange
@@ -191,7 +187,7 @@ targets: [invalid yaml structure
         errors.Should().NotBeEmpty();
     }
 
-    [Test]
+    [Fact]
     public async Task ValidateFileAsync_WithValidFile_ShouldReturnEmptyErrors()
     {
         // Arrange
@@ -204,7 +200,7 @@ targets: [invalid yaml structure
         errors.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public async Task ValidateFileAsync_WithInvalidFile_ShouldReturnErrors()
     {
         // Arrange
@@ -225,7 +221,7 @@ targets: [invalid yaml structure
         }
     }
 
-    [Test]
+    [Fact]
     public async Task ValidateFileAsync_WithNonExistentFile_ShouldReturnErrors()
     {
         // Arrange
@@ -239,7 +235,7 @@ targets: [invalid yaml structure
         errors.Should().Contain(e => e.Contains("not found"));
     }
 
-    [Test]
+    [Fact]
     public async Task LoadFromFileAsync_ShouldHandleCancellation()
     {
         // Arrange

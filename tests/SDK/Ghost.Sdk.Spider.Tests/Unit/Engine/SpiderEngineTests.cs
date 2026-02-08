@@ -4,7 +4,7 @@ using Ghost.Sdk.Spider.Engine;
 using Ghost.Sdk.Spider.Engine.Queue;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using SpiderExecutionContext = Ghost.Sdk.Spider.Engine.ExecutionContext;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
@@ -14,15 +14,13 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 /// Note: These tests assume a SpiderEngine implementation exists.
 /// If not implemented yet, they serve as specification tests.
 /// </summary>
-[TestFixture]
 public class SpiderEngineTests
 {
-    private Mock<ISpiderEngine> _mockEngine = null!;
-    private Mock<IRequestQueue> _mockQueue = null!;
-    private TestSpider _testSpider = null!;
+    private Mock<ISpiderEngine> _mockEngine;
+    private Mock<IRequestQueue> _mockQueue;
+    private TestSpider _testSpider;
 
-    [SetUp]
-    public void Setup()
+    public SpiderEngineTests()
     {
         _mockEngine = new Mock<ISpiderEngine>();
         _mockQueue = new Mock<IRequestQueue>();
@@ -31,7 +29,7 @@ public class SpiderEngineTests
 
     #region StartAsync Tests
 
-    [Test]
+    [Fact]
     public async Task StartAsync_WithValidSpider_ShouldExecuteSuccessfully()
     {
         // Arrange
@@ -60,7 +58,7 @@ public class SpiderEngineTests
         result.RequestsProcessed.Should().BeGreaterThan(0);
     }
 
-    [Test]
+    [Fact]
     public async Task StartAsync_WithNullSpider_ShouldThrow()
     {
         // Arrange
@@ -75,7 +73,7 @@ public class SpiderEngineTests
         await act.Should().ThrowAsync<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public async Task StartAsync_WithException_ShouldReturnFailedResult()
     {
         // Arrange
@@ -96,7 +94,7 @@ public class SpiderEngineTests
         result.Exception.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task StartAsync_WithCancellation_ShouldStopGracefully()
     {
         // Arrange
@@ -114,7 +112,7 @@ public class SpiderEngineTests
         await act.Should().ThrowAsync<OperationCanceledException>();
     }
 
-    [Test]
+    [Fact]
     public async Task StartAsync_ShouldCallOnStart()
     {
         // Arrange
@@ -138,7 +136,7 @@ public class SpiderEngineTests
         // configurableSpider.OnStartCalled.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task StartAsync_ShouldCallOnComplete()
     {
         // Arrange
@@ -166,7 +164,7 @@ public class SpiderEngineTests
 
     #region Request Queue Integration
 
-    [Test]
+    [Fact]
     public async Task Engine_ShouldEnqueueStartUrls()
     {
         // Arrange
@@ -193,7 +191,7 @@ public class SpiderEngineTests
         _mockQueue.Verify(q => q.EnqueueAsync(It.IsAny<Request>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
     }
 
-    [Test]
+    [Fact]
     public async Task Engine_ShouldProcessRequestsFromQueue()
     {
         // Arrange
@@ -216,7 +214,7 @@ public class SpiderEngineTests
         dequeuedRequest!.Url.Should().Be("https://example.com");
     }
 
-    [Test]
+    [Fact]
     public async Task Engine_WithEmptyQueue_ShouldComplete()
     {
         // Arrange
@@ -237,7 +235,7 @@ public class SpiderEngineTests
 
     #region Parallel Execution Tests
 
-    [Test]
+    [Fact]
     public async Task Engine_WithMaxConcurrency_ShouldRespectLimit()
     {
         // Arrange
@@ -282,7 +280,7 @@ public class SpiderEngineTests
         maxConcurrentObserved.Should().BeLessOrEqualTo(options.MaxConcurrency);
     }
 
-    [Test]
+    [Fact]
     public async Task Engine_WithParallelRequests_ShouldHandleConcurrency()
     {
         // Arrange
@@ -328,7 +326,7 @@ public class SpiderEngineTests
 
     #region Error Recovery Tests
 
-    [Test]
+    [Fact]
     public async Task Engine_WithFailedRequest_ShouldContinueProcessing()
     {
         // Arrange
@@ -355,7 +353,7 @@ public class SpiderEngineTests
         executionResult.Success.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task Engine_WithMaxRequests_ShouldStopWhenReached()
     {
         // Arrange
@@ -381,7 +379,7 @@ public class SpiderEngineTests
         executionResult.RequestsProcessed.Should().Be(10);
     }
 
-    [Test]
+    [Fact]
     public async Task Engine_OnError_ShouldCallSpiderErrorHandler()
     {
         // Arrange
@@ -405,7 +403,7 @@ public class SpiderEngineTests
 
     #region StopAsync Tests
 
-    [Test]
+    [Fact]
     public async Task StopAsync_ShouldCompleteGracefully()
     {
         // Arrange
@@ -420,7 +418,7 @@ public class SpiderEngineTests
         _mockEngine.Verify(e => e.StopAsync(timeout, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task StopAsync_WithTimeout_ShouldForceStop()
     {
         // Arrange
@@ -439,7 +437,7 @@ public class SpiderEngineTests
 
     #region PauseAsync/ResumeAsync Tests
 
-    [Test]
+    [Fact]
     public async Task PauseAsync_ShouldPauseExecution()
     {
         // Arrange
@@ -453,7 +451,7 @@ public class SpiderEngineTests
         _mockEngine.Verify(e => e.PauseAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task ResumeAsync_ShouldResumeExecution()
     {
         // Arrange
@@ -467,7 +465,7 @@ public class SpiderEngineTests
         _mockEngine.Verify(e => e.ResumeAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task PauseResume_ShouldMaintainContext()
     {
         // Arrange
@@ -487,7 +485,7 @@ public class SpiderEngineTests
 
     #region GetCurrentContext Tests
 
-    [Test]
+    [Fact]
     public void GetCurrentContext_WithRunningSpider_ShouldReturnContext()
     {
         // Arrange
@@ -502,7 +500,7 @@ public class SpiderEngineTests
         result!.SpiderName.Should().Be("TestSpider");
     }
 
-    [Test]
+    [Fact]
     public void GetCurrentContext_WithNoRunningSpider_ShouldReturnNull()
     {
         // Arrange
@@ -519,7 +517,7 @@ public class SpiderEngineTests
 
     #region IAsyncEnumerable Streaming Tests
 
-    [Test]
+    [Fact]
     public async Task Engine_StreamingResults_ShouldYieldItemsAsExtracted()
     {
         // Arrange - Simulating IAsyncEnumerable<T> pattern
@@ -546,7 +544,7 @@ public class SpiderEngineTests
         }
     }
 
-    [Test]
+    [Fact]
     public async Task Engine_StreamingWithError_ShouldHandleGracefully()
     {
         // Arrange
@@ -584,7 +582,7 @@ public class SpiderEngineTests
 
     #region Spider Options Tests
 
-    [Test]
+    [Fact]
     public async Task Engine_WithRequestDelay_ShouldThrottle()
     {
         // Arrange
@@ -605,7 +603,7 @@ public class SpiderEngineTests
         elapsed.Should().BeGreaterOrEqualTo(TimeSpan.FromMilliseconds(290));
     }
 
-    [Test]
+    [Fact]
     public void Engine_WithMaxDepth_ShouldRespectLimit()
     {
         // Arrange
@@ -616,7 +614,7 @@ public class SpiderEngineTests
         spider.Options.MaxDepth.Should().Be(2);
     }
 
-    [Test]
+    [Fact]
     public void Engine_WithAllowedDomains_ShouldFilterUrls()
     {
         // Arrange
@@ -638,7 +636,7 @@ public class SpiderEngineTests
 
     #region Result Statistics Tests
 
-    [Test]
+    [Fact]
     public async Task Engine_ShouldCollectStatistics()
     {
         // Arrange

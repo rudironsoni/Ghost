@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Engine;
-using NUnit.Framework;
+using Xunit;
 using System.Collections.Concurrent;
 using SpiderExecutionContext = Ghost.Sdk.Spider.Engine.ExecutionContext;
 
@@ -9,14 +9,12 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 /// <summary>
 /// Comprehensive tests for ExecutionContext.
 /// </summary>
-[TestFixture]
 public class ExecutionContextTests
 {
-    private SpiderExecutionContext _context = null!;
-    private SpiderOptions _options = null!;
+    private SpiderExecutionContext _context;
+    private SpiderOptions _options;
 
-    [SetUp]
-    public void Setup()
+    public ExecutionContextTests()
     {
         _options = new SpiderOptions
         {
@@ -29,7 +27,7 @@ public class ExecutionContextTests
 
     #region Constructor Tests
 
-    [Test]
+    [Fact]
     public void Constructor_WithValidParameters_ShouldInitialize()
     {
         // Assert
@@ -40,7 +38,7 @@ public class ExecutionContextTests
         _context.State.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithNullSpiderName_ShouldThrow()
     {
         // Act
@@ -51,7 +49,7 @@ public class ExecutionContextTests
             .WithParameterName("spiderName");
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithNullOptions_ShouldThrow()
     {
         // Act
@@ -66,14 +64,14 @@ public class ExecutionContextTests
 
     #region Counter Tests
 
-    [Test]
+    [Fact]
     public void RequestsProcessed_InitialValue_ShouldBeZero()
     {
         // Assert
         _context.RequestsProcessed.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public void IncrementRequestsProcessed_ShouldIncrement()
     {
         // Act
@@ -84,7 +82,7 @@ public class ExecutionContextTests
         _context.RequestsProcessed.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void IncrementRequestsProcessed_Multiple_ShouldIncrementCorrectly()
     {
         // Act
@@ -96,7 +94,7 @@ public class ExecutionContextTests
         _context.RequestsProcessed.Should().Be(3);
     }
 
-    [Test]
+    [Fact]
     public void IncrementRequestsSucceeded_ShouldIncrement()
     {
         // Act
@@ -107,7 +105,7 @@ public class ExecutionContextTests
         _context.RequestsSucceeded.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void IncrementRequestsFailed_ShouldIncrement()
     {
         // Act
@@ -118,7 +116,7 @@ public class ExecutionContextTests
         _context.RequestsFailed.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void IncrementItemsExtracted_WithDefaultCount_ShouldIncrementByOne()
     {
         // Act
@@ -129,7 +127,7 @@ public class ExecutionContextTests
         _context.ItemsExtracted.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public void IncrementItemsExtracted_WithCustomCount_ShouldIncrementByCount()
     {
         // Act
@@ -140,7 +138,7 @@ public class ExecutionContextTests
         _context.ItemsExtracted.Should().Be(5);
     }
 
-    [Test]
+    [Fact]
     public void IncrementItemsExtracted_Multiple_ShouldAccumulate()
     {
         // Act
@@ -156,7 +154,7 @@ public class ExecutionContextTests
 
     #region Thread Safety Tests
 
-    [Test]
+    [Fact]
     public async Task Counters_ConcurrentIncrements_ShouldBeThreadSafe()
     {
         // Arrange
@@ -172,7 +170,7 @@ public class ExecutionContextTests
         _context.RequestsProcessed.Should().Be(taskCount);
     }
 
-    [Test]
+    [Fact]
     public async Task MixedCounters_ConcurrentIncrements_ShouldBeThreadSafe()
     {
         // Arrange
@@ -200,7 +198,7 @@ public class ExecutionContextTests
 
     #region State Management Tests
 
-    [Test]
+    [Fact]
     public void State_AddItem_ShouldStore()
     {
         // Act
@@ -211,7 +209,7 @@ public class ExecutionContextTests
         _context.State["customKey"].Should().Be("customValue");
     }
 
-    [Test]
+    [Fact]
     public void State_AddMultipleItems_ShouldStoreAll()
     {
         // Act
@@ -226,7 +224,7 @@ public class ExecutionContextTests
         _context.State["key3"].Should().BeEquivalentTo(new List<string> { "a", "b", "c" });
     }
 
-    [Test]
+    [Fact]
     public void State_UpdateExisting_ShouldOverwrite()
     {
         // Arrange
@@ -239,7 +237,7 @@ public class ExecutionContextTests
         _context.State["key"].Should().Be("newValue");
     }
 
-    [Test]
+    [Fact]
     public void State_RemoveItem_ShouldRemove()
     {
         // Arrange
@@ -252,14 +250,14 @@ public class ExecutionContextTests
         _context.State.Should().NotContainKey("key");
     }
 
-    [Test]
+    [Fact]
     public void State_IsConcurrentDictionary_ShouldBeThreadSafe()
     {
         // Assert
         _context.State.Should().BeOfType<ConcurrentDictionary<string, object>>();
     }
 
-    [Test]
+    [Fact]
     public async Task State_ConcurrentAccess_ShouldBeThreadSafe()
     {
         // Arrange
@@ -279,14 +277,14 @@ public class ExecutionContextTests
 
     #region Pause/Cancel Tests
 
-    [Test]
+    [Fact]
     public void IsPaused_InitialValue_ShouldBeFalse()
     {
         // Assert
         _context.IsPaused.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void IsPaused_SetTrue_ShouldUpdate()
     {
         // Act
@@ -296,14 +294,14 @@ public class ExecutionContextTests
         _context.IsPaused.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void IsCancellationRequested_InitialValue_ShouldBeFalse()
     {
         // Assert
         _context.IsCancellationRequested.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void IsCancellationRequested_SetTrue_ShouldUpdate()
     {
         // Act
@@ -317,7 +315,7 @@ public class ExecutionContextTests
 
     #region Request Limit Tests
 
-    [Test]
+    [Fact]
     public void IsRequestLimitReached_WithNoLimit_ShouldReturnFalse()
     {
         // Arrange
@@ -332,7 +330,7 @@ public class ExecutionContextTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void IsRequestLimitReached_BelowLimit_ShouldReturnFalse()
     {
         // Arrange
@@ -348,7 +346,7 @@ public class ExecutionContextTests
         result.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public void IsRequestLimitReached_AtLimit_ShouldReturnTrue()
     {
         // Arrange
@@ -367,7 +365,7 @@ public class ExecutionContextTests
         result.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void IsRequestLimitReached_AboveLimit_ShouldReturnTrue()
     {
         // Arrange
@@ -390,7 +388,7 @@ public class ExecutionContextTests
 
     #region Statistics Tests
 
-    [Test]
+    [Fact]
     public void GetStatistics_ShouldReturnAllCounters()
     {
         // Arrange
@@ -411,7 +409,7 @@ public class ExecutionContextTests
         stats["ItemsExtracted"].Should().Be(5);
     }
 
-    [Test]
+    [Fact]
     public void GetStatistics_ShouldCalculateElapsedTime()
     {
         // Act
@@ -422,7 +420,7 @@ public class ExecutionContextTests
         ((double)stats["ElapsedSeconds"]).Should().BeGreaterOrEqualTo(0);
     }
 
-    [Test]
+    [Fact]
     public async Task GetStatistics_WithDelay_ShouldShowElapsedTime()
     {
         // Arrange
@@ -436,7 +434,7 @@ public class ExecutionContextTests
         Convert.ToDouble(stats["ElapsedSeconds"]).Should().BeGreaterOrEqualTo(0.09); // Allow 10% tolerance for timing precision
     }
 
-    [Test]
+    [Fact]
     public void GetStatistics_ShouldCalculateRequestsPerSecond()
     {
         // Arrange
@@ -453,7 +451,7 @@ public class ExecutionContextTests
         Convert.ToDouble(stats["RequestsPerSecond"]).Should().BeGreaterOrEqualTo(0);
     }
 
-    [Test]
+    [Fact]
     public void GetStatistics_ShouldCalculateSuccessRate()
     {
         // Arrange
@@ -473,7 +471,7 @@ public class ExecutionContextTests
         successRate.Should().BeApproximately(2.0 / 3.0, 0.01); // 2 succeeded out of 3 processed
     }
 
-    [Test]
+    [Fact]
     public void GetStatistics_WithZeroRequests_ShouldHandleGracefully()
     {
         // Act
@@ -485,7 +483,7 @@ public class ExecutionContextTests
         stats["SuccessRate"].Should().Be(0.0);
     }
 
-    [Test]
+    [Fact]
     public void GetStatistics_MultipleCallsShouldReturnUpdatedValues()
     {
         // Arrange
@@ -505,7 +503,7 @@ public class ExecutionContextTests
 
     #region Integration Tests
 
-    [Test]
+    [Fact]
     public async Task Context_SimulateRealUsage_ShouldTrackCorrectly()
     {
         // Arrange - Simulate a spider processing requests
@@ -543,7 +541,7 @@ public class ExecutionContextTests
         Convert.ToDouble(stats["SuccessRate"]).Should().BeGreaterThan(0.8);
     }
 
-    [Test]
+    [Fact]
     public void Context_WithCustomState_ShouldMaintainState()
     {
         // Arrange & Act
@@ -557,7 +555,7 @@ public class ExecutionContextTests
         _context.State["lastError"].Should().Be("Some error message");
     }
 
-    [Test]
+    [Fact]
     public async Task Context_LongRunningExecution_ShouldTrackDuration()
     {
         // Arrange
@@ -576,7 +574,7 @@ public class ExecutionContextTests
 
     #region Edge Cases
 
-    [Test]
+    [Fact]
     public void Context_WithEmptySpiderName_ShouldThrow()
     {
         // Act
@@ -587,7 +585,7 @@ public class ExecutionContextTests
         act.Should().NotThrow();
     }
 
-    [Test]
+    [Fact]
     public void Context_WithWhitespaceSpiderName_ShouldAccept()
     {
         // Act
@@ -597,7 +595,7 @@ public class ExecutionContextTests
         context.SpiderName.Should().Be(" ");
     }
 
-    [Test]
+    [Fact]
     public void IncrementItemsExtracted_WithZero_ShouldNotChange()
     {
         // Act
@@ -607,7 +605,7 @@ public class ExecutionContextTests
         _context.ItemsExtracted.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public void IncrementItemsExtracted_WithNegative_ShouldDecrement()
     {
         // Arrange

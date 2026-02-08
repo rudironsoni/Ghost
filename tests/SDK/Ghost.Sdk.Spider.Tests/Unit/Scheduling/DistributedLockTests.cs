@@ -1,5 +1,5 @@
 using FluentAssertions;
-using NUnit.Framework;
+using Xunit;
 using System.Collections.Concurrent;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Scheduling;
@@ -7,10 +7,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Scheduling;
 /// <summary>
 /// Tests for distributed locking mechanisms used in scheduling
 /// </summary>
-[TestFixture]
 public class DistributedLockTests
 {
-    [Test]
+    [Fact]
     public async Task DistributedLock_AcquireAndRelease_ShouldWork()
     {
         // Arrange
@@ -28,7 +27,7 @@ public class DistributedLockTests
         lockObj.Release();
     }
 
-    [Test]
+    [Fact]
     public async Task DistributedLock_ConcurrentAccess_ShouldSerialize()
     {
         // Arrange
@@ -71,7 +70,7 @@ public class DistributedLockTests
         executionOrder.Should().HaveCount(10);
     }
 
-    [Test]
+    [Fact]
     public async Task DistributedLock_Timeout_ShouldReturnFalse()
     {
         // Arrange
@@ -88,7 +87,7 @@ public class DistributedLockTests
         lockObj.Release();
     }
 
-    [Test]
+    [Fact]
     public async Task DistributedLock_NestedAcquisition_ShouldDeadlock()
     {
         // Arrange
@@ -104,7 +103,7 @@ public class DistributedLockTests
         lockObj.Release();
     }
 
-    [Test]
+    [Fact]
     public async Task DistributedLock_MultipleKeys_ShouldIsolate()
     {
         // Arrange
@@ -125,7 +124,7 @@ public class DistributedLockTests
         lock2.Release();
     }
 
-    [Test]
+    [Fact]
     public async Task DistributedLock_ReleaseWithoutAcquire_ShouldThrow()
     {
         // Arrange
@@ -137,7 +136,7 @@ public class DistributedLockTests
         act.Should().Throw<SemaphoreFullException>();
     }
 
-    [Test]
+    [Fact]
     public async Task DistributedLock_LongRunningOperation_ShouldHoldLock()
     {
         // Arrange
@@ -177,7 +176,7 @@ public class DistributedLockTests
         firstTaskCompleted.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task DistributedLock_ExceptionDuringLock_ShouldRelease()
     {
         // Arrange

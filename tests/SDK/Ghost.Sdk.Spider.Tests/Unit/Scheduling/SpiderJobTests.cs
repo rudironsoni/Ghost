@@ -2,7 +2,7 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Engine;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Quartz;
 using SpiderBase = Ghost.Sdk.Spider.Engine.Spider;
 
@@ -13,15 +13,13 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Scheduling;
 /// Note: These tests assume a SpiderJob implementation exists.
 /// If not implemented yet, they serve as specification tests.
 /// </summary>
-[TestFixture]
 public class SpiderJobTests
 {
-    private Mock<IJobExecutionContext> _mockJobContext = null!;
-    private Mock<ISpiderEngine> _mockEngine = null!;
-    private TestSpider _testSpider = null!;
+    private Mock<IJobExecutionContext> _mockJobContext;
+    private Mock<ISpiderEngine> _mockEngine;
+    private TestSpider _testSpider;
 
-    [SetUp]
-    public void Setup()
+    public SpiderJobTests()
     {
         _mockJobContext = new Mock<IJobExecutionContext>();
         _mockEngine = new Mock<ISpiderEngine>();
@@ -38,7 +36,7 @@ public class SpiderJobTests
         _mockJobContext.Setup(c => c.CancellationToken).Returns(CancellationToken.None);
     }
 
-    [Test]
+    [Fact]
     public async Task Execute_WithValidSpider_ShouldStartEngine()
     {
         // Arrange
@@ -67,7 +65,7 @@ public class SpiderJobTests
         _mockEngine.Verify(e => e.StartAsync(_testSpider, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task Execute_WithEngineException_ShouldLogError()
     {
         // Arrange
@@ -84,7 +82,7 @@ public class SpiderJobTests
         await act.Should().ThrowAsync<Exception>().WithMessage("Engine failed");
     }
 
-    [Test]
+    [Fact]
     public async Task Execute_WithCancellation_ShouldStopGracefully()
     {
         // Arrange
@@ -102,7 +100,7 @@ public class SpiderJobTests
         await act.Should().ThrowAsync<OperationCanceledException>();
     }
 
-    [Test]
+    [Fact]
     public async Task Execute_ShouldPassCancellationToken()
     {
         // Arrange
@@ -131,7 +129,7 @@ public class SpiderJobTests
         }
     }
 
-    [Test]
+    [Fact]
     public async Task Execute_WithFailedResult_ShouldHandleFailure()
     {
         // Arrange
@@ -155,7 +153,7 @@ public class SpiderJobTests
         result.Exception.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void JobDataMap_ShouldContainSpider()
     {
         // Arrange & Act
@@ -166,7 +164,7 @@ public class SpiderJobTests
         jobDataMap["spider"].Should().Be(_testSpider);
     }
 
-    [Test]
+    [Fact]
     public void JobDataMap_ShouldContainSpiderName()
     {
         // Arrange & Act
@@ -177,7 +175,7 @@ public class SpiderJobTests
         jobDataMap["spiderName"].Should().Be("TestSpider");
     }
 
-    [Test]
+    [Fact]
     public async Task Execute_WithNullSpider_ShouldThrow()
     {
         // Arrange
@@ -188,7 +186,7 @@ public class SpiderJobTests
         jobDataMap.Should().NotContainKey("spider");
     }
 
-    [Test]
+    [Fact]
     public async Task Execute_WithLongRunningSpider_ShouldComplete()
     {
         // Arrange
@@ -219,7 +217,7 @@ public class SpiderJobTests
         executionResult.Duration.Should().BeGreaterOrEqualTo(delay);
     }
 
-    [Test]
+    [Fact]
     public async Task Execute_WithJobInterruption_ShouldCancel()
     {
         // Arrange
@@ -248,7 +246,7 @@ public class SpiderJobTests
         await task.Invoking(async t => await t).Should().ThrowAsync<TaskCanceledException>();
     }
 
-    [Test]
+    [Fact]
     public async Task Execute_ShouldRecordExecutionMetrics()
     {
         // Arrange
@@ -281,7 +279,7 @@ public class SpiderJobTests
         executionResult.Statistics.Should().ContainKey("customMetric");
     }
 
-    [Test]
+    [Fact]
     public async Task Execute_WithRetryableError_ShouldRetry()
     {
         // Arrange
@@ -327,7 +325,7 @@ public class SpiderJobTests
         attemptCount.Should().Be(maxRetries);
     }
 
-    [Test]
+    [Fact]
     public void JobKey_ShouldBeUnique()
     {
         // Arrange
@@ -342,7 +340,7 @@ public class SpiderJobTests
         jobKey1.Group.Should().Be("SpiderJobs");
     }
 
-    [Test]
+    [Fact]
     public void TriggerKey_ShouldBeUnique()
     {
         // Arrange

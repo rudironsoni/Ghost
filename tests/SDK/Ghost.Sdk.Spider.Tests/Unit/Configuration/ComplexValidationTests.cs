@@ -1,16 +1,15 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Configuration.Models;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Configuration;
 
 /// <summary>
 /// Complex validation tests for configuration edge cases
 /// </summary>
-[TestFixture]
 public class ComplexValidationTests
 {
-    [Test]
+    [Fact]
     public void Configuration_WithValidEntity_ShouldInitialize()
     {
         // Arrange & Act
@@ -34,7 +33,7 @@ public class ComplexValidationTests
         config.Fields.Should().HaveCount(1);
     }
 
-    [Test]
+    [Fact]
     public void Configuration_WithDeepNesting_ShouldHandle()
     {
         // Arrange & Act
@@ -56,7 +55,7 @@ public class ComplexValidationTests
         config.Fields[0].Selector?.Expression.Should().Contain("level");
     }
 
-    [Test]
+    [Fact]
     public void Configuration_WithMultipleFields_ShouldValidateAll()
     {
         // Arrange & Act
@@ -76,7 +75,7 @@ public class ComplexValidationTests
         entity.Fields.Select(f => f.Name).Should().BeEquivalentTo(new[] { "Name", "Price", "Description" });
     }
 
-    [Test]
+    [Fact]
     public void Configuration_WithPipeline_ShouldValidate()
     {
         // Arrange & Act
@@ -97,7 +96,7 @@ public class ComplexValidationTests
         config.Stages.Should().HaveCount(2);
     }
 
-    [Test]
+    [Fact]
     public void Configuration_WithScheduling_ShouldValidate()
     {
         // Arrange & Act
@@ -113,7 +112,7 @@ public class ComplexValidationTests
         config.Enabled.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void Configuration_WithEmptyEntities_ShouldBeValid()
     {
         // Arrange & Act
@@ -127,7 +126,7 @@ public class ComplexValidationTests
         config.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public void Configuration_WithDuplicateEntityNames_ShouldBeDetectable()
     {
         // Arrange & Act
@@ -148,7 +147,7 @@ public class ComplexValidationTests
         duplicateNames[0].Should().Be("Entity");
     }
 
-    [Test]
+    [Fact]
     public void Configuration_WithNavigationRules_ShouldValidate()
     {
         // Arrange & Act

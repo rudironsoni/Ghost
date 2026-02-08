@@ -1,22 +1,20 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Strategies;
 using Microsoft.Extensions.Logging.Abstractions;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Strategies;
 
-[TestFixture]
 public class StrategyRouterTests
 {
-    private StrategyRouter _router = null!;
+    private readonly StrategyRouter _router;
 
-    [SetUp]
-    public void Setup()
+    public StrategyRouterTests()
     {
         _router = new StrategyRouter(NullLogger<StrategyRouter>.Instance);
     }
 
-    [Test]
+    [Fact]
     public void RegisterStrategy_WithValidStrategy_ShouldRegister()
     {
         // Arrange
@@ -31,7 +29,7 @@ public class StrategyRouterTests
         metrics.Should().ContainKey("TestStrategy");
     }
 
-    [Test]
+    [Fact]
     public void RegisterStrategy_WithNullName_ShouldThrow()
     {
         // Arrange
@@ -42,14 +40,14 @@ public class StrategyRouterTests
         Assert.Throws<ArgumentNullException>(() => _router.RegisterStrategy(null!, strategy));
     }
 
-    [Test]
+    [Fact]
     public void RegisterStrategy_WithNullStrategy_ShouldThrow()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => _router.RegisterStrategy("Test", null!));
     }
 
-    [Test]
+    [Fact]
     public async Task ExecuteAsync_WithSuccessfulStrategy_ShouldReturnSuccess()
     {
         // Arrange
@@ -73,7 +71,7 @@ public class StrategyRouterTests
         result.Data.Should().Be(expectedData);
     }
 
-    [Test]
+    [Fact]
     public async Task ExecuteAsync_WithFailingStrategy_ShouldTryNextStrategy()
     {
         // Arrange
@@ -99,7 +97,7 @@ public class StrategyRouterTests
         result.StrategyName.Should().Be("SuccessStrategy");
     }
 
-    [Test]
+    [Fact]
     public async Task ExecuteAsync_WithAllStrategiesFailing_ShouldReturnFailure()
     {
         // Arrange
@@ -125,7 +123,7 @@ public class StrategyRouterTests
         result.ErrorMessage.Should().Contain("All strategies failed");
     }
 
-    [Test]
+    [Fact]
     public async Task ExecuteStrategyAsync_WithValidName_ShouldExecuteStrategy()
     {
         // Arrange
@@ -149,7 +147,7 @@ public class StrategyRouterTests
         result.Data.Should().Be(expectedData);
     }
 
-    [Test]
+    [Fact]
     public void ExecuteStrategyAsync_WithInvalidName_ShouldThrow()
     {
         // Arrange
@@ -165,7 +163,7 @@ public class StrategyRouterTests
             async () => await _router.ExecuteStrategyAsync("NonExistent", context));
     }
 
-    [Test]
+    [Fact]
     public async Task ExecuteChainAsync_WithSuccessfulStrategies_ShouldExecuteAll()
     {
         // Arrange
@@ -203,7 +201,7 @@ public class StrategyRouterTests
         ((Dictionary<string, object>)result.Data!).Should().HaveCount(2);
     }
 
-    [Test]
+    [Fact]
     public async Task ExecuteChainAsync_WithStopOnFailure_ShouldStopOnFirstFailure()
     {
         // Arrange
@@ -245,7 +243,7 @@ public class StrategyRouterTests
         ((int)result.Metadata!["StrategiesExecuted"]).Should().Be(2); // Only first two executed
     }
 
-    [Test]
+    [Fact]
     public void GetMetrics_ShouldReturnRegisteredStrategies()
     {
         // Arrange
@@ -263,7 +261,7 @@ public class StrategyRouterTests
         metrics.Should().ContainKey("Strategy2");
     }
 
-    [Test]
+    [Fact]
     public async Task GetMetrics_AfterExecution_ShouldUpdateMetrics()
     {
         // Arrange
@@ -285,7 +283,7 @@ public class StrategyRouterTests
         metrics["TestStrategy"].SuccessCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task ResetMetrics_ShouldClearMetrics()
     {
         // Arrange

@@ -1,36 +1,34 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Engine.Queue;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 
-[TestFixture]
 public class InMemoryRequestQueueTests
 {
-    private InMemoryRequestQueue _queue = null!;
+    private InMemoryRequestQueue _queue;
 
-    [SetUp]
-    public void Setup()
+    public InMemoryRequestQueueTests()
     {
         _queue = new InMemoryRequestQueue();
     }
 
-    [Test]
+    [Fact]
     public void Count_WhenEmpty_ShouldReturnZero()
     {
         // Act & Assert
         _queue.Count.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public void IsEmpty_WhenEmpty_ShouldReturnTrue()
     {
         // Act & Assert
         _queue.IsEmpty.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task EnqueueAsync_WithNullRequest_ShouldThrow()
     {
         // Act
@@ -40,7 +38,7 @@ public class InMemoryRequestQueueTests
         await act.Should().ThrowAsync<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public async Task EnqueueAsync_WithValidRequest_ShouldIncreaseCount()
     {
         // Arrange
@@ -54,7 +52,7 @@ public class InMemoryRequestQueueTests
         _queue.IsEmpty.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task EnqueueAsync_WithDuplicateUrl_ShouldNotAddAgain()
     {
         // Arrange
@@ -69,7 +67,7 @@ public class InMemoryRequestQueueTests
         _queue.Count.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task DequeueAsync_WhenEmpty_ShouldReturnNull()
     {
         // Act
@@ -79,7 +77,7 @@ public class InMemoryRequestQueueTests
         result.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task DequeueAsync_WithOneItem_ShouldReturnAndRemove()
     {
         // Arrange
@@ -96,7 +94,7 @@ public class InMemoryRequestQueueTests
         _queue.IsEmpty.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task DequeueAsync_WithMultipleItems_ShouldReturnItemsBasedOnPriority()
     {
         // Arrange - All with same priority (default 0), so order may vary based on internal implementation
@@ -116,7 +114,7 @@ public class InMemoryRequestQueueTests
         _queue.Count.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public async Task EnqueueAsync_WithPriority_ShouldRespectPriority()
     {
         // Arrange
@@ -135,7 +133,7 @@ public class InMemoryRequestQueueTests
         result3!.Url.Should().Be("https://example.com/low");
     }
 
-    [Test]
+    [Fact]
     public async Task PeekAsync_WhenEmpty_ShouldReturnNull()
     {
         // Act
@@ -145,7 +143,7 @@ public class InMemoryRequestQueueTests
         result.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task PeekAsync_ShouldReturnWithoutRemoving()
     {
         // Arrange
@@ -164,7 +162,7 @@ public class InMemoryRequestQueueTests
         _queue.Count.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task ClearAsync_ShouldRemoveAllItems()
     {
         // Arrange
@@ -180,7 +178,7 @@ public class InMemoryRequestQueueTests
         _queue.IsEmpty.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ClearAsync_ShouldClearSeenUrls()
     {
         // Arrange
@@ -195,7 +193,7 @@ public class InMemoryRequestQueueTests
         _queue.Count.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task ContainsAsync_WithNullUrl_ShouldThrow()
     {
         // Act
@@ -205,7 +203,7 @@ public class InMemoryRequestQueueTests
         await act.Should().ThrowAsync<ArgumentNullException>();
     }
 
-    [Test]
+    [Fact]
     public async Task ContainsAsync_WithSeenUrl_ShouldReturnTrue()
     {
         // Arrange
@@ -219,7 +217,7 @@ public class InMemoryRequestQueueTests
         contains.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task ContainsAsync_WithUnseenUrl_ShouldReturnFalse()
     {
         // Act
@@ -229,7 +227,7 @@ public class InMemoryRequestQueueTests
         contains.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task ContainsAsync_AfterDequeue_ShouldStillReturnTrue()
     {
         // Arrange
@@ -244,7 +242,7 @@ public class InMemoryRequestQueueTests
         contains.Should().BeTrue(); // URL stays in seen list
     }
 
-    [Test]
+    [Fact]
     public async Task ThreadSafety_ConcurrentEnqueue_ShouldHandleCorrectly()
     {
         // Arrange
@@ -264,7 +262,7 @@ public class InMemoryRequestQueueTests
         _queue.Count.Should().Be(100);
     }
 
-    [Test]
+    [Fact]
     public async Task ThreadSafety_ConcurrentDequeue_ShouldHandleCorrectly()
     {
         // Arrange
