@@ -1,0 +1,137 @@
+---
+# HorizontalPodAutoscaler for Ghost Workers
+# Automatically scales workers based on Redis queue depth
+# Min: 3 replicas, Max: 100 replicas
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ghost-worker-hpa
+  namespace: ghost
+  labels:
+    app: ghost
+    component: worker
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ghost-worker
+  minReplicas: 3
+  maxReplicas: 100
+  metrics:
+  # Scale based on CPU utilization
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  # Scale based on memory utilization
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  # Scale based on custom metric (Redis queue depth)
+  # Note: Requires Prometheus Adapter or KEDA for custom metrics
+  - type: External
+    external:
+      metric:
+        name: redis_queue_length
+        selector:
+          matchLabels:
+            queue: ghost_jobs_queue
+      target:
+        type: AverageValue
+        averageValue: "100" # Target 100 jobs per worker
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300 # Wait 5 minutes before scaling down
+      policies:
+      - type: Percent
+        value: 50 # Scale down max 50% of current replicas at a time
+        periodSeconds: 60
+      - type: Pods
+        value: 5 # Or scale down max 5 pods at a time
+        periodSeconds: 60
+      selectPolicy: Min # Use the policy that removes fewest pods
+    scaleUp:
+      stabilizationWindowSeconds: 0 # Scale up immediately when needed
+      policies:
+      - type: Percent
+        value: 100 # Double the replicas if needed
+        periodSeconds: 60
+      - type: Pods
+        value: 10 # Or add max 10 pods at a time
+        periodSeconds: 60
+      selectPolicy: Max # Use the policy that adds most pods
+
+---
+# ServiceMonitor for Prometheus to scrape Ghost Worker metrics
+# Required for custom metrics-based scaling
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ghost-worker-metrics
+  namespace: ghost
+  labels:
+    app: ghost
+    component: worker
+spec:
+  selector:
+    matchLabels:
+      app: ghost
+      component: worker
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+
+---
+# PrometheusRule for alerting on scaling issues
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ghost-worker-scaling-alerts
+  namespace: ghost
+  labels:
+    app: ghost
+    component: worker
+spec:
+  groups:
+  - name: ghost-worker-scaling
+    interval: 30s
+    rules:
+    - alert: GhostWorkerHighQueueDepth
+      expr: redis_list_length{key="ghost:jobs:queue"} > 1000
+      for: 5m
+      labels:
+        severity: warning
+        component: ghost-worker
+      annotations:
+        summary: "High Redis queue depth for Ghost workers"
+        description: "Redis queue has {{ $value }} jobs pending, workers may be overwhelmed"
+    
+    - alert: GhostWorkerMaxReplicasReached
+      expr: kube_horizontalpodautoscaler_status_current_replicas{horizontalpodautoscaler="ghost-worker-hpa"} >= 100
+      for: 5m
+      labels:
+        severity: critical
+        component: ghost-worker
+      annotations:
+        summary: "Ghost worker HPA at maximum replicas"
+        description: "Worker autoscaler has reached max replicas (100), queue may continue growing"
+    
+    - alert: GhostWorkerScalingFailure
+      expr: |
+        kube_horizontalpodautoscaler_status_condition{condition="ScalingLimited",status="true",horizontalpodautoscaler="ghost-worker-hpa"} == 1
+      for: 10m
+      labels:
+        severity: warning
+        component: ghost-worker
+      annotations:
+        summary: "Ghost worker HPA scaling is limited"
+        description: "HPA cannot scale workers as needed, check resource constraints"
