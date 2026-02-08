@@ -115,7 +115,7 @@ public class RateLimitMiddlewareTests
     }
 
     [Test]
-    public void InvokeAsync_ExceedingLimitNoWait_ShouldThrow()
+    public async Task InvokeAsync_ExceedingLimitNoWait_ShouldThrow()
     {
         // Arrange
         var config = new Dictionary<string, object>
@@ -144,7 +144,7 @@ public class RateLimitMiddlewareTests
         };
 
         // Execute first request
-        middleware.InvokeAsync(context1, ctx => Task.CompletedTask).Wait();
+        await middleware.InvokeAsync(context1, ctx => Task.CompletedTask);
 
         var request2 = new Request
         {
