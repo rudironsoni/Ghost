@@ -22,7 +22,7 @@ public sealed class SessionManagerTests
 
         var manager = new SessionManager(options);
         var context = Substitute.For<IBrowserContext>();
-        
+
         var cookies = new List<BrowserContextCookiesResult>
         {
             new()
@@ -73,7 +73,7 @@ public sealed class SessionManagerTests
 
         var manager = new SessionManager(options);
         var context = Substitute.For<IBrowserContext>();
-        
+
         context.CookiesAsync().Returns(new List<BrowserContextCookiesResult>());
         context.StorageStateAsync().Returns("{\"cookies\":[],\"origins\":[]}");
 
@@ -109,12 +109,12 @@ public sealed class SessionManagerTests
 
         var manager = new SessionManager(options);
         var context = Substitute.For<IBrowserContext>();
-        
+
         context.CookiesAsync().Returns(new List<BrowserContextCookiesResult>());
         context.StorageStateAsync().Returns("{\"cookies\":[],\"origins\":[]}");
 
         var sessionId = await manager.SaveSessionAsync(context, "TestPlatform");
-        
+
         // Wait for session to expire
         await Task.Delay(10);
 
@@ -143,7 +143,7 @@ public sealed class SessionManagerTests
 
         var manager = new SessionManager(options);
         var context = Substitute.For<IBrowserContext>();
-        
+
         context.CookiesAsync().Returns(new List<BrowserContextCookiesResult>());
         context.StorageStateAsync().Returns("{\"cookies\":[],\"origins\":[]}");
 
