@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
 using Ghost.Platform.Indeed.Internal;
-using Ghost.Platform.Indeed.Jobs;
 using Microsoft.Extensions.Logging;
 
 namespace Ghost.Platform.Indeed;
@@ -13,25 +12,15 @@ namespace Ghost.Platform.Indeed;
 public class IndeedJobClient : Ghost.Abstractions.IJobScraper
 {
     private readonly IndeedApiClient _api;
-    private readonly IndeedJobDetailsScraper? _detailsScraper;
     private readonly ILogger<IndeedJobClient> _logger;
     private static readonly Action<ILogger, int, Exception?> LogRawCount =
         LoggerMessage.Define<int>(LogLevel.Information, new EventId(1001, "IndeedRawCount"), "IndeedApiClient returned {Count} raw items.");
     private static readonly Action<ILogger, int, Exception?> LogParsedCount =
         LoggerMessage.Define<int>(LogLevel.Information, new EventId(1002, "ParsedJobListings"), "Parsed {Count} JobListings.");
-    private static readonly Action<ILogger, int, int, Exception?> LogResponseValidation =
-        LoggerMessage.Define<int, int>(LogLevel.Information, new EventId(1003, "ResponseValidation"), "Response validation: {ValidCount}/{TotalCount} jobs passed validation.");
 
     public IndeedJobClient(IndeedApiClient api, ILogger<IndeedJobClient> logger)
     {
         _api = api;
-        _logger = logger;
-    }
-
-    public IndeedJobClient(IndeedApiClient api, IndeedJobDetailsScraper detailsScraper, ILogger<IndeedJobClient> logger)
-    {
-        _api = api;
-        _detailsScraper = detailsScraper;
         _logger = logger;
     }
 
@@ -55,27 +44,10 @@ public class IndeedJobClient : Ghost.Abstractions.IJobScraper
             list.AddRange(parsed);
         }
 
-        // Validate response quality
-        var validJobs = ValidateJobListings(list);
         LogRawCount(_logger, rawCount, null);
         LogParsedCount(_logger, parsedCount, null);
-        LogResponseValidation(_logger, validJobs.Count, list.Count, null);
 
-        return validJobs;
-    }
-
-    /// <summary>
-    /// Validates job listings to filter out incomplete or malformed entries.
-    /// </summary>
-    private List<JobListing> ValidateJobListings(List<JobListing> jobs)
-    {
-        return jobs.Where(job =>
-            !string.IsNullOrWhiteSpace(job.Id) &&
-            !string.IsNullOrWhiteSpace(job.Title) &&
-            !string.IsNullOrWhiteSpace(job.Company) &&
-            job.Title.Length >= 3 && // Minimum title length
-            job.Company.Length >= 2   // Minimum company name length
-        ).ToList();
+        return list;
     }
 
     /// <summary>
@@ -132,21 +104,8 @@ public class IndeedJobClient : Ghost.Abstractions.IJobScraper
         }
     }
 
-    public async Task<JobListing> GetJobDetailsAsync(string jobId, CancellationToken ct = default)
-    {
-        if (_detailsScraper != null)
-        {
-            return await _detailsScraper.GetJobDetailsAsync(jobId, ct);
-        }
-
-        // Fallback: return minimal job listing
-        return new JobListing
-        {
-            Id = jobId,
-            Source = "Indeed",
-            Url = $"https://indeed.com/viewjob?jk={jobId}"
-        };
-    }
+    public Task<JobListing> GetJobDetailsAsync(string jobId, CancellationToken ct = default) =>
+        Task.FromResult(new JobListing { Id = jobId, Source = "Indeed" });
 
     public Task<JobApplication> ApplyAsync(string jobId, ApplicationDetails details, CancellationToken ct = default) =>
         Task.FromResult(new JobApplication());
