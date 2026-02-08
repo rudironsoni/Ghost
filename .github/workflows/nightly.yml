@@ -32,10 +32,10 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           global-json-file: global.json
 
-      - name: Install Playwright
+      - name: Install Patchright
         run: |
-          dotnet tool install --global Microsoft.Playwright.CLI || true
-          playwright install chromium firefox webkit
+          dotnet tool install --global Patchright.CLI || true
+          patchright install chromium
 
       - name: Cache NuGet
         uses: actions/cache@v4
@@ -90,10 +90,10 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           global-json-file: global.json
 
-      - name: Install Playwright
+      - name: Install Patchright
         run: |
-          dotnet tool install --global Microsoft.Playwright.CLI || true
-          playwright install ${{ matrix.browser }}
+          dotnet tool install --global Patchright.CLI || true
+          patchright install ${{ matrix.browser }}
 
       - name: Cache NuGet
         uses: actions/cache@v4
@@ -192,10 +192,10 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           global-json-file: global.json
 
-      - name: Install Playwright
+      - name: Install Patchright
         run: |
-          dotnet tool install --global Microsoft.Playwright.CLI || true
-          playwright install chromium
+          dotnet tool install --global Patchright.CLI || true
+          patchright install chromium
 
       - name: Cache NuGet
         uses: actions/cache@v4
@@ -276,10 +276,10 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           global-json-file: global.json
 
-      - name: Install Playwright
+      - name: Install Patchright
         run: |
-          dotnet tool install --global Microsoft.Playwright.CLI || true
-          playwright install chromium
+          dotnet tool install --global Patchright.CLI || true
+          patchright install chromium
 
       - name: Cache NuGet
         uses: actions/cache@v4
