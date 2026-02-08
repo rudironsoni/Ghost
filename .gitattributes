@@ -1,3 +1,16 @@
 
+# Line ending normalization
+* text=auto eol=lf
+
+# Explicitly set text files to LF
+*.cs text eol=lf
+*.csproj text eol=lf
+*.sln text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.sh text eol=lf
+
 # Use bd merge for beads JSONL files
 .beads/issues.jsonl merge=beads

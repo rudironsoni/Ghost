@@ -1,0 +1,14 @@
+{
+  "ref": "refs/heads/main",
+  "repository": {
+    "name": "Ghost",
+    "owner": {
+      "login": "rudironsoni"
+    },
+    "default_branch": "main"
+  },
+  "head_commit": {
+    "id": "abc123def456",
+    "message": "feat: test commit"
+  }
+}

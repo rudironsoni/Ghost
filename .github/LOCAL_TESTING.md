@@ -64,15 +64,50 @@ curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo ba
    act -j build
    ```
 
-3. **Simulate a pull request event:**
+3. **Simulate a pull request event with mock data:**
    ```bash
-   act pull_request
+   act pull_request -e .github/test-events/pr-event.json
    ```
 
 4. **Run with verbose output:**
    ```bash
    act -v
    ```
+
+---
+
+## Testing Pull Request Workflows
+
+The PR validation workflow requires PR context. Use the provided mock event files:
+
+### Run PR Title Validation
+
+```bash
+# Run with mock PR event
+act -j validate-title -e .github/test-events/pr-event.json
+
+# Or set PR_TITLE environment variable
+act -j validate-title --env PR_TITLE="feat: my feature"
+```
+
+### Run Lint and Format Check
+
+```bash
+# Run formatting check (handles line endings automatically)
+act -j lint-format
+```
+
+### Run Full PR Validation
+
+```bash
+# Run all PR validation jobs (some may be skipped due to dependencies)
+act pull_request -e .github/test-events/pr-event.json
+
+# Or run specific jobs in sequence
+act -j validate-title -e .github/test-events/pr-event.json
+act -j lint-format
+act -j build
+```
 
 ---
 
@@ -280,21 +315,24 @@ docker images | grep act | awk '{print $3}' | xargs docker rmi
 #### PR Validation Workflow
 
 ```bash
-# Run full PR validation
-act pull_request -W .github/workflows/pr-validation.yml
+# Run full PR validation with mock event
+act pull_request -e .github/test-events/pr-event.json
 
 # Run only build and test
 act -j build -j test
 
-# Skip title validation (requires GitHub context)
-act pull_request --skip validate-title
+# Run PR title validation with custom title
+act -j validate-title --env PR_TITLE="fix(core): resolve memory leak"
+
+# Test formatting
+act -j lint-format
 ```
 
 #### CI Workflow
 
 ```bash
-# Run CI on push event
-act push -W .github/workflows/ci.yml
+# Run CI on push event with mock data
+act push -e .github/test-events/push-event.json -W .github/workflows/ci.yml
 ```
 
 #### Nightly Workflow
@@ -321,13 +359,23 @@ act -j test --matrix dotnet-version:9.0
 
 ### Custom Event Payloads
 
+Mock event files are provided in `.github/test-events/`:
+- `pr-event.json` - Pull request event with sample PR data
+- `push-event.json` - Push event with sample commit data
+
 ```bash
-# Create event payload JSON
-cat > event.json << 'EOF'
+# Use provided mock PR event
+act pull_request -e .github/test-events/pr-event.json
+
+# Use provided mock push event
+act push -e .github/test-events/push-event.json
+
+# Create custom event payload
+cat > custom-event.json << 'EOF'
 {
   "pull_request": {
-    "number": 123,
-    "title": "feat: add new feature",
+    "number": 456,
+    "title": "feat(platforms): add Indeed scraper",
     "base": {"sha": "abc123"},
     "head": {"sha": "def456"}
   }
@@ -335,7 +383,7 @@ cat > event.json << 'EOF'
 EOF
 
 # Run with custom payload
-act pull_request -e event.json
+act pull_request -e custom-event.json
 ```
 
 ### Platform-Specific Testing
@@ -358,9 +406,10 @@ act -P ubuntu-latest=mcr.microsoft.com/dotnet/sdk:9.0
    - `github.token` may not work for API calls
    - `github.event` context is simulated
    - Repository metadata may be incomplete
+   - **Workaround**: Use `.github/test-events/*.json` files for mock data
 
 2. **Third-Party Actions**: Some actions may not work locally
-   - `actions/github-script@v7`: Limited GitHub API access
+   - `actions/github-script@v7`: Limited GitHub API access (but PR title validation now works with fallback)
    - `dorny/test-reporter@v1`: Requires GitHub API
    - `actions/cache@v4`: Works but cache is container-local
 
@@ -372,31 +421,61 @@ act -P ubuntu-latest=mcr.microsoft.com/dotnet/sdk:9.0
    - Never commit secrets to version control
    - Use environment variables or secret managers for sensitive data
 
+5. **Line Endings**: Container may use different line endings than host
+   - **Fixed**: Workflow now normalizes line endings automatically
+   - `.gitattributes` enforces LF line endings for all text files
+
 ### Workarounds
+
+#### GitHub API and Context Issues
+
+The workflow has been updated to handle missing GitHub context:
+
+```bash
+# PR title validation now works with mock events
+act -j validate-title -e .github/test-events/pr-event.json
+
+# Or use environment variable
+act -j validate-title --env PR_TITLE="feat: my feature"
+
+# If both are missing, uses test default: "test: default title for local testing"
+act -j validate-title
+```
 
 #### Skip Jobs That Require GitHub API
 
 ```bash
 # Skip jobs that won't work locally
-act --skip validate-title --skip pr-summary
+act --skip pr-summary
 ```
 
 #### Mock GitHub API Responses
 
-Create a mock API server or use environment variables:
+Use the provided mock event files or create custom ones:
 
 ```bash
+# Use provided mock events
+act pull_request -e .github/test-events/pr-event.json
+act push -e .github/test-events/push-event.json
+
+# Set environment variables
 act -s GITHUB_TOKEN=mock_token --env GITHUB_REPOSITORY=rudironsoni/Ghost
 ```
 
 #### Use Conditional Execution
 
-Add conditions to workflow steps:
+Workflows now handle act testing gracefully with fallbacks:
 
 ```yaml
-- name: Call GitHub API
-  if: github.event_name != 'act_local'
-  run: gh api ...
+# Example: PR title validation with fallback
+- name: Check PR Title
+  uses: actions/github-script@v7
+  with:
+    script: |
+      const title = context.payload.pull_request?.title 
+        || process.env.PR_TITLE 
+        || 'test: default title for local testing';
+      // validation logic...
 ```
 
 ---
@@ -410,11 +489,18 @@ Add conditions to workflow steps:
    # Quick validation during development
    act -j lint-format
    act -j build
+   
+   # With mock PR event for title validation
+   act -j validate-title -e .github/test-events/pr-event.json
    ```
 
 3. **Pre-Push Validation**: Run full workflow before pushing:
    ```bash
-   act pull_request --skip validate-title
+   # Full PR validation
+   act pull_request -e .github/test-events/pr-event.json
+   
+   # Or run key jobs
+   act -j lint-format && act -j build && act -j test
    ```
 
 4. **Cache NuGet Packages**: Mount host NuGet cache for faster restores:

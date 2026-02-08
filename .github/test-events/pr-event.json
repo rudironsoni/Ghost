@@ -1,0 +1,15 @@
+{
+  "pull_request": {
+    "number": 123,
+    "title": "feat: test feature for local act testing",
+    "draft": false,
+    "head": {
+      "ref": "feature/test",
+      "sha": "abc123def456"
+    },
+    "base": {
+      "ref": "main",
+      "sha": "def456abc123"
+    }
+  }
+}
