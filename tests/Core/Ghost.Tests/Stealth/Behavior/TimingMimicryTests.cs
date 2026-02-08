@@ -1,0 +1,88 @@
+using Ghost.Stealth.Behavior;
+
+namespace Ghost.Tests.Stealth.Behavior;
+
+public class TimingMimicryTests
+{
+    [Fact]
+    public async Task NavigationDelayAsync_TakesExpectedTime()
+    {
+        // Arrange
+        var timing = new TimingMimicry();
+        var startTime = DateTime.UtcNow;
+
+        // Act
+        await timing.NavigationDelayAsync();
+
+        // Assert
+        var elapsed = DateTime.UtcNow - startTime;
+        Assert.InRange(elapsed.TotalMilliseconds, 1900, 5200); // 2000-5000ms + buffer
+    }
+
+    [Fact]
+    public async Task PreClickDelayAsync_TakesExpectedTime()
+    {
+        // Arrange
+        var timing = new TimingMimicry();
+        var startTime = DateTime.UtcNow;
+
+        // Act
+        await timing.PreClickDelayAsync();
+
+        // Assert
+        var elapsed = DateTime.UtcNow - startTime;
+        Assert.InRange(elapsed.TotalMilliseconds, 400, 1700); // 500-1500ms + buffer
+    }
+
+    [Fact]
+    public async Task PostClickDelayAsync_TakesExpectedTime()
+    {
+        // Arrange
+        var timing = new TimingMimicry();
+        var startTime = DateTime.UtcNow;
+
+        // Act
+        await timing.PostClickDelayAsync();
+
+        // Assert
+        var elapsed = DateTime.UtcNow - startTime;
+        Assert.InRange(elapsed.TotalMilliseconds, 900, 3200); // 1000-3000ms + buffer
+    }
+
+    [Fact]
+    public async Task CustomDelayAsync_TakesExpectedTime()
+    {
+        // Arrange
+        var timing = new TimingMimicry();
+        var startTime = DateTime.UtcNow;
+
+        // Act
+        await timing.CustomDelayAsync(100, 200);
+
+        // Assert
+        var elapsed = DateTime.UtcNow - startTime;
+        Assert.InRange(elapsed.TotalMilliseconds, 90, 250); // 100-200ms + buffer
+    }
+
+    [Fact]
+    public async Task CustomDelayAsync_ThrowsOnInvalidRange()
+    {
+        // Arrange
+        var timing = new TimingMimicry();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            async () => await timing.CustomDelayAsync(100, 50));
+    }
+
+    [Fact]
+    public async Task CustomDelayAsync_ThrowsOnNegativeMin()
+    {
+        // Arrange
+        var timing = new TimingMimicry();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            async () => await timing.CustomDelayAsync(-1, 100));
+    }
+}
