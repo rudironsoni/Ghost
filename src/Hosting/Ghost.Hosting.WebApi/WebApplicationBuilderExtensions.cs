@@ -20,4 +20,15 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddGhost(builder.Configuration, configure);
         return builder;
     }
+
+    /// <summary>
+    /// Adds correlation ID middleware to the request pipeline.
+    /// </summary>
+    /// <param name="app">Web application.</param>
+    /// <returns>The same app instance.</returns>
+    public static WebApplication UseCorrelationId(this WebApplication app)
+    {
+        app.UseMiddleware<CorrelationIdMiddleware>();
+        return app;
+    }
 }
