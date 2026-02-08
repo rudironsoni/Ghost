@@ -8,12 +8,17 @@ namespace Ghost.Consent;
 
 /// <summary>
 /// Default implementation of IConsentHandler for automated consent management.
-/// Detects and handles 25+ Consent Management Platforms (CMPs).
+/// Detects and handles 25+ Consent Management Platforms (CMPs) with advanced features:
+/// - Shadow DOM support
+/// - Multi-step consent flows
+/// - Iframe-based CMPs
+/// - Region-aware detection (GDPR, CCPA, LGPD)
 /// </summary>
 public class ConsentHandler : IConsentHandler
 {
     private readonly ILogger<ConsentHandler> _logger;
     private readonly int _timeoutMs;
+    private readonly ConsentFlowHandler _flowHandler;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConsentHandler"/> class.
@@ -24,6 +29,7 @@ public class ConsentHandler : IConsentHandler
     {
         _logger = logger ?? NullLogger<ConsentHandler>.Instance;
         _timeoutMs = timeoutMs;
+        _flowHandler = new ConsentFlowHandler();
     }
 
     /// <inheritdoc/>
@@ -107,6 +113,14 @@ public class ConsentHandler : IConsentHandler
 
         _logger.LogDebug("Checking for consent banners on page: {Url}", page.Url);
 
+        // Detect privacy regulation for context
+        var regulation = await RegionDetector.DetectRegulationAsync(page);
+        if (regulation != RegionDetector.PrivacyRegulation.Unknown)
+        {
+            _logger.LogInformation("Detected privacy regulation: {Regulation}", regulation);
+            _logger.LogDebug("Strategy: {Strategy}", RegionDetector.GetConsentStrategy(regulation));
+        }
+
         var cmpType = await DetectCMPAsync(page);
         if (cmpType == null)
         {
@@ -119,6 +133,7 @@ public class ConsentHandler : IConsentHandler
 
     /// <summary>
     /// Internal method to detect if a specific CMP is present on the page.
+    /// Enhanced with shadow DOM support.
     /// </summary>
     private async Task<bool> DetectCMPInternalAsync(IPage page, CMPConfig config)
     {
@@ -138,16 +153,24 @@ public class ConsentHandler : IConsentHandler
                 }
                 else
                 {
-                    // For regular selectors, check visibility
+                    // Check regular DOM first
                     var element = await page.QuerySelectorAsync(selector);
                     if (element != null)
                     {
                         var isVisible = await element.IsVisibleAsync();
                         if (isVisible)
                         {
-                            _logger.LogDebug("Found CMP element: {Selector}", selector);
+                            _logger.LogDebug("Found CMP element in regular DOM: {Selector}", selector);
                             return true;
                         }
+                    }
+
+                    // Check shadow DOM if not found in regular DOM
+                    var foundInShadow = await ShadowDOMHelper.FindInShadowDOMAsync(page, selector);
+                    if (foundInShadow)
+                    {
+                        _logger.LogDebug("Found CMP element in shadow DOM: {Selector}", selector);
+                        return true;
                     }
                 }
             }
@@ -204,6 +227,7 @@ public class ConsentHandler : IConsentHandler
                 }
                 else
                 {
+                    // Try regular DOM first
                     var button = await page.QuerySelectorAsync(selector);
                     if (button != null)
                     {
@@ -212,7 +236,7 @@ public class ConsentHandler : IConsentHandler
 
                         if (isVisible && isEnabled)
                         {
-                            _logger.LogDebug("Clicking consent button: {Selector}", selector);
+                            _logger.LogDebug("Clicking consent button in regular DOM: {Selector}", selector);
 
                             try
                             {
@@ -227,6 +251,14 @@ public class ConsentHandler : IConsentHandler
                             }
                         }
                     }
+
+                    // Try shadow DOM if regular DOM failed
+                    var clickedInShadow = await ShadowDOMHelper.ClickInShadowDOMAsync(page, selector);
+                    if (clickedInShadow)
+                    {
+                        _logger.LogDebug("Clicked consent button in shadow DOM: {Selector}", selector);
+                        return true;
+                    }
                 }
             }
             catch (Exception ex)
@@ -240,44 +272,10 @@ public class ConsentHandler : IConsentHandler
 
     /// <summary>
     /// Handles multi-step consent flows.
+    /// Delegates to ConsentFlowHandler for advanced detection.
     /// </summary>
     private async Task<bool> HandleMultiStepConsentAsync(IPage page, CMPConfig config)
     {
-        if (config.Steps == null || config.Steps.Length == 0)
-        {
-            _logger.LogWarning("Multi-step CMP {CmpName} has no steps defined", config.Name);
-            return false;
-        }
-
-        _logger.LogDebug("Handling multi-step consent for CMP: {CmpName}", config.Name);
-
-        foreach (var stepSelector in config.Steps)
-        {
-            try
-            {
-                var button = await page.QuerySelectorAsync(stepSelector);
-                if (button != null)
-                {
-                    var isVisible = await button.IsVisibleAsync();
-                    var isEnabled = await button.IsEnabledAsync();
-
-                    if (isVisible && isEnabled)
-                    {
-                        _logger.LogDebug("Clicking step: {Selector}", stepSelector);
-                        await button.ClickAsync();
-
-                        // Wait between steps
-                        await Task.Delay(500);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogDebug(ex, "Failed to click step: {Selector}", stepSelector);
-                return false;
-            }
-        }
-
-        return true;
+        return await _flowHandler.ExecuteMultiStepFlowAsync(page, config);
     }
 }
