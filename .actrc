@@ -1,29 +1,12 @@
-# act configuration for Ghost local workflow testing
-# https://github.com/nektos/act
-
-# Use smaller Docker images for faster execution
+# Act configuration for Ghost
+# Use medium-sized image for faster startup
 -P ubuntu-latest=catthehacker/ubuntu:act-latest
 
-# Bind mount the workspace to avoid copying large files
---container-options "--mount type=bind,source=$(pwd),target=/workspace"
-
-# Set working directory
---container-options "--workdir /workspace"
-
-# Use Docker socket for Docker-in-Docker scenarios
---container-options "-v /var/run/docker.sock:/var/run/docker.sock"
-
-# Suppress update checks
---no-recurse
-
-# Set default secrets (use .env for sensitive values)
-# -s GITHUB_TOKEN=<your_token>
-
-# Load environment variables from .env file if it exists
-# --env-file .env
-
-# Verbose output by default (comment out for quieter runs)
-# -v
+# Bind mount the repository
+--bind
 
 # Reuse containers for faster subsequent runs
 --reuse
+
+# Local .env file for secrets
+--env-file .env
