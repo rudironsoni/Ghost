@@ -4,7 +4,7 @@ using Ghost.Sdk.Spider.Storage.Sinks;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Moq.Protected;
-using NUnit.Framework;
+using Xunit;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -14,27 +14,24 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// <summary>
 /// Detailed tests for webhook storage edge cases and advanced scenarios
 /// </summary>
-[TestFixture]
-public class WebhookStorageDetailedTests
+public class WebhookStorageDetailedTests : IDisposable
 {
-    private Mock<HttpMessageHandler> _httpMessageHandler = null!;
-    private HttpClient _httpClient = null!;
+    private readonly Mock<HttpMessageHandler> _httpMessageHandler;
+    private readonly HttpClient _httpClient;
     private const string WebhookUrl = "https://webhook.example.com/receive";
 
-    [SetUp]
-    public void Setup()
+    public WebhookStorageDetailedTests()
     {
         _httpMessageHandler = new Mock<HttpMessageHandler>();
         _httpClient = new HttpClient(_httpMessageHandler.Object);
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         _httpClient.Dispose();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithTimeout_ShouldReturnFailure()
     {
         // Arrange
@@ -57,7 +54,7 @@ public class WebhookStorageDetailedTests
         result.Error.Should().Contain("timeout");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithComplexObject_ShouldSerializeCorrectly()
     {
         // Arrange
@@ -101,7 +98,7 @@ public class WebhookStorageDetailedTests
         content.Should().Contain("nested");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_WithLargeBatch_ShouldHandle()
     {
         // Arrange
@@ -128,7 +125,7 @@ public class WebhookStorageDetailedTests
         result.ItemsStored.Should().Be(1000);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithRetryableError_ShouldReturnFailure()
     {
         // Arrange
@@ -155,7 +152,7 @@ public class WebhookStorageDetailedTests
         result.Error.Should().Contain("ServiceUnavailable");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithJsonContent_ShouldSerializeProperly()
     {
         // Arrange
@@ -183,7 +180,7 @@ public class WebhookStorageDetailedTests
         content.Should().Contain("123");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithMinimalContext_ShouldSucceed()
     {
         // Arrange
@@ -205,7 +202,7 @@ public class WebhookStorageDetailedTests
         result.Success.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_WithPartialSuccess_ShouldReportCorrectly()
     {
         // Arrange
@@ -234,7 +231,7 @@ public class WebhookStorageDetailedTests
         result.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithSpecialCharacters_ShouldEscapeCorrectly()
     {
         // Arrange
@@ -269,7 +266,7 @@ public class WebhookStorageDetailedTests
         json.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithCircularReference_ShouldHandleGracefully()
     {
         // Arrange
@@ -293,7 +290,7 @@ public class WebhookStorageDetailedTests
         result.Success.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithContextMetadata_ShouldIncludeInPayload()
     {
         // Arrange

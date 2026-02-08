@@ -1,16 +1,15 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Storage.Contracts;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
 /// <summary>
 /// Additional comprehensive tests for Storage Pipeline to boost coverage.
 /// </summary>
-[TestFixture]
 public class StoragePipelineFullTests
 {
-    [Test]
+    [Fact]
     public async Task Pipeline_WithNullItem_ShouldHandleGracefully()
     {
         // Arrange
@@ -27,7 +26,7 @@ public class StoragePipelineFullTests
         result.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithTransformationThatReturnsNull_ShouldHandleGracefully()
     {
         // Arrange
@@ -46,7 +45,7 @@ public class StoragePipelineFullTests
         result.Should().NotBeNull();
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithMultipleTransformations_ShouldApplyInOrder()
     {
         // Arrange
@@ -85,7 +84,7 @@ public class StoragePipelineFullTests
         transformationOrder.Should().Equal(1, 2, 3);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithMultipleFilters_ShouldApplyAllFilters()
     {
         // Arrange
@@ -120,7 +119,7 @@ public class StoragePipelineFullTests
         mockStorage.StoreCount.Should().Be(1); // Only middle value passes both filters
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithFailingTransformation_ShouldReturnFailure()
     {
         // Arrange
@@ -140,7 +139,7 @@ public class StoragePipelineFullTests
         result.Error.Should().Contain("Transform failed");
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithAllStoragesFailing_ShouldReturnFailure()
     {
         // Arrange
@@ -160,7 +159,7 @@ public class StoragePipelineFullTests
         result.ItemsStored.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithPartialStorageFailure_AndContinueOnError_ShouldSucceed()
     {
         // Arrange
@@ -185,7 +184,7 @@ public class StoragePipelineFullTests
         storage3.StoreCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithMetricsEnabled_ShouldTrackStorage()
     {
         // Arrange
@@ -205,7 +204,7 @@ public class StoragePipelineFullTests
         mockStorage.StoreCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithMetricsEnabled_ShouldTrackFilteredItems()
     {
         // Arrange
@@ -225,7 +224,7 @@ public class StoragePipelineFullTests
         mockStorage.StoreCount.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_BatchStore_WithEmptyCollection_ShouldSucceed()
     {
         // Arrange
@@ -244,7 +243,7 @@ public class StoragePipelineFullTests
         result.ItemsStored.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_BatchStore_WithLargeBatch_ShouldProcessAll()
     {
         // Arrange
@@ -264,7 +263,7 @@ public class StoragePipelineFullTests
         mockStorage.BatchStoreCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_ConcurrentStores_ShouldHandleSafely()
     {
         // Arrange
@@ -284,7 +283,7 @@ public class StoragePipelineFullTests
         mockStorage.StoreCount.Should().Be(20);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithValidator_ShouldRejectInvalidItems()
     {
         // Arrange
@@ -317,7 +316,7 @@ public class StoragePipelineFullTests
         mockStorage.StoreCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_WithMultipleValidators_ShouldApplyAll()
     {
         // Arrange
@@ -358,7 +357,7 @@ public class StoragePipelineFullTests
         mockStorage.StoreCount.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_InitializeMultipleTimes_ShouldBeIdempotent()
     {
         // Arrange
@@ -375,7 +374,7 @@ public class StoragePipelineFullTests
         storage.IsInitialized.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_FlushMultipleTimes_ShouldBeIdempotent()
     {
         // Arrange
@@ -391,7 +390,7 @@ public class StoragePipelineFullTests
         storage.IsFlushed.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task Pipeline_CloseMultipleTimes_ShouldBeIdempotent()
     {
         // Arrange

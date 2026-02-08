@@ -2,7 +2,7 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Storage.Contracts;
 using Ghost.Sdk.Spider.Storage.Sinks;
 using Microsoft.Extensions.Logging.Abstractions;
-using NUnit.Framework;
+using Xunit;
 using System.Text;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
@@ -10,15 +10,13 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// <summary>
 /// Advanced tests for ConsoleStorage covering edge cases and formatting scenarios.
 /// </summary>
-[TestFixture]
-public class ConsoleStorageAdvancedTests
+public class ConsoleStorageAdvancedTests : IDisposable
 {
-    private ConsoleStorage _storage = null!;
-    private StringWriter _consoleOutput = null!;
-    private TextWriter _originalOutput = null!;
+    private readonly ConsoleStorage _storage;
+    private readonly StringWriter _consoleOutput;
+    private readonly TextWriter _originalOutput;
 
-    [SetUp]
-    public void Setup()
+    public ConsoleStorageAdvancedTests()
     {
         _storage = new ConsoleStorage(NullLogger<ConsoleStorage>.Instance);
         _consoleOutput = new StringWriter();
@@ -26,14 +24,13 @@ public class ConsoleStorageAdvancedTests
         Console.SetOut(_consoleOutput);
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         Console.SetOut(_originalOutput);
         _consoleOutput.Dispose();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithComplexNestedObject_ShouldFormatCorrectly()
     {
         // Arrange
@@ -76,7 +73,7 @@ public class ConsoleStorageAdvancedTests
         output.Should().Contain("Inner");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithSpecialCharacters_ShouldHandleCorrectly()
     {
         // Arrange
@@ -102,7 +99,7 @@ public class ConsoleStorageAdvancedTests
         output.Should().Contain("Unicode:");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithLargeObject_ShouldHandleCorrectly()
     {
         // Arrange
@@ -122,7 +119,7 @@ public class ConsoleStorageAdvancedTests
         result.ItemsStored.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithDateTime_ShouldFormatCorrectly()
     {
         // Arrange
@@ -149,7 +146,7 @@ public class ConsoleStorageAdvancedTests
         output.Should().Contain("Modified");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_ShouldShowBatchHeader()
     {
         // Arrange
@@ -178,7 +175,7 @@ public class ConsoleStorageAdvancedTests
         output.Should().Contain("Items: 2");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_ShouldIncludeDecorators()
     {
         // Arrange
@@ -197,7 +194,7 @@ public class ConsoleStorageAdvancedTests
         lines.Should().Contain(line => line.StartsWith("-") && line.Length >= 80);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithEmptyObject_ShouldSucceed()
     {
         // Arrange
@@ -212,7 +209,7 @@ public class ConsoleStorageAdvancedTests
         result.ItemsStored.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_WithSingleItem_ShouldProcessCorrectly()
     {
         // Arrange
@@ -227,7 +224,7 @@ public class ConsoleStorageAdvancedTests
         result.ItemsStored.Should().Be(1);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithNumericTypes_ShouldFormatCorrectly()
     {
         // Arrange
@@ -254,7 +251,7 @@ public class ConsoleStorageAdvancedTests
         output.Should().Contain("99.99");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithBooleanValues_ShouldFormatCorrectly()
     {
         // Arrange
@@ -277,7 +274,7 @@ public class ConsoleStorageAdvancedTests
         output.Should().Contain("IsDeleted");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithArrays_ShouldFormatCorrectly()
     {
         // Arrange
@@ -300,7 +297,7 @@ public class ConsoleStorageAdvancedTests
         output.Should().Contain("three");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_WithManyItems_ShouldProcessAll()
     {
         // Arrange
@@ -326,7 +323,7 @@ public class ConsoleStorageAdvancedTests
         output.Should().Contain("Item50");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithContextMetadata_ShouldNotFailIfNotDisplayed()
     {
         // Arrange
@@ -352,7 +349,7 @@ public class ConsoleStorageAdvancedTests
         output.Should().Contain("MetadataSpider");
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithNullLogger_ShouldSucceed()
     {
         // Act
@@ -364,7 +361,7 @@ public class ConsoleStorageAdvancedTests
         storage.IsAvailable.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_ShouldRecordDuration()
     {
         // Arrange
@@ -378,7 +375,7 @@ public class ConsoleStorageAdvancedTests
         result.Duration.Should().BeGreaterThan(TimeSpan.Zero);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_ShouldRecordDuration()
     {
         // Arrange

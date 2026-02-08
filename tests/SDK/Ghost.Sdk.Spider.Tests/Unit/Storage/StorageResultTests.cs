@@ -1,16 +1,15 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Storage.Contracts;
-using NUnit.Framework;
+using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
 /// <summary>
 /// Tests for StorageResult class and its factory methods.
 /// </summary>
-[TestFixture]
 public class StorageResultTests
 {
-    [Test]
+    [Fact]
     public void CreateSuccess_ShouldCreateSuccessfulResult()
     {
         // Arrange
@@ -31,7 +30,7 @@ public class StorageResultTests
         result.Metadata.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void CreateFailure_ShouldCreateFailedResult()
     {
         // Arrange
@@ -53,7 +52,7 @@ public class StorageResultTests
         result.Metadata.Should().BeEmpty();
     }
 
-    [Test]
+    [Fact]
     public void CreateFailure_WithNullException_ShouldSucceed()
     {
         // Arrange
@@ -70,7 +69,7 @@ public class StorageResultTests
         result.Exception.Should().BeNull();
     }
 
-    [Test]
+    [Fact]
     public void StorageResult_WithMetadata_ShouldStoreMetadata()
     {
         // Arrange
@@ -97,7 +96,7 @@ public class StorageResultTests
         result.Metadata["key3"].Should().Be(true);
     }
 
-    [Test]
+    [Fact]
     public void StorageResult_WithZeroDuration_ShouldBeValid()
     {
         // Act
@@ -108,7 +107,7 @@ public class StorageResultTests
         result.Duration.Should().Be(TimeSpan.Zero);
     }
 
-    [Test]
+    [Fact]
     public void StorageResult_WithLargeDuration_ShouldBeValid()
     {
         // Arrange

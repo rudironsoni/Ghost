@@ -2,7 +2,7 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Configuration.Models;
 using Ghost.Sdk.Spider.Storage.Contracts;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using System.Data;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
@@ -11,16 +11,14 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// Tests for PostgreSQL storage implementation using mocking.
 /// These tests verify the expected behavior of PostgreSQL storage without requiring a real database.
 /// </summary>
-[TestFixture]
 public class PostgreSqlStorageTests
 {
-    private Mock<IDbConnection> _mockConnection = null!;
-    private Mock<IDbCommand> _mockCommand = null!;
-    private Mock<IDbTransaction> _mockTransaction = null!;
-    private PostgreSqlConfiguration _config = null!;
+    private readonly Mock<IDbConnection> _mockConnection;
+    private readonly Mock<IDbCommand> _mockCommand;
+    private readonly Mock<IDbTransaction> _mockTransaction;
+    private readonly PostgreSqlConfiguration _config;
 
-    [SetUp]
-    public void Setup()
+    public PostgreSqlStorageTests()
     {
         _mockConnection = new Mock<IDbConnection>();
         _mockCommand = new Mock<IDbCommand>();
@@ -38,7 +36,7 @@ public class PostgreSqlStorageTests
         };
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithValidConfiguration_ShouldCreate()
     {
         // Arrange & Act
@@ -49,7 +47,7 @@ public class PostgreSqlStorageTests
         storage.Name.Should().Be("PostgreSQL");
     }
 
-    [Test]
+    [Fact]
     public void IsAvailable_WithOpenConnection_ShouldReturnTrue()
     {
         // Arrange
@@ -63,7 +61,7 @@ public class PostgreSqlStorageTests
         isAvailable.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public void IsAvailable_WithClosedConnection_ShouldReturnFalse()
     {
         // Arrange
@@ -77,7 +75,7 @@ public class PostgreSqlStorageTests
         isAvailable.Should().BeFalse();
     }
 
-    [Test]
+    [Fact]
     public async Task InitializeAsync_ShouldOpenConnection()
     {
         // Arrange
@@ -90,7 +88,7 @@ public class PostgreSqlStorageTests
         _mockConnection.Verify(c => c.Open(), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task InitializeAsync_WithAutoCreateTable_ShouldCreateTable()
     {
         // Arrange
@@ -103,7 +101,7 @@ public class PostgreSqlStorageTests
         _mockConnection.Verify(c => c.CreateCommand(), Times.AtLeastOnce);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_ShouldExecuteInsertCommand()
     {
         // Arrange
@@ -127,7 +125,7 @@ public class PostgreSqlStorageTests
         _mockCommand.Verify(c => c.ExecuteNonQuery(), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithUpsert_ShouldExecuteUpsertCommand()
     {
         // Arrange
@@ -150,7 +148,7 @@ public class PostgreSqlStorageTests
         _mockCommand.Verify(c => c.ExecuteNonQuery(), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_ShouldExecuteBatchInsert()
     {
         // Arrange
@@ -179,7 +177,7 @@ public class PostgreSqlStorageTests
         _mockTransaction.Verify(t => t.Commit(), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_WithError_ShouldRollback()
     {
         // Arrange
@@ -197,7 +195,7 @@ public class PostgreSqlStorageTests
         _mockTransaction.Verify(t => t.Rollback(), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithNullValues_ShouldHandleCorrectly()
     {
         // Arrange
@@ -214,7 +212,7 @@ public class PostgreSqlStorageTests
         result.Success.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithLargeObject_ShouldHandle()
     {
         // Arrange
@@ -236,7 +234,7 @@ public class PostgreSqlStorageTests
         result.Success.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task FlushAsync_ShouldComplete()
     {
         // Arrange
@@ -249,7 +247,7 @@ public class PostgreSqlStorageTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public async Task CloseAsync_ShouldCloseConnection()
     {
         // Arrange
@@ -262,7 +260,7 @@ public class PostgreSqlStorageTests
         _mockConnection.Verify(c => c.Close(), Times.Once);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithCustomSchema_ShouldUseCorrectSchema()
     {
         // Arrange
@@ -281,7 +279,7 @@ public class PostgreSqlStorageTests
         // Would verify SQL contains "custom_schema" in real implementation
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_WithEmptyList_ShouldSucceed()
     {
         // Arrange
@@ -297,7 +295,7 @@ public class PostgreSqlStorageTests
         result.ItemsStored.Should().Be(0);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithConnectionFailure_ShouldReturnFailure()
     {
         // Arrange

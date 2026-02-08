@@ -4,7 +4,7 @@ using Ghost.Sdk.Spider.Storage.Sinks;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Moq.Protected;
-using NUnit.Framework;
+using Xunit;
 using System.Net;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
@@ -12,27 +12,24 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// <summary>
 /// Advanced tests for WebhookStorage covering edge cases and error scenarios.
 /// </summary>
-[TestFixture]
-public class WebhookStorageAdvancedTests
+public class WebhookStorageAdvancedTests : IDisposable
 {
-    private Mock<HttpMessageHandler> _httpMessageHandler = null!;
-    private HttpClient _httpClient = null!;
+    private readonly Mock<HttpMessageHandler> _httpMessageHandler;
+    private readonly HttpClient _httpClient;
     private const string WebhookUrl = "https://webhook.example.com/receive";
 
-    [SetUp]
-    public void Setup()
+    public WebhookStorageAdvancedTests()
     {
         _httpMessageHandler = new Mock<HttpMessageHandler>();
         _httpClient = new HttpClient(_httpMessageHandler.Object);
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         _httpClient.Dispose();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithCancellation_ShouldHandleCancellation()
     {
         // Arrange
@@ -58,7 +55,7 @@ public class WebhookStorageAdvancedTests
         result.Exception.Should().BeAssignableTo<OperationCanceledException>();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithTimeout_ShouldReturnFailure()
     {
         // Arrange
@@ -82,13 +79,13 @@ public class WebhookStorageAdvancedTests
         result.Exception.Should().BeOfType<TaskCanceledException>();
     }
 
-    [Test]
-    [TestCase(HttpStatusCode.BadRequest)]
-    [TestCase(HttpStatusCode.Unauthorized)]
-    [TestCase(HttpStatusCode.Forbidden)]
-    [TestCase(HttpStatusCode.NotFound)]
-    [TestCase(HttpStatusCode.ServiceUnavailable)]
-    [TestCase(HttpStatusCode.GatewayTimeout)]
+    [Theory]
+    [InlineData(HttpStatusCode.BadRequest)]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.Forbidden)]
+    [InlineData(HttpStatusCode.NotFound)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    [InlineData(HttpStatusCode.GatewayTimeout)]
     public async Task StoreAsync_WithVariousErrorCodes_ShouldReturnFailure(HttpStatusCode statusCode)
     {
         // Arrange
@@ -115,7 +112,7 @@ public class WebhookStorageAdvancedTests
         result.Error.Should().Contain(statusCode.ToString());
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithComplexObject_ShouldSerializeCorrectly()
     {
         // Arrange
@@ -168,7 +165,7 @@ public class WebhookStorageAdvancedTests
         content.Should().Contain("version");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_WithMixedTypes_ShouldSucceed()
     {
         // Arrange
@@ -198,7 +195,7 @@ public class WebhookStorageAdvancedTests
         result.ItemsStored.Should().Be(3);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_WithLargeBatch_ShouldHandleCorrectly()
     {
         // Arrange
@@ -230,7 +227,7 @@ public class WebhookStorageAdvancedTests
         result.Duration.Should().BeGreaterThan(TimeSpan.Zero);
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithNullValues_ShouldIgnoreNulls()
     {
         // Arrange
@@ -269,7 +266,7 @@ public class WebhookStorageAdvancedTests
         content.Should().NotContain("OptionalField");
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithCircularReference_ShouldIgnoreLoop()
     {
         // Arrange
@@ -293,7 +290,7 @@ public class WebhookStorageAdvancedTests
         result.Success.Should().BeTrue();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreBatchAsync_FailureDuringBatch_ShouldReturnFailure()
     {
         // Arrange
@@ -321,7 +318,7 @@ public class WebhookStorageAdvancedTests
         result.Error.Should().Contain("InternalServerError");
     }
 
-    [Test]
+    [Fact]
     public async Task FlushAsync_WithPendingOperations_ShouldComplete()
     {
         // Arrange
@@ -334,7 +331,7 @@ public class WebhookStorageAdvancedTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public async Task CloseAsync_AfterOperations_ShouldComplete()
     {
         // Arrange
@@ -356,7 +353,7 @@ public class WebhookStorageAdvancedTests
         await act.Should().NotThrowAsync();
     }
 
-    [Test]
+    [Fact]
     public async Task StoreAsync_WithContentHeaders_ShouldSetCorrectHeaders()
     {
         // Arrange
