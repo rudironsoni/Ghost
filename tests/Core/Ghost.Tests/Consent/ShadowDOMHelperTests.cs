@@ -78,7 +78,7 @@ public class ShadowDOMHelperTests
         // Arrange
         var page = Substitute.For<IPage>();
         page.EvaluateAsync<int>(Arg.Any<string>())
-            .Returns(Task.FromException<int>(new Exception("Test error")));
+            .Returns(Task.FromException<int>(new InvalidOperationException("Test error")));
 
         // Act
         var count = await ShadowDOMHelper.GetShadowRootCountAsync(page);
@@ -95,7 +95,7 @@ public class ShadowDOMHelperTests
         page.QuerySelectorAsync(Arg.Any<string>())
             .Returns(Task.FromResult<IElement?>(null));
         page.EvaluateAsync<bool>(Arg.Any<string>())
-            .Returns(Task.FromException<bool>(new Exception("Test error")));
+            .Returns(Task.FromException<bool>(new InvalidOperationException("Test error")));
 
         // Act
         var result = await ShadowDOMHelper.FindInShadowDOMAsync(page, ".test");
@@ -112,7 +112,7 @@ public class ShadowDOMHelperTests
         page.QuerySelectorAsync(Arg.Any<string>())
             .Returns(Task.FromResult<IElement?>(null));
         page.EvaluateAsync<bool>(Arg.Any<string>())
-            .Returns(Task.FromException<bool>(new Exception("Test error")));
+            .Returns(Task.FromException<bool>(new InvalidOperationException("Test error")));
 
         // Act
         var result = await ShadowDOMHelper.ClickInShadowDOMAsync(page, ".test");
