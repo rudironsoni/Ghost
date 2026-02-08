@@ -1,123 +1,412 @@
-name: CI
+name: CI - Main Integration
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.sln'
+      - '**/*.csproj'
+      - '.github/workflows/ci.yml'
+
+concurrency:
+  group: ci-main
+  cancel-in-progress: false
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  CONFIGURATION: Release
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
 
 jobs:
   build:
+    name: Build Solution
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 15
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
           global-json-file: global.json
-      
-      - name: Cache NuGet packages
+
+      - name: Cache NuGet
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
-      
-      - name: Restore dependencies
+
+      - name: Restore Dependencies
         run: dotnet restore Ghost.sln
-      
-      - name: Build solution
-        run: dotnet build Ghost.sln --configuration Release --no-restore --warnaserror -p:NoWarn=CA1016
-      
-      - name: Upload build artifacts
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
+
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-output
+          name: build-artifacts
           path: |
             **/bin/Release/
-            **/obj/Release/
-          retention-days: 1
+            !**/bin/Release/**/*.pdb
+          retention-days: 7
 
-  test:
+  unit-tests:
+    name: Unit Tests
     runs-on: ubuntu-latest
     needs: build
-    
+    timeout-minutes: 20
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
           global-json-file: global.json
-      
-      - name: Cache NuGet packages
+
+      - name: Cache NuGet
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
-      
-      - name: Restore dependencies
+
+      - name: Restore Dependencies
         run: dotnet restore Ghost.sln
-      
-      - name: Build solution
-        run: dotnet build Ghost.sln --configuration Release --no-restore --warnaserror -p:NoWarn=CA1016
-      
-      - name: Run tests
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
+
+      - name: Run Unit Tests
         run: |
           dotnet test Ghost.sln \
-            --configuration Release \
+            --configuration ${{ env.CONFIGURATION }} \
             --no-build \
             --verbosity normal \
             --logger "trx;LogFileName=test-results.trx" \
             --collect:"XPlat Code Coverage" \
-            --filter "FullyQualifiedName!~E2E"
-      
-      - name: Upload test results
+            --filter "FullyQualifiedName!~E2E&FullyQualifiedName!~Integration" \
+            -- RunConfiguration.MaxCpuCount=4
+
+      - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
+          name: unit-test-results
           path: |
             **/TestResults/**/*.trx
             **/TestResults/**/coverage.cobertura.xml
           retention-days: 7
-      
-      - name: Publish test results
-        if: always()
-        uses: dorny/test-reporter@v1
-        with:
-          name: .NET Tests
-          path: '**/TestResults/**/*.trx'
-          reporter: dotnet-trx
-          fail-on-error: true
 
-  code-quality:
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: '**/TestResults/**/coverage.cobertura.xml'
+          flags: unittests
+          name: unit-tests-coverage
+
+  integration-tests:
+    name: Integration Tests
     runs-on: ubuntu-latest
-    
+    needs: build
+    timeout-minutes: 30
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
           global-json-file: global.json
-      
-      - name: Install dotnet-format
-        run: dotnet tool install -g dotnet-format || dotnet tool update -g dotnet-format
-      
-      - name: Restore dependencies
+
+      - name: Install Playwright
+        run: |
+          dotnet tool install --global Microsoft.Playwright.CLI || true
+          playwright install chromium
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Dependencies
         run: dotnet restore Ghost.sln
-      
-      - name: Check code formatting
-        run: dotnet format Ghost.sln --verify-no-changes --verbosity diagnostic
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
+
+      - name: Run Integration Tests
+        run: |
+          dotnet test Ghost.sln \
+            --configuration ${{ env.CONFIGURATION }} \
+            --no-build \
+            --verbosity normal \
+            --logger "trx;LogFileName=integration-test-results.trx" \
+            --collect:"XPlat Code Coverage" \
+            --filter "FullyQualifiedName~Integration&FullyQualifiedName!~E2E" \
+            -- RunConfiguration.MaxCpuCount=2
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: |
+            **/TestResults/**/*.trx
+            **/TestResults/**/coverage.cobertura.xml
+          retention-days: 7
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Install Playwright
+        run: |
+          dotnet tool install --global Microsoft.Playwright.CLI || true
+          playwright install chromium
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
+
+      - name: Run E2E Tests (Shard ${{ matrix.shard }})
+        run: |
+          dotnet test Ghost.sln \
+            --configuration ${{ env.CONFIGURATION }} \
+            --no-build \
+            --verbosity normal \
+            --logger "trx;LogFileName=e2e-test-results-shard-${{ matrix.shard }}.trx" \
+            --filter "FullyQualifiedName~E2E" \
+            -- RunConfiguration.MaxCpuCount=1
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results-shard-${{ matrix.shard }}
+          path: |
+            **/TestResults/**/*.trx
+          retention-days: 7
+
+  codeql-analysis:
+    name: CodeQL Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
+          queries: security-and-quality
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:csharp"
+
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Run Dependency Check
+        run: |
+          dotnet list Ghost.sln package --vulnerable --include-transitive 2>&1 | tee vulnerability-report.txt
+          if grep -q "has the following vulnerable packages" vulnerability-report.txt; then
+            echo "⚠️ Vulnerable dependencies found"
+            cat vulnerability-report.txt
+            exit 1
+          fi
+
+      - name: Upload Vulnerability Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulnerability-report
+          path: vulnerability-report.txt
+          retention-days: 30
+
+  secret-scan:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  package-artifacts:
+    name: Package NuGet Artifacts
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Calculate Version
+        id: version
+        run: |
+          VERSION="1.0.0.${{ github.run_id }}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Package version: ${VERSION}"
+
+      - name: Pack NuGet Packages
+        run: |
+          dotnet pack Ghost.sln \
+            --configuration ${{ env.CONFIGURATION }} \
+            --no-restore \
+            -p:PackageVersion=${{ steps.version.outputs.version }} \
+            -p:IncludeSymbols=true \
+            -p:SymbolPackageFormat=snupkg \
+            --output ./artifacts/packages
+
+      - name: Upload NuGet Packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./artifacts/packages/*.nupkg
+          retention-days: 30
+
+  generate-sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Install CycloneDX
+        run: dotnet tool install --global CycloneDX
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Generate SBOM
+        run: |
+          dotnet CycloneDX Ghost.sln -o ./artifacts/sbom -f spdx-json -sv 2.3
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: ./artifacts/sbom/*.json
+          retention-days: 30
+
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [build, unit-tests, integration-tests, e2e-tests, codeql-analysis, dependency-scan, secret-scan, package-artifacts, generate-sbom]
+    if: always()
+    steps:
+      - name: Check Results
+        run: |
+          if [[ "${{ needs.build.result }}" != "success" ]] || \
+             [[ "${{ needs.unit-tests.result }}" != "success" ]] || \
+             [[ "${{ needs.integration-tests.result }}" != "success" ]] || \
+             [[ "${{ needs.e2e-tests.result }}" != "success" ]] || \
+             [[ "${{ needs.codeql-analysis.result }}" != "success" ]] || \
+             [[ "${{ needs.dependency-scan.result }}" != "success" ]] || \
+             [[ "${{ needs.secret-scan.result }}" != "success" ]]; then
+            echo "❌ CI pipeline failed"
+            exit 1
+          fi
+          echo "✅ CI pipeline passed"

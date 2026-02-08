@@ -1,75 +1,259 @@
-name: Release Docker Image
+name: Release
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       bump:
-        description: Version bump (major, minor, patch)
+        description: 'Version bump type'
         required: true
-        default: minor
+        default: 'minor'
         type: choice
         options:
           - patch
           - minor
           - major
+      prerelease:
+        description: 'Is this a prerelease?'
+        required: false
+        default: false
+        type: boolean
+  push:
+    tags:
+      - 'v*.*.*'
 
 permissions:
   contents: write
   packages: write
+  id-token: write
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  CONFIGURATION: Release
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  release:
+  calculate-version:
+    name: Calculate Version
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Compute next version tag
+      - name: Calculate Version
         id: version
         run: |
           git fetch --tags --force
-          latest=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "v0.0.0")
-          version=${latest#v}
-          IFS='.' read -r major minor patch <<< "$version"
-          bump="${{ github.event_name == 'workflow_dispatch' && inputs.bump || 'minor' }}"
-          case "$bump" in
-            major)
-              major=$((major + 1))
-              minor=0
-              patch=0
-              ;;
-            minor)
-              minor=$((minor + 1))
-              patch=0
-              ;;
-            patch|*)
-              patch=$((patch + 1))
-              ;;
-          esac
-          new_tag="v${major}.${minor}.${patch}"
-          if git rev-parse -q --verify "refs/tags/$new_tag" >/dev/null; then
-            echo "Tag $new_tag already exists, will skip creation"
-            echo "tag_exists=true" >> "$GITHUB_OUTPUT"
+          
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
+            # Triggered by tag push
+            TAG="${GITHUB_REF#refs/tags/}"
+            VERSION="${TAG#v}"
           else
-            echo "tag_exists=false" >> "$GITHUB_OUTPUT"
+            # Manual workflow dispatch
+            latest=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "v0.0.0")
+            version=${latest#v}
+            IFS='.' read -r major minor patch <<< "$version"
+            
+            bump="${{ github.event.inputs.bump }}"
+            case "$bump" in
+              major)
+                major=$((major + 1))
+                minor=0
+                patch=0
+                ;;
+              minor)
+                minor=$((minor + 1))
+                patch=0
+                ;;
+              patch)
+                patch=$((patch + 1))
+                ;;
+            esac
+            
+            VERSION="${major}.${minor}.${patch}"
+            TAG="v${VERSION}"
           fi
-          echo "tag=$new_tag" >> "$GITHUB_OUTPUT"
+          
+          # Add build number
+          BUILD_VERSION="${VERSION}.${{ github.run_id }}"
+          
+          # Add prerelease suffix if requested
+          if [[ "${{ github.event.inputs.prerelease }}" == "true" ]]; then
+            BUILD_VERSION="${VERSION}-alpha.${{ github.run_id }}"
+          fi
+          
+          echo "version=${BUILD_VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Package version: ${BUILD_VERSION}"
+          echo "Git tag: ${TAG}"
 
-      - name: Create git tag
-        if: steps.version.outputs.tag_exists == 'false'
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          git fetch --tags --force
+          
+          # Get the previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" HEAD)
+          else
+            COMMITS=$(git log --pretty=format:"- %s (%h)" ${PREVIOUS_TAG}..HEAD)
+          fi
+          
+          CHANGELOG="## Changes\n\n${COMMITS}"
+          
+          # Save to file for multi-line output
+          echo -e "$CHANGELOG" > changelog.txt
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat changelog.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Git Tag
+        if: github.event_name == 'workflow_dispatch'
         env:
           GIT_AUTHOR_NAME: github-actions[bot]
           GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
           GIT_COMMITTER_NAME: github-actions[bot]
           GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
         run: |
-          git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
-          git push origin "${{ steps.version.outputs.tag }}"
+          TAG="${{ steps.version.outputs.tag }}"
+          
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "⚠️ Tag $TAG already exists, skipping creation"
+          else
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+            echo "✓ Created and pushed tag $TAG"
+          fi
+
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    needs: calculate-version
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
+
+      - name: Run Tests
+        run: |
+          dotnet test Ghost.sln \
+            --configuration ${{ env.CONFIGURATION }} \
+            --no-build \
+            --verbosity normal \
+            --filter "FullyQualifiedName!~E2E"
+
+  create-nuget-packages:
+    name: Create NuGet Packages
+    runs-on: ubuntu-latest
+    needs: [calculate-version, build-and-test]
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Pack NuGet Packages
+        run: |
+          dotnet pack Ghost.sln \
+            --configuration ${{ env.CONFIGURATION }} \
+            --no-restore \
+            -p:PackageVersion=${{ needs.calculate-version.outputs.version }} \
+            -p:IncludeSymbols=true \
+            -p:SymbolPackageFormat=snupkg \
+            --output ./artifacts/packages
+
+      - name: Generate SBOM
+        run: |
+          dotnet tool install --global CycloneDX
+          dotnet CycloneDX Ghost.sln -o ./artifacts/sbom -f spdx-json -sv 2.3
+
+      - name: Upload NuGet Packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./artifacts/packages/*.nupkg
+          retention-days: 90
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: ./artifacts/sbom/*.json
+          retention-days: 90
+
+  publish-nuget:
+    name: Publish to NuGet.org
+    runs-on: ubuntu-latest
+    needs: [calculate-version, create-nuget-packages]
+    environment: production
+    timeout-minutes: 15
+    steps:
+      - name: Download NuGet Packages
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./packages
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Publish to NuGet.org
+        run: |
+          for package in ./packages/*.nupkg; do
+            echo "Publishing $package..."
+            dotnet nuget push "$package" \
+              --api-key ${{ secrets.NUGET_API_KEY }} \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          done
+
+  build-docker-image:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: [calculate-version, build-and-test]
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -77,16 +261,159 @@ jobs:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Extract Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.calculate-version.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.calculate-version.outputs.version }}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and Push Docker Image
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
           file: src/Ghost.WebApi/Dockerfile
           push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/ghost-webapi:${{ steps.version.outputs.tag }}
-            ghcr.io/${{ github.repository_owner }}/ghost-webapi:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Generate SBOM for Container
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.calculate-version.outputs.version }}
+          format: spdx-json
+          output-file: container-sbom.spdx.json
+
+      - name: Upload Container SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-sbom
+          path: container-sbom.spdx.json
+          retention-days: 90
+
+  sign-container:
+    name: Sign Container Image
+    runs-on: ubuntu-latest
+    needs: [calculate-version, build-docker-image]
+    timeout-minutes: 10
+    steps:
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sign Container Image
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          IMAGE_URL="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.calculate-version.outputs.version }}"
+          
+          if [ -n "$COSIGN_PRIVATE_KEY" ]; then
+            echo "Signing container image: $IMAGE_URL"
+            echo "$COSIGN_PRIVATE_KEY" > cosign.key
+            cosign sign --key cosign.key "$IMAGE_URL"
+            rm cosign.key
+            echo "✓ Container image signed successfully"
+          else
+            echo "⚠️ COSIGN_PRIVATE_KEY not set, skipping signing"
+          fi
+
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [calculate-version, publish-nuget, sign-container]
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download NuGet Packages
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./packages
+
+      - name: Download SBOM
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom
+          path: ./sbom
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.calculate-version.outputs.tag }}
+          name: Release ${{ needs.calculate-version.outputs.tag }}
+          body: |
+            # Ghost Framework Release ${{ needs.calculate-version.outputs.tag }}
+            
+            ${{ needs.calculate-version.outputs.changelog }}
+            
+            ## 📦 NuGet Packages
+            
+            Published to NuGet.org:
+            - Ghost.Core
+            - Ghost.Contracts
+            - Ghost.Platforms.*
+            - Ghost.Hosting
+            - Ghost.Sdk
+            
+            ## 🐳 Docker Image
+            
+            ```bash
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.calculate-version.outputs.version }}
+            ```
+            
+            ## 📋 SBOM
+            
+            Software Bill of Materials (SBOM) attached to this release.
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease == 'true' }}
+          files: |
+            ./packages/*.nupkg
+            ./sbom/*.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-summary:
+    name: Release Summary
+    runs-on: ubuntu-latest
+    needs: [calculate-version, publish-nuget, create-github-release]
+    if: always()
+    steps:
+      - name: Summary
+        run: |
+          echo "## 🚀 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.calculate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** ${{ needs.calculate-version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.publish-nuget.result }}" == "success" ]]; then
+            echo "✅ NuGet packages published" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ NuGet publishing failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.create-github-release.result }}" == "success" ]]; then
+            echo "✅ GitHub release created" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ GitHub release failed" >> $GITHUB_STEP_SUMMARY
+          fi

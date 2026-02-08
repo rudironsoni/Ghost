@@ -2,23 +2,34 @@ name: PR Validation
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [main]
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.sln'
+      - '**/*.csproj'
+      - '.github/workflows/pr-validation.yml'
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  CONFIGURATION: Release
 
 jobs:
   validate-title:
     name: Validate PR Title
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 2
     steps:
-      - name: Check PR title format
+      - name: Check PR Title Format
         uses: actions/github-script@v7
         with:
           script: |
             const title = context.payload.pull_request.title;
-            
-            // Conventional commit format: type(scope): description
-            // Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
             const conventionalCommitRegex = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9-]+\))?: .+$/i;
             
             if (!conventionalCommitRegex.test(title)) {
@@ -34,84 +45,113 @@ jobs:
               core.info(`✓ PR title follows conventional commits format: "${title}"`);
             }
 
-  build:
-    name: Build Solution
+  lint-format:
+    name: Lint & Format Check
     runs-on: ubuntu-latest
-    needs: validate-title
-    
+    timeout-minutes: 5
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
           global-json-file: global.json
-      
-      - name: Cache NuGet packages
+
+      - name: Cache NuGet
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-          restore-paths: |
-            ~/.nuget/packages
-      
-      - name: Restore dependencies
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Tools
+        run: dotnet tool restore
+
+      - name: Check Formatting
+        run: dotnet format Ghost.sln --verify-no-changes --verbosity diagnostic
+
+  build:
+    name: Build Solution
+    runs-on: ubuntu-latest
+    needs: validate-title
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Dependencies
         run: dotnet restore Ghost.sln
-      
-      - name: Build solution
-        run: dotnet build Ghost.sln --configuration Release --no-restore --warnaserror
-      
-      - name: Upload build artifacts
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
+
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: pr-build-output
           path: |
             **/bin/Release/
-            **/obj/Release/
+            !**/bin/Release/**/*.pdb
           retention-days: 1
 
   test:
     name: Run Unit Tests
     runs-on: ubuntu-latest
     needs: build
-    
+    timeout-minutes: 15
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
           global-json-file: global.json
-      
-      - name: Cache NuGet packages
+
+      - name: Cache NuGet
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-          restore-paths: |
-            ~/.nuget/packages
-      
-      - name: Restore dependencies
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Dependencies
         run: dotnet restore Ghost.sln
-      
-      - name: Build solution
-        run: dotnet build Ghost.sln --configuration Release --no-restore --warnaserror
-      
-      - name: Run unit tests
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
+
+      - name: Run Unit Tests
         run: |
           dotnet test Ghost.sln \
-            --configuration Release \
+            --configuration ${{ env.CONFIGURATION }} \
             --no-build \
             --verbosity normal \
             --logger "trx;LogFileName=test-results.trx" \
             --collect:"XPlat Code Coverage" \
-            --filter "FullyQualifiedName!~E2E"
-      
-      - name: Upload test results
+            --filter "FullyQualifiedName!~E2E" \
+            -- RunConfiguration.MaxCpuCount=2
+
+      - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -120,8 +160,8 @@ jobs:
             **/TestResults/**/*.trx
             **/TestResults/**/coverage.cobertura.xml
           retention-days: 7
-      
-      - name: Publish test results
+
+      - name: Publish Test Results
         if: always()
         uses: dorny/test-reporter@v1
         with:
@@ -134,105 +174,67 @@ jobs:
     name: Check DotnetSpider References
     runs-on: ubuntu-latest
     needs: validate-title
-    
+    timeout-minutes: 5
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
-      - name: Get changed files
+
+      - name: Get Changed Files
         id: changed-files
         run: |
-          # Get the base branch
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
           
-          echo "Base SHA: $BASE_SHA"
-          echo "Head SHA: $HEAD_SHA"
-          
-          # Get all changed files in src/ and tests/
           git diff --name-only $BASE_SHA...$HEAD_SHA | grep -E '^(src/|tests/)' > changed_files.txt || true
           
           if [ -s changed_files.txt ]; then
-            echo "Changed files:"
-            cat changed_files.txt
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
-            echo "No changes in src/ or tests/ directories"
             echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
-      
-      - name: Check for DotnetSpider references in changed files
+
+      - name: Check for DotnetSpider References
         if: steps.changed-files.outputs.has_changes == 'true'
         run: |
-          echo "Checking for DotnetSpider references in changed files..."
-          
-          # Check each changed file for DotnetSpider references
           FOUND_REFERENCES=false
           
           while IFS= read -r file; do
-            if [ -f "$file" ]; then
-              if grep -i "DotnetSpider" "$file"; then
-                echo "❌ Found DotnetSpider reference in: $file"
-                FOUND_REFERENCES=true
-              fi
+            if [ -f "$file" ] && grep -i "DotnetSpider" "$file"; then
+              echo "❌ Found DotnetSpider reference in: $file"
+              FOUND_REFERENCES=true
             fi
           done < changed_files.txt
           
           if [ "$FOUND_REFERENCES" = true ]; then
-            echo ""
-            echo "════════════════════════════════════════════════════════════"
             echo "❌ VALIDATION FAILED: DotnetSpider references detected"
-            echo "════════════════════════════════════════════════════════════"
-            echo ""
-            echo "This PR adds new DotnetSpider references, which is not allowed."
-            echo "The project is migrating away from DotnetSpider to Ghost.Sdk.Spider."
-            echo ""
             echo "Please update your changes to use Ghost.Sdk.Spider instead."
-            echo "════════════════════════════════════════════════════════════"
             exit 1
           else
             echo "✓ No DotnetSpider references found in changed files"
           fi
-      
-      - name: Check for DotnetSpider in all src/ and tests/
-        run: |
-          echo "Double-checking all src/ and tests/ directories..."
-          
-          # This is a safety check to ensure no DotnetSpider references exist
-          # Use grep -r with || true to prevent pipeline failure
-          GREP_OUTPUT=$(grep -r "DotnetSpider" src/ tests/ 2>/dev/null || true)
-          
-          if [ -n "$GREP_OUTPUT" ]; then
-            echo "⚠️  Warning: DotnetSpider references still exist in the codebase:"
-            echo "$GREP_OUTPUT"
-            echo ""
-            echo "Note: This is informational only. The check above ensures no NEW references were added."
-          else
-            echo "✓ No DotnetSpider references found in src/ and tests/ directories"
-          fi
 
-  pr-validation-summary:
+  pr-summary:
     name: PR Validation Summary
     runs-on: ubuntu-latest
-    needs: [validate-title, build, test, check-migrations]
+    needs: [validate-title, lint-format, build, test, check-migrations]
     if: always()
-    
     steps:
-      - name: Check validation results
+      - name: Check Validation Results
         uses: actions/github-script@v7
         with:
           script: |
             const jobs = [
               { name: 'Validate PR Title', result: '${{ needs.validate-title.result }}' },
+              { name: 'Lint & Format Check', result: '${{ needs.lint-format.result }}' },
               { name: 'Build Solution', result: '${{ needs.build.result }}' },
               { name: 'Run Unit Tests', result: '${{ needs.test.result }}' },
               { name: 'Check DotnetSpider References', result: '${{ needs.check-migrations.result }}' }
             ];
             
             let allPassed = true;
-            let summary = '## PR Validation Results\n\n';
+            let summary = '## 🔍 PR Validation Results\n\n';
             
             for (const job of jobs) {
               const icon = job.result === 'success' ? '✅' : '❌';
@@ -255,11 +257,3 @@ jobs:
             
             core.summary.addRaw(summary);
             await core.summary.write();
-            
-            // Also add as a comment on the PR
-            const prNumber = context.payload.pull_request.number;
-            await github.rest.issues.createComment({
-              ...context.repo,
-              issue_number: prNumber,
-              body: summary
-            });

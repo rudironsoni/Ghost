@@ -1,0 +1,65 @@
+name: Setup Ghost Build Environment
+description: Sets up .NET, caches, and common dependencies for Ghost builds
+author: Ghost Team
+
+inputs:
+  dotnet-version:
+    description: '.NET version to use'
+    required: false
+    default: '10.0.x'
+  install-playwright:
+    description: 'Install Playwright browsers'
+    required: false
+    default: 'false'
+  playwright-browsers:
+    description: 'Browsers to install (chromium, firefox, webkit)'
+    required: false
+    default: 'chromium'
+
+outputs:
+  cache-hit:
+    description: 'Whether NuGet cache was hit'
+    value: ${{ steps.cache-nuget.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ inputs.dotnet-version }}
+        global-json-file: global.json
+
+    - name: Cache NuGet Packages
+      id: cache-nuget
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Install Playwright CLI
+      if: inputs.install-playwright == 'true'
+      shell: bash
+      run: |
+        dotnet tool install --global Microsoft.Playwright.CLI || dotnet tool update --global Microsoft.Playwright.CLI
+
+    - name: Install Playwright Browsers
+      if: inputs.install-playwright == 'true'
+      shell: bash
+      run: |
+        playwright install ${{ inputs.playwright-browsers }}
+
+    - name: Display Environment Info
+      shell: bash
+      run: |
+        echo "## 🔧 Build Environment" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **OS:** $(uname -s)" >> $GITHUB_STEP_SUMMARY
+        echo "- **.NET Version:** $(dotnet --version)" >> $GITHUB_STEP_SUMMARY
+        echo "- **NuGet Cache Hit:** ${{ steps.cache-nuget.outputs.cache-hit }}" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ inputs.install-playwright }}" == "true" ]; then
+          echo "- **Playwright:** Installed (${{ inputs.playwright-browsers }})" >> $GITHUB_STEP_SUMMARY
+        fi

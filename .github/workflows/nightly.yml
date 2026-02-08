@@ -1,0 +1,431 @@
+name: Nightly Build
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Daily at 3 AM UTC
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-build
+  cancel-in-progress: false
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  CONFIGURATION: Release
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  full-integration-tests:
+    name: Full Integration Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Install Playwright
+        run: |
+          dotnet tool install --global Microsoft.Playwright.CLI || true
+          playwright install chromium firefox webkit
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
+
+      - name: Run All Integration Tests
+        run: |
+          dotnet test Ghost.sln \
+            --configuration ${{ env.CONFIGURATION }} \
+            --no-build \
+            --verbosity normal \
+            --logger "trx;LogFileName=integration-test-results.trx" \
+            --collect:"XPlat Code Coverage" \
+            --filter "FullyQualifiedName~Integration" \
+            -- RunConfiguration.MaxCpuCount=2
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: |
+            **/TestResults/**/*.trx
+            **/TestResults/**/coverage.cobertura.xml
+          retention-days: 30
+
+  e2e-full-suite:
+    name: E2E Full Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Install Playwright
+        run: |
+          dotnet tool install --global Microsoft.Playwright.CLI || true
+          playwright install ${{ matrix.browser }}
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
+
+      - name: Run E2E Tests (${{ matrix.browser }})
+        env:
+          PLAYWRIGHT_BROWSER: ${{ matrix.browser }}
+        run: |
+          dotnet test Ghost.sln \
+            --configuration ${{ env.CONFIGURATION }} \
+            --no-build \
+            --verbosity normal \
+            --logger "trx;LogFileName=e2e-test-results-${{ matrix.browser }}.trx" \
+            --filter "FullyQualifiedName~E2E" \
+            -- RunConfiguration.MaxCpuCount=1
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results-${{ matrix.browser }}
+          path: |
+            **/TestResults/**/*.trx
+            **/TestResults/**/*.png
+            **/TestResults/**/*.webm
+          retention-days: 30
+
+  performance-benchmarks:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
+
+      - name: Run Performance Benchmarks
+        continue-on-error: true
+        run: |
+          # Find and run benchmark projects
+          for proj in $(find tests -name "*Benchmarks.csproj" 2>/dev/null); do
+            echo "Running benchmarks in $proj"
+            dotnet run --project "$proj" --configuration ${{ env.CONFIGURATION }} --no-build
+          done
+
+      - name: Upload Benchmark Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            **/BenchmarkDotNet.Artifacts/**
+          retention-days: 30
+
+  stability-tests:
+    name: Stability Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Install Playwright
+        run: |
+          dotnet tool install --global Microsoft.Playwright.CLI || true
+          playwright install chromium
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
+
+      - name: Run Stability Tests
+        continue-on-error: true
+        run: |
+          # Run critical E2E tests 10 times to check for flakiness
+          for i in {1..10}; do
+            echo "Stability run $i of 10"
+            dotnet test Ghost.sln \
+              --configuration ${{ env.CONFIGURATION }} \
+              --no-build \
+              --logger "trx;LogFileName=stability-run-$i.trx" \
+              --filter "FullyQualifiedName~E2E&Priority=Critical" \
+              -- RunConfiguration.MaxCpuCount=1
+          done
+
+      - name: Analyze Stability Results
+        if: always()
+        run: |
+          echo "# Stability Test Analysis" > stability-report.md
+          echo "" >> stability-report.md
+          
+          # Count passed/failed runs
+          TOTAL_RUNS=10
+          PASSED=$(grep -r "Passed!" **/TestResults/stability-run-*.trx 2>/dev/null | wc -l || echo "0")
+          FAILED=$(grep -r "Failed!" **/TestResults/stability-run-*.trx 2>/dev/null | wc -l || echo "0")
+          
+          PASS_RATE=$((PASSED * 100 / TOTAL_RUNS))
+          
+          echo "**Total Runs:** $TOTAL_RUNS" >> stability-report.md
+          echo "**Passed:** $PASSED" >> stability-report.md
+          echo "**Failed:** $FAILED" >> stability-report.md
+          echo "**Pass Rate:** $PASS_RATE%" >> stability-report.md
+          echo "" >> stability-report.md
+          
+          if [ $PASS_RATE -lt 90 ]; then
+            echo "⚠️ **WARNING:** Pass rate below 90% - tests may be flaky" >> stability-report.md
+          else
+            echo "✅ Tests are stable" >> stability-report.md
+          fi
+          
+          cat stability-report.md
+
+      - name: Upload Stability Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stability-test-results
+          path: |
+            **/TestResults/stability-run-*.trx
+            stability-report.md
+          retention-days: 30
+
+  code-coverage:
+    name: Full Code Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Install Playwright
+        run: |
+          dotnet tool install --global Microsoft.Playwright.CLI || true
+          playwright install chromium
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
+
+      - name: Run All Tests with Coverage
+        run: |
+          dotnet test Ghost.sln \
+            --configuration ${{ env.CONFIGURATION }} \
+            --no-build \
+            --verbosity normal \
+            --collect:"XPlat Code Coverage" \
+            --filter "FullyQualifiedName!~E2E" \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+
+      - name: Generate Coverage Report
+        run: |
+          dotnet tool install --global dotnet-reportgenerator-globaltool || true
+          reportgenerator \
+            -reports:**/TestResults/**/coverage.cobertura.xml \
+            -targetdir:./coverage-report \
+            -reporttypes:Html;TextSummary
+
+      - name: Display Coverage Summary
+        run: |
+          echo "## 📊 Code Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat ./coverage-report/Summary.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./coverage-report/
+          retention-days: 30
+
+      - name: Check Coverage Threshold
+        run: |
+          # Extract line coverage percentage
+          COVERAGE=$(grep "Line coverage:" ./coverage-report/Summary.txt | grep -oP '\d+\.\d+%' | grep -oP '\d+')
+          echo "Coverage: ${COVERAGE}%"
+          
+          if [ "$COVERAGE" -lt 80 ]; then
+            echo "⚠️ Code coverage (${COVERAGE}%) is below threshold (80%)"
+            exit 1
+          fi
+
+  nightly-summary:
+    name: Nightly Build Summary
+    runs-on: ubuntu-latest
+    needs: [full-integration-tests, e2e-full-suite, performance-benchmarks, stability-tests, code-coverage]
+    if: always()
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## 🌙 Nightly Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.full-integration-tests.result }}" == "success" ]]; then
+            echo "✅ **Integration Tests:** Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Integration Tests:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.e2e-full-suite.result }}" == "success" ]]; then
+            echo "✅ **E2E Tests:** Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **E2E Tests:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.performance-benchmarks.result }}" == "success" ]]; then
+            echo "✅ **Performance Benchmarks:** Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Performance Benchmarks:** Issues Found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.stability-tests.result }}" == "success" ]]; then
+            echo "✅ **Stability Tests:** Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Stability Tests:** Issues Found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.code-coverage.result }}" == "success" ]]; then
+            echo "✅ **Code Coverage:** Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Code Coverage:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Create Issue on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'nightly-build,automated'
+            });
+            
+            const existingIssue = issues.data.find(issue => 
+              issue.title.includes('Nightly Build Failure')
+            );
+            
+            const body = `## 🌙 Nightly Build Failure
+            
+            **Date:** ${new Date().toISOString()}
+            **Run:** ${context.runId}
+            
+            ### Failed Jobs
+            
+            ${context.payload.jobs.filter(j => j.conclusion === 'failure').map(j => `- ❌ ${j.name}`).join('\n')}
+            
+            [View Workflow Run](${context.payload.workflow_run.html_url})
+            `;
+            
+            if (existingIssue) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: body
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🌙 Nightly Build Failure',
+                body: body,
+                labels: ['nightly-build', 'automated', 'bug']
+              });
+            }
