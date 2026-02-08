@@ -10,7 +10,7 @@ using Ghost.Session;
 using Ghost.Stealth.Behavior;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Playwright;
+using Playwright = Microsoft.Playwright;
 
 namespace Ghost.Platform.Google.Jobs;
 
@@ -20,13 +20,13 @@ namespace Ghost.Platform.Google.Jobs;
 /// </summary>
 public sealed class GoogleJobsBrowserClient : IAsyncDisposable
 {
-    private readonly IBrowserContext _context;
+    private readonly Playwright.IBrowserContext _context;
     private readonly IConsentHandler? _consentHandler;
     private readonly BehavioralMimicryService? _behaviorService;
     private readonly ISessionManager? _sessionManager;
     private readonly GoogleJobsOptions _options;
     private readonly ILogger<GoogleJobsBrowserClient> _logger;
-    private IPage? _currentPage;
+    private Playwright.IPage? _currentPage;
     private int _requestCount;
     private const string PlatformName = "GoogleJobs";
 
@@ -52,7 +52,7 @@ public sealed class GoogleJobsBrowserClient : IAsyncDisposable
         LoggerMessage.Define(LogLevel.Information, new EventId(4007, "SessionSaved"), "Saved Google Jobs session for reuse");
 
     public GoogleJobsBrowserClient(
-        IBrowserContext context,
+        Playwright.IBrowserContext context,
         IOptions<GoogleJobsOptions> options,
         ILogger<GoogleJobsBrowserClient> logger,
         IConsentHandler? consentHandler = null,
