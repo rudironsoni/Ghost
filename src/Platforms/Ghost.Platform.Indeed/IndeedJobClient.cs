@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
 using Ghost.Platform.Indeed.Internal;
+using Ghost.Platform.Indeed.Jobs;
 using Microsoft.Extensions.Logging;
 
 namespace Ghost.Platform.Indeed;
@@ -12,22 +13,51 @@ namespace Ghost.Platform.Indeed;
 public class IndeedJobClient : Ghost.Abstractions.IJobScraper
 {
     private readonly IndeedApiClient _api;
+    private readonly IndeedSearchScraper? _searchScraper;
+    private readonly IndeedJobDetailsScraper? _detailsScraper;
     private readonly ILogger<IndeedJobClient> _logger;
     private static readonly Action<ILogger, int, Exception?> LogRawCount =
         LoggerMessage.Define<int>(LogLevel.Information, new EventId(1001, "IndeedRawCount"), "IndeedApiClient returned {Count} raw items.");
     private static readonly Action<ILogger, int, Exception?> LogParsedCount =
         LoggerMessage.Define<int>(LogLevel.Information, new EventId(1002, "ParsedJobListings"), "Parsed {Count} JobListings.");
 
+    /// <summary>
+    /// Legacy constructor for backward compatibility (API-only).
+    /// </summary>
     public IndeedJobClient(IndeedApiClient api, ILogger<IndeedJobClient> logger)
     {
         _api = api;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Modern constructor with multi-strategy scraper support.
+    /// </summary>
+    public IndeedJobClient(
+        IndeedApiClient api,
+        ILogger<IndeedJobClient> logger,
+        IndeedSearchScraper? searchScraper = null,
+        IndeedJobDetailsScraper? detailsScraper = null)
+    {
+        _api = api;
+        _logger = logger;
+        _searchScraper = searchScraper;
+        _detailsScraper = detailsScraper;
+    }
+
     public string PlatformName => "Indeed";
 
     public async Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
     {
+        // Use multi-strategy scraper if available (API + browser fallback)
+        if (_searchScraper != null)
+        {
+            var results = await _searchScraper.SearchAsync(criteria, ct);
+            LogParsedCount(_logger, results.Count, null);
+            return results;
+        }
+
+        // Fallback to legacy API-only approach
         var list = new List<JobListing>();
         int rawCount = 0;
         int parsedCount = 0;
@@ -104,8 +134,17 @@ public class IndeedJobClient : Ghost.Abstractions.IJobScraper
         }
     }
 
-    public Task<JobListing> GetJobDetailsAsync(string jobId, CancellationToken ct = default) =>
-        Task.FromResult(new JobListing { Id = jobId, Source = "Indeed" });
+    public async Task<JobListing> GetJobDetailsAsync(string jobId, CancellationToken ct = default)
+    {
+        // Use details scraper if available
+        if (_detailsScraper != null)
+        {
+            return await _detailsScraper.GetDetailsAsync(jobId, ct);
+        }
+
+        // Fallback to stub implementation
+        return new JobListing { Id = jobId, Source = "Indeed" };
+    }
 
     public Task<JobApplication> ApplyAsync(string jobId, ApplicationDetails details, CancellationToken ct = default) =>
         Task.FromResult(new JobApplication());
