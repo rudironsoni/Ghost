@@ -15,7 +15,7 @@ namespace Ghost.ProxyManagement;
 /// </summary>
 public sealed class RotatingProxyPool : IDisposable
 {
-    private readonly FreeProxyScraper _scraper;
+    private readonly IProxySource _scraper;
     private readonly FreeProxyHealthChecker _healthChecker;
     private readonly ILogger<RotatingProxyPool> _logger;
 
@@ -33,7 +33,7 @@ public sealed class RotatingProxyPool : IDisposable
             "Removed unhealthy proxy {Server} from pool");
 
     public RotatingProxyPool(
-        FreeProxyScraper scraper,
+        IProxySource scraper,
         FreeProxyHealthChecker healthChecker,
         ILogger<RotatingProxyPool> logger)
     {
@@ -153,33 +153,41 @@ public sealed class RotatingProxyPool : IDisposable
         await _refreshLock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            // Scrape proxies
-            var proxies = await _scraper.FetchProxiesAsync(ct).ConfigureAwait(false);
-
-            // Health check each proxy
-            var healthCheckTasks = proxies.Select(p => _healthChecker.CheckHealthAsync(p, ct));
-            var results = await Task.WhenAll(healthCheckTasks).ConfigureAwait(false);
-
-            // Add healthy proxies to pool
-            foreach (var result in results.Where(r => r.IsHealthy))
-            {
-                var key = GetProxyKey(result.Proxy);
-                _proxyPool.TryAdd(key, new ProxyPoolEntry
-                {
-                    Proxy = result.Proxy,
-                    IsHealthy = true,
-                    LastHealthCheck = result.CheckedAt,
-                    LastResponseTime = result.ResponseTime,
-                    AddedAt = DateTimeOffset.UtcNow
-                });
-            }
-
-            s_logPoolRefreshed(_logger, HealthyProxyCount, null);
+            await RefreshPoolCoreAsync(ct).ConfigureAwait(false);
         }
         finally
         {
             _refreshLock.Release();
         }
+    }
+
+    /// <summary>
+    /// Core refresh logic that assumes the caller has already acquired _refreshLock.
+    /// </summary>
+    private async Task RefreshPoolCoreAsync(CancellationToken ct)
+    {
+        // Scrape proxies
+        var proxies = await _scraper.FetchProxiesAsync(ct).ConfigureAwait(false);
+
+        // Health check each proxy
+        var healthCheckTasks = proxies.Select(p => _healthChecker.CheckHealthAsync(p, ct));
+        var results = await Task.WhenAll(healthCheckTasks).ConfigureAwait(false);
+
+        // Add healthy proxies to pool
+        foreach (var result in results.Where(r => r.IsHealthy))
+        {
+            var key = GetProxyKey(result.Proxy);
+            _proxyPool.TryAdd(key, new ProxyPoolEntry
+            {
+                Proxy = result.Proxy,
+                IsHealthy = true,
+                LastHealthCheck = result.CheckedAt,
+                LastResponseTime = result.ResponseTime,
+                AddedAt = DateTimeOffset.UtcNow
+            });
+        }
+
+        s_logPoolRefreshed(_logger, HealthyProxyCount, null);
     }
 
     /// <summary>
@@ -201,7 +209,7 @@ public sealed class RotatingProxyPool : IDisposable
             if (_initialized)
                 return;
 
-            await RefreshPoolAsync(ct).ConfigureAwait(false);
+            await RefreshPoolCoreAsync(ct).ConfigureAwait(false);
             _initialized = true;
         }
         finally
