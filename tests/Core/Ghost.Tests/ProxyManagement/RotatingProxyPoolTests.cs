@@ -16,7 +16,7 @@ public sealed class RotatingProxyPoolTests
     public async Task GetNextProxyAsync_WithEmptyPool_ReturnsNull()
     {
         // Arrange
-        var scraper = Substitute.For<FreeProxyScraper>(NullLogger<FreeProxyScraper>.Instance);
+        var scraper = Substitute.For<IProxySource>();
         scraper.FetchProxiesAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(Array.Empty<ProxyInfo>() as System.Collections.Generic.IEnumerable<ProxyInfo>));
 
@@ -24,7 +24,8 @@ public sealed class RotatingProxyPoolTests
         var pool = new RotatingProxyPool(scraper, healthChecker, NullLogger<RotatingProxyPool>.Instance);
 
         // Act
-        var proxy = await pool.GetNextProxyAsync();
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var proxy = await pool.GetNextProxyAsync(cts.Token);
 
         // Assert
         proxy.Should().BeNull();
@@ -34,7 +35,7 @@ public sealed class RotatingProxyPoolTests
     public async Task HealthyProxyCount_InitiallyZero()
     {
         // Arrange
-        var scraper = Substitute.For<FreeProxyScraper>(NullLogger<FreeProxyScraper>.Instance);
+        var scraper = Substitute.For<IProxySource>();
         scraper.FetchProxiesAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(Array.Empty<ProxyInfo>() as System.Collections.Generic.IEnumerable<ProxyInfo>));
 
@@ -49,7 +50,7 @@ public sealed class RotatingProxyPoolTests
     public async Task ReportProxyResultAsync_WithNullProxy_ThrowsArgumentNullException()
     {
         // Arrange
-        var scraper = Substitute.For<FreeProxyScraper>(NullLogger<FreeProxyScraper>.Instance);
+        var scraper = Substitute.For<IProxySource>();
         var healthChecker = new FreeProxyHealthChecker(NullLogger<FreeProxyHealthChecker>.Instance);
         var pool = new RotatingProxyPool(scraper, healthChecker, NullLogger<RotatingProxyPool>.Instance);
 
@@ -62,7 +63,7 @@ public sealed class RotatingProxyPoolTests
     public void GetAllProxies_InitiallyEmpty()
     {
         // Arrange
-        var scraper = Substitute.For<FreeProxyScraper>(NullLogger<FreeProxyScraper>.Instance);
+        var scraper = Substitute.For<IProxySource>();
         var healthChecker = new FreeProxyHealthChecker(NullLogger<FreeProxyHealthChecker>.Instance);
         var pool = new RotatingProxyPool(scraper, healthChecker, NullLogger<RotatingProxyPool>.Instance);
 
