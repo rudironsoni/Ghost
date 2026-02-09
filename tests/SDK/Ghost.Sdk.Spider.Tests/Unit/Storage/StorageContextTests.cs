@@ -10,7 +10,7 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 public class StorageContextTests
 {
     [Fact]
-    public void Create_WithSpiderName_ShouldCreateContext()
+    public static void Create_WithSpiderName_ShouldCreateContext()
     {
         // Arrange
         var spiderName = "TestSpider";
@@ -32,7 +32,7 @@ public class StorageContextTests
     }
 
     [Fact]
-    public void Create_WithSpiderNameAndSourceUrl_ShouldCreateContext()
+    public static void Create_WithSpiderNameAndSourceUrl_ShouldCreateContext()
     {
         // Arrange
         var spiderName = "TestSpider";
@@ -49,7 +49,7 @@ public class StorageContextTests
     }
 
     [Fact]
-    public void Context_WithMetadata_ShouldStoreMetadata()
+    public static void Context_WithMetadata_ShouldStoreMetadata()
     {
         // Arrange
         var context = new StorageContext
@@ -71,7 +71,7 @@ public class StorageContextTests
     }
 
     [Fact]
-    public void Context_WithTags_ShouldStoreTags()
+    public static void Context_WithTags_ShouldStoreTags()
     {
         // Arrange
         var context = new StorageContext
@@ -88,7 +88,7 @@ public class StorageContextTests
     }
 
     [Fact]
-    public void Context_WithTableName_ShouldStoreTableName()
+    public static void Context_WithTableName_ShouldStoreTableName()
     {
         // Arrange
         var tableName = "products";
@@ -103,7 +103,7 @@ public class StorageContextTests
     }
 
     [Fact]
-    public void Context_WithBatchId_ShouldStoreBatchId()
+    public static void Context_WithBatchId_ShouldStoreBatchId()
     {
         // Arrange
         var batchId = "batch-12345";
@@ -118,7 +118,7 @@ public class StorageContextTests
     }
 
     [Fact]
-    public void Context_UpdateOnConflict_ShouldDefaultToFalse()
+    public static void Context_UpdateOnConflict_ShouldDefaultToFalse()
     {
         // Arrange
         var context = new StorageContext
@@ -131,7 +131,7 @@ public class StorageContextTests
     }
 
     [Fact]
-    public void Context_WithUpdateOnConflict_ShouldStoreValue()
+    public static void Context_WithUpdateOnConflict_ShouldStoreValue()
     {
         // Arrange
         var context = new StorageContext
@@ -149,7 +149,7 @@ public class StorageContextTests
     }
 
     [Fact]
-    public void Context_Timestamp_ShouldBeUtc()
+    public static void Context_Timestamp_ShouldBeUtc()
     {
         // Act
         var context = StorageContext.Create("TestSpider");
@@ -160,7 +160,7 @@ public class StorageContextTests
     }
 
     [Fact]
-    public void Context_WithAllProperties_ShouldStoreAllValues()
+    public static void Context_WithAllProperties_ShouldStoreAllValues()
     {
         // Arrange
         var timestamp = DateTimeOffset.UtcNow;

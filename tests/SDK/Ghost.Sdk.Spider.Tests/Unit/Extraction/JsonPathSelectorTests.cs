@@ -8,14 +8,14 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 public class JsonPathSelectorTests
 {
     [Fact]
-    public void Select_WithSimplePath_ShouldReturnValue()
+    public static void Select_WithSimplePath_ShouldReturnValue()
     {
         // Arrange
         var selector = new JsonPathSelector("$.name");
         var json = TestData.SampleJson;
 
         // Act
-        var results = selector.Select(json);
+        var results = selector.SelectValues(json);
 
         // Assert
         results.Should().HaveCount(1);
@@ -23,28 +23,28 @@ public class JsonPathSelectorTests
     }
 
     [Fact]
-    public void Select_WithArrayPath_ShouldReturnArrayItems()
+    public static void Select_WithArrayPath_ShouldReturnArrayItems()
     {
         // Arrange
         var selector = new JsonPathSelector("$.tags[*]");
         var json = TestData.SampleJson;
 
         // Act
-        var results = selector.Select(json);
+        var results = selector.SelectValues(json);
 
         // Assert
         results.Should().HaveCount(3);
     }
 
     [Fact]
-    public void Select_WithNestedPath_ShouldReturnNestedValue()
+    public static void Select_WithNestedPath_ShouldReturnNestedValue()
     {
         // Arrange
         var selector = new JsonPathSelector("$.metadata.created");
         var json = TestData.SampleJson;
 
         // Act
-        var results = selector.Select(json);
+        var results = selector.SelectValues(json);
 
         // Assert
         results.Should().HaveCount(1);
@@ -52,14 +52,14 @@ public class JsonPathSelectorTests
     }
 
     [Fact]
-    public async Task Select_WithComplexNesting_ShouldWork()
+    public static async Task Select_WithComplexNesting_ShouldWork()
     {
         // Arrange
         var selector = new JsonPathSelector("$.data.items[*].title");
         var json = await TestData.ReadFixtureAsync("test-json.json");
 
         // Act
-        var results = selector.Select(json);
+        var results = selector.SelectValues(json);
 
         // Assert
         results.Should().HaveCount(3);
@@ -69,7 +69,7 @@ public class JsonPathSelectorTests
     }
 
     [Fact]
-    public void SelectFirst_ShouldReturnFirstMatch()
+    public static void SelectFirst_ShouldReturnFirstMatch()
     {
         // Arrange
         var selector = new JsonPathSelector("$.tags[*]");
@@ -84,7 +84,7 @@ public class JsonPathSelectorTests
     }
 
     [Fact]
-    public void SelectFirst_WithNoMatches_ShouldReturnNull()
+    public static void SelectFirst_WithNoMatches_ShouldReturnNull()
     {
         // Arrange
         var selector = new JsonPathSelector("$.nonexistent");
@@ -98,55 +98,55 @@ public class JsonPathSelectorTests
     }
 
     [Fact]
-    public void Select_WithEmptyContent_ShouldReturnEmptyList()
+    public static void Select_WithEmptyContent_ShouldReturnEmptyList()
     {
         // Arrange
         var selector = new JsonPathSelector("$.test");
 
         // Act
-        var results = selector.Select(string.Empty);
+        var results = selector.SelectValues(string.Empty);
 
         // Assert
         results.Should().BeEmpty();
     }
 
     [Fact]
-    public void Select_WithInvalidJson_ShouldReturnEmptyList()
+    public static void Select_WithInvalidJson_ShouldReturnEmptyList()
     {
         // Arrange
         var selector = new JsonPathSelector("$.test");
         var invalidJson = "{ invalid json }";
 
         // Act
-        var results = selector.Select(invalidJson);
+        var results = selector.SelectValues(invalidJson);
 
         // Assert
         results.Should().BeEmpty();
     }
 
     [Fact]
-    public void Select_WithFilterExpression_ShouldReturnFilteredResults()
+    public static void Select_WithFilterExpression_ShouldReturnFilteredResults()
     {
         // Arrange
         var selector = new JsonPathSelector("$.data.items[?(@.id > 1)]");
         var json = TestData.SampleNestedJson;
 
         // Act
-        var results = selector.Select(json);
+        var results = selector.SelectValues(json);
 
         // Assert
         results.Should().HaveCount(2);
     }
 
     [Fact]
-    public async Task Select_WithDeepNesting_ShouldExtractCorrectly()
+    public static async Task Select_WithDeepNesting_ShouldExtractCorrectly()
     {
         // Arrange
         var selector = new JsonPathSelector("$.user.orders[*].orderId");
         var json = await TestData.ReadFixtureAsync("nested-json.json");
 
         // Act
-        var results = selector.Select(json);
+        var results = selector.SelectValues(json);
 
         // Assert
         results.Should().HaveCount(2);
@@ -155,21 +155,21 @@ public class JsonPathSelectorTests
     }
 
     [Fact]
-    public async Task Select_WithRecursiveDescent_ShouldFindAllMatches()
+    public static async Task Select_WithRecursiveDescent_ShouldFindAllMatches()
     {
         // Arrange
         var selector = new JsonPathSelector("$..productId");
         var json = await TestData.ReadFixtureAsync("nested-json.json");
 
         // Act
-        var results = selector.Select(json);
+        var results = selector.SelectValues(json);
 
         // Assert
         results.Should().NotBeEmpty();
     }
 
     [Fact]
-    public void Validate_WithValidPath_ShouldReturnTrue()
+    public static void Validate_WithValidPath_ShouldReturnTrue()
     {
         // Arrange
         var selector = new JsonPathSelector("$.data.items[*]");
@@ -182,21 +182,21 @@ public class JsonPathSelectorTests
     }
 
     [Fact]
-    public void Constructor_WithNullExpression_ShouldThrow()
+    public static void Constructor_WithNullExpression_ShouldThrow()
     {
         // Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new JsonPathSelector(null!));
     }
 
     [Fact]
-    public void Constructor_WithEmptyExpression_ShouldThrow()
+    public static void Constructor_WithEmptyExpression_ShouldThrow()
     {
         // Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new JsonPathSelector(""));
     }
 
     [Fact]
-    public void Expression_ShouldReturnConstructorValue()
+    public static void Expression_ShouldReturnConstructorValue()
     {
         // Arrange
         var expression = "$.data.items";
@@ -207,14 +207,14 @@ public class JsonPathSelectorTests
     }
 
     [Fact]
-    public void Select_WithRootPath_ShouldReturnWholeDocument()
+    public static void Select_WithRootPath_ShouldReturnWholeDocument()
     {
         // Arrange
         var selector = new JsonPathSelector("$");
         var json = @"{""key"": ""value""}";
 
         // Act
-        var results = selector.Select(json);
+        var results = selector.SelectValues(json);
 
         // Assert
         results.Should().HaveCount(1);
@@ -223,14 +223,14 @@ public class JsonPathSelectorTests
     }
 
     [Fact]
-    public void Select_WithArrayIndex_ShouldReturnSpecificElement()
+    public static void Select_WithArrayIndex_ShouldReturnSpecificElement()
     {
         // Arrange
         var selector = new JsonPathSelector("$.tags[1]");
         var json = TestData.SampleJson;
 
         // Act
-        var results = selector.Select(json);
+        var results = selector.SelectValues(json);
 
         // Assert
         results.Should().HaveCount(1);
