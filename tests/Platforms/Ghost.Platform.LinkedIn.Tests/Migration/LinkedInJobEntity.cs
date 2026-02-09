@@ -8,7 +8,7 @@ namespace Ghost.Platform.LinkedIn.Tests.Migration;
 /// Entity for extracting LinkedIn job postings using Ghost.Sdk.Spider.
 /// This demonstrates the migration from the old platform-specific approach to the Spider SDK.
 /// </summary>
-[EntitySelector(Expression = "//html", Type = SelectorType.XPath)]
+[EntitySelector(Expression = "(/html | /section[contains(@class, 'top-card-layout')])[1]", Type = SelectorType.XPath)]
 public class LinkedInJobEntity : EntityBase<LinkedInJobEntity>
 {
     /// <summary>
@@ -51,49 +51,49 @@ public class LinkedInJobEntity : EntityBase<LinkedInJobEntity>
     /// <summary>
     /// Employment type (Full-time, Part-time, etc.)
     /// </summary>
-    [ValueSelector("//span[contains(text(), 'Employment type')]/following-sibling::span", SelectorType.XPath, TakeFirst = true)]
+    [ValueSelector("//h3[.//span[contains(text(), 'Employment type')]]/following-sibling::span[1]", SelectorType.XPath, TakeFirst = true)]
     [TrimFormatterAttribute(Order = 1)]
     public string? EmploymentType { get; set; }
 
     /// <summary>
     /// Seniority level
     /// </summary>
-    [ValueSelector("//span[contains(text(), 'Seniority level')]/following-sibling::span", SelectorType.XPath, TakeFirst = true)]
+    [ValueSelector("//h3[.//span[contains(text(), 'Seniority level')]]/following-sibling::span[1]", SelectorType.XPath, TakeFirst = true)]
     [TrimFormatterAttribute(Order = 1)]
     public string? SeniorityLevel { get; set; }
 
     /// <summary>
     /// Job function/category
     /// </summary>
-    [ValueSelector("//span[contains(text(), 'Job function')]/following-sibling::span", SelectorType.XPath, TakeFirst = true)]
+    [ValueSelector("//h3[.//span[contains(text(), 'Job function')]]/following-sibling::span[1]", SelectorType.XPath, TakeFirst = true)]
     [TrimFormatterAttribute(Order = 1)]
     public string? JobFunction { get; set; }
 
     /// <summary>
     /// Industries
     /// </summary>
-    [ValueSelector("//span[contains(text(), 'Industries')]/following-sibling::span", SelectorType.XPath, TakeFirst = true)]
+    [ValueSelector("//h3[.//span[contains(text(), 'Industries')]]/following-sibling::span[1]", SelectorType.XPath, TakeFirst = true)]
     [TrimFormatterAttribute(Order = 1)]
     public string? Industries { get; set; }
 
     /// <summary>
     /// Company logo URL
     /// </summary>
-    [ValueSelector("//img[contains(@class, 'artdeco-entity-image')]/@data-delayed-url", SelectorType.XPath, TakeFirst = true)]
+    [ValueSelector("//img[contains(@class, 'artdeco-entity-image')]", SelectorType.XPath, TakeFirst = true, Attribute = "data-delayed-url")]
     [TrimFormatterAttribute(Order = 1)]
     public string? CompanyLogoUrl { get; set; }
 
     /// <summary>
     /// Job URL (extracted from link)
     /// </summary>
-    [ValueSelector("//a[contains(@class, 'topcard__link')]/@href", SelectorType.XPath, TakeFirst = true)]
+    [ValueSelector("//a[contains(@class, 'topcard__link')]", SelectorType.XPath, TakeFirst = true, Attribute = "href")]
     [TrimFormatterAttribute(Order = 1)]
     public string? JobUrl { get; set; }
 
     /// <summary>
     /// Company URL
     /// </summary>
-    [ValueSelector("//a[contains(@class, 'topcard__org-name-link')]/@href", SelectorType.XPath, TakeFirst = true)]
+    [ValueSelector("//a[contains(@class, 'topcard__org-name-link')]", SelectorType.XPath, TakeFirst = true, Attribute = "href")]
     [TrimFormatterAttribute(Order = 1)]
     public string? CompanyUrl { get; set; }
 

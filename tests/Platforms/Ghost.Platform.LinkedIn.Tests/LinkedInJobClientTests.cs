@@ -38,8 +38,16 @@ public class LinkedInJobClientTests
         var mockPage = new Mock<IPage>();
         mockSession.Setup(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockPage.Object);
-        mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IElement?)null);
+        
+        // Mock QuerySelectorAllAsync to return empty list instead of null
+        mockPage.Setup(p => p.QuerySelectorAllAsync("button", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<IElement>());
+        
+        mockPage.Setup(p => p.NavigateAsync(It.IsAny<string>(), It.IsAny<NavigationOptions>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        
+        mockPage.Setup(p => p.WaitForLoadStateAsync(It.IsAny<WaitOptions>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         var logger = new Mock<ILogger<LinkedInJobClient>>();
         var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
@@ -87,12 +95,29 @@ public class LinkedInJobClientTests
         mockSession.Setup(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockPage.Object);
 
-        var mockBtn = new Mock<IElement>();
-        mockBtn.Setup(b => b.GetTextContentAsync(It.IsAny<CancellationToken>())).ReturnsAsync("Easy Apply");
+        mockPage.Setup(p => p.NavigateAsync(It.IsAny<string>(), It.IsAny<NavigationOptions>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
-        // Mock query selector to return the button
-        mockPage.Setup(p => p.QuerySelectorAsync(It.Is<string>(s => s.Contains("jobs-apply-button") || s.Contains("jobs-s-apply")), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(mockBtn.Object);
+        mockPage.Setup(p => p.WaitForLoadStateAsync(It.IsAny<WaitOptions>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Mock HTML content with Easy Apply button for EntityParser
+        var htmlContent = @"
+            <html>
+            <body>
+                <div class='top-card-layout__title'>Software Engineer</div>
+                <div class='topcard__org-name-link'>Test Company</div>
+                <div class='topcard__flavor--bullet'>San Francisco, CA</div>
+                <div class='show-more-less-html__markup'>Job description here</div>
+                <div class='jobs-apply-button--top-card'>
+                    <button>Easy Apply</button>
+                </div>
+                <link rel='canonical' href='https://www.linkedin.com/jobs/view/123' />
+            </body>
+            </html>";
+
+        mockPage.Setup(p => p.GetContentAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(htmlContent);
 
         var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
         var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), null!, new JavaScriptAdapter(), new EntityParser());

@@ -36,8 +36,8 @@ public class LinkedInSocialClientTests
         var mockPage = new Mock<IPage>();
         mockSession.Setup(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockPage.Object);
-        mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IElement?)null);
+        mockPage.Setup(p => p.QuerySelectorAllAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<IElement>().AsReadOnly());
 
         var logger = new Mock<ILogger<LinkedInSocialClient>>();
         var client = new LinkedInSocialClient(mockSession.Object, Options.Create(new LinkedInOptions()), logger.Object);
