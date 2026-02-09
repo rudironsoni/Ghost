@@ -148,7 +148,7 @@ public class StrategyRouterTests
     }
 
     [Fact]
-    public void ExecuteStrategyAsync_WithInvalidName_ShouldThrow()
+    public async Task ExecuteStrategyAsync_WithInvalidName_ShouldThrow()
     {
         // Arrange
         var context = new StrategyContext
@@ -159,7 +159,7 @@ public class StrategyRouterTests
         };
 
         // Act & Assert
-        Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await _router.ExecuteStrategyAsync("NonExistent", context));
     }
 

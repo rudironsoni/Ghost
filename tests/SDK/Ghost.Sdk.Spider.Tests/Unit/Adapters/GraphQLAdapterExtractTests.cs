@@ -134,21 +134,21 @@ public class GraphQLAdapterExtractTests : IDisposable
     }
 
     [Fact]
-    public void ExtractAsync_WithNullRequest_ShouldThrowArgumentNullException()
+    public async Task ExtractAsync_WithNullRequest_ShouldThrowArgumentNullException()
     {
         // Act & Assert
-        Assert.ThrowsAsync<ArgumentNullException>(async () =>
+        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
             await _adapter.ExtractAsync(null!, new GraphQLAdapterOptions()));
     }
 
     [Fact]
-    public void ExtractAsync_WithNullOptions_ShouldThrowArgumentNullException()
+    public async Task ExtractAsync_WithNullOptions_ShouldThrowArgumentNullException()
     {
         // Arrange
         var request = new Request("https://example.com/graphql");
 
         // Act & Assert
-        Assert.ThrowsAsync<ArgumentNullException>(async () =>
+        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
             await _adapter.ExtractAsync(request, null!));
     }
 
