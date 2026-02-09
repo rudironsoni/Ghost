@@ -45,6 +45,12 @@
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- Disable MSBuild node reuse to prevent test hangs (Ghost-2ny) -->
+    <UseSharedCompilation>false</UseSharedCompilation>
+    <DisableMSBuildNodeReuse>true</DisableMSBuildNodeReuse>
+  </PropertyGroup>
+
   <!-- Layer detection -->
   <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Core'))">
     <GhostLayer>Kernel</GhostLayer>
