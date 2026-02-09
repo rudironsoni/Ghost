@@ -1,9 +1,9 @@
 using FluentAssertions;
+using Ghost.Contracts.Jobs;
+using Ghost.Platform.Google.Jobs.Internal;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using Ghost.Platform.Google.Jobs.Internal;
-using Ghost.Contracts.Jobs;
 
 namespace Ghost.Platform.Google.Tests;
 
@@ -72,7 +72,7 @@ public class GoogleJobsParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        var job = result.First();
+        var job = result[0];
         job.Title.Should().Be("Software Engineer");
         job.Company.Should().Be("Tech Company");
         job.Location.Should().Be("San Francisco");
@@ -196,7 +196,7 @@ public class GoogleJobsParserIntegrationTests
         string? html = null;
 
         // Act
-            var result = GoogleJobsParser.ParseFromHtml(html!, _logger);
+        var result = GoogleJobsParser.ParseFromHtml(html!, _logger);
 
         // Assert
         result.Should().NotBeNull();
@@ -332,7 +332,7 @@ public class GoogleJobsParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        var job = result.First();
+        var job = result[0];
         job.Title.Should().Be("Software Engineer");
         job.Company.Should().Be("Tech Company");
         job.Location.Should().Be("San Francisco");
@@ -393,7 +393,7 @@ public class GoogleJobsParserIntegrationTests
 
             // Assert
             result.Should().HaveCount(1);
-            result.First().JobType.Should().Be(expectedJobType, $"Should parse {employmentType} correctly");
+            result[0].JobType.Should().Be(expectedJobType, $"Should parse {employmentType} correctly");
         }
     }
 
@@ -507,7 +507,7 @@ public class GoogleJobsParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        result.First().Salary.Should().Be("$100,000 - $150,000");
+        result[0].Salary.Should().Be("$100,000 - $150,000");
     }
 
     [Fact]
@@ -553,7 +553,7 @@ public class GoogleJobsParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        result.First().PostedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(1));
+        result[0].PostedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -651,7 +651,7 @@ public class GoogleJobsParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        result.First().Title.Should().Be("Software Engineer");
+        result[0].Title.Should().Be("Software Engineer");
     }
 
     [Fact]
