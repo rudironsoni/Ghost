@@ -8,6 +8,7 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 
 public class EntityParserImplementationTests
 {
+    private static readonly string[] ExpectedTags = new[] { "Tag1", "Tag2", "Tag3" };
 
     [Fact]
     public void Parse_WithXPathSelector_ExtractsMultipleProducts()
@@ -306,7 +307,7 @@ public class EntityParserImplementationTests
         // Assert
         results.Should().HaveCount(1);
         results[0].Tags.Should().HaveCount(3);
-        results[0].Tags.Should().Contain(new[] { "Tag1", "Tag2", "Tag3" });
+        results[0].Tags.Should().Contain(ExpectedTags);
     }
 
     [Fact]

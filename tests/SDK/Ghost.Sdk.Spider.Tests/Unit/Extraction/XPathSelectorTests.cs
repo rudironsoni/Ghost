@@ -21,7 +21,7 @@ public class XPathSelectorTests
             </html>";
 
         // Act
-        var results = selector.Select(html);
+        var results = selector.SelectValues(html);
 
         // Assert
         results.Should().HaveCount(2);
@@ -43,7 +43,7 @@ public class XPathSelectorTests
             </html>";
 
         // Act
-        var results = selector.Select(html);
+        var results = selector.SelectValues(html);
 
         // Assert
         results.Should().HaveCount(2);
@@ -93,7 +93,7 @@ public class XPathSelectorTests
         var selector = new XPathSelector("//div");
 
         // Act
-        var results = selector.Select(string.Empty);
+        var results = selector.SelectValues(string.Empty);
 
         // Assert
         results.Should().BeEmpty();
@@ -117,7 +117,7 @@ public class XPathSelectorTests
             </html>";
 
         // Act
-        var results = selector.Select(html);
+        var results = selector.SelectValues(html);
 
         // Assert
         results.Should().HaveCount(2);
@@ -184,7 +184,7 @@ public class XPathSelectorTests
             </html>";
 
         // Act
-        var results = selector.Select(html);
+        var results = selector.SelectValues(html);
 
         // Assert
         results.Should().HaveCount(1);

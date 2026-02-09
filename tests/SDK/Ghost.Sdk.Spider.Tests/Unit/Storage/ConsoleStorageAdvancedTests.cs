@@ -191,8 +191,8 @@ public class ConsoleStorageAdvancedTests : IDisposable
 
         // Should contain separator lines
         var lines = output.Split(Environment.NewLine);
-        lines.Should().Contain(line => line.StartsWith("=") && line.Length >= 80);
-        lines.Should().Contain(line => line.StartsWith("-") && line.Length >= 80);
+        lines.Should().Contain(line => line.StartsWith('=') && line.Length >= 80);
+        lines.Should().Contain(line => line.StartsWith('-') && line.Length >= 80);
     }
 
     [Fact]

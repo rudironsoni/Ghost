@@ -112,7 +112,7 @@ public class AdapterRegistryTests
 
         // Assert
         var adapterType = _registry.GetAdapterType("TestAdapter");
-        adapterType.Should().Be(typeof(GraphQLAdapter));
+        adapterType.Should().Be<GraphQLAdapter>();
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public class AdapterRegistryTests
         var result = _registry.GetAdapterType("TestAdapter");
 
         // Assert
-        result.Should().Be(typeof(StaticHtmlAdapter));
+        result.Should().Be<StaticHtmlAdapter>();
     }
 
     [Fact]
@@ -386,7 +386,7 @@ public class AdapterRegistryTests
     }
 
     [Fact]
-    public void Register_ThreadSafety_ShouldHandleConcurrentRegistrations()
+    public async Task Register_ThreadSafety_ShouldHandleConcurrentRegistrations()
     {
         // Arrange
         var tasks = new List<Task>();
@@ -403,7 +403,7 @@ public class AdapterRegistryTests
         }
 
         // Assert
-        Task.WaitAll(tasks.ToArray());
+        await Task.WhenAll(tasks.ToArray());
         for (int i = 0; i < 10; i++)
         {
             registry.IsRegistered($"Adapter{i}").Should().BeTrue();

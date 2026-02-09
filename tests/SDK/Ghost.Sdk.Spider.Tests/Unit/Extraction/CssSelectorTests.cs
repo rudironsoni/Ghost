@@ -21,7 +21,7 @@ public class CssSelectorTests
             </html>";
 
         // Act
-        var results = selector.Select(html);
+        var results = selector.SelectValues(html);
 
         // Assert
         results.Should().HaveCount(2);
@@ -43,7 +43,7 @@ public class CssSelectorTests
             </html>";
 
         // Act
-        var results = selector.Select(html);
+        var results = selector.SelectValues(html);
 
         // Assert
         results.Should().HaveCount(2);
@@ -93,7 +93,7 @@ public class CssSelectorTests
         var selector = new CssSelector("div");
 
         // Act
-        var results = selector.Select(string.Empty);
+        var results = selector.SelectValues(string.Empty);
 
         // Assert
         results.Should().BeEmpty();
@@ -117,7 +117,7 @@ public class CssSelectorTests
             </html>";
 
         // Act
-        var results = selector.Select(html);
+        var results = selector.SelectValues(html);
 
         // Assert
         results.Should().HaveCount(2);
@@ -139,7 +139,7 @@ public class CssSelectorTests
             </html>";
 
         // Act
-        var results = selector.Select(html);
+        var results = selector.SelectValues(html);
 
         // Assert
         results.Should().HaveCount(1);
@@ -160,7 +160,7 @@ public class CssSelectorTests
             </html>";
 
         // Act
-        var results = selector.Select(html);
+        var results = selector.SelectValues(html);
 
         // Assert
         results.Should().HaveCount(1);
@@ -183,7 +183,7 @@ public class CssSelectorTests
             </html>";
 
         // Act
-        var results = selector.Select(html);
+        var results = selector.SelectValues(html);
 
         // Assert
         results.Should().HaveCount(1);

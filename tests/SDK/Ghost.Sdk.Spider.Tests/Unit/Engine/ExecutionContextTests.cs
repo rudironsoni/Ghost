@@ -2,6 +2,7 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Engine;
 using Xunit;
 using System.Collections.Concurrent;
+using System.Globalization;
 using SpiderExecutionContext = Ghost.Sdk.Spider.Engine.ExecutionContext;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
@@ -431,7 +432,7 @@ public class ExecutionContextTests
 
         // Assert
         stats.Should().ContainKey("ElapsedSeconds");
-        Convert.ToDouble(stats["ElapsedSeconds"]).Should().BeGreaterOrEqualTo(0.09); // Allow 10% tolerance for timing precision
+        Convert.ToDouble(stats["ElapsedSeconds"], CultureInfo.InvariantCulture).Should().BeGreaterOrEqualTo(0.09); // Allow 10% tolerance for timing precision
     }
 
     [Fact]
@@ -448,7 +449,7 @@ public class ExecutionContextTests
 
         // Assert
         stats.Should().ContainKey("RequestsPerSecond");
-        Convert.ToDouble(stats["RequestsPerSecond"]).Should().BeGreaterOrEqualTo(0);
+        Convert.ToDouble(stats["RequestsPerSecond"], CultureInfo.InvariantCulture).Should().BeGreaterOrEqualTo(0);
     }
 
     [Fact]
@@ -467,7 +468,7 @@ public class ExecutionContextTests
 
         // Assert
         stats.Should().ContainKey("SuccessRate");
-        var successRate = Convert.ToDouble(stats["SuccessRate"]);
+        var successRate = Convert.ToDouble(stats["SuccessRate"], CultureInfo.InvariantCulture);
         successRate.Should().BeApproximately(2.0 / 3.0, 0.01); // 2 succeeded out of 3 processed
     }
 
@@ -538,7 +539,7 @@ public class ExecutionContextTests
         context.ItemsExtracted.Should().BeGreaterThan(0);
 
         var stats = context.GetStatistics();
-        Convert.ToDouble(stats["SuccessRate"]).Should().BeGreaterThan(0.8);
+        Convert.ToDouble(stats["SuccessRate"], CultureInfo.InvariantCulture).Should().BeGreaterThan(0.8);
     }
 
     [Fact]
@@ -566,7 +567,7 @@ public class ExecutionContextTests
         var stats = _context.GetStatistics();
 
         // Assert
-        var elapsed = Convert.ToDouble(stats["ElapsedSeconds"]);
+        var elapsed = Convert.ToDouble(stats["ElapsedSeconds"], CultureInfo.InvariantCulture);
         elapsed.Should().BeGreaterOrEqualTo(0.2);
     }
 

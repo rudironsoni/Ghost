@@ -9,6 +9,8 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Configuration;
 /// </summary>
 public class ComplexValidationTests
 {
+    private static readonly string[] ExpectedFieldNames = new[] { "Name", "Price", "Description" };
+    
     [Fact]
     public void Configuration_WithValidEntity_ShouldInitialize()
     {
@@ -72,7 +74,7 @@ public class ComplexValidationTests
 
         // Assert
         entity.Fields.Should().HaveCount(3);
-        entity.Fields.Select(f => f.Name).Should().BeEquivalentTo(new[] { "Name", "Price", "Description" });
+        entity.Fields.Select(f => f.Name).Should().BeEquivalentTo(ExpectedFieldNames);
     }
 
     [Fact]

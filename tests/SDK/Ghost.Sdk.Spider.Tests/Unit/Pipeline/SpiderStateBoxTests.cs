@@ -253,7 +253,7 @@ public class SpiderStateBoxTests
     }
 
     [Fact]
-    public void Properties_IsThreadSafe_ConcurrentAccess()
+    public async Task Properties_IsThreadSafe_ConcurrentAccess()
     {
         // Arrange
         var tasks = new List<Task>();
@@ -272,14 +272,14 @@ public class SpiderStateBoxTests
             }));
         }
 
-        Task.WaitAll(tasks.ToArray());
+        await Task.WhenAll(tasks.ToArray());
 
         // Assert - All values should be present
         _stateBox.Properties.Count.Should().Be(1000);
     }
 
     [Fact]
-    public void Counters_AreThreadSafe_ConcurrentIncrements()
+    public async Task Counters_AreThreadSafe_ConcurrentIncrements()
     {
         // Arrange
         var tasks = new List<Task>();
@@ -297,7 +297,7 @@ public class SpiderStateBoxTests
             }));
         }
 
-        Task.WaitAll(tasks.ToArray());
+        await Task.WhenAll(tasks.ToArray());
 
         // Assert - Count should be exactly 10 * 1000
         _stateBox.RequestCount.Should().Be(10000);

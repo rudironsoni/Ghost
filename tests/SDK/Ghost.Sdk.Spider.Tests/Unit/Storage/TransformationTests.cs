@@ -156,7 +156,7 @@ public class TransformationTests
         var context = StorageContext.Create("LocationSpider");
 
         // Act
-        var result = await transformation.TransformAsync(item, context);
+        var result = await GeocodeTransformation.TransformAsync(item, context);
 
         // Assert
         result.Should().NotBeNull();
@@ -481,9 +481,9 @@ public class TransformationTests
                 result[prop.Name] = prop.GetValue(item)!;
             }
 
-            if (result.ContainsKey("Address"))
+            if (result.TryGetValue("Address", out var addressValue))
             {
-                var coords = await MockGeocoder.GeocodeAsync(result["Address"].ToString()!);
+                var coords = await MockGeocoder.GeocodeAsync(addressValue.ToString()!);
                 result["Latitude"] = coords.Lat;
                 result["Longitude"] = coords.Lon;
             }

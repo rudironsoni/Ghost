@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Configuration.Models;
 using Ghost.Sdk.Spider.Storage.Contracts;
+using System.Globalization;
 using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
@@ -324,7 +325,7 @@ public class ElasticsearchStorageTests
         // Arrange
         var storage = new MockElasticsearchStorage(_mockClient, _config);
         var items = Enumerable.Range(1, 1000)
-            .Select(i => new { Id = i.ToString(), Title = $"Document {i}" })
+            .Select(i => new { Id = i.ToString(CultureInfo.InvariantCulture), Title = $"Document {i}" })
             .ToArray();
         var context = new StorageContext
         {
@@ -382,18 +383,18 @@ public class ElasticsearchStorageTests
     private sealed class MockElasticsearchClient
     {
         public bool IsHealthy { get; set; } = true;
-        public bool IndexExists { get; set; } = false;
-        public bool IndexCreated { get; set; } = false;
+        public bool IndexExists { get; set; }
+        public bool IndexCreated { get; set; }
         public string? CreatedIndexName { get; set; }
-        public int IndexedDocuments { get; set; } = 0;
-        public int UpdatedDocuments { get; set; } = 0;
-        public int BulkOperations { get; set; } = 0;
+        public int IndexedDocuments { get; set; }
+        public int UpdatedDocuments { get; set; }
+        public int BulkOperations { get; set; }
         public string? LastUsedIndex { get; set; }
-        public bool IndexRefreshed { get; set; } = false;
-        public bool IsDisposed { get; set; } = false;
-        public bool SimulatePartialFailure { get; set; } = false;
-        public bool SimulateMappingConflict { get; set; } = false;
-        public bool AuthenticationUsed { get; set; } = false;
+        public bool IndexRefreshed { get; set; }
+        public bool IsDisposed { get; set; }
+        public bool SimulatePartialFailure { get; set; }
+        public bool SimulateMappingConflict { get; set; }
+        public bool AuthenticationUsed { get; set; }
         public DateTimeOffset? LastDocumentTimestamp { get; set; }
     }
 

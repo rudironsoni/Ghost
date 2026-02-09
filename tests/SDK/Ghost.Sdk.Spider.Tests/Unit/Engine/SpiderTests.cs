@@ -73,7 +73,7 @@ public class SpiderTests
         // Arrange
         var spider = new ConfigurableTestSpider();
         var context = new SpiderExecutionContext("TestSpider", new SpiderOptions());
-        var exception = new Exception("Test error");
+        var exception = new InvalidOperationException("Test error");
 
         // Act
         await spider.OnErrorAsync(exception, context);

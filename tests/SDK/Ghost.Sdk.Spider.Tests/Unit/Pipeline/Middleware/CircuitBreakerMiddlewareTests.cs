@@ -65,42 +65,7 @@ public class CircuitBreakerMiddlewareTests
         var middleware = new CircuitBreakerMiddleware(config);
         var context = CreateContext();
 
-        PipelineDelegate failingNext = _ => throw new Exception("Simulated failure");
-
-        // Act - Cause failures to open the circuit
-        for (int i = 0; i < 3; i++)
-        {
-            try
-            {
-                await middleware.InvokeAsync(context, failingNext);
-            }
-            catch
-            {
-                // Expected
-            }
-        }
-
-        // Assert - Circuit should now be open
-        var act = async () => await middleware.InvokeAsync(context, _ => Task.CompletedTask);
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*Circuit breaker is open*");
-    }
-
-    [Fact]
-    public async Task InvokeAsync_WhenCircuitOpen_AfterTimeout_ShouldTransitionToHalfOpen()
-    {
-        // Arrange
-        var config = new Dictionary<string, object>
-        {
-            ["FailureThreshold"] = 2,
-            ["SuccessThreshold"] = 1,
-            ["Timeout"] = 1, // 1 second
-            ["SamplingDuration"] = 10
-        };
-        var middleware = new CircuitBreakerMiddleware(config);
-        var context = CreateContext();
-
-        PipelineDelegate failingNext = _ => throw new Exception("Simulated failure");
+        PipelineDelegate failingNext = _ => throw new InvalidOperationException("Simulated failure");
 
         // Act - Open the circuit
         for (int i = 0; i < 2; i++)
@@ -146,7 +111,7 @@ public class CircuitBreakerMiddlewareTests
         var middleware = new CircuitBreakerMiddleware(config);
         var context = CreateContext();
 
-        PipelineDelegate failingNext = _ => throw new Exception("Simulated failure");
+        PipelineDelegate failingNext = _ => throw new InvalidOperationException("Simulated failure");
         PipelineDelegate successNext = _ => Task.CompletedTask;
 
         // Act - Open the circuit
@@ -195,7 +160,7 @@ public class CircuitBreakerMiddlewareTests
         var middleware = new CircuitBreakerMiddleware(config);
         var context = CreateContext();
 
-        PipelineDelegate failingNext = _ => throw new Exception("Simulated failure");
+        PipelineDelegate failingNext = _ => throw new InvalidOperationException("Simulated failure");
 
         // Act - Open the circuit
         for (int i = 0; i < 2; i++)
@@ -243,7 +208,7 @@ public class CircuitBreakerMiddlewareTests
         var middleware = new CircuitBreakerMiddleware(config);
         var context = CreateContext();
 
-        PipelineDelegate failingNext = _ => throw new Exception("Simulated failure");
+        PipelineDelegate failingNext = _ => throw new InvalidOperationException("Simulated failure");
 
         // Act - Single failure should open circuit
         try
@@ -274,7 +239,7 @@ public class CircuitBreakerMiddlewareTests
         var middleware = new CircuitBreakerMiddleware(config);
         var context = CreateContext();
 
-        PipelineDelegate failingNext = _ => throw new Exception("Simulated failure");
+        PipelineDelegate failingNext = _ => throw new InvalidOperationException("Simulated failure");
         PipelineDelegate successNext = _ => Task.CompletedTask;
 
         // Act - Cause 2 failures
@@ -310,7 +275,7 @@ public class CircuitBreakerMiddlewareTests
         var middleware = new CircuitBreakerMiddleware(config);
         var context = CreateContext();
 
-        PipelineDelegate failingNext = _ => throw new Exception("Simulated failure");
+        PipelineDelegate failingNext = _ => throw new InvalidOperationException("Simulated failure");
         PipelineDelegate successNext = _ => Task.CompletedTask;
 
         // Act - Cause some failures

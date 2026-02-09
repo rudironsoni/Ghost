@@ -125,7 +125,7 @@ public class RegexSelectorTests
 
         // Assert
         results.Should().HaveCount(4);
-        results.Should().AllSatisfy(r => r.ToLower().Should().Be("test"));
+        results.Should().AllSatisfy(r => r.ToLowerInvariant().Should().Be("test"));
     }
 
     [Fact]

@@ -334,8 +334,8 @@ public class FormatterTests
             var formatter = new StringFormatter { FormatString = "{0}" };
             var input = "TEST VALUE";
 
-            // Act
-            var result = formatter.Format(input.ToLower());
+        // Act
+        var result = formatter.Format(input.ToLowerInvariant());
 
             // Assert
             result.Should().Be("test value");
@@ -348,8 +348,8 @@ public class FormatterTests
             var formatter = new StringFormatter { FormatString = "{0}" };
             var input = "test value";
 
-            // Act
-            var result = formatter.Format(input.ToUpper());
+        // Act
+        var result = formatter.Format(input.ToUpperInvariant());
 
             // Assert
             result.Should().Be("TEST VALUE");
@@ -361,7 +361,7 @@ public class FormatterTests
             // Arrange
             var formatter = new StringFormatter { FormatString = "{0}" };
             var input = "test value";
-            var capitalized = char.ToUpper(input[0]) + input.Substring(1);
+            var capitalized = char.ToUpperInvariant(input[0]) + input.Substring(1);
 
             // Act
             var result = formatter.Format(capitalized);

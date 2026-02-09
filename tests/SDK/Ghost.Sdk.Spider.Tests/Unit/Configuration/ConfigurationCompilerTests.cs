@@ -383,7 +383,7 @@ extraction:
         result.IsSuccess.Should().BeFalse();
         result.Configuration.Should().BeNull();
         result.Errors.Should().ContainSingle();
-        result.Errors.First().Should().Be("Test error");
+        result.Errors[0].Should().Be("Test error");
     }
 
     [Fact]

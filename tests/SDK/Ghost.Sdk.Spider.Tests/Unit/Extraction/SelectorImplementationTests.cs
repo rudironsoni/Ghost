@@ -17,7 +17,7 @@ public class SelectorImplementationTests
             var selector = new XPathSelector("//p");
 
             // Act
-            var results = selector.Select(html);
+            var results = selector.SelectValues(html);
 
             // Assert
             results.Should().HaveCount(2);
@@ -91,7 +91,7 @@ public class SelectorImplementationTests
             var selector = new CssSelector(".item");
 
             // Act
-            var results = selector.Select(html);
+            var results = selector.SelectValues(html);
 
             // Assert
             results.Should().HaveCount(2);
@@ -107,7 +107,7 @@ public class SelectorImplementationTests
             var selector = new CssSelector("img", "src");
 
             // Act
-            var results = selector.Select(html);
+            var results = selector.SelectValues(html);
 
             // Assert
             results.Should().ContainSingle();
@@ -136,7 +136,7 @@ public class SelectorImplementationTests
             var selector = new CssSelector(".container .text");
 
             // Act
-            var results = selector.Select(html);
+            var results = selector.SelectValues(html);
 
             // Assert
             results.Should().ContainSingle();
@@ -167,7 +167,7 @@ public class SelectorImplementationTests
             var selector = new RegexSelector(@"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b");
 
             // Act
-            var results = selector.Select(content);
+            var results = selector.SelectValues(content);
 
             // Assert
             results.Should().HaveCount(2);
@@ -183,7 +183,7 @@ public class SelectorImplementationTests
             var selector = new RegexSelector(@"\$(\d+\.\d+)", group: 1);
 
             // Act
-            var results = selector.Select(content);
+            var results = selector.SelectValues(content);
 
             // Assert
             results.Should().HaveCount(2);
@@ -213,7 +213,7 @@ public class SelectorImplementationTests
             var selector = new RegexSelector("hello", options: RegexOptions.IgnoreCase);
 
             // Act
-            var results = selector.Select(content);
+            var results = selector.SelectValues(content);
 
             // Assert
             results.Should().HaveCount(3);
@@ -243,7 +243,7 @@ public class SelectorImplementationTests
             var selector = new JsonPathSelector("$.items[*]");
 
             // Act
-            var results = selector.Select(json);
+            var results = selector.SelectValues(json);
 
             // Assert
             results.Should().HaveCount(3);
@@ -260,7 +260,7 @@ public class SelectorImplementationTests
             var selector = new JsonPathSelector("$.user.name");
 
             // Act
-            var results = selector.Select(json);
+            var results = selector.SelectValues(json);
 
             // Assert
             results.Should().ContainSingle();
@@ -290,7 +290,7 @@ public class SelectorImplementationTests
             var selector = new JsonPathSelector("$.products[*].name");
 
             // Act
-            var results = selector.Select(json);
+            var results = selector.SelectValues(json);
 
             // Assert
             results.Should().HaveCount(2);
@@ -303,7 +303,7 @@ public class SelectorImplementationTests
             var selector = new JsonPathSelector("$.test");
 
             // Act
-            var results = selector.Select("not valid json");
+            var results = selector.SelectValues("not valid json");
 
             // Assert
             results.Should().BeEmpty();
@@ -333,7 +333,7 @@ public class SelectorImplementationTests
             var selector = new JmesPathSelector("name");
 
             // Act
-            var results = selector.Select(json);
+            var results = selector.SelectValues(json);
 
             // Assert
             results.Should().ContainSingle();
@@ -348,7 +348,7 @@ public class SelectorImplementationTests
             var selector = new JmesPathSelector("users[*].name");
 
             // Act
-            var results = selector.Select(json);
+            var results = selector.SelectValues(json);
 
             // Assert
             results.Should().HaveCount(2);
@@ -375,7 +375,7 @@ public class SelectorImplementationTests
             var selector = new JmesPathSelector("test");
 
             // Act
-            var results = selector.Select("invalid");
+            var results = selector.SelectValues("invalid");
 
             // Assert
             results.Should().BeEmpty();

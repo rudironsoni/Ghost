@@ -198,7 +198,7 @@ public class PipelineTests
     }
 
     [Fact]
-    public void PipelineDelegate_ShouldBeInvocable()
+    public async Task PipelineDelegate_ShouldBeInvocable()
     {
         // Arrange
         var executed = false;
@@ -216,7 +216,7 @@ public class PipelineTests
         };
 
         // Act
-        del(context).Wait();
+        await del(context);
 
         // Assert
         executed.Should().BeTrue();

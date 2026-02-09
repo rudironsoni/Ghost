@@ -17,6 +17,8 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Scheduling;
 /// </summary>
 public class QuartzSpiderSchedulerTests
 {
+    private static readonly string[] ExpectedMetadataTags = new[] { "tag1", "tag2" };
+    
     private Mock<SpiderScheduler> _mockScheduler;
     private Mock<SpiderBase> _mockSpider;
 
@@ -371,7 +373,7 @@ public class QuartzSpiderSchedulerTests
         {
             ["environment"] = "production",
             ["version"] = "1.0.0",
-            ["tags"] = new[] { "tag1", "tag2" }
+            ["tags"] = ExpectedMetadataTags
         };
 
         var scheduleInfo = new ScheduleInfo
@@ -393,6 +395,6 @@ public class QuartzSpiderSchedulerTests
         info.Should().NotBeNull();
         info!.Metadata.Should().ContainKey("environment");
         info.Metadata["environment"].Should().Be("production");
-        info.Metadata["tags"].Should().BeEquivalentTo(new[] { "tag1", "tag2" });
+        info.Metadata["tags"].Should().BeEquivalentTo(ExpectedMetadataTags);
     }
 }
