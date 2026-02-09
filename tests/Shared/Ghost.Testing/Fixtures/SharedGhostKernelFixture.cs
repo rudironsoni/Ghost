@@ -10,12 +10,13 @@ namespace Ghost.Testing.Fixtures;
 /// and disposed when last test class completes. This reduces browser instances
 /// from O(n) to O(1) where n = number of test classes.
 /// </summary>
-public sealed class SharedGhostKernelFixture : IAsyncLifetime
+public sealed class SharedGhostKernelFixture : IAsyncLifetime, IDisposable
 {
     private GhostKernel? _kernel;
     private int _referenceCount;
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private readonly KernelOptions _options;
+    private bool _disposed;
 
     public SharedGhostKernelFixture()
     {
@@ -94,5 +95,17 @@ public sealed class SharedGhostKernelFixture : IAsyncLifetime
         }
 
         return await _kernel.NewSessionAsync(options);
+    }
+
+    /// <summary>
+    /// Disposes the semaphore lock used for synchronization.
+    /// </summary>
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            _initLock.Dispose();
+            _disposed = true;
+        }
     }
 }
