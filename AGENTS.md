@@ -44,14 +44,14 @@ dotnet clean Ghost.sln
 ## Test Commands
 
 ```bash
-# Run all tests
-dotnet test Ghost.sln --configuration Release
+# Run all tests (USE --maxcpucount:1 to prevent hangs)
+dotnet test Ghost.sln --configuration Release --maxcpucount:1
 
 # Run all tests with verbosity
-dotnet test Ghost.sln --configuration Release --verbosity normal
+dotnet test Ghost.sln --configuration Release --verbosity normal --maxcpucount:1
 
 # Run all tests excluding E2E (CI style)
-dotnet test Ghost.sln --configuration Release --filter "FullyQualifiedName!~E2E"
+dotnet test Ghost.sln --configuration Release --filter "FullyQualifiedName!~E2E" --maxcpucount:1
 
 # Run tests for a specific project
 dotnet test tests/Core/Ghost.Tests/Ghost.Tests.csproj --configuration Release
@@ -63,8 +63,10 @@ dotnet test tests/Core/Ghost.Tests --filter "FullyQualifiedName~GhostKernelTests
 dotnet test tests/Core/Ghost.Tests --filter "FullyQualifiedName=Ghost.Core.Tests.GhostKernelTests.NewSessionAsyncUsesOptionsToCreateContext"
 
 # Run tests with code coverage
-dotnet test Ghost.sln --collect:"XPlat Code Coverage"
+dotnet test Ghost.sln --collect:"XPlat Code Coverage" --maxcpucount:1
 ```
+
+**IMPORTANT**: Always use `--maxcpucount:1` when running the full test suite to prevent MSBuild child node crashes that cause test hangs. This forces sequential test execution.
 
 ## Lint/Format Commands
 
