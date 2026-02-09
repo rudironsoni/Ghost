@@ -117,7 +117,7 @@ jobs:
             --logger "trx;LogFileName=test-results.trx" \
             --collect:"XPlat Code Coverage" \
             --filter "FullyQualifiedName!~E2E&FullyQualifiedName!~Integration" \
-            -- RunConfiguration.MaxCpuCount=4
+            --maxcpucount:1
 
       - name: Upload Test Results
         if: always()
@@ -185,7 +185,7 @@ jobs:
             --logger "trx;LogFileName=integration-test-results.trx" \
             --collect:"XPlat Code Coverage" \
             --filter "FullyQualifiedName~Integration&FullyQualifiedName!~E2E" \
-            -- RunConfiguration.MaxCpuCount=2
+            --maxcpucount:1
 
       - name: Upload Test Results
         if: always()
@@ -251,7 +251,7 @@ jobs:
             --verbosity normal \
             --logger "trx;LogFileName=e2e-test-results-shard-${{ matrix.shard }}.trx" \
             --filter "FullyQualifiedName~E2E" \
-            -- RunConfiguration.MaxCpuCount=1
+            --maxcpucount:1
 
       - name: Upload Test Results
         if: always()
