@@ -1,72 +1,68 @@
 using Ghost.Core;
-using Ghost.Core.Configuration;
+using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Ghost.Platform.InfoJobs.Integration.Fixtures;
 
 /// <summary>
-/// Test fixture that provides a GhostKernel instance for InfoJobs integration tests.
+/// Per-test-class fixture that provides an isolated browser context for InfoJobs integration tests.
+/// Each test class gets a fresh browser session with no shared state.
+/// Use with [Collection("Browser")] and IClassFixture&lt;InfoJobsContextFixture&gt;.
 /// </summary>
-public sealed class GhostKernelFixture : IAsyncLifetime
+public sealed class InfoJobsContextFixture : IAsyncLifetime
 {
-    public GhostKernel Kernel { get; private set; } = null!;
-    public IBrowserSession Session { get; private set; } = null!;
+    private readonly RealBrowserFixture _browserFixture;
+    private IBrowserSession? _session;
+
+    public InfoJobsContextFixture(RealBrowserFixture browserFixture)
+    {
+        _browserFixture = browserFixture;
+    }
+
+    public IBrowserSession Session => _session ?? throw new InvalidOperationException("Fixture not initialized");
     public IServiceProvider ServiceProvider { get; private set; } = null!;
 
     public async Task InitializeAsync()
     {
-        var options = new KernelOptions
+        try
         {
-            EnableStealth = true,
-            Headless = true
-        };
+            // Create a fresh session for this test class
+            _session = await _browserFixture.CreateSessionAsync();
 
-        Kernel = await GhostKernel.CreateAsync(options);
+            // Build service provider with InfoJobs platform
+            var services = new ServiceCollection();
+            services.AddSingleton(_session);
+            services.AddSingleton<IBrowserSession>(_session);
+            services.AddLogging();
 
-        // Create a session for testing
-        Session = await Kernel.NewSessionAsync();
+            // Register InfoJobs services manually
+            var infoJobsOptions = new Ghost.Platform.InfoJobs.Jobs.InfoJobsOptions();
+            var httpClient = new System.Net.Http.HttpClient();
 
-        // Build service provider with InfoJobs platform
-        var services = new ServiceCollection();
-        services.AddSingleton(Session);
-        services.AddSingleton<IBrowserSession>(Session);
-        services.AddLogging();
+            services.AddSingleton(infoJobsOptions);
+            services.AddSingleton(httpClient);
+            services.AddSingleton<Ghost.Platform.InfoJobs.Jobs.Internal.InfoJobsApiClient>(sp =>
+            {
+                var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Ghost.Platform.InfoJobs.Jobs.Internal.InfoJobsApiClient>>();
+                return new Ghost.Platform.InfoJobs.Jobs.Internal.InfoJobsApiClient(httpClient, infoJobsOptions, logger);
+            });
+            services.AddScoped<Ghost.Platform.InfoJobs.Jobs.InfoJobClient>();
 
-        // Register InfoJobs services manually
-        var infoJobsOptions = new Ghost.Platform.InfoJobs.Jobs.InfoJobsOptions();
-        var httpClient = new System.Net.Http.HttpClient();
-
-        services.AddSingleton(infoJobsOptions);
-        services.AddSingleton(httpClient);
-        services.AddSingleton<Ghost.Platform.InfoJobs.Jobs.Internal.InfoJobsApiClient>(sp =>
+            ServiceProvider = services.BuildServiceProvider();
+        }
+        catch
         {
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Ghost.Platform.InfoJobs.Jobs.Internal.InfoJobsApiClient>>();
-            return new Ghost.Platform.InfoJobs.Jobs.Internal.InfoJobsApiClient(httpClient, infoJobsOptions, logger);
-        });
-        services.AddScoped<Ghost.Platform.InfoJobs.Jobs.InfoJobClient>();
-
-        ServiceProvider = services.BuildServiceProvider();
+            await DisposeAsync();
+            throw;
+        }
     }
 
     public async Task DisposeAsync()
     {
-        if (Session != null)
+        if (_session != null)
         {
-            await Session.DisposeAsync();
+            await _session.DisposeAsync();
         }
-
-        if (Kernel != null)
-        {
-            await Kernel.DisposeAsync();
-        }
-    }
-
-    /// <summary>
-    /// Creates a new browser session for testing.
-    /// </summary>
-    public async Task<IBrowserSession> CreateSessionAsync()
-    {
-        return await Kernel.NewSessionAsync();
     }
 }

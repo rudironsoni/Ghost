@@ -31,6 +31,7 @@
     <ProjectReference Include="..\..\..\src\Platforms\Ghost.Platform.Indeed\Ghost.Platform.Indeed.csproj" />
     <ProjectReference Include="..\..\..\src\Core\Ghost\Ghost.csproj" />
     <ProjectReference Include="..\..\..\src\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
+    <ProjectReference Include="..\..\Shared\Ghost.Testing\Ghost.Testing.csproj" />
   </ItemGroup>
 
 </Project>

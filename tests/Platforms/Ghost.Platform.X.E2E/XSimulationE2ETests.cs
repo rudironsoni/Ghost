@@ -10,12 +10,13 @@ namespace Ghost.Platform.X.E2E;
 /// <summary>
 /// End-to-end tests for X platform simulation mode.
 /// </summary>
-public class XSimulationE2ETests : IClassFixture<GhostKernelFixture>
+[Collection("Browser")]
+public class XSimulationE2ETests : IClassFixture<XContextFixture>
 {
-    private readonly GhostKernelFixture _fixture;
+    private readonly XContextFixture _fixture;
     private readonly XSimulationValidator _validator;
 
-    public XSimulationE2ETests(GhostKernelFixture fixture)
+    public XSimulationE2ETests(XContextFixture fixture)
     {
         _fixture = fixture;
         _validator = _fixture.ServiceProvider.GetRequiredService<XSimulationValidator>();

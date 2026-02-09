@@ -12,12 +12,13 @@ namespace Ghost.Platform.InfoJobs.Integration;
 /// InfoJobs is a Spanish/Portuguese job platform.
 /// </summary>
 [Trait("Category", "Integration")]
-public class InfoJobsIntegrationTests : IClassFixture<GhostKernelFixture>
+[Collection("Browser")]
+public class InfoJobsIntegrationTests : IClassFixture<InfoJobsContextFixture>
 {
-    private readonly GhostKernelFixture _fixture;
+    private readonly InfoJobsContextFixture _fixture;
     private readonly InfoJobClient _jobClient;
 
-    public InfoJobsIntegrationTests(GhostKernelFixture fixture)
+    public InfoJobsIntegrationTests(InfoJobsContextFixture fixture)
     {
         _fixture = fixture;
         _jobClient = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
