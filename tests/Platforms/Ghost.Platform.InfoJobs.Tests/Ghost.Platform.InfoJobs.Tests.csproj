@@ -4,6 +4,8 @@
     <IsPackable>false</IsPackable>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- Prevent extension auto-loading to avoid hanging during test host startup -->
+    <GhostDisableExtensionAutoLoad>true</GhostDisableExtensionAutoLoad>
   </PropertyGroup>
 
   <ItemGroup>
