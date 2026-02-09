@@ -60,7 +60,7 @@ jobs:
             --logger "trx;LogFileName=integration-test-results.trx" \
             --collect:"XPlat Code Coverage" \
             --filter "FullyQualifiedName~Integration" \
-            -- RunConfiguration.MaxCpuCount=2
+            --maxcpucount:1
 
       - name: Upload Test Results
         if: always()
@@ -119,7 +119,7 @@ jobs:
             --verbosity normal \
             --logger "trx;LogFileName=e2e-test-results-${{ matrix.browser }}.trx" \
             --filter "FullyQualifiedName~E2E" \
-            -- RunConfiguration.MaxCpuCount=1
+            --maxcpucount:1
 
       - name: Upload Test Results
         if: always()
@@ -222,7 +222,7 @@ jobs:
               --no-build \
               --logger "trx;LogFileName=stability-run-$i.trx" \
               --filter "FullyQualifiedName~E2E&Priority=Critical" \
-              -- RunConfiguration.MaxCpuCount=1
+              --maxcpucount:1
           done
 
       - name: Analyze Stability Results
