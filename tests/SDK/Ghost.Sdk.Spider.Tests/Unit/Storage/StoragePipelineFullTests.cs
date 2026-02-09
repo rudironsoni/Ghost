@@ -408,7 +408,7 @@ public class StoragePipelineFullTests
 
     #region Test Helpers
 
-    private class StoragePipeline : IStorage
+    private sealed class StoragePipeline : IStorage
     {
         private readonly List<IStorage> _storages = new();
         private readonly List<Func<object, StorageContext, Task<object>>> _transformations = new();
@@ -543,7 +543,7 @@ public class StoragePipelineFullTests
         }
     }
 
-    private class MockStorage : IStorage
+    private sealed class MockStorage : IStorage
     {
         public string Name => "Mock";
         public bool IsAvailable => true;
@@ -598,7 +598,7 @@ public class StoragePipelineFullTests
         }
     }
 
-    private class PipelineMetrics
+    private sealed class PipelineMetrics
     {
         public int TotalItems { get; set; }
         public int SuccessCount { get; set; }
@@ -606,7 +606,7 @@ public class StoragePipelineFullTests
         public int FilteredCount { get; set; }
     }
 
-    private class ValidationResult
+    private sealed class ValidationResult
     {
         public bool IsValid { get; set; }
         public string? ErrorMessage { get; set; }

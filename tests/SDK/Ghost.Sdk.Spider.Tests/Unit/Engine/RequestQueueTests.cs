@@ -408,7 +408,7 @@ public class RequestQueueTests
     /// <summary>
     /// Mock distributed queue for testing distributed scenarios
     /// </summary>
-    private class MockDistributedQueue : IRequestQueue
+    private sealed class MockDistributedQueue : IRequestQueue
     {
         private static readonly Dictionary<string, Request> _globalQueue = new();
         private static readonly HashSet<string> _globalSeenUrls = new();

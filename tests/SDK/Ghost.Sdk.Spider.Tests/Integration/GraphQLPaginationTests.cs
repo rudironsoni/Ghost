@@ -30,6 +30,7 @@ public class GraphQLPaginationTests : IDisposable
     public void Dispose()
     {
         _httpClient.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     [Fact]

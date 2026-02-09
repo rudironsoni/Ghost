@@ -28,6 +28,7 @@ public class StaticHtmlAdapterTests : IDisposable
         _httpClient.Dispose();
         _server.Stop();
         _server.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     [Fact]

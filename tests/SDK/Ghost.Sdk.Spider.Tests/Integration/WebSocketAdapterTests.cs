@@ -24,6 +24,7 @@ public class WebSocketAdapterTests : IDisposable
     {
         _server.Stop();
         _server.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     #region Connection Establishment

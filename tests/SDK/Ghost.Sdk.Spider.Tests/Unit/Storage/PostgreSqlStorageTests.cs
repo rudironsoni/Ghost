@@ -315,7 +315,7 @@ public class PostgreSqlStorageTests
 
     #region Mock Implementation
 
-    private class MockPostgreSqlStorage : IStorage
+    private sealed class MockPostgreSqlStorage : IStorage
     {
         private readonly IDbConnection _connection;
         private readonly PostgreSqlConfiguration _config;

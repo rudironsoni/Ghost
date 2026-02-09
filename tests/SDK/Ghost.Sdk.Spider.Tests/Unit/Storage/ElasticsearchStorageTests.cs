@@ -379,7 +379,7 @@ public class ElasticsearchStorageTests
 
     #region Mock Implementation
 
-    private class MockElasticsearchClient
+    private sealed class MockElasticsearchClient
     {
         public bool IsHealthy { get; set; } = true;
         public bool IndexExists { get; set; } = false;
@@ -397,7 +397,7 @@ public class ElasticsearchStorageTests
         public DateTimeOffset? LastDocumentTimestamp { get; set; }
     }
 
-    private class MockElasticsearchStorage : IStorage
+    private sealed class MockElasticsearchStorage : IStorage
     {
         private readonly MockElasticsearchClient _client;
         private readonly ElasticsearchConfiguration _config;
