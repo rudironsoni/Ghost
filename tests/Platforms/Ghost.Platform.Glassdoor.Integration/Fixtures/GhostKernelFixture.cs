@@ -8,16 +8,16 @@ namespace Ghost.Platform.Glassdoor.Integration.Fixtures;
 /// <summary>
 /// Per-test-class fixture that provides an isolated browser context for Glassdoor integration tests.
 /// Each test class gets a fresh browser session with no shared state.
-/// Use with [Collection("Browser")] and IClassFixture&lt;GlassdoorContextFixture&gt;.
+/// Use with [Collection("SharedKernel")] and IClassFixture&lt;GlassdoorContextFixture&gt;.
 /// </summary>
 public sealed class GlassdoorContextFixture : IAsyncLifetime
 {
-    private readonly RealBrowserFixture _browserFixture;
+    private readonly SharedGhostKernelFixture _kernelFixture;
     private IBrowserSession? _session;
 
-    public GlassdoorContextFixture(RealBrowserFixture browserFixture)
+    public GlassdoorContextFixture(SharedGhostKernelFixture kernelFixture)
     {
-        _browserFixture = browserFixture;
+        _kernelFixture = kernelFixture;
     }
 
     public IBrowserSession Session => _session ?? throw new InvalidOperationException("Fixture not initialized");
@@ -28,7 +28,7 @@ public sealed class GlassdoorContextFixture : IAsyncLifetime
         try
         {
             // Create a fresh session for this test class
-            _session = await _browserFixture.CreateSessionAsync();
+            _session = await _kernelFixture.CreateSessionAsync();
 
             // Build service provider with Glassdoor platform
             var services = new ServiceCollection();
@@ -40,7 +40,7 @@ public sealed class GlassdoorContextFixture : IAsyncLifetime
             var glassdoorOptions = Microsoft.Extensions.Options.Options.Create(new Ghost.Platform.Glassdoor.GlassdoorOptions());
             var proxyProvider = Ghost.Proxy.StaticProxyProvider.Empty;
 
-            services.AddSingleton(_browserFixture.ConcreteKernel);
+            services.AddSingleton(_kernelFixture.ConcreteKernel);
             services.AddSingleton(glassdoorOptions);
             services.AddSingleton<Ghost.Abstractions.IProxyProvider>(proxyProvider);
             services.AddSingleton<System.Net.Http.HttpClient>();
@@ -48,7 +48,7 @@ public sealed class GlassdoorContextFixture : IAsyncLifetime
             services.AddSingleton<Ghost.Platform.Glassdoor.Internal.GlassdoorBrowserClient>(sp =>
             {
                 var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Ghost.Platform.Glassdoor.Internal.GlassdoorBrowserClient>>();
-                return new Ghost.Platform.Glassdoor.Internal.GlassdoorBrowserClient(_browserFixture.ConcreteKernel, glassdoorOptions, logger, proxyProvider);
+                return new Ghost.Platform.Glassdoor.Internal.GlassdoorBrowserClient(_kernelFixture.ConcreteKernel, glassdoorOptions, logger, proxyProvider);
             });
             services.AddScoped<Ghost.Platform.Glassdoor.GlassdoorJobClient>();
 

@@ -1,9 +1,11 @@
 using FluentAssertions;
 using Ghost.Sdk.Loaders;
+using Ghost.Testing.Reliability;
 using Xunit;
 
 namespace Ghost.Sdk.Tests.Loaders;
 
+[TestTimeout(60000)] // 60 seconds for integration tests
 public sealed class ItemLoaderIntegrationTests
 {
     private sealed class Product

@@ -2,6 +2,7 @@ using Ghost.Contracts.Simulation;
 using Ghost.Contracts.Social;
 using Ghost.Platform.X.E2E.Fixtures;
 using Ghost.Platform.X.Internal;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -11,6 +12,7 @@ namespace Ghost.Platform.X.E2E;
 /// End-to-end tests for X platform simulation mode.
 /// </summary>
 [Collection("Browser")]
+[TestTimeout(120000)] // 120 seconds for E2E tests
 public class XSimulationE2ETests : IClassFixture<XContextFixture>
 {
     private readonly XContextFixture _fixture;

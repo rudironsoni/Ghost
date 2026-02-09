@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Platform.Glassdoor.Integration.Fixtures;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -8,9 +9,11 @@ namespace Ghost.Platform.Glassdoor.Integration;
 
 /// <summary>
 /// Integration tests for Glassdoor platform using real browser automation.
+/// Uses SharedKernel collection to share a single GhostKernel instance across all integration tests.
 /// </summary>
 [Trait("Category", "Integration")]
-[Collection("Browser")]
+[Collection("SharedKernel")]
+[TestTimeout(60000)] // 60 seconds for integration tests
 public class GlassdoorIntegrationTests : IClassFixture<GlassdoorContextFixture>
 {
     private readonly GlassdoorContextFixture _fixture;
