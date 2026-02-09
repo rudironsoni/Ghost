@@ -64,4 +64,6 @@
     </AssemblyAttribute>
   </ItemGroup>
 
+  <!-- No project references needed for contracts -->
+
 </Project>

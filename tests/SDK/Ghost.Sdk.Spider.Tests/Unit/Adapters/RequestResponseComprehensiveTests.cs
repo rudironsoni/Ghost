@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.Contracts;
+using Ghost.Sdk.Spider.Meta;
 using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
@@ -370,5 +371,121 @@ public class RequestResponseComprehensiveTests
         // Act & Assert
         response.Exception.Should().Be(exception);
         response.Exception!.Message.Should().Be("Test exception");
+    }
+
+    [Fact]
+    public void Request_Meta_ShouldNotBeNull()
+    {
+        // Arrange & Act
+        var request = new Request("https://example.com");
+
+        // Assert
+        request.Meta.Should().NotBeNull();
+        request.Meta.Should().BeAssignableTo<IMetaDictionary>();
+    }
+
+    [Fact]
+    public void Request_Meta_Set_ShouldStoreValue()
+    {
+        // Arrange
+        var request = new Request("https://example.com");
+
+        // Act
+        request.Meta.Set("depth", 3);
+        request.Meta.Set("start_url", "https://example.com");
+
+        // Assert
+        request.Meta.Get<int>("depth").Should().Be(3);
+        request.Meta.Get<string>("start_url").Should().Be("https://example.com");
+    }
+
+    [Fact]
+    public void Request_Meta_TryGet_WithExistingKey_ShouldReturnTrue()
+    {
+        // Arrange
+        var request = new Request("https://example.com");
+        request.Meta.Set("depth", 3);
+
+        // Act
+        var result = request.Meta.TryGet<int>("depth", out var depth);
+
+        // Assert
+        result.Should().BeTrue();
+        depth.Should().Be(3);
+    }
+
+    [Fact]
+    public void Request_Meta_TryGet_WithNonExistingKey_ShouldReturnFalse()
+    {
+        // Arrange
+        var request = new Request("https://example.com");
+
+        // Act
+        var result = request.Meta.TryGet<int>("depth", out var depth);
+
+        // Assert
+        result.Should().BeFalse();
+        depth.Should().Be(0);
+    }
+
+    [Fact]
+    public void Response_Meta_ShouldNotBeNull()
+    {
+        // Arrange
+        var contentResult = ContentResult.CreateSuccess("<html></html>", ContentType.StaticHtml);
+
+        // Act
+        var response = new Response(contentResult);
+
+        // Assert
+        response.Meta.Should().NotBeNull();
+        response.Meta.Should().BeAssignableTo<IMetaDictionary>();
+    }
+
+    [Fact]
+    public void Response_Meta_Set_ShouldStoreValue()
+    {
+        // Arrange
+        var contentResult = ContentResult.CreateSuccess("<html></html>", ContentType.StaticHtml);
+        var response = new Response(contentResult);
+
+        // Act
+        response.Meta.Set("depth", 3);
+        response.Meta.Set("parent_url", "https://example.com");
+
+        // Assert
+        response.Meta.Get<int>("depth").Should().Be(3);
+        response.Meta.Get<string>("parent_url").Should().Be("https://example.com");
+    }
+
+    [Fact]
+    public void Response_Meta_TryGet_WithExistingKey_ShouldReturnTrue()
+    {
+        // Arrange
+        var contentResult = ContentResult.CreateSuccess("<html></html>", ContentType.StaticHtml);
+        var response = new Response(contentResult);
+        response.Meta.Set("item_count", 42);
+
+        // Act
+        var result = response.Meta.TryGet<int>("item_count", out var count);
+
+        // Assert
+        result.Should().BeTrue();
+        count.Should().Be(42);
+    }
+
+    [Fact]
+    public void Response_Meta_TryGet_WithNonExistingKey_ShouldReturnFalse()
+    {
+        // Arrange
+        var contentResult = ContentResult.CreateSuccess("<html></html>", ContentType.StaticHtml);
+        var response = new Response(contentResult);
+
+        // Act
+        var result = response.Meta.TryGet<int>("item_count", out var count);
+
+        // Assert
+        result.Should().BeFalse();
+        count.Should().Be(0);
     }
 }
