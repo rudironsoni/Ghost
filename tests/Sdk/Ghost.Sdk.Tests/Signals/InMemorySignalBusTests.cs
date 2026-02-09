@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Ghost.Sdk.Signals;
+using Xunit;
 
 namespace Ghost.Sdk.Tests.Signals;
 
