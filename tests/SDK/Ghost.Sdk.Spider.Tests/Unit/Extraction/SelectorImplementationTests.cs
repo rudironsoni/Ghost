@@ -33,7 +33,7 @@ public class SelectorImplementationTests
             var selector = new XPathSelector("//a", "href");
 
             // Act
-            var results = selector.Select(html);
+            var results = selector.SelectValues(html);
 
             // Assert
             results.Should().ContainSingle();
@@ -61,7 +61,7 @@ public class SelectorImplementationTests
             var selector = new XPathSelector("//p");
 
             // Act
-            var results = selector.Select("");
+            var results = selector.SelectValues("");
 
             // Assert
             results.Should().BeEmpty();
