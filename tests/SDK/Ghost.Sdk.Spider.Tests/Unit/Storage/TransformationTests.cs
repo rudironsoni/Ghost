@@ -11,11 +11,12 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// </summary>
 public class TransformationTests
 {
+    private static readonly string[] s_requiredFields = ["Title", "Price"];
+
     [Fact]
-    public async Task NormalizeTransformation_ShouldTrimAndLowercase()
+    public static async Task NormalizeTransformation_ShouldTrimAndLowercase()
     {
         // Arrange
-        var transformation = new NormalizeTransformation();
         var item = new
         {
             Title = "  Test Product  ",
@@ -24,7 +25,7 @@ public class TransformationTests
         var context = StorageContext.Create("TestSpider");
 
         // Act
-        var result = await transformation.TransformAsync(item, context);
+        var result = await NormalizeTransformation.TransformAsync(item, context);
 
         // Assert
         result.Should().NotBeNull();
@@ -34,7 +35,7 @@ public class TransformationTests
     }
 
     [Fact]
-    public async Task FilterTransformation_WithPredicate_ShouldFilterCorrectly()
+    public static async Task FilterTransformation_WithPredicate_ShouldFilterCorrectly()
     {
         // Arrange
         var transformation = new FilterTransformation(item =>
@@ -57,10 +58,9 @@ public class TransformationTests
     }
 
     [Fact]
-    public async Task EnrichmentTransformation_ShouldAddMetadata()
+    public static async Task EnrichmentTransformation_ShouldAddMetadata()
     {
         // Arrange
-        var transformation = new EnrichmentTransformation();
         var item = new { Title = "Test", Price = 99.99 };
         var context = new StorageContext
         {
@@ -69,7 +69,7 @@ public class TransformationTests
         };
 
         // Act
-        var result = await transformation.TransformAsync(item, context);
+        var result = await EnrichmentTransformation.TransformAsync(item, context);
 
         // Assert
         result.Should().NotBeNull();
@@ -81,10 +81,9 @@ public class TransformationTests
     }
 
     [Fact]
-    public async Task CleanHtmlTransformation_ShouldRemoveHtmlTags()
+    public static async Task CleanHtmlTransformation_ShouldRemoveHtmlTags()
     {
         // Arrange
-        var transformation = new CleanHtmlTransformation();
         var item = new
         {
             Title = "<h1>Title</h1>",
@@ -93,7 +92,7 @@ public class TransformationTests
         var context = StorageContext.Create("CleanSpider");
 
         // Act
-        var result = await transformation.TransformAsync(item, context);
+        var result = await CleanHtmlTransformation.TransformAsync(item, context);
 
         // Assert
         result.Should().NotBeNull();
@@ -103,10 +102,9 @@ public class TransformationTests
     }
 
     [Fact]
-    public async Task PriceNormalizationTransformation_ShouldNormalizePrices()
+    public static async Task PriceNormalizationTransformation_ShouldNormalizePrices()
     {
         // Arrange
-        var transformation = new PriceNormalizationTransformation();
         var item = new
         {
             Price = "$1,234.56",
@@ -115,7 +113,7 @@ public class TransformationTests
         var context = StorageContext.Create("PriceSpider");
 
         // Act
-        var result = await transformation.TransformAsync(item, context);
+        var result = await PriceNormalizationTransformation.TransformAsync(item, context);
 
         // Assert
         result.Should().NotBeNull();
@@ -125,10 +123,9 @@ public class TransformationTests
     }
 
     [Fact]
-    public async Task DateNormalizationTransformation_ShouldNormalizeDates()
+    public static async Task DateNormalizationTransformation_ShouldNormalizeDates()
     {
         // Arrange
-        var transformation = new DateNormalizationTransformation();
         var item = new
         {
             PublishedDate = "2024-01-15T10:30:00",
@@ -137,7 +134,7 @@ public class TransformationTests
         var context = StorageContext.Create("DateSpider");
 
         // Act
-        var result = await transformation.TransformAsync(item, context);
+        var result = await DateNormalizationTransformation.TransformAsync(item, context);
 
         // Assert
         result.Should().NotBeNull();
@@ -147,7 +144,7 @@ public class TransformationTests
     }
 
     [Fact]
-    public async Task GeocodeTransformation_ShouldAddCoordinates()
+    public static async Task GeocodeTransformation_ShouldAddCoordinates()
     {
         // Arrange
         var mockGeocoder = new MockGeocoder();
@@ -171,10 +168,9 @@ public class TransformationTests
     }
 
     [Fact]
-    public async Task UrlNormalizationTransformation_ShouldNormalizeUrls()
+    public static async Task UrlNormalizationTransformation_ShouldNormalizeUrls()
     {
         // Arrange
-        var transformation = new UrlNormalizationTransformation();
         var item = new
         {
             Url = "HTTPS://EXAMPLE.COM/Page?utm_source=test&id=123",
@@ -187,7 +183,7 @@ public class TransformationTests
         };
 
         // Act
-        var result = await transformation.TransformAsync(item, context);
+        var result = await UrlNormalizationTransformation.TransformAsync(item, context);
 
         // Assert
         result.Should().NotBeNull();
@@ -197,7 +193,7 @@ public class TransformationTests
     }
 
     [Fact]
-    public async Task DeduplicationTransformation_ShouldDetectDuplicates()
+    public static async Task DeduplicationTransformation_ShouldDetectDuplicates()
     {
         // Arrange
         var transformation = new DeduplicationTransformation();
@@ -218,7 +214,7 @@ public class TransformationTests
     }
 
     [Fact]
-    public async Task CompositeTransformation_ShouldApplyMultipleTransformations()
+    public static async Task CompositeTransformation_ShouldApplyMultipleTransformations()
     {
         // Arrange
         var composite = new CompositeTransformation();
@@ -241,10 +237,10 @@ public class TransformationTests
     }
 
     [Fact]
-    public async Task ValidationTransformation_ShouldValidateRequiredFields()
+    public static async Task ValidationTransformation_ShouldValidateRequiredFields()
     {
         // Arrange
-        var transformation = new ValidationTransformation(new[] { "Title", "Price" });
+        var transformation = new ValidationTransformation(s_requiredFields);
         var validItem = new { Title = "Product", Price = 99.99 };
         var invalidItem = new { Title = "Product" }; // Missing Price
         var context = StorageContext.Create("ValidationSpider");
@@ -256,11 +252,11 @@ public class TransformationTests
         // Assert
         result1.IsValid.Should().BeTrue();
         result2.IsValid.Should().BeFalse();
-        result2.Errors.Should().Contain(e => e.Contains("Price"));
+        result2.Errors.Should().Contain(e => e.Contains("Price", StringComparison.Ordinal));
     }
 
     [Fact]
-    public async Task TruncateTransformation_ShouldTruncateLongFields()
+    public static async Task TruncateTransformation_ShouldTruncateLongFields()
     {
         // Arrange
         var transformation = new TruncateTransformation(maxLength: 10);
@@ -282,7 +278,7 @@ public class TransformationTests
     }
 
     [Fact]
-    public async Task DefaultValueTransformation_ShouldSetDefaults()
+    public static async Task DefaultValueTransformation_ShouldSetDefaults()
     {
         // Arrange
         var transformation = new DefaultValueTransformation(new Dictionary<string, object>
@@ -329,9 +325,9 @@ public class TransformationTests
         return dict;
     }
 
-    private class NormalizeTransformation
+    private sealed class NormalizeTransformation
     {
-        public Task<object> TransformAsync(object item, StorageContext context)
+        public static Task<object> TransformAsync(object item, StorageContext context)
         {
             var result = new Dictionary<string, object>();
             var inputDict = GetProperties(item);
@@ -351,7 +347,7 @@ public class TransformationTests
         }
     }
 
-    private class FilterTransformation
+    private sealed class FilterTransformation
     {
         private readonly Func<object, bool> _predicate;
 
@@ -366,9 +362,9 @@ public class TransformationTests
         }
     }
 
-    private class EnrichmentTransformation
+    private sealed class EnrichmentTransformation
     {
-        public Task<object> TransformAsync(object item, StorageContext context)
+        public static Task<object> TransformAsync(object item, StorageContext context)
         {
             var result = new Dictionary<string, object>();
             foreach (var prop in item.GetType().GetProperties())
@@ -382,9 +378,9 @@ public class TransformationTests
         }
     }
 
-    private class CleanHtmlTransformation
+    private sealed class CleanHtmlTransformation
     {
-        public Task<object> TransformAsync(object item, StorageContext context)
+        public static Task<object> TransformAsync(object item, StorageContext context)
         {
             var result = new Dictionary<string, object>();
             var inputDict = GetProperties(item);
@@ -404,9 +400,9 @@ public class TransformationTests
         }
     }
 
-    private class PriceNormalizationTransformation
+    private sealed class PriceNormalizationTransformation
     {
-        public Task<object> TransformAsync(object item, StorageContext context)
+        public static Task<object> TransformAsync(object item, StorageContext context)
         {
             var result = new Dictionary<string, object>();
             foreach (var prop in item.GetType().GetProperties())
@@ -433,9 +429,9 @@ public class TransformationTests
         }
     }
 
-    private class DateNormalizationTransformation
+    private sealed class DateNormalizationTransformation
     {
-        public Task<object> TransformAsync(object item, StorageContext context)
+        public static Task<object> TransformAsync(object item, StorageContext context)
         {
             var result = new Dictionary<string, object>();
             foreach (var prop in item.GetType().GetProperties())
@@ -461,25 +457,23 @@ public class TransformationTests
         }
     }
 
-    private class MockGeocoder
+    private sealed class MockGeocoder
     {
-        public Task<(double Lat, double Lon)> GeocodeAsync(string address)
+        public static Task<(double Lat, double Lon)> GeocodeAsync(string address)
         {
             // Mock coordinates for testing
             return Task.FromResult((37.4224, -122.0856));
         }
     }
 
-    private class GeocodeTransformation
+    private sealed class GeocodeTransformation
     {
-        private readonly MockGeocoder _geocoder;
-
         public GeocodeTransformation(MockGeocoder geocoder)
         {
-            _geocoder = geocoder;
+            // Constructor kept for API compatibility but geocoder parameter is unused
         }
 
-        public async Task<object> TransformAsync(object item, StorageContext context)
+        public static async Task<object> TransformAsync(object item, StorageContext context)
         {
             var result = new Dictionary<string, object>();
             foreach (var prop in item.GetType().GetProperties())
@@ -489,7 +483,7 @@ public class TransformationTests
 
             if (result.ContainsKey("Address"))
             {
-                var coords = await _geocoder.GeocodeAsync(result["Address"].ToString()!);
+                var coords = await MockGeocoder.GeocodeAsync(result["Address"].ToString()!);
                 result["Latitude"] = coords.Lat;
                 result["Longitude"] = coords.Lon;
             }
@@ -498,9 +492,9 @@ public class TransformationTests
         }
     }
 
-    private class UrlNormalizationTransformation
+    private sealed class UrlNormalizationTransformation
     {
-        public Task<object> TransformAsync(object item, StorageContext context)
+        public static Task<object> TransformAsync(object item, StorageContext context)
         {
             var result = new Dictionary<string, object>();
             foreach (var prop in item.GetType().GetProperties())
@@ -519,9 +513,9 @@ public class TransformationTests
             return Task.FromResult<object>(DictToAnonymous(result));
         }
 
-        private string NormalizeUrl(string url, string baseUrl)
+        private static string NormalizeUrl(string url, string baseUrl)
         {
-            if (url.StartsWith("/"))
+            if (url.StartsWith('/'))
             {
                 var baseUri = new Uri(baseUrl);
                 return $"{baseUri.Scheme}://{baseUri.Host}{url}";
@@ -561,7 +555,7 @@ public class TransformationTests
         }
     }
 
-    private class DeduplicationTransformation
+    private sealed class DeduplicationTransformation
     {
         private readonly HashSet<string> _seen = new();
 
@@ -572,7 +566,7 @@ public class TransformationTests
         }
     }
 
-    private class CompositeTransformation
+    private sealed class CompositeTransformation
     {
         private readonly List<dynamic> _transformations = new();
 
@@ -592,7 +586,7 @@ public class TransformationTests
         }
     }
 
-    private class ValidationTransformation
+    private sealed class ValidationTransformation
     {
         private readonly string[] _requiredFields;
 
@@ -622,13 +616,13 @@ public class TransformationTests
         }
     }
 
-    private class ValidationResult
+    private sealed class ValidationResult
     {
         public bool IsValid { get; set; }
         public List<string> Errors { get; set; } = new();
     }
 
-    private class TruncateTransformation
+    private sealed class TruncateTransformation
     {
         private readonly int _maxLength;
 
@@ -656,7 +650,7 @@ public class TransformationTests
         }
     }
 
-    private class DefaultValueTransformation
+    private sealed class DefaultValueTransformation
     {
         private readonly Dictionary<string, object> _defaults;
 

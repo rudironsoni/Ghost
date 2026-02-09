@@ -11,7 +11,7 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 public class IStorageContractTests
 {
     [Fact]
-    public async Task MockStorage_ShouldImplementIStorage()
+    public static async Task MockStorage_ShouldImplementIStorage()
     {
         // Arrange
         var storage = new MockStorage();
@@ -29,7 +29,7 @@ public class IStorageContractTests
     }
 
     [Fact]
-    public async Task Storage_StoreAsync_ShouldAcceptCancellationToken()
+    public static async Task Storage_StoreAsync_ShouldAcceptCancellationToken()
     {
         // Arrange
         var storage = new MockStorage();
@@ -45,7 +45,7 @@ public class IStorageContractTests
     }
 
     [Fact]
-    public async Task Storage_StoreBatchAsync_ShouldHandleEmptyList()
+    public static async Task Storage_StoreBatchAsync_ShouldHandleEmptyList()
     {
         // Arrange
         var storage = new MockStorage();
@@ -61,7 +61,7 @@ public class IStorageContractTests
     }
 
     [Fact]
-    public async Task Storage_InitializeAsync_ShouldBeCancellable()
+    public static async Task Storage_InitializeAsync_ShouldBeCancellable()
     {
         // Arrange
         var storage = new MockStorage();
@@ -73,7 +73,7 @@ public class IStorageContractTests
     }
 
     [Fact]
-    public async Task Storage_LifecycleOperations_ShouldSucceed()
+    public static async Task Storage_LifecycleOperations_ShouldSucceed()
     {
         // Arrange
         var storage = new MockStorage();
@@ -87,7 +87,7 @@ public class IStorageContractTests
     /// <summary>
     /// Mock storage for contract testing.
     /// </summary>
-    private class MockStorage : IStorage
+    private sealed class MockStorage : IStorage
     {
         public string Name => "Mock";
         public bool IsAvailable => true;

@@ -12,7 +12,7 @@ public class EntityParserBoostTests
 {
 
     [Fact]
-    public void Parse_WithNullContent_ShouldReturnEmptyList()
+    public static void Parse_WithNullContent_ShouldReturnEmptyList()
     {
         // Arrange
         var context = new ExtractionContext
@@ -30,7 +30,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithWhitespaceContent_ShouldReturnEmptyList()
+    public static void Parse_WithWhitespaceContent_ShouldReturnEmptyList()
     {
         // Arrange
         var context = new ExtractionContext
@@ -48,7 +48,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void ParseSingle_WithMultipleMatches_ShouldReturnFirstMatch()
+    public static void ParseSingle_WithMultipleMatches_ShouldReturnFirstMatch()
     {
         // Arrange
         var html = @"
@@ -80,7 +80,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithNumericConversion_ShouldConvertCorrectly()
+    public static void Parse_WithNumericConversion_ShouldConvertCorrectly()
     {
         // Arrange
         var html = @"
@@ -111,7 +111,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithDateTimeConversion_ShouldParseDateTime()
+    public static void Parse_WithDateTimeConversion_ShouldParseDateTime()
     {
         // Arrange
         var html = @"
@@ -139,7 +139,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithListOfStrings_ShouldReturnList()
+    public static void Parse_WithListOfStrings_ShouldReturnList()
     {
         // Arrange
         var html = @"
@@ -168,7 +168,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithEmptyStringValue_ShouldHandleGracefully()
+    public static void Parse_WithEmptyStringValue_ShouldHandleGracefully()
     {
         // Arrange
         var html = @"
@@ -196,7 +196,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithMalformedHtml_ShouldHandleGracefully()
+    public static void Parse_WithMalformedHtml_ShouldHandleGracefully()
     {
         // Arrange
         var html = "<html><body><div>Unclosed div<p>Unclosed paragraph";
@@ -216,7 +216,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithSpecialCharacters_ShouldPreserveCharacters()
+    public static void Parse_WithSpecialCharacters_ShouldPreserveCharacters()
     {
         // Arrange
         var html = @"
@@ -244,7 +244,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithNestedElements_ShouldExtractCorrectly()
+    public static void Parse_WithNestedElements_ShouldExtractCorrectly()
     {
         // Arrange
         var html = @"
@@ -276,7 +276,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithAttributeExtraction_ShouldExtractAttributeValues()
+    public static void Parse_WithAttributeExtraction_ShouldExtractAttributeValues()
     {
         // Arrange
         var html = @"
@@ -303,7 +303,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithDefaultValues_ShouldUseDefaults()
+    public static void Parse_WithDefaultValues_ShouldUseDefaults()
     {
         // Arrange
         var html = @"
@@ -330,7 +330,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithValidationFailure_ShouldExcludeInvalidEntities()
+    public static void Parse_WithValidationFailure_ShouldExcludeInvalidEntities()
     {
         // Arrange
         var html = @"
@@ -358,7 +358,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithMultipleEntityTypes_ShouldHandlePolymorphism()
+    public static void Parse_WithMultipleEntityTypes_ShouldHandlePolymorphism()
     {
         // Arrange
         var html = @"
@@ -384,7 +384,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithUnicodeContent_ShouldPreserveUnicode()
+    public static void Parse_WithUnicodeContent_ShouldPreserveUnicode()
     {
         // Arrange
         var html = @"
@@ -412,7 +412,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void ParseSingle_WithEmptyContent_ShouldReturnNull()
+    public static void ParseSingle_WithEmptyContent_ShouldReturnNull()
     {
         // Arrange
         var context = new ExtractionContext
@@ -430,7 +430,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithJsonPathSelector_ShouldExtractFromJson()
+    public static void Parse_WithJsonPathSelector_ShouldExtractFromJson()
     {
         // Arrange
         var json = @"{
@@ -455,7 +455,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithComplexNestedJson_ShouldNavigateStructure()
+    public static void Parse_WithComplexNestedJson_ShouldNavigateStructure()
     {
         // Arrange
         var json = @"{
@@ -487,7 +487,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithInvalidJson_ShouldReturnEmptyList()
+    public static void Parse_WithInvalidJson_ShouldReturnEmptyList()
     {
         // Arrange
         var json = @"{invalid json structure";
@@ -507,7 +507,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithNullableTypes_ShouldHandleNullValues()
+    public static void Parse_WithNullableTypes_ShouldHandleNullValues()
     {
         // Arrange
         var html = @"
@@ -535,7 +535,7 @@ public class EntityParserBoostTests
     }
 
     [Fact]
-    public void Parse_WithLargeContent_ShouldHandleEfficiently()
+    public static void Parse_WithLargeContent_ShouldHandleEfficiently()
     {
         // Arrange
         var largeHtml = string.Join("\n", Enumerable.Range(1, 1000).Select(i =>
