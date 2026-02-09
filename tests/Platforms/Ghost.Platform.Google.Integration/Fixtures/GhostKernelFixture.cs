@@ -8,16 +8,16 @@ namespace Ghost.Platform.Google.Integration.Fixtures;
 /// <summary>
 /// Per-test-class fixture that provides an isolated browser context for Google Jobs integration tests.
 /// Each test class gets a fresh browser session with no shared state.
-/// Use with [Collection("Browser")] and IClassFixture&lt;GoogleContextFixture&gt;.
+/// Use with [Collection("SharedKernel")] and IClassFixture&lt;GoogleContextFixture&gt;.
 /// </summary>
 public sealed class GoogleContextFixture : IAsyncLifetime
 {
-    private readonly RealBrowserFixture _browserFixture;
+    private readonly SharedGhostKernelFixture _kernelFixture;
     private IBrowserSession? _session;
 
-    public GoogleContextFixture(RealBrowserFixture browserFixture)
+    public GoogleContextFixture(SharedGhostKernelFixture kernelFixture)
     {
-        _browserFixture = browserFixture;
+        _kernelFixture = kernelFixture;
     }
 
     public IBrowserSession Session => _session ?? throw new InvalidOperationException("Fixture not initialized");
@@ -28,7 +28,7 @@ public sealed class GoogleContextFixture : IAsyncLifetime
         try
         {
             // Create a fresh session for this test class
-            _session = await _browserFixture.CreateSessionAsync();
+            _session = await _kernelFixture.CreateSessionAsync();
 
             // Build service provider with Google Jobs platform
             var services = new ServiceCollection();
@@ -41,7 +41,7 @@ public sealed class GoogleContextFixture : IAsyncLifetime
             var googleOptionsWrapped = Microsoft.Extensions.Options.Options.Create(googleOptions);
             var httpClient = new System.Net.Http.HttpClient();
 
-            services.AddSingleton(_browserFixture.ConcreteKernel);
+            services.AddSingleton(_kernelFixture.ConcreteKernel);
             services.AddSingleton(googleOptions);
             services.AddSingleton(googleOptionsWrapped);
             services.AddSingleton(httpClient);
@@ -53,7 +53,7 @@ public sealed class GoogleContextFixture : IAsyncLifetime
             services.AddSingleton<Ghost.Platform.Google.Jobs.Internal.GoogleJobsBrowserClient>(sp =>
             {
                 var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Ghost.Platform.Google.Jobs.Internal.GoogleJobsBrowserClient>>();
-                return new Ghost.Platform.Google.Jobs.Internal.GoogleJobsBrowserClient(_browserFixture.ConcreteKernel, googleOptionsWrapped, logger);
+                return new Ghost.Platform.Google.Jobs.Internal.GoogleJobsBrowserClient(_kernelFixture.ConcreteKernel, googleOptionsWrapped, logger);
             });
             services.AddSingleton<Ghost.Platform.Google.Jobs.Internal.GoogleJobsScraper>();
             services.AddScoped<Ghost.Platform.Google.Jobs.GoogleJobClient>();

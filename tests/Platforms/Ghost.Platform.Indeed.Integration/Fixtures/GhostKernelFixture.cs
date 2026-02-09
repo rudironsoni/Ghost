@@ -8,16 +8,16 @@ namespace Ghost.Platform.Indeed.Integration.Fixtures;
 /// <summary>
 /// Per-test-class fixture that provides an isolated browser context for Indeed integration tests.
 /// Each test class gets a fresh browser session with no shared state.
-/// Use with [Collection("Browser")] and IClassFixture&lt;IndeedContextFixture&gt;.
+/// Use with [Collection("SharedKernel")] and IClassFixture&lt;IndeedContextFixture&gt;.
 /// </summary>
 public sealed class IndeedContextFixture : IAsyncLifetime
 {
-    private readonly RealBrowserFixture _browserFixture;
+    private readonly SharedGhostKernelFixture _kernelFixture;
     private IBrowserSession? _session;
 
-    public IndeedContextFixture(RealBrowserFixture browserFixture)
+    public IndeedContextFixture(SharedGhostKernelFixture kernelFixture)
     {
-        _browserFixture = browserFixture;
+        _kernelFixture = kernelFixture;
     }
 
     public IBrowserSession Session => _session ?? throw new InvalidOperationException("Fixture not initialized");
@@ -28,7 +28,7 @@ public sealed class IndeedContextFixture : IAsyncLifetime
         try
         {
             // Create a fresh session for this test class
-            _session = await _browserFixture.CreateSessionAsync();
+            _session = await _kernelFixture.CreateSessionAsync();
 
             // Build service provider with Indeed platform
             var services = new ServiceCollection();

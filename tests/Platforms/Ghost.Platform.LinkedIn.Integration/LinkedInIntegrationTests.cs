@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
+using Ghost.Testing.Reliability;
 using Xunit;
 
 namespace Ghost.Platform.LinkedIn.Integration;
@@ -9,6 +10,7 @@ namespace Ghost.Platform.LinkedIn.Integration;
 /// These tests verify the behavior of LinkedInJobClient without hitting real LinkedIn.
 /// </summary>
 [Trait("Category", "Integration")]
+[TestTimeout(60000)] // 60 seconds for integration tests
 public class LinkedInIntegrationTests
 {
     [Fact]
