@@ -14,8 +14,12 @@ public class GhostKernelHostedServiceTests
 {
     private static GhostKernel CreateKernel(IPlaywright playwright, IBrowser browser)
     {
-        var ctor = typeof(GhostKernel).GetConstructor(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic, null, new[] { typeof(IPlaywright), typeof(IBrowser), typeof(int), typeof(bool), typeof(string) }, null)!;
-        return (GhostKernel)ctor.Invoke(new object[] { playwright, browser, 1, false, "Chromium" });
+        var ctor = typeof(GhostKernel).GetConstructor(
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+            null,
+            new[] { typeof(IPlaywright), typeof(IBrowser), typeof(int), typeof(bool), typeof(string), typeof(Ghost.Net.Socks5Bridge) },
+            null)!;
+        return (GhostKernel)ctor.Invoke(new object?[] { playwright, browser, 1, false, "Chromium", null });
     }
 
     [Fact]
