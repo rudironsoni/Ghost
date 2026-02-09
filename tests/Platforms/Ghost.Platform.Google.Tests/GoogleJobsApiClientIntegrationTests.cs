@@ -3,19 +3,19 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
+using Ghost.Contracts.Jobs;
+using Ghost.Platform.Google.Jobs;
+using Ghost.Platform.Google.Jobs.Internal;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using Ghost.Platform.Google.Jobs;
-using Ghost.Platform.Google.Jobs.Internal;
-using Ghost.Contracts.Jobs;
 
 namespace Ghost.Platform.Google.Tests;
 
 /// <summary>
 /// Integration tests for GoogleJobsApiClient covering job search, consent handling, and retry logic.
 /// </summary>
-public class GoogleJobsApiClientIntegrationTests
+public sealed class GoogleJobsApiClientIntegrationTests : IDisposable
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<GoogleJobsApiClient> _logger;
@@ -28,6 +28,12 @@ public class GoogleJobsApiClientIntegrationTests
         _httpClient = new HttpClient(_httpMessageHandler);
         _logger = new Mock<ILogger<GoogleJobsApiClient>>().Object;
         _options = new GoogleJobsOptions();
+    }
+
+    public void Dispose()
+    {
+        _httpClient?.Dispose();
+        _httpMessageHandler?.Dispose();
     }
 
     [Fact]
@@ -77,10 +83,10 @@ public class GoogleJobsApiClientIntegrationTests
 
         result.Should().NotBeNull();
         result.Should().HaveCountGreaterOrEqualTo(1);
-        result.First().Title.Should().Be("Software Engineer");
-        result.First().Company.Should().Be("Tech Company");
-        result.First().Location.Should().Be("San Francisco");
-        result.First().Source.Should().Be("Google");
+        result[0].Title.Should().Be("Software Engineer");
+        result[0].Company.Should().Be("Tech Company");
+        result[0].Location.Should().Be("San Francisco");
+        result[0].Source.Should().Be("Google");
     }
 
     [Fact]
@@ -156,7 +162,7 @@ public class GoogleJobsApiClientIntegrationTests
 
         result.Should().NotBeNull();
         result.Should().HaveCountGreaterOrEqualTo(1);
-        result.First().Title.Should().Be("Developer");
+        result[0].Title.Should().Be("Developer");
         callCount.Should().BeGreaterThan(1);
     }
 
@@ -495,7 +501,7 @@ public class GoogleJobsApiClientIntegrationTests
             client.SearchAsync("test", "test"));
     }
 
-    private class MockHttpMessageHandler : HttpMessageHandler
+    private sealed class MockHttpMessageHandler : HttpMessageHandler, IDisposable
     {
         public HttpResponseMessage? Response { get; set; }
         public Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>>? GetResponseFunc { get; set; }
@@ -507,6 +513,15 @@ public class GoogleJobsApiClientIntegrationTests
                 return await GetResponseFunc(request, cancellationToken);
             }
             return await Task.FromResult(Response ?? new HttpResponseMessage(HttpStatusCode.OK));
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                Response?.Dispose();
+            }
+            base.Dispose(disposing);
         }
     }
 }

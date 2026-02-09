@@ -38,14 +38,14 @@ public class LinkedInJobClientTests
         var mockPage = new Mock<IPage>();
         mockSession.Setup(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockPage.Object);
-        
+
         // Mock QuerySelectorAllAsync to return empty list instead of null
         mockPage.Setup(p => p.QuerySelectorAllAsync("button", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<IElement>());
-        
+
         mockPage.Setup(p => p.NavigateAsync(It.IsAny<string>(), It.IsAny<NavigationOptions>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        
+
         mockPage.Setup(p => p.WaitForLoadStateAsync(It.IsAny<WaitOptions>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 

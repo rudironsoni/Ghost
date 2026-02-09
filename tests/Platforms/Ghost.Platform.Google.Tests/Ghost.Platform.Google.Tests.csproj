@@ -4,9 +4,6 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
-    <!-- TEMPORARILY EXCLUDED: Tests hang during execution. Needs investigation. -->
-    <ExcludeFromBuild>true</ExcludeFromBuild>
-    <IsTestProject>false</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Platforms\Ghost.Platform.Google\Ghost.Platform.Google.csproj" />
@@ -18,6 +15,7 @@
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="Moq" />
+    <PackageReference Include="NSubstitute" />
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />
