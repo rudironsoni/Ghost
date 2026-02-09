@@ -27,6 +27,7 @@ public class WebhookStorageAdvancedTests : IDisposable
     public void Dispose()
     {
         _httpClient.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     [Fact]

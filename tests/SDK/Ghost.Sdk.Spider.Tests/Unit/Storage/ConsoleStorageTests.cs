@@ -25,6 +25,7 @@ public class ConsoleStorageTests : IDisposable
     {
         Console.SetOut(_originalOutput);
         _consoleOutput.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     [Fact]

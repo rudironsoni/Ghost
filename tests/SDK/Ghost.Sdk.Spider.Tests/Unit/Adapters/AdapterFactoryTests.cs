@@ -31,6 +31,7 @@ public class AdapterFactoryTests : IDisposable
     public void Dispose()
     {
         _serviceProvider.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     [Fact]

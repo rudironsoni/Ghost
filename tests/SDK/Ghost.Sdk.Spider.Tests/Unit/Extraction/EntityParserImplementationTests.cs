@@ -335,7 +335,7 @@ public class EntityParserImplementationTests
 
     // Test entities
     [EntitySelector(Expression = "//div[@class='product']", Type = SelectorType.XPath)]
-    private class XPathProduct : EntityBase<XPathProduct>
+    private sealed class XPathProduct : EntityBase<XPathProduct>
     {
         [ValueSelector(".//h2", SelectorType.XPath)]
         public string Name { get; set; } = string.Empty;
@@ -345,7 +345,7 @@ public class EntityParserImplementationTests
     }
 
     [EntitySelector(Expression = "article", Type = SelectorType.Css)]
-    private class CssArticle : EntityBase<CssArticle>
+    private sealed class CssArticle : EntityBase<CssArticle>
     {
         [ValueSelector("h1", SelectorType.Css)]
         public string Title { get; set; } = string.Empty;
@@ -355,14 +355,14 @@ public class EntityParserImplementationTests
     }
 
     [EntitySelector(Expression = ".contact", Type = SelectorType.Css)]
-    private class HtmlEmailEntity : EntityBase<HtmlEmailEntity>
+    private sealed class HtmlEmailEntity : EntityBase<HtmlEmailEntity>
     {
         [ValueSelector(@"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", SelectorType.Regex)]
         public string Email { get; set; } = string.Empty;
     }
 
     [EntitySelector(Expression = "$.users[*]", Type = SelectorType.JsonPath)]
-    private class JsonUser : EntityBase<JsonUser>
+    private sealed class JsonUser : EntityBase<JsonUser>
     {
         [ValueSelector("$.name", SelectorType.JsonPath)]
         public string Name { get; set; } = string.Empty;
@@ -372,7 +372,7 @@ public class EntityParserImplementationTests
     }
 
     [EntitySelector(Expression = ".item", Type = SelectorType.Css)]
-    private class NestedItem : EntityBase<NestedItem>
+    private sealed class NestedItem : EntityBase<NestedItem>
     {
         [ValueSelector("h2", SelectorType.Css)]
         public string Name { get; set; } = string.Empty;
@@ -385,7 +385,7 @@ public class EntityParserImplementationTests
     }
 
     [EntitySelector(Expression = "a", Type = SelectorType.Css)]
-    private class LinkEntity : EntityBase<LinkEntity>
+    private sealed class LinkEntity : EntityBase<LinkEntity>
     {
         [ValueSelector("a", SelectorType.Css, Attribute = "href")]
         public string Url { get; set; } = string.Empty;
@@ -398,28 +398,28 @@ public class EntityParserImplementationTests
     }
 
     [EntitySelector(Expression = ".item", Type = SelectorType.Css)]
-    private class TypedItem : EntityBase<TypedItem>
+    private sealed class TypedItem : EntityBase<TypedItem>
     {
         [ValueSelector(".item", SelectorType.Css, Attribute = "data-count")]
         public int Count { get; set; }
     }
 
     [EntitySelector(Expression = ".item", Type = SelectorType.Css)]
-    private class DecimalItem : EntityBase<DecimalItem>
+    private sealed class DecimalItem : EntityBase<DecimalItem>
     {
         [ValueSelector(".item", SelectorType.Css, Attribute = "data-price")]
         public decimal Price { get; set; }
     }
 
     [EntitySelector(Expression = ".item", Type = SelectorType.Css)]
-    private class BoolItem : EntityBase<BoolItem>
+    private sealed class BoolItem : EntityBase<BoolItem>
     {
         [ValueSelector(".item", SelectorType.Css, Attribute = "data-available")]
         public bool Available { get; set; }
     }
 
     [EntitySelector(Expression = ".item", Type = SelectorType.Css)]
-    private class ItemWithDefault : EntityBase<ItemWithDefault>
+    private sealed class ItemWithDefault : EntityBase<ItemWithDefault>
     {
         [ValueSelector(".name", SelectorType.Css)]
         public string Name { get; set; } = string.Empty;
@@ -429,7 +429,7 @@ public class EntityParserImplementationTests
     }
 
     [EntitySelector(Expression = ".item", Type = SelectorType.Css)]
-    private class ItemWithTags : EntityBase<ItemWithTags>
+    private sealed class ItemWithTags : EntityBase<ItemWithTags>
     {
         [ValueSelector(".tag", SelectorType.Css, TakeFirst = false)]
         public List<string> Tags { get; set; } = new();

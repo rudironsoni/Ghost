@@ -271,7 +271,7 @@ public class PipelineExecutionTests
     }
 
     // Test helper classes
-    private class TestMiddleware : IPipelineMiddleware
+    private sealed class TestMiddleware : IPipelineMiddleware
     {
         private readonly Action _onExecute;
 

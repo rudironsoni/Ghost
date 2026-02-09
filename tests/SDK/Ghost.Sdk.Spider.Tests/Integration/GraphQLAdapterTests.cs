@@ -32,6 +32,7 @@ public class GraphQLAdapterTests : IDisposable
         _httpClient.Dispose();
         _server.Stop();
         _server.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     #region Query Execution

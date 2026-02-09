@@ -30,6 +30,7 @@ public class AdapterFactoryImplementationTests : IDisposable
         {
             disposable.Dispose();
         }
+        GC.SuppressFinalize(this);
     }
 
     [Fact]
@@ -143,7 +144,7 @@ public class AdapterFactoryImplementationTests : IDisposable
     }
 
     // Test helper classes
-    private class TestAdapter : IContentAdapter
+    private sealed class TestAdapter : IContentAdapter
     {
         public string Name => "TestAdapter";
         public ContentType ContentType => ContentType.Html;

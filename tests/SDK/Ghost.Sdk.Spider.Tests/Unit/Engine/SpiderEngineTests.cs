@@ -535,7 +535,7 @@ public class SpiderEngineTests
         streamedItems.Should().BeEquivalentTo(extractedItems);
     }
 
-    private async IAsyncEnumerable<string> SimulateAsyncStream(List<string> items)
+    private static async IAsyncEnumerable<string> SimulateAsyncStream(List<string> items)
     {
         foreach (var item in items)
         {
@@ -568,7 +568,7 @@ public class SpiderEngineTests
         streamedItems.Should().HaveCount(2);
     }
 
-    private async IAsyncEnumerable<string> SimulateAsyncStreamWithError(List<string> items)
+    private static async IAsyncEnumerable<string> SimulateAsyncStreamWithError(List<string> items)
     {
         foreach (var item in items)
         {
