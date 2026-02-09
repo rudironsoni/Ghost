@@ -59,7 +59,7 @@ jobs:
             --verbosity normal \
             --logger "trx;LogFileName=integration-test-results.trx" \
             --collect:"XPlat Code Coverage" \
-            --filter "FullyQualifiedName~Integration" \
+            --filter "Category=Integration" \
             --maxcpucount:1 \
             -nodereuse:false
 
@@ -119,7 +119,7 @@ jobs:
             --no-build \
             --verbosity normal \
             --logger "trx;LogFileName=e2e-test-results-${{ matrix.browser }}.trx" \
-            --filter "FullyQualifiedName~E2E" \
+            --filter "Category=E2E" \
             --maxcpucount:1 \
             -nodereuse:false
 
@@ -223,7 +223,7 @@ jobs:
               --configuration ${{ env.CONFIGURATION }} \
               --no-build \
               --logger "trx;LogFileName=stability-run-$i.trx" \
-              --filter "FullyQualifiedName~E2E&Priority=Critical" \
+              --filter "Category=E2E&Priority=Critical" \
               --maxcpucount:1 \
               -nodereuse:false
           done
@@ -305,7 +305,7 @@ jobs:
             --no-build \
             --verbosity normal \
             --collect:"XPlat Code Coverage" \
-            --filter "FullyQualifiedName!~E2E" \
+            --filter "Category!=E2E" \
             -nodereuse:false \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
 
