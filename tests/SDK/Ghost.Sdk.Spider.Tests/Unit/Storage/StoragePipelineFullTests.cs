@@ -417,9 +417,9 @@ public class StoragePipelineFullTests
         private PipelineMetrics _metrics = new();
 
         public string Name => "Pipeline";
-        public bool IsAvailable => _storages.Any();
-        public bool ContinueOnError { get; set; } = false;
-        public bool CollectMetrics { get; set; } = false;
+        public bool IsAvailable => _storages.Count > 0;
+        public bool ContinueOnError { get; set; }
+        public bool CollectMetrics { get; set; }
 
         public void AddStorage(IStorage storage) => _storages.Add(storage);
         public void AddTransformation(Func<object, StorageContext, Task<object>> transform) => _transformations.Add(transform);
@@ -472,7 +472,7 @@ public class StoragePipelineFullTests
                     transformedItem = await transformation(transformedItem, context);
                 }
 
-                if (!_storages.Any())
+                if (_storages.Count == 0)
                 {
                     return StorageResult.CreateSuccess(0, DateTimeOffset.UtcNow - startTime);
                 }
@@ -505,7 +505,7 @@ public class StoragePipelineFullTests
             var startTime = DateTimeOffset.UtcNow;
             var itemList = items.ToList();
 
-            if (!_storages.Any())
+            if (_storages.Count == 0)
             {
                 return StorageResult.CreateSuccess(0, DateTimeOffset.UtcNow - startTime);
             }
@@ -547,13 +547,13 @@ public class StoragePipelineFullTests
     {
         public string Name => "Mock";
         public bool IsAvailable => true;
-        public bool ShouldFail { get; set; } = false;
-        public int StoreCount { get; private set; } = 0;
-        public int BatchStoreCount { get; private set; } = 0;
+        public bool ShouldFail { get; set; }
+        public int StoreCount { get; private set; }
+        public int BatchStoreCount { get; private set; }
         public object? LastStoredItem { get; private set; }
-        public bool IsInitialized { get; private set; } = false;
-        public bool IsFlushed { get; private set; } = false;
-        public bool IsClosed { get; private set; } = false;
+        public bool IsInitialized { get; private set; }
+        public bool IsFlushed { get; private set; }
+        public bool IsClosed { get; private set; }
 
         public Task InitializeAsync(CancellationToken cancellationToken = default)
         {

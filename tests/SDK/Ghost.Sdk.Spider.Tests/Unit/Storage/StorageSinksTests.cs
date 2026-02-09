@@ -314,7 +314,7 @@ public class StorageSinksTests
     }
 
     [Fact]
-    public void ConsoleStorage_IsThreadSafe_ShouldHandleConcurrentCalls()
+    public async Task ConsoleStorage_IsThreadSafe_ShouldHandleConcurrentCalls()
     {
         // Arrange
         var storage = new ConsoleStorage();
@@ -332,10 +332,10 @@ public class StorageSinksTests
             tasks.Add(storage.StoreAsync(new { Id = id }, context));
         }
 
-        Task.WaitAll(tasks.ToArray());
+        var results = await Task.WhenAll(tasks.ToArray());
 
         // Assert
-        tasks.Should().AllSatisfy(t => t.Result.Success.Should().BeTrue());
+        results.Should().AllSatisfy(result => result.Success.Should().BeTrue());
     }
 
     [Fact]

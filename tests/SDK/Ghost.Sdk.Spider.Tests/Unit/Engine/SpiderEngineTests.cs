@@ -77,7 +77,7 @@ public class SpiderEngineTests
     public async Task StartAsync_WithException_ShouldReturnFailedResult()
     {
         // Arrange
-        var exception = new Exception("Test failure");
+        var exception = new InvalidOperationException("Test failure");
         var failedResult = SpiderResult.CreateFailure("TestSpider", "Test failure", exception, DateTimeOffset.UtcNow);
 
         _mockEngine
@@ -384,7 +384,7 @@ public class SpiderEngineTests
     {
         // Arrange
         var configurableSpider = new ConfigurableTestSpider();
-        var exception = new Exception("Test error");
+        var exception = new InvalidOperationException("Test error");
 
         var result = SpiderResult.CreateFailure("ConfigurableTestSpider", "Test error", exception, DateTimeOffset.UtcNow);
 

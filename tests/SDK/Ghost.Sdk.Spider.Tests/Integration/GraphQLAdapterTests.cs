@@ -16,6 +16,8 @@ namespace Ghost.Sdk.Spider.Tests.Integration;
 /// </summary>
 public class GraphQLAdapterTests : IDisposable
 {
+    private static readonly string[] ExpectedTags = new[] { "tag1", "tag2" };
+    
     private readonly WireMockServer _server;
     private readonly HttpClient _httpClient;
     private readonly GraphQLAdapter _adapter;
@@ -197,7 +199,7 @@ public class GraphQLAdapterTests : IDisposable
         const string query = "mutation CreatePost($input: PostInput!) { createPost(input: $input) { id } }";
         var variables = new Dictionary<string, object>
         {
-            { "input", new { title = "New Post", content = "Content here", tags = new[] { "tag1", "tag2" } } }
+            { "input", new { title = "New Post", content = "Content here", tags = ExpectedTags } }
         };
         var graphQLRequest = new GraphQLRequest(query, variables);
 

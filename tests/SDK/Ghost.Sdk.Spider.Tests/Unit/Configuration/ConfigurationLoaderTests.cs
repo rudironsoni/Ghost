@@ -244,8 +244,7 @@ targets: [invalid yaml structure
         cts.Cancel();
 
         // Act & Assert
-        await Assert.ThatAsync(
-            async () => await _loader.LoadFromFileAsync(filePath, cts.Token),
-            Throws.InstanceOf<OperationCanceledException>());
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            async () => await _loader.LoadFromFileAsync(filePath, cts.Token));
     }
 }

@@ -11,6 +11,10 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Configuration;
 /// </summary>
 public class ConfigurationModelsTests
 {
+    private static readonly string[] ExpectedScopes = new[] { "read", "write" };
+    private static readonly string[] ExpectedChannels = new[] { "email", "slack" };
+    private static readonly string[] ExpectedContentTypes = new[] { "image/*", "video/*", "audio/*", "font/*" };
+    
     [Fact]
     public void SpiderConfiguration_ShouldInitializeWithDefaults()
     {
@@ -162,7 +166,7 @@ public class ConfigurationModelsTests
         config.TokenUrl.Should().Be("https://auth.example.com/token");
         config.ClientId.Should().Be("client123");
         config.ClientSecret.Should().Be("secret456");
-        config.Scopes.Should().Contain(new[] { "read", "write" });
+        config.Scopes.Should().Contain(ExpectedScopes);
     }
 
     [Fact]
@@ -444,7 +448,7 @@ public class ConfigurationModelsTests
         config.Name.Should().Be("TestRule");
         config.Condition.Should().Be("test > 0");
         config.Severity.Should().Be("Critical");
-        config.Channels.Should().Contain(new[] { "email", "slack" });
+        config.Channels.Should().Contain(ExpectedChannels);
         config.Metadata["owner"].Should().Be("team-a");
     }
 
@@ -559,13 +563,7 @@ public class ConfigurationModelsTests
         var config = new LimitsConfiguration();
 
         // Assert
-        config.BlockedContentTypes.Should().Contain(new[]
-        {
-            "image/*",
-            "video/*",
-            "audio/*",
-            "font/*"
-        });
+        config.BlockedContentTypes.Should().Contain(ExpectedContentTypes);
     }
 
     [Fact]

@@ -12,6 +12,8 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Scheduling;
 /// </summary>
 public class TriggerManagerTests
 {
+    private static readonly string[] ExpectedSpiderNames = new[] { "Spider1", "Spider2", "Spider3" };
+    
     private Mock<IScheduler> _mockScheduler;
     private Mock<SpiderBase> _mockSpider;
 
@@ -149,7 +151,7 @@ public class TriggerManagerTests
 
         // Assert
         schedules.Should().HaveCount(3);
-        schedules.Select(s => s.SpiderName).Should().Contain(new[] { "Spider1", "Spider2", "Spider3" });
+        schedules.Select(s => s.SpiderName).Should().Contain(ExpectedSpiderNames);
     }
 
     [Fact]

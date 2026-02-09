@@ -15,7 +15,7 @@ public class EntityBaseTests
 
         // Assert
         metadata.Should().NotBeNull();
-        metadata.EntityType.Should().Be(typeof(TestProduct));
+        metadata.EntityType.Should().Be<TestProduct>();
         metadata.EntitySelector.Should().NotBeNull();
         metadata.Properties.Should().NotBeEmpty();
     }

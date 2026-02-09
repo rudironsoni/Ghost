@@ -42,7 +42,7 @@ public class AdapterFactoryImplementationTests : IDisposable
         // Assert
         var adapterType = _registry.GetAdapterType("TestAdapter");
         adapterType.Should().NotBeNull();
-        adapterType.Should().Be(typeof(TestAdapter));
+        adapterType.Should().Be<TestAdapter>();
     }
 
     [Fact]
@@ -112,8 +112,8 @@ public class AdapterFactoryImplementationTests : IDisposable
         var adapterType2 = _registry.GetAdapterType("testadapter");
 
         // Assert
-        adapterType1.Should().Be(typeof(TestAdapter));
-        adapterType2.Should().Be(typeof(TestAdapter));
+        adapterType1.Should().Be<TestAdapter>();
+        adapterType2.Should().Be<TestAdapter>();
     }
 
     [Fact]
@@ -127,7 +127,7 @@ public class AdapterFactoryImplementationTests : IDisposable
         var adapterType = _registry.GetAdapterType("TestAdapter");
 
         // Assert
-        adapterType.Should().Be(typeof(TestAdapter));
+        adapterType.Should().Be<TestAdapter>();
     }
 
     [Fact]

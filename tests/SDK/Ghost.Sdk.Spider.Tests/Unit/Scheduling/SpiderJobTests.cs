@@ -69,7 +69,7 @@ public class SpiderJobTests
     public async Task Execute_WithEngineException_ShouldLogError()
     {
         // Arrange
-        var exception = new Exception("Engine failed");
+        var exception = new InvalidOperationException("Engine failed");
 
         _mockEngine
             .Setup(e => e.StartAsync(_testSpider, It.IsAny<CancellationToken>()))
@@ -79,7 +79,7 @@ public class SpiderJobTests
         var act = async () => await _mockEngine.Object.StartAsync(_testSpider, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<Exception>().WithMessage("Engine failed");
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Engine failed");
     }
 
     [Fact]
@@ -136,7 +136,7 @@ public class SpiderJobTests
         var failedResult = SpiderResult.CreateFailure(
             "TestSpider",
             "Spider execution failed",
-            new Exception("Test error"),
+            new InvalidOperationException("Test error"),
             DateTimeOffset.UtcNow);
 
         _mockEngine

@@ -37,7 +37,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeTrue();
@@ -64,7 +64,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeTrue();
@@ -91,7 +91,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeTrue();
@@ -118,7 +118,7 @@ public class ConditionEvaluatorAdditionalTests
         };
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeTrue();
@@ -136,7 +136,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeFalse();
@@ -163,7 +163,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeFalse();
@@ -190,7 +190,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeFalse();
@@ -217,7 +217,7 @@ public class ConditionEvaluatorAdditionalTests
         };
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeTrue();
@@ -235,7 +235,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeFalse();
@@ -257,7 +257,7 @@ public class ConditionEvaluatorAdditionalTests
         };
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeFalse();
@@ -275,7 +275,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeFalse();
@@ -297,7 +297,7 @@ public class ConditionEvaluatorAdditionalTests
         };
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeFalse();
@@ -324,7 +324,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeFalse();
@@ -351,7 +351,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeFalse();
@@ -369,7 +369,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeFalse();
@@ -390,7 +390,7 @@ public class ConditionEvaluatorAdditionalTests
         };
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeFalse();
@@ -408,7 +408,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeFalse();
@@ -435,7 +435,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeFalse();
@@ -462,7 +462,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeTrue();
@@ -488,7 +488,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeFalse();
@@ -519,7 +519,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeTrue();
@@ -549,7 +549,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeTrue();
@@ -580,7 +580,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeTrue();
@@ -611,7 +611,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeTrue();
@@ -642,7 +642,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeTrue();
@@ -673,7 +673,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeTrue();
@@ -694,7 +694,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeFalse();
@@ -736,7 +736,7 @@ public class ConditionEvaluatorAdditionalTests
         var attempts = new List<StrategyAttempt>();
 
         // Act
-        var result = _evaluator.Evaluate(conditions, context, attempts);
+        var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
 
         // Assert
         result.Should().BeTrue();

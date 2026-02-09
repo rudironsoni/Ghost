@@ -120,7 +120,7 @@ public class CircuitBreakerMiddlewareFullTests
         {
             try
             {
-                await middleware.InvokeAsync(context, _ => throw new Exception("Fail"));
+                await middleware.InvokeAsync(context, _ => throw new InvalidOperationException("Fail"));
             }
             catch { /* Expected */ }
         }
@@ -159,7 +159,7 @@ public class CircuitBreakerMiddlewareFullTests
         {
             try
             {
-                await middleware.InvokeAsync(context, _ => throw new Exception("Fail"));
+                await middleware.InvokeAsync(context, _ => throw new InvalidOperationException("Fail"));
             }
             catch { /* Expected */ }
         }
@@ -218,7 +218,7 @@ public class CircuitBreakerMiddlewareFullTests
         {
             try
             {
-                await middleware.InvokeAsync(context, _ => throw new Exception("Rapid fail"));
+                await middleware.InvokeAsync(context, _ => throw new InvalidOperationException("Rapid fail"));
             }
             catch { /* Expected */ }
         }
@@ -243,10 +243,10 @@ public class CircuitBreakerMiddlewareFullTests
 
         // Act - Mix successes and failures
         await middleware.InvokeAsync(context, _ => Task.CompletedTask);
-        try { await middleware.InvokeAsync(context, _ => throw new Exception("F1")); } catch { }
+        try { await middleware.InvokeAsync(context, _ => throw new InvalidOperationException("F1")); } catch { }
         await middleware.InvokeAsync(context, _ => Task.CompletedTask);
-        try { await middleware.InvokeAsync(context, _ => throw new Exception("F2")); } catch { }
-        try { await middleware.InvokeAsync(context, _ => throw new Exception("F3")); } catch { }
+        try { await middleware.InvokeAsync(context, _ => throw new InvalidOperationException("F2")); } catch { }
+        try { await middleware.InvokeAsync(context, _ => throw new InvalidOperationException("F3")); } catch { }
 
         // Circuit should still be closed (only 3 failures, need 4)
         var finalCallSucceeded = false;
@@ -277,7 +277,7 @@ public class CircuitBreakerMiddlewareFullTests
         // Open circuit
         for (int i = 0; i < 2; i++)
         {
-            try { await middleware.InvokeAsync(context, _ => throw new Exception("Open")); } catch { }
+            try { await middleware.InvokeAsync(context, _ => throw new InvalidOperationException("Open")); } catch { }
         }
 
         // Verify open
@@ -315,7 +315,7 @@ public class CircuitBreakerMiddlewareFullTests
         // Open circuit
         try
         {
-            await middleware.InvokeAsync(context, _ => throw new Exception("Trigger open"));
+            await middleware.InvokeAsync(context, _ => throw new InvalidOperationException("Trigger open"));
         }
         catch { /* Expected */ }
 
