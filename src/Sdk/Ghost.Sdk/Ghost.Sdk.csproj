@@ -7,6 +7,11 @@
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
 
+  <!-- Expose internals to test project -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ghost.Sdk.Tests" />
+  </ItemGroup>
+
   <!-- Package references -->
   <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" />
