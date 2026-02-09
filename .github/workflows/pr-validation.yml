@@ -190,6 +190,10 @@ jobs:
         if: steps.changed.outputs.skip != 'true'
         run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
 
+      - name: Pre-test Cleanup
+        if: steps.changed.outputs.skip != 'true'
+        run: ./tests/scripts/pre-test.sh
+
       - name: Run Unit Tests
         if: steps.changed.outputs.skip != 'true'
         run: |
@@ -202,6 +206,10 @@ jobs:
             --filter "Category!=E2E" \
             --maxcpucount:1 \
             -nodereuse:false
+
+      - name: Post-test Cleanup
+        if: always() && steps.changed.outputs.skip != 'true'
+        run: ./tests/scripts/post-test.sh
 
       - name: Upload Test Results
         if: always() && steps.changed.outputs.skip != 'true'

@@ -48,48 +48,62 @@ dotnet clean Ghost.sln
 Tests are organized by `Category` trait for targeted execution:
 
 ```bash
+# Run tests with automatic cleanup (RECOMMENDED):
+./tests/scripts/run-tests.sh Ghost.sln --configuration Release
+
 # Run Unit tests only (fast, reliable, no external dependencies)
-dotnet test Ghost.sln --configuration Release --filter "Category=Unit|Category=UnitTest" -nodereuse:false
+./tests/scripts/run-tests.sh Ghost.sln --configuration Release --filter "Category=Unit|Category=UnitTest"
 
 # Run Integration tests only (slower, may require browser setup)
-dotnet test Ghost.sln --configuration Release --filter "Category=Integration" -nodereuse:false
+./tests/scripts/run-tests.sh Ghost.sln --configuration Release --filter "Category=Integration"
 
 # Run E2E tests only (slowest, full system tests)
-dotnet test Ghost.sln --configuration Release --filter "Category=E2E" -nodereuse:false
+./tests/scripts/run-tests.sh Ghost.sln --configuration Release --filter "Category=E2E"
 
 # Run all tests except E2E (CI default)
-dotnet test Ghost.sln --configuration Release --filter "Category!=E2E" -nodereuse:false
+./tests/scripts/run-tests.sh Ghost.sln --configuration Release --filter "Category!=E2E"
+```
 
-# Run all tests (USE --maxcpucount:1 to prevent hangs)
+**IMPORTANT**: The `run-tests.sh` wrapper script automatically handles pre-test and post-test cleanup to prevent zombie processes. This is the **RECOMMENDED** way to run tests.
+
+**Manual cleanup (if not using run-tests.sh):**
+```bash
+# Pre-test cleanup
+./tests/scripts/pre-test.sh
+
+# Run tests
 dotnet test Ghost.sln --configuration Release --maxcpucount:1 -nodereuse:false
+
+# Post-test cleanup (ALWAYS run this, even if tests fail)
+./tests/scripts/post-test.sh
 ```
 
 ### Other Test Commands
 
 ```bash
-# Run all tests with verbosity
-dotnet test Ghost.sln --configuration Release --verbosity normal --maxcpucount:1 -nodereuse:false
+# Run all tests with verbosity (using wrapper script)
+./tests/scripts/run-tests.sh Ghost.sln --configuration Release --verbosity normal
 
 # Run tests for a specific project
-dotnet test tests/Core/Ghost.Tests/Ghost.Tests.csproj --configuration Release -nodereuse:false
+./tests/scripts/run-tests.sh tests/Core/Ghost.Tests/Ghost.Tests.csproj --configuration Release
 
 # Run a single test by fully qualified name
-dotnet test tests/Core/Ghost.Tests --filter "FullyQualifiedName~GhostKernelTests" -nodereuse:false
+./tests/scripts/run-tests.sh tests/Core/Ghost.Tests --filter "FullyQualifiedName~GhostKernelTests"
 
 # Run a specific test method
-dotnet test tests/Core/Ghost.Tests --filter "FullyQualifiedName=Ghost.Core.Tests.GhostKernelTests.NewSessionAsyncUsesOptionsToCreateContext" -nodereuse:false
+./tests/scripts/run-tests.sh tests/Core/Ghost.Tests --filter "FullyQualifiedName=Ghost.Core.Tests.GhostKernelTests.NewSessionAsyncUsesOptionsToCreateContext"
 
 # Run tests with code coverage
-dotnet test Ghost.sln --collect:"XPlat Code Coverage" --maxcpucount:1 -nodereuse:false
+./tests/scripts/run-tests.sh Ghost.sln --collect:"XPlat Code Coverage"
 
 # Combine filters (Unit OR Integration tests)
-dotnet test Ghost.sln --filter "Category=Unit|Category=Integration" -nodereuse:false
+./tests/scripts/run-tests.sh Ghost.sln --filter "Category=Unit|Category=Integration"
 
 # Combine filters (Integration tests AND specific priority)
-dotnet test Ghost.sln --filter "Category=Integration&Priority=High" -nodereuse:false
+./tests/scripts/run-tests.sh Ghost.sln --filter "Category=Integration&Priority=High"
 ```
 
-**IMPORTANT**: Always use `--maxcpucount:1` and `-nodereuse:false` when running the full test suite to prevent MSBuild child node crashes that cause test hangs. This forces sequential test execution and disables MSBuild node reuse.
+**Legacy commands (without cleanup script):** Always use `--maxcpucount:1` and `-nodereuse:false` when running the full test suite to prevent MSBuild child node crashes that cause test hangs. This forces sequential test execution and disables MSBuild node reuse.
 
 **Alternative**: You can also set the environment variable globally to disable node reuse:
 ```bash

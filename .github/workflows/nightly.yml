@@ -51,6 +51,9 @@ jobs:
       - name: Build Solution
         run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
 
+      - name: Pre-test Cleanup
+        run: ./tests/scripts/pre-test.sh
+
       - name: Run All Integration Tests
         run: |
           dotnet test Ghost.sln \
@@ -62,6 +65,10 @@ jobs:
             --filter "Category=Integration" \
             --maxcpucount:1 \
             -nodereuse:false
+
+      - name: Post-test Cleanup
+        if: always()
+        run: ./tests/scripts/post-test.sh
 
       - name: Upload Test Results
         if: always()
@@ -110,6 +117,9 @@ jobs:
       - name: Build Solution
         run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
 
+      - name: Pre-test Cleanup
+        run: ./tests/scripts/pre-test.sh
+
       - name: Run E2E Tests (${{ matrix.browser }})
         env:
           PLAYWRIGHT_BROWSER: ${{ matrix.browser }}
@@ -122,6 +132,10 @@ jobs:
             --filter "Category=E2E" \
             --maxcpucount:1 \
             -nodereuse:false
+
+      - name: Post-test Cleanup
+        if: always()
+        run: ./tests/scripts/post-test.sh
 
       - name: Upload Test Results
         if: always()
@@ -213,6 +227,9 @@ jobs:
       - name: Build Solution
         run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
 
+      - name: Pre-test Cleanup
+        run: ./tests/scripts/pre-test.sh
+
       - name: Run Stability Tests
         continue-on-error: true
         run: |
@@ -227,6 +244,10 @@ jobs:
               --maxcpucount:1 \
               -nodereuse:false
           done
+
+      - name: Post-test Cleanup
+        if: always()
+        run: ./tests/scripts/post-test.sh
 
       - name: Analyze Stability Results
         if: always()
@@ -298,6 +319,9 @@ jobs:
       - name: Build Solution
         run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
 
+      - name: Pre-test Cleanup
+        run: ./tests/scripts/pre-test.sh
+
       - name: Run All Tests with Coverage
         run: |
           dotnet test Ghost.sln \
@@ -308,6 +332,10 @@ jobs:
             --filter "Category!=E2E" \
             -nodereuse:false \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+
+      - name: Post-test Cleanup
+        if: always()
+        run: ./tests/scripts/post-test.sh
 
       - name: Generate Coverage Report
         run: |
