@@ -1,81 +1,77 @@
 using Ghost.Core;
-using Ghost.Core.Configuration;
+using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Ghost.Platform.Google.Integration.Fixtures;
 
 /// <summary>
-/// Test fixture that provides a GhostKernel instance for Google Jobs integration tests.
+/// Per-test-class fixture that provides an isolated browser context for Google Jobs integration tests.
+/// Each test class gets a fresh browser session with no shared state.
+/// Use with [Collection("Browser")] and IClassFixture&lt;GoogleContextFixture&gt;.
 /// </summary>
-public sealed class GhostKernelFixture : IAsyncLifetime
+public sealed class GoogleContextFixture : IAsyncLifetime
 {
-    public GhostKernel Kernel { get; private set; } = null!;
-    public IBrowserSession Session { get; private set; } = null!;
+    private readonly RealBrowserFixture _browserFixture;
+    private IBrowserSession? _session;
+
+    public GoogleContextFixture(RealBrowserFixture browserFixture)
+    {
+        _browserFixture = browserFixture;
+    }
+
+    public IBrowserSession Session => _session ?? throw new InvalidOperationException("Fixture not initialized");
     public IServiceProvider ServiceProvider { get; private set; } = null!;
 
     public async Task InitializeAsync()
     {
-        var options = new KernelOptions
+        try
         {
-            EnableStealth = true,
-            Headless = true
-        };
+            // Create a fresh session for this test class
+            _session = await _browserFixture.CreateSessionAsync();
 
-        Kernel = await GhostKernel.CreateAsync(options);
+            // Build service provider with Google Jobs platform
+            var services = new ServiceCollection();
+            services.AddSingleton(_session);
+            services.AddSingleton<IBrowserSession>(_session);
+            services.AddLogging();
 
-        // Create a session for testing
-        Session = await Kernel.NewSessionAsync();
+            // Register Google Jobs services manually
+            var googleOptions = new Ghost.Platform.Google.Jobs.GoogleJobsOptions();
+            var googleOptionsWrapped = Microsoft.Extensions.Options.Options.Create(googleOptions);
+            var httpClient = new System.Net.Http.HttpClient();
 
-        // Build service provider with Google Jobs platform
-        var services = new ServiceCollection();
-        services.AddSingleton(Session);
-        services.AddSingleton<IBrowserSession>(Session);
-        services.AddLogging();
+            services.AddSingleton(_browserFixture.ConcreteKernel);
+            services.AddSingleton(googleOptions);
+            services.AddSingleton(googleOptionsWrapped);
+            services.AddSingleton(httpClient);
+            services.AddSingleton<Ghost.Platform.Google.Jobs.Internal.GoogleJobsApiClient>(sp =>
+            {
+                var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Ghost.Platform.Google.Jobs.Internal.GoogleJobsApiClient>>();
+                return new Ghost.Platform.Google.Jobs.Internal.GoogleJobsApiClient(httpClient, googleOptions, logger);
+            });
+            services.AddSingleton<Ghost.Platform.Google.Jobs.Internal.GoogleJobsBrowserClient>(sp =>
+            {
+                var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Ghost.Platform.Google.Jobs.Internal.GoogleJobsBrowserClient>>();
+                return new Ghost.Platform.Google.Jobs.Internal.GoogleJobsBrowserClient(_browserFixture.ConcreteKernel, googleOptionsWrapped, logger);
+            });
+            services.AddSingleton<Ghost.Platform.Google.Jobs.Internal.GoogleJobsScraper>();
+            services.AddScoped<Ghost.Platform.Google.Jobs.GoogleJobClient>();
 
-        // Register Google Jobs services manually
-        var googleOptions = new Ghost.Platform.Google.Jobs.GoogleJobsOptions();
-        var googleOptionsWrapped = Microsoft.Extensions.Options.Options.Create(googleOptions);
-        var httpClient = new System.Net.Http.HttpClient();
-
-        services.AddSingleton(Kernel);
-        services.AddSingleton(googleOptions);
-        services.AddSingleton(googleOptionsWrapped);
-        services.AddSingleton(httpClient);
-        services.AddSingleton<Ghost.Platform.Google.Jobs.Internal.GoogleJobsApiClient>(sp =>
+            ServiceProvider = services.BuildServiceProvider();
+        }
+        catch
         {
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Ghost.Platform.Google.Jobs.Internal.GoogleJobsApiClient>>();
-            return new Ghost.Platform.Google.Jobs.Internal.GoogleJobsApiClient(httpClient, googleOptions, logger);
-        });
-        services.AddSingleton<Ghost.Platform.Google.Jobs.Internal.GoogleJobsBrowserClient>(sp =>
-        {
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Ghost.Platform.Google.Jobs.Internal.GoogleJobsBrowserClient>>();
-            return new Ghost.Platform.Google.Jobs.Internal.GoogleJobsBrowserClient(Kernel, googleOptionsWrapped, logger);
-        });
-        services.AddSingleton<Ghost.Platform.Google.Jobs.Internal.GoogleJobsScraper>();
-        services.AddScoped<Ghost.Platform.Google.Jobs.GoogleJobClient>();
-
-        ServiceProvider = services.BuildServiceProvider();
+            await DisposeAsync();
+            throw;
+        }
     }
 
     public async Task DisposeAsync()
     {
-        if (Session != null)
+        if (_session != null)
         {
-            await Session.DisposeAsync();
+            await _session.DisposeAsync();
         }
-
-        if (Kernel != null)
-        {
-            await Kernel.DisposeAsync();
-        }
-    }
-
-    /// <summary>
-    /// Creates a new browser session for testing.
-    /// </summary>
-    public async Task<IBrowserSession> CreateSessionAsync()
-    {
-        return await Kernel.NewSessionAsync();
     }
 }

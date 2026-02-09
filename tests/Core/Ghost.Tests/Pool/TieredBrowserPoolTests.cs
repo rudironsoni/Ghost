@@ -15,38 +15,46 @@ public class TieredBrowserPoolTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _kernel = await GhostKernel.CreateAsync(new KernelOptions
+        try
         {
-            Headless = true,
-            EnableStealth = false,
-            MaxConcurrentSessions = 50
-        });
+            _kernel = await GhostKernel.CreateAsync(new KernelOptions
+            {
+                Headless = true,
+                EnableStealth = false,
+                MaxConcurrentSessions = 50
+            });
 
-        var options = new TieredBrowserPoolOptions
+            var options = new TieredBrowserPoolOptions
+            {
+                Hot = new HotPoolOptions
+                {
+                    MinimumSize = 2,
+                    MaximumSize = 5,
+                    MaxAge = TimeSpan.FromMinutes(5)
+                },
+                Warm = new WarmPoolOptions
+                {
+                    MinimumSize = 3,
+                    MaximumSize = 10,
+                    MaxAge = TimeSpan.FromMinutes(10)
+                },
+                Cold = new ColdPoolOptions
+                {
+                    MaximumConcurrent = 20
+                },
+                SessionTtl = TimeSpan.FromMinutes(5),
+                HealthCheckInterval = TimeSpan.FromSeconds(5)
+            };
+
+            _pool = new TieredBrowserPool(_kernel, options, NullLogger<TieredBrowserPool>.Instance);
+
+            await Task.Delay(2000);
+        }
+        catch
         {
-            Hot = new HotPoolOptions
-            {
-                MinimumSize = 2,
-                MaximumSize = 5,
-                MaxAge = TimeSpan.FromMinutes(5)
-            },
-            Warm = new WarmPoolOptions
-            {
-                MinimumSize = 3,
-                MaximumSize = 10,
-                MaxAge = TimeSpan.FromMinutes(10)
-            },
-            Cold = new ColdPoolOptions
-            {
-                MaximumConcurrent = 20
-            },
-            SessionTtl = TimeSpan.FromMinutes(5),
-            HealthCheckInterval = TimeSpan.FromSeconds(5)
-        };
-
-        _pool = new TieredBrowserPool(_kernel, options, NullLogger<TieredBrowserPool>.Instance);
-
-        await Task.Delay(2000);
+            await DisposeAsync();
+            throw;
+        }
     }
 
     public async Task DisposeAsync()

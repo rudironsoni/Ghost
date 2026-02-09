@@ -1,61 +1,56 @@
 using Ghost.Core;
-using Ghost.Core.Configuration;
-using Microsoft.Extensions.Configuration;
+using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Ghost.Platform.X.E2E.Fixtures;
 
 /// <summary>
-/// Test fixture that provides a GhostKernel instance for E2E tests.
+/// Per-test-class fixture that provides an isolated browser context for X E2E tests.
+/// Each test class gets a fresh browser session with no shared state.
+/// Use with [Collection("Browser")] and IClassFixture&lt;XContextFixture&gt;.
 /// </summary>
-public sealed class GhostKernelFixture : IAsyncLifetime
+public sealed class XContextFixture : IAsyncLifetime
 {
-    public GhostKernel Kernel { get; private set; } = null!;
-    public IBrowserSession Session { get; private set; } = null!;
+    private readonly RealBrowserFixture _browserFixture;
+    private IBrowserSession? _session;
+
+    public XContextFixture(RealBrowserFixture browserFixture)
+    {
+        _browserFixture = browserFixture;
+    }
+
+    public IBrowserSession Session => _session ?? throw new InvalidOperationException("Fixture not initialized");
     public IServiceProvider ServiceProvider { get; private set; } = null!;
 
     public async Task InitializeAsync()
     {
-        var options = new KernelOptions
+        try
         {
-            EnableStealth = true,
-            Headless = true
-        };
+            // Create a fresh session for this test class
+            _session = await _browserFixture.CreateSessionAsync();
 
-        Kernel = await GhostKernel.CreateAsync(options);
+            // Build service provider with X platform
+            var services = new ServiceCollection();
+            services.AddSingleton(_session);
+            services.AddSingleton<IBrowserSession>(_session);
+            services.AddLogging();
+            services.AddXPlatform();
 
-        // Create a session for testing
-        Session = await Kernel.NewSessionAsync();
-
-        // Build service provider with X platform
-        var services = new ServiceCollection();
-        services.AddSingleton(Session);
-        services.AddSingleton<IBrowserSession>(Session);
-        services.AddLogging();
-        services.AddXPlatform();
-
-        ServiceProvider = services.BuildServiceProvider();
+            ServiceProvider = services.BuildServiceProvider();
+        }
+        catch
+        {
+            await DisposeAsync();
+            throw;
+        }
     }
 
     public async Task DisposeAsync()
     {
-        if (Session != null)
+        if (_session != null)
         {
-            await Session.DisposeAsync();
+            await _session.DisposeAsync();
         }
-
-        if (Kernel != null)
-        {
-            await Kernel.DisposeAsync();
-        }
-    }
-
-    /// <summary>
-    /// Creates a new browser session for testing.
-    /// </summary>
-    public async Task<IBrowserSession> CreateSessionAsync()
-    {
-        return await Kernel.NewSessionAsync();
     }
 }

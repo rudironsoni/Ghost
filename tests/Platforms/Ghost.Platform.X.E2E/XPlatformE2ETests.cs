@@ -10,12 +10,13 @@ namespace Ghost.Platform.X.E2E;
 /// <summary>
 /// End-to-end tests for X platform using real browser automation.
 /// </summary>
-public class XPlatformE2ETests : IClassFixture<GhostKernelFixture>
+[Collection("Browser")]
+public class XPlatformE2ETests : IClassFixture<XContextFixture>
 {
-    private readonly GhostKernelFixture _fixture;
+    private readonly XContextFixture _fixture;
     private readonly IBrowserSession _session;
 
-    public XPlatformE2ETests(GhostKernelFixture fixture)
+    public XPlatformE2ETests(XContextFixture fixture)
     {
         _fixture = fixture;
         _session = _fixture.ServiceProvider.GetRequiredService<IBrowserSession>();

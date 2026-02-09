@@ -11,12 +11,13 @@ namespace Ghost.Platform.Google.Integration;
 /// Integration tests for Google Jobs platform using real browser automation.
 /// </summary>
 [Trait("Category", "Integration")]
-public class GoogleJobsIntegrationTests : IClassFixture<GhostKernelFixture>
+[Collection("Browser")]
+public class GoogleJobsIntegrationTests : IClassFixture<GoogleContextFixture>
 {
-    private readonly GhostKernelFixture _fixture;
+    private readonly GoogleContextFixture _fixture;
     private readonly GoogleJobClient _jobClient;
 
-    public GoogleJobsIntegrationTests(GhostKernelFixture fixture)
+    public GoogleJobsIntegrationTests(GoogleContextFixture fixture)
     {
         _fixture = fixture;
         _jobClient = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();

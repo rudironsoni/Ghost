@@ -10,12 +10,13 @@ namespace Ghost.Platform.Glassdoor.Integration;
 /// Integration tests for Glassdoor platform using real browser automation.
 /// </summary>
 [Trait("Category", "Integration")]
-public class GlassdoorIntegrationTests : IClassFixture<GhostKernelFixture>
+[Collection("Browser")]
+public class GlassdoorIntegrationTests : IClassFixture<GlassdoorContextFixture>
 {
-    private readonly GhostKernelFixture _fixture;
+    private readonly GlassdoorContextFixture _fixture;
     private readonly GlassdoorJobClient _jobClient;
 
-    public GlassdoorIntegrationTests(GhostKernelFixture fixture)
+    public GlassdoorIntegrationTests(GlassdoorContextFixture fixture)
     {
         _fixture = fixture;
         _jobClient = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();

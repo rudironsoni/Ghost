@@ -11,12 +11,13 @@ namespace Ghost.Platform.Indeed.Integration;
 /// Tests API → Browser fallback mechanism.
 /// </summary>
 [Trait("Category", "Integration")]
-public class IndeedIntegrationTests : IClassFixture<GhostKernelFixture>
+[Collection("Browser")]
+public class IndeedIntegrationTests : IClassFixture<IndeedContextFixture>
 {
-    private readonly GhostKernelFixture _fixture;
+    private readonly IndeedContextFixture _fixture;
     private readonly IndeedJobClient _jobClient;
 
-    public IndeedIntegrationTests(GhostKernelFixture fixture)
+    public IndeedIntegrationTests(IndeedContextFixture fixture)
     {
         _fixture = fixture;
         _jobClient = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();

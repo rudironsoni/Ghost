@@ -1,75 +1,71 @@
 using Ghost.Core;
-using Ghost.Core.Configuration;
+using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Ghost.Platform.Glassdoor.Integration.Fixtures;
 
 /// <summary>
-/// Test fixture that provides a GhostKernel instance for Glassdoor integration tests.
+/// Per-test-class fixture that provides an isolated browser context for Glassdoor integration tests.
+/// Each test class gets a fresh browser session with no shared state.
+/// Use with [Collection("Browser")] and IClassFixture&lt;GlassdoorContextFixture&gt;.
 /// </summary>
-public sealed class GhostKernelFixture : IAsyncLifetime
+public sealed class GlassdoorContextFixture : IAsyncLifetime
 {
-    public GhostKernel Kernel { get; private set; } = null!;
-    public IBrowserSession Session { get; private set; } = null!;
+    private readonly RealBrowserFixture _browserFixture;
+    private IBrowserSession? _session;
+
+    public GlassdoorContextFixture(RealBrowserFixture browserFixture)
+    {
+        _browserFixture = browserFixture;
+    }
+
+    public IBrowserSession Session => _session ?? throw new InvalidOperationException("Fixture not initialized");
     public IServiceProvider ServiceProvider { get; private set; } = null!;
 
     public async Task InitializeAsync()
     {
-        var options = new KernelOptions
+        try
         {
-            EnableStealth = true,
-            Headless = true
-        };
+            // Create a fresh session for this test class
+            _session = await _browserFixture.CreateSessionAsync();
 
-        Kernel = await GhostKernel.CreateAsync(options);
+            // Build service provider with Glassdoor platform
+            var services = new ServiceCollection();
+            services.AddSingleton(_session);
+            services.AddSingleton<IBrowserSession>(_session);
+            services.AddLogging();
 
-        // Create a session for testing
-        Session = await Kernel.NewSessionAsync();
+            // Register Glassdoor services manually
+            var glassdoorOptions = Microsoft.Extensions.Options.Options.Create(new Ghost.Platform.Glassdoor.GlassdoorOptions());
+            var proxyProvider = Ghost.Proxy.StaticProxyProvider.Empty;
 
-        // Build service provider with Glassdoor platform
-        var services = new ServiceCollection();
-        services.AddSingleton(Session);
-        services.AddSingleton<IBrowserSession>(Session);
-        services.AddLogging();
+            services.AddSingleton(_browserFixture.ConcreteKernel);
+            services.AddSingleton(glassdoorOptions);
+            services.AddSingleton<Ghost.Abstractions.IProxyProvider>(proxyProvider);
+            services.AddSingleton<System.Net.Http.HttpClient>();
+            services.AddSingleton<Ghost.Platform.Glassdoor.Internal.GlassdoorApiClient>();
+            services.AddSingleton<Ghost.Platform.Glassdoor.Internal.GlassdoorBrowserClient>(sp =>
+            {
+                var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Ghost.Platform.Glassdoor.Internal.GlassdoorBrowserClient>>();
+                return new Ghost.Platform.Glassdoor.Internal.GlassdoorBrowserClient(_browserFixture.ConcreteKernel, glassdoorOptions, logger, proxyProvider);
+            });
+            services.AddScoped<Ghost.Platform.Glassdoor.GlassdoorJobClient>();
 
-        // Register Glassdoor services manually
-        var glassdoorOptions = Microsoft.Extensions.Options.Options.Create(new Ghost.Platform.Glassdoor.GlassdoorOptions());
-        var proxyProvider = Ghost.Proxy.StaticProxyProvider.Empty;
-
-        services.AddSingleton(Kernel);
-        services.AddSingleton(glassdoorOptions);
-        services.AddSingleton<Ghost.Abstractions.IProxyProvider>(proxyProvider);
-        services.AddSingleton<System.Net.Http.HttpClient>();
-        services.AddSingleton<Ghost.Platform.Glassdoor.Internal.GlassdoorApiClient>();
-        services.AddSingleton<Ghost.Platform.Glassdoor.Internal.GlassdoorBrowserClient>(sp =>
+            ServiceProvider = services.BuildServiceProvider();
+        }
+        catch
         {
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Ghost.Platform.Glassdoor.Internal.GlassdoorBrowserClient>>();
-            return new Ghost.Platform.Glassdoor.Internal.GlassdoorBrowserClient(Kernel, glassdoorOptions, logger, proxyProvider);
-        });
-        services.AddScoped<Ghost.Platform.Glassdoor.GlassdoorJobClient>();
-
-        ServiceProvider = services.BuildServiceProvider();
+            await DisposeAsync();
+            throw;
+        }
     }
 
     public async Task DisposeAsync()
     {
-        if (Session != null)
+        if (_session != null)
         {
-            await Session.DisposeAsync();
+            await _session.DisposeAsync();
         }
-
-        if (Kernel != null)
-        {
-            await Kernel.DisposeAsync();
-        }
-    }
-
-    /// <summary>
-    /// Creates a new browser session for testing.
-    /// </summary>
-    public async Task<IBrowserSession> CreateSessionAsync()
-    {
-        return await Kernel.NewSessionAsync();
     }
 }

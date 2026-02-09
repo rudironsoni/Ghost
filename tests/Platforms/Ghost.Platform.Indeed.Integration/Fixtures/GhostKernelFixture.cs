@@ -1,75 +1,71 @@
 using Ghost.Core;
-using Ghost.Core.Configuration;
+using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Ghost.Platform.Indeed.Integration.Fixtures;
 
 /// <summary>
-/// Test fixture that provides a GhostKernel instance for Indeed integration tests.
+/// Per-test-class fixture that provides an isolated browser context for Indeed integration tests.
+/// Each test class gets a fresh browser session with no shared state.
+/// Use with [Collection("Browser")] and IClassFixture&lt;IndeedContextFixture&gt;.
 /// </summary>
-public sealed class GhostKernelFixture : IAsyncLifetime
+public sealed class IndeedContextFixture : IAsyncLifetime
 {
-    public GhostKernel Kernel { get; private set; } = null!;
-    public IBrowserSession Session { get; private set; } = null!;
+    private readonly RealBrowserFixture _browserFixture;
+    private IBrowserSession? _session;
+
+    public IndeedContextFixture(RealBrowserFixture browserFixture)
+    {
+        _browserFixture = browserFixture;
+    }
+
+    public IBrowserSession Session => _session ?? throw new InvalidOperationException("Fixture not initialized");
     public IServiceProvider ServiceProvider { get; private set; } = null!;
 
     public async Task InitializeAsync()
     {
-        var options = new KernelOptions
+        try
         {
-            EnableStealth = true,
-            Headless = true
-        };
+            // Create a fresh session for this test class
+            _session = await _browserFixture.CreateSessionAsync();
 
-        Kernel = await GhostKernel.CreateAsync(options);
+            // Build service provider with Indeed platform
+            var services = new ServiceCollection();
+            services.AddSingleton(_session);
+            services.AddSingleton<IBrowserSession>(_session);
+            services.AddLogging();
 
-        // Create a session for testing
-        Session = await Kernel.NewSessionAsync();
+            // Register Indeed services manually
+            var indeedOptions = new Ghost.Platform.Indeed.IndeedOptions
+            {
+                ApiKey = "test-api-key-for-integration-tests" // Required by IndeedConstants.GetHeaders
+            };
+            var proxyProvider = Ghost.Proxy.StaticProxyProvider.Empty;
 
-        // Build service provider with Indeed platform
-        var services = new ServiceCollection();
-        services.AddSingleton(Session);
-        services.AddSingleton<IBrowserSession>(Session);
-        services.AddLogging();
+            services.AddSingleton(indeedOptions);
+            services.AddSingleton<Ghost.Abstractions.IProxyProvider>(proxyProvider);
+            services.AddSingleton<Ghost.Platform.Indeed.Internal.IndeedApiClient>(sp =>
+            {
+                var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Ghost.Platform.Indeed.Internal.IndeedApiClient>>();
+                return new Ghost.Platform.Indeed.Internal.IndeedApiClient(proxyProvider, indeedOptions, logger);
+            });
+            services.AddScoped<Ghost.Platform.Indeed.IndeedJobClient>();
 
-        // Register Indeed services manually
-        var indeedOptions = new Ghost.Platform.Indeed.IndeedOptions
+            ServiceProvider = services.BuildServiceProvider();
+        }
+        catch
         {
-            ApiKey = "test-api-key-for-integration-tests" // Required by IndeedConstants.GetHeaders
-        };
-        var proxyProvider = Ghost.Proxy.StaticProxyProvider.Empty;
-
-        services.AddSingleton(indeedOptions);
-        services.AddSingleton<Ghost.Abstractions.IProxyProvider>(proxyProvider);
-        services.AddSingleton<Ghost.Platform.Indeed.Internal.IndeedApiClient>(sp =>
-        {
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Ghost.Platform.Indeed.Internal.IndeedApiClient>>();
-            return new Ghost.Platform.Indeed.Internal.IndeedApiClient(proxyProvider, indeedOptions, logger);
-        });
-        services.AddScoped<Ghost.Platform.Indeed.IndeedJobClient>();
-
-        ServiceProvider = services.BuildServiceProvider();
+            await DisposeAsync();
+            throw;
+        }
     }
 
     public async Task DisposeAsync()
     {
-        if (Session != null)
+        if (_session != null)
         {
-            await Session.DisposeAsync();
+            await _session.DisposeAsync();
         }
-
-        if (Kernel != null)
-        {
-            await Kernel.DisposeAsync();
-        }
-    }
-
-    /// <summary>
-    /// Creates a new browser session for testing.
-    /// </summary>
-    public async Task<IBrowserSession> CreateSessionAsync()
-    {
-        return await Kernel.NewSessionAsync();
     }
 }
