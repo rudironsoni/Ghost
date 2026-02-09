@@ -199,7 +199,7 @@ jobs:
             --verbosity normal \
             --logger "trx;LogFileName=test-results.trx" \
             --collect:"XPlat Code Coverage" \
-            --filter "FullyQualifiedName!~E2E" \
+            --filter "Category!=E2E" \
             --maxcpucount:1 \
             -nodereuse:false
 

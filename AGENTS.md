@@ -43,15 +43,32 @@ dotnet clean Ghost.sln
 
 ## Test Commands
 
-```bash
-# Run all tests (USE --maxcpucount:1 and -nodereuse:false to prevent hangs)
-dotnet test Ghost.sln --configuration Release --maxcpucount:1 -nodereuse:false
+### Test Tiers (xUnit Trait Filters)
 
+Tests are organized by `Category` trait for targeted execution:
+
+```bash
+# Run Unit tests only (fast, reliable, no external dependencies)
+dotnet test Ghost.sln --configuration Release --filter "Category=Unit|Category=UnitTest" -nodereuse:false
+
+# Run Integration tests only (slower, may require browser setup)
+dotnet test Ghost.sln --configuration Release --filter "Category=Integration" -nodereuse:false
+
+# Run E2E tests only (slowest, full system tests)
+dotnet test Ghost.sln --configuration Release --filter "Category=E2E" -nodereuse:false
+
+# Run all tests except E2E (CI default)
+dotnet test Ghost.sln --configuration Release --filter "Category!=E2E" -nodereuse:false
+
+# Run all tests (USE --maxcpucount:1 to prevent hangs)
+dotnet test Ghost.sln --configuration Release --maxcpucount:1 -nodereuse:false
+```
+
+### Other Test Commands
+
+```bash
 # Run all tests with verbosity
 dotnet test Ghost.sln --configuration Release --verbosity normal --maxcpucount:1 -nodereuse:false
-
-# Run all tests excluding E2E (CI style)
-dotnet test Ghost.sln --configuration Release --filter "FullyQualifiedName!~E2E" --maxcpucount:1 -nodereuse:false
 
 # Run tests for a specific project
 dotnet test tests/Core/Ghost.Tests/Ghost.Tests.csproj --configuration Release -nodereuse:false
@@ -64,6 +81,12 @@ dotnet test tests/Core/Ghost.Tests --filter "FullyQualifiedName=Ghost.Core.Tests
 
 # Run tests with code coverage
 dotnet test Ghost.sln --collect:"XPlat Code Coverage" --maxcpucount:1 -nodereuse:false
+
+# Combine filters (Unit OR Integration tests)
+dotnet test Ghost.sln --filter "Category=Unit|Category=Integration" -nodereuse:false
+
+# Combine filters (Integration tests AND specific priority)
+dotnet test Ghost.sln --filter "Category=Integration&Priority=High" -nodereuse:false
 ```
 
 **IMPORTANT**: Always use `--maxcpucount:1` and `-nodereuse:false` when running the full test suite to prevent MSBuild child node crashes that cause test hangs. This forces sequential test execution and disables MSBuild node reuse.
@@ -186,7 +209,7 @@ public class GhostKernelTests
 2. **Run quality gates** (if code changed):
    ```bash
    dotnet build Ghost.sln --configuration Release --no-restore --warnaserror
-   dotnet test Ghost.sln --configuration Release --filter "FullyQualifiedName!~E2E" -nodereuse:false
+   dotnet test Ghost.sln --configuration Release --filter "Category!=E2E" -nodereuse:false
    dotnet format Ghost.sln --verify-no-changes
    ```
 3. **Update issue status** - Close finished work, update in-progress items

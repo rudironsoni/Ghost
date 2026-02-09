@@ -116,7 +116,7 @@ jobs:
             --verbosity normal \
             --logger "trx;LogFileName=test-results.trx" \
             --collect:"XPlat Code Coverage" \
-            --filter "FullyQualifiedName!~E2E&FullyQualifiedName!~Integration" \
+            --filter "Category=Unit|Category=UnitTest" \
             --maxcpucount:1 \
             -nodereuse:false
 
@@ -185,7 +185,7 @@ jobs:
             --verbosity normal \
             --logger "trx;LogFileName=integration-test-results.trx" \
             --collect:"XPlat Code Coverage" \
-            --filter "FullyQualifiedName~Integration&FullyQualifiedName!~E2E" \
+            --filter "Category=Integration" \
             --maxcpucount:1 \
             -nodereuse:false
 
@@ -252,7 +252,7 @@ jobs:
             --no-build \
             --verbosity normal \
             --logger "trx;LogFileName=e2e-test-results-shard-${{ matrix.shard }}.trx" \
-            --filter "FullyQualifiedName~E2E" \
+            --filter "Category=E2E" \
             --maxcpucount:1 \
             -nodereuse:false
 
