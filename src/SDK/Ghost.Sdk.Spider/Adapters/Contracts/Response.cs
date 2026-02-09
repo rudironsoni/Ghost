@@ -1,3 +1,5 @@
+using Ghost.Sdk.Spider.Meta;
+
 namespace Ghost.Sdk.Spider.Adapters.Contracts;
 
 /// <summary>
@@ -134,6 +136,23 @@ public class Response
     /// </list>
     /// </remarks>
     public Dictionary<string, object> Metadata { get; set; } = new();
+
+    /// <summary>
+    /// Gets the type-safe metadata dictionary for storing spider metadata.
+    /// </summary>
+    /// <value>
+    /// A type-safe dictionary for storing custom metadata that can be passed
+    /// between spider components, such as response metadata or extracted data.
+    /// </value>
+    /// <remarks>
+    /// Example usage:
+    /// <code>
+    /// response.Meta.Set("depth", 3);
+    /// response.Meta.Set("parent_url", "https://example.com");
+    /// var depth = response.Meta.Get&lt;int&gt;("depth");
+    /// </code>
+    /// </remarks>
+    public IMetaDictionary Meta { get; } = new MetaDictionary();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Response"/> class.

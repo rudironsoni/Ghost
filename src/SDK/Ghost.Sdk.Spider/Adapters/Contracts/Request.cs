@@ -1,3 +1,5 @@
+using Ghost.Sdk.Spider.Meta;
+
 namespace Ghost.Sdk.Spider.Adapters.Contracts;
 
 /// <summary>
@@ -98,6 +100,23 @@ public class Request
     /// </list>
     /// </remarks>
     public Dictionary<string, object> Metadata { get; set; } = new();
+
+    /// <summary>
+    /// Gets the type-safe metadata dictionary for storing spider metadata.
+    /// </summary>
+    /// <value>
+    /// A type-safe dictionary for storing custom metadata that can be passed
+    /// between spider components, such as request depth, start URLs, or session data.
+    /// </value>
+    /// <remarks>
+    /// Example usage:
+    /// <code>
+    /// request.Meta.Set("depth", 3);
+    /// request.Meta.Set("start_url", "https://example.com");
+    /// var depth = request.Meta.Get&lt;int&gt;("depth");
+    /// </code>
+    /// </remarks>
+    public IMetaDictionary Meta { get; } = new MetaDictionary();
 
     /// <summary>
     /// Gets or sets the unique identifier for this request.
