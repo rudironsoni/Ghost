@@ -44,29 +44,34 @@ dotnet clean Ghost.sln
 ## Test Commands
 
 ```bash
-# Run all tests (USE --maxcpucount:1 to prevent hangs)
-dotnet test Ghost.sln --configuration Release --maxcpucount:1
+# Run all tests (USE --maxcpucount:1 and -nodereuse:false to prevent hangs)
+dotnet test Ghost.sln --configuration Release --maxcpucount:1 -nodereuse:false
 
 # Run all tests with verbosity
-dotnet test Ghost.sln --configuration Release --verbosity normal --maxcpucount:1
+dotnet test Ghost.sln --configuration Release --verbosity normal --maxcpucount:1 -nodereuse:false
 
 # Run all tests excluding E2E (CI style)
-dotnet test Ghost.sln --configuration Release --filter "FullyQualifiedName!~E2E" --maxcpucount:1
+dotnet test Ghost.sln --configuration Release --filter "FullyQualifiedName!~E2E" --maxcpucount:1 -nodereuse:false
 
 # Run tests for a specific project
-dotnet test tests/Core/Ghost.Tests/Ghost.Tests.csproj --configuration Release
+dotnet test tests/Core/Ghost.Tests/Ghost.Tests.csproj --configuration Release -nodereuse:false
 
 # Run a single test by fully qualified name
-dotnet test tests/Core/Ghost.Tests --filter "FullyQualifiedName~GhostKernelTests"
+dotnet test tests/Core/Ghost.Tests --filter "FullyQualifiedName~GhostKernelTests" -nodereuse:false
 
 # Run a specific test method
-dotnet test tests/Core/Ghost.Tests --filter "FullyQualifiedName=Ghost.Core.Tests.GhostKernelTests.NewSessionAsyncUsesOptionsToCreateContext"
+dotnet test tests/Core/Ghost.Tests --filter "FullyQualifiedName=Ghost.Core.Tests.GhostKernelTests.NewSessionAsyncUsesOptionsToCreateContext" -nodereuse:false
 
 # Run tests with code coverage
-dotnet test Ghost.sln --collect:"XPlat Code Coverage" --maxcpucount:1
+dotnet test Ghost.sln --collect:"XPlat Code Coverage" --maxcpucount:1 -nodereuse:false
 ```
 
-**IMPORTANT**: Always use `--maxcpucount:1` when running the full test suite to prevent MSBuild child node crashes that cause test hangs. This forces sequential test execution.
+**IMPORTANT**: Always use `--maxcpucount:1` and `-nodereuse:false` when running the full test suite to prevent MSBuild child node crashes that cause test hangs. This forces sequential test execution and disables MSBuild node reuse.
+
+**Alternative**: You can also set the environment variable globally to disable node reuse:
+```bash
+export MSBUILDDISABLENODEREUSE=1
+```
 
 ## Lint/Format Commands
 
@@ -181,7 +186,7 @@ public class GhostKernelTests
 2. **Run quality gates** (if code changed):
    ```bash
    dotnet build Ghost.sln --configuration Release --no-restore --warnaserror
-   dotnet test Ghost.sln --configuration Release --filter "FullyQualifiedName!~E2E"
+   dotnet test Ghost.sln --configuration Release --filter "FullyQualifiedName!~E2E" -nodereuse:false
    dotnet format Ghost.sln --verify-no-changes
    ```
 3. **Update issue status** - Close finished work, update in-progress items

@@ -200,7 +200,8 @@ jobs:
             --logger "trx;LogFileName=test-results.trx" \
             --collect:"XPlat Code Coverage" \
             --filter "FullyQualifiedName!~E2E" \
-            --maxcpucount:1
+            --maxcpucount:1 \
+            -nodereuse:false
 
       - name: Upload Test Results
         if: always() && steps.changed.outputs.skip != 'true'

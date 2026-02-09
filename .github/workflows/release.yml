@@ -169,7 +169,8 @@ jobs:
             --configuration ${{ env.CONFIGURATION }} \
             --no-build \
             --verbosity normal \
-            --filter "FullyQualifiedName!~E2E"
+            --filter "FullyQualifiedName!~E2E" \
+            -nodereuse:false
 
   create-nuget-packages:
     name: Create NuGet Packages
