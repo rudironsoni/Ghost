@@ -2,6 +2,9 @@ namespace Ghost.Testing.Fakes;
 
 public class FakePage : IPage
 {
+    private string _content = "<html><body></body></html>";
+    private readonly Dictionary<string, FakeElement> _elements = new();
+
     public string PageId { get; } = Guid.NewGuid().ToString();
     public string Url { get; private set; } = "about:blank";
     public string? Title { get; private set; }
@@ -17,8 +20,14 @@ public class FakePage : IPage
     public Task GoForwardAsync(NavigationOptions? options = null, CancellationToken ct = default) => Task.CompletedTask;
     public Task ReloadAsync(NavigationOptions? options = null, CancellationToken ct = default) => Task.CompletedTask;
 
-    public Task<IElement?> QuerySelectorAsync(string selector, CancellationToken ct = default) =>
-        Task.FromResult<IElement?>(new FakeElement());
+    public Task<IElement?> QuerySelectorAsync(string selector, CancellationToken ct = default)
+    {
+        if (_elements.TryGetValue(selector, out var element))
+        {
+            return Task.FromResult<IElement?>(element);
+        }
+        return Task.FromResult<IElement?>(new FakeElement());
+    }
 
     public Task<IReadOnlyList<IElement>> QuerySelectorAllAsync(string selector, CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<IElement>>([]);
@@ -49,13 +58,25 @@ public class FakePage : IPage
         Task.FromResult(Array.Empty<byte>());
 
     public Task<string> GetContentAsync(CancellationToken ct = default) =>
-        Task.FromResult("<html><body></body></html>");
+        Task.FromResult(_content);
 
-    public Task SetContentAsync(string html, CancellationToken ct = default) => Task.CompletedTask;
+    public Task SetContentAsync(string html, CancellationToken ct = default)
+    {
+        _content = html;
+        return Task.CompletedTask;
+    }
 
     public Task FocusAsync(string selector, CancellationToken ct = default) => Task.CompletedTask;
     public Task HoverAsync(string selector, CancellationToken ct = default) => Task.CompletedTask;
     public Task PressAsync(string selector, string key, CancellationToken ct = default) => Task.CompletedTask;
+
+    /// <summary>
+    /// Helper method for tests to register elements that can be queried.
+    /// </summary>
+    public void RegisterElement(string selector, FakeElement element)
+    {
+        _elements[selector] = element;
+    }
 
     public ValueTask DisposeAsync()
     {

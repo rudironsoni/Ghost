@@ -2,16 +2,44 @@ namespace Ghost.Testing.Fakes;
 
 public class FakeElement : IElement
 {
+    private readonly Dictionary<string, string> _attributes = new();
+    private string _textContent = string.Empty;
+    private string _innerHTML = string.Empty;
+
     public string SelectorPath { get; } = "fake-selector";
 
     public Task<string?> GetAttributeAsync(string name, CancellationToken ct = default) =>
-        Task.FromResult<string?>(null);
+        Task.FromResult(_attributes.TryGetValue(name, out var value) ? value : null);
 
     public Task<string?> GetTextContentAsync(CancellationToken ct = default) =>
-        Task.FromResult<string?>(string.Empty);
+        Task.FromResult<string?>(_textContent);
 
     public Task<string?> GetInnerHtmlAsync(CancellationToken ct = default) =>
-        Task.FromResult<string?>(string.Empty);
+        Task.FromResult<string?>(_innerHTML);
+
+    /// <summary>
+    /// Helper method for tests to set element attributes.
+    /// </summary>
+    public void SetAttribute(string name, string value)
+    {
+        _attributes[name] = value;
+    }
+
+    /// <summary>
+    /// Helper method for tests to set text content.
+    /// </summary>
+    public void SetTextContent(string content)
+    {
+        _textContent = content;
+    }
+
+    /// <summary>
+    /// Helper method for tests to set inner HTML.
+    /// </summary>
+    public void SetInnerHtml(string html)
+    {
+        _innerHTML = html;
+    }
 
     public Task<bool> IsVisibleAsync(CancellationToken ct = default) =>
         Task.FromResult(true);
