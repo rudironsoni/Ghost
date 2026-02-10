@@ -1,3 +1,4 @@
+using FluentAssertions;
 using Ghost.Sdk.Middleware;
 using Xunit;
 
