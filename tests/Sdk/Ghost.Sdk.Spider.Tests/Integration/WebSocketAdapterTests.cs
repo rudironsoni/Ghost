@@ -11,6 +11,8 @@ namespace Ghost.Sdk.Spider.Tests.Integration;
 /// Integration tests for WebSocketAdapter (placeholder for future implementation).
 /// These tests demonstrate expected WebSocket functionality using WireMock.Net.
 /// </summary>
+[Trait("Category", "Integration")]
+[Trait("Capability", "RequiresMockServer")]
 public class WebSocketAdapterTests : IDisposable
 {
     private readonly WireMockServer _server;

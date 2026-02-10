@@ -15,7 +15,7 @@ namespace Ghost.Platform.LinkedIn.Tests.Internal;
 /// Tests for LinkedInSessionPool.
 /// </summary>
 [Collection("Sequential")]
-[Trait("Category", "UnitTest")]
+[Trait("Category", "Unit")]
 public class LinkedInSessionPoolTests
 {
     [Fact]
