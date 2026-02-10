@@ -238,29 +238,37 @@ public sealed class GoogleJobsApiClient : IDisposable
         var userAgent = GoogleJobsConstants.GetRandomUserAgent();
         LogUserAgentRotation(_logger, userAgent, null);
 
-        var req = new HttpRequestMessage(HttpMethod.Get, url);
-        foreach (var header in GoogleJobsConstants.SearchHeaders)
-        {
-            req.Headers.TryAddWithoutValidation(header.Key, header.Value);
-        }
-
-        // Override User-Agent with rotated value
-        req.Headers.TryAddWithoutValidation("User-Agent", userAgent);
-
-        // Add consent bypass cookies
+        // Prepare cookie value for reuse
         var cookieValue = $"{GoogleJobsConstants.ConsentCookie}; {GoogleJobsConstants.SocsCookie}";
-        req.Headers.TryAddWithoutValidation("Cookie", cookieValue);
+
+        // Helper function to create a new request for each retry attempt
+        HttpRequestMessage CreateRequest()
+        {
+            var req = new HttpRequestMessage(HttpMethod.Get, url);
+            foreach (var header in GoogleJobsConstants.SearchHeaders)
+            {
+                req.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+            // Override User-Agent with rotated value
+            req.Headers.TryAddWithoutValidation("User-Agent", userAgent);
+
+            // Add consent bypass cookies
+            req.Headers.TryAddWithoutValidation("Cookie", cookieValue);
+
+            return req;
+        }
 
         HttpResponseMessage res;
         if (httpSession != null)
         {
             LogUsingRotatingProxySession(_logger, null);
-            res = await _retryPolicy.ExecuteAsync(async () => await httpSession.ExecuteAsync(() => req, ct).ConfigureAwait(false)).ConfigureAwait(false);
+            res = await _retryPolicy.ExecuteAsync(async () => await httpSession.ExecuteAsync(CreateRequest, ct).ConfigureAwait(false)).ConfigureAwait(false);
         }
         else
         {
             LogUsingDirectHttpClient(_logger, null);
-            res = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(req, ct).ConfigureAwait(false)).ConfigureAwait(false);
+            res = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(CreateRequest(), ct).ConfigureAwait(false)).ConfigureAwait(false);
         }
 
         LogReceivedResponseStatus(_logger, (int)res.StatusCode, null);
