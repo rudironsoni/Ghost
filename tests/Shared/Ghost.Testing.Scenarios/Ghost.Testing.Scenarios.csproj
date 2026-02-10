@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsTestProject>false</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <OutputType>Library</OutputType>
+    <!-- Suppress performance logging warnings for test infrastructure -->
+    <NoWarn>$(NoWarn);CA1848</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../src/Contracts/Ghost.Contracts.Jobs/Ghost.Contracts.Jobs.csproj" />
+  </ItemGroup>
+</Project>
