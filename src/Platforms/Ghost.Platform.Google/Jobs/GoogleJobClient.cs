@@ -71,7 +71,7 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
         _options = options?.Value ?? new GoogleJobsOptions();
     }
 
-    public string PlatformName => "GoogleJobs";
+    public string PlatformName => "Google";
 
     public async Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
     {
@@ -254,7 +254,7 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
         {
             var job = results[0];
             // Update the ID to match the requested ID for test compatibility
-            return job with { Id = jobId, Source = "GoogleJobs" };
+            return job with { Id = jobId, Source = "Google" };
         }
 
         throw new InvalidOperationException($"Job with ID '{jobId}' not found");
@@ -269,7 +269,7 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
         {
             var job = results[0];
             // Update the ID to match the requested ID for test compatibility
-            return job with { Id = jobId, Source = "GoogleJobs" };
+            return job with { Id = jobId, Source = "Google" };
         }
 
         throw new InvalidOperationException($"Job with ID '{jobId}' not found");
