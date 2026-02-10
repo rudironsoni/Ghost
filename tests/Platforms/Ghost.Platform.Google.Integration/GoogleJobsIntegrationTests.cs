@@ -9,20 +9,28 @@ using Xunit;
 namespace Ghost.Platform.Google.Integration;
 
 /// <summary>
-/// Integration tests for Google Jobs platform using real browser automation.
-/// Uses SharedKernel collection to share a single GhostKernel instance across all integration tests.
+/// Integration tests for Google Jobs platform using mocked HTTP responses.
+/// Uses GoogleWireMockFixture to avoid live network calls and ensure deterministic test results.
 /// </summary>
 [Trait("Category", "Integration")]
-[Trait("Capability", "RequiresBrowser")]
-[Trait("Capability", "RequiresNetwork")]
-[Collection("SharedKernel")]
-[TestTimeout(60000)] // 60 seconds for integration tests
-public class GoogleJobsIntegrationTests : IClassFixture<GoogleContextFixture>
+[CollectionDefinition("GoogleJobsIntegration", DisableParallelization = false)]
+public class GoogleJobsIntegrationTestsFixture : ICollectionFixture<GoogleWireMockFixture>
 {
-    private readonly GoogleContextFixture _fixture;
+}
+
+/// <summary>
+/// Integration tests for Google Jobs platform using mocked HTTP responses.
+/// Uses GoogleWireMockFixture to avoid live network calls and ensure deterministic test results.
+/// </summary>
+[Trait("Category", "Integration")]
+[Collection("GoogleJobsIntegration")]
+[TestTimeout(60000)] // 60 seconds for integration tests
+public class GoogleJobsIntegrationTests
+{
+    private readonly GoogleWireMockFixture _fixture;
     private readonly GoogleJobClient _jobClient;
 
-    public GoogleJobsIntegrationTests(GoogleContextFixture fixture)
+    public GoogleJobsIntegrationTests(GoogleWireMockFixture fixture)
     {
         _fixture = fixture;
         _jobClient = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
@@ -107,15 +115,14 @@ public class GoogleJobsIntegrationTests : IClassFixture<GoogleContextFixture>
     }
 
     [Fact]
-    public async Task SearchJobs_WithBrowserStrategy_ReturnsResults()
+    public async Task SearchJobs_WithHttpStrategy_ReturnsResults()
     {
         // Arrange
         var criteria = new JobSearchCriteria
         {
             Query = "data scientist",
             Location = "San Francisco",
-            MaxResults = 5,
-            Strategy = "Browser"
+            MaxResults = 5
         };
 
         // Act
@@ -123,7 +130,7 @@ public class GoogleJobsIntegrationTests : IClassFixture<GoogleContextFixture>
 
         // Assert
         results.Should().NotBeNull();
-        results.Should().NotBeEmpty("Browser strategy should return results");
+        results.Should().NotBeEmpty("HTTP strategy should return results");
 
         foreach (var job in results)
         {
