@@ -1,5 +1,5 @@
 using Ghost.Core;
-using Ghost.Testing.Fixtures;
+using Ghost.Core.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -8,16 +8,15 @@ namespace Ghost.Platform.InfoJobs.Integration.Fixtures;
 /// <summary>
 /// Per-test-class fixture that provides an isolated browser context for InfoJobs integration tests.
 /// Each test class gets a fresh browser session with no shared state.
-/// Use with [Collection("SharedKernel")] and IClassFixture&lt;InfoJobsContextFixture&gt;.
+/// Use with IClassFixture&lt;InfoJobsContextFixture&gt;.
 /// </summary>
 public sealed class InfoJobsContextFixture : IAsyncLifetime
 {
-    private readonly SharedGhostKernelFixture _kernelFixture;
+    private GhostKernel? _kernel;
     private IBrowserSession? _session;
 
-    public InfoJobsContextFixture(SharedGhostKernelFixture kernelFixture)
+    public InfoJobsContextFixture()
     {
-        _kernelFixture = kernelFixture;
     }
 
     public IBrowserSession Session => _session ?? throw new InvalidOperationException("Fixture not initialized");
@@ -27,8 +26,16 @@ public sealed class InfoJobsContextFixture : IAsyncLifetime
     {
         try
         {
+            // Create a GhostKernel instance for this test class
+            var options = new KernelOptions
+            {
+                EnableStealth = true,
+                Headless = true
+            };
+            _kernel = await GhostKernel.CreateAsync(options);
+
             // Create a fresh session for this test class
-            _session = await _kernelFixture.CreateSessionAsync();
+            _session = await _kernel.NewSessionAsync();
 
             // Build service provider with InfoJobs platform
             var services = new ServiceCollection();
@@ -63,6 +70,11 @@ public sealed class InfoJobsContextFixture : IAsyncLifetime
         if (_session != null)
         {
             await _session.DisposeAsync();
+        }
+
+        if (_kernel != null)
+        {
+            await _kernel.DisposeAsync();
         }
     }
 }
