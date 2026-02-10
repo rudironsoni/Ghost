@@ -13,6 +13,8 @@ namespace Ghost.Platform.Indeed.Integration;
 /// Uses SharedKernel collection to share a single GhostKernel instance across all integration tests.
 /// </summary>
 [Trait("Category", "Integration")]
+[Trait("Capability", "RequiresBrowser")]
+[Trait("Capability", "RequiresNetwork")]
 [Collection("SharedKernel")]
 [TestTimeout(60000)] // 60 seconds for integration tests
 public class IndeedIntegrationTests : IClassFixture<IndeedContextFixture>

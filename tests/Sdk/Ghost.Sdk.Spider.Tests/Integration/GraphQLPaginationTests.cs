@@ -14,6 +14,7 @@ namespace Ghost.Sdk.Spider.Tests.Integration;
 /// <summary>
 /// Comprehensive tests for GraphQL pagination scenarios including Relay-style cursor pagination.
 /// </summary>
+[Trait("Category", "Integration")]
 public class GraphQLPaginationTests : IDisposable
 {
     private readonly Mock<ILogger<GraphQLAdapter>> _mockLogger;

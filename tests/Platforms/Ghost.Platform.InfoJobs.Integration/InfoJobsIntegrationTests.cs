@@ -14,6 +14,8 @@ namespace Ghost.Platform.InfoJobs.Integration;
 /// Uses InfoJobsContextFixture to provide an isolated browser context for this test class.
 /// </summary>
 [Trait("Category", "Integration")]
+[Trait("Capability", "RequiresBrowser")]
+[Trait("Capability", "RequiresNetwork")]
 [TestTimeout(60000)] // 60 seconds for integration tests
 public class InfoJobsIntegrationTests : IClassFixture<InfoJobsContextFixture>
 {

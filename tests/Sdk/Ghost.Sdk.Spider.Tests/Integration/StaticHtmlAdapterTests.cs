@@ -12,6 +12,8 @@ namespace Ghost.Sdk.Spider.Tests.Integration;
 /// <summary>
 /// Integration tests for StaticHtmlAdapter using WireMock.Net for HTTP mocking.
 /// </summary>
+[Trait("Category", "Integration")]
+[Trait("Capability", "RequiresMockServer")]
 public class StaticHtmlAdapterTests : IDisposable
 {
     private readonly WireMockServer _server;
