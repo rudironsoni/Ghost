@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <DisableMSBuildNodeReuse>true</DisableMSBuildNodeReuse>
+    <UseSharedCompilation>false</UseSharedCompilation>
+    <BuildInParallel>false</BuildInParallel>
+  </PropertyGroup>
+</Project>
