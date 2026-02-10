@@ -11,10 +11,9 @@ namespace Ghost.Platform.InfoJobs.Integration;
 /// <summary>
 /// Integration tests for InfoJobs platform using real browser automation.
 /// InfoJobs is a Spanish/Portuguese job platform.
-/// Uses SharedKernel collection to share a single GhostKernel instance across all integration tests.
+/// Uses InfoJobsContextFixture to provide an isolated browser context for this test class.
 /// </summary>
 [Trait("Category", "Integration")]
-[Collection("SharedKernel")]
 [TestTimeout(60000)] // 60 seconds for integration tests
 public class InfoJobsIntegrationTests : IClassFixture<InfoJobsContextFixture>
 {
