@@ -61,7 +61,7 @@ public class GoogleJobsIntegrationTests
             job.Id.Should().NotBeNullOrEmpty("Job ID should be populated");
             job.Title.Should().NotBeNullOrEmpty("Job title should be populated");
             job.Company.Should().NotBeNullOrEmpty("Company name should be populated");
-            job.Source.Should().Be("GoogleJobs");
+            job.Source.Should().Be("Google");
         }
     }
 
@@ -111,7 +111,7 @@ public class GoogleJobsIntegrationTests
         jobDetails.Id.Should().Be(jobId);
         jobDetails.Title.Should().NotBeNullOrEmpty("Job title should be populated");
         jobDetails.Company.Should().NotBeNullOrEmpty("Company name should be populated");
-        jobDetails.Source.Should().Be("GoogleJobs");
+        jobDetails.Source.Should().Be("Google");
     }
 
     [Fact]
@@ -141,13 +141,13 @@ public class GoogleJobsIntegrationTests
     }
 
     [Fact]
-    public async Task PlatformName_ReturnsGoogleJobs()
+    public async Task PlatformName_ReturnsGoogle()
     {
         // Act
         var platformName = _jobClient.PlatformName;
 
         // Assert
-        platformName.Should().Be("GoogleJobs");
+        platformName.Should().Be("Google");
     }
 
     [Fact]

@@ -315,7 +315,7 @@ public static class GoogleJobsParser
                 Description = string.IsNullOrWhiteSpace(description) ? null : description,
                 Url = url ?? $"https://www.google.com/search?q={Uri.EscapeDataString(title)}",
                 PostedAt = postedAt,
-                Source = "GoogleJobs"
+                Source = "Google"
             };
         }
         catch
@@ -624,7 +624,7 @@ public static class GoogleJobsParser
                 Salary = salary,
                 JobType = jobType,
                 PostedAt = postedAt,
-                Source = "GoogleJobs"
+                Source = "Google"
             };
         }
         catch
@@ -780,7 +780,7 @@ public static class GoogleJobsParser
                 Salary = string.IsNullOrWhiteSpace(salary) ? null : salary,
                 JobType = jobType,
                 PostedAt = postedAt,
-                Source = "GoogleJobs"
+                Source = "Google"
             };
         }
         catch
