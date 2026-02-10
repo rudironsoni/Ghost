@@ -62,7 +62,8 @@ public class IndeedExtension : Ghost.Hosting.IExtension
             var apiClient = sp.GetRequiredService<IndeedApiClient>();
             var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.IndeedSearchScraper>>();
             var browserSession = sp.GetService<IBrowserSession>();
-            return new Jobs.IndeedSearchScraper(apiClient, logger, browserSession);
+            var options = sp.GetRequiredService<IndeedOptions>();
+            return new Jobs.IndeedSearchScraper(apiClient, logger, browserSession, options);
         });
 
         services.AddScoped<Jobs.IndeedJobDetailsScraper>(sp =>
@@ -72,7 +73,8 @@ public class IndeedExtension : Ghost.Hosting.IExtension
 
             var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.IndeedJobDetailsScraper>>();
             var jsonLdExtractor = sp.GetService<Ghost.Abstractions.IJsonLdExtractor>();
-            return new Jobs.IndeedJobDetailsScraper(browserSession, logger, jsonLdExtractor);
+            var options = sp.GetRequiredService<IndeedOptions>();
+            return new Jobs.IndeedJobDetailsScraper(browserSession, logger, jsonLdExtractor, options);
         });
 
         services.AddScoped<IndeedJobClient>(sp =>

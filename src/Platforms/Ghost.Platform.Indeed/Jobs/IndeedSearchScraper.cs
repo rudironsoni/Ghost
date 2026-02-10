@@ -17,6 +17,7 @@ public class IndeedSearchScraper
     private readonly IndeedApiClient _apiClient;
     private readonly IBrowserSession? _browserSession;
     private readonly ILogger<IndeedSearchScraper> _logger;
+    private readonly IndeedOptions _options;
 
     private static readonly Action<ILogger, string, string, Exception?> LogSearchStart =
         LoggerMessage.Define<string, string>(
@@ -51,11 +52,13 @@ public class IndeedSearchScraper
     public IndeedSearchScraper(
         IndeedApiClient apiClient,
         ILogger<IndeedSearchScraper> logger,
-        IBrowserSession? browserSession = null)
+        IBrowserSession? browserSession = null,
+        IndeedOptions? options = null)
     {
         _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _browserSession = browserSession;
+        _options = options ?? new IndeedOptions();
     }
 
     /// <summary>
@@ -126,7 +129,7 @@ public class IndeedSearchScraper
         {
             ct.ThrowIfCancellationRequested();
 
-            var parsed = IndeedJobParser.ParseJobs(root).ToList();
+            var parsed = IndeedJobParser.ParseJobs(root, _options.BaseUrl).ToList();
             results.AddRange(parsed);
 
             if (results.Count >= maxResults)
@@ -155,7 +158,7 @@ public class IndeedSearchScraper
             // Build Indeed search URL
             var encodedQuery = Uri.EscapeDataString(query);
             var encodedLocation = Uri.EscapeDataString(location);
-            var searchUrl = $"https://www.indeed.com/jobs?q={encodedQuery}&l={encodedLocation}";
+            var searchUrl = $"{_options.BaseUrl}/jobs?q={encodedQuery}&l={encodedLocation}";
 
             await page.NavigateAsync(searchUrl, null, ct);
 
@@ -187,7 +190,7 @@ public class IndeedSearchScraper
                             Location = loc,
                             Description = description,
                             Salary = salary,
-                            Url = $"https://www.indeed.com/viewjob?jk={jobId}",
+                            Url = $"{_options.BaseUrl}/viewjob?jk={jobId}",
                             Source = "Indeed"
                         });
                     }
