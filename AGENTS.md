@@ -49,6 +49,9 @@
 - MUST STOP on build warning or build error.
 - MUST STOP on required test failure.
 - MUST STOP when expected tests discover zero tests.
+- MUST STOP when destructive operations would affect source code outside the task scope.
+- MUST STOP when filesystem operations encounter case-sensitivity conflicts.
+- MUST STOP when `rm`, `git mv`, or deletion operations would remove existing implementation code.
 - MUST fix root cause.
 - MUST rerun full mandatory verification sequence after fixes.
 - MUST NOT close issue while any mandatory check is unresolved.
@@ -216,7 +219,42 @@
   11. `git status`
 - MUST NOT claim completion before successful push.
 
-## 24. Project Structure
+## 24. Critical Guardrails (Zero-Tolerance)
+
+### 24.1 Scope Discipline (NEVER Expand Scope)
+
+- MUST NOT implement cosmetic fixes (naming, casing, formatting) discovered during unrelated work.
+- MUST NOT refactor code outside the explicitly assigned issue scope.
+- MUST document discovered issues with `bd create` and link as dependencies, NOT fix them immediately.
+- MUST focus on minimal, focused changes that satisfy ONLY the acceptance criteria.
+- MUST ask user for explicit permission before expanding scope in any way.
+
+### 24.2 Data Loss Prevention (Source Code Protection)
+
+- MUST NEVER use `rm -rf`, `git mv`, or deletion operations on existing source code directories.
+- MUST NEVER attempt to "clean up" or "fix" filesystem issues by deleting files.
+- MUST verify file existence before any move/delete: `ls <path>` and confirm with user.
+- MUST create explicit backups before any filesystem restructuring: `cp -r <src> <src>.backup.$(date +%s)`.
+- MUST STOP immediately if filesystem operations encounter errors or unexpected states.
+
+### 24.3 Filesystem Safety (Case Sensitivity)
+
+- MUST NOT attempt case-sensitive renames on case-insensitive filesystems (macOS APFS, Windows NTFS).
+- MUST recognize that `Sdk` and `SDK` are identical on case-insensitive filesystems.
+- MUST document casing inconsistencies in RFC/docs, NOT attempt to fix them with `git mv`.
+- MUST use explicit user confirmation before any directory restructuring operations.
+
+### 24.4 Catastrophic Error Prevention
+
+- MUST STOP and ASK USER when:
+  - More than 5 files would be modified outside the task scope
+  - Existing implementation code would be deleted or moved
+  - Git operations fail or show unexpected output
+  - Build fails after filesystem changes
+- MUST verify workspace integrity before claiming completion: `git status`, `dotnet build`.
+- MUST NOT use `--force` or `--no-verify` flags to bypass safety checks without user approval.
+
+## 25. Project Structure
 
 - Layer 0: `src/Core/Ghost/`
 - Layer 1: `src/Contracts/`
@@ -225,14 +263,14 @@
 - Layer 4: `src/Sdk/`
 - Tests: `tests/` mirrors source layout.
 
-## 25. Reference Documents
+## 26. Reference Documents
 
 - `docs/agent-playbook.md`
 - `docs/testing-reference.md`
 - `docs/dotnet10-ops.md`
 
 <!-- BEGIN BEADS INTEGRATION -->
-## 26. Issue Tracking with bd
+## 27. Issue Tracking with bd
 
 - MUST use bd for non-trivial task tracking.
 - MUST run required workflow:
