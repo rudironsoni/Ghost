@@ -44,11 +44,21 @@ public sealed class GlassdoorContextFixture : IAsyncLifetime
             services.AddSingleton(glassdoorOptions);
             services.AddSingleton<Ghost.Abstractions.IProxyProvider>(proxyProvider);
             services.AddSingleton<System.Net.Http.HttpClient>();
-            services.AddSingleton<Ghost.Platform.Glassdoor.Internal.GlassdoorApiClient>();
+            services.AddSingleton<Ghost.Platform.Glassdoor.Internal.GlassdoorApiClient>(sp =>
+            {
+                var httpClient = sp.GetRequiredService<System.Net.Http.HttpClient>();
+                var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Ghost.Platform.Glassdoor.Internal.GlassdoorApiClient>>();
+                return new Ghost.Platform.Glassdoor.Internal.GlassdoorApiClient(httpClient, logger);
+            });
             services.AddSingleton<Ghost.Platform.Glassdoor.Internal.GlassdoorBrowserClient>(sp =>
             {
                 var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Ghost.Platform.Glassdoor.Internal.GlassdoorBrowserClient>>();
                 return new Ghost.Platform.Glassdoor.Internal.GlassdoorBrowserClient(_kernelFixture.ConcreteKernel, glassdoorOptions, logger, proxyProvider);
+            });
+            services.AddSingleton<Ghost.Platform.Glassdoor.Jobs.GlassdoorSearchScraper>(sp =>
+            {
+                var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Ghost.Platform.Glassdoor.Jobs.GlassdoorSearchScraper>>();
+                return new Ghost.Platform.Glassdoor.Jobs.GlassdoorSearchScraper(_kernelFixture.ConcreteKernel, glassdoorOptions, logger, proxyProvider);
             });
             services.AddScoped<Ghost.Platform.Glassdoor.GlassdoorJobClient>();
 
