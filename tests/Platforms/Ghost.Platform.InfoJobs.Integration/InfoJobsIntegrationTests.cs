@@ -9,20 +9,19 @@ using Xunit;
 namespace Ghost.Platform.InfoJobs.Integration;
 
 /// <summary>
-/// Integration tests for InfoJobs platform using real browser automation.
+/// Integration tests for InfoJobs platform using WireMock for API mocking.
 /// InfoJobs is a Spanish/Portuguese job platform.
-/// Uses InfoJobsContextFixture to provide an isolated browser context for this test class.
+/// Uses InfoJobsWireMockFixture to provide a mock InfoJobs API server.
 /// </summary>
 [Trait("Category", "Integration")]
-[Trait("Capability", "RequiresBrowser")]
-[Trait("Capability", "RequiresNetwork")]
+[Trait("Capability", "RequiresMockServer")]
 [TestTimeout(60000)] // 60 seconds for integration tests
-public class InfoJobsIntegrationTests : IClassFixture<InfoJobsContextFixture>
+public class InfoJobsIntegrationTests : IClassFixture<InfoJobsWireMockFixture>
 {
-    private readonly InfoJobsContextFixture _fixture;
+    private readonly InfoJobsWireMockFixture _fixture;
     private readonly InfoJobClient _jobClient;
 
-    public InfoJobsIntegrationTests(InfoJobsContextFixture fixture)
+    public InfoJobsIntegrationTests(InfoJobsWireMockFixture fixture)
     {
         _fixture = fixture;
         _jobClient = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
