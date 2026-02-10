@@ -11,11 +11,11 @@ namespace Ghost.Sdk.Spider.Meta;
 /// Example usage:
 /// <code>
 /// var meta = new MetaDictionary();
-/// meta.Set("depth", 3);
-/// meta.Set("start_url", "https://example.com");
-/// meta.Set("retry_count", 0);
+/// meta.SetValue("depth", 3);
+/// meta.SetValue("start_url", "https://example.com");
+/// meta.SetValue("retry_count", 0);
 /// 
-/// var depth = meta.Get&lt;int&gt;("depth");
+/// var depth = meta.GetValue&lt;int&gt;("depth");
 /// if (meta.TryGet&lt;string&gt;("start_url", out var startUrl))
 /// {
 ///     Console.WriteLine($"Started from: {startUrl}");
@@ -49,7 +49,7 @@ public class MetaDictionary : Dictionary<string, object>, IMetaDictionary
     /// <returns>The value associated with the specified key, cast to type <typeparamref name="T"/>.</returns>
     /// <exception cref="KeyNotFoundException">The key does not exist in the dictionary.</exception>
     /// <exception cref="InvalidCastException">The value cannot be cast to type <typeparamref name="T"/>.</exception>
-    public T Get<T>(string key) => (T)this[key];
+    public T GetValue<T>(string key) => (T)this[key];
 
     /// <summary>
     /// Sets the value associated with the specified key.
@@ -57,7 +57,7 @@ public class MetaDictionary : Dictionary<string, object>, IMetaDictionary
     /// <typeparam name="T">The type of the value to set.</typeparam>
     /// <param name="key">The key of the value to set.</param>
     /// <param name="value">The value to associate with the key.</param>
-    public void Set<T>(string key, T value) => this[key] = value!;
+    public void SetValue<T>(string key, T value) => this[key] = value!;
 
     /// <summary>
     /// Attempts to get the value associated with the specified key, cast to the specified type.

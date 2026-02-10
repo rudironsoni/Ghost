@@ -194,10 +194,7 @@ public abstract class CrawlSpider : Spider, ICrawlSpider
             _ => new System.Collections.Concurrent.ConcurrentQueue<Request>()
         ) as System.Collections.Concurrent.ConcurrentQueue<Request>;
 
-        if (pendingRequests is not null)
-        {
-            pendingRequests.Enqueue(request);
-        }
+        pendingRequests?.Enqueue(request);
 
         return Task.CompletedTask;
     }
@@ -232,10 +229,7 @@ public abstract class CrawlSpider : Spider, ICrawlSpider
             _ => new System.Collections.Concurrent.ConcurrentBag<object>()
         ) as System.Collections.Concurrent.ConcurrentBag<object>;
 
-        if (items is not null)
-        {
-            items.Add(item);
-        }
+        items?.Add(item);
 
         return Task.CompletedTask;
     }

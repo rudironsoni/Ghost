@@ -1,4 +1,6 @@
+using FluentAssertions;
 using Ghost.Sdk.Middleware;
+using Xunit;
 
 namespace Ghost.Sdk.Tests.Middleware;
 
