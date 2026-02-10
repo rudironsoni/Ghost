@@ -6,7 +6,7 @@ namespace Ghost.Platform.Indeed.Internal;
 
 public static class IndeedJobParser
 {
-    public static IEnumerable<JobListing> ParseJobs(JsonElement root)
+    public static IEnumerable<JobListing> ParseJobs(JsonElement root, string baseUrl = "https://www.indeed.com")
     {
         if (!root.TryGetProperty("data", out var data)) yield break;
         if (!data.TryGetProperty("jobSearch", out var jobSearch)) yield break;
@@ -30,8 +30,7 @@ public static class IndeedJobParser
 
             string salary = ExtractSalary(job);
 
-            var domain = "indeed.com";
-            var url = $"https://{domain}/viewjob?jk={id}";
+            var url = $"{baseUrl}/viewjob?jk={id}";
 
             yield return new JobListing
             {

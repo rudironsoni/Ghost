@@ -19,10 +19,12 @@ namespace Ghost.Platform.Indeed.Internal;
 public sealed class IndeedMultiStrategyParser
 {
     private readonly ILogger<IndeedMultiStrategyParser> _logger;
+    private readonly string _baseUrl;
 
-    public IndeedMultiStrategyParser(ILogger<IndeedMultiStrategyParser>? logger = null)
+    public IndeedMultiStrategyParser(ILogger<IndeedMultiStrategyParser>? logger = null, string baseUrl = "https://www.indeed.com")
     {
         _logger = logger ?? NullLogger<IndeedMultiStrategyParser>.Instance;
+        _baseUrl = baseUrl;
     }
 
 
@@ -55,7 +57,7 @@ public sealed class IndeedMultiStrategyParser
     /// <summary>
     /// Main entry point for parsing HTML using Ghost.Sdk.Spider EntityParser
     /// </summary>
-    public Task<List<JobListing>> ParseHtmlAsync(string html)
+    public Task<List<JobListing>> ParseHtmlAsync(string html, string? baseUrl = null)
     {
         if (string.IsNullOrWhiteSpace(html))
         {
@@ -85,7 +87,7 @@ public sealed class IndeedMultiStrategyParser
             }
 
             // Convert entities to JobListing objects
-            var jobListings = ConvertEntitiesToJobListings(entities);
+            var jobListings = ConvertEntitiesToJobListings(entities, baseUrl ?? _baseUrl);
 
             LogJobsExtracted(_logger, jobListings.Count, null);
 
@@ -101,7 +103,7 @@ public sealed class IndeedMultiStrategyParser
     /// <summary>
     /// Converts parsed entities to JobListing objects
     /// </summary>
-    private List<JobListing> ConvertEntitiesToJobListings(List<IndeedJobEntity> entities)
+    private List<JobListing> ConvertEntitiesToJobListings(List<IndeedJobEntity> entities, string baseUrl)
     {
         var jobListings = new List<JobListing>();
 
@@ -116,6 +118,11 @@ public sealed class IndeedMultiStrategyParser
                     continue;
                 }
 
+                // Construct URL from base URL and job key
+                var jobUrl = string.IsNullOrWhiteSpace(entity.JobKey)
+                    ? null
+                    : $"{baseUrl}/viewjob?jk={entity.JobKey}";
+
                 var jobListing = new JobListing
                 {
                     Id = entity.JobKey ?? Guid.NewGuid().ToString(),
@@ -128,7 +135,7 @@ public sealed class IndeedMultiStrategyParser
                     ExperienceLevel = ExperienceLevel.Unknown,
                     PostedAt = ParsePostedDate(entity.PostedAt),
                     Remote = IsRemotePosition(entity.RemoteLabel),
-                    Url = entity.JobUrl,
+                    Url = jobUrl,
                     Source = "Indeed",
                     IsEasyApply = false
                 };

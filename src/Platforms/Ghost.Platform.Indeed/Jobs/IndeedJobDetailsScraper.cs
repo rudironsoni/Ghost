@@ -16,6 +16,7 @@ public class IndeedJobDetailsScraper
     private readonly IBrowserSession _browserSession;
     private readonly ILogger<IndeedJobDetailsScraper> _logger;
     private readonly IJsonLdExtractor? _jsonLdExtractor;
+    private readonly IndeedOptions _options;
 
     private static readonly Action<ILogger, string, Exception?> LogFetchingDetails =
         LoggerMessage.Define<string>(
@@ -38,11 +39,13 @@ public class IndeedJobDetailsScraper
     public IndeedJobDetailsScraper(
         IBrowserSession browserSession,
         ILogger<IndeedJobDetailsScraper> logger,
-        IJsonLdExtractor? jsonLdExtractor = null)
+        IJsonLdExtractor? jsonLdExtractor = null,
+        IndeedOptions? options = null)
     {
         _browserSession = browserSession ?? throw new ArgumentNullException(nameof(browserSession));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _jsonLdExtractor = jsonLdExtractor;
+        _options = options ?? new IndeedOptions();
     }
 
     /// <summary>
@@ -60,7 +63,7 @@ public class IndeedJobDetailsScraper
         var page = await _browserSession.NewPageAsync(null, ct);
         try
         {
-            var jobUrl = $"https://www.indeed.com/viewjob?jk={jobId}";
+            var jobUrl = $"{_options.BaseUrl}/viewjob?jk={jobId}";
             await page.NavigateAsync(jobUrl, null, ct);
 
             // Wait for the main job content to load
@@ -126,7 +129,7 @@ public class IndeedJobDetailsScraper
         }
     }
 
-    private static JobListing ParseJobPostingFromJsonLd(JsonElement jsonLd, string jobId)
+    private JobListing ParseJobPostingFromJsonLd(JsonElement jsonLd, string jobId)
     {
         return new JobListing
         {
@@ -136,7 +139,7 @@ public class IndeedJobDetailsScraper
             Location = ExtractLocationFromJsonLd(jsonLd),
             Description = jsonLd.TryGetProperty("description", out var desc) ? desc.GetString() ?? string.Empty : string.Empty,
             Salary = ExtractSalaryFromJsonLd(jsonLd),
-            Url = $"https://www.indeed.com/viewjob?jk={jobId}",
+            Url = $"{_options.BaseUrl}/viewjob?jk={jobId}",
             Source = "Indeed",
             PostedAt = ExtractPostedDateFromJsonLd(jsonLd),
             Remote = CheckIfRemote(jsonLd)
