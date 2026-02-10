@@ -24,6 +24,7 @@ public class IndeedApiClient : IDisposable
     private readonly ISessionOrchestrator? _sessionOrchestrator;
     private readonly CountryCode _country;
     private readonly string _apiKey;
+    private readonly string _apiEndpoint;
     private readonly ILogger<IndeedApiClient> _logger;
     private readonly HttpClient _httpClient;
     private readonly SocketsHttpHandler _handler;
@@ -122,6 +123,7 @@ public class IndeedApiClient : IDisposable
         _sessionOrchestrator = sessionOrchestrator;
         _country = options.Country;
         _apiKey = options.ApiKey;
+        _apiEndpoint = options.ApiEndpoint;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _timeProvider = timeProvider ?? TimeProvider.System;
 
@@ -284,7 +286,7 @@ public class IndeedApiClient : IDisposable
 
     internal HttpRequestMessage CreateRequest(object payload)
     {
-        var req = new HttpRequestMessage(HttpMethod.Post, IndeedConstants.ApiUrl)
+        var req = new HttpRequestMessage(HttpMethod.Post, _apiEndpoint)
         {
             Content = JsonContent.Create(payload)
         };
@@ -431,7 +433,7 @@ public class IndeedApiClient : IDisposable
                 var json = JsonSerializer.Serialize(payload);
                 LogRequestPayload(_logger, json, null);
 
-                LogSendingRequest(_logger, IndeedConstants.ApiUrl, null);
+                LogSendingRequest(_logger, _apiEndpoint, null);
 
                 foreach (var header in _httpClient.DefaultRequestHeaders)
                 {
@@ -556,7 +558,7 @@ public class IndeedApiClient : IDisposable
             var json = JsonSerializer.Serialize(payload);
             LogRequestPayload(_logger, json, null);
 
-            LogSendingRequest(_logger, IndeedConstants.ApiUrl, null);
+            LogSendingRequest(_logger, _apiEndpoint, null);
 
             foreach (var header in _httpClient.DefaultRequestHeaders)
             {
