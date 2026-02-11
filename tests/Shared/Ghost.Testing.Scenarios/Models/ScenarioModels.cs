@@ -57,5 +57,6 @@ public enum ScrollType
     None,
     AutoThreshold,
     ButtonDriven,
-    Virtualized
+    Virtualized,
+    DuplicateChunk
 }

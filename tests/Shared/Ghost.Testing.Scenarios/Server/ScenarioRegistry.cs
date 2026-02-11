@@ -20,6 +20,7 @@ public sealed class ScenarioRegistry
         "/scenario/scroll/auto-threshold",
         "/scenario/scroll/button-driven",
         "/scenario/scroll/virtualized",
+        "/scenario/scroll/duplicate-chunk",
         "/scenario/pagination/numbered",
         "/scenario/pagination/cursor",
         "/scenario/pagination/mixed",
@@ -56,7 +57,9 @@ public sealed class ScenarioRegistry
         app.MapGet("/scenario/scroll/auto-threshold", ScrollScenarios.AutoThresholdHandler);
         app.MapGet("/scenario/scroll/button-driven", ScrollScenarios.ButtonDrivenHandler);
         app.MapGet("/scenario/scroll/virtualized", ScrollScenarios.VirtualizedHandler);
+        app.MapGet("/scenario/scroll/duplicate-chunk", ScrollScenarios.DuplicateChunkReplayHandler);
         app.MapGet("/api/scroll/load-more", ScrollScenarios.LoadMoreApiHandler);
+        app.MapGet("/api/scroll/load-more-duplicates", ScrollScenarios.LoadMoreDuplicatesApiHandler);
 
         // Pagination scenarios
         app.MapGet("/scenario/pagination/numbered", PaginationScenarios.NumberedHandler);
@@ -71,6 +74,6 @@ public sealed class ScenarioRegistry
         app.MapGet("/scenario/antibot/simple-challenge", AntiBotScenarios.SimpleChallengeHandler);
         app.MapPost("/scenario/antibot/verify", AntiBotScenarios.VerifyChallengeHandler);
 
-        _logger.LogInformation("Registered {Count} scenario routes", 16);
+        _logger.LogInformation("Registered {Count} scenario routes", 17);
     }
 }
