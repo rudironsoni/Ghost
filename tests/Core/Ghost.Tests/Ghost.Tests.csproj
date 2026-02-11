@@ -7,6 +7,8 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Core\Ghost\Ghost.csproj" />
+    <ProjectReference Include="..\..\Shared\Ghost.Testing\Ghost.Testing.csproj" />
+    <ProjectReference Include="..\..\Shared\Ghost.Testing.Scenarios\Ghost.Testing.Scenarios.csproj" />
   </ItemGroup>
 
   <ItemGroup>
