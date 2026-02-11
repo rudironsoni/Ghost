@@ -209,8 +209,8 @@ public class SitemapSpiderTests
             }
         };
 
-        var recentDate = DateTime.UtcNow.AddDays(-10).ToString("yyyy-MM-dd");
-        var oldDate = DateTime.UtcNow.AddDays(-60).ToString("yyyy-MM-dd");
+        var recentDate = DateTime.UtcNow.AddDays(-10).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+        var oldDate = DateTime.UtcNow.AddDays(-60).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 
         var xmlContent = $"""
             <?xml version="1.0" encoding="UTF-8"?>

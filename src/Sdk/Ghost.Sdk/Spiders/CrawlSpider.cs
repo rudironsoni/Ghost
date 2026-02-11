@@ -29,7 +29,7 @@ namespace Ghost.Sdk.Spiders;
 /// <code>
 /// var linkExtractor = new HtmlAgilityLinkExtractor();
 /// var spider = new CrawlSpider(linkExtractor) { Name = "ExampleSpider" };
-/// 
+///
 /// // Add rule to parse product pages
 /// spider.AddRule(
 ///     name: "ProductPages",
@@ -42,7 +42,7 @@ namespace Ghost.Sdk.Spiders;
 ///         return new[] { item };
 ///     }
 /// );
-/// 
+///
 /// // Add rule to follow category pages but not extract items
 /// spider.AddRule(
 ///     name: "CategoryPages",
