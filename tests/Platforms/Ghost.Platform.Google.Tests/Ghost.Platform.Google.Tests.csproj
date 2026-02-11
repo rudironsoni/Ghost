@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Platforms\Ghost.Platform.Google\Ghost.Platform.Google.csproj" />
     <ProjectReference Include="..\..\..\src\Core\Ghost\Ghost.csproj" />
+    <ProjectReference Include="..\..\Shared\Ghost.Testing\Ghost.Testing.csproj" />
   </ItemGroup>
 
   <ItemGroup>
