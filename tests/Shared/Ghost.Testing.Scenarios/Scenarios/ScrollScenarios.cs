@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Ghost.Testing.Scenarios.Models;
 using Ghost.Testing.Scenarios.Server;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -254,6 +255,169 @@ public static class ScrollScenarios
         logger.LogInformation("API: scroll/load-more offset={Offset} limit={Limit}", offset, limit);
 
         var jobs = TestData.GetJobPostings(offset, limit);
+        var hasMore = offset + limit < TestData.TotalJobCount;
+
+        var response = new
+        {
+            jobs = jobs.Select(j => new
+            {
+                id = j.Id,
+                title = j.Title,
+                company = j.Company,
+                location = j.Location,
+                description = j.Description
+            }),
+            hasMore,
+            offset,
+            limit,
+            total = TestData.TotalJobCount
+        };
+
+        return Results.Json(response);
+    }
+
+    public static IResult DuplicateChunkReplayHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
+    {
+        logger.LogInformation("Scenario: scroll/duplicate-chunk");
+
+        var jobs = TestData.GetJobPostings(0, 15);
+
+        var html = $$"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Jobs - Duplicate Chunk Replay</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .job { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .duplicate { background-color: #fff3cd; border-color: #ffc107; }
+        #load-more-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 12px 24px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #stats { margin: 20px 0; padding: 10px; background: #f5f5f5; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Job Listings (Duplicate Chunk Replay)</h1>
+    <div id="stats">
+        <strong>Stats:</strong> Total: <span id="total-count">0</span> | Unique: <span id="unique-count">0</span> | Duplicates: <span id="duplicate-count">0</span>
+    </div>
+    <div id="job-list">
+        {{string.Join("\n", jobs.Select(j => $@"
+        <div class='job' data-job-id='{j.Id}'>
+            <h2>{j.Title}</h2>
+            <div>{j.Company} - {j.Location}</div>
+        </div>"))}}
+    </div>
+    <button id="load-more-btn" onclick="loadMore()">Load More Jobs</button>
+
+    <script>
+        let offset = {{jobs.Count}};
+        let hasMore = true;
+        let seenIds = new Set();
+        let duplicateCount = 0;
+
+        // Initialize with initial jobs
+        document.querySelectorAll('.job[data-job-id]').forEach(el => {
+            const id = el.dataset.jobId;
+            if (seenIds.has(id)) {
+                el.classList.add('duplicate');
+                duplicateCount++;
+            } else {
+                seenIds.add(id);
+            }
+        });
+        updateStats();
+
+        async function loadMore() {
+            if (!hasMore) return;
+
+            const btn = document.getElementById('load-more-btn');
+            btn.disabled = true;
+            btn.textContent = 'Loading...';
+
+            console.log('[SCENARIO] Loading chunk at offset', offset);
+
+            const response = await fetch(`/api/scroll/load-more-duplicates?offset=${offset}&limit=15`);
+            const data = await response.json();
+
+            const jobList = document.getElementById('job-list');
+            data.jobs.forEach(job => {
+                const div = document.createElement('div');
+                div.className = 'job';
+                div.dataset.jobId = job.id;
+
+                if (seenIds.has(job.id)) {
+                    div.classList.add('duplicate');
+                    duplicateCount++;
+                    console.log('[SCENARIO] Duplicate detected:', job.id);
+                } else {
+                    seenIds.add(job.id);
+                }
+
+                div.innerHTML = `<h2>${job.title}</h2><div>${job.company} - ${job.location}</div>`;
+                jobList.appendChild(div);
+            });
+
+            offset += data.jobs.length;
+            hasMore = data.hasMore;
+            updateStats();
+
+            if (hasMore) {
+                btn.disabled = false;
+                btn.textContent = 'Load More Jobs';
+            } else {
+                btn.textContent = 'No More Jobs';
+            }
+
+            console.log('[SCENARIO] Chunk loaded. Unique:', seenIds.size, 'Duplicates:', duplicateCount);
+        }
+
+        function updateStats() {
+            const total = document.querySelectorAll('.job').length;
+            document.getElementById('total-count').textContent = total;
+            document.getElementById('unique-count').textContent = seenIds.size;
+            document.getElementById('duplicate-count').textContent = duplicateCount;
+        }
+    </script>
+</body>
+</html>
+""";
+
+        return Results.Content(html, "text/html");
+    }
+
+    public static async Task<IResult> LoadMoreDuplicatesApiHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
+    {
+        await Task.Delay(100); // Simulate network delay
+
+        var offset = int.TryParse(context.Request.Query["offset"], out var o) ? o : 0;
+        var limit = int.TryParse(context.Request.Query["limit"], out var l) ? l : 15;
+
+        logger.LogInformation("API: scroll/load-more-duplicates offset={Offset} limit={Limit}", offset, limit);
+
+        // Simulate duplicate chunks: return overlapping items on certain offsets
+        List<SyntheticJobPosting> jobs;
+        if (offset == 15 || offset == 45 || offset == 75)
+        {
+            // Return duplicate chunk (overlap with previous)
+            jobs = TestData.GetJobPostings(offset - 5, limit);
+            logger.LogInformation("API: Returning duplicate chunk at offset {Offset}", offset);
+        }
+        else
+        {
+            jobs = TestData.GetJobPostings(offset, limit);
+        }
+
         var hasMore = offset + limit < TestData.TotalJobCount;
 
         var response = new
