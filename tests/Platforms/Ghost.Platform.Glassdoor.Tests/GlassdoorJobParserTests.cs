@@ -35,7 +35,7 @@ public class GlassdoorJobParserTests
     [Fact]
     public void ParsesMultipleJobsFromGraphQLResponse()
     {
-         var json = """
+        var json = """
 {
   "data": {
     "jobSearchResults": {
@@ -86,23 +86,23 @@ public class GlassdoorJobParserTests
         var list = GlassdoorJobParser.ParseSearchResponse(json);
         list.Should().HaveCount(2);
 
-         var firstJob = list[0];
-         firstJob.Title.Should().Be("Software Engineer");
-         firstJob.Company.Should().Be("Tech Corp");
-         firstJob.Location.Should().Be("San Francisco, CA");
-         firstJob.Salary.Should().Be("100000 - 150000 USD");
+        var firstJob = list[0];
+        firstJob.Title.Should().Be("Software Engineer");
+        firstJob.Company.Should().Be("Tech Corp");
+        firstJob.Location.Should().Be("San Francisco, CA");
+        firstJob.Salary.Should().Be("100000 - 150000 USD");
 
-         var secondJob = list[1];
-         secondJob.Title.Should().Be("Product Manager");
-         secondJob.Company.Should().Be("Product Inc");
-         secondJob.Location.Should().Be("New York, NY");
-         secondJob.Salary.Should().Be("120000 - 180000 USD");
+        var secondJob = list[1];
+        secondJob.Title.Should().Be("Product Manager");
+        secondJob.Company.Should().Be("Product Inc");
+        secondJob.Location.Should().Be("New York, NY");
+        secondJob.Salary.Should().Be("120000 - 180000 USD");
     }
 
     [Fact]
     public void HandlesMissingSalaryDataGracefully()
     {
-         var json = """
+        var json = """
 {
   "data": {
     "jobSearchResults": {
