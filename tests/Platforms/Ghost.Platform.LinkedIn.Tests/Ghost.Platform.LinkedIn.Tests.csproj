@@ -11,7 +11,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Platforms\Ghost.Platform.LinkedIn\Ghost.Platform.LinkedIn.csproj" />
+    <ProjectReference Include="..\..\..\src\Platforms\Ghost.Platform.Common\Ghost.Platform.Common.csproj" />
     <ProjectReference Include="..\..\..\src\SDK\Ghost.Sdk.Spider\Ghost.Sdk.Spider.csproj" />
+    <ProjectReference Include="..\..\Shared\Ghost.Testing\Ghost.Testing.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit" />

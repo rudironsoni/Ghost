@@ -1,9 +1,4 @@
 using System.Net.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using NSubstitute;
-using Xunit;
-using Xunit.Abstractions;
 using Ghost;
 using Ghost.Abstractions;
 using Ghost.Contracts.Jobs;
@@ -11,6 +6,11 @@ using Ghost.Core;
 using Ghost.Platform.Google.Jobs;
 using Ghost.Platform.Google.Tests.Contracts;
 using Ghost.Testing.Contracts;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using NSubstitute;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Platform.Google.Tests.Contracts;
 
