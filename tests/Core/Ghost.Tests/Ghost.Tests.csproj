@@ -4,9 +4,12 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <NoWarn>$(NoWarn);CA1707;CA2201;CA1822;CA2012</NoWarn>
+    <LangVersion>preview</LangVersion>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Core\Ghost\Ghost.csproj" />
+    <ProjectReference Include="..\..\..\src\Sdk\Ghost.Sdk\Ghost.Sdk.csproj" />
     <ProjectReference Include="..\..\Shared\Ghost.Testing\Ghost.Testing.csproj" />
     <ProjectReference Include="..\..\Shared\Ghost.Testing.Scenarios\Ghost.Testing.Scenarios.csproj" />
   </ItemGroup>
