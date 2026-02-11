@@ -3,8 +3,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
-using Ghost.Testing.Contracts;
 using Ghost.Platform.Glassdoor;
+using Ghost.Testing.Contracts;
 
 namespace Ghost.Platform.Glassdoor.Tests.Contracts;
 

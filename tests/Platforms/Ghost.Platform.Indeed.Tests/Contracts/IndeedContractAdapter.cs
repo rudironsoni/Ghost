@@ -3,28 +3,28 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
-using Ghost.Platform.InfoJobs.Jobs;
+using Ghost.Platform.Indeed;
 using Ghost.Testing.Contracts;
 
-namespace Ghost.Platform.InfoJobs.Tests.Contracts;
+namespace Ghost.Platform.Indeed.Tests.Contracts;
 
 /// <summary>
-/// Adapter for InfoJobs provider contract testing.
+/// Adapter for Indeed provider contract testing.
 /// </summary>
-public sealed class InfoJobsContractAdapter : IProviderContractAdapter
+public sealed class IndeedContractAdapter : IProviderContractAdapter
 {
-    private readonly IJobClient _jobClient;
+    private readonly IndeedJobClient _jobClient;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="InfoJobsContractAdapter"/> class.
+    /// Initializes a new instance of the <see cref="IndeedContractAdapter"/> class.
     /// </summary>
-    public InfoJobsContractAdapter(IJobClient jobClient)
+    public IndeedContractAdapter(IndeedJobClient jobClient)
     {
         _jobClient = jobClient;
     }
 
     /// <inheritdoc />
-    public string PlatformName => "InfoJobs";
+    public string PlatformName => "Indeed";
 
     /// <inheritdoc />
     public Task<IReadOnlyList<JobListing>> GetJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
@@ -46,7 +46,7 @@ public sealed class InfoJobsContractAdapter : IProviderContractAdapter
     {
         var allJobs = new List<JobListing>();
 
-        // InfoJobs uses page-based pagination
+        // Indeed uses cursor-based pagination
         // We'll simulate this by making multiple searches
         for (int page = 0; page < maxPages; page++)
         {
@@ -54,7 +54,7 @@ public sealed class InfoJobsContractAdapter : IProviderContractAdapter
             {
                 Query = criteria.Query,
                 Location = criteria.Location,
-                // InfoJobs-specific pagination would go here
+                // Indeed-specific pagination would go here
             };
 
             var jobs = await _jobClient.SearchJobsAsync(pageCriteria, ct);

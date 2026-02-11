@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -64,6 +64,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.LinkedIn.Tests", "tests\Platforms\Ghost.Platform.LinkedIn.Tests\Ghost.Platform.LinkedIn.Tests.csproj", "{7BC91500-683F-4DA9-BE99-2CE172F30473}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Anthropic.Tests", "tests\Platforms\Ghost.Platform.Anthropic.Tests\Ghost.Platform.Anthropic.Tests.csproj", "{3634E1F1-D45B-459B-B1AA-6297CBC7C9DE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Indeed.Tests", "tests\Platforms\Ghost.Platform.Indeed.Tests\Ghost.Platform.Indeed.Tests.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567891}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Glassdoor.Tests", "tests\Platforms\Ghost.Platform.Glassdoor.Tests\Ghost.Platform.Glassdoor.Tests.csproj", "{B2C3D4E5-F6A7-8901-BCDE-F23456789012}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.InfoJobs.Tests", "tests\Platforms\Ghost.Platform.InfoJobs.Tests\Ghost.Platform.InfoJobs.Tests.csproj", "{C3D4E5F6-A7B8-9012-CDEF-345678901234}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.X.E2E", "tests\Platforms\Ghost.Platform.X.E2E\Ghost.Platform.X.E2E.csproj", "{D4E5F6A7-B8C9-0123-DEF0-456789012345}"
 EndProject
@@ -569,6 +575,9 @@ Global
 		{BF17D4E2-E9EB-4C06-80F8-84FF9C8C26E4} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
 		{7BC91500-683F-4DA9-BE99-2CE172F30473} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
 		{3634E1F1-D45B-459B-B1AA-6297CBC7C9DE} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567891} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
+		{C3D4E5F6-A7B8-9012-CDEF-345678901234} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
 		{D4E5F6A7-B8C9-0123-DEF0-456789012345} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
 		{7D613B3F-FE61-4A88-8984-A01247C2185C} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{9B989A1A-9222-4BA5-AB5B-4E3CEC5DA58F} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
