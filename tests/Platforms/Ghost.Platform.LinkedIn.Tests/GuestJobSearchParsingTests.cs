@@ -23,15 +23,15 @@ public class GuestJobSearchParsingTests
     public void ParseExperienceNotApplicableMapsToUnknown()
     {
         var level = GuestJobSearch_ParseExperience("Not Applicable");
-        level.Should().Be(Contracts.Jobs.ExperienceLevel.Unknown);
+        level.Should().Be(Ghost.Contracts.Jobs.ExperienceLevel.Unknown);
     }
 
-    private static Contracts.Jobs.ExperienceLevel GuestJobSearch_ParseExperience(string v)
+    private static Ghost.Contracts.Jobs.ExperienceLevel GuestJobSearch_ParseExperience(string v)
     {
         // use reflection to call private static method ParseExperienceLevel in GuestJobSearch
         var mi = typeof(GuestJobSearch).GetMethod("ParseExperienceLevel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
             ?? throw new System.InvalidOperationException("ParseExperienceLevel not found");
         var res = mi.Invoke(null, new object[] { v });
-        return res is Contracts.Jobs.ExperienceLevel el ? el : Contracts.Jobs.ExperienceLevel.Unknown;
+        return res is Ghost.Contracts.Jobs.ExperienceLevel el ? el : Ghost.Contracts.Jobs.ExperienceLevel.Unknown;
     }
 }
