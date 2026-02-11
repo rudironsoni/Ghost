@@ -3,10 +3,10 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
+using Ghost.Platform.Glassdoor.Internal;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using Ghost.Platform.Glassdoor.Internal;
 
 namespace Ghost.Platform.Glassdoor.Tests;
 

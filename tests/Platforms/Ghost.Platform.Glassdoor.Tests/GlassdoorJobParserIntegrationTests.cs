@@ -1,7 +1,7 @@
 using FluentAssertions;
-using Xunit;
-using Ghost.Platform.Glassdoor.Internal;
 using Ghost.Contracts.Jobs;
+using Ghost.Platform.Glassdoor.Internal;
+using Xunit;
 
 namespace Ghost.Platform.Glassdoor.Tests;
 

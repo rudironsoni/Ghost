@@ -1,7 +1,7 @@
+using System.Globalization;
 using Ghost.Core;
 using Ghost.Testing.Fixtures;
 using Ghost.Testing.Scenarios.Server;
-using System.Globalization;
 using Xunit;
 using Xunit.Abstractions;
 

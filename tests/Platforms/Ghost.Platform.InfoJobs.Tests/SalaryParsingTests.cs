@@ -1,6 +1,6 @@
 using FluentAssertions;
-using Ghost.Platform.InfoJobs.Jobs.Internal;
 using Ghost.Contracts.Jobs;
+using Ghost.Platform.InfoJobs.Jobs.Internal;
 using Xunit;
 
 namespace Ghost.Platform.InfoJobs.Tests;
