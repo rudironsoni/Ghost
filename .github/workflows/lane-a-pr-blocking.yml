@@ -1,4 +1,4 @@
-name: PR Validation
+name: CI - Lane A (PR Blocking)
 
 on:
   pull_request:
@@ -9,10 +9,11 @@ on:
       - 'tests/**'
       - '*.sln'
       - '**/*.csproj'
-      - '.github/workflows/pr-validation.yml'
+      - '.github/workflows/lane-a-pr-blocking.yml'
+  workflow_dispatch:
 
 concurrency:
-  group: pr-${{ github.event.pull_request.number }}
+  group: lane-a-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 env:
@@ -24,10 +25,6 @@ permissions:
   actions: read
 
 jobs:
-  # This workflow now serves as a lightweight PR validation
-  # The actual PR blocking tests are run in Lane A workflow
-  # See: .github/workflows/lane-a-pr-blocking.yml
-
   validate-title:
     name: Validate PR Title
     runs-on: ubuntu-latest
@@ -37,22 +34,10 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // Support act local testing with fallback to environment variable or test default
-            const title = context.payload.pull_request?.title
-              || process.env.PR_TITLE
-              || 'test: default title for local testing';
-
+            const title = context.payload.pull_request?.title || process.env.PR_TITLE || 'test: default title';
             const conventionalCommitRegex = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9-]+\))?: .+$/i;
-
             if (!conventionalCommitRegex.test(title)) {
-              core.setFailed(
-                `PR title does not follow conventional commits format.\n\n` +
-                `Expected format: type(scope): description\n` +
-                `Example: "feat(linkedin): add new parser"\n\n` +
-                `Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert\n` +
-                `Scope is optional but recommended.\n\n` +
-                `Current title: "${title}"`
-              );
+              core.setFailed(`PR title does not follow conventional commits format. Expected: type(scope): description`);
             } else {
               core.info(`✓ PR title follows conventional commits format: "${title}"`);
             }
@@ -60,7 +45,6 @@ jobs:
   lint-format:
     name: Lint & Format Check
     runs-on: ubuntu-latest
-    # Skip draft PRs
     if: github.event.pull_request.draft == false
     timeout-minutes: 5
     steps:
@@ -69,11 +53,8 @@ jobs:
 
       - name: Normalize Line Endings
         run: |
-          # Configure git to normalize line endings to LF
           git config core.autocrlf input
           git config core.eol lf
-
-          # Re-checkout files with normalized line endings
           git rm --cached -r .
           git reset --hard
 
@@ -101,7 +82,6 @@ jobs:
     name: Build Solution
     runs-on: ubuntu-latest
     needs: validate-title
-    # Skip draft PRs
     if: github.event.pull_request.draft == false
     timeout-minutes: 10
     steps:
@@ -128,9 +108,9 @@ jobs:
           path: |
             **/bin/Release/
             **/obj/Release/
-          key: ${{ runner.os }}-build-pr-${{ github.event.pull_request.head.sha }}
+          key: ${{ runner.os }}-build-lane-a-${{ github.event.pull_request.head.sha }}
           restore-keys: |
-            ${{ runner.os }}-build-pr-
+            ${{ runner.os }}-build-lane-a-
             ${{ runner.os }}-build-
 
       - name: Restore Dependencies
@@ -142,17 +122,146 @@ jobs:
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: pr-build-output
+          name: lane-a-build-output
           path: |
             **/bin/Release/
             !**/bin/Release/**/*.pdb
           retention-days: 1
 
+  unit-tests:
+    name: Unit Tests (Hermetic)
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event.pull_request.draft == false
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
+
+      - name: Pre-test Cleanup
+        run: ./tests/scripts/pre-test.sh
+
+      - name: Run Unit Tests
+        run: |
+          dotnet test Ghost.sln \
+            --configuration ${{ env.CONFIGURATION }} \
+            --no-build \
+            --verbosity normal \
+            --logger "trx;LogFileName=unit-test-results.trx" \
+            --collect:"XPlat Code Coverage" \
+            --filter "Category=Unit|Category=UnitTest" \
+            -nodereuse:false
+
+      - name: Post-test Cleanup
+        if: always()
+        run: ./tests/scripts/post-test.sh
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lane-a-unit-test-results
+          path: |
+            **/TestResults/**/*.trx
+            **/TestResults/**/coverage.cobertura.xml
+          retention-days: 7
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: '**/TestResults/**/coverage.cobertura.xml'
+          flags: lane-a-unit
+          name: lane-a-unit-tests-coverage
+
+  mocked-integration-tests:
+    name: Mocked Integration Tests
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event.pull_request.draft == false
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
+
+      - name: Pre-test Cleanup
+        run: ./tests/scripts/pre-test.sh
+
+      - name: Run Mocked Integration Tests
+        run: |
+          dotnet test Ghost.sln \
+            --configuration ${{ env.CONFIGURATION }} \
+            --no-build \
+            --verbosity normal \
+            --logger "trx;LogFileName=mocked-integration-test-results.trx" \
+            --collect:"XPlat Code Coverage" \
+            --filter "Category=Integration&Capability=RequiresMockServer" \
+            -nodereuse:false
+
+      - name: Post-test Cleanup
+        if: always()
+        run: ./tests/scripts/post-test.sh
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lane-a-mocked-integration-test-results
+          path: |
+            **/TestResults/**/*.trx
+            **/TestResults/**/coverage.cobertura.xml
+          retention-days: 7
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: '**/TestResults/**/coverage.cobertura.xml'
+          flags: lane-a-mocked-integration
+          name: lane-a-mocked-integration-coverage
+
   check-migrations:
     name: Check DotnetSpider References
     runs-on: ubuntu-latest
     needs: validate-title
-    # Skip draft PRs
     if: github.event.pull_request.draft == false
     timeout-minutes: 5
     steps:
@@ -166,9 +275,7 @@ jobs:
         run: |
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-
           git diff --name-only $BASE_SHA...$HEAD_SHA | grep -E '^(src/|tests/)' > changed_files.txt || true
-
           if [ -s changed_files.txt ]; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
@@ -179,14 +286,12 @@ jobs:
         if: steps.changed-files.outputs.has_changes == 'true'
         run: |
           FOUND_REFERENCES=false
-
           while IFS= read -r file; do
             if [ -f "$file" ] && grep -i "DotnetSpider" "$file"; then
               echo "❌ Found DotnetSpider reference in: $file"
               FOUND_REFERENCES=true
             fi
           done < changed_files.txt
-
           if [ "$FOUND_REFERENCES" = true ]; then
             echo "❌ VALIDATION FAILED: DotnetSpider references detected"
             echo "Please update your changes to use Ghost.Sdk.Spider instead."
@@ -195,13 +300,13 @@ jobs:
             echo "✓ No DotnetSpider references found in changed files"
           fi
 
-  pr-summary:
-    name: PR Validation Summary
+  lane-a-summary:
+    name: Lane A Summary (PR Blocking)
     runs-on: ubuntu-latest
-    needs: [validate-title, lint-format, build, check-migrations]
+    needs: [validate-title, lint-format, build, unit-tests, mocked-integration-tests, check-migrations]
     if: always()
     steps:
-      - name: Check Validation Results
+      - name: Check Results
         uses: actions/github-script@v7
         with:
           script: |
@@ -209,14 +314,17 @@ jobs:
               { name: 'Validate PR Title', result: '${{ needs.validate-title.result }}' },
               { name: 'Lint & Format Check', result: '${{ needs.lint-format.result }}' },
               { name: 'Build Solution', result: '${{ needs.build.result }}' },
+              { name: 'Unit Tests (Hermetic)', result: '${{ needs.unit-tests.result }}' },
+              { name: 'Mocked Integration Tests', result: '${{ needs.mocked-integration-tests.result }}' },
               { name: 'Check DotnetSpider References', result: '${{ needs.check-migrations.result }}' }
             ];
 
             let allPassed = true;
-            let summary = '## 🔍 PR Validation Results\n\n';
-            summary += '### Quick Validation Checks\n\n';
-            summary += 'Note: Full PR blocking tests (Unit + Mocked Integration) run in Lane A workflow.\n';
-            summary += 'See: [Lane A (PR Blocking)](../../actions/workflows/lane-a-pr-blocking.yml)\n\n';
+            let summary = '## 🚦 Lane A: PR Blocking (Fast, Deterministic)\n\n';
+            summary += '### Scope: Unit tests + Mocked Integration tests\n';
+            summary += '- No live network calls\n';
+            summary += '- Max parallelism\n';
+            summary += '- Must pass for PR merge\n\n';
 
             for (const job of jobs) {
               const icon = job.result === 'success' ? '✅' : '❌';
@@ -229,13 +337,12 @@ jobs:
             summary += '\n';
 
             if (allPassed) {
-              summary += '### ✅ Quick validation checks passed!\n\n';
-              summary += 'This PR has passed the quick validation checks.\n';
-              summary += 'The full PR blocking tests (Lane A) will run separately.\n';
+              summary += '### ✅ Lane A Passed - PR can proceed to review\n\n';
+              summary += 'This PR meets the PR blocking requirements.\n';
             } else {
-              summary += '### ❌ Some validation checks failed\n\n';
+              summary += '### ❌ Lane A Failed - PR blocked\n\n';
               summary += 'Please review the failed checks above and make necessary corrections.\n';
-              core.setFailed('PR validation failed');
+              core.setFailed('Lane A failed - PR blocked');
             }
 
             core.summary.addRaw(summary);
