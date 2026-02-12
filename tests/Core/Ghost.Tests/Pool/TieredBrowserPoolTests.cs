@@ -278,18 +278,19 @@ public class TieredBrowserPoolTests : IAsyncLifetime
         };
 
         await using var pool = new TieredBrowserPool(_kernel!, options);
-
-        var sessions = new List<IBrowserSession>();
         var tasks = Enumerable.Range(0, maxConcurrent + 5)
             .Select(async _ =>
             {
                 var session = await pool.AcquireBrowserAsync(Tier.Cold);
-                lock (sessions)
+
+                try
                 {
-                    sessions.Add(session);
+                    await Task.Delay(100);
                 }
-                await Task.Delay(100);
-                return session;
+                finally
+                {
+                    await pool.ReturnBrowserAsync(session);
+                }
             })
             .ToArray();
 
@@ -297,10 +298,5 @@ public class TieredBrowserPoolTests : IAsyncLifetime
 
         var health = await pool.GetHealthAsync();
         Assert.True(health.Cold.InUse <= maxConcurrent);
-
-        foreach (var session in sessions)
-        {
-            await pool.ReturnBrowserAsync(session);
-        }
     }
 }

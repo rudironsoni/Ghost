@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -99,7 +100,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         }
         catch { }
 
-        var platformErrors = new List<PlatformError>();
+        var platformErrors = new ConcurrentBag<PlatformError>();
         var successfulPlatforms = 0;
         var totalPlatforms = scrapersToRun?.Count() ?? 0;
 
@@ -108,7 +109,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             try
             {
                 var result = await s.SearchJobsAsync(criteriaNonNull, ct).ConfigureAwait(false);
-                successfulPlatforms++;
+                Interlocked.Increment(ref successfulPlatforms);
                 return result;
             }
             catch (OperationCanceledException) { throw; }
@@ -134,19 +135,20 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         }
 
         var executionTime = DateTime.UtcNow - startTime;
-        var success = platformErrors.Count < totalPlatforms || all.Count > 0;
+        var platformErrorsList = platformErrors.ToList();
+        var success = platformErrorsList.Count < totalPlatforms || all.Count > 0;
 
         return new JobSearchResult
         {
             Jobs = map.Values.ToList(),
             Success = success,
-            PlatformErrors = platformErrors,
+            PlatformErrors = platformErrorsList,
             ErrorMessage = !success ? "All platforms failed to return results" : null,
             Metadata = new SearchMetadata
             {
                 TotalPlatforms = totalPlatforms,
                 SuccessfulPlatforms = successfulPlatforms,
-                FailedPlatforms = platformErrors.Count,
+                FailedPlatforms = platformErrorsList.Count,
                 ExecutionTimeMs = (long)executionTime.TotalMilliseconds,
                 Criteria = criteriaNonNull
             }
