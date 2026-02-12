@@ -28,7 +28,10 @@ public sealed class InfiniteScrollMiddleware
             context.Items["ScrollOffset"] = offset;
             context.Items["ScrollLimit"] = limit;
 
-            _logger.LogDebug("Scroll request with offset={Offset}, limit={Limit}", offset, limit);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("Scroll request with offset={Offset}, limit={Limit}", offset, limit);
+            }
         }
 
         await _next(context);

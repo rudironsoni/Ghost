@@ -19,7 +19,7 @@ public class StealthScriptsTests
         script.Should().Contain(profile.VideoCardRenderer);
 
         // Check for specific spoofing techniques
-        script.Should().Contain("Object.defineProperty(navigator,'webdriver',{get:()=>undefined});");
+        script.Should().Contain("Object.defineProperty(navigator,'webdriver',{");
         script.Should().Contain("Object.defineProperty(navigator,'hardwareConcurrency'");
         script.Should().Contain("WebGLRenderingContext.prototype.getParameter");
     }

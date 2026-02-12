@@ -153,13 +153,19 @@ public class ConsentManagerService
                 if (!detected)
                     continue;
 
-                _logger.LogInformation("Detected consent manager: {ManagerId}", manager.Id);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Detected consent manager: {ManagerId}", manager.Id);
+                }
 
                 // Try to accept/click the consent
                 var handled = await AcceptConsentAsync(page, manager, timeoutMs);
                 if (handled)
                 {
-                    _logger.LogInformation("Successfully handled consent for: {ManagerId}", manager.Id);
+                    if (_logger.IsEnabled(LogLevel.Information))
+                    {
+                        _logger.LogInformation("Successfully handled consent for: {ManagerId}", manager.Id);
+                    }
 
                     // Wait a moment for the banner to disappear and page to settle
                     await Task.Delay(1000);
@@ -168,18 +174,27 @@ public class ConsentManagerService
                     var stillPresent = await DetectConsentManagerAsync(page, manager, 1000);
                     if (!stillPresent)
                     {
-                        _logger.LogInformation("Consent banner successfully dismissed");
+                        if (_logger.IsEnabled(LogLevel.Information))
+                        {
+                            _logger.LogInformation("Consent banner successfully dismissed");
+                        }
                         return true;
                     }
                     else
                     {
-                        _logger.LogWarning("Consent banner still present after acceptance attempt");
+                        if (_logger.IsEnabled(LogLevel.Warning))
+                        {
+                            _logger.LogWarning("Consent banner still present after acceptance attempt");
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Error handling consent manager {ManagerId}", manager.Id);
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug(ex, "Error handling consent manager {ManagerId}", manager.Id);
+                }
             }
         }
 
@@ -202,7 +217,10 @@ public class ConsentManagerService
                     var frame = await page.QuerySelectorAsync(selector);
                     if (frame != null)
                     {
-                        _logger.LogDebug("Found iframe consent manager: {Selector}", selector);
+                        if (_logger.IsEnabled(LogLevel.Debug))
+                        {
+                            _logger.LogDebug("Found iframe consent manager: {Selector}", selector);
+                        }
                         return true;
                     }
                 }
@@ -216,7 +234,10 @@ public class ConsentManagerService
                         var isVisible = await element.IsVisibleAsync();
                         if (isVisible)
                         {
-                            _logger.LogDebug("Found consent element: {Selector}", selector);
+                            if (_logger.IsEnabled(LogLevel.Debug))
+                            {
+                                _logger.LogDebug("Found consent element: {Selector}", selector);
+                            }
                             return true;
                         }
                     }
@@ -255,7 +276,10 @@ public class ConsentManagerService
 
                     if (clicked)
                     {
-                        _logger.LogDebug("Clicked iframe consent button: {Selector}", selector);
+                        if (_logger.IsEnabled(LogLevel.Debug))
+                        {
+                            _logger.LogDebug("Clicked iframe consent button: {Selector}", selector);
+                        }
                         return true;
                     }
                 }
@@ -269,7 +293,10 @@ public class ConsentManagerService
 
                         if (isVisible && isEnabled)
                         {
-                            _logger.LogDebug("Clicking consent button: {Selector}", selector);
+                            if (_logger.IsEnabled(LogLevel.Debug))
+                            {
+                                _logger.LogDebug("Clicking consent button: {Selector}", selector);
+                            }
 
                             try
                             {
@@ -287,7 +314,10 @@ public class ConsentManagerService
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Failed to click selector {Selector}", selector);
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug(ex, "Failed to click selector {Selector}", selector);
+                }
             }
         }
 

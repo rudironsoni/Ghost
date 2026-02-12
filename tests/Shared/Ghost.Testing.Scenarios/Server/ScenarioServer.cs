@@ -71,7 +71,10 @@ public sealed class ScenarioServer : IDisposable
         await app.StartAsync(cancellationToken);
 
         var logger = app.Services.GetRequiredService<ILogger<ScenarioServer>>();
-        logger.LogInformation("Scenario server started at {BaseUrl}", baseUrl);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Scenario server started at {BaseUrl}", baseUrl);
+        }
 
         return new ScenarioServer(app, baseUrl, selectedPort);
     }

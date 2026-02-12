@@ -37,7 +37,10 @@ public class ConsentHandler : IConsentHandler
     {
         ArgumentNullException.ThrowIfNull(page);
 
-        _logger.LogDebug("Detecting CMP on page: {Url}", page.Url);
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug("Detecting CMP on page: {Url}", page.Url);
+        }
 
         var configs = CMPDatabase.GetAllConfigs();
 
@@ -48,13 +51,19 @@ public class ConsentHandler : IConsentHandler
                 var detected = await DetectCMPInternalAsync(page, config);
                 if (detected)
                 {
-                    _logger.LogInformation("Detected CMP: {CmpName}", config.Name);
+                    if (_logger.IsEnabled(LogLevel.Information))
+                    {
+                        _logger.LogInformation("Detected CMP: {CmpName}", config.Name);
+                    }
                     return config.Name;
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Error detecting CMP {CmpName}", config.Name);
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug(ex, "Error detecting CMP {CmpName}", config.Name);
+                }
             }
         }
 
@@ -75,14 +84,20 @@ public class ConsentHandler : IConsentHandler
             return false;
         }
 
-        _logger.LogDebug("Attempting to accept consent for CMP: {CmpType}", cmpType);
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug("Attempting to accept consent for CMP: {CmpType}", cmpType);
+        }
 
         try
         {
             var accepted = await AcceptConsentInternalAsync(page, config);
             if (accepted)
             {
-                _logger.LogInformation("Successfully accepted consent for CMP: {CmpType}", cmpType);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Successfully accepted consent for CMP: {CmpType}", cmpType);
+                }
 
                 // Wait for banner to disappear
                 await Task.Delay(1000);
@@ -111,14 +126,23 @@ public class ConsentHandler : IConsentHandler
     {
         ArgumentNullException.ThrowIfNull(page);
 
-        _logger.LogDebug("Checking for consent banners on page: {Url}", page.Url);
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug("Checking for consent banners on page: {Url}", page.Url);
+        }
 
         // Detect privacy regulation for context
         var regulation = await RegionDetector.DetectRegulationAsync(page);
         if (regulation != RegionDetector.PrivacyRegulation.Unknown)
         {
-            _logger.LogInformation("Detected privacy regulation: {Regulation}", regulation);
-            _logger.LogDebug("Strategy: {Strategy}", RegionDetector.GetConsentStrategy(regulation));
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Detected privacy regulation: {Regulation}", regulation);
+            }
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("Strategy: {Strategy}", RegionDetector.GetConsentStrategy(regulation));
+            }
         }
 
         var cmpType = await DetectCMPAsync(page);
@@ -147,7 +171,10 @@ public class ConsentHandler : IConsentHandler
                     var frame = await page.QuerySelectorAsync(selector);
                     if (frame != null)
                     {
-                        _logger.LogDebug("Found iframe CMP: {Selector}", selector);
+                        if (_logger.IsEnabled(LogLevel.Debug))
+                        {
+                            _logger.LogDebug("Found iframe CMP: {Selector}", selector);
+                        }
                         return true;
                     }
                 }
@@ -160,7 +187,10 @@ public class ConsentHandler : IConsentHandler
                         var isVisible = await element.IsVisibleAsync();
                         if (isVisible)
                         {
-                            _logger.LogDebug("Found CMP element in regular DOM: {Selector}", selector);
+                            if (_logger.IsEnabled(LogLevel.Debug))
+                            {
+                                _logger.LogDebug("Found CMP element in regular DOM: {Selector}", selector);
+                            }
                             return true;
                         }
                     }
@@ -169,7 +199,10 @@ public class ConsentHandler : IConsentHandler
                     var foundInShadow = await ShadowDOMHelper.FindInShadowDOMAsync(page, selector);
                     if (foundInShadow)
                     {
-                        _logger.LogDebug("Found CMP element in shadow DOM: {Selector}", selector);
+                        if (_logger.IsEnabled(LogLevel.Debug))
+                        {
+                            _logger.LogDebug("Found CMP element in shadow DOM: {Selector}", selector);
+                        }
                         return true;
                     }
                 }
@@ -221,7 +254,10 @@ public class ConsentHandler : IConsentHandler
 
                     if (clicked)
                     {
-                        _logger.LogDebug("Clicked iframe consent button: {Selector}", selector);
+                        if (_logger.IsEnabled(LogLevel.Debug))
+                        {
+                            _logger.LogDebug("Clicked iframe consent button: {Selector}", selector);
+                        }
                         return true;
                     }
                 }
@@ -236,7 +272,10 @@ public class ConsentHandler : IConsentHandler
 
                         if (isVisible && isEnabled)
                         {
-                            _logger.LogDebug("Clicking consent button in regular DOM: {Selector}", selector);
+                            if (_logger.IsEnabled(LogLevel.Debug))
+                            {
+                                _logger.LogDebug("Clicking consent button in regular DOM: {Selector}", selector);
+                            }
 
                             try
                             {
@@ -256,14 +295,20 @@ public class ConsentHandler : IConsentHandler
                     var clickedInShadow = await ShadowDOMHelper.ClickInShadowDOMAsync(page, selector);
                     if (clickedInShadow)
                     {
-                        _logger.LogDebug("Clicked consent button in shadow DOM: {Selector}", selector);
+                        if (_logger.IsEnabled(LogLevel.Debug))
+                        {
+                            _logger.LogDebug("Clicked consent button in shadow DOM: {Selector}", selector);
+                        }
                         return true;
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Failed to click selector: {Selector}", selector);
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug(ex, "Failed to click selector: {Selector}", selector);
+                }
             }
         }
 

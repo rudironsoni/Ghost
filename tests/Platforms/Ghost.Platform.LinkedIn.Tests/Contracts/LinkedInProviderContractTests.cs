@@ -17,6 +17,7 @@ namespace Ghost.Platform.LinkedIn.Tests.Contracts;
 /// <summary>
 /// Contract tests for LinkedIn provider.
 /// </summary>
+[Trait("Category", "E2E")]
 public class LinkedInProviderContractTests : ProviderContractTests<LinkedInContractAdapter>
 {
     private readonly ITestOutputHelper _output;

@@ -111,7 +111,10 @@ public static class GhostKernelInstrumentation
         {
             // Suppress CA1848 analyzer warning
 #pragma warning disable CA1848
-            logger.LogDebug("Operation completed: {Operation}", activity.DisplayName);
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                logger.LogDebug("Operation completed: {Operation}", activity.DisplayName);
+            }
 #pragma warning restore CA1848
         }
         activity.Dispose();

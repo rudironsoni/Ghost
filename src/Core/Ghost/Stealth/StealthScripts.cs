@@ -18,8 +18,27 @@ public static class StealthScripts
                 const rand = () => ((Math.sin(seed++) + 1) / 2);
                 window.__ghostSeed = seed;
 
-                /* webdriver flag removal */
-                Object.defineProperty(navigator,'webdriver',{get:()=>undefined});
+                /* webdriver flag removal - multiple approaches for robustness */
+                try {
+                    // Approach 1: Try to delete the property first
+                    delete navigator.webdriver;
+                } catch(e) {}
+                try {
+                    // Approach 2: Redefine with configurable: true
+                    Object.defineProperty(navigator,'webdriver',{
+                        get:()=>undefined,
+                        configurable:true,
+                        enumerable:false
+                    });
+                } catch(e) {}
+                try {
+                    // Approach 3: Use Object.defineProperty on the prototype
+                    Object.defineProperty(Object.getPrototypeOf(navigator),'webdriver',{
+                        get:()=>undefined,
+                        configurable:true,
+                        enumerable:false
+                    });
+                } catch(e) {}
 
                 /* hardware concurrency */
                 Object.defineProperty(navigator,'hardwareConcurrency',{get:()=>{{{p.Cores}}}});
