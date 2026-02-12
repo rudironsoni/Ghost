@@ -21,5 +21,6 @@
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Moq" />
     <PackageReference Include="coverlet.collector" />
+
   </ItemGroup>
 </Project>

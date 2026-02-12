@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace Ghost.Services;
 
-public class StaticProxySource : IProxySource
+public sealed class StaticProxySource : IProxySource
 {
     private readonly ProxySourceConfig _config;
     private readonly ILogger<StaticProxySource> _logger;
