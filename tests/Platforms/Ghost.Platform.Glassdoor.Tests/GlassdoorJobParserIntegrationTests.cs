@@ -45,7 +45,7 @@ public class GlassdoorJobParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        var job = result.First();
+        var job = result[0];
         job.Title.Should().Be("Software Engineer");
         job.Company.Should().Be("Tech Company");
         job.Location.Should().Be("San Francisco, CA");
@@ -167,7 +167,7 @@ public class GlassdoorJobParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        var job = result.First();
+        var job = result[0];
         job.Title.Should().Be("Software Engineer");
         job.Company.Should().Be("Tech Company");
         job.Location.Should().BeNull();
@@ -237,7 +237,7 @@ public class GlassdoorJobParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        result.First().Salary.Should().Be("100000 USD");
+        result[0].Salary.Should().Be("100000 USD");
     }
 
     [Fact]
@@ -274,7 +274,7 @@ public class GlassdoorJobParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        result.First().Salary.Should().Be("150000 USD");
+        result[0].Salary.Should().Be("150000 USD");
     }
 
     [Fact]
@@ -311,7 +311,7 @@ public class GlassdoorJobParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        result.First().Salary.Should().Be("100000 - 150000");
+        result[0].Salary.Should().Be("100000 - 150000");
     }
 
     [Fact]
@@ -349,7 +349,7 @@ public class GlassdoorJobParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        var job = result.First();
+        var job = result[0];
         job.Title.Should().Be("Software Engineer");
         job.Company.Should().Be("Tech Company");
         job.Location.Should().Be("San Francisco, CA");
@@ -384,7 +384,7 @@ public class GlassdoorJobParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        result.First().Company.Should().Be("Tech Company");
+        result[0].Company.Should().Be("Tech Company");
     }
 
     [Fact]
@@ -415,7 +415,7 @@ public class GlassdoorJobParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        result.First().Location.Should().Be("San Francisco");
+        result[0].Location.Should().Be("San Francisco");
     }
 
     [Fact]
@@ -466,7 +466,7 @@ public class GlassdoorJobParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        result.First().Title.Should().Be("Software Engineer");
+        result[0].Title.Should().Be("Software Engineer");
     }
 
     [Fact]
@@ -502,7 +502,7 @@ public class GlassdoorJobParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        result.First().Title.Should().Be("Data Scientist");
+        result[0].Title.Should().Be("Data Scientist");
     }
 
     [Fact]
@@ -540,7 +540,7 @@ public class GlassdoorJobParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        result.First().Salary.Should().Be("100000 - 150000 USD");
+        result[0].Salary.Should().Be("100000 - 150000 USD");
     }
 
     [Fact]
@@ -572,7 +572,7 @@ public class GlassdoorJobParserIntegrationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        result.First().Title.Should().Be("Software Engineer");
+        result[0].Title.Should().Be("Software Engineer");
     }
 
     [Fact]

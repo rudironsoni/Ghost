@@ -13,7 +13,7 @@ namespace Ghost.Platform.Glassdoor.Tests;
 /// <summary>
 /// Integration tests for GlassdoorApiClient covering CSRF token, rate limiting, and error handling.
 /// </summary>
-public class GlassdoorApiClientIntegrationTests
+public class GlassdoorApiClientIntegrationTests : IDisposable
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<GlassdoorApiClient> _logger;
@@ -24,6 +24,13 @@ public class GlassdoorApiClientIntegrationTests
         _httpMessageHandler = new MockHttpMessageHandler();
         _httpClient = new HttpClient(_httpMessageHandler);
         _logger = new Mock<ILogger<GlassdoorApiClient>>().Object;
+    }
+
+    public void Dispose()
+    {
+        _httpClient.Dispose();
+        _httpMessageHandler.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     [Fact]
@@ -537,17 +544,7 @@ public class GlassdoorApiClientIntegrationTests
             client.SearchAsync("software engineer", "San Francisco", null, cts.Token));
     }
 
-    [Fact]
-    public void Dispose_ReleasesResources()
-    {
-        var client = new GlassdoorApiClient(_httpClient, _logger);
-
-        client.Dispose();
-
-        client.Dispose();
-    }
-
-    private class MockHttpMessageHandler : HttpMessageHandler
+    private sealed class MockHttpMessageHandler : HttpMessageHandler
     {
         public HttpResponseMessage? Response { get; set; }
         public Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>>? GetResponseFunc { get; set; }
