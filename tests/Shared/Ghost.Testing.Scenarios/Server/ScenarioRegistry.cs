@@ -16,7 +16,14 @@ public sealed class ScenarioRegistry
     [
         "/scenario/consent/modal-blocking",
         "/scenario/consent/banner-soft",
+        "/scenario/consent/banner-dismiss",
         "/scenario/consent/iframe-cmp",
+        "/scenario/consent/iframe-cmp-advanced",
+        "/scenario/consent/region-gdpr",
+        "/scenario/consent/region-ccpa",
+        "/scenario/consent/region-lgpd",
+        "/scenario/consent/stateful-persistence",
+        "/scenario/consent/reconsent-policy-change",
         "/scenario/scroll/auto-threshold",
         "/scenario/scroll/button-driven",
         "/scenario/scroll/virtualized",
@@ -26,6 +33,13 @@ public sealed class ScenarioRegistry
         "/scenario/pagination/mixed",
         "/scenario/dedupe/query-reorder",
         "/scenario/dedupe/tracking-params",
+        "/scenario/dedupe/redirect-chain",
+        "/scenario/dedupe/multiple-aliases",
+        "/scenario/dedupe/temporal-changes",
+        "/scenario/dedupe/mixed-case-params",
+        "/scenario/dedupe/array-params",
+        "/scenario/dedupe/session-tracking",
+        "/scenario/dedupe/ab-test-variants",
         "/scenario/antibot/simple-challenge"
     ];
 
@@ -50,7 +64,14 @@ public sealed class ScenarioRegistry
         // Consent scenarios
         app.MapGet("/scenario/consent/modal-blocking", ConsentScenarios.ModalBlockingHandler);
         app.MapGet("/scenario/consent/banner-soft", ConsentScenarios.BannerSoftHandler);
+        app.MapGet("/scenario/consent/banner-dismiss", ConsentScenarios.BannerDismissHandler);
         app.MapGet("/scenario/consent/iframe-cmp", ConsentScenarios.IframeCmpHandler);
+        app.MapGet("/scenario/consent/iframe-cmp-advanced", ConsentScenarios.IframeCmpAdvancedHandler);
+        app.MapGet("/scenario/consent/region-gdpr", ConsentScenarios.RegionGdprHandler);
+        app.MapGet("/scenario/consent/region-ccpa", ConsentScenarios.RegionCcpaHandler);
+        app.MapGet("/scenario/consent/region-lgpd", ConsentScenarios.RegionLgpdHandler);
+        app.MapGet("/scenario/consent/stateful-persistence", ConsentScenarios.StatefulPersistenceHandler);
+        app.MapGet("/scenario/consent/reconsent-policy-change", ConsentScenarios.ReconsentPolicyChangeHandler);
         app.MapPost("/scenario/consent/accept", ConsentScenarios.AcceptConsentHandler);
 
         // Scroll scenarios
@@ -69,6 +90,13 @@ public sealed class ScenarioRegistry
         // Deduplication scenarios
         app.MapGet("/scenario/dedupe/query-reorder", DedupeScenarios.QueryReorderHandler);
         app.MapGet("/scenario/dedupe/tracking-params", DedupeScenarios.TrackingParamsHandler);
+        app.MapGet("/scenario/dedupe/redirect-chain", DedupeScenarios.RedirectChainHandler);
+        app.MapGet("/scenario/dedupe/multiple-aliases", DedupeScenarios.MultipleAliasesHandler);
+        app.MapGet("/scenario/dedupe/temporal-changes", DedupeScenarios.TemporalChangesHandler);
+        app.MapGet("/scenario/dedupe/mixed-case-params", DedupeScenarios.MixedCaseParamsHandler);
+        app.MapGet("/scenario/dedupe/array-params", DedupeScenarios.ArrayParamsHandler);
+        app.MapGet("/scenario/dedupe/session-tracking", DedupeScenarios.SessionTrackingHandler);
+        app.MapGet("/scenario/dedupe/ab-test-variants", DedupeScenarios.ABTestVariantsHandler);
 
         // Anti-bot scenarios
         app.MapGet("/scenario/antibot/simple-challenge", AntiBotScenarios.SimpleChallengeHandler);
@@ -76,7 +104,7 @@ public sealed class ScenarioRegistry
 
         if (_logger.IsEnabled(LogLevel.Information))
         {
-            _logger.LogInformation("Registered {Count} scenario routes", 17);
+            _logger.LogInformation("Registered {Count} scenario routes", 31);
         }
     }
 }
