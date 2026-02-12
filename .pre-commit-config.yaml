@@ -23,10 +23,10 @@ repos:
         files: '\.(cs|csproj|sln)$'
         stages: [pre-commit]
 
-      # Run quick unit tests (skip Integration and E2E tests)
+      # Run quick non-E2E tests
       - id: dotnet-test-quick
         name: Quick unit tests
-        entry: dotnet test Ghost.sln --configuration Release --filter "FullyQualifiedName!~Integration&FullyQualifiedName!~E2E" --no-build --no-restore
+        entry: dotnet test Ghost.sln --filter "Category!=E2E"
         language: system
         pass_filenames: false
         files: '\.(cs|csproj)$'

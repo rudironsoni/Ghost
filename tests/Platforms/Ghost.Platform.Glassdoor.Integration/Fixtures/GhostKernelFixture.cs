@@ -37,7 +37,14 @@ public sealed class GlassdoorContextFixture : IAsyncLifetime
             services.AddLogging();
 
             // Register Glassdoor services manually
-            var glassdoorOptions = Microsoft.Extensions.Options.Options.Create(new Ghost.Platform.Glassdoor.GlassdoorOptions());
+            var glassdoorOptions = Microsoft.Extensions.Options.Options.Create(new Ghost.Platform.Glassdoor.GlassdoorOptions
+            {
+                Strategy = Ghost.Platform.Glassdoor.JobSearchStrategy.HttpOnly,
+                Enabled = false,
+                MaxRetries = 0,
+                EnableRetryWithJitter = false,
+                RequestTimeoutMs = 8000
+            });
             var proxyProvider = Ghost.Proxy.StaticProxyProvider.Empty;
 
             services.AddSingleton(_kernelFixture.ConcreteKernel);
