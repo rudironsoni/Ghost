@@ -74,6 +74,9 @@ public sealed class ScenarioRegistry
         app.MapGet("/scenario/antibot/simple-challenge", AntiBotScenarios.SimpleChallengeHandler);
         app.MapPost("/scenario/antibot/verify", AntiBotScenarios.VerifyChallengeHandler);
 
-        _logger.LogInformation("Registered {Count} scenario routes", 17);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("Registered {Count} scenario routes", 17);
+        }
     }
 }

@@ -252,7 +252,10 @@ public static class ScrollScenarios
         var offset = int.TryParse(context.Request.Query["offset"], out var o) ? o : 0;
         var limit = int.TryParse(context.Request.Query["limit"], out var l) ? l : 20;
 
-        logger.LogInformation("API: scroll/load-more offset={Offset} limit={Limit}", offset, limit);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("API: scroll/load-more offset={Offset} limit={Limit}", offset, limit);
+        }
 
         var jobs = TestData.GetJobPostings(offset, limit);
         var hasMore = offset + limit < TestData.TotalJobCount;
@@ -403,7 +406,10 @@ public static class ScrollScenarios
         var offset = int.TryParse(context.Request.Query["offset"], out var o) ? o : 0;
         var limit = int.TryParse(context.Request.Query["limit"], out var l) ? l : 15;
 
-        logger.LogInformation("API: scroll/load-more-duplicates offset={Offset} limit={Limit}", offset, limit);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("API: scroll/load-more-duplicates offset={Offset} limit={Limit}", offset, limit);
+        }
 
         // Simulate duplicate chunks: return overlapping items on certain offsets
         List<SyntheticJobPosting> jobs;
@@ -411,7 +417,10 @@ public static class ScrollScenarios
         {
             // Return duplicate chunk (overlap with previous)
             jobs = TestData.GetJobPostings(offset - 5, limit);
-            logger.LogInformation("API: Returning duplicate chunk at offset {Offset}", offset);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("API: Returning duplicate chunk at offset {Offset}", offset);
+            }
         }
         else
         {

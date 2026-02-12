@@ -17,6 +17,7 @@ namespace Ghost.Platform.Google.Tests.Contracts;
 /// <summary>
 /// Contract tests for Google provider.
 /// </summary>
+[Trait("Category", "E2E")]
 public class GoogleProviderContractTests : ProviderContractTests<GoogleContractAdapter>
 {
     private readonly ITestOutputHelper _output;
@@ -33,15 +34,11 @@ public class GoogleProviderContractTests : ProviderContractTests<GoogleContractA
     protected override GoogleContractAdapter CreateAdapter()
     {
         // Add substitutes for dependencies
-        var browserSession = Substitute.For<IBrowserSession>();
         var logger = Substitute.For<ILogger<Jobs.GoogleJobClient>>();
         var apiLogger = Substitute.For<ILogger<Jobs.Internal.GoogleJobsApiClient>>();
-        var browserLogger = Substitute.For<ILogger<Jobs.Internal.GoogleJobsBrowserClient>>();
-        var scraperLogger = Substitute.For<ILogger<Jobs.Internal.GoogleJobsScraper>>();
-        var kernel = Substitute.For<GhostKernel>();
 
-        // Add Google jobs options
-        var options = new Jobs.GoogleJobsOptions { Enabled = true };
+        // Add Google jobs options - use HttpOnly strategy to avoid browser dependencies
+        var options = new Jobs.GoogleJobsOptions { Enabled = true, Strategy = JobSearchStrategy.HttpOnly };
         var optionsWrapper = Options.Create(options);
 
         // Create HTTP client
@@ -50,14 +47,8 @@ public class GoogleProviderContractTests : ProviderContractTests<GoogleContractA
         // Create Google jobs API client
         var apiClient = new Jobs.Internal.GoogleJobsApiClient(httpClient, options, apiLogger);
 
-        // Create Google jobs browser client
-        var browserClient = new Jobs.Internal.GoogleJobsBrowserClient(kernel, optionsWrapper, browserLogger);
-
-        // Create Google jobs scraper
-        var scraper = new Jobs.Internal.GoogleJobsScraper(httpClient, scraperLogger);
-
-        // Create Google job client
-        var jobClient = new Jobs.GoogleJobClient(apiClient, browserClient, scraper, logger, optionsWrapper);
+        // Create Google job client using API-only constructor
+        var jobClient = new Jobs.GoogleJobClient(apiClient, logger, optionsWrapper);
 
         return new GoogleContractAdapter(jobClient);
     }

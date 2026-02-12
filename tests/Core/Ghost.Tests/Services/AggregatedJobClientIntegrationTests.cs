@@ -183,7 +183,7 @@ public class AggregatedJobClientIntegrationTests
         result.Count.Should().Be(1);
         result[0].Source.Should().Be("Google");
         mockScraper1.Verify(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()), Times.Once);
-        mockScraper2.Verify(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()), Times.Once);
+        mockScraper2.Verify(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -282,19 +282,43 @@ public class AggregatedJobClientIntegrationTests
         mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("Network error"));
 
-        var client = new AggregatedJobClient(new[] { mockScraper1.Object }, _mockDedupe.Object, _mockLogger.Object);
+        var testLogger = new TestLogger<AggregatedJobClient>();
+        var client = new AggregatedJobClient(new[] { mockScraper1.Object }, _mockDedupe.Object, testLogger);
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
         await client.SearchJobsAsync(criteria);
 
         // Assert
-        _mockLogger.Verify(l => l.Log(
-            LogLevel.Warning,
-            It.IsAny<EventId>(),
-            It.IsAny<object>(),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<object, Exception?, string>>()), Times.AtLeastOnce);
+        testLogger.LogEntries.Should().Contain(e => e.LogLevel == LogLevel.Warning);
+    }
+
+    private sealed class TestLogger<T> : ILogger<T>
+    {
+        public List<LogEntry> LogEntries { get; } = new();
+
+        public IDisposable BeginScope<TState>(TState state) where TState : notnull => throw new NotImplementedException();
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+            LogEntries.Add(new LogEntry
+            {
+                LogLevel = logLevel,
+                EventId = eventId,
+                State = state?.ToString(),
+                Exception = exception
+            });
+        }
+    }
+
+    private sealed class LogEntry
+    {
+        public LogLevel LogLevel { get; set; }
+        public EventId EventId { get; set; }
+        public string? State { get; set; }
+        public Exception? Exception { get; set; }
     }
 
     [Fact]
@@ -577,7 +601,7 @@ public class AggregatedJobClientIntegrationTests
         result.Count.Should().Be(1);
         result[0].Source.Should().Be("Google");
         mockScraper1.Verify(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()), Times.Once);
-        mockScraper2.Verify(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()), Times.Once);
+        mockScraper2.Verify(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

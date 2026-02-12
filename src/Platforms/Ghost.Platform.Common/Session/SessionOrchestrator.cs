@@ -54,10 +54,13 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
                 _options.HealthCheckInterval);
         }
 
-        _logger.LogInformation(
-            "SessionOrchestrator initialized with {MaxHttpSessions} HTTP and {MaxBrowserSessions} browser sessions",
-            _options.MaxConcurrentHttpSessions,
-            _options.MaxConcurrentBrowserSessions);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation(
+                "SessionOrchestrator initialized with {MaxHttpSessions} HTTP and {MaxBrowserSessions} browser sessions",
+                _options.MaxConcurrentHttpSessions,
+                _options.MaxConcurrentBrowserSessions);
+        }
     }
 
     /// <inheritdoc/>
@@ -67,12 +70,15 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
 
         var sessionType = DetermineSessionType(context);
 
-        _logger.LogDebug(
-            "Allocating {SessionType} session for platform {Platform}, country {Country}, complexity {Complexity}",
-            sessionType,
-            context.PlatformName,
-            context.CountryCode ?? "any",
-            context.ComplexityScore ?? 0);
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug(
+                "Allocating {SessionType} session for platform {Platform}, country {Country}, complexity {Complexity}",
+                sessionType,
+                context.PlatformName,
+                context.CountryCode ?? "any",
+                context.ComplexityScore ?? 0);
+        }
 
         var sessionId = GenerateSessionId();
         var metadata = new SessionMetadata
@@ -108,11 +114,14 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
                 throw new InvalidOperationException($"Session ID {sessionId} already exists");
             }
 
-            _logger.LogInformation(
-                "Allocated {SessionType} session {SessionId} for platform {Platform}",
-                sessionType,
-                sessionId,
-                context.PlatformName);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(
+                    "Allocated {SessionType} session {SessionId} for platform {Platform}",
+                    sessionType,
+                    sessionId,
+                    context.PlatformName);
+            }
 
             return sessionId;
         }
@@ -142,10 +151,13 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
         {
             if (existingMapping.ExpiresAt > DateTime.UtcNow && _sessions.ContainsKey(existingMapping.SessionId))
             {
-                _logger.LogDebug(
-                    "Reusing existing session {SessionId} for affinity key {AffinityKey}",
-                    existingMapping.SessionId,
-                    affinityOptions.AffinityKey);
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug(
+                        "Reusing existing session {SessionId} for affinity key {AffinityKey}",
+                        existingMapping.SessionId,
+                        affinityOptions.AffinityKey);
+                }
 
                 if (_sessions.TryGetValue(existingMapping.SessionId, out var metadata))
                 {
@@ -182,11 +194,14 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
 
         _affinityMappings.TryAdd(affinityOptions.AffinityKey, mapping);
 
-        _logger.LogInformation(
-            "Created affinity mapping: {AffinityKey} -> {SessionId}, expires at {ExpiresAt}",
-            affinityOptions.AffinityKey,
-            sessionId,
-            mapping.ExpiresAt);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation(
+                "Created affinity mapping: {AffinityKey} -> {SessionId}, expires at {ExpiresAt}",
+                affinityOptions.AffinityKey,
+                sessionId,
+                mapping.ExpiresAt);
+        }
 
         return sessionId;
     }
@@ -282,7 +297,10 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
     /// <inheritdoc/>
     public async Task RecycleSessionAsync(string sessionId, CancellationToken ct = default)
     {
-        _logger.LogInformation("Recycling session {SessionId}", sessionId);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("Recycling session {SessionId}", sessionId);
+        }
 
         if (!_sessions.TryRemove(sessionId, out var metadata))
         {
@@ -302,7 +320,10 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
 
         await DisposeSessionAsync(metadata);
 
-        _logger.LogInformation("Session {SessionId} recycled successfully", sessionId);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("Session {SessionId} recycled successfully", sessionId);
+        }
     }
 
     /// <inheritdoc/>
@@ -315,11 +336,14 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
 
         metadata.ExpiresAt = metadata.ExpiresAt.Add(additionalTime);
 
-        _logger.LogDebug(
-            "Extended TTL for session {SessionId} by {AdditionalTime}, new expiration: {ExpiresAt}",
-            sessionId,
-            additionalTime,
-            metadata.ExpiresAt);
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug(
+                "Extended TTL for session {SessionId} by {AdditionalTime}, new expiration: {ExpiresAt}",
+                sessionId,
+                additionalTime,
+                metadata.ExpiresAt);
+        }
 
         return Task.CompletedTask;
     }
@@ -350,10 +374,13 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
 
         await metadata.BrowserSession.SaveStorageStateAsync(storagePath);
 
-        _logger.LogInformation(
-            "Persisted session state for {SessionId} to {StoragePath}",
-            sessionId,
-            storagePath);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation(
+                "Persisted session state for {SessionId} to {StoragePath}",
+                sessionId,
+                storagePath);
+        }
     }
 
     /// <inheritdoc/>
@@ -398,7 +425,10 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
     /// <inheritdoc/>
     public async Task CloseSessionAsync(string sessionId, CancellationToken ct = default)
     {
-        _logger.LogInformation("Closing session {SessionId}", sessionId);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("Closing session {SessionId}", sessionId);
+        }
 
         if (!_sessions.TryRemove(sessionId, out var metadata))
         {
@@ -418,13 +448,19 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
 
         await DisposeSessionAsync(metadata);
 
-        _logger.LogInformation("Session {SessionId} closed successfully", sessionId);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("Session {SessionId} closed successfully", sessionId);
+        }
     }
 
     /// <inheritdoc/>
     public async Task<int> PerformHealthCheckSweepAsync(CancellationToken ct = default)
     {
-        _logger.LogDebug("Performing health check sweep on {Count} sessions", _sessions.Count);
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug("Performing health check sweep on {Count} sessions", _sessions.Count);
+        }
 
         var recycledCount = 0;
         var now = DateTime.UtcNow;
@@ -468,10 +504,13 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
 
         if (recycledCount > 0)
         {
-            _logger.LogInformation(
-                "Health check sweep completed: recycled {RecycledCount} sessions, cleaned {ExpiredAffinity} affinity mappings",
-                recycledCount,
-                expiredAffinityKeys.Count);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(
+                    "Health check sweep completed: recycled {RecycledCount} sessions, cleaned {ExpiredAffinity} affinity mappings",
+                    recycledCount,
+                    expiredAffinityKeys.Count);
+            }
         }
 
         return recycledCount;
@@ -644,7 +683,10 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
         if (oldestKey != null)
         {
             _affinityMappings.TryRemove(oldestKey, out _);
-            _logger.LogDebug("Evicted affinity mapping {AffinityKey}", oldestKey);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("Evicted affinity mapping {AffinityKey}", oldestKey);
+            }
         }
     }
 

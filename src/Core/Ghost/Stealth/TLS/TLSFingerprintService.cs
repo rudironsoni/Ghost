@@ -32,11 +32,14 @@ public sealed class TLSFingerprintService
     {
         var profile = _randomizer.GenerateRandomProfile(browserType);
 
-        _logger.LogDebug(
-            "Generated JA3 profile: {JA3String} (Hash: {JA3Hash})",
-            profile.ToJA3String(),
-            profile.ToJA3Hash()
-        );
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug(
+                "Generated JA3 profile: {JA3String} (Hash: {JA3Hash})",
+                profile.ToJA3String(),
+                profile.ToJA3Hash()
+            );
+        }
 
         return profile;
     }
@@ -70,11 +73,14 @@ public sealed class TLSFingerprintService
             // 3. Patchright kernel modifications (future enhancement)
 
             // For now, log the JA3 profile that should be applied
-            _logger.LogInformation(
-                "JA3 profile prepared for context: {JA3Hash}. " +
-                "Full TLS modification requires proxy integration or browser kernel patches.",
-                profile.ToJA3Hash()
-            );
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(
+                    "JA3 profile prepared for context: {JA3Hash}. " +
+                    "Full TLS modification requires proxy integration or browser kernel patches.",
+                    profile.ToJA3Hash()
+                );
+            }
 
             // We can set some related fingerprints via CDP
             await ConfigureNetworkEmulation(client, profile);
@@ -95,11 +101,14 @@ public sealed class TLSFingerprintService
         // Modern browsers with TLS 1.3 support HTTP/2
         var supportsHttp2 = profile.TLSVersion >= 771;
 
-        _logger.LogDebug(
-            "Configured network emulation for TLS version {TLSVersion} (HTTP/2: {HTTP2})",
-            profile.TLSVersion,
-            supportsHttp2
-        );
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug(
+                "Configured network emulation for TLS version {TLSVersion} (HTTP/2: {HTTP2})",
+                profile.TLSVersion,
+                supportsHttp2
+            );
+        }
 
         // Additional CDP commands for network behavior can be added here
         await Task.CompletedTask;

@@ -30,8 +30,11 @@ public sealed class PaginationMiddleware
             context.Items["PageSize"] = pageSize;
             context.Items["Cursor"] = cursor;
 
-            _logger.LogDebug("Pagination request with page={Page}, pageSize={PageSize}, cursor={Cursor}",
-                page, pageSize, cursor);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("Pagination request with page={Page}, pageSize={PageSize}, cursor={Cursor}",
+                    page, pageSize, cursor);
+            }
         }
 
         await _next(context);

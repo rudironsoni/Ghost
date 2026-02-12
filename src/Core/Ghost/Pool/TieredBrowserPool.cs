@@ -62,10 +62,13 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
             await WarmUpAsync(Tier.Hot, _options.Hot.MinimumSize, CancellationToken.None);
             await WarmUpAsync(Tier.Warm, _options.Warm.MinimumSize, CancellationToken.None);
 
-            _logger.LogInformation(
-                "Tiered browser pool initialized: Hot={HotCount}, Warm={WarmCount}",
-                _options.Hot.MinimumSize,
-                _options.Warm.MinimumSize);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(
+                    "Tiered browser pool initialized: Hot={HotCount}, Warm={WarmCount}",
+                    _options.Hot.MinimumSize,
+                    _options.Warm.MinimumSize);
+            }
         }
         catch (Exception ex)
         {
@@ -101,11 +104,14 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
                 UseCount = 1
             };
 
-            _logger.LogDebug(
-                "Acquired browser from {Tier} pool in {ElapsedMs}ms (SessionId={SessionId})",
-                tier,
-                sw.Elapsed.TotalMilliseconds,
-                session.SessionId);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug(
+                    "Acquired browser from {Tier} pool in {ElapsedMs}ms (SessionId={SessionId})",
+                    tier,
+                    sw.Elapsed.TotalMilliseconds,
+                    session.SessionId);
+            }
 
             return session;
         }
@@ -203,7 +209,10 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
         {
             if (pooled.IsExpired(_options.SessionTtl))
             {
-                _logger.LogDebug("Session expired, disposing (SessionId={SessionId})", session.SessionId);
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug("Session expired, disposing (SessionId={SessionId})", session.SessionId);
+                }
                 await session.DisposeAsync();
                 return;
             }
@@ -226,10 +235,13 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
                 if (currentCount < maxSize)
                 {
                     targetPool.Add(pooled);
-                    _logger.LogDebug(
-                        "Returned session to {Tier} pool (SessionId={SessionId})",
-                        pooled.Tier,
-                        session.SessionId);
+                    if (_logger.IsEnabled(LogLevel.Debug))
+                    {
+                        _logger.LogDebug(
+                            "Returned session to {Tier} pool (SessionId={SessionId})",
+                            pooled.Tier,
+                            session.SessionId);
+                    }
                     return;
                 }
             }
@@ -461,10 +473,13 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
         if (hotExpired.Count > 0 || warmExpired.Count > 0)
         {
-            _logger.LogInformation(
-                "Cleaned up expired sessions: Hot={HotExpired}, Warm={WarmExpired}",
-                hotExpired.Count,
-                warmExpired.Count);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(
+                    "Cleaned up expired sessions: Hot={HotExpired}, Warm={WarmExpired}",
+                    hotExpired.Count,
+                    warmExpired.Count);
+            }
         }
 
         return Task.CompletedTask;

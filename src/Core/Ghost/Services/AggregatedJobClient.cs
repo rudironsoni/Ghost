@@ -50,10 +50,13 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         // Log how many scrapers were injected
         try
         {
-            _logger.LogInformation("Injected scrapers count: {Count}", _scrapers?.Count ?? 0);
-            foreach (var s in _scrapers ?? Enumerable.Empty<IJobScraper>())
+            if (_logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation("Available scraper: '{Name}' (Type: {Type})", s.PlatformName, s.GetType().Name);
+                _logger.LogInformation("Injected scrapers count: {Count}", _scrapers?.Count ?? 0);
+                foreach (var s in _scrapers ?? Enumerable.Empty<IJobScraper>())
+                {
+                    _logger.LogInformation("Available scraper: '{Name}' (Type: {Type})", s.PlatformName, s.GetType().Name);
+                }
             }
         }
         catch { /* swallow any logging errors */ }
@@ -64,13 +67,19 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         {
             try
             {
-                _logger.LogInformation("Search criteria sources: {Sources}", string.Join(", ", criteriaNonNull.Sources));
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Search criteria sources: {Sources}", string.Join(", ", criteriaNonNull.Sources));
+                }
             }
             catch { }
             var lower = new HashSet<string>((criteriaNonNull.Sources ?? new List<string>()).Select(s => s?.ToLowerInvariant() ?? string.Empty));
             try
             {
-                _logger.LogInformation("Requested sources (normalized): {Sources}", string.Join(", ", lower));
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Requested sources (normalized): {Sources}", string.Join(", ", lower));
+                }
             }
             catch { }
             scrapersToRun = (_scrapers ?? Enumerable.Empty<IJobScraper>())
@@ -83,7 +92,10 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
 
         try
         {
-            _logger.LogInformation("Selected scrapers: {Scrapers}", string.Join(", ", (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => s.PlatformName)));
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Selected scrapers: {Scrapers}", string.Join(", ", (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => s.PlatformName)));
+            }
         }
         catch { }
 
@@ -149,16 +161,15 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         // log how many scrapers were injected
         try
         {
-            _logger.LogInformation("Injected scrapers count: {Count}", _scrapers?.Count ?? 0);
-            // log each injected scraper name and type for debugging
-            try
+            if (_logger.IsEnabled(LogLevel.Information))
             {
+                _logger.LogInformation("Injected scrapers count: {Count}", _scrapers?.Count ?? 0);
+                // log each injected scraper name and type for debugging
                 foreach (var s in _scrapers ?? Enumerable.Empty<IJobScraper>())
                 {
                     _logger.LogInformation("Available scraper: '{Name}' (Type: {Type})", s.PlatformName, s.GetType().Name);
                 }
             }
-            catch { }
         }
         catch { /* swallow any logging errors */ }
 
@@ -169,14 +180,20 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             // log provided sources
             try
             {
-                _logger.LogInformation("Search criteria sources: {Sources}", string.Join(", ", criteriaNonNull.Sources));
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Search criteria sources: {Sources}", string.Join(", ", criteriaNonNull.Sources));
+                }
             }
             catch { }
             var lower = new HashSet<string>((criteriaNonNull.Sources ?? new List<string>()).Select(s => s?.ToLowerInvariant() ?? string.Empty));
             // log normalized requested sources for debugging
             try
             {
-                _logger.LogInformation("Requested sources (normalized): {Sources}", string.Join(", ", lower));
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Requested sources (normalized): {Sources}", string.Join(", ", lower));
+                }
             }
             catch { }
             scrapersToRun = (_scrapers ?? Enumerable.Empty<IJobScraper>())
@@ -190,7 +207,10 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         // log selected scrapers after filtering
         try
         {
-            _logger.LogInformation("Selected scrapers: {Scrapers}", string.Join(", ", (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => s.PlatformName)));
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Selected scrapers: {Scrapers}", string.Join(", ", (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => s.PlatformName)));
+            }
         }
         catch { }
 
