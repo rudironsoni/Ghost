@@ -12,6 +12,7 @@ using Xunit;
 namespace Ghost.Platform.Google.Tests;
 
 [Collection("GooglePlatformTests")]
+[Trait("Category", "Unit")]
 public class GoogleClientTests
 {
     [Fact]

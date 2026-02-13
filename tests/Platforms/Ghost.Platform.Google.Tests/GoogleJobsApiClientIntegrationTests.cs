@@ -14,7 +14,10 @@ namespace Ghost.Platform.Google.Tests;
 
 /// <summary>
 /// Integration tests for GoogleJobsApiClient covering job search, consent handling, and retry logic.
+/// Uses MockHttpMessageHandler for deterministic HTTP mocking without external network calls.
 /// </summary>
+[Trait("Category", "Integration")]
+[Trait("Capability", "RequiresMockServer")]
 public sealed class GoogleJobsApiClientIntegrationTests : IDisposable
 {
     private readonly HttpClient _httpClient;

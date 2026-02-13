@@ -9,6 +9,7 @@ using Xunit;
 
 namespace Ghost.Platform.Anthropic.Tests;
 
+[Trait("Category", "Unit")]
 public class AnthropicClientTests
 {
     [Fact]
