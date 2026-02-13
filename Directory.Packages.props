@@ -93,9 +93,10 @@
        <PackageVersion Include="NUnit3TestAdapter" Version="4.6.0" />
        <PackageVersion Include="NUnit.Analyzers" Version="4.6.0" />
        <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="9.0.1" />
-       <PackageVersion Include="WireMock.Net" Version="1.6.11" />
-       <PackageVersion Include="Patchright.NUnit" Version="1.58.0" />
-     </ItemGroup>
+        <PackageVersion Include="WireMock.Net" Version="1.6.11" />
+        <PackageVersion Include="Patchright.NUnit" Version="1.58.0" />
+        <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
+      </ItemGroup>
 
   <!-- Roslyn Analyzers -->
   <ItemGroup Label="Analyzers">
