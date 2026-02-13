@@ -10,6 +10,7 @@ using Ghost.WebApi.Features.Health;
 using Ghost.WebApi.Features.Jobs;
 using Ghost.WebApi.Features.LinkedIn;
 using Ghost.WebApi.Metrics;
+using Ghost.WebApi.Security;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging.Abstractions;
 // Removed unused reflection/disk/culture usings after replacing dynamic loader with
@@ -54,6 +55,8 @@ builder.Services.AddGhostResilience(builder.Configuration);
 builder.Services.AddGhostMonitoring(builder.Configuration);
 builder.Services.AddRedisQueueMetrics();
 builder.Services.AddHttpClient();
+builder.Services.Configure<AdminApiKeyOptions>(builder.Configuration.GetSection(AdminApiKeyOptions.SectionName));
+builder.Services.AddScoped<AdminApiKeyEndpointFilter>();
 builder.Services.Configure<Ghost.Core.ProxyOptions>(builder.Configuration.GetSection("Ghost:Proxy"));
 builder.Services.AddSingleton<Ghost.Abstractions.IProxyProvider, Ghost.Services.RotatingProxyProvider>();
 

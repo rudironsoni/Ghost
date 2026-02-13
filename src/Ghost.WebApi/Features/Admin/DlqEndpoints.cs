@@ -1,5 +1,6 @@
 using System.Globalization;
 using Ghost.Core;
+using Ghost.WebApi.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -22,15 +23,15 @@ public static class DlqEndpoints
 
         group.MapGet(string.Empty, GetJobs)
             .WithName("GetDlqJobs")
-            .AllowAnonymous();
+            .AddEndpointFilter<AdminApiKeyEndpointFilter>();
 
         group.MapGet("/stats", GetStats)
             .WithName("GetDlqStats")
-            .AllowAnonymous();
+            .AddEndpointFilter<AdminApiKeyEndpointFilter>();
 
         group.MapPost("/clear", ClearQueue)
             .WithName("ClearDlq")
-            .AllowAnonymous();
+            .AddEndpointFilter<AdminApiKeyEndpointFilter>();
     }
 
     private static async Task<IResult> GetJobs(

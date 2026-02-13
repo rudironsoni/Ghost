@@ -1,4 +1,5 @@
 using Ghost.Core.Monitoring;
+using Ghost.WebApi.Security;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ghost.WebApi.Features.Health;
@@ -11,16 +12,17 @@ public static class MetricsEndpoints
     public static void MapMetricsEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/metrics")
-            .WithTags("Metrics")
-            .AllowAnonymous();
+            .WithTags("Metrics");
 
         group.MapGet("/", GetMetrics)
             .WithName("GetMetrics")
-            .WithSummary("Get all metrics in JSON format");
+            .WithSummary("Get all metrics in JSON format")
+            .AddEndpointFilter<AdminApiKeyEndpointFilter>();
 
         group.MapGet("/prometheus", GetPrometheusMetrics)
             .WithName("GetPrometheusMetrics")
-            .WithSummary("Get metrics in Prometheus exposition format");
+            .WithSummary("Get metrics in Prometheus exposition format")
+            .AddEndpointFilter<AdminApiKeyEndpointFilter>();
     }
 
     private static IResult GetMetrics([FromServices] IMetricsCollector metrics)

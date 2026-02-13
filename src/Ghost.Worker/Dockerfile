@@ -1,7 +1,7 @@
 # Ghost Worker Dockerfile
 # Multi-stage build for optimized container size
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-noble AS build
 WORKDIR /src
 
 # Copy solution and project files
@@ -22,7 +22,7 @@ WORKDIR /src/src/Ghost.Worker
 RUN dotnet publish -c Release -o /app/publish --no-restore
 
 # Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS runtime
 WORKDIR /app
 
 # Install Playwright dependencies and browsers

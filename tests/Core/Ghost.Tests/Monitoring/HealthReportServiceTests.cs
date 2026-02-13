@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Ghost.Abstractions;
 using Ghost.Monitoring;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace Ghost.Tests.Monitoring;
@@ -10,7 +11,7 @@ public class HealthReportServiceTests
     [Fact]
     public async Task BuildReportAsyncReturnsEmptyListsWhenNoProxySources()
     {
-        var service = new HealthReportService(Array.Empty<IProxySource>());
+        var service = new HealthReportService(Array.Empty<IProxySource>(), Array.Empty<IJobScraper>(), NullLogger<HealthReportService>.Instance);
 
         var report = await service.BuildReportAsync(CancellationToken.None);
 
@@ -27,7 +28,7 @@ public class HealthReportServiceTests
             new TestProxySource(),
             new TestProxySource()
         };
-        var service = new HealthReportService(sources);
+        var service = new HealthReportService(sources, Array.Empty<IJobScraper>(), NullLogger<HealthReportService>.Instance);
 
         var report = await service.BuildReportAsync(CancellationToken.None);
 
@@ -37,7 +38,7 @@ public class HealthReportServiceTests
     [Fact]
     public async Task BuildReportAsyncPopulatesHealthyProxyEntries()
     {
-        var service = new HealthReportService(new[] { new TestProxySource() });
+        var service = new HealthReportService(new[] { new TestProxySource(new[] { new ProxyInfo("proxy://one", null, null) }) }, Array.Empty<IJobScraper>(), NullLogger<HealthReportService>.Instance);
 
         var report = await service.BuildReportAsync(CancellationToken.None);
 
@@ -49,7 +50,7 @@ public class HealthReportServiceTests
     {
         using var cts = new CancellationTokenSource();
         cts.Cancel();
-        var service = new HealthReportService(Array.Empty<IProxySource>());
+        var service = new HealthReportService(Array.Empty<IProxySource>(), Array.Empty<IJobScraper>(), NullLogger<HealthReportService>.Instance);
 
         var act = () => service.BuildReportAsync(cts.Token);
 
@@ -58,9 +59,21 @@ public class HealthReportServiceTests
 
     private sealed class TestProxySource : IProxySource
     {
+        private readonly IEnumerable<ProxyInfo> _proxies;
+
+        public TestProxySource()
+            : this(Array.Empty<ProxyInfo>())
+        {
+        }
+
+        public TestProxySource(IEnumerable<ProxyInfo> proxies)
+        {
+            _proxies = proxies;
+        }
+
         public Task<IEnumerable<ProxyInfo>> FetchProxiesAsync(CancellationToken ct)
         {
-            return Task.FromResult<IEnumerable<ProxyInfo>>(Array.Empty<ProxyInfo>());
+            return Task.FromResult(_proxies);
         }
     }
 }
