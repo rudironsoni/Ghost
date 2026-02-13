@@ -1,7 +1,7 @@
 using System;
-using Moq;
 using Ghost.Abstractions;
 using Ghost.Platform.Common.Session;
+using Moq;
 using Xunit;
 
 namespace Ghost.Platform.Common.Tests.Session;

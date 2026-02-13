@@ -3,9 +3,9 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Moq;
 using Ghost.Abstractions;
 using Ghost.Platform.Common.Session;
+using Moq;
 using Xunit;
 
 namespace Ghost.Platform.Common.Tests.Session;

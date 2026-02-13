@@ -168,7 +168,6 @@ public class XSocialClientTests
 
         // Assert
         Assert.Equal("Test content", result.Content);
-        Assert.NotNull(result.CreatedAt);
     }
 
     [Fact]
