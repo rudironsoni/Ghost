@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Plugin.LinkedIn;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -12,6 +13,8 @@ namespace Ghost.Plugin.LinkedIn.Tests;
 
 public class LinkedInPluginRegistrationTests
 {
+    [Trait("Category", "Unit")]
+    [TestTimeout(10000)]
     [Fact]
     public void ConfigureServices_ShouldRegisterReadinessCheckService()
     {
@@ -27,6 +30,8 @@ public class LinkedInPluginRegistrationTests
         services.Should().ContainSingle(sd => sd.ServiceType == typeof(ILinkedInPluginReadinessCheck));
     }
 
+    [Trait("Category", "Unit")]
+    [TestTimeout(10000)]
     [Fact]
     public void ConfigureServices_ShouldRegisterCapabilitiesService()
     {
@@ -42,6 +47,8 @@ public class LinkedInPluginRegistrationTests
         services.Should().ContainSingle(sd => sd.ServiceType == typeof(LinkedInPluginCapabilities));
     }
 
+    [Trait("Category", "Unit")]
+    [TestTimeout(10000)]
     [Fact]
     public void ConfigureServices_ShouldRegisterKeyedJobClient()
     {
@@ -63,6 +70,8 @@ public class LinkedInPluginRegistrationTests
         keyedDescriptor!.Lifetime.Should().Be(ServiceLifetime.Scoped);
     }
 
+    [Trait("Category", "Unit")]
+    [TestTimeout(10000)]
     [Fact]
     public void Capabilities_ShouldHaveExpectedValues()
     {
