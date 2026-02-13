@@ -13,7 +13,6 @@ public sealed partial class ScraperWorker : BackgroundService
     private readonly IConnectionMultiplexer _redis;
     private readonly IServiceProvider _serviceProvider;
     private readonly WorkerConfiguration _config;
-    private readonly SemaphoreSlim _concurrencyLimiter;
 
     // LoggerMessage delegates for high-performance logging
     [LoggerMessage(Level = LogLevel.Information, Message = "Ghost Worker {WorkerId} starting on node {NodeName} with max concurrency {MaxConcurrency}")]
@@ -53,7 +52,6 @@ public sealed partial class ScraperWorker : BackgroundService
         _redis = redis;
         _serviceProvider = serviceProvider;
         _config = config;
-        _concurrencyLimiter = new SemaphoreSlim(config.MaxConcurrentJobs, config.MaxConcurrentJobs);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -63,54 +61,49 @@ public sealed partial class ScraperWorker : BackgroundService
         var db = _redis.GetDatabase();
         var queueKey = _config.RedisQueueKey;
 
+        var workers = Enumerable
+            .Range(0, _config.MaxConcurrentJobs)
+            .Select(_ => RunWorkerLoopAsync(db, queueKey, stoppingToken))
+            .ToArray();
+
+        try
+        {
+            await Task.WhenAll(workers);
+        }
+        catch (OperationCanceledException)
+        {
+            LogWorkerStopping();
+        }
+
+        LogWorkerShutdown(_config.WorkerId);
+    }
+
+    private async Task RunWorkerLoopAsync(IDatabase db, string queueKey, CancellationToken stoppingToken)
+    {
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                // Wait for available concurrency slot
-                await _concurrencyLimiter.WaitAsync(stoppingToken);
-
-                // Pop job from Redis queue (blocking with timeout)
                 var jobJson = await db.ListRightPopAsync(queueKey);
 
                 if (jobJson.IsNullOrEmpty)
                 {
-                    // No jobs available, release slot and wait before retry
-                    _concurrencyLimiter.Release();
                     await Task.Delay(_config.PollIntervalMs, stoppingToken);
                     continue;
                 }
 
-                // Process job asynchronously (fire and forget with error handling)
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await ProcessJobAsync(jobJson!, stoppingToken);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogUnhandledJobError(ex);
-                    }
-                    finally
-                    {
-                        _concurrencyLimiter.Release();
-                    }
-                }, stoppingToken);
+                await ProcessJobAsync(jobJson!, stoppingToken);
             }
             catch (OperationCanceledException)
             {
-                LogWorkerStopping();
                 break;
             }
             catch (Exception ex)
             {
-                LogWorkerLoopError(ex);
-                await Task.Delay(1000, stoppingToken); // Brief pause before retry
+                LogUnhandledJobError(ex);
+                await Task.Delay(1000, stoppingToken);
             }
         }
-
-        LogWorkerShutdown(_config.WorkerId);
     }
 
     private async Task ProcessJobAsync(string jobJson, CancellationToken cancellationToken)
@@ -121,8 +114,8 @@ public sealed partial class ScraperWorker : BackgroundService
         try
         {
             // Deserialize job request
-            ArgumentNullException.ThrowIfNull(JsonConvert.DeserializeObject<JobRequest>(jobJson), nameof(jobJson));
-            var jobRequest = JsonConvert.DeserializeObject<JobRequest>(jobJson)!;
+            var jobRequest = JsonConvert.DeserializeObject<JobRequest>(jobJson)
+                ?? throw new ArgumentNullException(nameof(jobJson));
 
             jobId = jobRequest.JobId;
             LogProcessingJob(jobRequest.JobId, jobRequest.Platform, jobRequest.SearchQuery);
@@ -131,8 +124,9 @@ public sealed partial class ScraperWorker : BackgroundService
             await UpdateJobStatusAsync(jobRequest.JobId, JobStatus.Processing, cancellationToken);
 
             // Resolve the appropriate job client for the platform
-            var jobClient = ResolveJobClient(jobRequest.Platform)
-                ?? throw new NotSupportedException($"Platform {jobRequest.Platform} is not supported");
+            await using var scope = _serviceProvider.CreateAsyncScope();
+            var jobClient = ResolveJobClient(scope.ServiceProvider, jobRequest.Platform)
+                ?? throw new NotSupportedException($"Platform '{jobRequest.Platform}' is not supported");
 
             // Execute scraping with platform-specific criteria
             var criteria = new JobSearchCriteria
@@ -163,17 +157,13 @@ public sealed partial class ScraperWorker : BackgroundService
         }
     }
 
-    private IJobClient? ResolveJobClient(string platform)
+    private static IJobClient? ResolveJobClient(IServiceProvider scopedProvider, string platform)
     {
-        // Use service provider to resolve the correct IJobClient implementation
-        // based on the platform name
-        using var scope = _serviceProvider.CreateScope();
-
         return platform.ToLowerInvariant() switch
         {
-            "linkedin" => scope.ServiceProvider.GetKeyedService<IJobClient>("linkedin"),
-            "indeed" => scope.ServiceProvider.GetKeyedService<IJobClient>("indeed"),
-            "glassdoor" => scope.ServiceProvider.GetKeyedService<IJobClient>("glassdoor"),
+            "linkedin" => scopedProvider.GetKeyedService<IJobClient>("linkedin"),
+            "indeed" => scopedProvider.GetKeyedService<IJobClient>("indeed"),
+            "glassdoor" => scopedProvider.GetKeyedService<IJobClient>("glassdoor"),
             _ => null
         };
     }
@@ -211,11 +201,6 @@ public sealed partial class ScraperWorker : BackgroundService
         await db.StringSetAsync(statusKey, statusJson, TimeSpan.FromHours(_config.ResultsExpirationHours));
     }
 
-    public override void Dispose()
-    {
-        _concurrencyLimiter.Dispose();
-        base.Dispose();
-    }
 }
 
 /// <summary>

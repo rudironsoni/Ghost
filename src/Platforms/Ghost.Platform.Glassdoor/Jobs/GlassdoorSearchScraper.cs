@@ -14,7 +14,7 @@ namespace Ghost.Platform.Glassdoor.Jobs;
 /// </summary>
 public sealed class GlassdoorSearchScraper : IDisposable
 {
-    private readonly GhostKernel _kernel;
+    private readonly IGhostKernel _kernel;
     private readonly IProxyProvider? _proxyProvider;
     private readonly ILogger<GlassdoorSearchScraper> _logger;
     private readonly GlassdoorOptions _options;
@@ -60,7 +60,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
         LoggerMessage.Define(LogLevel.Debug, new EventId(11, "DomExtractionFailed"), "DOM extraction failed, falling back to regex");
 
     public GlassdoorSearchScraper(
-        GhostKernel kernel,
+        IGhostKernel kernel,
         IOptions<GlassdoorOptions> options,
         ILogger<GlassdoorSearchScraper> logger,
         IProxyProvider? proxyProvider = null)

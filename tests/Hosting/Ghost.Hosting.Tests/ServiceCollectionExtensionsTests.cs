@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using FluentAssertions;
+using Ghost.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -51,5 +52,25 @@ public class ServiceCollectionExtensionsTests
         services.AddGhost(_ => { });
         // Verify services were added (at minimum, options should be registered)
         services.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task AddGhostCanBuildProviderWithoutSynchronousKernelInitialization()
+    {
+        var services = new ServiceCollection();
+        services.AddGhost(_ => { });
+
+        await using var provider = services.BuildServiceProvider(new ServiceProviderOptions
+        {
+            ValidateOnBuild = true,
+            ValidateScopes = true
+        });
+
+        var kernel = provider.GetRequiredService<IGhostKernel>();
+        kernel.Should().NotBeNull();
+
+        await using var scope = provider.CreateAsyncScope();
+        var browserSession = scope.ServiceProvider.GetRequiredService<Ghost.IBrowserSession>();
+        browserSession.Should().NotBeNull();
     }
 }

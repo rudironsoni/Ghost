@@ -8,6 +8,7 @@
     <ProjectReference Include="..\..\..\src\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
     <ProjectReference Include="..\..\..\src\Core\Ghost\Ghost.csproj" />
     <ProjectReference Include="..\..\..\src\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\src\Ghost.Worker\Ghost.Worker.csproj" />
   </ItemGroup>
 
   <ItemGroup>
