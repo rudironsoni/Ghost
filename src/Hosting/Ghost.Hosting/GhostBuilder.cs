@@ -1,7 +1,6 @@
 using Ghost.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace Ghost.Hosting;
 
@@ -67,32 +66,13 @@ public sealed class GhostBuilder
         // Register core services needed by extensions
         _services.AddSingleton<Ghost.Abstractions.IDeduplicationService, Ghost.Utilities.DeduplicationService>();
 
-        // Register IGhostKernel interface for the kernel
-        _services.AddSingleton<IGhostKernel>(provider =>
-        {
-            var opts = provider.GetRequiredService<IOptions<KernelOptions>>().Value;
-            // Create synchronously since DI registration is not async
-            // This is acceptable for the singleton kernel initialization during startup
-            return GhostKernel.CreateAsync(opts).GetAwaiter().GetResult();
-        });
+        // Register kernel manager and expose it as IGhostKernel.
+        _services.AddSingleton<GhostKernelManager>();
+        _services.AddSingleton<IGhostKernel>(provider => provider.GetRequiredService<GhostKernelManager>());
+        _services.AddHostedService(provider => provider.GetRequiredService<GhostKernelManager>());
 
-        // Register concrete GhostKernel type for extensions that need it
-        _services.AddSingleton(provider => (GhostKernel)provider.GetRequiredService<IGhostKernel>());
-
-        // Register Hosted Service to manage Kernel lifecycle (shutdown)
-        _services.AddHostedService<GhostKernelHostedService>();
-
-        // Register IBrowserSession as Scoped (per-request) factory from the kernel
-        // NOTE: This creates a new browser session for each HTTP request scope
-        // Services using this should be Scoped, not Singleton
-        // FIXED: Wrapped in Lazy to prevent resolution during container validation
-        _services.AddScoped<IBrowserSession>(provider =>
-        {
-            var kernel = provider.GetRequiredService<IGhostKernel>();
-            // FIXED: This is now safe because it's only called within a Scoped context (HTTP request)
-            // not during application startup/DI validation
-            return kernel.NewSessionAsync().GetAwaiter().GetResult();
-        });
+        // Register scoped browser session wrapper that initializes asynchronously on first use.
+        _services.AddScoped<IBrowserSession, DeferredBrowserSession>();
 
         // Load extensions via loader (validates and registers)
         var loader = new ExtensionLoader();
@@ -105,8 +85,8 @@ public sealed class GhostBuilder
 
             if (_services is null) throw new InvalidOperationException("Services collection is missing");
 
-            // Tell the extension loader that IBrowserSession and GhostKernel are provided by the kernel
-            var kernelProvidedServices = new HashSet<Type> { typeof(IBrowserSession), typeof(Ghost.Core.GhostKernel) };
+            // Tell the extension loader which kernel services are available.
+            var kernelProvidedServices = new HashSet<Type> { typeof(IBrowserSession), typeof(IGhostKernel) };
             ExtensionLoader.LoadExtensions(_extensions, _services, _configuration, kernelProvidedServices);
         }
     }

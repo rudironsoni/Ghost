@@ -10,7 +10,7 @@ namespace Ghost.Platform.Glassdoor.Internal;
 
 public sealed class GlassdoorBrowserClient : IDisposable
 {
-    private readonly GhostKernel _kernel;
+    private readonly IGhostKernel _kernel;
     private readonly IProxyProvider? _proxyProvider;
     private readonly ILogger<GlassdoorBrowserClient> _logger;
     private readonly IOptions<GlassdoorOptions> _options;
@@ -85,7 +85,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
     private readonly ConsentManagerService _consentService;
 
     public GlassdoorBrowserClient(
-        GhostKernel kernel,
+        IGhostKernel kernel,
         IOptions<GlassdoorOptions> options,
         ILogger<GlassdoorBrowserClient> logger,
         IProxyProvider? proxyProvider = null)

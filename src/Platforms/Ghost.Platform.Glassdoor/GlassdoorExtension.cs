@@ -45,7 +45,7 @@ public sealed class GlassdoorExtension : Ghost.Hosting.IExtension
         // Register browser fallback client WITHOUT proxy support to avoid SOCKS5 auth issues
         services.AddScoped<Internal.GlassdoorBrowserClient>(sp =>
         {
-            var kernel = sp.GetRequiredService<GhostKernel>();
+            var kernel = sp.GetRequiredService<IGhostKernel>();
             var options = sp.GetRequiredService<IOptions<GlassdoorOptions>>();
             var logger = sp.GetRequiredService<ILogger<Internal.GlassdoorBrowserClient>>();
             // Explicitly pass null for proxy provider to disable proxy for Glassdoor browser client
@@ -55,7 +55,7 @@ public sealed class GlassdoorExtension : Ghost.Hosting.IExtension
         // Register heavy stealth browser scraper with optional proxy support
         services.AddScoped<Jobs.GlassdoorSearchScraper>(sp =>
         {
-            var kernel = sp.GetRequiredService<GhostKernel>();
+            var kernel = sp.GetRequiredService<IGhostKernel>();
             var options = sp.GetRequiredService<IOptions<GlassdoorOptions>>();
             var logger = sp.GetRequiredService<ILogger<Jobs.GlassdoorSearchScraper>>();
             var proxyProvider = sp.GetService<IProxyProvider>();

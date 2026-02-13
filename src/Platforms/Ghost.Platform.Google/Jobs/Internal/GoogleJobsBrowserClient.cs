@@ -15,7 +15,7 @@ namespace Ghost.Platform.Google.Jobs.Internal;
 public sealed class GoogleJobsBrowserClient
 {
     private static readonly Random s_random = new Random();
-    private readonly GhostKernel _kernel;
+    private readonly IGhostKernel _kernel;
     private readonly ILogger<GoogleJobsBrowserClient> _logger;
     private readonly IOptions<GoogleJobsOptions> _options;
 
@@ -62,7 +62,7 @@ public sealed class GoogleJobsBrowserClient
     private const int MaxRequestsPerSession = 5;
 
     public GoogleJobsBrowserClient(
-        GhostKernel kernel,
+        IGhostKernel kernel,
         IOptions<GoogleJobsOptions> options,
         ILogger<GoogleJobsBrowserClient> logger)
     {
