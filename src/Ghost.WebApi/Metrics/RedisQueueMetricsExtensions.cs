@@ -1,4 +1,5 @@
 using Ghost.WebApi.Metrics;
+using Ghost.WebApi.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -40,7 +41,7 @@ public static class RedisQueueMetricsExtensions
             .WithName("GetRedisQueueMetrics")
             .WithTags("Metrics")
             .WithSummary("Get Redis queue depth metrics in Prometheus format")
-            .AllowAnonymous();
+            .AddEndpointFilter<AdminApiKeyEndpointFilter>();
 
         return app;
     }
