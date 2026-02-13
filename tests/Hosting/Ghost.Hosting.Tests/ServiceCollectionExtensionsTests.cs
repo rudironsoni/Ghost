@@ -1,9 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using FluentAssertions;
 using Ghost.Core;
+using Ghost.Engine.Abstractions.Engine;
+using Ghost.Engine.Abstractions.Scheduler;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Ghost.Hosting.Tests;
@@ -72,5 +77,50 @@ public class ServiceCollectionExtensionsTests
         await using var scope = provider.CreateAsyncScope();
         var browserSession = scope.ServiceProvider.GetRequiredService<Ghost.IBrowserSession>();
         browserSession.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task AddGhostRegistersEngineRuntimeServices()
+    {
+        var services = new ServiceCollection();
+        services.AddGhost(_ => { });
+
+        await using var provider = services.BuildServiceProvider(new ServiceProviderOptions
+        {
+            ValidateOnBuild = true,
+            ValidateScopes = true
+        });
+
+        provider.GetRequiredService<IGhostEngine>().Should().NotBeNull();
+        provider.GetRequiredService<IRequestScheduler>().Should().NotBeNull();
+
+        var hostedServices = provider.GetServices<IHostedService>().ToList();
+        var warmupService = hostedServices.FirstOrDefault(x => x.GetType().Name == "GhostEngineWarmupHostedService");
+        warmupService.Should().NotBeNull();
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await warmupService!.StartAsync(cts.Token);
+        await warmupService.StopAsync(cts.Token);
+    }
+
+    [Fact]
+    public void AddGhostEngineOptionsValidationFailsOnInvalidConfiguration()
+    {
+        var services = new ServiceCollection();
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Ghost:Engine:MaxInFlight"] = "0",
+                ["Ghost:Engine:MaxPendingItems"] = "10"
+            })
+            .Build();
+
+        services.AddGhost(config, _ => { });
+
+        using var provider = services.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptions<Ghost.Engine.Engine.GhostEngineOptions>>();
+
+        var act = () => _ = options.Value;
+        act.Should().Throw<OptionsValidationException>();
     }
 }
