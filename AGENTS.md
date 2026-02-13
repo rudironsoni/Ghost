@@ -23,8 +23,8 @@
   - `dotnet format Ghost.sln --verify-no-changes`
   - `dotnet restore Ghost.sln`
   - `dotnet build Ghost.sln --no-restore --warnaserror`
-  - `dotnet test Ghost.sln --no-build --filter "Category!=E2E"`
-  - MUST run `dotnet test Ghost.sln --filter "Category!=E2E"` if `--no-build` artifacts are unavailable.
+  - `dotnet test Ghost.sln --no-build`
+  - MUST run `dotnet test Ghost.sln` if `--no-build` artifacts are unavailable.
 - MUST produce mandatory final output schema.
 - MUST close completed issue: `bd close <id> --reason "Completed" --json`.
 - MUST NOT edit code before `in_progress` except explicit user one-off waiver.
@@ -70,9 +70,9 @@
 - MUST use current-session test results only.
 - MUST use `dotnet test` only.
 - MUST NOT use wrapper test scripts.
-- MUST run required non-E2E gate:
-  - `dotnet test Ghost.sln --no-build --filter "Category!=E2E"`
-  - MUST use `dotnet test Ghost.sln --filter "Category!=E2E"` when artifacts are missing.
+- MUST run all tests:
+  - `dotnet test Ghost.sln --no-build`
+  - MUST use `dotnet test Ghost.sln` when artifacts are missing.
 - MUST fix failing tests before completion claim.
 - MUST rerun full mandatory verification sequence after test fixes.
 - MUST NOT narrow test scope to bypass failures unless user explicitly approves and final status is `NOT VERIFIED`.
@@ -174,7 +174,7 @@
 - `dotnet format Ghost.sln --verify-no-changes`
 - `dotnet restore Ghost.sln`
 - `dotnet build Ghost.sln --no-restore --warnaserror`
-- `dotnet test Ghost.sln --no-build --filter "Category!=E2E"`
+- `dotnet test Ghost.sln --no-build`
 
 ## 21. Mandatory Final Output Schema
 
@@ -212,7 +212,7 @@
   4. `dotnet format Ghost.sln --verify-no-changes`
   5. `dotnet restore Ghost.sln`
   6. `dotnet build Ghost.sln --no-restore --warnaserror`
-  7. `dotnet test Ghost.sln --no-build --filter "Category!=E2E"`
+  7. `dotnet test Ghost.sln --no-build`
   8. `git commit -m "..."`
   9. `bd sync`
   10. `git push`
@@ -284,3 +284,29 @@
 - MUST NOT use markdown TODO files as tracking system.
 
 <!-- END BEADS INTEGRATION -->
+
+## Landing the Plane (Session Completion)
+
+**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+
+**MANDATORY WORKFLOW:**
+
+1. **File issues for remaining work** - Create issues for anything that needs follow-up
+2. **Run quality gates** (if code changed) - Tests, linters, builds
+3. **Update issue status** - Close finished work, update in-progress items
+4. **PUSH TO REMOTE** - This is MANDATORY:
+   ```bash
+   git pull --rebase
+   bd sync
+   git push
+   git status  # MUST show "up to date with origin"
+   ```
+5. **Clean up** - Clear stashes, prune remote branches
+6. **Verify** - All changes committed AND pushed
+7. **Hand off** - Provide context for next session
+
+**CRITICAL RULES:**
+- Work is NOT complete until `git push` succeeds
+- NEVER stop before pushing - that leaves work stranded locally
+- NEVER say "ready to push when you are" - YOU must push
+- If push fails, resolve and retry until it succeeds

@@ -19,8 +19,15 @@ public sealed class ConsentMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // Check for consent cookie
-        var hasConsent = context.Request.Cookies.ContainsKey("ghost_consent");
+        var path = context.Request.Path.Value ?? string.Empty;
+        var isStatefulScenario = path.Contains("/scenario/consent/stateful-persistence", StringComparison.OrdinalIgnoreCase)
+            || path.Contains("/scenario/consent/reconsent-policy-change", StringComparison.OrdinalIgnoreCase);
+
+        // Most consent scenarios should always render a first-visit experience.
+        // Only stateful/re-consent scenarios should honor persisted consent cookies.
+        var hasConsent = isStatefulScenario
+            && context.Request.Cookies.TryGetValue("ghost_consent", out var consentValue)
+            && !string.IsNullOrWhiteSpace(consentValue);
 
         // Add consent state to items for downstream handlers
         context.Items["HasConsent"] = hasConsent;
