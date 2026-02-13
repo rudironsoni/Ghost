@@ -48,7 +48,7 @@ public sealed class LinkedInPlugin : IExtension
 
         // Register keyed IJobClient mapping for worker compatibility
         // This allows workers to resolve IJobClient by key "linkedin"
-        services.AddKeyedScoped<Ghost.Contracts.Jobs.IJobClient>("linkedin", (sp, key) =>
-            sp.GetRequiredService<Ghost.Contracts.Jobs.IJobClient>());
+        services.AddKeyedScoped<Ghost.Contracts.Jobs.IJobClient>("linkedin", (sp, _) =>
+            sp.GetRequiredService<Ghost.Platform.LinkedIn.LinkedInJobClient>());
     }
 }
