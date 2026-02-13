@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ghost.Engine.Abstractions</RootNamespace>
+    <Description>Ghost engine abstraction contracts</Description>
+  </PropertyGroup>
+</Project>
