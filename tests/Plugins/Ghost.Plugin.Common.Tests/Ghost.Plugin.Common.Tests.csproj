@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Moq" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../src/Platforms/Ghost.Platform.Common/Ghost.Platform.Common.csproj" />
+    <ProjectReference Include="../../../src/Plugins/Ghost.Plugin.Indeed/Ghost.Plugin.Indeed.csproj" />
+    <ProjectReference Include="../../../src/Plugins/Ghost.Plugin.Glassdoor/Ghost.Plugin.Glassdoor.csproj" />
+    <ProjectReference Include="../../../src/Plugins/Ghost.Plugin.Google/Ghost.Plugin.Google.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Platforms\Ghost.Platform.Common.Tests\**\*.cs" />
+  </ItemGroup>
+
+</Project>

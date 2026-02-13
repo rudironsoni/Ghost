@@ -61,21 +61,37 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Hosting.Tests", "test
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Platforms", "Platforms", "{3074E563-20D1-8CCA-24EE-526153D49D6A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.OpenAI.Tests", "tests\Platforms\Ghost.Platform.OpenAI.Tests\Ghost.Platform.OpenAI.Tests.csproj", "{C11DE628-19A2-4614-AF64-0057A2047B10}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.LinkedIn.Tests", "tests\Platforms\Ghost.Platform.LinkedIn.Tests\Ghost.Platform.LinkedIn.Tests.csproj", "{7BC91500-683F-4DA9-BE99-2CE172F30473}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Indeed.Tests", "tests\Platforms\Ghost.Platform.Indeed.Tests\Ghost.Platform.Indeed.Tests.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567891}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Glassdoor.Tests", "tests\Platforms\Ghost.Platform.Glassdoor.Tests\Ghost.Platform.Glassdoor.Tests.csproj", "{18919C9F-7E49-AE5B-AE9E-3F77532A5F94}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.InfoJobs.Tests", "tests\Platforms\Ghost.Platform.InfoJobs.Tests\Ghost.Platform.InfoJobs.Tests.csproj", "{C3D4E5F6-A7B8-9012-CDEF-345678901234}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.X.E2E", "tests\Platforms\Ghost.Platform.X.E2E\Ghost.Platform.X.E2E.csproj", "{D4E5F6A7-B8C9-0123-DEF0-456789012345}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugins", "Plugins", "{7C75B972-AEBA-4116-AE94-54F6EF7B4B62}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.LinkedIn.Tests", "tests\Plugins\Ghost.Plugin.LinkedIn.Tests\Ghost.Plugin.LinkedIn.Tests.csproj", "{D941FEFA-711A-4A95-A0EF-D8D0F9F52301}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.LinkedIn.Integration", "tests\Plugins\Ghost.Plugin.LinkedIn.Integration\Ghost.Plugin.LinkedIn.Integration.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567892}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Indeed.Tests", "tests\Plugins\Ghost.Plugin.Indeed.Tests\Ghost.Plugin.Indeed.Tests.csproj", "{B2C3D4E5-F6A7-8901-BCDE-F23456789013}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Indeed.Integration", "tests\Plugins\Ghost.Plugin.Indeed.Integration\Ghost.Plugin.Indeed.Integration.csproj", "{C3D4E5F6-A7B8-9012-CDEF-345678901345}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Google.Tests", "tests\Plugins\Ghost.Plugin.Google.Tests\Ghost.Plugin.Google.Tests.csproj", "{D4E5F6A7-B8C9-0123-DEF0-456789012346}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Google.Integration", "tests\Plugins\Ghost.Plugin.Google.Integration\Ghost.Plugin.Google.Integration.csproj", "{E5F6A7B8-C9D0-1234-EF01-567890123457}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Glassdoor.Tests", "tests\Plugins\Ghost.Plugin.Glassdoor.Tests\Ghost.Plugin.Glassdoor.Tests.csproj", "{F6A7B8C9-D0E1-2345-F012-678901234568}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Glassdoor.Integration", "tests\Plugins\Ghost.Plugin.Glassdoor.Integration\Ghost.Plugin.Glassdoor.Integration.csproj", "{07B8C9D0-E1F2-3456-0123-789012345679}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.InfoJobs.Tests", "tests\Plugins\Ghost.Plugin.InfoJobs.Tests\Ghost.Plugin.InfoJobs.Tests.csproj", "{18C9D0E1-F2E3-4567-1234-89012345678A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.InfoJobs.Integration", "tests\Plugins\Ghost.Plugin.InfoJobs.Integration\Ghost.Plugin.InfoJobs.Integration.csproj", "{29D0E1F2-3E45-5678-2345-90123456789B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.OpenAI.Tests", "tests\Plugins\Ghost.Plugin.OpenAI.Tests\Ghost.Plugin.OpenAI.Tests.csproj", "{3AE1F2E3-4F56-6789-3456-0123456789CD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Anthropic.Tests", "tests\Plugins\Ghost.Plugin.Anthropic.Tests\Ghost.Plugin.Anthropic.Tests.csproj", "{4BF2E3F4-5067-789A-4567-123456789ADE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.X.Tests", "tests\Plugins\Ghost.Plugin.X.Tests\Ghost.Plugin.X.Tests.csproj", "{5CE3F4F5-6178-89AB-5678-23456789ABEF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.X.E2E", "tests\Plugins\Ghost.Plugin.X.E2E\Ghost.Plugin.X.E2E.csproj", "{6DF4F5F6-7289-9ABC-6789-3456789ABC01}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Common.Tests", "tests\Plugins\Ghost.Plugin.Common.Tests\Ghost.Plugin.Common.Tests.csproj", "{7EF5F6F7-839A-ABCD-789A-456789ABC012}"
+EndProject
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.WebApi", "src\Ghost.WebApi\Ghost.WebApi.csproj", "{7D613B3F-FE61-4A88-8984-A01247C2185C}"
 EndProject
@@ -83,23 +99,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Worker", "src\Ghost.W
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Contracts.Jobs", "src\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj", "{478EB99E-04D1-47DF-A205-1754B7CD6CE6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.LinkedIn.Integration", "tests\Platforms\Ghost.Platform.LinkedIn.Integration\Ghost.Platform.LinkedIn.Integration.csproj", "{3028B1C6-7D1B-41E8-AC98-8E02F7E18987}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Indeed.Integration", "tests\Platforms\Ghost.Platform.Indeed.Integration\Ghost.Platform.Indeed.Integration.csproj", "{68D19675-512E-4C3D-BCB9-7624183F4CA5}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Indeed", "src\Platforms\Ghost.Platform.Indeed\Ghost.Platform.Indeed.csproj", "{55272419-AF8C-48EB-8B60-42DDD6E7827C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Sdk.Spider", "src\SDK\Ghost.Sdk.Spider\Ghost.Sdk.Spider.csproj", "{D5AB0AC6-0D09-4D61-837C-AC1C043E3B97}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Common", "src\Platforms\Ghost.Platform.Common\Ghost.Platform.Common.csproj", "{F7C28B81-21F8-40E7-A5EE-8E72F3791AEC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Google.Integration", "tests\Platforms\Ghost.Platform.Google.Integration\Ghost.Platform.Google.Integration.csproj", "{29CA8484-FFC7-4B58-8160-BB5D07607025}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Glassdoor.Integration", "tests\Platforms\Ghost.Platform.Glassdoor.Integration\Ghost.Platform.Glassdoor.Integration.csproj", "{D58F8FE6-CF55-4441-86BB-681D8604948F}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.Glassdoor", "src\Platforms\Ghost.Platform.Glassdoor\Ghost.Platform.Glassdoor.csproj", "{E767C56D-6020-474C-A5BC-C38A39AC5CD8}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.InfoJobs.Integration", "tests\Platforms\Ghost.Platform.InfoJobs.Integration\Ghost.Platform.InfoJobs.Integration.csproj", "{E0DCB06E-5598-422C-B30C-135C5AAC130C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Platform.InfoJobs", "src\Platforms\Ghost.Platform.InfoJobs\Ghost.Platform.InfoJobs.csproj", "{9EAF7D11-9AE8-4E2E-BB9A-0E9D3CC0227E}"
 EndProject
@@ -765,25 +771,29 @@ Global
 		{2A5903AA-195D-83FB-6F94-018C32AA5AC8} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{75DE254C-2B44-4E31-9B9F-6C3DD8F5A3F0} = {2A5903AA-195D-83FB-6F94-018C32AA5AC8}
 		{3074E563-20D1-8CCA-24EE-526153D49D6A} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
-		{C11DE628-19A2-4614-AF64-0057A2047B10} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
-		{7BC91500-683F-4DA9-BE99-2CE172F30473} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
-		{A1B2C3D4-E5F6-7890-ABCD-EF1234567891} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
-		{C3D4E5F6-A7B8-9012-CDEF-345678901234} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
-		{D4E5F6A7-B8C9-0123-DEF0-456789012345} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
 		{7C75B972-AEBA-4116-AE94-54F6EF7B4B62} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{D941FEFA-711A-4A95-A0EF-D8D0F9F52301} = {7C75B972-AEBA-4116-AE94-54F6EF7B4B62}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567892} = {7C75B972-AEBA-4116-AE94-54F6EF7B4B62}
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789013} = {7C75B972-AEBA-4116-AE94-54F6EF7B4B62}
+		{C3D4E5F6-A7B8-9012-CDEF-345678901345} = {7C75B972-AEBA-4116-AE94-54F6EF7B4B62}
+		{D4E5F6A7-B8C9-0123-DEF0-456789012346} = {7C75B972-AEBA-4116-AE94-54F6EF7B4B62}
+		{E5F6A7B8-C9D0-1234-EF01-567890123457} = {7C75B972-AEBA-4116-AE94-54F6EF7B4B62}
+		{F6A7B8C9-D0E1-2345-F012-678901234568} = {7C75B972-AEBA-4116-AE94-54F6EF7B4B62}
+		{07B8C9D0-E1F2-3456-0123-789012345679} = {7C75B972-AEBA-4116-AE94-54F6EF7B4B62}
+		{18C9D0E1-F2E3-4567-1234-89012345678A} = {7C75B972-AEBA-4116-AE94-54F6EF7B4B62}
+		{29D0E1F2-3E45-5678-2345-90123456789B} = {7C75B972-AEBA-4116-AE94-54F6EF7B4B62}
+		{3AE1F2E3-4F56-6789-3456-0123456789CD} = {7C75B972-AEBA-4116-AE94-54F6EF7B4B62}
+		{4BF2E3F4-5067-789A-4567-123456789ADE} = {7C75B972-AEBA-4116-AE94-54F6EF7B4B62}
+		{5CE3F4F5-6178-89AB-5678-23456789ABEF} = {7C75B972-AEBA-4116-AE94-54F6EF7B4B62}
+		{6DF4F5F6-7289-9ABC-6789-3456789ABC01} = {7C75B972-AEBA-4116-AE94-54F6EF7B4B62}
+		{7EF5F6F7-839A-ABCD-789A-456789ABC012} = {7C75B972-AEBA-4116-AE94-54F6EF7B4B62}
 		{7D613B3F-FE61-4A88-8984-A01247C2185C} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{9B989A1A-9222-4BA5-AB5B-4E3CEC5DA58F} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{478EB99E-04D1-47DF-A205-1754B7CD6CE6} = {FFBE31B8-50B9-B415-22BC-2F92C97CADA3}
-		{3028B1C6-7D1B-41E8-AC98-8E02F7E18987} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
-		{68D19675-512E-4C3D-BCB9-7624183F4CA5} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
 		{55272419-AF8C-48EB-8B60-42DDD6E7827C} = {82099983-647E-F067-E69A-CD800643A918}
 		{D5AB0AC6-0D09-4D61-837C-AC1C043E3B97} = {51B637F8-9C04-5803-F48E-8CB9352021B0}
 		{F7C28B81-21F8-40E7-A5EE-8E72F3791AEC} = {82099983-647E-F067-E69A-CD800643A918}
-		{29CA8484-FFC7-4B58-8160-BB5D07607025} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
-		{D58F8FE6-CF55-4441-86BB-681D8604948F} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
 		{E767C56D-6020-474C-A5BC-C38A39AC5CD8} = {82099983-647E-F067-E69A-CD800643A918}
-		{E0DCB06E-5598-422C-B30C-135C5AAC130C} = {3074E563-20D1-8CCA-24EE-526153D49D6A}
 		{9EAF7D11-9AE8-4E2E-BB9A-0E9D3CC0227E} = {82099983-647E-F067-E69A-CD800643A918}
 		{9D556B49-86D1-93A7-9596-FFAAB74EC556} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{2E823E30-78F0-496E-9155-CF15DD34DCEA} = {9D556B49-86D1-93A7-9596-FFAAB74EC556}
