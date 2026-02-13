@@ -1,3 +1,4 @@
+using Ghost.Engine.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -53,6 +54,7 @@ public static class ServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configure);
 
         var builder = new GhostBuilder(services, configuration);
+        services.AddGhostEngineHosting(configuration);
         configure(builder);
         builder.Build();
 
