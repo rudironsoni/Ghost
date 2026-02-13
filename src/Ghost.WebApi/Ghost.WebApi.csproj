@@ -20,6 +20,7 @@
     <ProjectReference Include="..\Core\Ghost\Ghost.csproj" />
     <ProjectReference Include="..\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
     <ProjectReference Include="..\Hosting\Ghost.Hosting.WebApi\Ghost.Hosting.WebApi.csproj" />
+    <ProjectReference Include="..\Plugins\Ghost.Plugin.LinkedIn\Ghost.Plugin.LinkedIn.csproj" />
     <ProjectReference Include="..\Platforms\Ghost.Platform.Anthropic\Ghost.Platform.Anthropic.csproj" />
     <ProjectReference Include="..\Platforms\Ghost.Platform.Google\Ghost.Platform.Google.csproj" />
     <ProjectReference Include="..\Platforms\Ghost.Platform.LinkedIn\Ghost.Platform.LinkedIn.csproj" />

@@ -122,7 +122,7 @@ builder.Services.AddGhost(builder.Configuration, gw =>
     // LinkedIn
     if (builder.Configuration.GetValue("Ghost:Extensions:LinkedIn:Enabled", false))
     {
-        gw.UseExtension(new Ghost.Platform.LinkedIn.LinkedInExtension());
+        gw.UseExtension(new Ghost.Plugin.LinkedIn.LinkedInPlugin());
     }
 
     // Indeed
