@@ -1,12 +1,15 @@
 using System;
 using FluentAssertions;
 using Ghost.Plugin.LinkedIn;
+using Ghost.Testing.Reliability;
 using Xunit;
 
 namespace Ghost.Plugin.LinkedIn.Tests;
 
 public class LinkedInPluginMetadataTests
 {
+    [Trait("Category", "Unit")]
+    [TestTimeout(10000)]
     [Fact]
     public void Name_ShouldBeLinkedIn()
     {
@@ -17,6 +20,8 @@ public class LinkedInPluginMetadataTests
         plugin.Name.Should().Be("LinkedIn");
     }
 
+    [Trait("Category", "Unit")]
+    [TestTimeout(10000)]
     [Fact]
     public void Version_ShouldBe1_0_0()
     {
@@ -27,6 +32,8 @@ public class LinkedInPluginMetadataTests
         plugin.Version.Should().Be(new Version(1, 0, 0));
     }
 
+    [Trait("Category", "Unit")]
+    [TestTimeout(10000)]
     [Fact]
     public void ProvidedServices_ShouldIncludeExpectedServices()
     {
@@ -39,6 +46,8 @@ public class LinkedInPluginMetadataTests
         plugin.ProvidedServices.Should().Contain(typeof(Ghost.Contracts.News.INewsClient));
     }
 
+    [Trait("Category", "Unit")]
+    [TestTimeout(10000)]
     [Fact]
     public void RequiredServices_ShouldIncludeBrowserSession()
     {

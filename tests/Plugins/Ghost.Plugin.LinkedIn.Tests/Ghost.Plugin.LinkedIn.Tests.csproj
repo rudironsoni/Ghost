@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Shared\Ghost.Testing\Ghost.Testing.csproj" />
     <ProjectReference Include="..\..\..\src\Plugins\Ghost.Plugin.LinkedIn\Ghost.Plugin.LinkedIn.csproj" />
     <ProjectReference Include="..\..\..\src\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
     <ProjectReference Include="..\..\..\src\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
@@ -22,6 +23,7 @@
     <PackageReference Include="Moq" />
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="WireMock.Net" />
     <PackageReference Include="coverlet.collector">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
