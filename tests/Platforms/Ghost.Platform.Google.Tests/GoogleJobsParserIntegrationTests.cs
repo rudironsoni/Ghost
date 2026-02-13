@@ -10,6 +10,8 @@ namespace Ghost.Platform.Google.Tests;
 /// <summary>
 /// Integration tests for GoogleJobsParser covering mock HTML responses and parser resilience.
 /// </summary>
+[Trait("Category", "Integration")]
+[Trait("Capability", "RequiresMockServer")]
 public class GoogleJobsParserIntegrationTests
 {
     private readonly ILogger _logger;

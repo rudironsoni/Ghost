@@ -3,6 +3,7 @@ using Xunit;
 
 namespace Ghost.Platform.Google.Tests;
 
+[Trait("Category", "Unit")]
 [Collection("GooglePlatformTests")]
 public class GoogleOptionsTests
 {
