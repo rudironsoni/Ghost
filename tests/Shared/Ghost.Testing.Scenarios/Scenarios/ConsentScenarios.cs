@@ -30,14 +30,14 @@ public static class ConsentScenarios
         .job h2 { margin: 0 0 10px 0; color: #333; }
         .job .company { color: #666; font-size: 14px; }
         .job .location { color: #888; font-size: 12px; }
-        #consent-modal { 
-            display: {{(hasConsent ? "none" : "block")}}; 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.8); 
+        #consent-modal {
+            display: {{(hasConsent ? "none" : "block")}};
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
             z-index: 9999;
         }
         .modal-content {
@@ -125,14 +125,14 @@ public static class ConsentScenarios
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; padding-bottom: 80px; }
         .job { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
         .job h2 { margin: 0 0 10px 0; color: #333; }
-        #consent-banner { 
-            display: {{(hasConsent ? "none" : "block")}}; 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            width: 100%; 
-            background: #333; 
-            color: white; 
+        #consent-banner {
+            display: {{(hasConsent ? "none" : "block")}};
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #333;
+            color: white;
             padding: 15px;
             z-index: 1000;
         }
@@ -197,12 +197,12 @@ public static class ConsentScenarios
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
         .job { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
-        #cmp-iframe { 
-            display: {{(hasConsent ? "none" : "block")}}; 
-            position: fixed; 
-            bottom: 20px; 
-            right: 20px; 
-            width: 400px; 
+        #cmp-iframe {
+            display: {{(hasConsent ? "none" : "block")}};
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 400px;
             height: 300px;
             border: 2px solid #333;
             z-index: 9999;
@@ -291,14 +291,14 @@ public static class ConsentScenarios
             cursor: pointer;
         }
         .accept-btn { background: #4CAF50; color: white; }
-        .dismiss-btn { background: #666; color: white; }
+        .dismiss { background: #666; color: white; }
     </style>
 </head>
 <body>
     <div id="consent-banner">
         <span>We use cookies to improve your experience. You can dismiss without deciding.</span>
         <button class="accept-btn" onclick="acceptConsent()">Accept</button>
-        <button class="dismiss-btn" onclick="dismissBanner()">Dismiss</button>
+        <button class="dismiss" onclick="dismissBanner()">Dismiss</button>
     </div>
 
     <h1>Job Listings (Banner with Dismiss)</h1>

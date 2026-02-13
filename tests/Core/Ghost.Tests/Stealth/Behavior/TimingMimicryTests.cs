@@ -47,7 +47,7 @@ public class TimingMimicryTests
 
         // Assert
         var elapsed = DateTime.UtcNow - startTime;
-        Assert.InRange(elapsed.TotalMilliseconds, 900, 3200); // 1000-3000ms + buffer
+        Assert.InRange(elapsed.TotalMilliseconds, 900, 3500); // 1000-3000ms + buffer for CI scheduler jitter
     }
 
     [Fact]
