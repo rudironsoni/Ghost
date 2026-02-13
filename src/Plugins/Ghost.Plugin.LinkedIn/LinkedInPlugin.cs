@@ -31,24 +31,36 @@ public sealed class LinkedInPlugin : IExtension
     /// <inheritdoc />
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
+        var pluginOptions = new LinkedInPluginOptions
+        {
+            UsePluginRuntime = configuration.GetValue("Ghost:Plugins:LinkedIn:UsePluginRuntime", true),
+            RegisterReadinessServices = configuration.GetValue("Ghost:Plugins:LinkedIn:RegisterReadinessServices", true),
+            RegisterKeyedJobClient = configuration.GetValue("Ghost:Plugins:LinkedIn:RegisterKeyedJobClient", true)
+        };
+
         // Delegate to the platform extension for all core service registrations
         _platformExtension.ConfigureServices(services, configuration);
 
-        // Register plugin-specific services
-        services.AddSingleton<LinkedInPluginCapabilities>(sp => new LinkedInPluginCapabilities
+        if (pluginOptions.RegisterReadinessServices)
         {
-            RequiresBrowser = true,
-            RequiresProxy = false,
-            SupportsJobs = true,
-            SupportsSocial = true,
-            SupportsNews = true
-        });
+            // Register plugin-specific services
+            services.AddSingleton<LinkedInPluginCapabilities>(sp => new LinkedInPluginCapabilities
+            {
+                RequiresBrowser = true,
+                RequiresProxy = false,
+                SupportsJobs = true,
+                SupportsSocial = true,
+                SupportsNews = true
+            });
 
-        services.AddSingleton<ILinkedInPluginReadinessCheck, LinkedInPluginReadinessCheck>();
+            services.AddSingleton<ILinkedInPluginReadinessCheck, LinkedInPluginReadinessCheck>();
+        }
 
-        // Register keyed IJobClient mapping for worker compatibility
-        // This allows workers to resolve IJobClient by key "linkedin"
-        services.AddKeyedScoped<Ghost.Contracts.Jobs.IJobClient>("linkedin", (sp, _) =>
-            sp.GetRequiredService<Ghost.Platform.LinkedIn.LinkedInJobClient>());
+        if (pluginOptions.UsePluginRuntime && pluginOptions.RegisterKeyedJobClient)
+        {
+            // Register keyed IJobClient mapping for worker compatibility.
+            services.AddKeyedScoped<Ghost.Contracts.Jobs.IJobClient>("linkedin", (sp, _) =>
+                sp.GetRequiredService<Ghost.Platform.LinkedIn.LinkedInJobClient>());
+        }
     }
 }
