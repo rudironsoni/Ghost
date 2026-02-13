@@ -1,0 +1,118 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using FluentAssertions;
+using Ghost.Engine.Abstractions.Transport;
+using Ghost.Engine.Scheduler;
+using Xunit;
+
+namespace Ghost.Engine.Tests.Scheduler;
+
+public class InMemoryRequestSchedulerTests
+{
+    [Fact]
+    public async Task EnqueueAsync_WithPriority_DequeuesInPriorityOrder()
+    {
+        // Arrange
+        var scheduler = new InMemoryRequestScheduler();
+        var request1 = new GhostRequest("http://example.com/1", "GET", new Dictionary<string, string>(), null, null);
+        var request2 = new GhostRequest("http://example.com/2", "GET", new Dictionary<string, string>(), null, null);
+        var request3 = new GhostRequest("http://example.com/3", "GET", new Dictionary<string, string>(), null, null);
+
+        // Act
+        await scheduler.EnqueueAsync(request2, priority: 2);
+        await scheduler.EnqueueAsync(request1, priority: 1);
+        await scheduler.EnqueueAsync(request3, priority: 3);
+
+        // Assert
+        var dequeued1 = await scheduler.DequeueAsync();
+        var dequeued2 = await scheduler.DequeueAsync();
+        var dequeued3 = await scheduler.DequeueAsync();
+
+        dequeued1.Should().Be(request1, "priority 1 should be dequeued first");
+        dequeued2.Should().Be(request2, "priority 2 should be dequeued second");
+        dequeued3.Should().Be(request3, "priority 3 should be dequeued third");
+    }
+
+    [Fact]
+    public async Task EnqueueAsync_WithDedupe_SkipsDuplicateRequests()
+    {
+        // Arrange
+        var seenUrls = new HashSet<string>();
+        var options = new InMemoryRequestSchedulerOptions
+        {
+            ShouldSkip = req => !seenUrls.Add(req.Url)
+        };
+        var scheduler = new InMemoryRequestScheduler(options);
+        var request1 = new GhostRequest("http://example.com/1", "GET", new Dictionary<string, string>(), null, null);
+        var request2 = new GhostRequest("http://example.com/1", "GET", new Dictionary<string, string>(), null, null); // Duplicate URL
+        var request3 = new GhostRequest("http://example.com/2", "GET", new Dictionary<string, string>(), null, null);
+
+        // Act
+        await scheduler.EnqueueAsync(request1);
+        await scheduler.EnqueueAsync(request2);
+        await scheduler.EnqueueAsync(request3);
+
+        // Assert
+        var count = await scheduler.CountAsync();
+        count.Should().Be(2, "duplicate should be skipped");
+
+        var dequeued1 = await scheduler.DequeueAsync();
+        var dequeued2 = await scheduler.DequeueAsync();
+        var dequeued3 = await scheduler.DequeueAsync();
+
+        dequeued1.Should().Be(request1);
+        dequeued2.Should().Be(request3);
+        dequeued3.Should().BeNull("only 2 requests should be enqueued");
+    }
+
+    [Fact]
+    public async Task DequeueAsync_WithCancellation_ThrowsOperationCanceledException()
+    {
+        // Arrange
+        var scheduler = new InMemoryRequestScheduler();
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            scheduler.DequeueAsync(cts.Token).AsTask());
+    }
+
+    [Fact]
+    public async Task CountAsync_ReturnsCorrectCount()
+    {
+        // Arrange
+        var scheduler = new InMemoryRequestScheduler();
+        var request1 = new GhostRequest("http://example.com/1", "GET", new Dictionary<string, string>(), null, null);
+        var request2 = new GhostRequest("http://example.com/2", "GET", new Dictionary<string, string>(), null, null);
+
+        // Act
+        await scheduler.EnqueueAsync(request1);
+        var count1 = await scheduler.CountAsync();
+
+        await scheduler.EnqueueAsync(request2);
+        var count2 = await scheduler.CountAsync();
+
+        await scheduler.DequeueAsync();
+        var count3 = await scheduler.CountAsync();
+
+        // Assert
+        count1.Should().Be(1);
+        count2.Should().Be(2);
+        count3.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task DequeueAsync_WhenEmpty_ReturnsNull()
+    {
+        // Arrange
+        var scheduler = new InMemoryRequestScheduler();
+
+        // Act
+        var result = await scheduler.DequeueAsync();
+
+        // Assert
+        result.Should().BeNull();
+    }
+}
