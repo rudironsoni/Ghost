@@ -1,7 +1,7 @@
 using System.Globalization;
 using Ghost.Contracts.Jobs;
 
-namespace Ghost.Platform.InfoJobs.Jobs.Internal;
+namespace Ghost.Plugin.InfoJobs.Internal;
 
 public static class InfoJobsConstants
 {

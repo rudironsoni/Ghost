@@ -150,7 +150,7 @@ builder.Services.AddGhost(builder.Configuration, gw =>
     // InfoJobs
     if (builder.Configuration.GetValue("Ghost:Extensions:InfoJobs:Enabled", false))
     {
-        gw.UseExtension(new Ghost.Platform.InfoJobs.InfoJobsExtension());
+        gw.UseExtension(new Ghost.Plugin.InfoJobs.InfoJobsPlugin());
     }
 
 });

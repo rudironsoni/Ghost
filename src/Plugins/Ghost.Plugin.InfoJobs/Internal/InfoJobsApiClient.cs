@@ -5,7 +5,7 @@ using System.Text.Json;
 using Ghost.Contracts.Jobs;
 using Microsoft.Extensions.Logging;
 
-namespace Ghost.Platform.InfoJobs.Jobs.Internal;
+namespace Ghost.Plugin.InfoJobs.Internal;
 
 public sealed class InfoJobsApiClient
 {

@@ -4,7 +4,7 @@ using Ghost.Contracts.Jobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Ghost.Platform.InfoJobs.Jobs;
+namespace Ghost.Plugin.InfoJobs;
 
 public sealed class InfoJobClient : Ghost.Abstractions.IJobScraper
 {

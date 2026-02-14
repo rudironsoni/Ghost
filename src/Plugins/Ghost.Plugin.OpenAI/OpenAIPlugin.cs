@@ -1,3 +1,4 @@
+using Ghost.Contracts.Inference;
 using Ghost.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -5,17 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Ghost.Plugin.OpenAI;
 
 /// <summary>
-/// OpenAI plugin that wraps the platform extension with plugin metadata and capabilities.
+/// OpenAI plugin providing AI inference capabilities.
 /// </summary>
 public sealed class OpenAIPlugin : IExtension
 {
-    private readonly Ghost.Platform.OpenAI.OpenAIExtension _platformExtension;
-
-    public OpenAIPlugin()
-    {
-        _platformExtension = new Ghost.Platform.OpenAI.OpenAIExtension();
-    }
-
     /// <inheritdoc />
     public string Name => "OpenAI";
 
@@ -23,10 +17,10 @@ public sealed class OpenAIPlugin : IExtension
     public Version Version => new(1, 0, 0);
 
     /// <inheritdoc />
-    public IReadOnlyList<Type> ProvidedServices => _platformExtension.ProvidedServices;
+    public IReadOnlyList<Type> ProvidedServices => new[] { typeof(IInferenceClient) };
 
     /// <inheritdoc />
-    public IReadOnlyList<Type> RequiredServices => _platformExtension.RequiredServices;
+    public IReadOnlyList<Type> RequiredServices => new[] { typeof(Ghost.IBrowserSession) };
 
     /// <inheritdoc />
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
@@ -38,8 +32,9 @@ public sealed class OpenAIPlugin : IExtension
             RegisterKeyedInferenceClient = configuration.GetValue("Ghost:Plugins:OpenAI:RegisterKeyedInferenceClient", true)
         };
 
-        // Delegate to the platform extension for all core service registrations
-        _platformExtension.ConfigureServices(services, configuration);
+        // Register core services
+        services.Configure<OpenAIOptions>(configuration.GetSection("OpenAI"));
+        services.AddScoped<IInferenceClient, OpenAIClient>();
 
         if (pluginOptions.RegisterReadinessServices)
         {
@@ -60,8 +55,8 @@ public sealed class OpenAIPlugin : IExtension
         if (pluginOptions.UsePluginRuntime && pluginOptions.RegisterKeyedInferenceClient)
         {
             // Register keyed IInferenceClient mapping for worker compatibility.
-            services.AddKeyedScoped<Ghost.Contracts.Inference.IInferenceClient>("openai", (sp, _) =>
-                sp.GetRequiredService<Ghost.Platform.OpenAI.OpenAIClient>());
+            services.AddKeyedScoped<IInferenceClient>("openai", (sp, _) =>
+                sp.GetRequiredService<OpenAIClient>());
         }
     }
 }

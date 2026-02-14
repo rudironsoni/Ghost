@@ -1,36 +1,70 @@
 using Ghost.Hosting;
+using Ghost.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ghost.Plugin.InfoJobs;
 
 /// <summary>
-/// InfoJobs plugin that wraps the platform extension with plugin metadata and capabilities.
+/// InfoJobs plugin that provides job search and scraping capabilities.
 /// </summary>
 public sealed class InfoJobsPlugin : IExtension
 {
-    private readonly Ghost.Platform.InfoJobs.InfoJobsExtension _platformExtension;
-
-    public InfoJobsPlugin()
-    {
-        _platformExtension = new Ghost.Platform.InfoJobs.InfoJobsExtension();
-    }
-
-    /// <inheritdoc />
     public string Name => "InfoJobs";
-
-    /// <inheritdoc />
     public Version Version => new(1, 0, 0);
+    public IReadOnlyList<Type> ProvidedServices => new[] { typeof(Ghost.Contracts.Jobs.IJobClient) };
+    public IReadOnlyList<Type> RequiredServices => Array.Empty<Type>();
 
-    /// <inheritdoc />
-    public IReadOnlyList<Type> ProvidedServices => _platformExtension.ProvidedServices;
-
-    /// <inheritdoc />
-    public IReadOnlyList<Type> RequiredServices => _platformExtension.RequiredServices;
-
-    /// <inheritdoc />
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
+        // diagnostic logging to help determine whether extension is applied and options bound
+        try
+        {
+            Console.WriteLine("Configuring InfoJobsPlugin...");
+            Console.Out.Flush();
+        }
+        catch { }
+
+        // bind using configuration section
+        services.Configure<InfoJobsOptions>(configuration.GetSection("Ghost:Extensions:InfoJobs"));
+        // register options validator
+        services.AddSingleton<Microsoft.Extensions.Options.IValidateOptions<InfoJobsOptions>, InfoJobsOptionsValidator>();
+
+        var rootOpts = new InfoJobsOptions();
+        configuration.GetSection("Ghost:Extensions:InfoJobs").Bind(rootOpts);
+        try
+        {
+            Console.WriteLine($"InfoJobs options: Enabled = {rootOpts.Enabled}");
+        }
+        catch { }
+
+        // InfoJobs Job Client
+        if (rootOpts.Enabled)
+        {
+            try { Console.WriteLine("Registering InfoJobClient..."); } catch { }
+            services.AddHttpClient<Internal.InfoJobsApiClient>()
+                .AddTypedClient((httpClient, sp) =>
+                {
+                    var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<InfoJobsOptions>>().Value;
+                    var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Internal.InfoJobsApiClient>>();
+                    return new Internal.InfoJobsApiClient(httpClient, options, logger);
+                })
+                .ConfigurePrimaryHttpMessageHandler(() =>
+                {
+                    var handler = new System.Net.Http.HttpClientHandler
+                    {
+                        CookieContainer = new System.Net.CookieContainer(),
+                        UseCookies = true,
+                        AllowAutoRedirect = true
+                    };
+                    return HttpClientSecurityExtensions.ConfigureSecureHttpClientHandler(handler);
+                });
+            services.AddScoped<InfoJobClient>();
+            services.AddScoped<Ghost.Abstractions.IJobScraper, InfoJobClient>();
+            services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => (Ghost.Contracts.Jobs.IJobClient)sp.GetRequiredService<InfoJobClient>());
+        }
+
+        // Plugin-specific services
         var pluginOptions = new InfoJobsPluginOptions
         {
             UsePluginRuntime = configuration.GetValue("Ghost:Plugins:InfoJobs:UsePluginRuntime", true),
@@ -38,12 +72,8 @@ public sealed class InfoJobsPlugin : IExtension
             RegisterKeyedJobClient = configuration.GetValue("Ghost:Plugins:InfoJobs:RegisterKeyedJobClient", true)
         };
 
-        // Delegate to the platform extension for all core service registrations
-        _platformExtension.ConfigureServices(services, configuration);
-
         if (pluginOptions.RegisterReadinessServices)
         {
-            // Register plugin-specific services
             services.AddSingleton<InfoJobsPluginCapabilities>(sp => new InfoJobsPluginCapabilities
             {
                 RequiresBrowser = true,
@@ -60,7 +90,7 @@ public sealed class InfoJobsPlugin : IExtension
         {
             // Register keyed IJobClient mapping for worker compatibility.
             services.AddKeyedScoped<Ghost.Contracts.Jobs.IJobClient>("infojobs", (sp, _) =>
-                sp.GetRequiredService<Ghost.Platform.InfoJobs.Jobs.InfoJobClient>());
+                sp.GetRequiredService<InfoJobClient>());
         }
     }
 }

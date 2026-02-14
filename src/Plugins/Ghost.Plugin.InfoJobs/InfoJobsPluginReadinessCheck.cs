@@ -9,11 +9,11 @@ namespace Ghost.Plugin.InfoJobs;
 internal sealed class InfoJobsPluginReadinessCheck : IInfoJobsPluginReadinessCheck
 {
     private readonly ILogger<InfoJobsPluginReadinessCheck> _logger;
-    private readonly IOptions<Ghost.Platform.InfoJobs.Jobs.InfoJobsOptions> _options;
+    private readonly IOptions<InfoJobsOptions> _options;
 
     public InfoJobsPluginReadinessCheck(
         ILogger<InfoJobsPluginReadinessCheck> logger,
-        IOptions<Ghost.Platform.InfoJobs.Jobs.InfoJobsOptions> options)
+        IOptions<InfoJobsOptions> options)
     {
         _logger = logger;
         _options = options;
