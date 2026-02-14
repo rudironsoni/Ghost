@@ -4,27 +4,29 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Smoke.Tests.Assertions;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Ghost.Smoke.Tests.Platforms;
 
 /// <summary>
-/// Smoke tests for LinkedIn platform.
+/// Smoke tests for Google platform.
 /// </summary>
 [Trait("Category", "Smoke")]
-[Trait("Platform", "LinkedIn")]
-public class LinkedInSmokeTests : IClassFixture<PlatformSmokeTestFixture>
+[Trait("Platform", "Google")]
+public class GoogleSmokeTests : IClassFixture<PlatformSmokeTestFixture>
 {
     private readonly PlatformSmokeTestFixture _fixture;
     private readonly ITestOutputHelper _output;
     private readonly IJobClient _client;
 
-    public LinkedInSmokeTests(PlatformSmokeTestFixture fixture, ITestOutputHelper output)
+    public GoogleSmokeTests(PlatformSmokeTestFixture fixture, ITestOutputHelper output)
     {
         _fixture = fixture;
         _output = output;
-        _client = _fixture.GetJobClient("linkedin");
+        // Google doesn't use keyed registration, so we get the non-keyed service
+        _client = _fixture.ServiceProvider.GetRequiredService<IJobClient>();
     }
 
     [Fact]
@@ -39,7 +41,7 @@ public class LinkedInSmokeTests : IClassFixture<PlatformSmokeTestFixture>
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 
         // Act
-        _output.WriteLine($"Searching LinkedIn for: {criteria.Query}");
+        _output.WriteLine($"Searching Google for: {criteria.Query}");
         var results = await _client.SearchJobsAsync(criteria, cts.Token);
 
         // Assert
@@ -83,7 +85,7 @@ public class LinkedInSmokeTests : IClassFixture<PlatformSmokeTestFixture>
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 
         // Act
-        _output.WriteLine($"Searching LinkedIn for: {criteria.Query} in {criteria.Location}");
+        _output.WriteLine($"Searching Google for: {criteria.Query} in {criteria.Location}");
         var results = await _client.SearchJobsAsync(criteria, cts.Token);
 
         // Assert
@@ -134,11 +136,11 @@ public class LinkedInSmokeTests : IClassFixture<PlatformSmokeTestFixture>
         // Assert
         jobDetails.Should().NotBeNull("job details should not be null");
         jobDetails.Id.Should().Be(jobId, "job ID should match the requested ID");
-        jobDetails.Source.Should().Be("LinkedIn", "source should be LinkedIn");
+        jobDetails.Source.Should().Be("Google", "source should be Google");
 
         // Validate required fields
         jobDetails.AssertRequiredFields();
-        jobDetails.AssertValidPlatformId("LinkedIn");
+        jobDetails.AssertValidPlatformId("Google");
         jobDetails.AssertUrlReachable();
 
         // Output detailed job information
