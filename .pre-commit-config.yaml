@@ -23,10 +23,12 @@ repos:
         files: '\.(cs|csproj|sln)$'
         stages: [pre-commit]
 
-      # Run all tests
+      # Run non-smoke tests (fast, deterministic)
+      # Smoke tests are excluded - they require Ghost.WebApi running and external services
+      # Smoke tests run in nightly CI (lane-c-nightly.yml) or manually
       - id: dotnet-test-quick
-        name: Run all tests
-        entry: dotnet test Ghost.sln
+        name: Run non-smoke tests
+        entry: dotnet test Ghost.sln --filter "Category!=Smoke"
         language: system
         pass_filenames: false
         files: '\.(cs|csproj)$'
