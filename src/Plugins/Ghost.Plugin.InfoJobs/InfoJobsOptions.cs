@@ -1,4 +1,4 @@
-namespace Ghost.Platform.InfoJobs.Jobs;
+namespace Ghost.Plugin.InfoJobs;
 
 public sealed class InfoJobsOptions
 {

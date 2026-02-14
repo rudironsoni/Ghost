@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Extensions.Options;
 
-namespace Ghost.Platform.InfoJobs.Jobs;
+namespace Ghost.Plugin.InfoJobs;
 
 /// <summary>
 /// Validates InfoJobsOptions when bound from configuration.

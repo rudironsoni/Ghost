@@ -3,11 +3,12 @@
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
     <!-- These tests use async streaming and can hang in CI - exclude from default test runs -->
     <DefaultItemExcludes>$(DefaultItemExcludes);OpenAIClientTests.cs</DefaultItemExcludes>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Platforms\Ghost.Platform.OpenAI\Ghost.Platform.OpenAI.csproj" />
+    <ProjectReference Include="..\..\..\src\Plugins\Ghost.Plugin.OpenAI\Ghost.Plugin.OpenAI.csproj" />
     <ProjectReference Include="..\..\..\src\Core\Ghost\Ghost.csproj" />
   </ItemGroup>
 
@@ -20,12 +21,8 @@
     <PackageReference Include="coverlet.collector" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="..\..\Platforms\Ghost.Platform.OpenAI.Tests\**\*.cs" />
-  </ItemGroup>
-
   <!-- Include the client tests but mark them as None so they don't get compiled by default -->
   <ItemGroup>
-    <None Include="..\..\Platforms\Ghost.Platform.OpenAI.Tests\OpenAIClientTests.cs" />
+    <None Include="OpenAIClientTests.cs" />
   </ItemGroup>
 </Project>
