@@ -5,7 +5,7 @@ using Ghost.Contracts.Social;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace Ghost.Platform.LinkedIn.Tests;
+namespace Ghost.Plugin.LinkedIn.Tests;
 
 public class LinkedInExtensionTests
 {

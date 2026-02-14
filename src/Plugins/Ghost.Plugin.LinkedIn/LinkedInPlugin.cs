@@ -1,34 +1,22 @@
 using Ghost.Hosting;
+using Ghost.Sdk.Spider.Adapters;
+using Ghost.Sdk.Spider.Core.Extraction;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Ghost.Plugin.LinkedIn;
 
 /// <summary>
-/// LinkedIn plugin that wraps the platform extension with plugin metadata and capabilities.
+/// LinkedIn plugin that provides job, social, and news client implementations.
 /// </summary>
 public sealed class LinkedInPlugin : IExtension
 {
-    private readonly Ghost.Platform.LinkedIn.LinkedInExtension _platformExtension;
-
-    public LinkedInPlugin()
-    {
-        _platformExtension = new Ghost.Platform.LinkedIn.LinkedInExtension();
-    }
-
-    /// <inheritdoc />
     public string Name => "LinkedIn";
-
-    /// <inheritdoc />
     public Version Version => new(1, 0, 0);
+    public IReadOnlyList<Type> ProvidedServices => new[] { typeof(Ghost.Contracts.Social.ISocialClient), typeof(Ghost.Contracts.Jobs.IJobClient), typeof(Ghost.Contracts.News.INewsClient) };
+    public IReadOnlyList<Type> RequiredServices => new[] { typeof(Ghost.IBrowserSession) };
 
-    /// <inheritdoc />
-    public IReadOnlyList<Type> ProvidedServices => _platformExtension.ProvidedServices;
-
-    /// <inheritdoc />
-    public IReadOnlyList<Type> RequiredServices => _platformExtension.RequiredServices;
-
-    /// <inheritdoc />
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         var pluginOptions = new LinkedInPluginOptions
@@ -38,8 +26,46 @@ public sealed class LinkedInPlugin : IExtension
             RegisterKeyedJobClient = configuration.GetValue("Ghost:Plugins:LinkedIn:RegisterKeyedJobClient", true)
         };
 
-        // Delegate to the platform extension for all core service registrations
-        _platformExtension.ConfigureServices(services, configuration);
+        // Bind from nested path: Ghost:Extensions:LinkedIn in appsettings.json
+        services.Configure<LinkedInOptions>(configuration.GetSection("Ghost:Extensions:LinkedIn"));
+        services.Configure<LinkedInSessionPoolOptions>(configuration.GetSection("Ghost:Extensions:LinkedIn:SessionPool"));
+
+        // Use factory method to prevent resolution during DI container validation
+        services.AddSingleton<Internal.LinkedInSessionPool>(sp =>
+        {
+            var kernel = sp.GetRequiredService<Ghost.Core.IGhostKernel>();
+            var poolOptions = sp.GetRequiredService<IOptions<LinkedInSessionPoolOptions>>().Value;
+            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Internal.LinkedInSessionPool>>();
+            var proxyProvider = sp.GetService<Ghost.Abstractions.IProxyProvider>();
+            var linkedInOptions = sp.GetRequiredService<IOptions<LinkedInOptions>>().Value;
+            return Internal.LinkedInSessionPool.Create(kernel, poolOptions, logger, proxyProvider, linkedInOptions);
+        });
+
+        // Register platform-specific implementations for core abstractions
+        services.AddSingleton<Ghost.Abstractions.ITextExtractor, Internal.LinkedInTextExtractor>();
+        services.AddSingleton<Ghost.Abstractions.ICountryDomainProvider, Internal.LinkedInCountryProvider>();
+        // Ensure JsonLdExtractor from Core utilities is available to this platform
+        services.AddSingleton<Ghost.Abstractions.IJsonLdExtractor, Ghost.Utilities.JsonLdExtractor>();
+        // GuestJobSearch implements guest API scraping logic - Singleton since it only uses the session pool
+        services.AddSingleton<Internal.IGuestJobSearch, Internal.GuestJobSearch>();
+
+        // Register Spider SDK services required by LinkedInJobClient
+        services.AddSingleton<JavaScriptAdapter>();
+        services.AddSingleton<EntityParser>();
+
+        // Register concrete implementations as Scoped (not Singleton) because they depend on IBrowserSession
+        services.AddScoped<LinkedInSocialClient>();
+        services.AddScoped<LinkedInJobClient>();
+        services.AddScoped<LinkedInNewsClient>();
+
+        // Authenticator used by LinkedInSocialClient for logging in / cookie handling - Scoped because it uses IBrowserSession
+        services.AddScoped<Internal.LinkedInAuthenticator>();
+
+        // Register interface mappings (for when aggregators need them)
+        services.AddScoped<Ghost.Contracts.Social.ISocialClient>(sp => sp.GetRequiredService<LinkedInSocialClient>());
+        services.AddScoped<Ghost.Abstractions.IJobScraper>(sp => sp.GetRequiredService<LinkedInJobClient>());
+        services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => sp.GetRequiredService<LinkedInJobClient>());
+        services.AddScoped<Ghost.Contracts.News.INewsClient>(sp => sp.GetRequiredService<LinkedInNewsClient>());
 
         if (pluginOptions.RegisterReadinessServices)
         {
@@ -60,7 +86,7 @@ public sealed class LinkedInPlugin : IExtension
         {
             // Register keyed IJobClient mapping for worker compatibility.
             services.AddKeyedScoped<Ghost.Contracts.Jobs.IJobClient>("linkedin", (sp, _) =>
-                sp.GetRequiredService<Ghost.Platform.LinkedIn.LinkedInJobClient>());
+                sp.GetRequiredService<LinkedInJobClient>());
         }
     }
 }

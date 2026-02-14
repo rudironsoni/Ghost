@@ -2,7 +2,7 @@ using System;
 using FluentAssertions;
 using Xunit;
 
-namespace Ghost.Platform.LinkedIn.Tests.Internal;
+namespace Ghost.Plugin.LinkedIn.Tests.Internal;
 
 public class ParsingTests
 {
@@ -64,7 +64,7 @@ public class ParsingTests
         """;
 
         var extractor = new Ghost.Utilities.JsonLdExtractor();
-        var parser = new Ghost.Platform.LinkedIn.Internal.JsonLdParser(extractor);
+        var parser = new Ghost.Plugin.LinkedIn.Internal.JsonLdParser(extractor);
         var result = parser.Parse(json, "123", "http://url");
 
         result.Should().NotBeNull();

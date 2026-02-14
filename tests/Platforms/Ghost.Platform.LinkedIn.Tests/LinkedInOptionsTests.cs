@@ -2,7 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace Ghost.Platform.LinkedIn.Tests;
+namespace Ghost.Plugin.LinkedIn.Tests;
 
 public class LinkedInOptionsTests
 {

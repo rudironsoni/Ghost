@@ -2,10 +2,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
-using Ghost.Platform.LinkedIn.Internal;
+using Ghost.Plugin.LinkedIn.Internal;
 using Xunit;
 
-namespace Ghost.Platform.LinkedIn.Tests;
+namespace Ghost.Plugin.LinkedIn.Tests;
 
 public class GuestJobSearchParsingTests
 {
@@ -14,7 +14,7 @@ public class GuestJobSearchParsingTests
     {
         var html = "";
         var extractor = new Ghost.Utilities.JsonLdExtractor();
-        var parser = new Ghost.Platform.LinkedIn.Internal.JsonLdParser(extractor);
+        var parser = new Ghost.Plugin.LinkedIn.Internal.JsonLdParser(extractor);
         var parsed = parser.Parse(html, "123", "https://www.linkedin.com/jobs/view/123");
         parsed.Should().BeNull();
     }

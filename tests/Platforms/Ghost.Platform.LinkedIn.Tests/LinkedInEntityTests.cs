@@ -1,9 +1,9 @@
 using FluentAssertions;
-using Ghost.Platform.LinkedIn.Tests.Migration;
+using Ghost.Plugin.LinkedIn.Tests.Migration;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Xunit;
 
-namespace Ghost.Platform.LinkedIn.Tests;
+namespace Ghost.Plugin.LinkedIn.Tests;
 
 /// <summary>
 /// Tests for LinkedInJobEntity extraction using Ghost.Sdk.Spider.

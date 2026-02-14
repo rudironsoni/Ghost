@@ -4,12 +4,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Core;
-using Ghost.Platform.LinkedIn.Internal;
+using Ghost.Plugin.LinkedIn.Internal;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Ghost.Platform.LinkedIn.Tests.Internal;
+namespace Ghost.Plugin.LinkedIn.Tests.Internal;
 
 /// <summary>
 /// Tests for LinkedInSessionPool.

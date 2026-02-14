@@ -1,7 +1,7 @@
 using Ghost.Contracts.Jobs;
 using Ghost.Contracts.News;
 using Ghost.Contracts.Social;
-using Ghost.Platform.LinkedIn;
+using Ghost.Plugin.LinkedIn;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -48,7 +48,7 @@ public static class LinkedInEndpoints
             }
             return Results.Ok(job);
         }
-        catch (Ghost.Platform.LinkedIn.BrowserServiceUnavailableException)
+        catch (Ghost.Plugin.LinkedIn.BrowserServiceUnavailableException)
         {
             return Results.Problem(
                 detail: "Browser automation service is currently unavailable. Please try again later.",
@@ -81,7 +81,7 @@ public static class LinkedInEndpoints
             var defaultResults = await jobClient.SearchJobsAsync(criteria, ct);
             return Results.Ok(defaultResults);
         }
-        catch (Ghost.Platform.LinkedIn.BrowserServiceUnavailableException)
+        catch (Ghost.Plugin.LinkedIn.BrowserServiceUnavailableException)
         {
             return Results.Problem(
                 detail: "Browser automation service is currently unavailable. Please try again later.",
@@ -104,7 +104,7 @@ public static class LinkedInEndpoints
             var profile = await socialClient.GetProfileAsync(id, ct);
             return profile is not null ? Results.Ok(profile) : Results.NotFound();
         }
-        catch (Ghost.Platform.LinkedIn.BrowserServiceUnavailableException)
+        catch (Ghost.Plugin.LinkedIn.BrowserServiceUnavailableException)
         {
             return Results.Problem(
                 detail: "Browser automation service is currently unavailable. Please try again later.",
@@ -128,7 +128,7 @@ public static class LinkedInEndpoints
             var results = await newsClient.SearchAsync(request.Query, options, ct);
             return Results.Ok(results);
         }
-        catch (Ghost.Platform.LinkedIn.BrowserServiceUnavailableException)
+        catch (Ghost.Plugin.LinkedIn.BrowserServiceUnavailableException)
         {
             return Results.Problem(
                 detail: "Browser automation service is currently unavailable. Please try again later.",

@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Xunit;
 
-namespace Ghost.Platform.LinkedIn.Tests;
+namespace Ghost.Plugin.LinkedIn.Tests;
 
 public class LinkedInSessionPoolOptionsTests
 {

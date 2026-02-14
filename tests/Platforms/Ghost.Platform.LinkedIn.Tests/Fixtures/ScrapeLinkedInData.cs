@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
 
-namespace Ghost.Platform.LinkedIn.Tests.Fixtures;
+namespace Ghost.Plugin.LinkedIn.Tests.Fixtures;
 
 public class LinkedInFixtureScraper
 {

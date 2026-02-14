@@ -9,11 +9,11 @@ namespace Ghost.Plugin.LinkedIn;
 internal sealed class LinkedInPluginReadinessCheck : ILinkedInPluginReadinessCheck
 {
     private readonly ILogger<LinkedInPluginReadinessCheck> _logger;
-    private readonly IOptions<Ghost.Platform.LinkedIn.LinkedInOptions> _options;
+    private readonly IOptions<Ghost.Plugin.LinkedIn.LinkedInOptions> _options;
 
     public LinkedInPluginReadinessCheck(
         ILogger<LinkedInPluginReadinessCheck> logger,
-        IOptions<Ghost.Platform.LinkedIn.LinkedInOptions> options)
+        IOptions<Ghost.Plugin.LinkedIn.LinkedInOptions> options)
     {
         _logger = logger;
         _options = options;
