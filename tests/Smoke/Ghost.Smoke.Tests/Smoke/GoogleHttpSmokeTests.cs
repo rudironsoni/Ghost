@@ -15,7 +15,7 @@ namespace Ghost.Smoke.Tests.Smoke;
 /// Tests the Ghost API endpoints for Google job search and retrieval.
 /// </summary>
 [Trait("Category", "Smoke")]
-[Trait("Platform", "Google")]
+[Trait("Plugin", "Google")]
 public class GoogleHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
 {
     private readonly HttpSmokeTestFixture _fixture;

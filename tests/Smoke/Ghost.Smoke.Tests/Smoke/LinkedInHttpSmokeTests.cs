@@ -15,7 +15,7 @@ namespace Ghost.Smoke.Tests.Smoke;
 /// Tests the Ghost API endpoints for LinkedIn job search and retrieval.
 /// </summary>
 [Trait("Category", "Smoke")]
-[Trait("Platform", "LinkedIn")]
+[Trait("Plugin", "LinkedIn")]
 public class LinkedInHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
 {
     private readonly HttpSmokeTestFixture _fixture;

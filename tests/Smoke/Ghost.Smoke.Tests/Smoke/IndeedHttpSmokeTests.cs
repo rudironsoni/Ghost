@@ -15,7 +15,7 @@ namespace Ghost.Smoke.Tests.Smoke;
 /// Tests the Ghost API endpoints for Indeed job search and retrieval.
 /// </summary>
 [Trait("Category", "Smoke")]
-[Trait("Platform", "Indeed")]
+[Trait("Plugin", "Indeed")]
 public class IndeedHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
 {
     private readonly HttpSmokeTestFixture _fixture;

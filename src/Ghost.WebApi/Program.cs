@@ -53,6 +53,7 @@ builder.Services.AddHealthChecks()
     .AddCheck("ghost-webapi", () => HealthCheckResult.Healthy("Ghost WebAPI is running"));
 builder.Services.AddGhostResilience(builder.Configuration);
 builder.Services.AddGhostMonitoring(builder.Configuration);
+builder.Services.AddRedisQueue(builder.Configuration);
 builder.Services.AddRedisQueueMetrics();
 builder.Services.AddHttpClient();
 builder.Services.Configure<AdminApiKeyOptions>(builder.Configuration.GetSection(AdminApiKeyOptions.SectionName));
