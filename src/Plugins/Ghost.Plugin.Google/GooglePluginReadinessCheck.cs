@@ -9,11 +9,11 @@ namespace Ghost.Plugin.Google;
 internal sealed class GooglePluginReadinessCheck : IGooglePluginReadinessCheck
 {
     private readonly ILogger<GooglePluginReadinessCheck> _logger;
-    private readonly IOptions<Ghost.Platform.Google.GoogleOptions> _options;
+    private readonly IOptions<Ghost.Plugin.Google.GoogleOptions> _options;
 
     public GooglePluginReadinessCheck(
         ILogger<GooglePluginReadinessCheck> logger,
-        IOptions<Ghost.Platform.Google.GoogleOptions> options)
+        IOptions<Ghost.Plugin.Google.GoogleOptions> options)
     {
         _logger = logger;
         _options = options;

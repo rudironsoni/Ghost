@@ -1,9 +1,9 @@
 using Ghost.Abstractions;
 using Ghost.Contracts.Jobs;
 using Ghost.Core;
-using Ghost.Platform.Glassdoor;
-using Ghost.Platform.Glassdoor.Internal;
-using Ghost.Platform.Glassdoor.Tests.Contracts;
+using Ghost.Plugin.Glassdoor;
+using Ghost.Plugin.Glassdoor.Internal;
+using Ghost.Plugin.Glassdoor.Tests.Contracts;
 using Ghost.Testing.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -11,7 +11,7 @@ using NSubstitute;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Ghost.Platform.Glassdoor.Tests.Contracts;
+namespace Ghost.Plugin.Glassdoor.Tests.Contracts;
 
 /// <summary>
 /// Contract tests for Glassdoor provider.

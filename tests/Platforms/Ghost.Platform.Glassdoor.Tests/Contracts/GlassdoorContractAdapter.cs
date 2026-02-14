@@ -3,10 +3,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
-using Ghost.Platform.Glassdoor;
+using Ghost.Plugin.Glassdoor;
 using Ghost.Testing.Contracts;
 
-namespace Ghost.Platform.Glassdoor.Tests.Contracts;
+namespace Ghost.Plugin.Glassdoor.Tests.Contracts;
 
 /// <summary>
 /// Adapter for Glassdoor provider contract testing.

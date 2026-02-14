@@ -23,9 +23,9 @@
     <ProjectReference Include="..\Plugins\Ghost.Plugin.LinkedIn\Ghost.Plugin.LinkedIn.csproj" />
     <ProjectReference Include="..\Plugins\Ghost.Plugin.Anthropic\Ghost.Plugin.Anthropic.csproj" />
     <ProjectReference Include="..\Plugins\Ghost.Plugin.Google\Ghost.Plugin.Google.csproj" />
-    <ProjectReference Include="..\Platforms\Ghost.Platform.OpenAI\Ghost.Platform.OpenAI.csproj" />
-    <ProjectReference Include="..\Platforms\Ghost.Platform.Indeed\Ghost.Platform.Indeed.csproj" />
-    <ProjectReference Include="..\Platforms\Ghost.Platform.Glassdoor\Ghost.Platform.Glassdoor.csproj" />
+    <ProjectReference Include="..\Plugins\Ghost.Plugin.OpenAI\Ghost.Plugin.OpenAI.csproj" />
+    <ProjectReference Include="..\Plugins\Ghost.Plugin.Indeed\Ghost.Plugin.Indeed.csproj" />
+    <ProjectReference Include="..\Plugins\Ghost.Plugin.Glassdoor\Ghost.Plugin.Glassdoor.csproj" />
     <ProjectReference Include="..\Plugins\Ghost.Plugin.InfoJobs\Ghost.Plugin.InfoJobs.csproj" />
   </ItemGroup>
 

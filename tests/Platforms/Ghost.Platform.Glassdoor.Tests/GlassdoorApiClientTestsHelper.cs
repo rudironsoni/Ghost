@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace Ghost.Platform.Glassdoor.Tests;
+namespace Ghost.Plugin.Glassdoor.Tests;
 
 /// <summary>
 /// Helper class for Glassdoor API client tests to expose internal extraction logic.

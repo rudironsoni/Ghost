@@ -132,19 +132,19 @@ builder.Services.AddGhost(builder.Configuration, gw =>
     // Indeed
     if (builder.Configuration.GetValue("Ghost:Extensions:Indeed:Enabled", false))
     {
-        gw.UseExtension(new Ghost.Platform.Indeed.IndeedExtension());
+        gw.UseExtension(new Ghost.Plugin.Indeed.IndeedPlugin());
     }
 
     // Glassdoor
     if (builder.Configuration.GetValue("Ghost:Extensions:Glassdoor:Enabled", false))
     {
-        gw.UseExtension(new Ghost.Platform.Glassdoor.GlassdoorExtension());
+        gw.UseExtension(new Ghost.Plugin.Glassdoor.GlassdoorPlugin());
     }
 
     // Google
     if (builder.Configuration.GetValue("Ghost:Extensions:Google:Enabled", false))
     {
-        gw.UseExtension(new Ghost.Platform.Google.GoogleExtension());
+        gw.UseExtension(new Ghost.Plugin.Google.GooglePlugin());
     }
 
     // InfoJobs

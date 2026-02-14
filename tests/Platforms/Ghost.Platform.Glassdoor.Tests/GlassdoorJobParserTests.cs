@@ -1,8 +1,8 @@
 using FluentAssertions;
-using Ghost.Platform.Glassdoor.Internal;
+using Ghost.Plugin.Glassdoor.Internal;
 using Xunit;
 
-namespace Ghost.Platform.Glassdoor.Tests;
+namespace Ghost.Plugin.Glassdoor.Tests;
 
 public class GlassdoorJobParserTests
 {

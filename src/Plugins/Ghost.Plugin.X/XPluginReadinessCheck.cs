@@ -9,11 +9,11 @@ namespace Ghost.Plugin.X;
 internal sealed class XPluginReadinessCheck : IXPluginReadinessCheck
 {
     private readonly ILogger<XPluginReadinessCheck> _logger;
-    private readonly IOptions<Ghost.Platform.X.XOptions> _options;
+    private readonly IOptions<Ghost.Plugin.X.XOptions> _options;
 
     public XPluginReadinessCheck(
         ILogger<XPluginReadinessCheck> logger,
-        IOptions<Ghost.Platform.X.XOptions> options)
+        IOptions<Ghost.Plugin.X.XOptions> options)
     {
         _logger = logger;
         _options = options;

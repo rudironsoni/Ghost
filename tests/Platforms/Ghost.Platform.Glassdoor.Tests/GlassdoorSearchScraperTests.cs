@@ -1,12 +1,12 @@
 using Ghost.Contracts.Jobs;
 using Ghost.Core;
-using Ghost.Platform.Glassdoor.Jobs;
+using Ghost.Plugin.Glassdoor.Jobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
-namespace Ghost.Platform.Glassdoor.Tests;
+namespace Ghost.Plugin.Glassdoor.Tests;
 
 public sealed class GlassdoorSearchScraperTests
 {

@@ -9,11 +9,11 @@ namespace Ghost.Plugin.Glassdoor;
 internal sealed class GlassdoorPluginReadinessCheck : IGlassdoorPluginReadinessCheck
 {
     private readonly ILogger<GlassdoorPluginReadinessCheck> _logger;
-    private readonly IOptions<Ghost.Platform.Glassdoor.GlassdoorOptions> _options;
+    private readonly IOptions<GlassdoorOptions> _options;
 
     public GlassdoorPluginReadinessCheck(
         ILogger<GlassdoorPluginReadinessCheck> logger,
-        IOptions<Ghost.Platform.Glassdoor.GlassdoorOptions> options)
+        IOptions<GlassdoorOptions> options)
     {
         _logger = logger;
         _options = options;

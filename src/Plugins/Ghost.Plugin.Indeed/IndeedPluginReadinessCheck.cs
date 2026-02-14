@@ -9,11 +9,11 @@ namespace Ghost.Plugin.Indeed;
 internal sealed class IndeedPluginReadinessCheck : IIndeedPluginReadinessCheck
 {
     private readonly ILogger<IndeedPluginReadinessCheck> _logger;
-    private readonly IOptions<Ghost.Platform.Indeed.IndeedOptions> _options;
+    private readonly IOptions<IndeedOptions> _options;
 
     public IndeedPluginReadinessCheck(
         ILogger<IndeedPluginReadinessCheck> logger,
-        IOptions<Ghost.Platform.Indeed.IndeedOptions> options)
+        IOptions<IndeedOptions> options)
     {
         _logger = logger;
         _options = options;

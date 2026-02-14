@@ -1,9 +1,9 @@
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
-using Ghost.Platform.Glassdoor.Internal;
+using Ghost.Plugin.Glassdoor.Internal;
 using Xunit;
 
-namespace Ghost.Platform.Glassdoor.Tests;
+namespace Ghost.Plugin.Glassdoor.Tests;
 
 /// <summary>
 /// Integration tests for GlassdoorJobParser covering mock JSON responses and parser resilience.

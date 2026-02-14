@@ -1,21 +1,15 @@
 using Ghost.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Ghost.Plugin.Google;
 
 /// <summary>
-/// Google plugin that wraps the platform extension with plugin metadata and capabilities.
+/// Google plugin that provides Google services including Jobs and Gemini inference.
 /// </summary>
 public sealed class GooglePlugin : IExtension
 {
-    private readonly Ghost.Platform.Google.GoogleExtension _platformExtension;
-
-    public GooglePlugin()
-    {
-        _platformExtension = new Ghost.Platform.Google.GoogleExtension();
-    }
-
     /// <inheritdoc />
     public string Name => "Google";
 
@@ -23,10 +17,16 @@ public sealed class GooglePlugin : IExtension
     public Version Version => new(1, 0, 0);
 
     /// <inheritdoc />
-    public IReadOnlyList<Type> ProvidedServices => _platformExtension.ProvidedServices;
+    public IReadOnlyList<Type> ProvidedServices => new[]
+    {
+        typeof(GooglePluginCapabilities),
+        typeof(IGooglePluginReadinessCheck),
+        typeof(Jobs.GoogleJobClient),
+        typeof(Gemini.GeminiClient)
+    };
 
     /// <inheritdoc />
-    public IReadOnlyList<Type> RequiredServices => _platformExtension.RequiredServices;
+    public IReadOnlyList<Type> RequiredServices => Array.Empty<Type>();
 
     /// <inheritdoc />
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
@@ -38,8 +38,21 @@ public sealed class GooglePlugin : IExtension
             RegisterKeyedInferenceClient = configuration.GetValue("Ghost:Plugins:Google:RegisterKeyedInferenceClient", true)
         };
 
-        // Delegate to the platform extension for all core service registrations
-        _platformExtension.ConfigureServices(services, configuration);
+        // Configure Google options
+        services.Configure<GoogleOptions>(configuration.GetSection("Ghost:Plugins:Google"));
+        services.AddSingleton<IValidateOptions<GoogleOptions>, GoogleOptionsValidator>();
+
+        // Configure Jobs options
+        services.Configure<Jobs.GoogleJobsOptions>(configuration.GetSection("Ghost:Plugins:Google:Jobs"));
+
+        // Configure Gemini options
+        services.Configure<Gemini.GeminiOptions>(configuration.GetSection("Ghost:Plugins:Google:Gemini"));
+
+        // Register Jobs client
+        services.AddSingleton<Jobs.GoogleJobClient>();
+
+        // Register Gemini client
+        services.AddSingleton<Gemini.GeminiClient>();
 
         if (pluginOptions.RegisterReadinessServices)
         {
@@ -61,7 +74,7 @@ public sealed class GooglePlugin : IExtension
         {
             // Register keyed IInferenceClient mapping for worker compatibility.
             services.AddKeyedScoped<Ghost.Contracts.Inference.IInferenceClient>("google", (sp, _) =>
-                sp.GetRequiredService<Ghost.Platform.Google.Gemini.GeminiClient>());
+                sp.GetRequiredService<Ghost.Plugin.Google.Gemini.GeminiClient>());
         }
     }
 }
