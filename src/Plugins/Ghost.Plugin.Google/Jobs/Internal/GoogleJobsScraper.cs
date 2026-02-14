@@ -4,11 +4,11 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Ghost.Platform.Google.Jobs.Entities;
+using Ghost.Plugin.Google.Jobs.Entities;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 
-namespace Ghost.Platform.Google.Jobs.Internal;
+namespace Ghost.Plugin.Google.Jobs.Internal;
 
 /// <summary>
 /// Direct HTML scraper for Google Jobs - NO API KEY NEEDED

@@ -5,7 +5,7 @@ using Ghost.Contracts.Jobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Ghost.Platform.Google.Jobs.Internal;
+namespace Ghost.Plugin.Google.Jobs.Internal;
 
 public static class GoogleJobsParser
 {

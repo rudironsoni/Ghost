@@ -1,4 +1,4 @@
-namespace Ghost.Platform.Google.Jobs;
+namespace Ghost.Plugin.Google.Jobs;
 
 /// <summary>
 /// Strategy for attempting job search methods.

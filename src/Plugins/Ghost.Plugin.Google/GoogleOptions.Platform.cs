@@ -1,4 +1,4 @@
-namespace Ghost.Platform.Google;
+namespace Ghost.Plugin.Google;
 
 /// <summary>
 /// Options for the Gemini browser integration.

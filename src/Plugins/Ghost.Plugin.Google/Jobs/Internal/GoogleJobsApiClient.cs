@@ -3,11 +3,11 @@ using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using Ghost.Contracts.Jobs;
 using Ghost.Http;
-using Ghost.Platform.Common.Session;
+using Ghost.Infrastructure.Session;
 using Microsoft.Extensions.Logging;
 using Polly;
 
-namespace Ghost.Platform.Google.Jobs.Internal;
+namespace Ghost.Plugin.Google.Jobs.Internal;
 
 /// <summary>
 /// Direct HTML scraper for Google Jobs - NO EXTERNAL API OR SERPAPI REQUIRED

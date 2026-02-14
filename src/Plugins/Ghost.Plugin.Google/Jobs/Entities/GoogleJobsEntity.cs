@@ -2,7 +2,7 @@ using Ghost.Sdk.Spider.Core.Entities;
 using Ghost.Sdk.Spider.Core.Entities.Attributes;
 using Ghost.Sdk.Spider.Core.Entities.Formatters;
 
-namespace Ghost.Platform.Google.Jobs.Entities;
+namespace Ghost.Plugin.Google.Jobs.Entities;
 
 [EntitySelector(
     Expression = "//div[@role='listitem' or contains(@class,'gws-plugins-horizon-jobs__li-ed') or contains(@class,'gws-plugins-horizon-jobs__li')]",
