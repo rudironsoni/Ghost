@@ -9,11 +9,11 @@ namespace Ghost.Plugin.Anthropic;
 internal sealed class AnthropicPluginReadinessCheck : IAnthropicPluginReadinessCheck
 {
     private readonly ILogger<AnthropicPluginReadinessCheck> _logger;
-    private readonly IOptions<Ghost.Platform.Anthropic.AnthropicOptions> _options;
+    private readonly IOptions<AnthropicOptions> _options;
 
     public AnthropicPluginReadinessCheck(
         ILogger<AnthropicPluginReadinessCheck> logger,
-        IOptions<Ghost.Platform.Anthropic.AnthropicOptions> options)
+        IOptions<AnthropicOptions> options)
     {
         _logger = logger;
         _options = options;

@@ -1,3 +1,4 @@
+using Ghost.Contracts.Inference;
 using Ghost.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -5,17 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Ghost.Plugin.Anthropic;
 
 /// <summary>
-/// Anthropic plugin that wraps the platform extension with plugin metadata and capabilities.
+/// Anthropic plugin providing AI inference capabilities.
 /// </summary>
 public sealed class AnthropicPlugin : IExtension
 {
-    private readonly Ghost.Platform.Anthropic.AnthropicExtension _platformExtension;
-
-    public AnthropicPlugin()
-    {
-        _platformExtension = new Ghost.Platform.Anthropic.AnthropicExtension();
-    }
-
     /// <inheritdoc />
     public string Name => "Anthropic";
 
@@ -23,10 +17,10 @@ public sealed class AnthropicPlugin : IExtension
     public Version Version => new(1, 0, 0);
 
     /// <inheritdoc />
-    public IReadOnlyList<Type> ProvidedServices => _platformExtension.ProvidedServices;
+    public IReadOnlyList<Type> ProvidedServices => new[] { typeof(IInferenceClient) };
 
     /// <inheritdoc />
-    public IReadOnlyList<Type> RequiredServices => _platformExtension.RequiredServices;
+    public IReadOnlyList<Type> RequiredServices => Type.EmptyTypes;
 
     /// <inheritdoc />
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
@@ -38,8 +32,9 @@ public sealed class AnthropicPlugin : IExtension
             RegisterKeyedInferenceClient = configuration.GetValue("Ghost:Plugins:Anthropic:RegisterKeyedInferenceClient", true)
         };
 
-        // Delegate to the platform extension for all core service registrations
-        _platformExtension.ConfigureServices(services, configuration);
+        // Register core services
+        services.Configure<AnthropicOptions>(configuration.GetSection("Anthropic"));
+        services.AddSingleton<AnthropicClient>();
 
         if (pluginOptions.RegisterReadinessServices)
         {
@@ -60,8 +55,8 @@ public sealed class AnthropicPlugin : IExtension
         if (pluginOptions.UsePluginRuntime && pluginOptions.RegisterKeyedInferenceClient)
         {
             // Register keyed IInferenceClient mapping for worker compatibility.
-            services.AddKeyedScoped<Ghost.Contracts.Inference.IInferenceClient>("anthropic", (sp, _) =>
-                sp.GetRequiredService<Ghost.Platform.Anthropic.AnthropicClient>());
+            services.AddKeyedScoped<IInferenceClient>("anthropic", (sp, _) =>
+                sp.GetRequiredService<AnthropicClient>());
         }
     }
 }

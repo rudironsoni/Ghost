@@ -12,8 +12,8 @@
     <WarningsNotAsErrors>CA1866;CA1310;CA1822;CA1707;CA1826;CA2201</WarningsNotAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Core\Ghost\Ghost.csproj" />
     <ProjectReference Include="..\..\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
-    <ProjectReference Include="..\..\Platforms\Ghost.Platform.Anthropic\Ghost.Platform.Anthropic.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Inference\Ghost.Contracts.Inference.csproj" />
   </ItemGroup>
