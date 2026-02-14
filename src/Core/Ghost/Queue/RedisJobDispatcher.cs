@@ -12,8 +12,9 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
 {
     private readonly RedisQueueOptions _options;
     private readonly ILogger<RedisJobDispatcher> _logger;
-    private readonly ConnectionMultiplexer _redis;
-    private readonly IDatabase _db;
+    private readonly Lazy<ConnectionMultiplexer> _redisLazy;
+    private ConnectionMultiplexer? _redis;
+    private IDatabase? _db;
 
     private static readonly JsonSerializerOptions s_jsonOptions = new()
     {
@@ -63,16 +64,34 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
         _options = options.Value;
         _logger = logger;
 
-        _redis = ConnectionMultiplexer.Connect(_options.ConnectionString);
-        _db = _redis.GetDatabase(_options.Database);
+        // Use lazy initialization to defer Redis connection until first use
+        // This prevents DI container build failures when Redis is unavailable
+        _redisLazy = new Lazy<ConnectionMultiplexer>(() =>
+        {
+            var redis = ConnectionMultiplexer.Connect(_options.ConnectionString);
+            s_queueInitialized(_logger, _options.ConnectionString, null);
+            return redis;
+        });
+    }
 
-        s_queueInitialized(_logger, _options.ConnectionString, null);
+    /// <summary>
+    /// Ensures the Redis connection is established.
+    /// </summary>
+    private void EnsureConnected()
+    {
+        if (_redis is null)
+        {
+            _redis = _redisLazy.Value;
+            _db = _redis.GetDatabase(_options.Database);
+        }
     }
 
     /// <inheritdoc />
     public async Task<string> EnqueueAsync(Job job, int priority = 2, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(job);
+
+        EnsureConnected();
 
         job.Priority = (JobPriority)Math.Clamp(priority, 0, 3);
         job.CreatedAt = DateTime.UtcNow;
@@ -84,7 +103,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
         // Use current timestamp as score for FIFO within priority
         var score = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-        await _db.SortedSetAddAsync(key, jobJson, score);
+        await _db!.SortedSetAddAsync(key, jobJson, score);
 
         s_jobEnqueued(_logger, job.Id, job.Priority.ToString(), null);
 
@@ -96,19 +115,21 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workerId);
 
+        EnsureConnected();
+
         // Try to dequeue from each priority level
         for (int priority = 0; priority <= 3; priority++)
         {
             var key = GetPendingKey((JobPriority)priority);
 
             // Get and remove the job with lowest score (oldest)
-            var entries = await _db.SortedSetRangeByScoreWithScoresAsync(key, take: 1);
+            var entries = await _db!.SortedSetRangeByScoreWithScoresAsync(key, take: 1);
 
             if (entries.Length == 0)
                 continue;
 
             var entry = entries[0];
-            var removed = await _db.SortedSetRemoveAsync(key, entry.Element);
+            var removed = await _db!.SortedSetRemoveAsync(key, entry.Element);
 
             if (!removed)
                 continue; // Another worker got it first
@@ -123,7 +144,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
             // Add to active jobs
             var activeKey = GetActiveKey(workerId);
             var jobJson = JsonSerializer.Serialize(job, s_jsonOptions);
-            await _db.HashSetAsync(activeKey, job.Id, jobJson);
+            await _db!.HashSetAsync(activeKey, job.Id, jobJson);
 
             s_jobDequeued(_logger, job.Id, workerId, null);
 
@@ -139,20 +160,22 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(jobId);
         ArgumentNullException.ThrowIfNull(result);
 
+        EnsureConnected();
+
         result.JobId = jobId;
         result.CompletedAt = DateTime.UtcNow;
 
         // Remove from active jobs
         var activeKey = GetActiveKey(result.WorkerId ?? "unknown");
-        await _db.HashDeleteAsync(activeKey, jobId);
+        await _db!.HashDeleteAsync(activeKey, jobId);
 
         // Add to completed jobs
         var completedKey = GetCompletedKey();
         var resultJson = JsonSerializer.Serialize(result, s_jsonOptions);
-        await _db.ListLeftPushAsync(completedKey, resultJson);
+        await _db!.ListLeftPushAsync(completedKey, resultJson);
 
         // Trim completed list to max size
-        await _db.ListTrimAsync(completedKey, 0, _options.MaxCompletedHistory - 1);
+        await _db!.ListTrimAsync(completedKey, 0, _options.MaxCompletedHistory - 1);
 
         s_jobCompleted(_logger, jobId, null);
     }
@@ -163,16 +186,18 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(jobId);
         ArgumentNullException.ThrowIfNull(exception);
 
+        EnsureConnected();
+
         // Get job from active queue
         Job? job = null;
         string? workerId = null;
 
         // Search all active worker queues to find the job
-        var server = _redis.GetServer(_redis.GetEndPoints().First());
+        var server = _redis!.GetServer(_redis.GetEndPoints().First());
         var pattern = $"{_options.QueuePrefix}:active:*";
         await foreach (var key in server.KeysAsync(pattern: pattern))
         {
-            var jobJson = await _db.HashGetAsync(key, jobId);
+            var jobJson = await _db!.HashGetAsync(key, jobId);
             if (!jobJson.IsNullOrEmpty)
             {
                 job = JsonSerializer.Deserialize<Job>(jobJson.ToString(), s_jsonOptions);
@@ -193,14 +218,14 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
 
         // Remove from active jobs
         var activeKey = GetActiveKey(workerId ?? "unknown");
-        await _db.HashDeleteAsync(activeKey, jobId);
+        await _db!.HashDeleteAsync(activeKey, jobId);
 
         if (job.RetryCount >= job.MaxRetries)
         {
             // Move to dead letter queue
             var deadKey = GetDeadKey();
             var jobJson = JsonSerializer.Serialize(job, s_jsonOptions);
-            await _db.ListLeftPushAsync(deadKey, jobJson);
+            await _db!.ListLeftPushAsync(deadKey, jobJson);
 
             s_jobMovedToDead(_logger, jobId, job.RetryCount, exception.Message, null);
         }
@@ -213,14 +238,14 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
             // Re-enqueue with delay (using score as timestamp)
             var key = GetPendingKey(job.Priority);
             var jobJson = JsonSerializer.Serialize(job, s_jsonOptions);
-            await _db.SortedSetAddAsync(key, jobJson, retryAt);
+            await _db!.SortedSetAddAsync(key, jobJson, retryAt);
 
             s_jobRetryScheduled(_logger, jobId, job.RetryCount, job.MaxRetries, delayMinutes, exception.Message, null);
         }
 
         // Store failure details
         var failedKey = GetFailedKey(jobId);
-        await _db.HashSetAsync(failedKey, new HashEntry[]
+        await _db!.HashSetAsync(failedKey, new HashEntry[]
         {
             new("job_id", jobId),
             new("retry_count", job.RetryCount),
@@ -228,17 +253,19 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
             new("stack_trace", exception.StackTrace ?? ""),
             new("failed_at", DateTimeOffset.UtcNow.ToUnixTimeSeconds())
         });
-        await _db.KeyExpireAsync(failedKey, TimeSpan.FromDays(7)); // Keep for 7 days
+        await _db!.KeyExpireAsync(failedKey, TimeSpan.FromDays(7)); // Keep for 7 days
     }
 
     /// <inheritdoc />
     public async Task<int> GetPendingCountAsync(CancellationToken cancellationToken = default)
     {
+        EnsureConnected();
+
         long total = 0;
         for (int priority = 0; priority <= 3; priority++)
         {
             var key = GetPendingKey((JobPriority)priority);
-            var count = await _db.SortedSetLengthAsync(key);
+            var count = await _db!.SortedSetLengthAsync(key);
             total += count;
         }
         return (int)total;
@@ -247,13 +274,15 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
     /// <inheritdoc />
     public async Task<int> GetActiveCountAsync(CancellationToken cancellationToken = default)
     {
+        EnsureConnected();
+
         long total = 0;
-        var server = _redis.GetServer(_redis.GetEndPoints().First());
+        var server = _redis!.GetServer(_redis.GetEndPoints().First());
         var pattern = $"{_options.QueuePrefix}:active:*";
 
         await foreach (var key in server.KeysAsync(pattern: pattern))
         {
-            var count = await _db.HashLengthAsync(key);
+            var count = await _db!.HashLengthAsync(key);
             total += count;
         }
 
@@ -263,16 +292,20 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
     /// <inheritdoc />
     public async Task<int> GetCompletedCountAsync(CancellationToken cancellationToken = default)
     {
+        EnsureConnected();
+
         var key = GetCompletedKey();
-        var count = await _db.ListLengthAsync(key);
+        var count = await _db!.ListLengthAsync(key);
         return (int)count;
     }
 
     /// <inheritdoc />
     public async Task<int> GetDeadCountAsync(CancellationToken cancellationToken = default)
     {
+        EnsureConnected();
+
         var key = GetDeadKey();
-        var count = await _db.ListLengthAsync(key);
+        var count = await _db!.ListLengthAsync(key);
         return (int)count;
     }
 
@@ -284,7 +317,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await _redis.DisposeAsync();
+        await _redis!.DisposeAsync();
         s_queueDisposed(_logger, null);
     }
 }
