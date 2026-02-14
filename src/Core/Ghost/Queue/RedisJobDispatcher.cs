@@ -317,7 +317,11 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await _redis!.DisposeAsync();
-        s_queueDisposed(_logger, null);
+        // Only dispose if connection was actually established
+        if (_redis is not null)
+        {
+            await _redis.DisposeAsync();
+            s_queueDisposed(_logger, null);
+        }
     }
 }
