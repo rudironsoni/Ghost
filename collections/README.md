@@ -2,6 +2,8 @@
 
 This is a Bruno OpenCollection (YAML format) for testing the Ghost WebAPI endpoints.
 
+> **Note**: Collections are primarily for exploration and manual testing. For production data validation, run the [smoke tests](../docs/testing/smoke-tests.md) which validate real, fresh job data from production endpoints.
+
 ## Structure
 
 ```
@@ -49,6 +51,59 @@ Ghost-WebAPI-OpenCollection/
 | `jobId` | `linkedin-12345` | Job ID for LinkedIn job lookup |
 | `profileId` | `john-doe` | Profile ID for LinkedIn social profile lookup |
 | `count` | `10` | Number of items to retrieve |
+
+## Collections vs Smoke Tests
+
+### Bruno Collections (This Directory)
+
+**Purpose**: API exploration and manual testing
+
+**Use When**:
+- Exploring API endpoints
+- Testing new features manually
+- Debugging specific requests
+- Understanding API behavior
+- Quick ad-hoc testing
+
+**Example**:
+```bash
+# Test health endpoint manually
+cd collections
+bru run "Health/Basic Health Check.yml" --env local
+```
+
+### Smoke Tests
+
+**Purpose**: Production data validation
+
+**Use When**:
+- Validating real job data quality
+- Checking scraper health before release
+- Verifying data freshness
+- Running comprehensive platform tests
+- Production readiness validation
+
+**Example**:
+```bash
+# Run all smoke tests to validate production data
+dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj
+
+# Run specific platform tests
+dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --filter "Platform=LinkedIn"
+```
+
+**Key Differences**:
+
+| Aspect | Collections | Smoke Tests |
+|--------|-------------|-------------|
+| Purpose | Exploration | Validation |
+| Data | Test/Development | Production |
+| Automation | Manual | Automated |
+| Execution | Bruno CLI | dotnet test |
+| CI/CD | Not recommended | Manual-only |
+| Scope | API endpoints | End-to-end flows |
+
+For production data validation, run smoke tests. For API exploration, use collections.
 
 ## Usage with Bruno CLI
 
