@@ -159,6 +159,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Smoke.Tests", "tests\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.InfoJobs", "src\Plugins\Ghost.Plugin.InfoJobs\Ghost.Plugin.InfoJobs.csproj", "{DADC1171-9821-4ACD-926B-D5C5E1355FAE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Worker.Tests", "tests\Unit\Ghost.Worker.Tests\Ghost.Worker.Tests.csproj", "{515A20D8-81D4-46FD-8C96-6D08895B430B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -685,6 +687,18 @@ Global
 		{DADC1171-9821-4ACD-926B-D5C5E1355FAE}.Release|x64.Build.0 = Release|Any CPU
 		{DADC1171-9821-4ACD-926B-D5C5E1355FAE}.Release|x86.ActiveCfg = Release|Any CPU
 		{DADC1171-9821-4ACD-926B-D5C5E1355FAE}.Release|x86.Build.0 = Release|Any CPU
+		{515A20D8-81D4-46FD-8C96-6D08895B430B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{515A20D8-81D4-46FD-8C96-6D08895B430B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{515A20D8-81D4-46FD-8C96-6D08895B430B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{515A20D8-81D4-46FD-8C96-6D08895B430B}.Debug|x64.Build.0 = Debug|Any CPU
+		{515A20D8-81D4-46FD-8C96-6D08895B430B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{515A20D8-81D4-46FD-8C96-6D08895B430B}.Debug|x86.Build.0 = Debug|Any CPU
+		{515A20D8-81D4-46FD-8C96-6D08895B430B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{515A20D8-81D4-46FD-8C96-6D08895B430B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{515A20D8-81D4-46FD-8C96-6D08895B430B}.Release|x64.ActiveCfg = Release|Any CPU
+		{515A20D8-81D4-46FD-8C96-6D08895B430B}.Release|x64.Build.0 = Release|Any CPU
+		{515A20D8-81D4-46FD-8C96-6D08895B430B}.Release|x86.ActiveCfg = Release|Any CPU
+		{515A20D8-81D4-46FD-8C96-6D08895B430B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -766,5 +780,6 @@ Global
 		{8AFE20AF-74AE-3999-CBF2-DC9CC38A72B8} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{9C9A52EC-2B64-4AF9-8E81-18CB16495752} = {8AFE20AF-74AE-3999-CBF2-DC9CC38A72B8}
 		{DADC1171-9821-4ACD-926B-D5C5E1355FAE} = {D87F64FC-77E7-48EB-B9AF-B28F6BA871FA}
+		{515A20D8-81D4-46FD-8C96-6D08895B430B} = {9D556B49-86D1-93A7-9596-FFAAB74EC556}
 	EndGlobalSection
 EndGlobal

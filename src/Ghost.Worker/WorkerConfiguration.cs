@@ -39,4 +39,9 @@ public sealed class WorkerConfiguration
     /// Gets or sets the results expiration time in hours.
     /// </summary>
     public int ResultsExpirationHours { get; set; } = 24;
+
+    /// <summary>
+    /// Gets or sets the graceful shutdown timeout in seconds.
+    /// </summary>
+    public int ShutdownTimeoutSeconds { get; set; } = 10;
 }
