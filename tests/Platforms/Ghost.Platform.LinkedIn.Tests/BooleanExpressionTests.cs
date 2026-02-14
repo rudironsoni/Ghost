@@ -1,9 +1,9 @@
 using System;
 using FluentAssertions;
-using Ghost.Platform.LinkedIn.Internal;
+using Ghost.Plugin.LinkedIn.Internal;
 using Xunit;
 
-namespace Ghost.Platform.LinkedIn.Tests;
+namespace Ghost.Plugin.LinkedIn.Tests;
 
 public class BooleanExpressionTests
 {

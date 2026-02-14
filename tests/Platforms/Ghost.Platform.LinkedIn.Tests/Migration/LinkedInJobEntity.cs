@@ -2,7 +2,7 @@ using Ghost.Sdk.Spider.Core.Entities;
 using Ghost.Sdk.Spider.Core.Entities.Attributes;
 using Ghost.Sdk.Spider.Core.Extraction.Selectors;
 
-namespace Ghost.Platform.LinkedIn.Tests.Migration;
+namespace Ghost.Plugin.LinkedIn.Tests.Migration;
 
 /// <summary>
 /// Entity for extracting LinkedIn job postings using Ghost.Sdk.Spider.

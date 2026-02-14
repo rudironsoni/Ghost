@@ -1,11 +1,11 @@
 using FluentAssertions;
-using Ghost.Platform.LinkedIn.Tests.Migration;
+using Ghost.Plugin.LinkedIn.Tests.Migration;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Engine;
 using Xunit;
 using ExecutionContext = Ghost.Sdk.Spider.Engine.ExecutionContext;
 
-namespace Ghost.Platform.LinkedIn.Tests;
+namespace Ghost.Plugin.LinkedIn.Tests;
 
 /// <summary>
 /// Tests for LinkedInSpider using Ghost.Sdk.Spider framework.

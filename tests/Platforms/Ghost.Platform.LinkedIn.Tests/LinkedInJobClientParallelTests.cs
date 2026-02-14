@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
-namespace Ghost.Platform.LinkedIn.Tests;
+namespace Ghost.Plugin.LinkedIn.Tests;
 
 public class LinkedInJobClientParallelTests
 {

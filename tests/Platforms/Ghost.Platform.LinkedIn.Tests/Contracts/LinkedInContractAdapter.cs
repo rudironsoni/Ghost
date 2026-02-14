@@ -7,7 +7,7 @@ using Ghost.Contracts.Jobs;
 using Ghost.Platform.LinkedIn;
 using Ghost.Testing.Contracts;
 
-namespace Ghost.Platform.LinkedIn.Tests.Contracts;
+namespace Ghost.Plugin.LinkedIn.Tests.Contracts;
 
 /// <summary>
 /// Adapter for LinkedIn provider contract testing.

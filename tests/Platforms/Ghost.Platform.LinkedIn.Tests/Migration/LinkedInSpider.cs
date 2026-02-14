@@ -2,7 +2,7 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Ghost.Sdk.Spider.Engine;
 
-namespace Ghost.Platform.LinkedIn.Tests.Migration;
+namespace Ghost.Plugin.LinkedIn.Tests.Migration;
 
 /// <summary>
 /// Spider for crawling LinkedIn job postings using Ghost.Sdk.Spider framework.

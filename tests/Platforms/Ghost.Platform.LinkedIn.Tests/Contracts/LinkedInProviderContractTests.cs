@@ -2,7 +2,7 @@ using Ghost.Abstractions;
 using Ghost.Contracts.Jobs;
 using Ghost.Platform.Common.Session;
 using Ghost.Platform.LinkedIn;
-using Ghost.Platform.LinkedIn.Tests.Contracts;
+using Ghost.Plugin.LinkedIn.Tests.Contracts;
 using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Ghost.Testing.Contracts;
@@ -12,7 +12,7 @@ using NSubstitute;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Ghost.Platform.LinkedIn.Tests.Contracts;
+namespace Ghost.Plugin.LinkedIn.Tests.Contracts;
 
 /// <summary>
 /// Contract tests for LinkedIn provider.
