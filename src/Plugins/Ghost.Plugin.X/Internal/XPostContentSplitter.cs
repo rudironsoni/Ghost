@@ -1,0 +1,287 @@
+using System.Text;
+using System.Text.RegularExpressions;
+
+#pragma warning disable IDE0032 // Use auto property
+
+namespace Ghost.Plugin.X.Internal;
+
+/// <summary>
+/// Splits content into tweet-sized parts for thread support.
+/// </summary>
+public sealed class XPostContentSplitter
+{
+    private readonly int _maxLength;
+    private readonly string _urlPlaceholder;
+
+    public XPostContentSplitter(int maxLength = 280)
+    {
+        _maxLength = maxLength;
+        _urlPlaceholder = "https://t.co/XXXXXXXXXX"; // X's URL shortener format
+    }
+
+    /// <summary>
+    /// Splits content into tweet-sized parts.
+    /// </summary>
+    /// <param name="content">The content to split.</param>
+    /// <returns>A list of tweet parts.</returns>
+    public IReadOnlyList<string> Split(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return Array.Empty<string>();
+        }
+
+        // If content fits in one tweet, return it as-is
+        if (EstimateLength(content) <= _maxLength)
+        {
+            return new[] { content };
+        }
+
+        // Split into sentences while respecting URLs
+        var sentences = ExtractSentences(content);
+        var parts = new List<string>();
+        var currentPart = new StringBuilder();
+
+        foreach (var sentence in sentences)
+        {
+            var estimatedLength = EstimateLength(currentPart.ToString() + sentence);
+
+            if (estimatedLength <= _maxLength)
+            {
+                // Sentence fits, add it
+                if (currentPart.Length > 0)
+                {
+                    currentPart.Append(' ');
+                }
+                currentPart.Append(sentence);
+            }
+            else
+            {
+                // Sentence doesn't fit, finalize current part
+                if (currentPart.Length > 0)
+                {
+                    parts.Add(currentPart.ToString());
+                    currentPart.Clear();
+                }
+
+                // Check if sentence itself is too long
+                if (EstimateLength(sentence) > _maxLength)
+                {
+                    // Split long sentence at word boundaries
+                    var chunks = SplitLongSentence(sentence);
+                    parts.AddRange(chunks);
+                }
+                else
+                {
+                    currentPart.Append(sentence);
+                }
+            }
+        }
+
+        // Add remaining content
+        if (currentPart.Length > 0)
+        {
+            parts.Add(currentPart.ToString());
+        }
+
+        // Add thread numbering (1/N, 2/N, etc.)
+        if (parts.Count > 1)
+        {
+            parts = AddThreadNumbering(parts);
+        }
+
+        return parts.AsReadOnly();
+    }
+
+    /// <summary>
+    /// Extracts sentences from content while preserving URLs.
+    /// </summary>
+    private List<string> ExtractSentences(string content)
+    {
+        var sentences = new List<string>();
+        var urlPattern = @"https?://[^\s]+";
+        var urls = Regex.Matches(content, urlPattern).Select(m => m.Value).ToList();
+
+        // Replace URLs with placeholders
+        var tempContent = content;
+        var urlIndex = 0;
+        var urlMap = new Dictionary<string, string>();
+
+        foreach (var url in urls)
+        {
+            var placeholder = $"{{URL{urlIndex}}}";
+            urlMap[placeholder] = url;
+            tempContent = tempContent.Replace(url, placeholder);
+            urlIndex++;
+        }
+
+        // Split by sentence boundaries
+        var sentencePattern = @"(?<=[.!?])\s+";
+        var rawSentences = Regex.Split(tempContent, sentencePattern)
+            .Select(s => s.Trim())
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToList();
+
+        // Restore URLs
+        foreach (var sentence in rawSentences)
+        {
+            var restored = sentence;
+            foreach (var kvp in urlMap)
+            {
+                restored = restored.Replace(kvp.Key, kvp.Value);
+            }
+            sentences.Add(restored);
+        }
+
+        return sentences;
+    }
+
+    /// <summary>
+    /// Estimates the character length of content, treating URLs as fixed length.
+    /// </summary>
+    private int EstimateLength(string content)
+    {
+        if (string.IsNullOrEmpty(content))
+        {
+            return 0;
+        }
+
+        var urlPattern = @"https?://[^\s]+";
+        var urls = Regex.Matches(content, urlPattern);
+        var urlLength = urls.Count * _urlPlaceholder.Length;
+        var nonUrlContent = Regex.Replace(content, urlPattern, "");
+
+        return urlLength + nonUrlContent.Length;
+    }
+
+    /// <summary>
+    /// Splits a long sentence at word boundaries.
+    /// </summary>
+    private List<string> SplitLongSentence(string sentence)
+    {
+        var chunks = new List<string>();
+        var words = sentence.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var currentChunk = new StringBuilder();
+
+        foreach (var word in words)
+        {
+            var testChunk = currentChunk.Length > 0
+                ? currentChunk + " " + word
+                : word;
+
+            if (EstimateLength(testChunk) <= _maxLength)
+            {
+                if (currentChunk.Length > 0)
+                {
+                    currentChunk.Append(' ');
+                }
+                currentChunk.Append(word);
+            }
+            else
+            {
+                if (currentChunk.Length > 0)
+                {
+                    chunks.Add(currentChunk.ToString());
+                    currentChunk.Clear();
+                }
+
+                // If single word is too long, split it into chunks
+                if (EstimateLength(word) > _maxLength)
+                {
+                    var wordChunks = SplitLongWord(word);
+                    chunks.AddRange(wordChunks);
+                }
+                else
+                {
+                    currentChunk.Append(word);
+                }
+            }
+        }
+
+        if (currentChunk.Length > 0)
+        {
+            chunks.Add(currentChunk.ToString());
+        }
+
+        return chunks;
+    }
+
+    /// <summary>
+    /// Splits a very long word into chunks of maxLength size.
+    /// </summary>
+    private List<string> SplitLongWord(string word)
+    {
+        var chunks = new List<string>();
+        var position = 0;
+
+        while (position < word.Length)
+        {
+            var remainingLength = word.Length - position;
+            var chunkSize = Math.Min(_maxLength, remainingLength);
+
+            chunks.Add(word.Substring(position, chunkSize));
+            position += chunkSize;
+        }
+
+        return chunks;
+    }
+
+    /// <summary>
+    /// Adds thread numbering to parts.
+    /// </summary>
+    private List<string> AddThreadNumbering(List<string> parts)
+    {
+        var numbered = new List<string>();
+        var totalParts = parts.Count;
+
+        for (int i = 0; i < parts.Count; i++)
+        {
+            var partNumber = i + 1;
+            var suffix = $" ({partNumber}/{totalParts})";
+
+            // Check if we need to trim content to fit the numbering
+            var content = parts[i];
+            if (EstimateLength(content + suffix) > _maxLength)
+            {
+                var maxContentLength = _maxLength - suffix.Length - 3; // -3 for "..."
+                content = content[..maxContentLength] + "...";
+            }
+
+            numbered.Add(content + suffix);
+        }
+
+        return numbered;
+    }
+
+    /// <summary>
+    /// Gets the maximum tweet length.
+    /// </summary>
+    public int MaxLength => _maxLength;
+
+    /// <summary>
+    /// Checks if content requires a thread (multiple tweets).
+    /// </summary>
+    public bool RequiresThread(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return false;
+        }
+
+        return EstimateLength(content) > _maxLength;
+    }
+
+    /// <summary>
+    /// Gets the estimated number of tweets required.
+    /// </summary>
+    public int GetEstimatedTweetCount(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return 0;
+        }
+
+        var parts = Split(content);
+        return parts.Count;
+    }
+}

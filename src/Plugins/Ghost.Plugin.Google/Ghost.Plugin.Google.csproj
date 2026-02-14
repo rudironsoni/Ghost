@@ -12,10 +12,15 @@
     <WarningsNotAsErrors>CA1866;CA1310;CA1822;CA1707;CA1826;CA2201</WarningsNotAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Core\Ghost\Ghost.csproj" />
     <ProjectReference Include="..\..\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
-    <ProjectReference Include="..\..\Platforms\Ghost.Platform.Google\Ghost.Platform.Google.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Ghost.Infrastructure.Session\Ghost.Infrastructure.Session.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Inference\Ghost.Contracts.Inference.csproj" />
+    <ProjectReference Include="..\..\SDK\Ghost.Sdk.Spider\Ghost.Sdk.Spider.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="HtmlAgilityPack" />
   </ItemGroup>
 </Project>

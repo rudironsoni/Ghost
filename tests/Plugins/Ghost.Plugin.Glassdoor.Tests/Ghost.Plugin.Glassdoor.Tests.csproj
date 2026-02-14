@@ -8,9 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../../src/Platforms/Ghost.Platform.Glassdoor/Ghost.Platform.Glassdoor.csproj" />
+    <ProjectReference Include="../../../src/Plugins/Ghost.Plugin.Glassdoor/Ghost.Plugin.Glassdoor.csproj" />
     <ProjectReference Include="../../../src/Contracts/Ghost.Contracts.Jobs/Ghost.Contracts.Jobs.csproj" />
     <ProjectReference Include="../../../src/Core/Ghost/Ghost.csproj" />
+    <ProjectReference Include="../../../src/Infrastructure/Ghost.Infrastructure.Session/Ghost.Infrastructure.Session.csproj" />
     <ProjectReference Include="../../Shared/Ghost.Testing/Ghost.Testing.csproj" />
   </ItemGroup>
 

@@ -9,11 +9,11 @@ namespace Ghost.Plugin.OpenAI;
 internal sealed class OpenAIPluginReadinessCheck : IOpenAIPluginReadinessCheck
 {
     private readonly ILogger<OpenAIPluginReadinessCheck> _logger;
-    private readonly IOptions<Ghost.Platform.OpenAI.OpenAIOptions> _options;
+    private readonly IOptions<OpenAIOptions> _options;
 
     public OpenAIPluginReadinessCheck(
         ILogger<OpenAIPluginReadinessCheck> logger,
-        IOptions<Ghost.Platform.OpenAI.OpenAIOptions> options)
+        IOptions<OpenAIOptions> options)
     {
         _logger = logger;
         _options = options;

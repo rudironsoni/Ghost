@@ -2,7 +2,7 @@ using FluentAssertions;
 using Ghost.Models;
 using Xunit;
 
-namespace Ghost.Platform.Glassdoor.Tests;
+namespace Ghost.Plugin.Glassdoor.Tests;
 
 /// <summary>
 /// Unit tests for GlassdoorOptions covering configuration validation and defaults.

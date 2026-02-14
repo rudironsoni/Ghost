@@ -3,12 +3,12 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
-using Ghost.Platform.Glassdoor.Internal;
+using Ghost.Plugin.Glassdoor.Internal;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace Ghost.Platform.Glassdoor.Tests;
+namespace Ghost.Plugin.Glassdoor.Tests;
 
 /// <summary>
 /// Integration tests for GlassdoorApiClient covering CSRF token, rate limiting, and error handling.

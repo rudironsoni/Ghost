@@ -9,11 +9,11 @@ namespace Ghost.Plugin.X;
 /// </summary>
 public sealed class XPlugin : IExtension
 {
-    private readonly Ghost.Platform.X.XExtension _platformExtension;
+    private readonly Ghost.Plugin.X.XExtension _platformExtension;
 
     public XPlugin()
     {
-        _platformExtension = new Ghost.Platform.X.XExtension();
+        _platformExtension = new Ghost.Plugin.X.XExtension();
     }
 
     /// <inheritdoc />
@@ -61,7 +61,7 @@ public sealed class XPlugin : IExtension
         {
             // Register keyed ISocialClient mapping for worker compatibility.
             services.AddKeyedScoped<Ghost.Contracts.Social.ISocialClient>("x", (sp, _) =>
-                sp.GetRequiredService<Ghost.Platform.X.XSocialClient>());
+                sp.GetRequiredService<Ghost.Plugin.X.XSocialClient>());
         }
     }
 }

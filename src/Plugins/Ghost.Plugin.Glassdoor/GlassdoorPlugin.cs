@@ -1,66 +1,91 @@
+using System.Net.Http;
+using Ghost.Abstractions;
+using Ghost.Contracts;
+using Ghost.Core;
 using Ghost.Hosting;
+using Ghost.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Ghost.Plugin.Glassdoor;
 
 /// <summary>
-/// Glassdoor plugin that wraps the platform extension with plugin metadata and capabilities.
+/// Glassdoor plugin that provides job search functionality.
 /// </summary>
-public sealed class GlassdoorPlugin : IExtension
+public sealed class GlassdoorPlugin : Ghost.Hosting.IExtension
 {
-    private readonly Ghost.Platform.Glassdoor.GlassdoorExtension _platformExtension;
-
-    public GlassdoorPlugin()
-    {
-        _platformExtension = new Ghost.Platform.Glassdoor.GlassdoorExtension();
-    }
-
-    /// <inheritdoc />
     public string Name => "Glassdoor";
-
-    /// <inheritdoc />
     public Version Version => new(1, 0, 0);
+    public IReadOnlyList<Type> ProvidedServices => new[] { typeof(Ghost.Contracts.Jobs.IJobClient) };
+    public IReadOnlyList<Type> RequiredServices => Array.Empty<Type>();
 
-    /// <inheritdoc />
-    public IReadOnlyList<Type> ProvidedServices => _platformExtension.ProvidedServices;
-
-    /// <inheritdoc />
-    public IReadOnlyList<Type> RequiredServices => _platformExtension.RequiredServices;
-
-    /// <inheritdoc />
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        var pluginOptions = new GlassdoorPluginOptions
-        {
-            UsePluginRuntime = configuration.GetValue("Ghost:Plugins:Glassdoor:UsePluginRuntime", true),
-            RegisterReadinessServices = configuration.GetValue("Ghost:Plugins:Glassdoor:RegisterReadinessServices", true),
-            RegisterKeyedJobClient = configuration.GetValue("Ghost:Plugins:Glassdoor:RegisterKeyedJobClient", true)
-        };
+        services.Configure<GlassdoorOptions>(configuration.GetSection("Ghost:Extensions:Glassdoor"));
 
-        // Delegate to the platform extension for all core service registrations
-        _platformExtension.ConfigureServices(services, configuration);
-
-        if (pluginOptions.RegisterReadinessServices)
+        // Register GlassdoorApiClient with a factory that creates an HttpClient with proper configuration
+        services.AddScoped<Internal.GlassdoorApiClient>(sp =>
         {
-            // Register plugin-specific services
-            services.AddSingleton<GlassdoorPluginCapabilities>(sp => new GlassdoorPluginCapabilities
+            var opts = sp.GetRequiredService<IOptions<GlassdoorOptions>>().Value;
+            var logger = sp.GetRequiredService<ILogger<Internal.GlassdoorApiClient>>();
+            var proxyProvider = sp.GetService<IProxyProvider>();
+
+            var handler = opts.ProxyEnabled && proxyProvider != null
+                ? new HttpClientHandler { Proxy = new RotatingWebProxy(proxyProvider), UseProxy = true }
+                : new HttpClientHandler { UseProxy = false };
+
+            var configuredHandler = HttpClientSecurityExtensions.ConfigureSecureHttpClientHandler(handler);
+            var httpClient = new HttpClient(configuredHandler)
             {
-                RequiresBrowser = true,
-                RequiresProxy = false,
-                SupportsJobs = true,
-                SupportsSocial = false,
-                SupportsNews = false
-            });
+                Timeout = TimeSpan.FromMilliseconds(opts.RequestTimeoutMs)
+            };
 
-            services.AddSingleton<IGlassdoorPluginReadinessCheck, GlassdoorPluginReadinessCheck>();
-        }
+            return new Internal.GlassdoorApiClient(httpClient, logger);
+        });
 
-        if (pluginOptions.UsePluginRuntime && pluginOptions.RegisterKeyedJobClient)
+        // Register browser fallback client WITHOUT proxy support to avoid SOCKS5 auth issues
+        services.AddScoped<Internal.GlassdoorBrowserClient>(sp =>
         {
-            // Register keyed IJobClient mapping for worker compatibility.
-            services.AddKeyedScoped<Ghost.Contracts.Jobs.IJobClient>("glassdoor", (sp, _) =>
-                sp.GetRequiredService<Ghost.Platform.Glassdoor.GlassdoorJobClient>());
-        }
+            var kernel = sp.GetRequiredService<IGhostKernel>();
+            var options = sp.GetRequiredService<IOptions<GlassdoorOptions>>();
+            var logger = sp.GetRequiredService<ILogger<Internal.GlassdoorBrowserClient>>();
+            // Explicitly pass null for proxy provider to disable proxy for Glassdoor browser client
+            return new Internal.GlassdoorBrowserClient(kernel, options, logger, proxyProvider: null);
+        });
+
+        // Register heavy stealth browser scraper with optional proxy support
+        services.AddScoped<Jobs.GlassdoorSearchScraper>(sp =>
+        {
+            var kernel = sp.GetRequiredService<IGhostKernel>();
+            var options = sp.GetRequiredService<IOptions<GlassdoorOptions>>();
+            var logger = sp.GetRequiredService<ILogger<Jobs.GlassdoorSearchScraper>>();
+            var proxyProvider = sp.GetService<IProxyProvider>();
+            // Proxy provider is optional - scraper will use it only if ProxyEnabled is true
+            return new Jobs.GlassdoorSearchScraper(kernel, options, logger, proxyProvider);
+        });
+
+        // Register GlassdoorJobClient and expose it as both IJobScraper and IJobClient
+        // IJobScraper is used by AggregatedJobClient, IJobClient for backward compatibility
+        services.AddScoped<GlassdoorJobClient>();
+        services.AddScoped<Ghost.Abstractions.IJobScraper>(sp => sp.GetRequiredService<GlassdoorJobClient>());
+        services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => sp.GetRequiredService<GlassdoorJobClient>());
+
+        // Register plugin-specific services
+        services.AddSingleton<GlassdoorPluginCapabilities>(sp => new GlassdoorPluginCapabilities
+        {
+            RequiresBrowser = true,
+            RequiresProxy = false,
+            SupportsJobs = true,
+            SupportsSocial = false,
+            SupportsNews = false
+        });
+
+        services.AddSingleton<IGlassdoorPluginReadinessCheck, GlassdoorPluginReadinessCheck>();
+
+        // Register keyed IJobClient mapping for worker compatibility.
+        services.AddKeyedScoped<Ghost.Contracts.Jobs.IJobClient>("glassdoor", (sp, _) =>
+            sp.GetRequiredService<GlassdoorJobClient>());
     }
 }
