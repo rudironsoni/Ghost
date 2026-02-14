@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Smoke.Tests.Assertions;
-using Ghost.Smoke.Tests.Platforms;
+using Ghost.Smoke.Tests.Integration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
@@ -13,18 +13,18 @@ using Xunit.Abstractions;
 namespace Ghost.Smoke.Tests.Flows;
 
 /// <summary>
-/// End-to-end smoke tests that validate complete user journeys through the Ghost job search system.
+/// End-to-end integration tests that validate complete user journeys through the Ghost job search system.
 /// These tests simulate real user workflows: search → select → get details → validate consistency.
 /// </summary>
-[Trait("Category", "Smoke")]
+[Trait("Category", "Integration")]
 [Trait("Flow", "EndToEnd")]
-public class EndToEndSmokeTests : IClassFixture<PlatformSmokeTestFixture>
+public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFixture>
 {
-    private readonly PlatformSmokeTestFixture _fixture;
+    private readonly PlatformIntegrationTestFixture _fixture;
     private readonly ITestOutputHelper _output;
     private readonly IServiceProvider _serviceProvider;
 
-    public EndToEndSmokeTests(PlatformSmokeTestFixture fixture, ITestOutputHelper output)
+    public EndToEndIntegrationTests(PlatformIntegrationTestFixture fixture, ITestOutputHelper output)
     {
         _fixture = fixture;
         _output = output;

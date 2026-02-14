@@ -7,20 +7,20 @@ using Ghost.Smoke.Tests.Assertions;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Ghost.Smoke.Tests.Platforms;
+namespace Ghost.Smoke.Tests.Integration;
 
 /// <summary>
-/// Smoke tests for InfoJobs platform.
+/// Integration tests for InfoJobs platform.
 /// </summary>
-[Trait("Category", "Smoke")]
+[Trait("Category", "Integration")]
 [Trait("Platform", "InfoJobs")]
-public class InfoJobsSmokeTests : IClassFixture<PlatformSmokeTestFixture>
+public class InfoJobsIntegrationTests : IClassFixture<PlatformIntegrationTestFixture>
 {
-    private readonly PlatformSmokeTestFixture _fixture;
+    private readonly PlatformIntegrationTestFixture _fixture;
     private readonly ITestOutputHelper _output;
     private readonly IJobClient _client;
 
-    public InfoJobsSmokeTests(PlatformSmokeTestFixture fixture, ITestOutputHelper output)
+    public InfoJobsIntegrationTests(PlatformIntegrationTestFixture fixture, ITestOutputHelper output)
     {
         _fixture = fixture;
         _output = output;

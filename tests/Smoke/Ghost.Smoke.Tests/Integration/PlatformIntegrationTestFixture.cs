@@ -9,14 +9,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace Ghost.Smoke.Tests.Platforms;
+namespace Ghost.Smoke.Tests.Integration;
 
 /// <summary>
-/// Shared fixture for platform smoke tests that configures the service provider
+/// Shared fixture for platform integration tests that configures the service provider
 /// with platform clients based on configuration.
 /// Only loads platforms that are explicitly enabled in configuration.
 /// </summary>
-public class PlatformSmokeTestFixture : IAsyncLifetime
+public class PlatformIntegrationTestFixture : IAsyncLifetime
 {
     public IServiceProvider ServiceProvider { get; private set; } = null!;
     public IConfiguration Configuration { get; private set; } = null!;
@@ -49,7 +49,7 @@ public class PlatformSmokeTestFixture : IAsyncLifetime
 
     private static void RegisterEnabledPlugins(IServiceCollection services, IConfiguration configuration)
     {
-        // LinkedIn - check if enabled (default: true for smoke tests)
+        // LinkedIn - check if enabled (default: true for integration tests)
         var linkedInEnabled = configuration.GetValue<bool?>("Ghost:Extensions:LinkedIn:Enabled") ?? true;
         if (linkedInEnabled)
         {
