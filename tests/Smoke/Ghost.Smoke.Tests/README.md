@@ -5,15 +5,18 @@ Real data smoke tests for Ghost job platform scrapers.
 ## Quick Start
 
 ```bash
-# Set environment variables (optional - defaults provided)
-export GHOST_BASE_URL="https://localhost:5001"
-export GHOST_API_KEY="your-api-key"
+# Set environment variables for smoke tests (optional - defaults provided)
+export GHOST_SMOKE_BASE_URL="http://localhost:8080"
+export GHOST_ADMIN_API_KEY="your-admin-api-key"
 
-# Run all smoke tests
-dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj
+# Run all smoke tests (HTTP-based)
+dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --filter "Category=Smoke"
 
-# Run only LinkedIn tests
-dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --filter "FullyQualifiedName~LinkedIn"
+# Run all integration tests (in-process)
+dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --filter "Category=Integration"
+
+# Run only LinkedIn smoke tests
+dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --filter "Category=Smoke&Platform=LinkedIn"
 
 # Run only end-to-end flow tests
 dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --filter "Category=Smoke&Flow=EndToEnd"
@@ -24,7 +27,19 @@ dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --logger "con
 
 ## Purpose
 
-These tests validate that scrapers return real, fresh job data from production endpoints. They run manually against a live Ghost instance with zero mocking.
+Ghost uses a **hybrid test architecture**:
+
+### Integration Tests (In-Process)
+- Test platform clients directly through dependency injection
+- Run in-process without HTTP overhead
+- Require kernel/platform clients to be available
+- Faster execution, better debugging
+
+### Smoke Tests (HTTP-Based)
+- Test full API stack including HTTP endpoints
+- Run against a running Ghost instance
+- Validate end-to-end functionality
+- More realistic testing environment
 
 ## Structure
 
@@ -32,38 +47,59 @@ These tests validate that scrapers return real, fresh job data from production e
   - `JobDataQualityAssertions.cs` - Extension methods for validating job data
   - `JobDataQualityAssertionsTests.cs` - Tests for assertion library
 
-- **Platforms/** - Platform-specific smoke tests
-  - `PlatformSmokeTestFixture.cs` - Shared fixture with service provider
-  - `LinkedInSmokeTests.cs` - LinkedIn platform tests
-  - `IndeedSmokeTests.cs` - Indeed platform tests
-  - `GlassdoorSmokeTests.cs` - Glassdoor platform tests
-  - `InfoJobsSmokeTests.cs` - InfoJobs platform tests
-  - `GoogleSmokeTests.cs` - Google platform tests
+- **Integration/** - In-process integration tests
+  - `PlatformIntegrationTestFixture.cs` - Shared fixture with service provider
+  - `LinkedInIntegrationTests.cs` - LinkedIn platform tests
+  - `IndeedIntegrationTests.cs` - Indeed platform tests
+  - `GlassdoorIntegrationTests.cs` - Glassdoor platform tests
+  - `InfoJobsIntegrationTests.cs` - InfoJobs platform tests
+  - `GoogleIntegrationTests.cs` - Google platform tests
+
+- **Smoke/** - HTTP-based smoke tests
+  - `HttpSmokeTestFixture.cs` - Shared fixture with HttpClient
+  - `GoogleHttpSmokeTests.cs` - Google HTTP tests
+  - `LinkedInHttpSmokeTests.cs` - LinkedIn HTTP tests
+  - `IndeedHttpSmokeTests.cs` - Indeed HTTP tests
+  - `GlassdoorHttpSmokeTests.cs` - Glassdoor HTTP tests
+  - `InfoJobsHttpSmokeTests.cs` - InfoJobs HTTP tests
+  - `MultiPlatformHttpSmokeTests.cs` - Cross-platform aggregation tests
 
 - **Flows/** - End-to-end workflow tests
-  - `EndToEndSmokeTests.cs` - Complete user journey tests
+  - `EndToEndIntegrationTests.cs` - Complete user journey tests
   - `MultiPlatformAggregationTests.cs` - Cross-platform aggregation tests
 
 ## Test Traits
 
 Tests are organized by traits for selective execution:
 
-- **Category**: `Smoke` - All smoke tests
+- **Category**: `Integration` or `Smoke` - Test type
 - **Platform**: `LinkedIn`, `Indeed`, `Glassdoor`, `InfoJobs`, `Google` - Platform-specific tests
 - **Flow**: `EndToEnd`, `MultiPlatform` - Workflow tests
 
 ## Configuration
 
+### Integration Tests
+Integration tests use `appsettings.json` for configuration.
+
+### Smoke Tests
 Environment variables (optional - defaults provided):
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `GHOST_BASE_URL` | `https://localhost:5001` | Ghost API base URL |
-| `GHOST_API_KEY` | (none) | API key for authentication |
+| `GHOST_SMOKE_BASE_URL` | `http://localhost:8080` | Ghost API base URL for smoke tests |
+| `GHOST_ADMIN_API_KEY` | (none) | Admin API key for authentication |
 
 ## Execution Notes
 
-- Tests connect to real production endpoints
+### Integration Tests
+- Run in-process with direct DI
+- Test platform clients directly
+- Require kernel/platform clients
+- Faster execution, better debugging
+- Can run in CI (if kernel available)
+
+### Smoke Tests
+- Connect to real production endpoints
 - No mocking or test doubles
 - Validates actual data quality and freshness
 - Requires network connectivity to production

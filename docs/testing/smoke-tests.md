@@ -2,7 +2,52 @@
 
 ## Overview
 
-Smoke tests are real data validation tests that verify Ghost job platform scrapers return fresh, complete, and accurate job data from production endpoints. Unlike unit tests, smoke tests:
+Ghost uses a **hybrid test architecture** with two types of tests:
+
+### 1. Integration Tests (In-Process)
+- **Location**: `tests/Smoke/Ghost.Smoke.Tests/Integration/`
+- **Execution**: In-process, direct dependency injection
+- **Requirement**: Requires kernel/platform clients to be available
+- **Trait**: `[Trait("Category", "Integration")]`
+- **Purpose**: Test platform clients directly without HTTP layer
+
+### 2. Smoke Tests (HTTP-Based)
+- **Location**: `tests/Smoke/Ghost.Smoke.Tests/Smoke/`
+- **Execution**: HTTP requests against running Ghost instance
+- **Requirement**: Requires Ghost instance to be running
+- **Trait**: `[Trait("Category", "Smoke")]`
+- **Purpose**: Test full API stack including HTTP endpoints
+
+## Integration Tests
+
+Integration tests validate that platform clients work correctly by calling them directly through dependency injection. These tests:
+
+- **Run in-process** - Direct DI, no HTTP overhead
+- **Test platform clients** - Validate scraper logic directly
+- **Require kernel** - Need platform clients to be available
+- **Faster execution** - No network latency
+- **Better debugging** - Direct access to client internals
+
+### When to Run Integration Tests
+
+- During development of platform clients
+- When updating scraper logic
+- When adding new platforms
+- In CI/CD pipelines (if kernel is available)
+
+### Running Integration Tests
+
+```bash
+# Run all integration tests
+dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --filter "Category=Integration"
+
+# Run specific platform integration tests
+dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --filter "Category=Integration&Platform=LinkedIn"
+```
+
+## Smoke Tests
+
+Smoke tests validate that the Ghost API endpoints return fresh, complete, and accurate job data. These tests:
 
 - **Connect to real production endpoints** - No mocks, no test doubles
 - **Validate actual data quality** - Check for required fields, freshness, duplicates
@@ -28,13 +73,22 @@ Smoke tests are real data validation tests that verify Ghost job platform scrape
 
 ## Prerequisites
 
+### For Integration Tests
+
+Integration tests require:
+- **Platform clients** - Kernel and platform plugins must be available
+- **.NET SDK** - .NET 10.0 or later
+- **Configuration** - `appsettings.json` with platform credentials (if needed)
+
+### For Smoke Tests
+
 Before running smoke tests, ensure you have:
 
-### 1. Ghost Instance Running
+#### 1. Ghost Instance Running
 
 ```bash
 # Check if Ghost is running
-curl https://localhost:5001/health
+curl http://localhost:8080/health
 
 # Expected response:
 # {"status":"healthy"}
@@ -51,15 +105,15 @@ dotnet run
 docker-compose up -d
 ```
 
-### 2. Admin API Key (Optional)
+#### 2. Admin API Key (Optional)
 
 Some endpoints may require authentication. Set the API key:
 
 ```bash
-export GHOST_API_KEY="your-admin-api-key"
+export GHOST_ADMIN_API_KEY="your-admin-api-key"
 ```
 
-### 3. Network Access
+#### 3. Network Access
 
 Smoke tests require outbound internet access to:
 - LinkedIn (linkedin.com)
@@ -68,7 +122,7 @@ Smoke tests require outbound internet access to:
 - InfoJobs (infojobs.net)
 - Google (google.com)
 
-### 4. .NET SDK
+#### 4. .NET SDK
 
 ```bash
 # Check .NET version
@@ -79,14 +133,42 @@ dotnet --version
 
 ## Configuration
 
-### Environment Variables
+### Integration Tests Configuration
+
+Integration tests use `appsettings.json` for configuration:
+
+```json
+{
+  "Ghost": {
+    "Extensions": {
+      "LinkedIn": {
+        "Enabled": true
+      },
+      "Indeed": {
+        "Enabled": true
+      },
+      "Google": {
+        "Enabled": true
+      },
+      "Glassdoor": {
+        "Enabled": false
+      },
+      "InfoJobs": {
+        "Enabled": false
+      }
+    }
+  }
+}
+```
+
+### Smoke Tests Configuration
 
 Smoke tests use environment variables for configuration. All variables are optional with sensible defaults.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `GHOST_BASE_URL` | `https://localhost:5001` | Ghost API base URL |
-| `GHOST_API_KEY` | (none) | API key for authentication |
+| `GHOST_SMOKE_BASE_URL` | `http://localhost:8080` | Ghost API base URL for smoke tests |
+| `GHOST_ADMIN_API_KEY` | (none) | Admin API key for authentication |
 
 ### Setting Environment Variables
 
@@ -94,12 +176,12 @@ Smoke tests use environment variables for configuration. All variables are optio
 
 ```bash
 # Temporary (current session)
-export GHOST_BASE_URL="https://localhost:5001"
-export GHOST_API_KEY="your-api-key"
+export GHOST_SMOKE_BASE_URL="http://localhost:8080"
+export GHOST_ADMIN_API_KEY="your-admin-api-key"
 
 # Permanent (add to ~/.bashrc or ~/.zshrc)
-echo 'export GHOST_BASE_URL="https://localhost:5001"' >> ~/.bashrc
-echo 'export GHOST_API_KEY="your-api-key"' >> ~/.bashrc
+echo 'export GHOST_SMOKE_BASE_URL="http://localhost:8080"' >> ~/.bashrc
+echo 'export GHOST_ADMIN_API_KEY="your-admin-api-key"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
@@ -107,12 +189,12 @@ source ~/.bashrc
 
 ```powershell
 # Temporary (current session)
-$env:GHOST_BASE_URL="https://localhost:5001"
-$env:GHOST_API_KEY="your-api-key"
+$env:GHOST_SMOKE_BASE_URL="http://localhost:8080"
+$env:GHOST_ADMIN_API_KEY="your-admin-api-key"
 
 # Permanent (add to system environment variables)
-[System.Environment]::SetEnvironmentVariable('GHOST_BASE_URL', 'https://localhost:5001', 'User')
-[System.Environment]::SetEnvironmentVariable('GHOST_API_KEY', 'your-api-key', 'User')
+[System.Environment]::SetEnvironmentVariable('GHOST_SMOKE_BASE_URL', 'http://localhost:8080', 'User')
+[System.Environment]::SetEnvironmentVariable('GHOST_ADMIN_API_KEY', 'your-admin-api-key', 'User')
 ```
 
 #### Using .env File (Not Recommended for Production)
@@ -120,8 +202,8 @@ $env:GHOST_API_KEY="your-api-key"
 Create a `.env` file in the smoke test directory:
 
 ```env
-GHOST_BASE_URL=https://localhost:5001
-GHOST_API_KEY=your-api-key
+GHOST_SMOKE_BASE_URL=http://localhost:8080
+GHOST_ADMIN_API_KEY=your-admin-api-key
 ```
 
 Then load it:
@@ -136,7 +218,33 @@ Get-Content .env | ForEach-Object { $var = $_.Split('='); [System.Environment]::
 
 ## Execution
 
-### Run All Smoke Tests
+### Run Integration Tests
+
+```bash
+# Run all integration tests
+dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --filter "Category=Integration"
+
+# Run specific platform integration tests
+dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --filter "Category=Integration&Platform=LinkedIn"
+
+# Run flow integration tests
+dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --filter "Category=Integration&Flow=EndToEnd"
+```
+
+### Run Smoke Tests
+
+```bash
+# Run all smoke tests
+dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --filter "Category=Smoke"
+
+# Run specific platform smoke tests
+dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --filter "Category=Smoke&Platform=LinkedIn"
+
+# Run flow smoke tests
+dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --filter "Category=Smoke&Flow=MultiPlatform"
+```
+
+### Run All Tests
 
 ```bash
 # Basic execution
@@ -154,7 +262,7 @@ dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --build
 Filter by platform trait:
 
 ```bash
-# LinkedIn only
+# LinkedIn only (both integration and smoke)
 dotnet test tests/Smoke/Ghost.Smoke.Tests/Ghost.Smoke.Tests.csproj --filter "Platform=LinkedIn"
 
 # Indeed only

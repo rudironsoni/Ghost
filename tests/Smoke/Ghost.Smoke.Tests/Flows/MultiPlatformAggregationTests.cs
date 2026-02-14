@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Smoke.Tests.Assertions;
-using Ghost.Smoke.Tests.Platforms;
+using Ghost.Smoke.Tests.Integration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
@@ -13,18 +13,18 @@ using Xunit.Abstractions;
 namespace Ghost.Smoke.Tests.Flows;
 
 /// <summary>
-/// Multi-platform aggregation smoke tests that validate cross-platform search functionality.
+/// Multi-platform aggregation integration tests that validate cross-platform search functionality.
 /// These tests ensure that the AggregatedJobClient correctly combines results from multiple platforms.
 /// </summary>
-[Trait("Category", "Smoke")]
+[Trait("Category", "Integration")]
 [Trait("Flow", "MultiPlatform")]
-public class MultiPlatformAggregationTests : IClassFixture<PlatformSmokeTestFixture>
+public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTestFixture>
 {
-    private readonly PlatformSmokeTestFixture _fixture;
+    private readonly PlatformIntegrationTestFixture _fixture;
     private readonly ITestOutputHelper _output;
     private readonly IServiceProvider _serviceProvider;
 
-    public MultiPlatformAggregationTests(PlatformSmokeTestFixture fixture, ITestOutputHelper output)
+    public MultiPlatformAggregationTests(PlatformIntegrationTestFixture fixture, ITestOutputHelper output)
     {
         _fixture = fixture;
         _output = output;

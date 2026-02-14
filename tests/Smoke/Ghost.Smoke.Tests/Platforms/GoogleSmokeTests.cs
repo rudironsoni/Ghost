@@ -8,20 +8,20 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Ghost.Smoke.Tests.Platforms;
+namespace Ghost.Smoke.Tests.Integration;
 
 /// <summary>
-/// Smoke tests for Google platform.
+/// Integration tests for Google platform.
 /// </summary>
-[Trait("Category", "Smoke")]
+[Trait("Category", "Integration")]
 [Trait("Platform", "Google")]
-public class GoogleSmokeTests : IClassFixture<PlatformSmokeTestFixture>
+public class GoogleIntegrationTests : IClassFixture<PlatformIntegrationTestFixture>
 {
-    private readonly PlatformSmokeTestFixture _fixture;
+    private readonly PlatformIntegrationTestFixture _fixture;
     private readonly ITestOutputHelper _output;
     private readonly IJobClient _client;
 
-    public GoogleSmokeTests(PlatformSmokeTestFixture fixture, ITestOutputHelper output)
+    public GoogleIntegrationTests(PlatformIntegrationTestFixture fixture, ITestOutputHelper output)
     {
         _fixture = fixture;
         _output = output;

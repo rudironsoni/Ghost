@@ -1,5 +1,6 @@
 using System;
-using System.Threading;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
@@ -7,46 +8,48 @@ using Ghost.Smoke.Tests.Assertions;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Ghost.Smoke.Tests.Integration;
+namespace Ghost.Smoke.Tests.Smoke;
 
 /// <summary>
-/// Integration tests for LinkedIn platform.
+/// HTTP-based smoke tests for InfoJobs platform.
+/// Tests the Ghost API endpoints for InfoJobs job search and retrieval.
 /// </summary>
-[Trait("Category", "Integration")]
-[Trait("Platform", "LinkedIn")]
-public class LinkedInIntegrationTests : IClassFixture<PlatformIntegrationTestFixture>
+[Trait("Category", "Smoke")]
+[Trait("Platform", "InfoJobs")]
+public class InfoJobsHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
 {
-    private readonly PlatformIntegrationTestFixture _fixture;
+    private readonly HttpSmokeTestFixture _fixture;
     private readonly ITestOutputHelper _output;
-    private readonly IJobClient _client;
 
-    public LinkedInIntegrationTests(PlatformIntegrationTestFixture fixture, ITestOutputHelper output)
+    public InfoJobsHttpSmokeTests(HttpSmokeTestFixture fixture, ITestOutputHelper output)
     {
         _fixture = fixture;
         _output = output;
-        _client = _fixture.GetJobClient("linkedin");
     }
 
     [Fact]
-    public async Task Search_RealJobs_Returns_Populated_Fresh_Data()
+    public async Task SearchJobs_Returns_Populated_Fresh_Data()
     {
         // Arrange
-        var criteria = new JobSearchCriteria
+        var searchRequest = new
         {
-            Query = "software engineer",
-            MaxResults = 10
+            query = "software engineer",
+            maxResults = 10,
+            platform = "InfoJobs"
         };
-        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 
         // Act
-        _output.WriteLine($"Searching LinkedIn for: {criteria.Query}");
-        var results = await _client.SearchJobsAsync(criteria, cts.Token);
+        _output.WriteLine($"Searching InfoJobs via API for: {searchRequest.query}");
+        var results = await _fixture.PostAsync<object, List<JobListing>>(
+            "/api/jobs/search",
+            searchRequest,
+            _output);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
         results.Should().NotBeEmpty("search should return at least one job");
 
-        _output.WriteLine($"Found {results.Count} jobs");
+        _output.WriteLine($"Found {results!.Count} jobs");
 
         // Validate data quality
         results.AssertRealJobResults();
@@ -60,7 +63,7 @@ public class LinkedInIntegrationTests : IClassFixture<PlatformIntegrationTestFix
 
         // Output sample data for human verification
         _output.WriteLine("\n=== Sample Job Data ===");
-        var sampleJob = results[0];
+        var sampleJob = results[0]!;
         _output.WriteLine($"ID: {sampleJob.Id}");
         _output.WriteLine($"Title: {sampleJob.Title}");
         _output.WriteLine($"Company: {sampleJob.Company}");
@@ -71,26 +74,29 @@ public class LinkedInIntegrationTests : IClassFixture<PlatformIntegrationTestFix
     }
 
     [Fact]
-    public async Task Search_WithLocation_Returns_Jobs_In_Location()
+    public async Task SearchJobs_WithLocation_Returns_Jobs_In_Location()
     {
         // Arrange
-        var criteria = new JobSearchCriteria
+        var searchRequest = new
         {
-            Query = "software engineer",
-            Location = "Remote",
-            MaxResults = 10
+            query = "software engineer",
+            location = "Remote",
+            maxResults = 10,
+            platform = "InfoJobs"
         };
-        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 
         // Act
-        _output.WriteLine($"Searching LinkedIn for: {criteria.Query} in {criteria.Location}");
-        var results = await _client.SearchJobsAsync(criteria, cts.Token);
+        _output.WriteLine($"Searching InfoJobs via API for: {searchRequest.query} in {searchRequest.location}");
+        var results = await _fixture.PostAsync<object, List<JobListing>>(
+            "/api/jobs/search",
+            searchRequest,
+            _output);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
         results.Should().NotBeEmpty("search should return at least one job");
 
-        _output.WriteLine($"Found {results.Count} jobs");
+        _output.WriteLine($"Found {results!.Count} jobs");
 
         // Validate data quality
         results.AssertRealJobResults();
@@ -112,33 +118,35 @@ public class LinkedInIntegrationTests : IClassFixture<PlatformIntegrationTestFix
     public async Task GetJobDetails_ById_Returns_Valid_Data()
     {
         // Arrange
-        var searchCriteria = new JobSearchCriteria
+        var searchRequest = new
         {
-            Query = "software engineer",
-            MaxResults = 5
+            query = "software engineer",
+            maxResults = 5,
+            platform = "InfoJobs"
         };
-        var searchCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 
         // First, search for a job to get a valid ID
-        var searchResults = await _client.SearchJobsAsync(searchCriteria, searchCts.Token);
+        var searchResults = await _fixture.PostAsync<object, List<JobListing>>(
+            "/api/jobs/search",
+            searchRequest,
+            _output);
+
         searchResults.Should().NotBeEmpty("need at least one job to test details endpoint");
 
-        var jobId = searchResults[0].Id;
+        var jobId = searchResults![0].Id;
         _output.WriteLine($"Testing GetJobDetails for job ID: {jobId}");
 
-        var detailsCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-
         // Act
-        var jobDetails = await _client.GetJobDetailsAsync(jobId, detailsCts.Token);
+        var jobDetails = await _fixture.GetAsync<JobListing>($"/api/jobs/{jobId}", _output);
 
         // Assert
         jobDetails.Should().NotBeNull("job details should not be null");
-        jobDetails.Id.Should().Be(jobId, "job ID should match the requested ID");
-        jobDetails.Source.Should().Be("LinkedIn", "source should be LinkedIn");
+        jobDetails!.Id.Should().Be(jobId, "job ID should match the requested ID");
+        jobDetails.Source.Should().Be("InfoJobs", "source should be InfoJobs");
 
         // Validate required fields
         jobDetails.AssertRequiredFields();
-        jobDetails.AssertValidPlatformId("LinkedIn");
+        jobDetails.AssertValidPlatformId("InfoJobs");
         jobDetails.AssertUrlReachable();
 
         // Output detailed job information

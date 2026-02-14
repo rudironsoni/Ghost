@@ -7,20 +7,20 @@ using Ghost.Smoke.Tests.Assertions;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Ghost.Smoke.Tests.Platforms;
+namespace Ghost.Smoke.Tests.Integration;
 
 /// <summary>
-/// Smoke tests for Glassdoor platform.
+/// Integration tests for Glassdoor platform.
 /// </summary>
-[Trait("Category", "Smoke")]
+[Trait("Category", "Integration")]
 [Trait("Platform", "Glassdoor")]
-public class GlassdoorSmokeTests : IClassFixture<PlatformSmokeTestFixture>
+public class GlassdoorIntegrationTests : IClassFixture<PlatformIntegrationTestFixture>
 {
-    private readonly PlatformSmokeTestFixture _fixture;
+    private readonly PlatformIntegrationTestFixture _fixture;
     private readonly ITestOutputHelper _output;
     private readonly IJobClient _client;
 
-    public GlassdoorSmokeTests(PlatformSmokeTestFixture fixture, ITestOutputHelper output)
+    public GlassdoorIntegrationTests(PlatformIntegrationTestFixture fixture, ITestOutputHelper output)
     {
         _fixture = fixture;
         _output = output;

@@ -7,20 +7,20 @@ using Ghost.Smoke.Tests.Assertions;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Ghost.Smoke.Tests.Platforms;
+namespace Ghost.Smoke.Tests.Integration;
 
 /// <summary>
-/// Smoke tests for Indeed platform.
+/// Integration tests for Indeed platform.
 /// </summary>
-[Trait("Category", "Smoke")]
+[Trait("Category", "Integration")]
 [Trait("Platform", "Indeed")]
-public class IndeedSmokeTests : IClassFixture<PlatformSmokeTestFixture>
+public class IndeedIntegrationTests : IClassFixture<PlatformIntegrationTestFixture>
 {
-    private readonly PlatformSmokeTestFixture _fixture;
+    private readonly PlatformIntegrationTestFixture _fixture;
     private readonly ITestOutputHelper _output;
     private readonly IJobClient _client;
 
-    public IndeedSmokeTests(PlatformSmokeTestFixture fixture, ITestOutputHelper output)
+    public IndeedIntegrationTests(PlatformIntegrationTestFixture fixture, ITestOutputHelper output)
     {
         _fixture = fixture;
         _output = output;
