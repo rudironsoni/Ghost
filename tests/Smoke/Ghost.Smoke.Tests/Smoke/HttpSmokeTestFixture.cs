@@ -1,104 +1,80 @@
-using System;
-using System.Net.Http;
+using System.Net;
 using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Ghost.Smoke.Tests.Smoke;
 
 /// <summary>
-/// Shared fixture for HTTP-based smoke tests that creates an HttpClient
-/// configured to communicate with a running Ghost instance.
+/// Test fixture for HTTP-based smoke tests against a running Ghost API instance.
+/// Provides a configured HttpClient with aggressive timeouts to prevent hanging.
 /// </summary>
 public class HttpSmokeTestFixture : IAsyncLifetime
 {
-    public HttpClient HttpClient { get; private set; } = null!;
-    public string BaseUrl { get; private set; } = null!;
-    public string? ApiKey { get; private set; }
-    public JsonSerializerOptions JsonSerializerOptions { get; private set; } = null!;
+    private readonly HttpClient _httpClient;
+
+    /// <summary>
+    /// Gets the base URL for the Ghost API.
+    /// Defaults to localhost:8080 but can be overridden via GHOST_SMOKE_TEST_URL environment variable.
+    /// </summary>
+    public string BaseUrl { get; }
+
+    /// <summary>
+    /// Gets the configured HttpClient for making requests to the Ghost API.
+    /// Configured with 5-second timeout to fail fast when server is unavailable.
+    /// </summary>
+    public HttpClient HttpClient => _httpClient;
+
+    public HttpSmokeTestFixture()
+    {
+        BaseUrl = Environment.GetEnvironmentVariable("GHOST_SMOKE_TEST_URL") ?? "http://localhost:8080";
+
+        _httpClient = new HttpClient
+        {
+            BaseAddress = new Uri(BaseUrl),
+            Timeout = TimeSpan.FromSeconds(5),
+        };
+
+        _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+        _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Ghost.Smoke.Tests", "1.0"));
+    }
 
     public Task InitializeAsync()
     {
-        // Get configuration from environment variables
-        BaseUrl = Environment.GetEnvironmentVariable("GHOST_SMOKE_BASE_URL") ?? "http://localhost:8080";
-        ApiKey = Environment.GetEnvironmentVariable("GHOST_ADMIN_API_KEY");
-
-        // Configure JSON options
-        JsonSerializerOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
-
-        // Create and configure HttpClient
-        HttpClient = new HttpClient
-        {
-            BaseAddress = new Uri(BaseUrl),
-            Timeout = TimeSpan.FromSeconds(30)
-        };
-
-        // Add API key header if provided
-        if (!string.IsNullOrEmpty(ApiKey))
-        {
-            HttpClient.DefaultRequestHeaders.Add("X-API-Key", ApiKey);
-        }
-
-        HttpClient.DefaultRequestHeaders.Accept.Add(
-            new MediaTypeWithQualityHeaderValue("application/json"));
-
+        // No server health check here - tests will fail naturally if server is unavailable
+        // The HttpClient timeout ensures they fail fast (within 5 seconds)
         return Task.CompletedTask;
     }
 
     public Task DisposeAsync()
     {
-        HttpClient?.Dispose();
+        _httpClient.Dispose();
         return Task.CompletedTask;
     }
 
     /// <summary>
-    /// Sends a POST request to the specified endpoint with JSON content.
+    /// Sends a GET request to the specified URI and returns the response.
     /// </summary>
-    public async Task<TResponse?> PostAsync<TRequest, TResponse>(
-        string endpoint,
-        TRequest request,
-        Xunit.Abstractions.ITestOutputHelper? output = null)
+    public Task<HttpResponseMessage> GetAsync(string requestUri)
     {
-        var json = JsonSerializer.Serialize(request, JsonSerializerOptions);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        output?.WriteLine($"POST {BaseUrl}{endpoint}");
-        output?.WriteLine($"Request: {json}");
-
-        var response = await HttpClient.PostAsync(endpoint, content);
-        var responseContent = await response.Content.ReadAsStringAsync();
-
-        output?.WriteLine($"Response Status: {response.StatusCode}");
-        output?.WriteLine($"Response: {responseContent}");
-
-        response.EnsureSuccessStatusCode();
-
-        return JsonSerializer.Deserialize<TResponse>(responseContent, JsonSerializerOptions);
+        return _httpClient.GetAsync(requestUri);
     }
 
     /// <summary>
-    /// Sends a GET request to the specified endpoint.
+    /// Sends a POST request with JSON content to the specified URI.
     /// </summary>
-    public async Task<TResponse?> GetAsync<TResponse>(
-        string endpoint,
-        Xunit.Abstractions.ITestOutputHelper? output = null)
+    public Task<HttpResponseMessage> PostAsJsonAsync<T>(string requestUri, T value)
     {
-        output?.WriteLine($"GET {BaseUrl}{endpoint}");
-
-        var response = await HttpClient.GetAsync(endpoint);
-        var responseContent = await response.Content.ReadAsStringAsync();
-
-        output?.WriteLine($"Response Status: {response.StatusCode}");
-        output?.WriteLine($"Response: {responseContent}");
-
-        response.EnsureSuccessStatusCode();
-
-        return JsonSerializer.Deserialize<TResponse>(responseContent, JsonSerializerOptions);
+        return _httpClient.PostAsJsonAsync(requestUri, value);
     }
+}
+
+/// <summary>
+/// Marks the test collection for HTTP smoke tests with shared fixture.
+/// </summary>
+[CollectionDefinition("HttpSmokeTests")]
+public class HttpSmokeTestCollection : ICollectionFixture<HttpSmokeTestFixture>
+{
+    // This class has no code, and is never created. Its purpose is simply
+    // to be the place to apply [CollectionDefinition] and all the
+    // ICollectionFixture<> interfaces.
 }
