@@ -73,11 +73,42 @@ public class Socks5Bridge : IDisposable
             _activeClients.Clear();
         }
 
+        // Note: We cannot await the accept loop task synchronously here.
+        // The task will complete naturally when cancellation is requested.
+        // If you need to wait for cleanup, use StopAsync instead.
+    }
+
+    public async Task StopAsync()
+    {
         try
         {
-            _acceptLoopTask?.GetAwaiter().GetResult();
+            _cts?.Cancel();
         }
         catch { }
+
+        try
+        {
+            _listener?.Stop();
+        }
+        catch { }
+
+        lock (_lock)
+        {
+            foreach (var c in _activeClients.ToArray())
+            {
+                try { c.Close(); } catch { }
+            }
+            _activeClients.Clear();
+        }
+
+        if (_acceptLoopTask != null)
+        {
+            try
+            {
+                await _acceptLoopTask;
+            }
+            catch { }
+        }
     }
 
     private async Task AcceptLoopAsync(CancellationToken ct)

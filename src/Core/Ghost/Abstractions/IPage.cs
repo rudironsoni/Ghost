@@ -6,7 +6,7 @@ public interface IPage : IAsyncDisposable
 {
     string PageId { get; }
     string Url { get; }
-    string? Title { get; }
+    Task<string?> GetTitleAsync(CancellationToken ct = default);
     Task NavigateAsync(string url, NavigationOptions? options = null, CancellationToken ct = default);
     Task GoBackAsync(NavigationOptions? options = null, CancellationToken ct = default);
     Task GoForwardAsync(NavigationOptions? options = null, CancellationToken ct = default);

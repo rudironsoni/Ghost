@@ -49,7 +49,7 @@ public class FakePageHermeticTests
 
         // Assert
         page.Url.Should().Be("https://example.com");
-        page.Title.Should().Be("Page: https://example.com");
+        (await page.GetTitleAsync()).Should().Be("Page: https://example.com");
     }
 
     [Fact]

@@ -258,10 +258,11 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
 
         try
         {
+            var title = await page.GetTitleAsync();
             var metadata = new
             {
                 Url = page.Url,
-                Title = page.Title,
+                Title = title,
                 PageId = page.PageId,
                 CapturedAt = DateTime.UtcNow,
                 CorrelationId = CorrelationId,

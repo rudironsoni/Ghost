@@ -14,6 +14,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<Ghost.Core.GhostKernel>(sp =>
         {
             var opts = sp.GetRequiredService<Ghost.Core.KernelOptions>();
+            // WARNING: Synchronous blocking during DI container setup.
+            // This is a known limitation of the DI container not supporting async factory methods.
+            // Consider using IHostedService for async initialization in production scenarios.
             return Ghost.Core.GhostKernel.CreateAsync(opts).GetAwaiter().GetResult();
         });
 

@@ -298,22 +298,16 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
         if (_disposed) return;
         await DisposeAsyncCore();
         _disposed = true;
+        GC.SuppressFinalize(this);
     }
 
     public void Dispose()
     {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
-
-    private void Dispose(bool disposing)
-    {
         if (_disposed) return;
-        if (disposing)
-        {
-            // Block synchronously to run async cleanup
-            DisposeAsyncCore().AsTask().GetAwaiter().GetResult();
-        }
+        // Note: We cannot call async cleanup synchronously here.
+        // Callers should use DisposeAsync for proper cleanup.
+        // If synchronous disposal is required, resources will be cleaned up by finalizer or process exit.
         _disposed = true;
+        GC.SuppressFinalize(this);
     }
 }

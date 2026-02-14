@@ -7,12 +7,14 @@ public class FakePage : IPage
 
     public string PageId { get; } = Guid.NewGuid().ToString();
     public string Url { get; private set; } = "about:blank";
-    public string? Title { get; private set; }
+    private string? _title;
+
+    public Task<string?> GetTitleAsync(CancellationToken ct = default) => Task.FromResult(_title);
 
     public Task NavigateAsync(string url, NavigationOptions? options = null, CancellationToken ct = default)
     {
         Url = url;
-        Title = $"Page: {url}";
+        _title = $"Page: {url}";
         return Task.CompletedTask;
     }
 

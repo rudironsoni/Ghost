@@ -17,7 +17,9 @@ public sealed class RotatingWebProxy : IWebProxy
 
     public Uri GetProxy(Uri destination)
     {
-        // Synchronously obtain a proxy from the provider. Use "US" as a default country code.
+        // WARNING: Synchronous blocking on async operation.
+        // This is a limitation of the IWebProxy interface which doesn't support async methods.
+        // Consider using a custom proxy implementation or caching proxies to avoid blocking.
         var proxy = _provider.GetProxyAsync("US").GetAwaiter().GetResult();
 
         if (proxy is null)
