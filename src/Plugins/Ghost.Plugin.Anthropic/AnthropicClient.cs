@@ -2,7 +2,7 @@ using Ghost.Contracts.Inference;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Ghost.Platform.Anthropic;
+namespace Ghost.Plugin.Anthropic;
 
 /// <summary>
 /// Browser-driven inference client that automates claude.ai via the Ghost browser kernel.

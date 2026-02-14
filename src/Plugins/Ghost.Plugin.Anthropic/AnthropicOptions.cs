@@ -1,4 +1,4 @@
-namespace Ghost.Platform.Anthropic;
+namespace Ghost.Plugin.Anthropic;
 
 /// <summary>
 /// Options for the Anthropic platform integration.
