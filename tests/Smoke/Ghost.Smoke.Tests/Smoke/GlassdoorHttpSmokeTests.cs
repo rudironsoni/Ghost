@@ -15,7 +15,7 @@ namespace Ghost.Smoke.Tests.Smoke;
 /// Tests the Ghost API endpoints for Glassdoor job search and retrieval.
 /// </summary>
 [Trait("Category", "Smoke")]
-[Trait("Platform", "Glassdoor")]
+[Trait("Plugin", "Glassdoor")]
 public class GlassdoorHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
 {
     private readonly HttpSmokeTestFixture _fixture;

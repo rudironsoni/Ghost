@@ -1,4 +1,6 @@
 using Ghost.Hosting;
+using Ghost.Sdk.Spider.Adapters;
+using Ghost.Sdk.Spider.Core.Extraction;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -38,6 +40,10 @@ public sealed class LinkedInExtension : IExtension
         services.AddSingleton<Ghost.Abstractions.IJsonLdExtractor, Ghost.Utilities.JsonLdExtractor>();
         // GuestJobSearch implements guest API scraping logic - Singleton since it only uses the session pool
         services.AddSingleton<Internal.IGuestJobSearch, Internal.GuestJobSearch>();
+
+        // Register Spider SDK services required by LinkedInJobClient
+        services.AddSingleton<JavaScriptAdapter>();
+        services.AddSingleton<EntityParser>();
 
         // Register concrete implementations as Scoped (not Singleton) because they depend on IBrowserSession
         services.AddScoped<LinkedInSocialClient>();
