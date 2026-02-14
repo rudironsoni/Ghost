@@ -4,7 +4,7 @@ using Ghost.Contracts.Jobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Ghost.Platform.Google.Jobs;
+namespace Ghost.Plugin.Google.Jobs;
 
 public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
 {

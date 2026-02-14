@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Extensions.Options;
 
-namespace Ghost.Platform.Google;
+namespace Ghost.Plugin.Google;
 
 /// <summary>
 /// Validates GoogleOptions when bound from configuration.

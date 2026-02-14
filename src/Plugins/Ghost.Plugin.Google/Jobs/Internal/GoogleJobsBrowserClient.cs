@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
-namespace Ghost.Platform.Google.Jobs.Internal;
+namespace Ghost.Plugin.Google.Jobs.Internal;
 
 public sealed class GoogleJobsBrowserClient
 {

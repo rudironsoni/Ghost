@@ -1,4 +1,4 @@
-namespace Ghost.Platform.Google.Jobs.Internal;
+namespace Ghost.Plugin.Google.Jobs.Internal;
 
 public static class GoogleJobsConstants
 {

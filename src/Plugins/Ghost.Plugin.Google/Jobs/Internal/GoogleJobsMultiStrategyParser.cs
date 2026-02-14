@@ -5,12 +5,12 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
-using Ghost.Platform.Google.Jobs.Entities;
+using Ghost.Plugin.Google.Jobs.Entities;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Ghost.Platform.Google.Jobs.Internal;
+namespace Ghost.Plugin.Google.Jobs.Internal;
 
 /// <summary>
 /// Parser for Google Jobs listings using Ghost.Sdk.Spider EntityParser.

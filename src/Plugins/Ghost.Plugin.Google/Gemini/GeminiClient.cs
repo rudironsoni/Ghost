@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
-namespace Ghost.Platform.Google.Gemini;
+namespace Ghost.Plugin.Google.Gemini;
 
 /// <summary>
 /// Browser-driven client for gemini.google.com using the Ghost kernel.
