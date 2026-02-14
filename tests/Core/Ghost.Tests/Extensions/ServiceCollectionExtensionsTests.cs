@@ -7,6 +7,7 @@ namespace Ghost.Extensions.Tests;
 public class ServiceCollectionExtensionsTests
 {
     [Fact]
+    [Obsolete("This test validates the obsolete AddGhostKernel method. Use GhostKernelManager instead.")]
     public void AddGhostKernelRegistersOptionsAndLoggerFactory()
     {
         var services = new ServiceCollection();

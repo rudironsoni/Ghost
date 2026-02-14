@@ -3,7 +3,7 @@ using Ghost.Stealth;
 
 namespace Ghost.Pool;
 
-public sealed class PooledBrowserSession : IDisposable
+public sealed class PooledBrowserSession : IDisposable, IAsyncDisposable
 {
     public required IBrowserSession Session { get; set; }
     public required Tier Tier { get; set; }
@@ -19,6 +19,16 @@ public sealed class PooledBrowserSession : IDisposable
 
     public void Dispose()
     {
-        Session.DisposeAsync().AsTask().Wait();
+        // Fire-and-forget async disposal to avoid blocking
+        // Consumers should use DisposeAsync() for proper cleanup
+        _ = DisposeAsync().AsTask();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (Session is not null)
+        {
+            await Session.DisposeAsync().ConfigureAwait(false);
+        }
     }
 }
