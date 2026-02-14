@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Smoke.Tests.Smoke;
 
@@ -8,9 +10,9 @@ namespace Ghost.Smoke.Tests.Smoke;
 /// Test fixture for HTTP-based smoke tests against a running Ghost API instance.
 /// Provides a configured HttpClient with aggressive timeouts to prevent hanging.
 /// </summary>
-public class HttpSmokeTestFixture : IAsyncLifetime
+public sealed class HttpSmokeTestFixture : IAsyncLifetime, IDisposable
 {
-    private readonly HttpClient _httpClient;
+    private HttpClient HttpClient { get; }
 
     /// <summary>
     /// Gets the base URL for the Ghost API.
@@ -18,24 +20,18 @@ public class HttpSmokeTestFixture : IAsyncLifetime
     /// </summary>
     public string BaseUrl { get; }
 
-    /// <summary>
-    /// Gets the configured HttpClient for making requests to the Ghost API.
-    /// Configured with 5-second timeout to fail fast when server is unavailable.
-    /// </summary>
-    public HttpClient HttpClient => _httpClient;
-
     public HttpSmokeTestFixture()
     {
         BaseUrl = Environment.GetEnvironmentVariable("GHOST_SMOKE_TEST_URL") ?? "http://localhost:8080";
 
-        _httpClient = new HttpClient
+        HttpClient = new HttpClient
         {
             BaseAddress = new Uri(BaseUrl),
             Timeout = TimeSpan.FromSeconds(5),
         };
 
-        _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
-        _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Ghost.Smoke.Tests", "1.0"));
+        HttpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+        HttpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Ghost.Smoke.Tests", "1.0"));
     }
 
     public Task InitializeAsync()
@@ -47,7 +43,7 @@ public class HttpSmokeTestFixture : IAsyncLifetime
 
     public Task DisposeAsync()
     {
-        _httpClient.Dispose();
+        HttpClient.Dispose();
         return Task.CompletedTask;
     }
 
@@ -56,7 +52,40 @@ public class HttpSmokeTestFixture : IAsyncLifetime
     /// </summary>
     public Task<HttpResponseMessage> GetAsync(string requestUri)
     {
-        return _httpClient.GetAsync(requestUri);
+        return HttpClient.GetAsync(requestUri);
+    }
+
+    /// <summary>
+    /// Sends a GET request to the specified URI and deserializes the JSON response.
+    /// </summary>
+    public async Task<TResponse?> GetAsync<TResponse>(string requestUri, ITestOutputHelper? output = null)
+    {
+        output?.WriteLine($"GET {requestUri}");
+        var response = await HttpClient.GetAsync(requestUri).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<TResponse>().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a POST request to the specified URI with the given content.
+    /// </summary>
+    public Task<HttpResponseMessage> PostAsync(string requestUri, HttpContent content)
+    {
+        return HttpClient.PostAsync(requestUri, content);
+    }
+
+    /// <summary>
+    /// Sends a POST request with JSON content to the specified URI and deserializes the response.
+    /// </summary>
+    public async Task<TResponse?> PostAsync<TRequest, TResponse>(
+        string requestUri,
+        TRequest request,
+        ITestOutputHelper? output = null)
+    {
+        output?.WriteLine($"POST {requestUri}");
+        var response = await HttpClient.PostAsJsonAsync(requestUri, request).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<TResponse>().ConfigureAwait(false);
     }
 
     /// <summary>
@@ -64,7 +93,14 @@ public class HttpSmokeTestFixture : IAsyncLifetime
     /// </summary>
     public Task<HttpResponseMessage> PostAsJsonAsync<T>(string requestUri, T value)
     {
-        return _httpClient.PostAsJsonAsync(requestUri, value);
+        return HttpClient.PostAsJsonAsync(requestUri, value);
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        HttpClient.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
 
@@ -72,7 +108,7 @@ public class HttpSmokeTestFixture : IAsyncLifetime
 /// Marks the test collection for HTTP smoke tests with shared fixture.
 /// </summary>
 [CollectionDefinition("HttpSmokeTests")]
-public class HttpSmokeTestCollection : ICollectionFixture<HttpSmokeTestFixture>
+public class HttpSmokeTestDefinitions : ICollectionFixture<HttpSmokeTestFixture>
 {
     // This class has no code, and is never created. Its purpose is simply
     // to be the place to apply [CollectionDefinition] and all the

@@ -122,9 +122,9 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             }
         }, ct)).ToArray();
 
-        await Task.WhenAll(tasks);
+        var results = await Task.WhenAll(tasks);
 
-        var all = tasks.SelectMany(t => t.Result ?? new List<JobListing>()).ToList();
+        var all = results.SelectMany(r => r ?? new List<JobListing>()).ToList();
 
         // dedupe by generated id
         var map = new Dictionary<string, JobListing>();
@@ -230,9 +230,9 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             }
         }, ct)).ToArray();
 
-        await Task.WhenAll(tasks);
+        var results = await Task.WhenAll(tasks);
 
-        var all = tasks.SelectMany(t => t.Result ?? new List<JobListing>()).ToList();
+        var all = results.SelectMany(r => r ?? new List<JobListing>()).ToList();
 
         // dedupe by generated id
         var map = new Dictionary<string, JobListing>();

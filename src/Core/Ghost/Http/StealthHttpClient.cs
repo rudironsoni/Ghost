@@ -27,7 +27,7 @@ public class StealthHttpClient
         AddDefaultHeaders(req);
 
         var policy = RetryPolicy.CreatePolicy(_options.MaxRetries, _options.BackoffFactor);
-        return await policy.ExecuteAsync(async () => await _client.SendAsync(CloneRequest(req), HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false)).ConfigureAwait(false);
+        return await policy.ExecuteAsync(async () => await _client.SendAsync(await CloneRequestAsync(req), HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     public async Task<HttpResponseMessage> PostAsync(string uri, HttpContent content, CancellationToken ct = default)
@@ -38,7 +38,7 @@ public class StealthHttpClient
         AddDefaultHeaders(req);
 
         var policy = RetryPolicy.CreatePolicy(_options.MaxRetries, _options.BackoffFactor);
-        return await policy.ExecuteAsync(async () => await _client.SendAsync(CloneRequest(req), HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false)).ConfigureAwait(false);
+        return await policy.ExecuteAsync(async () => await _client.SendAsync(await CloneRequestAsync(req), HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     private static void AddDefaultHeaders(HttpRequestMessage req)
@@ -66,7 +66,7 @@ public class StealthHttpClient
     }
 
     // HttpRequestMessage cannot be sent twice; clone minimal parts
-    private static HttpRequestMessage CloneRequest(HttpRequestMessage req)
+    private static async Task<HttpRequestMessage> CloneRequestAsync(HttpRequestMessage req)
     {
         var clone = new HttpRequestMessage(req.Method, req.RequestUri);
         // copy headers
@@ -75,7 +75,8 @@ public class StealthHttpClient
 
         if (req.Content != null)
         {
-            clone.Content = new StreamContent(req.Content.ReadAsStreamAsync().GetAwaiter().GetResult());
+            var contentStream = await req.Content.ReadAsStreamAsync();
+            clone.Content = new StreamContent(contentStream);
             foreach (var h in req.Content.Headers)
                 clone.Content.Headers.TryAddWithoutValidation(h.Key, h.Value);
         }

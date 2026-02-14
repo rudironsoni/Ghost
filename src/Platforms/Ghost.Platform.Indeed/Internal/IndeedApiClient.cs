@@ -18,7 +18,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Ghost.Platform.Indeed.Internal;
 
-public class IndeedApiClient : IDisposable
+public class IndeedApiClient : IAsyncDisposable, IDisposable
 {
     private readonly IProxyProvider? _proxyProvider;
     private readonly ISessionOrchestrator? _sessionOrchestrator;
@@ -678,44 +678,64 @@ public class IndeedApiClient : IDisposable
         }
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        Dispose(true);
+        if (_disposed) return;
+
+        _rateLimitSemaphore?.Dispose();
+
+        try
+        {
+            _httpClient?.Dispose();
+        }
+        catch { }
+
+        try
+        {
+            _handler?.Dispose();
+        }
+        catch { }
+
+        if (_currentSessionId != null && _sessionOrchestrator != null)
+        {
+            try
+            {
+                await _sessionOrchestrator.CloseSessionAsync(_currentSessionId, default);
+            }
+            catch (Exception ex)
+            {
+                LogSessionCloseFailed(_logger, _currentSessionId, ex);
+            }
+        }
+
+        _disposed = true;
         GC.SuppressFinalize(this);
     }
 
-    private void Dispose(bool disposing)
+    public void Dispose()
     {
-        if (!_disposed && disposing)
+        if (_disposed) return;
+
+        _rateLimitSemaphore?.Dispose();
+
+        try
         {
-            _rateLimitSemaphore?.Dispose();
-
-            try
-            {
-                _httpClient?.Dispose();
-            }
-            catch { }
-
-            try
-            {
-                _handler?.Dispose();
-            }
-            catch { }
-
-            if (_currentSessionId != null && _sessionOrchestrator != null)
-            {
-                try
-                {
-                    _sessionOrchestrator.CloseSessionAsync(_currentSessionId, default).GetAwaiter().GetResult();
-                }
-                catch (Exception ex)
-                {
-                    LogSessionCloseFailed(_logger, _currentSessionId, ex);
-                }
-            }
-
-            _disposed = true;
+            _httpClient?.Dispose();
         }
+        catch { }
+
+        try
+        {
+            _handler?.Dispose();
+        }
+        catch { }
+
+        // Note: We cannot call CloseSessionAsync synchronously here.
+        // Callers should use DisposeAsync for proper cleanup.
+        // If synchronous disposal is required, the session will be cleaned up by the orchestrator.
+
+        _disposed = true;
+        GC.SuppressFinalize(this);
     }
 
     private static bool IsBlockedOrConsentRequired(string responseContent)

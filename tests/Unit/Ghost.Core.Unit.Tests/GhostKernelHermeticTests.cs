@@ -59,7 +59,7 @@ public class GhostKernelHermeticTests
 
         // Assert
         page.Url.Should().Be("https://example.com");
-        page.Title.Should().Contain("example.com");
+        (await page.GetTitleAsync()).Should().Contain("example.com");
 
         await kernel.DisposeAsync();
     }

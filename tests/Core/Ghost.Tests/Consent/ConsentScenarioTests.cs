@@ -422,7 +422,7 @@ public class ConsentScenarioTests : IAsyncLifetime
         {
             var url = $"{_scenarioServer!.BaseUrl}{scenario}";
             await page.NavigateAsync(url);
-            var title = page.Title;
+            var title = await page.GetTitleAsync();
             Assert.NotNull(title);
             _output.WriteLine($"✓ {scenario} is accessible");
         }

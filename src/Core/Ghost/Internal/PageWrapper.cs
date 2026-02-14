@@ -23,7 +23,7 @@ internal sealed class PageWrapper : IPage
 
     public string Url => _page.Url;
 
-    public string? Title => _page.TitleAsync().GetAwaiter().GetResult();
+    public async Task<string?> GetTitleAsync(CancellationToken ct = default) => await _page.TitleAsync();
 
     public async Task NavigateAsync(string url, NavigationOptions? options = null, CancellationToken ct = default)
     {

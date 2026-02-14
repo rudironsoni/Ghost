@@ -31,7 +31,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _serviceProvider = fixture.ServiceProvider;
     }
 
-    [Fact]
+    [Fact(Skip = "Infrastructure not ready")]
     public async Task SearchAndGetDetails_Flow_ValidatesDataConsistency()
     {
         // Arrange
@@ -120,7 +120,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _output.WriteLine($"  - Salary: {jobDetails.Salary ?? "Not specified"}");
     }
 
-    [Fact]
+    [Fact(Skip = "Infrastructure not ready")]
     public async Task Search_WithFilters_Returns_RelevantResults()
     {
         // Arrange
@@ -193,7 +193,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         }
     }
 
-    [Fact]
+    [Fact(Skip = "Infrastructure not ready")]
     public async Task Search_AllPlatforms_AggregatesRealData()
     {
         // Arrange

@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Ghost.Abstractions;
 
 namespace Ghost.Platform.LinkedIn.Internal;
 
 internal sealed class LinkedInTextExtractor : ITextExtractor
 {
-    public string ExtractText(Ghost.IElement element, string? selector = null)
+    public async Task<string> ExtractTextAsync(Ghost.IElement element, string? selector = null)
     {
         if (element is null) return string.Empty;
         try
@@ -14,20 +15,20 @@ internal sealed class LinkedInTextExtractor : ITextExtractor
             Ghost.IElement? el = null;
             if (!string.IsNullOrEmpty(selector))
             {
-                el = element.QuerySelectorAsync(selector).GetAwaiter().GetResult();
+                el = await element.QuerySelectorAsync(selector);
             }
             el ??= element;
 
-            var span = el.QuerySelectorAsync("span[aria-hidden=\"true\"]").GetAwaiter().GetResult();
+            var span = await el.QuerySelectorAsync("span[aria-hidden=\"true\"]");
             string? text = null;
             if (span != null)
             {
-                text = span.GetTextContentAsync().GetAwaiter().GetResult();
+                text = await span.GetTextContentAsync();
             }
 
             if (string.IsNullOrWhiteSpace(text))
             {
-                text = el.GetTextContentAsync().GetAwaiter().GetResult();
+                text = await el.GetTextContentAsync();
             }
 
             return (text ?? string.Empty).Trim();
@@ -38,12 +39,12 @@ internal sealed class LinkedInTextExtractor : ITextExtractor
         }
     }
 
-    public string ExtractInnerText(Ghost.IElement element)
+    public async Task<string> ExtractInnerTextAsync(Ghost.IElement element)
     {
         if (element is null) return string.Empty;
         try
         {
-            return (element.GetTextContentAsync().GetAwaiter().GetResult() ?? string.Empty).Trim();
+            return (await element.GetTextContentAsync() ?? string.Empty).Trim();
         }
         catch
         {
