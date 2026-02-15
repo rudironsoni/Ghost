@@ -29,7 +29,7 @@ public class ProxyHealthCheckerIntegrationTests
 
             using var httpClient = new HttpClient();
             var checker = new ProxyHealthChecker(httpClient, NullLogger<ProxyHealthChecker>.Instance);
-            ProxyHealthReport report = await checker.CheckAllProxiesAsync().ConfigureAwait(false);
+            ProxyHealthReport report = await checker.CheckAllProxiesAsync();
 
             report.Should().NotBeNull();
             report.Proxies.Should().HaveCount(12);
@@ -49,7 +49,7 @@ public class ProxyHealthCheckerIntegrationTests
         using var httpClient = new HttpClient();
         var checker = new ProxyHealthChecker(httpClient, NullLogger<ProxyHealthChecker>.Instance);
         await FluentActions.Invoking(() => checker.MeasureLatencyAsync(" "))
-            .Should().ThrowAsync<ArgumentException>().ConfigureAwait(false);
+            .Should().ThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public class ProxyHealthCheckerIntegrationTests
             using var httpClient = new HttpClient();
             var checker = new ProxyHealthChecker(httpClient, NullLogger<ProxyHealthChecker>.Instance);
 
-            long latency = await checker.MeasureLatencyAsync(proxyUrl).ConfigureAwait(false);
+            long latency = await checker.MeasureLatencyAsync(proxyUrl);
 
             latency.Should().BeLessThanOrEqualTo(0);
         }

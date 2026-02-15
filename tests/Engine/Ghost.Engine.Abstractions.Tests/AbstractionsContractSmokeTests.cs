@@ -46,22 +46,22 @@ public sealed class AbstractionsContractSmokeTests
         ISignalBus signalBus = new FakeSignalBus();
         IGhostSettings settings = new FakeSettings();
 
-        await scheduler.EnqueueAsync(request, cancellationToken: cancellationToken).ConfigureAwait(false);
-        GhostRequest? dequeued = await scheduler.DequeueAsync(cancellationToken).ConfigureAwait(false);
-        GhostResponse downloaded = await downloader.DownloadAsync(dequeued!, context, cancellationToken).ConfigureAwait(false);
+        await scheduler.EnqueueAsync(request, cancellationToken: cancellationToken);
+        GhostRequest? dequeued = await scheduler.DequeueAsync(cancellationToken);
+        GhostResponse downloaded = await downloader.DownloadAsync(dequeued!, context, cancellationToken);
         GhostResponse middlewareResponse = await downloaderMiddleware.InvokeAsync(
             dequeued!,
             context,
             (_, _, _) => Task.FromResult(downloaded),
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
         SpiderOutput spiderOutput = await spiderMiddleware.InvokeAsync(
             middlewareResponse,
             context,
             (res, ctx, ct) => spider.ParseAsync(res, ctx, ct),
-            cancellationToken).ConfigureAwait(false);
-        ItemEnvelope processedItem = await itemPipeline.ProcessAsync(spiderOutput.Items[0], context, cancellationToken).ConfigureAwait(false);
-        await signalBus.PublishAsync(processedItem, cancellationToken).ConfigureAwait(false);
-        await engine.RunAsync(spider, context, cancellationToken).ConfigureAwait(false);
+            cancellationToken);
+        ItemEnvelope processedItem = await itemPipeline.ProcessAsync(spiderOutput.Items[0], context, cancellationToken);
+        await signalBus.PublishAsync(processedItem, cancellationToken);
+        await engine.RunAsync(spider, context, cancellationToken);
 
         Assert.NotNull(settings.GetOrDefault("none", "value"));
     }

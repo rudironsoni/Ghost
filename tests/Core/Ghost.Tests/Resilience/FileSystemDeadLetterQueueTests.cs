@@ -18,8 +18,8 @@ public class FileSystemDeadLetterQueueTests
         FileSystemDeadLetterQueue dlq = CreateQueue(root);
         var job = new FailedScrapeJob { Platform = "LinkedIn", Query = "dev", Location = "remote", Error = "err" };
 
-        await dlq.EnqueueAsync(job).ConfigureAwait(false);
-        IReadOnlyList<FailedScrapeJob> jobs = await dlq.GetFailedJobsAsync(TimeSpan.FromMinutes(5)).ConfigureAwait(false);
+        await dlq.EnqueueAsync(job);
+        IReadOnlyList<FailedScrapeJob> jobs = await dlq.GetFailedJobsAsync(TimeSpan.FromMinutes(5));
 
         jobs.Should().ContainSingle();
         jobs[0].Id.Should().NotBeNullOrWhiteSpace();
@@ -32,10 +32,10 @@ public class FileSystemDeadLetterQueueTests
         string root = CreateTempRoot();
         FileSystemDeadLetterQueue dlq = CreateQueue(root);
 
-        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "LinkedIn", Query = "q1", Location = "r", Error = "e" }).ConfigureAwait(false);
-        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "Indeed", Query = "q2", Location = "r", Error = "e" }).ConfigureAwait(false);
+        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "LinkedIn", Query = "q1", Location = "r", Error = "e" });
+        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "Indeed", Query = "q2", Location = "r", Error = "e" });
 
-        IReadOnlyList<FailedScrapeJob> jobs = await dlq.GetFailedJobsByPlatformAsync("LinkedIn", TimeSpan.FromMinutes(5)).ConfigureAwait(false);
+        IReadOnlyList<FailedScrapeJob> jobs = await dlq.GetFailedJobsByPlatformAsync("LinkedIn", TimeSpan.FromMinutes(5));
 
         jobs.Should().ContainSingle();
         jobs[0].Platform.Should().Be("LinkedIn");
@@ -55,9 +55,9 @@ public class FileSystemDeadLetterQueueTests
             FailedAt = DateTime.UtcNow.AddDays(-2)
         };
 
-        await dlq.EnqueueAsync(job).ConfigureAwait(false);
-        IReadOnlyList<FailedScrapeJob> recentJobs = await dlq.GetFailedJobsAsync(TimeSpan.FromHours(12)).ConfigureAwait(false);
-        IReadOnlyList<FailedScrapeJob> allJobs = await dlq.GetFailedJobsAsync(TimeSpan.FromDays(7)).ConfigureAwait(false);
+        await dlq.EnqueueAsync(job);
+        IReadOnlyList<FailedScrapeJob> recentJobs = await dlq.GetFailedJobsAsync(TimeSpan.FromHours(12));
+        IReadOnlyList<FailedScrapeJob> allJobs = await dlq.GetFailedJobsAsync(TimeSpan.FromDays(7));
 
         recentJobs.Should().BeEmpty();
         allJobs.Should().ContainSingle();
@@ -70,8 +70,8 @@ public class FileSystemDeadLetterQueueTests
         FileSystemDeadLetterQueue dlq = CreateQueue(root);
         var job = new FailedScrapeJob { Platform = "Indeed", Query = "q", Location = "l", Error = "e" };
 
-        await dlq.EnqueueAsync(job).ConfigureAwait(false);
-        FailedScrapeJob? fetched = await dlq.GetJobAsync(job.Id).ConfigureAwait(false);
+        await dlq.EnqueueAsync(job);
+        FailedScrapeJob? fetched = await dlq.GetJobAsync(job.Id);
 
         fetched.Should().NotBeNull();
         fetched!.Id.Should().Be(job.Id);
@@ -84,10 +84,10 @@ public class FileSystemDeadLetterQueueTests
         FileSystemDeadLetterQueue dlq = CreateQueue(root);
         var job = new FailedScrapeJob { Platform = "Indeed", Query = "q", Location = "l", Error = "e" };
 
-        await dlq.EnqueueAsync(job).ConfigureAwait(false);
-        await dlq.RetryAsync(job.Id).ConfigureAwait(false);
+        await dlq.EnqueueAsync(job);
+        await dlq.RetryAsync(job.Id);
 
-        FailedScrapeJob? fetched = await dlq.GetJobAsync(job.Id).ConfigureAwait(false);
+        FailedScrapeJob? fetched = await dlq.GetJobAsync(job.Id);
         fetched!.RetryCount.Should().Be(1);
         fetched.LastRetryAt.Should().NotBeNull();
     }
@@ -108,13 +108,13 @@ public class FileSystemDeadLetterQueueTests
             FailedAt = DateTime.UtcNow.AddDays(-10)
         };
 
-        await dlq.EnqueueAsync(recent).ConfigureAwait(false);
-        await dlq.EnqueueAsync(older).ConfigureAwait(false);
+        await dlq.EnqueueAsync(recent);
+        await dlq.EnqueueAsync(older);
 
-        await dlq.RetryAllAsync(TimeSpan.FromDays(2)).ConfigureAwait(false);
+        await dlq.RetryAllAsync(TimeSpan.FromDays(2));
 
-        FailedScrapeJob? recentJob = await dlq.GetJobAsync(recent.Id).ConfigureAwait(false);
-        FailedScrapeJob? olderJob = await dlq.GetJobAsync(older.Id).ConfigureAwait(false);
+        FailedScrapeJob? recentJob = await dlq.GetJobAsync(recent.Id);
+        FailedScrapeJob? olderJob = await dlq.GetJobAsync(older.Id);
 
         recentJob!.RetryCount.Should().Be(1);
         olderJob!.RetryCount.Should().Be(0);
@@ -127,10 +127,10 @@ public class FileSystemDeadLetterQueueTests
         FileSystemDeadLetterQueue dlq = CreateQueue(root);
         var job = new FailedScrapeJob { Platform = "LinkedIn", Query = "q", Location = "l", Error = "e" };
 
-        await dlq.EnqueueAsync(job).ConfigureAwait(false);
-        await dlq.ArchiveAsync(job.Id).ConfigureAwait(false);
+        await dlq.EnqueueAsync(job);
+        await dlq.ArchiveAsync(job.Id);
 
-        FailedScrapeJob? fetched = await dlq.GetJobAsync(job.Id).ConfigureAwait(false);
+        FailedScrapeJob? fetched = await dlq.GetJobAsync(job.Id);
         fetched.Should().BeNull();
 
         string archiveRoot = Path.Combine(root, "archived");
@@ -161,12 +161,12 @@ public class FileSystemDeadLetterQueueTests
             FailedAt = DateTime.UtcNow
         };
 
-        await dlq.EnqueueAsync(oldJob).ConfigureAwait(false);
-        await dlq.EnqueueAsync(newJob).ConfigureAwait(false);
+        await dlq.EnqueueAsync(oldJob);
+        await dlq.EnqueueAsync(newJob);
 
-        await dlq.ArchiveAllAsync(TimeSpan.FromDays(3)).ConfigureAwait(false);
+        await dlq.ArchiveAllAsync(TimeSpan.FromDays(3));
 
-        IReadOnlyList<FailedScrapeJob> remaining = await dlq.GetFailedJobsAsync(TimeSpan.FromDays(30)).ConfigureAwait(false);
+        IReadOnlyList<FailedScrapeJob> remaining = await dlq.GetFailedJobsAsync(TimeSpan.FromDays(30));
         remaining.Should().ContainSingle(job => job.Id == newJob.Id);
     }
 
@@ -176,10 +176,10 @@ public class FileSystemDeadLetterQueueTests
         string root = CreateTempRoot();
         FileSystemDeadLetterQueue dlq = CreateQueue(root);
 
-        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "LinkedIn", Query = "q", Location = "l", Error = "e" }).ConfigureAwait(false);
-        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "Indeed", Query = "q", Location = "l", Error = "e" }).ConfigureAwait(false);
+        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "LinkedIn", Query = "q", Location = "l", Error = "e" });
+        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "Indeed", Query = "q", Location = "l", Error = "e" });
 
-        int depth = await dlq.GetQueueDepthAsync().ConfigureAwait(false);
+        int depth = await dlq.GetQueueDepthAsync();
 
         depth.Should().Be(2);
     }
@@ -198,7 +198,7 @@ public class FileSystemDeadLetterQueueTests
             Error = "e"
         };
 
-        await dlq.EnqueueAsync(job).ConfigureAwait(false);
+        await dlq.EnqueueAsync(job);
 
         string activePath = Path.Combine(root, "active");
         Directory.EnumerateFiles(activePath, "*.json").Single()
@@ -211,7 +211,7 @@ public class FileSystemDeadLetterQueueTests
         string root = CreateTempRoot();
         FileSystemDeadLetterQueue dlq = CreateQueue(root);
 
-        await Assert.ThrowsAsync<ArgumentNullException>(() => dlq.EnqueueAsync(null!)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => dlq.EnqueueAsync(null!));
     }
 
     [Fact]
@@ -220,7 +220,7 @@ public class FileSystemDeadLetterQueueTests
         string root = CreateTempRoot();
         FileSystemDeadLetterQueue dlq = CreateQueue(root);
 
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => dlq.GetFailedJobsAsync(TimeSpan.FromSeconds(-1))).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => dlq.GetFailedJobsAsync(TimeSpan.FromSeconds(-1)));
     }
 
     private static string CreateTempRoot()

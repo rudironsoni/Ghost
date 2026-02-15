@@ -43,7 +43,7 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         List<JobListing>? results = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output).ConfigureAwait(false);
+            _output);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -96,7 +96,7 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         List<JobListing>? results = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output).ConfigureAwait(false);
+            _output);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -141,7 +141,7 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         List<JobListing>? results = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output).ConfigureAwait(false);
+            _output);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -196,7 +196,7 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         List<JobListing>? searchResults = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output).ConfigureAwait(false);
+            _output);
 
         searchResults.Should().NotBeEmpty("need at least one job to test details endpoint");
 
@@ -214,7 +214,7 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         {
             _output.WriteLine($"\nTesting {job.Source} job: {job.Id}");
 
-            JobListing? jobDetails = await _fixture.GetAsync<JobListing>($"/api/jobs/{job.Id}", _output).ConfigureAwait(false);
+            JobListing? jobDetails = await _fixture.GetAsync<JobListing>($"/api/jobs/{job.Id}", _output);
 
             jobDetails.Should().NotBeNull("job details should not be null");
             jobDetails!.Id.Should().Be(job.Id, "job ID should match the requested ID");

@@ -48,7 +48,7 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
         _output.WriteLine($"Max Results: {criteria.MaxResults}");
 
         IReadOnlyList<JobListing> results = await _serviceProvider.GetRequiredService<IJobClient>()
-            .SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
+            .SearchJobsAsync(criteria, cts.Token);
 
         // Assert
         results.Should().NotBeNull("aggregated results should not be null");
@@ -163,7 +163,7 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
             IReadOnlyList<JobListing> searchResults;
             try
             {
-                searchResults = await platformClient.SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
+                searchResults = await platformClient.SearchJobsAsync(criteria, cts.Token);
             }
             catch (Exception ex)
             {
@@ -265,7 +265,7 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
         _output.WriteLine($"Query: {criteria.Query}");
 
         IReadOnlyList<JobListing> results = await _serviceProvider.GetRequiredService<IJobClient>()
-            .SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
+            .SearchJobsAsync(criteria, cts.Token);
 
         // Assert
         results.Should().NotBeNull("results should not be null");

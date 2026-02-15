@@ -38,9 +38,9 @@ public class BrowserSessionHermeticTests
         var session = new FakeBrowserSession();
 
         // Act
-        IPage page1 = await session.NewPageAsync().ConfigureAwait(false);
-        IPage page2 = await session.NewPageAsync().ConfigureAwait(false);
-        IPage page3 = await session.NewPageAsync().ConfigureAwait(false);
+        IPage page1 = await session.NewPageAsync();
+        IPage page2 = await session.NewPageAsync();
+        IPage page3 = await session.NewPageAsync();
 
         // Assert
         session.Pages.Should().HaveCount(3);
@@ -54,10 +54,10 @@ public class BrowserSessionHermeticTests
     {
         // Arrange
         var session = new FakeBrowserSession();
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        IPage page = await session.NewPageAsync();
 
         // Act
-        IPage? retrieved = await session.GetPageAsync(page.PageId).ConfigureAwait(false);
+        IPage? retrieved = await session.GetPageAsync(page.PageId);
 
         // Assert
         retrieved.Should().NotBeNull();
@@ -71,7 +71,7 @@ public class BrowserSessionHermeticTests
         var session = new FakeBrowserSession();
 
         // Act
-        IPage? page = await session.GetPageAsync("non-existent-id").ConfigureAwait(false);
+        IPage? page = await session.GetPageAsync("non-existent-id");
 
         // Assert
         page.Should().BeNull();
@@ -82,11 +82,11 @@ public class BrowserSessionHermeticTests
     {
         // Arrange
         var session = new FakeBrowserSession();
-        await session.NewPageAsync().ConfigureAwait(false);
-        await session.NewPageAsync().ConfigureAwait(false);
+        await session.NewPageAsync();
+        await session.NewPageAsync();
 
         // Act
-        await session.CloseAsync().ConfigureAwait(false);
+        await session.CloseAsync();
 
         // Assert
         session.Pages.Should().BeEmpty();
@@ -97,11 +97,11 @@ public class BrowserSessionHermeticTests
     {
         // Arrange
         var session = new FakeBrowserSession();
-        await session.NewPageAsync().ConfigureAwait(false);
-        await session.NewPageAsync().ConfigureAwait(false);
+        await session.NewPageAsync();
+        await session.NewPageAsync();
 
         // Act
-        await session.DisposeAsync().ConfigureAwait(false);
+        await session.DisposeAsync();
 
         // Assert
         session.Pages.Should().BeEmpty();
@@ -117,7 +117,7 @@ public class BrowserSessionHermeticTests
         Func<Task> act = async () => await session.SaveStorageStateAsync("/tmp/state.json").ConfigureAwait(false);
 
         // Assert
-        await act.Should().NotThrowAsync().ConfigureAwait(false);
+        await act.Should().NotThrowAsync();
     }
 
     [Fact]
@@ -128,11 +128,11 @@ public class BrowserSessionHermeticTests
         var session2 = new FakeBrowserSession();
 
         // Act
-        IPage page1 = await session1.NewPageAsync().ConfigureAwait(false);
-        IPage page2 = await session2.NewPageAsync().ConfigureAwait(false);
+        IPage page1 = await session1.NewPageAsync();
+        IPage page2 = await session2.NewPageAsync();
 
-        await page1.NavigateAsync("https://example.com").ConfigureAwait(false);
-        await page2.NavigateAsync("https://test.com").ConfigureAwait(false);
+        await page1.NavigateAsync("https://example.com");
+        await page2.NavigateAsync("https://test.com");
 
         // Assert
         session1.Pages.Should().HaveCount(1);
@@ -151,7 +151,7 @@ public class BrowserSessionHermeticTests
         var pages = new List<IPage>();
         for (int i = 0; i < 5; i++)
         {
-            pages.Add(await session.NewPageAsync().ConfigureAwait(false));
+            pages.Add(await session.NewPageAsync());
         }
 
         // Assert

@@ -17,7 +17,7 @@ public class FakePageHermeticTests
         var page = new FakePage();
 
         // Act
-        string content = await page.GetContentAsync().ConfigureAwait(false);
+        string content = await page.GetContentAsync();
 
         // Assert
         content.Should().Be("<html><body></body></html>");
@@ -31,8 +31,8 @@ public class FakePageHermeticTests
         const string html = "<html><body><h1>Test</h1></body></html>";
 
         // Act
-        await page.SetContentAsync(html).ConfigureAwait(false);
-        string content = await page.GetContentAsync().ConfigureAwait(false);
+        await page.SetContentAsync(html);
+        string content = await page.GetContentAsync();
 
         // Assert
         content.Should().Be(html);
@@ -45,11 +45,11 @@ public class FakePageHermeticTests
         var page = new FakePage();
 
         // Act
-        await page.NavigateAsync("https://example.com").ConfigureAwait(false);
+        await page.NavigateAsync("https://example.com");
 
         // Assert
         page.Url.Should().Be("https://example.com");
-        (await page.GetTitleAsync().ConfigureAwait(false)).Should().Be("Page: https://example.com");
+        (await page.GetTitleAsync()).Should().Be("Page: https://example.com");
     }
 
     [Fact]
@@ -73,11 +73,11 @@ public class FakePageHermeticTests
         page.RegisterElement("h1", element);
 
         // Act
-        IElement? result = await page.QuerySelectorAsync("h1").ConfigureAwait(false);
+        IElement? result = await page.QuerySelectorAsync("h1");
 
         // Assert
         result.Should().NotBeNull();
-        string? text = await result!.GetTextContentAsync().ConfigureAwait(false);
+        string? text = await result!.GetTextContentAsync();
         text.Should().Be("Job Title");
     }
 
@@ -88,7 +88,7 @@ public class FakePageHermeticTests
         var page = new FakePage();
 
         // Act
-        IElement? result = await page.QuerySelectorAsync("div").ConfigureAwait(false);
+        IElement? result = await page.QuerySelectorAsync("div");
 
         // Assert
         result.Should().NotBeNull();
@@ -101,7 +101,7 @@ public class FakePageHermeticTests
         var page = new FakePage();
 
         // Act
-        IElement element = await page.WaitForSelectorAsync(".job-card").ConfigureAwait(false);
+        IElement element = await page.WaitForSelectorAsync(".job-card");
 
         // Assert
         element.Should().NotBeNull();
@@ -114,7 +114,7 @@ public class FakePageHermeticTests
         var page = new FakePage();
 
         // Act
-        byte[] screenshot = await page.ScreenshotAsync().ConfigureAwait(false);
+        byte[] screenshot = await page.ScreenshotAsync();
 
         // Assert
         screenshot.Should().NotBeNull();
@@ -128,7 +128,7 @@ public class FakePageHermeticTests
         var page = new FakePage();
 
         // Act
-        byte[] pdf = await page.PdfAsync().ConfigureAwait(false);
+        byte[] pdf = await page.PdfAsync();
 
         // Assert
         pdf.Should().NotBeNull();
@@ -145,6 +145,6 @@ public class FakePageHermeticTests
         Func<Task> act = async () => await page.DisposeAsync().ConfigureAwait(false);
 
         // Assert
-        await act.Should().NotThrowAsync().ConfigureAwait(false);
+        await act.Should().NotThrowAsync();
     }
 }

@@ -20,7 +20,7 @@ public class MouseMimicryTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, 500, 500).ConfigureAwait(false);
+        await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, 500, 500);
 
         // Assert
         // Should make 20-51 move calls (20-50 steps + final position)
@@ -35,7 +35,7 @@ public class MouseMimicryTests
         var mockMouse = new Mock<IMouse>();
 
         // Act
-        await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, 0, 0).ConfigureAwait(false);
+        await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, 0, 0);
 
         // Assert
         mockMouse.Verify(m => m.MoveAsync(It.IsAny<float>(), It.IsAny<float>(), It.IsAny<MouseMoveOptions>()), Times.Never);
@@ -61,7 +61,7 @@ public class MouseMimicryTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, targetX, targetY).ConfigureAwait(false);
+        await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, targetX, targetY);
 
         // Assert - last position should be close to target
         Assert.InRange(lastX, targetX - 1, targetX + 1);

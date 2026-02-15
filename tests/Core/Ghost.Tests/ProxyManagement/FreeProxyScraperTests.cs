@@ -52,7 +52,7 @@ public sealed class FreeProxyScraperTests
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
         // Act
-        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken.None).ConfigureAwait(false);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
 
         // Assert
         proxies.Should().NotBeNull();
@@ -76,7 +76,7 @@ public sealed class FreeProxyScraperTests
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
         // Act
-        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken.None).ConfigureAwait(false);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
         var proxyList = proxies.ToList();
 
         // Assert
@@ -104,6 +104,6 @@ public sealed class FreeProxyScraperTests
 
         // Act & Assert
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            async () => await scraper.FetchProxiesAsync(cts.Token).ConfigureAwait(false)).ConfigureAwait(false);
+            async () => await scraper.FetchProxiesAsync(cts.Token).ConfigureAwait(false));
     }
 }

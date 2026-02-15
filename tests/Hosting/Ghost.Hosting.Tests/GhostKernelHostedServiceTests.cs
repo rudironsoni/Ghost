@@ -35,7 +35,7 @@ public class GhostKernelHostedServiceTests
 
         var service = new GhostKernelHostedService(kernel, lifetimeMock.Object);
 
-        await service.StopAsync(CancellationToken.None).ConfigureAwait(false);
+        await service.StopAsync(CancellationToken.None);
 
         // kernel.DisposeAsync will close browser and dispose playwright; verify browser closed/disposed
         browserMock.Verify(b => b.CloseAsync(), Times.Once);
@@ -60,7 +60,7 @@ public class GhostKernelHostedServiceTests
         cts.Cancel();
 
         // Give a small delay for any registered callbacks to run
-        await Task.Delay(10).ConfigureAwait(false);
+        await Task.Delay(10);
 
         // If the hosted service registered for ApplicationStopping and invoked DisposeAsync,
         // the kernel's DisposeAsync will result in browser/playwright cleanup. Verify those were called.

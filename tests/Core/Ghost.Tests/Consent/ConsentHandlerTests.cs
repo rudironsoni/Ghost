@@ -48,7 +48,7 @@ public class ConsentHandlerTests
         var handler = new ConsentHandler();
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() => handler.DetectCMPAsync(null!)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => handler.DetectCMPAsync(null!));
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public class ConsentHandlerTests
         var handler = new ConsentHandler();
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() => handler.AcceptConsentAsync(null!, "onetrust")).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => handler.AcceptConsentAsync(null!, "onetrust"));
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public class ConsentHandlerTests
         var mockPage = new Mock<IPage>();
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() => handler.AcceptConsentAsync(mockPage.Object, null!)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => handler.AcceptConsentAsync(mockPage.Object, null!));
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public class ConsentHandlerTests
         var handler = new ConsentHandler();
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() => handler.HandleConsentAsync(null!)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => handler.HandleConsentAsync(null!));
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public class ConsentHandlerTests
         mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>())).ReturnsAsync((IElement?)null);
 
         // Act
-        string? result = await handler.DetectCMPAsync(mockPage.Object).ConfigureAwait(false);
+        string? result = await handler.DetectCMPAsync(mockPage.Object);
 
         // Assert
         Assert.Null(result);
@@ -106,7 +106,7 @@ public class ConsentHandlerTests
         var mockPage = new Mock<IPage>();
 
         // Act
-        bool result = await handler.AcceptConsentAsync(mockPage.Object, "unknown-cmp").ConfigureAwait(false);
+        bool result = await handler.AcceptConsentAsync(mockPage.Object, "unknown-cmp");
 
         // Assert
         Assert.False(result);
@@ -122,7 +122,7 @@ public class ConsentHandlerTests
         mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>())).ReturnsAsync((IElement?)null);
 
         // Act
-        bool result = await handler.HandleConsentAsync(mockPage.Object).ConfigureAwait(false);
+        bool result = await handler.HandleConsentAsync(mockPage.Object);
 
         // Assert
         Assert.False(result);

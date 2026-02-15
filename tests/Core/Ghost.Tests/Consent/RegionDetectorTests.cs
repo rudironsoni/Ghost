@@ -16,7 +16,7 @@ public class RegionDetectorTests
         // Act & Assert
 #pragma warning disable CS8604 // Possible null reference argument
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await RegionDetector.DetectRegulationAsync(page).ConfigureAwait(false)).ConfigureAwait(false);
+            async () => await RegionDetector.DetectRegulationAsync(page).ConfigureAwait(false));
 #pragma warning restore CS8604
     }
 
@@ -28,7 +28,7 @@ public class RegionDetectorTests
         mockPage.Setup(p => p.GetContentAsync()).ReturnsAsync("<html><body>This site uses GDPR compliant cookies</body></html>");
 
         // Act
-        RegionDetector.PrivacyRegulation result = await RegionDetector.DetectRegulationAsync(mockPage.Object).ConfigureAwait(false);
+        RegionDetector.PrivacyRegulation result = await RegionDetector.DetectRegulationAsync(mockPage.Object);
 
         // Assert
         Assert.Equal(RegionDetector.PrivacyRegulation.GDPR, result);
@@ -42,7 +42,7 @@ public class RegionDetectorTests
         mockPage.Setup(p => p.GetContentAsync()).ReturnsAsync("<html><body>Do Not Sell My Personal Information (CCPA)</body></html>");
 
         // Act
-        RegionDetector.PrivacyRegulation result = await RegionDetector.DetectRegulationAsync(mockPage.Object).ConfigureAwait(false);
+        RegionDetector.PrivacyRegulation result = await RegionDetector.DetectRegulationAsync(mockPage.Object);
 
         // Assert
         Assert.Equal(RegionDetector.PrivacyRegulation.CCPA, result);
@@ -56,7 +56,7 @@ public class RegionDetectorTests
         mockPage.Setup(p => p.GetContentAsync()).ReturnsAsync("<html><body>Lei Geral de Proteção de Dados (LGPD)</body></html>");
 
         // Act
-        RegionDetector.PrivacyRegulation result = await RegionDetector.DetectRegulationAsync(mockPage.Object).ConfigureAwait(false);
+        RegionDetector.PrivacyRegulation result = await RegionDetector.DetectRegulationAsync(mockPage.Object);
 
         // Assert
         Assert.Equal(RegionDetector.PrivacyRegulation.LGPD, result);
@@ -70,7 +70,7 @@ public class RegionDetectorTests
         mockPage.Setup(p => p.GetContentAsync()).ReturnsAsync("<html><body>PIPEDA compliance statement</body></html>");
 
         // Act
-        RegionDetector.PrivacyRegulation result = await RegionDetector.DetectRegulationAsync(mockPage.Object).ConfigureAwait(false);
+        RegionDetector.PrivacyRegulation result = await RegionDetector.DetectRegulationAsync(mockPage.Object);
 
         // Assert
         Assert.Equal(RegionDetector.PrivacyRegulation.PIPEDA, result);
@@ -86,7 +86,7 @@ public class RegionDetectorTests
         mockPage.Setup(p => p.EvaluateAsync<string>(It.IsAny<string>())).ReturnsAsync(string.Empty);
 
         // Act
-        RegionDetector.PrivacyRegulation result = await RegionDetector.DetectRegulationAsync(mockPage.Object).ConfigureAwait(false);
+        RegionDetector.PrivacyRegulation result = await RegionDetector.DetectRegulationAsync(mockPage.Object);
 
         // Assert
         Assert.Equal(RegionDetector.PrivacyRegulation.Unknown, result);
@@ -137,7 +137,7 @@ public class RegionDetectorTests
         mockPage.Setup(p => p.GetContentAsync()).ThrowsAsync(new InvalidOperationException("Test error"));
 
         // Act
-        RegionDetector.PrivacyRegulation result = await RegionDetector.DetectRegulationAsync(mockPage.Object).ConfigureAwait(false);
+        RegionDetector.PrivacyRegulation result = await RegionDetector.DetectRegulationAsync(mockPage.Object);
 
         // Assert
         Assert.Equal(RegionDetector.PrivacyRegulation.Unknown, result);

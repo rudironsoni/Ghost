@@ -48,7 +48,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _output.WriteLine($"Max Results: {criteria.MaxResults}");
 
         IReadOnlyList<JobListing> searchResults = await _serviceProvider.GetRequiredService<IJobClient>()
-            .SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
+            .SearchJobsAsync(criteria, cts.Token);
 
         // Assert - Step 1: Validate search results
         searchResults.Should().NotBeNull("search results should not be null");
@@ -70,7 +70,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
 
         var detailsCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         JobListing jobDetails = await _serviceProvider.GetRequiredService<IJobClient>()
-            .GetJobDetailsAsync(firstJob.Id, detailsCts.Token).ConfigureAwait(false);
+            .GetJobDetailsAsync(firstJob.Id, detailsCts.Token);
 
         // Assert - Step 2: Validate job details
         jobDetails.Should().NotBeNull("job details should not be null");
@@ -140,7 +140,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _output.WriteLine($"Remote Only: {criteria.RemoteOnly}");
 
         IReadOnlyList<JobListing> results = await _serviceProvider.GetRequiredService<IJobClient>()
-            .SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
+            .SearchJobsAsync(criteria, cts.Token);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -210,7 +210,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _output.WriteLine($"Max Results: {criteria.MaxResults}");
 
         IReadOnlyList<JobListing> results = await _serviceProvider.GetRequiredService<IJobClient>()
-            .SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
+            .SearchJobsAsync(criteria, cts.Token);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -311,7 +311,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
             IReadOnlyList<JobListing> searchResults;
             try
             {
-                searchResults = await platformClient.SearchJobsAsync(criteria, searchCts.Token).ConfigureAwait(false);
+                searchResults = await platformClient.SearchJobsAsync(criteria, searchCts.Token);
             }
             catch (Exception ex)
             {
@@ -335,7 +335,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
             JobListing? jobDetails = null;
             try
             {
-                jobDetails = await platformClient.GetJobDetailsAsync(firstJob.Id, detailsCts.Token).ConfigureAwait(false);
+                jobDetails = await platformClient.GetJobDetailsAsync(firstJob.Id, detailsCts.Token);
             }
             catch (Exception ex)
             {

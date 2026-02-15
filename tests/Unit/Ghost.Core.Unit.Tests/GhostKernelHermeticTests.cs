@@ -18,14 +18,14 @@ public class GhostKernelHermeticTests
         var kernel = new StubGhostKernel();
 
         // Act
-        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
+        IBrowserSession session = await kernel.NewSessionAsync();
 
         // Assert
         session.Should().NotBeNull();
         session.SessionId.Should().NotBeNullOrEmpty();
         session.IsConnected.Should().BeTrue();
 
-        await kernel.DisposeAsync().ConfigureAwait(false);
+        await kernel.DisposeAsync();
     }
 
     [Fact]
@@ -33,17 +33,17 @@ public class GhostKernelHermeticTests
     {
         // Arrange
         var kernel = new StubGhostKernel();
-        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
+        IBrowserSession session = await kernel.NewSessionAsync();
 
         // Act
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        IPage page = await session.NewPageAsync();
 
         // Assert
         page.Should().NotBeNull();
         page.PageId.Should().NotBeNullOrEmpty();
         page.Url.Should().Be("about:blank");
 
-        await kernel.DisposeAsync().ConfigureAwait(false);
+        await kernel.DisposeAsync();
     }
 
     [Fact]
@@ -51,17 +51,17 @@ public class GhostKernelHermeticTests
     {
         // Arrange
         var kernel = new StubGhostKernel();
-        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        IBrowserSession session = await kernel.NewSessionAsync();
+        IPage page = await session.NewPageAsync();
 
         // Act
-        await page.NavigateAsync("https://example.com").ConfigureAwait(false);
+        await page.NavigateAsync("https://example.com");
 
         // Assert
         page.Url.Should().Be("https://example.com");
-        (await page.GetTitleAsync().ConfigureAwait(false)).Should().Contain("example.com");
+        (await page.GetTitleAsync()).Should().Contain("example.com");
 
-        await kernel.DisposeAsync().ConfigureAwait(false);
+        await kernel.DisposeAsync();
     }
 
     [Fact]
@@ -69,18 +69,18 @@ public class GhostKernelHermeticTests
     {
         // Arrange
         var kernel = new StubGhostKernel();
-        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        IBrowserSession session = await kernel.NewSessionAsync();
+        IPage page = await session.NewPageAsync();
         const string testHtml = "<html><body><h1>Test Title</h1></body></html>";
 
         // Act
-        await page.SetContentAsync(testHtml).ConfigureAwait(false);
-        string content = await page.GetContentAsync().ConfigureAwait(false);
+        await page.SetContentAsync(testHtml);
+        string content = await page.GetContentAsync();
 
         // Assert
         content.Should().Be(testHtml);
 
-        await kernel.DisposeAsync().ConfigureAwait(false);
+        await kernel.DisposeAsync();
     }
 
     [Fact]
@@ -88,16 +88,16 @@ public class GhostKernelHermeticTests
     {
         // Arrange
         var kernel = new StubGhostKernel();
-        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        IBrowserSession session = await kernel.NewSessionAsync();
+        IPage page = await session.NewPageAsync();
 
         // Act
-        IElement? element = await page.QuerySelectorAsync("h1").ConfigureAwait(false);
+        IElement? element = await page.QuerySelectorAsync("h1");
 
         // Assert
         element.Should().NotBeNull();
 
-        await kernel.DisposeAsync().ConfigureAwait(false);
+        await kernel.DisposeAsync();
     }
 
     [Fact]
@@ -105,21 +105,21 @@ public class GhostKernelHermeticTests
     {
         // Arrange
         var kernel = new StubGhostKernel();
-        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
+        IBrowserSession session = await kernel.NewSessionAsync();
 
         // Act
-        IPage page1 = await session.NewPageAsync().ConfigureAwait(false);
-        IPage page2 = await session.NewPageAsync().ConfigureAwait(false);
+        IPage page1 = await session.NewPageAsync();
+        IPage page2 = await session.NewPageAsync();
 
-        await page1.NavigateAsync("https://example.com").ConfigureAwait(false);
-        await page2.NavigateAsync("https://test.com").ConfigureAwait(false);
+        await page1.NavigateAsync("https://example.com");
+        await page2.NavigateAsync("https://test.com");
 
         // Assert
         page1.Url.Should().Be("https://example.com");
         page2.Url.Should().Be("https://test.com");
         session.Pages.Should().HaveCount(2);
 
-        await kernel.DisposeAsync().ConfigureAwait(false);
+        await kernel.DisposeAsync();
     }
 
     [Fact]
@@ -129,13 +129,13 @@ public class GhostKernelHermeticTests
         var kernel = new StubGhostKernel();
 
         // Act
-        IBrowserSession session1 = await kernel.NewSessionAsync().ConfigureAwait(false);
-        IBrowserSession session2 = await kernel.NewSessionAsync().ConfigureAwait(false);
+        IBrowserSession session1 = await kernel.NewSessionAsync();
+        IBrowserSession session2 = await kernel.NewSessionAsync();
 
         // Assert
         session1.SessionId.Should().NotBe(session2.SessionId);
 
-        await kernel.DisposeAsync().ConfigureAwait(false);
+        await kernel.DisposeAsync();
     }
 
     [Fact]
@@ -143,16 +143,16 @@ public class GhostKernelHermeticTests
     {
         // Arrange
         var kernel = new StubGhostKernel();
-        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        IBrowserSession session = await kernel.NewSessionAsync();
+        IPage page = await session.NewPageAsync();
 
         // Act - Should not throw
         Func<Task> act = async () => await page.ClickAsync("button").ConfigureAwait(false);
 
         // Assert
-        await act.Should().NotThrowAsync().ConfigureAwait(false);
+        await act.Should().NotThrowAsync();
 
-        await kernel.DisposeAsync().ConfigureAwait(false);
+        await kernel.DisposeAsync();
     }
 
     [Fact]
@@ -160,16 +160,16 @@ public class GhostKernelHermeticTests
     {
         // Arrange
         var kernel = new StubGhostKernel();
-        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        IBrowserSession session = await kernel.NewSessionAsync();
+        IPage page = await session.NewPageAsync();
 
         // Act - Should not throw
         Func<Task> act = async () => await page.TypeAsync("input", "test text").ConfigureAwait(false);
 
         // Assert
-        await act.Should().NotThrowAsync().ConfigureAwait(false);
+        await act.Should().NotThrowAsync();
 
-        await kernel.DisposeAsync().ConfigureAwait(false);
+        await kernel.DisposeAsync();
     }
 
     [Fact]
@@ -177,15 +177,15 @@ public class GhostKernelHermeticTests
     {
         // Arrange
         var kernel = new StubGhostKernel();
-        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        IBrowserSession session = await kernel.NewSessionAsync();
+        IPage page = await session.NewPageAsync();
 
         // Act - Should not throw
         Func<Task> act = async () => await page.FillAsync("input", "test value").ConfigureAwait(false);
 
         // Assert
-        await act.Should().NotThrowAsync().ConfigureAwait(false);
+        await act.Should().NotThrowAsync();
 
-        await kernel.DisposeAsync().ConfigureAwait(false);
+        await kernel.DisposeAsync();
     }
 }

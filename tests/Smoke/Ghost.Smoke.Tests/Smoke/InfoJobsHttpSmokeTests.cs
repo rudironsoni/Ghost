@@ -43,7 +43,7 @@ public class InfoJobsHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         List<JobListing>? results = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output).ConfigureAwait(false);
+            _output);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -90,7 +90,7 @@ public class InfoJobsHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         List<JobListing>? results = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output).ConfigureAwait(false);
+            _output);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -129,7 +129,7 @@ public class InfoJobsHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         List<JobListing>? searchResults = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output).ConfigureAwait(false);
+            _output);
 
         searchResults.Should().NotBeEmpty("need at least one job to test details endpoint");
 
@@ -137,7 +137,7 @@ public class InfoJobsHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         _output.WriteLine($"Testing GetJobDetails for job ID: {jobId}");
 
         // Act
-        JobListing? jobDetails = await _fixture.GetAsync<JobListing>($"/api/jobs/{jobId}", _output).ConfigureAwait(false);
+        JobListing? jobDetails = await _fixture.GetAsync<JobListing>($"/api/jobs/{jobId}", _output);
 
         // Assert
         jobDetails.Should().NotBeNull("job details should not be null");
