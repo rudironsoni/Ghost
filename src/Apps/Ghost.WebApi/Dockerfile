@@ -22,13 +22,12 @@ COPY ["src/Contracts/Ghost.Contracts.Jobs/Ghost.Contracts.Jobs.csproj", "src/Con
 COPY ["src/Contracts/Ghost.Contracts.Social/Ghost.Contracts.Social.csproj", "src/Contracts/Ghost.Contracts.Social/"]
 COPY ["src/Contracts/Ghost.Contracts.News/Ghost.Contracts.News.csproj", "src/Contracts/Ghost.Contracts.News/"]
 COPY ["src/Contracts/Ghost.Contracts.Inference/Ghost.Contracts.Inference.csproj", "src/Contracts/Ghost.Contracts.Inference/"]
-COPY ["src/Plugins/Ghost.Plugin.Anthropic/Ghost.Plugin.Anthropic.csproj", "src/Plugins/Anthropic/Ghost.Plugin.Anthropic/"]
-COPY ["src/Plugins/Ghost.Plugin.Google/Ghost.Plugin.Google.csproj", "src/Plugins/Google/Ghost.Plugin.Google/"]
-COPY ["src/Plugins/Ghost.Plugin.LinkedIn/Ghost.Plugin.LinkedIn.csproj", "src/Plugins/LinkedIn/Ghost.Plugin.LinkedIn/"]
-COPY ["src/Plugins/Ghost.Plugin.OpenAI/Ghost.Plugin.OpenAI.csproj", "src/Plugins/OpenAI/Ghost.Plugin.OpenAI/"]
-COPY ["src/Plugins/Indeed/Ghost.Plugin.Indeed/Ghost.Plugin.Indeed.csproj", "src/Plugins/Indeed/Ghost.Plugin.Indeed/"]
-COPY ["src/Plugins/Glassdoor/Ghost.Plugin.Glassdoor/Ghost.Plugin.Glassdoor.csproj", "src/Plugins/Glassdoor/Ghost.Plugin.Glassdoor/"]
-COPY ["src/Plugins/InfoJobs/Ghost.Plugin.InfoJobs.csproj", "src/Plugins/InfoJobs/"]
+COPY ["src/Plugins/Ghost.Plugin.Anthropic/Ghost.Plugin.Anthropic.csproj", "src/Plugins/Ghost.Plugin.Anthropic/"]
+COPY ["src/Plugins/Ghost.Plugin.Google/Ghost.Plugin.Google.csproj", "src/Plugins/Ghost.Plugin.Google/"]
+COPY ["src/Plugins/Ghost.Plugin.LinkedIn/Ghost.Plugin.LinkedIn.csproj", "src/Plugins/Ghost.Plugin.LinkedIn/"]
+COPY ["src/Plugins/Ghost.Plugin.OpenAI/Ghost.Plugin.OpenAI.csproj", "src/Plugins/Ghost.Plugin.OpenAI/"]
+COPY ["src/Plugins/Ghost.Plugin.Indeed/Ghost.Plugin.Indeed.csproj", "src/Plugins/Ghost.Plugin.Indeed/"]
+COPY ["src/Plugins/Ghost.Plugin.Glassdoor/Ghost.Plugin.Glassdoor.csproj", "src/Plugins/Ghost.Plugin.Glassdoor/"]
 
 # Copy full source
 COPY . .
