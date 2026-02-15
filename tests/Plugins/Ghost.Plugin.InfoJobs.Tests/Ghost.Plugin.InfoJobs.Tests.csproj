@@ -9,8 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../../src/Platforms/Ghost.Platform.InfoJobs/Ghost.Platform.InfoJobs.csproj" />
-    <ProjectReference Include="../../../src/Platforms/Ghost.Platform.Common/Ghost.Platform.Common.csproj" />
     <ProjectReference Include="../../../src/Contracts/Ghost.Contracts.Jobs/Ghost.Contracts.Jobs.csproj" />
     <ProjectReference Include="../../../src/Core/Ghost/Ghost.csproj" />
     <ProjectReference Include="../../Shared/Ghost.Testing/Ghost.Testing.csproj" />
@@ -25,9 +23,5 @@
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\..\Platforms\Ghost.Platform.InfoJobs.Tests\**\*.cs" />
   </ItemGroup>
 </Project>

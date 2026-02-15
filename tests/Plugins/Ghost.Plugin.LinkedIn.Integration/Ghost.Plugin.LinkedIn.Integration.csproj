@@ -27,20 +27,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Platforms\Ghost.Platform.LinkedIn\Ghost.Platform.LinkedIn.csproj" />
     <ProjectReference Include="..\..\..\src\Core\Ghost\Ghost.csproj" />
     <ProjectReference Include="..\..\..\src\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
     <ProjectReference Include="..\..\Shared\Ghost.Testing\Ghost.Testing.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\..\Platforms\Ghost.Platform.LinkedIn.Integration\**\*.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\..\Platforms\Ghost.Platform.LinkedIn.Integration\Fixtures\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>

@@ -28,15 +28,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Platforms\Ghost.Platform.X\Ghost.Platform.X.csproj" />
     <ProjectReference Include="..\..\..\src\Core\Ghost\Ghost.csproj" />
     <ProjectReference Include="..\..\..\src\Contracts\Ghost.Contracts.Social\Ghost.Contracts.Social.csproj" />
     <ProjectReference Include="..\..\..\src\Contracts\Ghost.Contracts.Simulation\Ghost.Contracts.Simulation.csproj" />
     <ProjectReference Include="..\..\Shared\Ghost.Testing\Ghost.Testing.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\..\Platforms\Ghost.Platform.X.Tests\**\*.cs" />
   </ItemGroup>
 
 </Project>

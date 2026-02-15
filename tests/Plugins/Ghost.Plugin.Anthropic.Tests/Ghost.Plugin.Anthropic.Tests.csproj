@@ -5,7 +5,6 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Platforms\Ghost.Platform.Anthropic\Ghost.Platform.Anthropic.csproj" />
     <ProjectReference Include="..\..\..\src\Core\Ghost\Ghost.csproj" />
   </ItemGroup>
 
@@ -16,9 +15,5 @@
     <PackageReference Include="Moq" />
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="coverlet.collector" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\..\Platforms\Ghost.Platform.Anthropic.Tests\**\*.cs" />
   </ItemGroup>
 </Project>
