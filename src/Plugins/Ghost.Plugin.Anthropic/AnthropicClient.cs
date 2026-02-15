@@ -30,14 +30,14 @@ public sealed partial class AnthropicClient : Ghost.Contracts.Inference.IInferen
     /// <inheritdoc />
     public async Task<InferenceResponse> CompleteAsync(InferenceRequest request, CancellationToken ct = default)
     {
-        await foreach (var chunk in StreamAsync(request, ct))
+        await foreach (InferenceChunk chunk in StreamAsync(request, ct).ConfigureAwait(false))
         {
             // accumulate
         }
 
         // As a simple implementation, replay stream and build final message
         var buffer = new System.Text.StringBuilder();
-        await foreach (var c in StreamAsync(request, ct))
+        await foreach (InferenceChunk c in StreamAsync(request, ct).ConfigureAwait(false))
         {
             buffer.Append(c.Delta);
         }
@@ -54,22 +54,22 @@ public sealed partial class AnthropicClient : Ghost.Contracts.Inference.IInferen
     public async IAsyncEnumerable<InferenceChunk> StreamAsync(InferenceRequest request, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        var model = string.IsNullOrWhiteSpace(request.Model) ? _options.DefaultModel : request.Model;
+        string model = string.IsNullOrWhiteSpace(request.Model) ? _options.DefaultModel : request.Model;
 
         using var pageCt = CancellationTokenSource.CreateLinkedTokenSource(ct);
         pageCt.CancelAfter(_options.ResponseTimeout);
 
-        var page = await _session.NewPageAsync(ct: ct);
+        IPage page = await _session.NewPageAsync(ct: ct).ConfigureAwait(false);
         try
         {
             AnthropicLog.NavigatingTo(_logger, _options.BaseUrl);
-            await page.NavigateAsync(_options.BaseUrl, ct: ct);
+            await page.NavigateAsync(_options.BaseUrl, ct: ct).ConfigureAwait(false);
 
             // Very small, robust automation flow using simple selectors.
             // Wait for prompt box
             try
             {
-                await page.WaitForSelectorAsync("textarea", options: null, ct: ct);
+                await page.WaitForSelectorAsync("textarea", options: null, ct: ct).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -77,14 +77,14 @@ public sealed partial class AnthropicClient : Ghost.Contracts.Inference.IInferen
             }
 
             // Type prompt
-            var prompt = string.Join("\n", request.Messages.Select(m => m.Content));
+            string prompt = string.Join("\n", request.Messages.Select(m => m.Content));
             if (string.IsNullOrWhiteSpace(prompt)) prompt = "";
 
-            await page.TypeAsync("textarea", prompt, ct: ct);
-            await page.PressAsync("textarea", "Enter", ct);
+            await page.TypeAsync("textarea", prompt, ct: ct).ConfigureAwait(false);
+            await page.PressAsync("textarea", "Enter", ct).ConfigureAwait(false);
 
             // Poll for partial response. This is intentionally conservative and robust.
-            var last = string.Empty;
+            string last = string.Empty;
             var sw = System.Diagnostics.Stopwatch.StartNew();
             while (!ct.IsCancellationRequested && sw.Elapsed < _options.ResponseTimeout)
             {
@@ -92,7 +92,7 @@ public sealed partial class AnthropicClient : Ghost.Contracts.Inference.IInferen
                 string content = string.Empty;
                 try
                 {
-                    content = await page.EvaluateAsync<string>("() => { const el = document.querySelector('[data-testid=assistant-message]') || document.querySelector('.assistant'); return el ? el.innerText : ''; }", ct: ct);
+                    content = await page.EvaluateAsync<string>("() => { const el = document.querySelector('[data-testid=assistant-message]') || document.querySelector('.assistant'); return el ? el.innerText : ''; }", ct: ct).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -101,19 +101,19 @@ public sealed partial class AnthropicClient : Ghost.Contracts.Inference.IInferen
 
                 if (!string.IsNullOrEmpty(content) && content.Length > last.Length)
                 {
-                    var delta = content.Substring(last.Length);
+                    string delta = content.Substring(last.Length);
                     last = content;
                     yield return new InferenceChunk { Delta = delta };
                 }
 
-                await Task.Delay(200, ct);
+                await Task.Delay(200, ct).ConfigureAwait(false);
             }
 
             yield break;
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 }

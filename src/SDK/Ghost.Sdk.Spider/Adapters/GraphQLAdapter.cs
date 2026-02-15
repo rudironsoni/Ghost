@@ -64,7 +64,7 @@ public class GraphQLAdapter : IContentAdapter
             return Task.FromResult(false);
 
         // Check if it's a GraphQL request
-        var canHandle = request.ExpectedContentType == ContentType.GraphQL ||
+        bool canHandle = request.ExpectedContentType == ContentType.GraphQL ||
                        request.Url.Contains("/graphql", StringComparison.OrdinalIgnoreCase) ||
                        request.Headers.ContainsKey("X-GraphQL-Request");
 
@@ -86,7 +86,7 @@ public class GraphQLAdapter : IContentAdapter
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(options);
 
-        var startTime = DateTimeOffset.UtcNow;
+        DateTimeOffset startTime = DateTimeOffset.UtcNow;
 
         try
         {
@@ -99,19 +99,19 @@ public class GraphQLAdapter : IContentAdapter
                 graphQLRequest = JsonConvert.DeserializeObject<GraphQLRequest>(request.Body)
                     ?? throw new InvalidOperationException("Failed to parse GraphQL request from body");
             }
-            else if (request.Metadata.TryGetValue("Query", out var queryObj))
+            else if (request.Metadata.TryGetValue("Query", out object? queryObj))
             {
                 graphQLRequest = new GraphQLRequest
                 {
                     Query = queryObj.ToString() ?? throw new InvalidOperationException("Query is null")
                 };
 
-                if (request.Metadata.TryGetValue("Variables", out var varsObj))
+                if (request.Metadata.TryGetValue("Variables", out object? varsObj))
                 {
                     graphQLRequest.Variables = varsObj as Dictionary<string, object>;
                 }
 
-                if (request.Metadata.TryGetValue("OperationName", out var opNameObj))
+                if (request.Metadata.TryGetValue("OperationName", out object? opNameObj))
                 {
                     graphQLRequest.OperationName = opNameObj.ToString();
                 }
@@ -132,7 +132,7 @@ public class GraphQLAdapter : IContentAdapter
 
             // Add headers
             httpRequest.Headers.Add("User-Agent", options.UserAgent);
-            foreach (var header in request.Headers)
+            foreach (KeyValuePair<string, string> header in request.Headers)
             {
                 httpRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
@@ -141,11 +141,11 @@ public class GraphQLAdapter : IContentAdapter
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cts.CancelAfter(request.Timeout);
 
-            using var httpResponse = await _httpClient.SendAsync(httpRequest, cts.Token).ConfigureAwait(false);
-            var responseContent = await httpResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            using HttpResponseMessage httpResponse = await _httpClient.SendAsync(httpRequest, cts.Token).ConfigureAwait(false);
+            string responseContent = await httpResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
             // Parse GraphQL response
-            var graphQLResponse = JsonConvert.DeserializeObject<GraphQLResponse>(responseContent)
+            GraphQLResponse graphQLResponse = JsonConvert.DeserializeObject<GraphQLResponse>(responseContent)
                 ?? throw new InvalidOperationException("Failed to parse GraphQL response");
 
             var contentResult = new ContentResult
@@ -161,7 +161,7 @@ public class GraphQLAdapter : IContentAdapter
 
             if (graphQLResponse.Errors != null && graphQLResponse.Errors.Count > 0)
             {
-                var errorMessages = string.Join("; ", graphQLResponse.Errors.Select(e => e.Message));
+                string errorMessages = string.Join("; ", graphQLResponse.Errors.Select(e => e.Message));
                 contentResult.Error = $"GraphQL errors: {errorMessages}";
             }
 
@@ -177,7 +177,7 @@ public class GraphQLAdapter : IContentAdapter
             };
 
             // Copy response headers
-            foreach (var header in httpResponse.Headers)
+            foreach (KeyValuePair<string, IEnumerable<string>> header in httpResponse.Headers)
             {
                 response.Headers[header.Key] = string.Join(", ", header.Value);
             }

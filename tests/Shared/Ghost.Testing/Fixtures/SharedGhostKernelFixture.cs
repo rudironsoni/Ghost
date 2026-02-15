@@ -44,13 +44,13 @@ public sealed class SharedGhostKernelFixture : IAsyncLifetime, IDisposable
     /// </summary>
     public async Task InitializeAsync()
     {
-        await _initLock.WaitAsync();
+        await _initLock.WaitAsync().ConfigureAwait(false);
         try
         {
             if (Interlocked.Increment(ref _referenceCount) == 1)
             {
                 // First test class using this fixture - create the kernel
-                _kernel = await GhostKernel.CreateAsync(_options);
+                _kernel = await GhostKernel.CreateAsync(_options).ConfigureAwait(false);
             }
         }
         finally
@@ -64,7 +64,7 @@ public sealed class SharedGhostKernelFixture : IAsyncLifetime, IDisposable
     /// </summary>
     public async Task DisposeAsync()
     {
-        await _initLock.WaitAsync();
+        await _initLock.WaitAsync().ConfigureAwait(false);
         try
         {
             if (Interlocked.Decrement(ref _referenceCount) == 0)
@@ -72,7 +72,7 @@ public sealed class SharedGhostKernelFixture : IAsyncLifetime, IDisposable
                 // Last test class done - dispose the kernel
                 if (_kernel != null)
                 {
-                    await _kernel.DisposeAsync();
+                    await _kernel.DisposeAsync().ConfigureAwait(false);
                     _kernel = null;
                 }
             }
@@ -94,7 +94,7 @@ public sealed class SharedGhostKernelFixture : IAsyncLifetime, IDisposable
             throw new InvalidOperationException("Fixture not initialized. Call InitializeAsync first.");
         }
 
-        return await _kernel.NewSessionAsync(options);
+        return await _kernel.NewSessionAsync(options).ConfigureAwait(false);
     }
 
     /// <summary>

@@ -7,5 +7,5 @@ public record ProxyInfo(string Server, string? Username, string? Password);
 
 public interface IProxyProvider
 {
-    Task<ProxyInfo?> GetProxyAsync(string countryCode, CancellationToken token = default);
+    public Task<ProxyInfo?> GetProxyAsync(string countryCode, CancellationToken token = default);
 }

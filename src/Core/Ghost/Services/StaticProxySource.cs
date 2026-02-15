@@ -42,18 +42,18 @@ public sealed class StaticProxySource : IProxySource
 
     public Task<IEnumerable<ProxyInfo>> FetchProxiesAsync(CancellationToken ct)
     {
-        var cfg = _config;
+        ProxySourceConfig cfg = _config;
         if (cfg == null || !cfg.Enabled || cfg.Hosts == null || cfg.Hosts.Count == 0)
             return Task.FromResult(Enumerable.Empty<ProxyInfo>());
 
         var list = new List<ProxyInfo>();
-        foreach (var item in cfg.Hosts)
+        foreach (string item in cfg.Hosts)
         {
             if (string.IsNullOrWhiteSpace(item))
                 continue;
 
-            var trimmed = item.Trim();
-            var parsed = ParseProxyString(trimmed);
+            string trimmed = item.Trim();
+            ProxyInfo? parsed = ParseProxyString(trimmed);
             if (parsed is null)
             {
                 // If the item is a bare host (no scheme and no port), parsing will return null and we'll ignore
@@ -104,10 +104,10 @@ public sealed class StaticProxySource : IProxySource
             return null;
 
         // 1. Ensure scheme for parsing
-        var hadScheme = input.Contains("://");
-        var parsingInput = hadScheme ? input : $"http://{input}";
+        bool hadScheme = input.Contains("://");
+        string parsingInput = hadScheme ? input : $"http://{input}";
 
-        if (!Uri.TryCreate(parsingInput, UriKind.Absolute, out var uri))
+        if (!Uri.TryCreate(parsingInput, UriKind.Absolute, out Uri? uri))
             return null;
 
         // 2. Extract User/Pass
@@ -115,14 +115,14 @@ public sealed class StaticProxySource : IProxySource
         string? pass = null;
         if (!string.IsNullOrEmpty(uri.UserInfo))
         {
-            var parts = uri.UserInfo.Split(':', 2);
+            string[] parts = uri.UserInfo.Split(':', 2);
             user = parts.Length > 0 ? parts[0] : null;
             if (parts.Length > 1) pass = parts[1];
         }
 
         // 3. Construct server string
         // Use HostAndPort to preserve IPv6 bracket notation when needed and only include port if present/explicit
-        var hostAndPort = uri.GetComponents(UriComponents.HostAndPort, UriFormat.Unescaped);
+        string hostAndPort = uri.GetComponents(UriComponents.HostAndPort, UriFormat.Unescaped);
 
         string serverUrl;
         if (hadScheme)

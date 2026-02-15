@@ -5,6 +5,7 @@ using FluentAssertions;
 using Ghost.Core;
 using Ghost.Engine.Abstractions.Engine;
 using Ghost.Engine.Abstractions.Scheduler;
+using Ghost.Engine.Engine;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -19,7 +20,7 @@ public class ServiceCollectionExtensionsTests
     public void AddGhostNullServicesThrowsArgumentNullException()
     {
         IServiceCollection? services = null;
-        var act = () => Ghost.Hosting.ServiceCollectionExtensions.AddGhost(services!, _ => { });
+        Func<IServiceCollection> act = () => Ghost.Hosting.ServiceCollectionExtensions.AddGhost(services!, _ => { });
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -27,7 +28,7 @@ public class ServiceCollectionExtensionsTests
     public void AddGhostNullConfigureThrowsArgumentNullException()
     {
         var services = new ServiceCollection();
-        var act = () => services.AddGhost(null!);
+        Func<IServiceCollection> act = () => services.AddGhost(null!);
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -35,7 +36,7 @@ public class ServiceCollectionExtensionsTests
     public void AddGhostValidConfigReturnsServices()
     {
         var services = new ServiceCollection();
-        var result = services.AddGhost(_ => { });
+        IServiceCollection result = services.AddGhost(_ => { });
         result.Should().BeSameAs(services);
     }
 
@@ -43,10 +44,10 @@ public class ServiceCollectionExtensionsTests
     public void AddGhostWithConfigurationUsesProvidedConfig()
     {
         var services = new ServiceCollection();
-        var config = new ConfigurationBuilder()
+        IConfigurationRoot config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { ["Ghost:Headless"] = "true" })
             .Build();
-        var result = services.AddGhost(config, _ => { });
+        IServiceCollection result = services.AddGhost(config, _ => { });
         result.Should().BeSameAs(services);
     }
 
@@ -65,17 +66,17 @@ public class ServiceCollectionExtensionsTests
         var services = new ServiceCollection();
         services.AddGhost(_ => { });
 
-        await using var provider = services.BuildServiceProvider(new ServiceProviderOptions
+        await using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions
         {
             ValidateOnBuild = true,
             ValidateScopes = true
-        });
+        }).ConfigureAwait(false);
 
-        var kernel = provider.GetRequiredService<IGhostKernel>();
+        IGhostKernel kernel = provider.GetRequiredService<IGhostKernel>();
         kernel.Should().NotBeNull();
 
-        await using var scope = provider.CreateAsyncScope();
-        var browserSession = scope.ServiceProvider.GetRequiredService<Ghost.IBrowserSession>();
+        await using AsyncServiceScope scope = provider.CreateAsyncScope().ConfigureAwait(false);
+        IBrowserSession browserSession = scope.ServiceProvider.GetRequiredService<Ghost.IBrowserSession>();
         browserSession.Should().NotBeNull();
     }
 
@@ -85,29 +86,29 @@ public class ServiceCollectionExtensionsTests
         var services = new ServiceCollection();
         services.AddGhost(_ => { });
 
-        await using var provider = services.BuildServiceProvider(new ServiceProviderOptions
+        await using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions
         {
             ValidateOnBuild = true,
             ValidateScopes = true
-        });
+        }).ConfigureAwait(false);
 
         provider.GetRequiredService<IGhostEngine>().Should().NotBeNull();
         provider.GetRequiredService<IRequestScheduler>().Should().NotBeNull();
 
         var hostedServices = provider.GetServices<IHostedService>().ToList();
-        var warmupService = hostedServices.FirstOrDefault(x => x.GetType().Name == "GhostEngineWarmupHostedService");
+        IHostedService? warmupService = hostedServices.FirstOrDefault(x => x.GetType().Name == "GhostEngineWarmupHostedService");
         warmupService.Should().NotBeNull();
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        await warmupService!.StartAsync(cts.Token);
-        await warmupService.StopAsync(cts.Token);
+        await warmupService!.StartAsync(cts.Token).ConfigureAwait(false);
+        await warmupService.StopAsync(cts.Token).ConfigureAwait(false);
     }
 
     [Fact]
     public void AddGhostEngineOptionsValidationFailsOnInvalidConfiguration()
     {
         var services = new ServiceCollection();
-        var config = new ConfigurationBuilder()
+        IConfigurationRoot config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Engine:MaxInFlight"] = "0",
@@ -117,10 +118,10 @@ public class ServiceCollectionExtensionsTests
 
         services.AddGhost(config, _ => { });
 
-        using var provider = services.BuildServiceProvider();
-        var options = provider.GetRequiredService<IOptions<Ghost.Engine.Engine.GhostEngineOptions>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IOptions<GhostEngineOptions> options = provider.GetRequiredService<IOptions<Ghost.Engine.Engine.GhostEngineOptions>>();
 
-        var act = () => _ = options.Value;
+        Func<GhostEngineOptions> act = () => _ = options.Value;
         act.Should().Throw<OptionsValidationException>();
     }
 }

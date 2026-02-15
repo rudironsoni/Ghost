@@ -37,22 +37,22 @@ public partial class XSocialClient : ISocialClient
     public async Task<SocialProfile> GetProfileAsync(string profileId, CancellationToken ct = default)
     {
         Log.FetchingProfile(_logger, profileId);
-        var pageOpts = _options.GetPageOptions();
-        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        PageOptions pageOpts = _options.GetPageOptions();
+        IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
 
         try
         {
-            var url = $"{_options.BaseUrl}/{profileId}";
-            await page.NavigateAsync(url, ct: ct);
-            await page.WaitForLoadStateAsync(ct: ct);
+            string url = $"{_options.BaseUrl}/{profileId}";
+            await page.NavigateAsync(url, ct: ct).ConfigureAwait(false);
+            await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
             await _authenticator.EnsureAuthenticatedAsync(page, ct).ConfigureAwait(false);
-            var profile = await ExtractProfileDataAsync(page, profileId, ct);
+            SocialProfile profile = await ExtractProfileDataAsync(page, profileId, ct).ConfigureAwait(false);
             Log.ProfileFetched(_logger, profileId);
             return profile;
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 
@@ -61,23 +61,23 @@ public partial class XSocialClient : ISocialClient
         CancellationToken ct = default)
     {
         Log.SearchingProfiles(_logger, criteria.Query);
-        var pageOpts = _options.GetPageOptions();
-        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        PageOptions pageOpts = _options.GetPageOptions();
+        IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
 
         try
         {
-            var encodedQuery = Uri.EscapeDataString(criteria.Query ?? "");
-            var url = $"{_options.BaseUrl}/search?q={encodedQuery}&f=user";
-            await page.NavigateAsync(url, ct: ct);
-            await page.WaitForLoadStateAsync(ct: ct);
+            string encodedQuery = Uri.EscapeDataString(criteria.Query ?? "");
+            string url = $"{_options.BaseUrl}/search?q={encodedQuery}&f=user";
+            await page.NavigateAsync(url, ct: ct).ConfigureAwait(false);
+            await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
             await _authenticator.EnsureAuthenticatedAsync(page, ct).ConfigureAwait(false);
-            var profiles = await ExtractSearchResultsAsync(page, criteria.MaxResults, ct);
+            List<SocialProfile> profiles = await ExtractSearchResultsAsync(page, criteria.MaxResults, ct).ConfigureAwait(false);
             Log.ProfilesFound(_logger, profiles.Count, criteria.Query);
             return profiles.AsReadOnly();
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 
@@ -86,13 +86,13 @@ public partial class XSocialClient : ISocialClient
         CancellationToken ct = default)
     {
         Log.CreatingPost(_logger, request.Content?.Length ?? 0);
-        var pageOpts = _options.GetPageOptions();
-        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        PageOptions pageOpts = _options.GetPageOptions();
+        IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
 
         try
         {
             await _authenticator.EnsureAuthenticatedAsync(page, ct).ConfigureAwait(false);
-            var postId = await _threadComposer.ComposeAndPostAsync(page, request, ct);
+            string postId = await _threadComposer.ComposeAndPostAsync(page, request, ct).ConfigureAwait(false);
 
             var post = new SocialPost
             {
@@ -107,7 +107,7 @@ public partial class XSocialClient : ISocialClient
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 
@@ -116,23 +116,23 @@ public partial class XSocialClient : ISocialClient
         CancellationToken ct = default)
     {
         Log.FetchingFeed(_logger);
-        var pageOpts = _options.GetPageOptions();
-        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        PageOptions pageOpts = _options.GetPageOptions();
+        IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
 
         try
         {
-            var feedUrl = $"{_options.BaseUrl}/home";
+            string feedUrl = $"{_options.BaseUrl}/home";
 
-            await page.NavigateAsync(feedUrl, ct: ct);
-            await page.WaitForLoadStateAsync(ct: ct);
+            await page.NavigateAsync(feedUrl, ct: ct).ConfigureAwait(false);
+            await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
             await _authenticator.EnsureAuthenticatedAsync(page, ct).ConfigureAwait(false);
-            var posts = await ExtractFeedPostsAsync(page, options?.PageSize ?? 25, ct);
+            List<SocialPost> posts = await ExtractFeedPostsAsync(page, options?.PageSize ?? 25, ct).ConfigureAwait(false);
             Log.FeedFetched(_logger, posts.Count);
             return posts.AsReadOnly();
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 
@@ -142,58 +142,58 @@ public partial class XSocialClient : ISocialClient
         CancellationToken ct = default)
     {
         Log.SendingMessage(_logger, recipientId);
-        var pageOpts = _options.GetPageOptions();
-        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        PageOptions pageOpts = _options.GetPageOptions();
+        IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
 
         try
         {
             await _authenticator.EnsureAuthenticatedAsync(page, ct).ConfigureAwait(false);
-            await page.NavigateAsync($"{_options.BaseUrl}/messages/compose", ct: ct);
-            await page.WaitForLoadStateAsync(ct: ct);
+            await page.NavigateAsync($"{_options.BaseUrl}/messages/compose", ct: ct).ConfigureAwait(false);
+            await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
-            var searchBox = await page.WaitForSelectorAsync(
+            IElement searchBox = await page.WaitForSelectorAsync(
                 "input[placeholder*='Search']",
                 new WaitOptions { Timeout = 10000 },
-                ct) ?? throw new InvalidOperationException("Could not find recipient search box");
+                ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Could not find recipient search box");
 
-            await searchBox.TypeAsync(recipientId, ct: ct);
-            await Task.Delay(1000, ct);
+            await searchBox.TypeAsync(recipientId, ct: ct).ConfigureAwait(false);
+            await Task.Delay(1000, ct).ConfigureAwait(false);
 
-            var firstResult = await page.QuerySelectorAsync("[data-testid='TypeaheadUser']", ct)
+            IElement firstResult = await page.QuerySelectorAsync("[data-testid='TypeaheadUser']", ct).ConfigureAwait(false)
                 ?? throw new InvalidOperationException($"Could not find user: {recipientId}");
 
-            await firstResult.ClickAsync(ct: ct);
+            await firstResult.ClickAsync(ct: ct).ConfigureAwait(false);
 
-            var nextButton = await page.WaitForSelectorAsync(
+            IElement nextButton = await page.WaitForSelectorAsync(
                 "button[data-testid='nextButton']",
                 new WaitOptions { Timeout = 10000 },
-                ct);
+                ct).ConfigureAwait(false);
 
             if (nextButton != null)
             {
-                await nextButton.ClickAsync(ct: ct);
+                await nextButton.ClickAsync(ct: ct).ConfigureAwait(false);
             }
 
-            var messageBox = await page.WaitForSelectorAsync(
+            IElement messageBox = await page.WaitForSelectorAsync(
                 "div[role='textbox'][contenteditable='true']",
                 new WaitOptions { Timeout = 10000 },
-                ct) ?? throw new InvalidOperationException("Could not find message input box");
+                ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Could not find message input box");
 
-            await messageBox.TypeAsync(message, ct: ct);
+            await messageBox.TypeAsync(message, ct: ct).ConfigureAwait(false);
 
-            var sendButton = await page.WaitForSelectorAsync(
+            IElement sendButton = await page.WaitForSelectorAsync(
                 "button[data-testid='send']",
                 new WaitOptions { Timeout = 10000 },
-                ct) ?? throw new InvalidOperationException("Could not find send button");
+                ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Could not find send button");
 
-            await sendButton.ClickAsync(ct: ct);
-            await Task.Delay(1000, ct);
+            await sendButton.ClickAsync(ct: ct).ConfigureAwait(false);
+            await Task.Delay(1000, ct).ConfigureAwait(false);
 
             Log.MessageSent(_logger, recipientId);
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 
@@ -201,25 +201,25 @@ public partial class XSocialClient : ISocialClient
         ConnectionsOptions? options = null,
         CancellationToken ct = default)
     {
-        var profileId = options?.ProfileId ?? "me";
+        string profileId = options?.ProfileId ?? "me";
         Log.FetchingConnections(_logger, profileId);
-        var pageOpts = _options.GetPageOptions();
-        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        PageOptions pageOpts = _options.GetPageOptions();
+        IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
 
         try
         {
-            var connectionUrl = $"{_options.BaseUrl}/{profileId}/following";
+            string connectionUrl = $"{_options.BaseUrl}/{profileId}/following";
 
-            await page.NavigateAsync(connectionUrl, ct: ct);
-            await page.WaitForLoadStateAsync(ct: ct);
+            await page.NavigateAsync(connectionUrl, ct: ct).ConfigureAwait(false);
+            await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
             await _authenticator.EnsureAuthenticatedAsync(page, ct).ConfigureAwait(false);
-            var connections = await ExtractSocialConnectionsAsync(page, profileId, ct);
+            List<SocialConnection> connections = await ExtractSocialConnectionsAsync(page, profileId, ct).ConfigureAwait(false);
             Log.ConnectionsFetched(_logger, connections.Count, profileId);
             return connections.AsReadOnly();
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 
@@ -229,23 +229,23 @@ public partial class XSocialClient : ISocialClient
         CancellationToken ct = default)
     {
         Log.FollowingUser(_logger, profileId);
-        var pageOpts = _options.GetPageOptions();
-        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        PageOptions pageOpts = _options.GetPageOptions();
+        IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
 
         try
         {
-            await page.NavigateAsync($"{_options.BaseUrl}/{profileId}", ct: ct);
-            await page.WaitForLoadStateAsync(ct: ct);
+            await page.NavigateAsync($"{_options.BaseUrl}/{profileId}", ct: ct).ConfigureAwait(false);
+            await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
             await _authenticator.EnsureAuthenticatedAsync(page, ct).ConfigureAwait(false);
 
-            var followButton = await page.WaitForSelectorAsync(
+            IElement followButton = await page.WaitForSelectorAsync(
                 "button[data-testid='follow']",
                 new WaitOptions { Timeout = 10000 },
-                ct);
+                ct).ConfigureAwait(false);
 
             if (followButton == null)
             {
-                var followingButton = await page.QuerySelectorAsync("button[data-testid='unfollow']", ct);
+                IElement? followingButton = await page.QuerySelectorAsync("button[data-testid='unfollow']", ct).ConfigureAwait(false);
                 if (followingButton != null)
                 {
                     Log.AlreadyFollowing(_logger, profileId);
@@ -255,14 +255,14 @@ public partial class XSocialClient : ISocialClient
                 throw new InvalidOperationException("Could not find follow button");
             }
 
-            await followButton.ClickAsync(ct: ct);
-            await Task.Delay(1000, ct);
+            await followButton.ClickAsync(ct: ct).ConfigureAwait(false);
+            await Task.Delay(1000, ct).ConfigureAwait(false);
 
             Log.UserFollowed(_logger, profileId);
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 
@@ -286,7 +286,7 @@ public partial class XSocialClient : ISocialClient
                     }
                     return '';
                 }",
-                ct: ct);
+                ct: ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -300,7 +300,7 @@ public partial class XSocialClient : ISocialClient
                     const bioEl = document.querySelector('[data-testid=""UserDescription""]');
                     return bioEl?.innerText || '';
                 }",
-                ct: ct);
+                ct: ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -309,16 +309,16 @@ public partial class XSocialClient : ISocialClient
 
         try
         {
-            var followersText = await page.EvaluateAsync<string?>(
+            string? followersText = await page.EvaluateAsync<string?>(
                 "() => {" +
                 "    const link = document.querySelector('a[href$=\"/followers\"]');" +
                 "    return link?.innerText || '';" +
-                "}", ct: ct);
+                "}", ct: ct).ConfigureAwait(false);
 
             if (!string.IsNullOrWhiteSpace(followersText))
             {
-                var match = Regex.Match(followersText, @"([\d,\.]+)\s*[KkMm]?");
-                if (match.Success && int.TryParse(match.Groups[1].Value.Replace(",", ""), out var followers))
+                Match match = Regex.Match(followersText, @"([\d,\.]+)\s*[KkMm]?");
+                if (match.Success && int.TryParse(match.Groups[1].Value.Replace(",", ""), out int followers))
                 {
                     followersCount = followers;
                 }
@@ -347,20 +347,20 @@ public partial class XSocialClient : ISocialClient
 
         try
         {
-            var cells = await page.QuerySelectorAllAsync("[data-testid='UserCell']", ct);
+            IReadOnlyList<IElement> cells = await page.QuerySelectorAllAsync("[data-testid='UserCell']", ct).ConfigureAwait(false);
 
-            foreach (var cell in cells.Take(maxResults))
+            foreach (IElement? cell in cells.Take(maxResults))
             {
                 try
                 {
-                    var userNameEl = await cell.QuerySelectorAsync("[data-testid='UserName']", ct);
+                    IElement? userNameEl = await cell.QuerySelectorAsync("[data-testid='UserName']", ct).ConfigureAwait(false);
                     if (userNameEl == null) continue;
 
-                    var name = await userNameEl.GetTextContentAsync(ct);
+                    string? name = await userNameEl.GetTextContentAsync(ct).ConfigureAwait(false);
 
-                    var linkEl = await cell.QuerySelectorAsync("a[href^='/']", ct);
-                    var handle = linkEl != null
-                        ? await linkEl.GetAttributeAsync("href", ct)
+                    IElement? linkEl = await cell.QuerySelectorAsync("a[href^='/']", ct).ConfigureAwait(false);
+                    string? handle = linkEl != null
+                        ? await linkEl.GetAttributeAsync("href", ct).ConfigureAwait(false)
                         : null;
 
                     if (!string.IsNullOrWhiteSpace(handle))
@@ -396,13 +396,13 @@ public partial class XSocialClient : ISocialClient
 
         try
         {
-            var articles = await page.QuerySelectorAllAsync("article[data-testid='tweet']", ct);
+            IReadOnlyList<IElement> articles = await page.QuerySelectorAllAsync("article[data-testid='tweet']", ct).ConfigureAwait(false);
 
-            foreach (var article in articles.Take(maxPosts))
+            foreach (IElement? article in articles.Take(maxPosts))
             {
                 try
                 {
-                    var post = await ExtractPostFromArticleAsync(article, ct);
+                    SocialPost? post = await ExtractPostFromArticleAsync(article, ct).ConfigureAwait(false);
                     if (post != null)
                     {
                         posts.Add(post);
@@ -426,27 +426,27 @@ public partial class XSocialClient : ISocialClient
     {
         try
         {
-            var linkEl = await article.QuerySelectorAsync("a[href*='/status/']", ct);
-            var href = linkEl != null ? await linkEl.GetAttributeAsync("href", ct) : null;
+            IElement? linkEl = await article.QuerySelectorAsync("a[href*='/status/']", ct).ConfigureAwait(false);
+            string? href = linkEl != null ? await linkEl.GetAttributeAsync("href", ct).ConfigureAwait(false) : null;
 
             if (string.IsNullOrWhiteSpace(href)) return null;
 
-            var match = Regex.Match(href, @"/status/(\d+)");
+            Match match = Regex.Match(href, @"/status/(\d+)");
             if (!match.Success) return null;
 
-            var tweetId = match.Groups[1].Value;
+            string tweetId = match.Groups[1].Value;
 
-            var contentEl = await article.QuerySelectorAsync("[data-testid='tweetText']", ct);
-            var content = contentEl != null
-                ? await contentEl.GetTextContentAsync(ct)
+            IElement? contentEl = await article.QuerySelectorAsync("[data-testid='tweetText']", ct).ConfigureAwait(false);
+            string? content = contentEl != null
+                ? await contentEl.GetTextContentAsync(ct).ConfigureAwait(false)
                 : "";
 
-            var userNameEl = await article.QuerySelectorAsync("[data-testid='User-Name']", ct);
-            var authorLinkEl = userNameEl != null
-                ? await userNameEl.QuerySelectorAsync("a[href^='/']", ct)
+            IElement? userNameEl = await article.QuerySelectorAsync("[data-testid='User-Name']", ct).ConfigureAwait(false);
+            IElement? authorLinkEl = userNameEl != null
+                ? await userNameEl.QuerySelectorAsync("a[href^='/']", ct).ConfigureAwait(false)
                 : null;
-            var authorId = authorLinkEl != null
-                ? (await authorLinkEl.GetAttributeAsync("href", ct))?.TrimStart('/') ?? "unknown"
+            string authorId = authorLinkEl != null
+                ? (await authorLinkEl.GetAttributeAsync("href", ct).ConfigureAwait(false))?.TrimStart('/') ?? "unknown"
                 : "unknown";
 
             return new SocialPost
@@ -473,20 +473,20 @@ public partial class XSocialClient : ISocialClient
 
         try
         {
-            var cells = await page.QuerySelectorAllAsync("[data-testid='UserCell']", ct);
+            IReadOnlyList<IElement> cells = await page.QuerySelectorAllAsync("[data-testid='UserCell']", ct).ConfigureAwait(false);
 
-            foreach (var cell in cells)
+            foreach (IElement cell in cells)
             {
                 try
                 {
-                    var userNameEl = await cell.QuerySelectorAsync("[data-testid='UserName']", ct);
+                    IElement? userNameEl = await cell.QuerySelectorAsync("[data-testid='UserName']", ct).ConfigureAwait(false);
                     if (userNameEl == null) continue;
 
-                    var name = await userNameEl.GetTextContentAsync(ct);
+                    string? name = await userNameEl.GetTextContentAsync(ct).ConfigureAwait(false);
 
-                    var linkEl = await cell.QuerySelectorAsync("a[href^='/']", ct);
-                    var handle = linkEl != null
-                        ? await linkEl.GetAttributeAsync("href", ct)
+                    IElement? linkEl = await cell.QuerySelectorAsync("a[href^='/']", ct).ConfigureAwait(false);
+                    string? handle = linkEl != null
+                        ? await linkEl.GetAttributeAsync("href", ct).ConfigureAwait(false)
                         : null;
 
                     if (!string.IsNullOrWhiteSpace(handle))

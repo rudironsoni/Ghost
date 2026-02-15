@@ -47,9 +47,9 @@ public sealed class CloseSpiderExtension : ICloseSpiderExtension
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        foreach (var condition in _conditions)
+        foreach (ICloseCondition condition in _conditions)
         {
-            if (await condition.IsMetAsync(context, ct))
+            if (await condition.IsMetAsync(context, ct).ConfigureAwait(false))
             {
                 return true;
             }

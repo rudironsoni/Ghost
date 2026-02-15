@@ -5,7 +5,7 @@ namespace Ghost.Engine.Abstractions.Downloader;
 
 public interface IDownloaderMiddleware
 {
-    Task<GhostResponse> InvokeAsync(
+    public Task<GhostResponse> InvokeAsync(
         GhostRequest request,
         GhostEngineContext context,
         Func<GhostRequest, GhostEngineContext, CancellationToken, Task<GhostResponse>> nextStep,

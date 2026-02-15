@@ -124,17 +124,17 @@ public class CrawlSpider : Spider, ICrawlSpider
     {
         ArgumentNullException.ThrowIfNull(response);
 
-        var url = response.Url;
+        string url = response.Url;
 
         // Find and execute matching rules to extract items
-        foreach (var rule in Rules)
+        foreach (CrawlRule rule in Rules)
         {
             if (rule.FollowCondition(url))
             {
-                var items = rule.ParseAction(response);
-                foreach (var item in items)
+                IEnumerable<Item> items = rule.ParseAction(response);
+                foreach (Item item in items)
                 {
-                    await YieldItemAsync(item, ct);
+                    await YieldItemAsync(item, ct).ConfigureAwait(false);
                 }
             }
         }
@@ -142,14 +142,14 @@ public class CrawlSpider : Spider, ICrawlSpider
         // Extract and follow links
         if (response.IsSuccess && !string.IsNullOrWhiteSpace(response.Body))
         {
-            var links = _linkExtractor.ExtractLinks(response.Body, url);
+            IEnumerable<string> links = _linkExtractor.ExtractLinks(response.Body, url);
 
-            foreach (var link in links)
+            foreach (string link in links)
             {
                 // Schedule link if it matches any rule's follow condition
                 if (Rules.Any(r => r.FollowCondition(link)))
                 {
-                    await ScheduleRequestAsync(new Request { Url = link }, ct);
+                    await ScheduleRequestAsync(new Request { Url = link }, ct).ConfigureAwait(false);
                 }
             }
         }

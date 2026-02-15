@@ -88,7 +88,7 @@ public sealed class GoogleJobsMultiStrategyParser
             };
 
             // Parse entities using Ghost.Sdk.Spider EntityParser
-            var entities = EntityParser.Parse<GoogleJobsEntity>(context);
+            List<GoogleJobsEntity> entities = EntityParser.Parse<GoogleJobsEntity>(context);
 
             // Convert entities to JobListing objects
             var jobs = entities
@@ -97,7 +97,7 @@ public sealed class GoogleJobsMultiStrategyParser
                 .Select(job => job!).ToList();
 
             // Log incomplete entities
-            foreach (var entity in entities)
+            foreach (GoogleJobsEntity entity in entities)
             {
                 if (string.IsNullOrWhiteSpace(entity.Title) || string.IsNullOrWhiteSpace(entity.Company))
                 {
@@ -167,7 +167,7 @@ public sealed class GoogleJobsMultiStrategyParser
         if (string.IsNullOrWhiteSpace(jobTypeStr))
             return JobType.Unknown;
 
-        var normalized = jobTypeStr.ToLowerInvariant();
+        string normalized = jobTypeStr.ToLowerInvariant();
 
         if (normalized.Contains("full", StringComparison.OrdinalIgnoreCase))
             return JobType.FullTime;
@@ -196,10 +196,10 @@ public sealed class GoogleJobsMultiStrategyParser
         dateStr = dateStr.Trim().ToLowerInvariant();
 
         // Try to parse relative dates
-        var relativeMatch = Regex.Match(dateStr, @"(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago", RegexOptions.IgnoreCase);
-        if (relativeMatch.Success && int.TryParse(relativeMatch.Groups[1].Value, out var count))
+        Match relativeMatch = Regex.Match(dateStr, @"(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago", RegexOptions.IgnoreCase);
+        if (relativeMatch.Success && int.TryParse(relativeMatch.Groups[1].Value, out int count))
         {
-            var unit = relativeMatch.Groups[2].Value.ToLowerInvariant();
+            string unit = relativeMatch.Groups[2].Value.ToLowerInvariant();
             return unit switch
             {
                 "second" => DateTimeOffset.UtcNow.AddSeconds(-count),
@@ -221,7 +221,7 @@ public sealed class GoogleJobsMultiStrategyParser
             return DateTimeOffset.UtcNow.AddDays(-1);
 
         // Try to parse as absolute date
-        var formats = new[]
+        string[] formats = new[]
         {
             "yyyy-MM-dd",
             "yyyy-MM-dd HH:mm:ss",
@@ -234,9 +234,9 @@ public sealed class GoogleJobsMultiStrategyParser
             "MMMM dd, yyyy"
         };
 
-        foreach (var format in formats)
+        foreach (string? format in formats)
         {
-            if (DateTimeOffset.TryParseExact(dateStr, format, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var result))
+            if (DateTimeOffset.TryParseExact(dateStr, format, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTimeOffset result))
                 return result;
         }
 

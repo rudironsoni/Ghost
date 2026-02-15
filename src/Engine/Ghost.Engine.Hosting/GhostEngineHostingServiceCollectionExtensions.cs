@@ -36,7 +36,7 @@ public static class GhostEngineHostingServiceCollectionExtensions
 
         services.TryAddSingleton<IRequestScheduler>(sp =>
         {
-            var options = sp.GetRequiredService<IOptions<InMemoryRequestSchedulerOptions>>().Value;
+            InMemoryRequestSchedulerOptions options = sp.GetRequiredService<IOptions<InMemoryRequestSchedulerOptions>>().Value;
             return new InMemoryRequestScheduler(options);
         });
 
@@ -44,9 +44,9 @@ public static class GhostEngineHostingServiceCollectionExtensions
 
         services.TryAddSingleton<IGhostEngine>(sp =>
         {
-            var options = sp.GetRequiredService<IOptions<GhostEngineOptions>>().Value;
-            var scheduler = sp.GetRequiredService<IRequestScheduler>();
-            var downloader = sp.GetRequiredService<IDownloader>();
+            GhostEngineOptions options = sp.GetRequiredService<IOptions<GhostEngineOptions>>().Value;
+            IRequestScheduler scheduler = sp.GetRequiredService<IRequestScheduler>();
+            IDownloader downloader = sp.GetRequiredService<IDownloader>();
             return new GhostEngine(
                 options,
                 scheduler,

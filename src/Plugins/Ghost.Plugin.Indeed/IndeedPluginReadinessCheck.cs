@@ -23,7 +23,7 @@ internal sealed class IndeedPluginReadinessCheck : IIndeedPluginReadinessCheck
     public Task<bool> RunReadinessCheckAsync(System.Threading.CancellationToken cancellationToken = default)
     {
         // Lightweight deterministic validation: check that required options exist or have defaults
-        var options = _options.Value;
+        IndeedOptions options = _options.Value;
 
         // Basic validation - ensure options are not null
         if (options == null)

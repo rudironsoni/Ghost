@@ -38,15 +38,15 @@ public class JsonPathSelector : ISelector
             if (jsonNode == null)
                 return new List<string>();
 
-            var result = _jsonPath.Evaluate(jsonNode);
+            PathResult result = _jsonPath.Evaluate(jsonNode);
 
             if (result.Matches == null || result.Matches.Count == 0)
                 return new List<string>();
 
             var results = new List<string>();
-            foreach (var match in result.Matches)
+            foreach (Node match in result.Matches)
             {
-                var value = ExtractValue(match.Value);
+                string? value = ExtractValue(match.Value);
                 if (value != null)
                     results.Add(value);
             }
@@ -71,7 +71,7 @@ public class JsonPathSelector : ISelector
             if (jsonNode == null)
                 return null;
 
-            var result = _jsonPath.Evaluate(jsonNode);
+            PathResult result = _jsonPath.Evaluate(jsonNode);
 
             if (result.Matches == null || result.Matches.Count == 0)
                 return null;

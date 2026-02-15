@@ -4,8 +4,10 @@ using Ghost.Contracts;
 using Ghost.Contracts.Jobs;
 using Ghost.Hosting;
 using Ghost.Http;
+using Ghost.Infrastructure.Session;
 using Ghost.Models;
 using Ghost.Plugin.Indeed.Internal;
+using Ghost.Plugin.Indeed.Jobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -35,7 +37,7 @@ public sealed class IndeedPlugin : Ghost.Hosting.IExtension
         // register validator before binding options (follows InfoJobs pattern)
         services.AddSingleton<Microsoft.Extensions.Options.IValidateOptions<IndeedOptions>, IndeedOptionsValidator>();
         services.Configure<IndeedOptions>(configuration.GetSection("Ghost:Extensions:Indeed"));
-        var opts = configuration.GetSection("Ghost:Extensions:Indeed").Get<IndeedOptions>() ?? new IndeedOptions();
+        IndeedOptions opts = configuration.GetSection("Ghost:Extensions:Indeed").Get<IndeedOptions>() ?? new IndeedOptions();
         try { Console.WriteLine($"[DEBUG] IndeedPlugin bound options: Country={opts.Country}"); } catch { }
 
         if (!opts.Enabled) return;
@@ -45,10 +47,10 @@ public sealed class IndeedPlugin : Ghost.Hosting.IExtension
 
         services.AddSingleton<IndeedApiClient>(sp =>
         {
-            var proxyProvider = sp.GetService<IProxyProvider>();
-            var sessionOrchestrator = sp.GetService<Ghost.Infrastructure.Session.ISessionOrchestrator>();
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<IndeedApiClient>>();
-            var options = sp.GetRequiredService<IndeedOptions>();
+            IProxyProvider? proxyProvider = sp.GetService<IProxyProvider>();
+            ISessionOrchestrator? sessionOrchestrator = sp.GetService<Ghost.Infrastructure.Session.ISessionOrchestrator>();
+            ILogger<IndeedApiClient> logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<IndeedApiClient>>();
+            IndeedOptions options = sp.GetRequiredService<IndeedOptions>();
 
             if (proxyProvider != null && sessionOrchestrator != null)
             {
@@ -71,30 +73,30 @@ public sealed class IndeedPlugin : Ghost.Hosting.IExtension
         // Register scrapers (require browser session)
         services.AddScoped<Jobs.IndeedSearchScraper>(sp =>
         {
-            var apiClient = sp.GetRequiredService<IndeedApiClient>();
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.IndeedSearchScraper>>();
-            var browserSession = sp.GetService<IBrowserSession>();
-            var options = sp.GetRequiredService<IndeedOptions>();
+            IndeedApiClient apiClient = sp.GetRequiredService<IndeedApiClient>();
+            ILogger<IndeedSearchScraper> logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.IndeedSearchScraper>>();
+            IBrowserSession? browserSession = sp.GetService<IBrowserSession>();
+            IndeedOptions options = sp.GetRequiredService<IndeedOptions>();
             return new Jobs.IndeedSearchScraper(apiClient, logger, browserSession, options);
         });
 
         services.AddScoped<Jobs.IndeedJobDetailsScraper>(sp =>
         {
-            var browserSession = sp.GetService<IBrowserSession>()
+            IBrowserSession browserSession = sp.GetService<IBrowserSession>()
                 ?? throw new InvalidOperationException("IndeedJobDetailsScraper requires IBrowserSession to be registered.");
 
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.IndeedJobDetailsScraper>>();
-            var jsonLdExtractor = sp.GetService<Ghost.Abstractions.IJsonLdExtractor>();
-            var options = sp.GetRequiredService<IndeedOptions>();
+            ILogger<IndeedJobDetailsScraper> logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.IndeedJobDetailsScraper>>();
+            IJsonLdExtractor? jsonLdExtractor = sp.GetService<Ghost.Abstractions.IJsonLdExtractor>();
+            IndeedOptions options = sp.GetRequiredService<IndeedOptions>();
             return new Jobs.IndeedJobDetailsScraper(browserSession, logger, jsonLdExtractor, options);
         });
 
         services.AddScoped<IndeedJobClient>(sp =>
         {
-            var apiClient = sp.GetRequiredService<IndeedApiClient>();
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<IndeedJobClient>>();
-            var searchScraper = sp.GetService<Jobs.IndeedSearchScraper>();
-            var detailsScraper = sp.GetService<Jobs.IndeedJobDetailsScraper>();
+            IndeedApiClient apiClient = sp.GetRequiredService<IndeedApiClient>();
+            ILogger<IndeedJobClient> logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<IndeedJobClient>>();
+            IndeedSearchScraper? searchScraper = sp.GetService<Jobs.IndeedSearchScraper>();
+            IndeedJobDetailsScraper? detailsScraper = sp.GetService<Jobs.IndeedJobDetailsScraper>();
             return new IndeedJobClient(apiClient, logger, searchScraper, detailsScraper);
         });
 

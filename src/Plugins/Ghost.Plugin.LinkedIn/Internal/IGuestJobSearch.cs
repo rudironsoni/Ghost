@@ -7,6 +7,6 @@ namespace Ghost.Plugin.LinkedIn.Internal;
 
 public interface IGuestJobSearch
 {
-    Task<IReadOnlyList<string>> SearchAsync(JobSearchCriteria criteria, int limit, CancellationToken ct);
-    Task<JobListing?> FetchJobDetailsAsync(string jobId, CancellationToken ct);
+    public Task<IReadOnlyList<string>> SearchAsync(JobSearchCriteria criteria, int limit, CancellationToken ct);
+    public Task<JobListing?> FetchJobDetailsAsync(string jobId, CancellationToken ct);
 }

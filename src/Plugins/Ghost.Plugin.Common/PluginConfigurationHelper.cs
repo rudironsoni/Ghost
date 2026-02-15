@@ -12,7 +12,7 @@ public static class PluginConfigurationHelper
     /// <returns>The section name.</returns>
     public static string GetSectionName<TOptions>() where TOptions : class
     {
-        var typeName = typeof(TOptions).Name;
+        string typeName = typeof(TOptions).Name;
         // Remove "Options" suffix if present
         if (typeName.EndsWith("Options", StringComparison.OrdinalIgnoreCase))
         {

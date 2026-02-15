@@ -11,7 +11,7 @@ public static class LinkedInEndpoints
 {
     public static void MapLinkedInEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/linkedin")
+        RouteGroupBuilder group = app.MapGroup("/api/linkedin")
             .WithTags("LinkedIn");
 
         // Jobs
@@ -41,7 +41,7 @@ public static class LinkedInEndpoints
     {
         try
         {
-            var job = await jobClient.GetJobDetailsAsync(id, ct);
+            JobListing? job = await jobClient.GetJobDetailsAsync(id, ct).ConfigureAwait(false);
             if (job is null)
             {
                 return Results.NotFound();
@@ -71,14 +71,14 @@ public static class LinkedInEndpoints
         {
             // Check for strategy override via query parameter
             if (!string.IsNullOrEmpty(strategy) &&
-                Enum.TryParse<JobScrapingStrategy>(strategy, ignoreCase: true, out var strategyOverride))
+                Enum.TryParse<JobScrapingStrategy>(strategy, ignoreCase: true, out JobScrapingStrategy strategyOverride))
             {
-                var results = await jobClient.SearchJobsAsync(criteria, strategyOverride, ct);
+                List<JobListing> results = await jobClient.SearchJobsAsync(criteria, strategyOverride, ct).ConfigureAwait(false);
                 return Results.Ok(results);
             }
 
             // Default: use configured strategy
-            var defaultResults = await jobClient.SearchJobsAsync(criteria, ct);
+            IReadOnlyList<JobListing> defaultResults = await jobClient.SearchJobsAsync(criteria, ct).ConfigureAwait(false);
             return Results.Ok(defaultResults);
         }
         catch (Ghost.Plugin.LinkedIn.BrowserServiceUnavailableException)
@@ -101,7 +101,7 @@ public static class LinkedInEndpoints
     {
         try
         {
-            var profile = await socialClient.GetProfileAsync(id, ct);
+            SocialProfile? profile = await socialClient.GetProfileAsync(id, ct).ConfigureAwait(false);
             return profile is not null ? Results.Ok(profile) : Results.NotFound();
         }
         catch (Ghost.Plugin.LinkedIn.BrowserServiceUnavailableException)
@@ -125,7 +125,7 @@ public static class LinkedInEndpoints
         try
         {
             var options = new NewsSearchOptions { MaxResults = request.MaxResults };
-            var results = await newsClient.SearchAsync(request.Query, options, ct);
+            IReadOnlyList<NewsArticle> results = await newsClient.SearchAsync(request.Query, options, ct).ConfigureAwait(false);
             return Results.Ok(results);
         }
         catch (Ghost.Plugin.LinkedIn.BrowserServiceUnavailableException)

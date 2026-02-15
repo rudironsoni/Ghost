@@ -40,13 +40,13 @@ public class MediaPipeline : IMediaPipeline
         }
 
         // Download file
-        using var response = await _httpClient.GetAsync(request.Url, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+        using HttpResponseMessage response = await _httpClient.GetAsync(request.Url, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
         // Check file size if Content-Length is available
         if (response.Content.Headers.ContentLength.HasValue)
         {
-            var contentLength = response.Content.Headers.ContentLength.Value;
+            long contentLength = response.Content.Headers.ContentLength.Value;
             if (contentLength > _options.MaxFileSize)
             {
                 throw new InvalidOperationException($"File size ({contentLength} bytes) exceeds maximum allowed size ({_options.MaxFileSize} bytes).");
@@ -54,25 +54,25 @@ public class MediaPipeline : IMediaPipeline
         }
 
         // Determine filename
-        var fileName = request.FileName ?? GetFileNameFromUrl(request.Url);
+        string fileName = request.FileName ?? GetFileNameFromUrl(request.Url);
 
         // Validate extension if AllowedExtensions is specified
         if (_options.AllowedExtensions.Count > 0)
         {
-            var extension = Path.GetExtension(fileName);
+            string extension = Path.GetExtension(fileName);
             if (string.IsNullOrEmpty(extension) || !_options.AllowedExtensions.Contains(extension.ToLowerInvariant()))
             {
                 throw new InvalidOperationException($"File extension '{extension}' is not allowed.");
             }
         }
 
-        var localPath = Path.Combine(request.OutputPath, fileName);
+        string localPath = Path.Combine(request.OutputPath, fileName);
 
         // Ensure directory exists
         Directory.CreateDirectory(request.OutputPath);
 
         // Save file
-        await using (var fs = File.Create(localPath))
+        await using (FileStream fs = File.Create(localPath).ConfigureAwait(false))
         {
             await response.Content.CopyToAsync(fs, ct).ConfigureAwait(false);
         }
@@ -97,8 +97,8 @@ public class MediaPipeline : IMediaPipeline
     private static string GetFileNameFromUrl(string url)
     {
         var uri = new Uri(url);
-        var path = uri.AbsolutePath;
-        var fileName = Path.GetFileName(path);
+        string path = uri.AbsolutePath;
+        string fileName = Path.GetFileName(path);
 
         if (string.IsNullOrEmpty(fileName))
         {
@@ -106,8 +106,8 @@ public class MediaPipeline : IMediaPipeline
         }
 
         // Sanitize filename
-        var invalidChars = Path.GetInvalidFileNameChars();
-        foreach (var c in invalidChars)
+        char[] invalidChars = Path.GetInvalidFileNameChars();
+        foreach (char c in invalidChars)
         {
             fileName = fileName.Replace(c, '_');
         }
@@ -117,8 +117,8 @@ public class MediaPipeline : IMediaPipeline
 
     private static async Task<string> CalculateChecksumAsync(string path, CancellationToken ct)
     {
-        await using var fs = File.OpenRead(path);
-        var hash = await SHA256.HashDataAsync(fs, ct).ConfigureAwait(false);
+        await using FileStream fs = File.OpenRead(path).ConfigureAwait(false);
+        byte[] hash = await SHA256.HashDataAsync(fs, ct).ConfigureAwait(false);
         return Convert.ToHexString(hash);
     }
 }

@@ -14,17 +14,17 @@ public class DateParser : IDateParser
 
         input = input.Trim();
 
-        if (DateOnly.TryParse(input, out var d))
+        if (DateOnly.TryParse(input, out DateOnly d))
             return d;
 
-        if (DateTime.TryParse(input, out var dt))
+        if (DateTime.TryParse(input, out DateTime dt))
             return DateOnly.FromDateTime(dt);
 
-        if (DateOnly.TryParseExact(input, Formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var ex))
+        if (DateOnly.TryParseExact(input, Formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly ex))
             return ex;
 
         // Try Month Year like "Jan 2024"
-        if (DateTime.TryParseExact(input, Formats, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var dt2))
+        if (DateTime.TryParseExact(input, Formats, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out DateTime dt2))
             return DateOnly.FromDateTime(dt2);
 
         return null;
@@ -38,24 +38,24 @@ public class DateParser : IDateParser
         input = input.Trim();
 
         // examples: "Jan 2024 - Present", "Mar 2020 - Jul 2021"
-        var parts = input.Split('-', StringSplitOptions.TrimEntries);
+        string[] parts = input.Split('-', StringSplitOptions.TrimEntries);
         if (parts.Length == 1)
         {
-            var single = ParseDate(parts[0]);
+            DateOnly? single = ParseDate(parts[0]);
             // Single-date ranges should have no end (ongoing/single point -> End = null)
             return (single, null);
         }
 
-        var start = ParseDate(parts[0]);
-        var right = parts[1];
+        DateOnly? start = ParseDate(parts[0]);
+        string? right = parts[1];
         // Treat "Present", "Now", "Current", "Today" (and variants) as ongoing/no end date
-        var cleanedRight = System.Text.RegularExpressions.Regex.Replace(right ?? string.Empty, "[^A-Za-z]", "").ToLowerInvariant();
+        string cleanedRight = System.Text.RegularExpressions.Regex.Replace(right ?? string.Empty, "[^A-Za-z]", "").ToLowerInvariant();
         if (cleanedRight == "present" || cleanedRight == "now" || cleanedRight == "current" || cleanedRight == "today")
         {
             return (start, null);
         }
 
-        var end = ParseDate(right);
+        DateOnly? end = ParseDate(right);
         return (start, end);
     }
 
@@ -64,17 +64,17 @@ public class DateParser : IDateParser
         if (string.IsNullOrWhiteSpace(input))
             return null;
 
-        var s = input.Trim();
+        string s = input.Trim();
         if (string.Equals(s, "today", StringComparison.OrdinalIgnoreCase))
             return DateTime.UtcNow.Date;
 
         if (s.EndsWith("ago", StringComparison.OrdinalIgnoreCase))
         {
             // e.g., "3 days ago"
-            var parts = s.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length >= 3 && int.TryParse(parts[0], out var num))
+            string[] parts = s.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 3 && int.TryParse(parts[0], out int num))
             {
-                var unit = parts[1].ToLowerInvariant();
+                string unit = parts[1].ToLowerInvariant();
                 return unit switch
                 {
                     "day" or "days" => DateTime.UtcNow.AddDays(-num),
@@ -88,7 +88,7 @@ public class DateParser : IDateParser
         }
 
         // fallback
-        if (DateTime.TryParse(s, out var dt))
+        if (DateTime.TryParse(s, out DateTime dt))
             return dt;
 
         return null;

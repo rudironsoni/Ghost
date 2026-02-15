@@ -30,10 +30,10 @@ public static class GlassdoorJobParser
     {
         if (element.ValueKind == JsonValueKind.Array)
         {
-            foreach (var item in element.EnumerateArray())
+            foreach (JsonElement item in element.EnumerateArray())
             {
                 // Try to parse as job first
-                var jl = ParseJobItem(item);
+                JobListing? jl = ParseJobItem(item);
                 if (jl != null)
                 {
                     jobs.Add(jl);
@@ -47,15 +47,15 @@ public static class GlassdoorJobParser
         }
         else if (element.ValueKind == JsonValueKind.Object)
         {
-            foreach (var prop in element.EnumerateObject())
+            foreach (JsonProperty prop in element.EnumerateObject())
             {
                 // Check if this property contains job data
                 if (prop.Name.Contains("job", StringComparison.OrdinalIgnoreCase) &&
                     prop.Value.ValueKind == JsonValueKind.Array)
                 {
-                    foreach (var item in prop.Value.EnumerateArray())
+                    foreach (JsonElement item in prop.Value.EnumerateArray())
                     {
-                        var jl = ParseJobItem(item);
+                        JobListing? jl = ParseJobItem(item);
                         if (jl != null) jobs.Add(jl);
                     }
                 }
@@ -82,35 +82,35 @@ public static class GlassdoorJobParser
             string? url = null;
 
             // Try to extract from nested jobview structure (from GraphQL response)
-            if (item.TryGetProperty("jobview", out var jobview) && jobview.ValueKind == JsonValueKind.Object)
+            if (item.TryGetProperty("jobview", out JsonElement jobview) && jobview.ValueKind == JsonValueKind.Object)
             {
-                if (jobview.TryGetProperty("header", out var header) && header.ValueKind == JsonValueKind.Object)
+                if (jobview.TryGetProperty("header", out JsonElement header) && header.ValueKind == JsonValueKind.Object)
                 {
                     title = GetString(header, "jobTitleText");
                     location = GetString(header, "locationName");
                     url = GetString(header, "jobLink");
 
-                    if (header.TryGetProperty("employer", out var employer) && employer.ValueKind == JsonValueKind.Object)
+                    if (header.TryGetProperty("employer", out JsonElement employer) && employer.ValueKind == JsonValueKind.Object)
                     {
                         company = GetString(employer, "name");
                     }
 
-                    if (header.TryGetProperty("payPeriodAdjustedPay", out var pay) && pay.ValueKind == JsonValueKind.Object)
+                    if (header.TryGetProperty("payPeriodAdjustedPay", out JsonElement pay) && pay.ValueKind == JsonValueKind.Object)
                     {
-                        var p10 = GetNumber(pay, "p10");
-                        var p90 = GetNumber(pay, "p90");
-                        var cur = GetString(pay, "payCurrency") ?? GetString(pay, "currency");
+                        double? p10 = GetNumber(pay, "p10");
+                        double? p90 = GetNumber(pay, "p90");
+                        string? cur = GetString(pay, "payCurrency") ?? GetString(pay, "currency");
                         if (p10.HasValue || p90.HasValue)
                         {
-                            var left = p10?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
-                            var right = p90?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
-                            var range = p10.HasValue && p90.HasValue ? $"{left} - {right}" : (p10.HasValue ? left : right);
+                            string left = p10?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+                            string right = p90?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+                            string range = p10.HasValue && p90.HasValue ? $"{left} - {right}" : (p10.HasValue ? left : right);
                             salary = cur is not null ? $"{range} {cur}" : range;
                         }
                     }
                 }
 
-                if (jobview.TryGetProperty("job", out var job) && job.ValueKind == JsonValueKind.Object)
+                if (jobview.TryGetProperty("job", out JsonElement job) && job.ValueKind == JsonValueKind.Object)
                 {
                     id = GetString(job, "listingId");
                     description = GetString(job, "description");
@@ -151,15 +151,15 @@ public static class GlassdoorJobParser
 
     private static string? GetString(JsonElement el, params string[] names)
     {
-        foreach (var name in names)
+        foreach (string name in names)
         {
             try
             {
-                if (el.TryGetProperty(name, out var v))
+                if (el.TryGetProperty(name, out JsonElement v))
                 {
                     if (v.ValueKind == JsonValueKind.String)
                     {
-                        var str = v.GetString();
+                        string? str = v.GetString();
                         if (!string.IsNullOrWhiteSpace(str))
                             return str;
                     }
@@ -178,8 +178,8 @@ public static class GlassdoorJobParser
     {
         try
         {
-            if (!el.TryGetProperty(name, out var v)) return null;
-            if (v.ValueKind == JsonValueKind.Number && v.TryGetDouble(out var d)) return d;
+            if (!el.TryGetProperty(name, out JsonElement v)) return null;
+            if (v.ValueKind == JsonValueKind.Number && v.TryGetDouble(out double d)) return d;
             if (v.ValueKind == JsonValueKind.String && double.TryParse(v.GetString(), out d)) return d;
         }
         catch { }

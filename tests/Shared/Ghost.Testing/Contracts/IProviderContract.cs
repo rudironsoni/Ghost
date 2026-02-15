@@ -14,12 +14,12 @@ public interface IProviderContract
     /// <summary>
     /// Name of the contract.
     /// </summary>
-    string Name { get; }
+    public string Name { get; }
 
     /// <summary>
     /// Executes the contract test against the provided adapter.
     /// </summary>
-    Task<ContractResult> ExecuteAsync(
+    public Task<ContractResult> ExecuteAsync(
         IProviderContractAdapter adapter,
         CancellationToken ct = default);
 }
@@ -82,9 +82,9 @@ public sealed class ContractRunner
     {
         var results = new List<ContractResult>();
 
-        foreach (var contract in _contracts)
+        foreach (IProviderContract contract in _contracts)
         {
-            var result = await contract.ExecuteAsync(adapter, ct);
+            ContractResult result = await contract.ExecuteAsync(adapter, ct).ConfigureAwait(false);
             results.Add(result);
         }
 

@@ -20,7 +20,7 @@ internal static class GoogleJobsApiClientProxyHelpers
         client.Timeout = System.TimeSpan.FromSeconds(20);
 
         using var req = new HttpRequestMessage(HttpMethod.Get, url);
-        var res = await client.SendAsync(req).ConfigureAwait(false);
+        HttpResponseMessage res = await client.SendAsync(req).ConfigureAwait(false);
         if (!res.IsSuccessStatusCode)
             return null;
 

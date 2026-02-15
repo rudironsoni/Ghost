@@ -83,7 +83,7 @@ public class RegexFormatter : Formatter
             return _compiledRegex.Replace(str, Replacement);
         }
 
-        var match = _compiledRegex.Match(str);
+        Match match = _compiledRegex.Match(str);
         if (!match.Success)
             return str;
 
@@ -114,7 +114,7 @@ public class RegexFormatter : Formatter
 
     private Regex CompileRegex()
     {
-        var options = RegexOptions.Compiled;
+        RegexOptions options = RegexOptions.Compiled;
 
         if (IgnoreCase)
             options |= RegexOptions.IgnoreCase;

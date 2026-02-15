@@ -5,5 +5,5 @@ namespace Ghost.Engine.Abstractions.Downloader;
 
 public interface IDownloader
 {
-    Task<GhostResponse> DownloadAsync(GhostRequest request, GhostEngineContext context, CancellationToken cancellationToken = default);
+    public Task<GhostResponse> DownloadAsync(GhostRequest request, GhostEngineContext context, CancellationToken cancellationToken = default);
 }

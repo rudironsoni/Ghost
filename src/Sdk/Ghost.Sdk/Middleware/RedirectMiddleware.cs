@@ -44,7 +44,7 @@ public interface IRedirectMiddleware
     /// <param name="execute">A function that executes the actual HTTP request.</param>
     /// <param name="ct">Cancellation token to observe.</param>
     /// <returns>The final non-redirect response.</returns>
-    Task<Response> HandleRedirectsAsync(Request request, Func<Request, Task<Response>> execute, CancellationToken ct);
+    public Task<Response> HandleRedirectsAsync(Request request, Func<Request, Task<Response>> execute, CancellationToken ct);
 }
 
 /// <summary>
@@ -99,26 +99,26 @@ public class RedirectMiddleware : IRedirectMiddleware
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(execute);
 
-        var redirectCount = 0;
-        var currentRequest = request;
+        int redirectCount = 0;
+        Request currentRequest = request;
 
         while (redirectCount < _options.MaxRedirects)
         {
-            var response = await execute(currentRequest).ConfigureAwait(false);
+            Response response = await execute(currentRequest).ConfigureAwait(false);
 
             if (!IsRedirectStatusCode(response.StatusCode))
             {
                 return response;
             }
 
-            var location = response.Headers.GetValueOrDefault("Location");
+            string? location = response.Headers.GetValueOrDefault("Location");
             if (string.IsNullOrEmpty(location))
             {
                 return response; // No location header, return redirect response
             }
 
             // Resolve relative URLs
-            var redirectUrl = ResolveUrl(currentRequest.Url, location);
+            string redirectUrl = ResolveUrl(currentRequest.Url, location);
 
             // Check if we should follow this redirect
             if (!ShouldFollowRedirect(currentRequest.Url, redirectUrl))
@@ -157,8 +157,8 @@ public class RedirectMiddleware : IRedirectMiddleware
     private bool ShouldFollowRedirect(string originalUrl, string redirectUrl)
     {
         // Don't follow redirects to different schemes if not allowed
-        if (!_options.AllowCrossScheme && Uri.TryCreate(originalUrl, UriKind.Absolute, out var originalUri)
-            && Uri.TryCreate(redirectUrl, UriKind.Absolute, out var redirectUri))
+        if (!_options.AllowCrossScheme && Uri.TryCreate(originalUrl, UriKind.Absolute, out Uri? originalUri)
+            && Uri.TryCreate(redirectUrl, UriKind.Absolute, out Uri? redirectUri))
         {
             if (!string.Equals(originalUri.Scheme, redirectUri.Scheme, StringComparison.OrdinalIgnoreCase))
             {

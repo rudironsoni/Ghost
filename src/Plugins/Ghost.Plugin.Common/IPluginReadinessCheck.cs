@@ -8,14 +8,14 @@ public interface IPluginReadinessCheck
     /// <summary>
     /// Gets the name of the readiness check.
     /// </summary>
-    string Name { get; }
+    public string Name { get; }
 
     /// <summary>
     /// Performs the readiness check asynchronously.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task representing the readiness check result.</returns>
-    Task<ReadinessCheckResult> CheckAsync(CancellationToken cancellationToken = default);
+    public Task<ReadinessCheckResult> CheckAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>

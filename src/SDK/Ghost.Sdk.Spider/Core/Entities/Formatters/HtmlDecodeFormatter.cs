@@ -59,12 +59,12 @@ public class HtmlDecodeFormatter : Formatter
         }
 
         // Decode multiple times until no more changes or max iterations reached
-        var decoded = str;
-        var iterations = 0;
+        string decoded = str;
+        int iterations = 0;
 
         while (iterations < MaxDecodeIterations)
         {
-            var nextDecode = WebUtility.HtmlDecode(decoded);
+            string nextDecode = WebUtility.HtmlDecode(decoded);
             if (nextDecode == decoded) // No more changes
                 break;
 

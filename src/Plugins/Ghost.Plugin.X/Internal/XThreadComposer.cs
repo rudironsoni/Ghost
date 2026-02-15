@@ -34,7 +34,7 @@ public partial class XThreadComposer
         CancellationToken ct = default)
     {
         // Split content into tweet-sized parts
-        var parts = _contentSplitter.Split(request.Content);
+        IReadOnlyList<string> parts = _contentSplitter.Split(request.Content);
 
         if (parts.Count == 0)
         {
@@ -48,9 +48,9 @@ public partial class XThreadComposer
 
         for (int i = 0; i < parts.Count; i++)
         {
-            var isFirstTweet = i == 0;
-            var isLastTweet = i == parts.Count - 1;
-            var part = parts[i];
+            bool isFirstTweet = i == 0;
+            bool isLastTweet = i == parts.Count - 1;
+            string part = parts[i];
 
             Log.PostingTweet(_logger, i + 1, parts.Count, part[..Math.Min(50, part.Length)]);
 
@@ -59,13 +59,13 @@ public partial class XThreadComposer
             if (isFirstTweet)
             {
                 // Post first tweet (with media if provided)
-                tweetId = await PostTweetAsync(page, part, request.MediaUrls, ct);
+                tweetId = await PostTweetAsync(page, part, request.MediaUrls, ct).ConfigureAwait(false);
                 firstTweetId = tweetId;
             }
             else
             {
                 // Post reply to previous tweet
-                tweetId = await PostReplyAsync(page, part, previousTweetId!, ct);
+                tweetId = await PostReplyAsync(page, part, previousTweetId!, ct).ConfigureAwait(false);
             }
 
             previousTweetId = tweetId;
@@ -74,7 +74,7 @@ public partial class XThreadComposer
             if (!isLastTweet && _options.ThreadDelayMs > 0)
             {
                 Log.WaitingBeforeTweet(_logger, _options.ThreadDelayMs);
-                await Task.Delay(_options.ThreadDelayMs, ct);
+                await Task.Delay(_options.ThreadDelayMs, ct).ConfigureAwait(false);
             }
         }
 
@@ -92,37 +92,37 @@ public partial class XThreadComposer
         CancellationToken ct)
     {
         // Navigate to compose page
-        await page.NavigateAsync($"{_options.BaseUrl}/compose/tweet", ct: ct);
-        await page.WaitForLoadStateAsync(ct: ct);
+        await page.NavigateAsync($"{_options.BaseUrl}/compose/tweet", ct: ct).ConfigureAwait(false);
+        await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
         // Wait for compose textarea
-        var composeBox = await page.WaitForSelectorAsync(
+        IElement composeBox = await page.WaitForSelectorAsync(
             "div[role='textbox'][contenteditable='true']",
             new WaitOptions { Timeout = 10000 },
-            ct) ?? throw new InvalidOperationException("Could not find compose text box");
+            ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Could not find compose text box");
 
         // Type content
-        await composeBox.TypeAsync(content, ct: ct);
+        await composeBox.TypeAsync(content, ct: ct).ConfigureAwait(false);
 
         // Upload media if provided
         if (mediaUrls?.Count > 0)
         {
-            await UploadMediaAsync(page, mediaUrls, ct);
+            await UploadMediaAsync(page, mediaUrls, ct).ConfigureAwait(false);
         }
 
         // Click post button
-        var postButton = await page.WaitForSelectorAsync(
+        IElement postButton = await page.WaitForSelectorAsync(
             "button[data-testid='tweetButton']",
             new WaitOptions { Timeout = 10000 },
-            ct) ?? throw new InvalidOperationException("Could not find post button");
+            ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Could not find post button");
 
-        await postButton.ClickAsync(ct: ct);
+        await postButton.ClickAsync(ct: ct).ConfigureAwait(false);
 
         // Wait for tweet to be posted and extract ID
-        await Task.Delay(2000, ct); // Brief delay for navigation
+        await Task.Delay(2000, ct).ConfigureAwait(false); // Brief delay for navigation
 
         // Try to extract tweet ID from URL
-        var tweetId = await ExtractTweetIdAsync(page, ct);
+        string? tweetId = await ExtractTweetIdAsync(page, ct).ConfigureAwait(false);
 
         if (string.IsNullOrEmpty(tweetId))
         {
@@ -143,41 +143,41 @@ public partial class XThreadComposer
         CancellationToken ct)
     {
         // Navigate to the tweet we're replying to
-        await page.NavigateAsync($"{_options.BaseUrl}/i/status/{replyToTweetId}", ct: ct);
-        await page.WaitForLoadStateAsync(ct: ct);
+        await page.NavigateAsync($"{_options.BaseUrl}/i/status/{replyToTweetId}", ct: ct).ConfigureAwait(false);
+        await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
         // Click reply button
-        var replyButton = await page.WaitForSelectorAsync(
+        IElement replyButton = await page.WaitForSelectorAsync(
             "button[data-testid='reply']",
             new WaitOptions { Timeout = 10000 },
-            ct) ?? throw new InvalidOperationException("Could not find reply button");
+            ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Could not find reply button");
 
-        await replyButton.ClickAsync(ct: ct);
+        await replyButton.ClickAsync(ct: ct).ConfigureAwait(false);
 
         // Wait for reply compose box
-        await Task.Delay(1000, ct);
+        await Task.Delay(1000, ct).ConfigureAwait(false);
 
-        var composeBox = await page.WaitForSelectorAsync(
+        IElement composeBox = await page.WaitForSelectorAsync(
             "div[role='textbox'][contenteditable='true']",
             new WaitOptions { Timeout = 10000 },
-            ct) ?? throw new InvalidOperationException("Could not find reply compose box");
+            ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Could not find reply compose box");
 
         // Type content
-        await composeBox.TypeAsync(content, ct: ct);
+        await composeBox.TypeAsync(content, ct: ct).ConfigureAwait(false);
 
         // Click reply button
-        var submitReplyButton = await page.WaitForSelectorAsync(
+        IElement submitReplyButton = await page.WaitForSelectorAsync(
             "button[data-testid='tweetButton']",
             new WaitOptions { Timeout = 10000 },
-            ct) ?? throw new InvalidOperationException("Could not find submit reply button");
+            ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Could not find submit reply button");
 
-        await submitReplyButton.ClickAsync(ct: ct);
+        await submitReplyButton.ClickAsync(ct: ct).ConfigureAwait(false);
 
         // Wait for reply to be posted
-        await Task.Delay(2000, ct);
+        await Task.Delay(2000, ct).ConfigureAwait(false);
 
         // Extract tweet ID
-        var tweetId = await ExtractTweetIdAsync(page, ct);
+        string? tweetId = await ExtractTweetIdAsync(page, ct).ConfigureAwait(false);
 
         if (string.IsNullOrEmpty(tweetId))
         {
@@ -199,19 +199,19 @@ public partial class XThreadComposer
         Log.UploadingMedia(_logger, mediaUrls.Count);
 
         // Find media input
-        var mediaInput = await page.QuerySelectorAsync("input[type='file']", ct);
+        IElement? mediaInput = await page.QuerySelectorAsync("input[type='file']", ct).ConfigureAwait(false);
 
         if (mediaInput == null)
         {
             Log.MediaInputNotFound(_logger);
 
             // Try clicking the media button to reveal the input
-            var mediaButton = await page.QuerySelectorAsync("[data-testid='mediaButton']", ct);
+            IElement? mediaButton = await page.QuerySelectorAsync("[data-testid='mediaButton']", ct).ConfigureAwait(false);
             if (mediaButton != null)
             {
-                await mediaButton.ClickAsync(ct: ct);
-                await Task.Delay(500, ct);
-                mediaInput = await page.QuerySelectorAsync("input[type='file']", ct);
+                await mediaButton.ClickAsync(ct: ct).ConfigureAwait(false);
+                await Task.Delay(500, ct).ConfigureAwait(false);
+                mediaInput = await page.QuerySelectorAsync("input[type='file']", ct).ConfigureAwait(false);
             }
         }
 
@@ -222,7 +222,7 @@ public partial class XThreadComposer
 
         // Validate and set files
         var validFiles = new List<string>();
-        foreach (var url in mediaUrls)
+        foreach (string url in mediaUrls)
         {
             if (!File.Exists(url))
             {
@@ -230,7 +230,7 @@ public partial class XThreadComposer
                 continue;
             }
 
-            var extension = Path.GetExtension(url).ToLowerInvariant();
+            string extension = Path.GetExtension(url).ToLowerInvariant();
             if (_options.SupportedImageFormats.Contains(extension) ||
                 _options.SupportedVideoFormats.Contains(extension))
             {
@@ -259,7 +259,7 @@ public partial class XThreadComposer
         Log.SettingMediaFiles(_logger, validFiles.Count);
 
         // Wait for upload to complete
-        await Task.Delay(2000, ct);
+        await Task.Delay(2000, ct).ConfigureAwait(false);
 
         Log.MediaUploadCompleted(_logger);
     }
@@ -271,17 +271,17 @@ public partial class XThreadComposer
     {
         try
         {
-            var url = page.Url;
+            string url = page.Url;
 
             // Match /status/123456789 pattern
-            var match = Regex.Match(url, @"/status/(\d+)");
+            Match match = Regex.Match(url, @"/status/(\d+)");
             if (match.Success)
             {
                 return match.Groups[1].Value;
             }
 
             // Try to get from page data
-            var tweetId = await page.EvaluateAsync<string?>(
+            string? tweetId = await page.EvaluateAsync<string?>(
                 @"() => {
                     const article = document.querySelector('article[data-testid=""tweet""]');
                     if (article) {
@@ -293,7 +293,7 @@ public partial class XThreadComposer
                     }
                     return null;
                 }",
-                ct: ct);
+                ct: ct).ConfigureAwait(false);
 
             return tweetId;
         }

@@ -100,15 +100,15 @@ public abstract class CrawlSpider : Spider, ICrawlSpider
         ArgumentNullException.ThrowIfNull(response);
         ArgumentNullException.ThrowIfNull(context);
 
-        var finalUrl = response.FinalUrl ?? string.Empty;
+        string finalUrl = response.FinalUrl ?? string.Empty;
         var matchedRules = Rules.Where(r => r.Pattern.IsMatch(finalUrl)).ToList();
 
         // Process each matching rule
-        foreach (var rule in matchedRules)
+        foreach (IRule? rule in matchedRules)
         {
             // Execute rule callback to extract items
-            var items = await rule.Callback(response).ConfigureAwait(false);
-            foreach (var item in items)
+            IEnumerable<object> items = await rule.Callback(response).ConfigureAwait(false);
+            foreach (object item in items)
             {
                 // Store extracted items in context for the engine to process
                 await StoreExtractedItemAsync(item, context, cancellationToken).ConfigureAwait(false);
@@ -150,8 +150,8 @@ public abstract class CrawlSpider : Spider, ICrawlSpider
             return;
         }
 
-        var baseUrl = response.FinalUrl ?? string.Empty;
-        var html = response.Content.Content;
+        string baseUrl = response.FinalUrl ?? string.Empty;
+        string html = response.Content.Content;
 
         if (string.IsNullOrWhiteSpace(html) || string.IsNullOrWhiteSpace(baseUrl))
         {
@@ -159,10 +159,10 @@ public abstract class CrawlSpider : Spider, ICrawlSpider
         }
 
         // Extract links using the configured link extractor
-        var links = _linkExtractor.ExtractLinks(html, baseUrl);
+        IEnumerable<string> links = _linkExtractor.ExtractLinks(html, baseUrl);
 
         // Filter and schedule links
-        foreach (var link in links.Where(l => ShouldFollowUrl(l, context)))
+        foreach (string? link in links.Where(l => ShouldFollowUrl(l, context)))
         {
             var request = new Request(link);
             await ScheduleRequestAsync(request, context, cancellationToken).ConfigureAwait(false);
@@ -260,7 +260,7 @@ public abstract class CrawlSpider : Spider, ICrawlSpider
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        if (!context.State.TryGetValue(PendingRequestsKey, out var queueObj))
+        if (!context.State.TryGetValue(PendingRequestsKey, out object? queueObj))
         {
             return Enumerable.Empty<Request>();
         }
@@ -271,7 +271,7 @@ public abstract class CrawlSpider : Spider, ICrawlSpider
         }
 
         var requests = new List<Request>();
-        while (queue.TryDequeue(out var request))
+        while (queue.TryDequeue(out Request? request))
         {
             requests.Add(request);
         }
@@ -293,7 +293,7 @@ public abstract class CrawlSpider : Spider, ICrawlSpider
         ArgumentNullException.ThrowIfNull(context);
 
         const string itemsKey = "CrawlSpider:ExtractedItems";
-        if (!context.State.TryGetValue(itemsKey, out var itemsObj))
+        if (!context.State.TryGetValue(itemsKey, out object? itemsObj))
         {
             return Enumerable.Empty<object>();
         }

@@ -35,16 +35,16 @@ public sealed class InMemoryDnsCache : IDnsCache, IDisposable
         ArgumentNullException.ThrowIfNull(hostname);
 
         // Try to get from cache first
-        if (_cache.TryGetValue(hostname, out var entry) && !entry.IsExpired)
+        if (_cache.TryGetValue(hostname, out DnsCacheEntry? entry) && !entry.IsExpired)
         {
             return entry.Addresses;
         }
 
         // Cache miss or expired - resolve DNS
-        var addresses = await Dns.GetHostAddressesAsync(hostname, ct).ConfigureAwait(false);
+        IPAddress[] addresses = await Dns.GetHostAddressesAsync(hostname, ct).ConfigureAwait(false);
 
         // Store in cache
-        var expiresAt = DateTimeOffset.UtcNow.Add(_options.Ttl);
+        DateTimeOffset expiresAt = DateTimeOffset.UtcNow.Add(_options.Ttl);
         _cache[hostname] = new DnsCacheEntry(addresses, expiresAt);
 
         // Enforce max entries limit
@@ -81,7 +81,7 @@ public sealed class InMemoryDnsCache : IDnsCache, IDisposable
             .Select(kvp => kvp.Key)
             .ToList();
 
-        foreach (var key in expiredKeys)
+        foreach (string? key in expiredKeys)
         {
             _cache.TryRemove(key, out _);
         }
@@ -92,7 +92,7 @@ public sealed class InMemoryDnsCache : IDnsCache, IDisposable
     /// </summary>
     private void EnforceMaxEntries()
     {
-        var cacheCount = _cache.Count;
+        int cacheCount = _cache.Count;
         if (cacheCount <= _options.MaxEntries)
         {
             return;
@@ -105,7 +105,7 @@ public sealed class InMemoryDnsCache : IDnsCache, IDisposable
             .Select(kvp => kvp.Key)
             .ToList();
 
-        foreach (var key in entriesToRemove)
+        foreach (string? key in entriesToRemove)
         {
             _cache.TryRemove(key, out _);
         }

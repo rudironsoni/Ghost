@@ -12,7 +12,7 @@ public interface IItemLoader<T> where T : class, new()
     /// <param name="field">The name of the property to populate.</param>
     /// <param name="xpath">The XPath selector to extract values.</param>
     /// <returns>The current loader instance for method chaining.</returns>
-    IItemLoader<T> AddXPath(string field, string xpath);
+    public IItemLoader<T> AddXPath(string field, string xpath);
 
     /// <summary>
     /// Adds a field extractor using a CSS selector.
@@ -20,7 +20,7 @@ public interface IItemLoader<T> where T : class, new()
     /// <param name="field">The name of the property to populate.</param>
     /// <param name="selector">The CSS selector to extract values.</param>
     /// <returns>The current loader instance for method chaining.</returns>
-    IItemLoader<T> AddCss(string field, string selector);
+    public IItemLoader<T> AddCss(string field, string selector);
 
     /// <summary>
     /// Adds a static value to a field.
@@ -28,7 +28,7 @@ public interface IItemLoader<T> where T : class, new()
     /// <param name="field">The name of the property to populate.</param>
     /// <param name="value">The value to add.</param>
     /// <returns>The current loader instance for method chaining.</returns>
-    IItemLoader<T> AddValue(string field, string value);
+    public IItemLoader<T> AddValue(string field, string value);
 
     /// <summary>
     /// Adds a processor function to transform a field's value.
@@ -36,19 +36,19 @@ public interface IItemLoader<T> where T : class, new()
     /// <param name="field">The name of the property to process.</param>
     /// <param name="processor">The transformation function.</param>
     /// <returns>The current loader instance for method chaining.</returns>
-    IItemLoader<T> AddProcessor(string field, Func<string, string> processor);
+    public IItemLoader<T> AddProcessor(string field, Func<string, string> processor);
 
     /// <summary>
     /// Extracts data from HTML and returns a single populated item.
     /// </summary>
     /// <param name="html">The HTML content to parse.</param>
     /// <returns>A populated item instance.</returns>
-    T LoadItem(string html);
+    public T LoadItem(string html);
 
     /// <summary>
     /// Extracts data from HTML and returns multiple populated items.
     /// </summary>
     /// <param name="html">The HTML content to parse.</param>
     /// <returns>A list of populated item instances.</returns>
-    List<T> LoadItems(string html);
+    public List<T> LoadItems(string html);
 }

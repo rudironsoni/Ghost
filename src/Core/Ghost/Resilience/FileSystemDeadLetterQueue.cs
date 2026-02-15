@@ -76,7 +76,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        var rootPath = options.RootPath;
+        string rootPath = options.RootPath;
         if (string.IsNullOrWhiteSpace(rootPath))
         {
             throw new ArgumentException("RootPath must be provided.", nameof(options));
@@ -131,7 +131,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
             job.Platform = string.Empty;
         }
 
-        var path = GetActiveJobPath(job);
+        string path = GetActiveJobPath(job);
         await WriteJobAsync(path, job).ConfigureAwait(false);
     }
 
@@ -158,7 +158,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
 
         job.Metadata = metadata;
 
-        var path = GetActiveJobPath(job);
+        string path = GetActiveJobPath(job);
         await WriteJobAsync(path, job).ConfigureAwait(false);
     }
 
@@ -171,16 +171,16 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
 
         var items = new List<Ghost.Core.DeadLetterItem>();
 
-        foreach (var path in EnumerateActiveFiles().Take(count))
+        foreach (string? path in EnumerateActiveFiles().Take(count))
         {
-            var job = await ReadJobAsync(path).ConfigureAwait(false);
+            FailedScrapeJob? job = await ReadJobAsync(path).ConfigureAwait(false);
             if (job is null) continue;
 
-            var data = job.Metadata?.GetValueOrDefault("Data")?.ToString() ?? string.Empty;
+            string data = job.Metadata?.GetValueOrDefault("Data")?.ToString() ?? string.Empty;
 
             items.Add(new Ghost.Core.DeadLetterItem
             {
-                Id = Guid.TryParse(job.Id, out var guid) ? guid : Guid.NewGuid(),
+                Id = Guid.TryParse(job.Id, out Guid guid) ? guid : Guid.NewGuid(),
                 EnqueuedAt = job.FailedAt,
                 Reason = job.Error,
                 ExceptionMessage = job.StackTrace,
@@ -201,11 +201,11 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
         EnsureDirectories();
         await AutoArchiveIfDueAsync().ConfigureAwait(false);
 
-        var items = await PeekAsync(count, cancellationToken).ConfigureAwait(false);
+        List<DeadLetterItem> items = await PeekAsync(count, cancellationToken).ConfigureAwait(false);
 
-        foreach (var item in items)
+        foreach (DeadLetterItem item in items)
         {
-            var path = FindJobFile(item.Id.ToString("N") ?? string.Empty);
+            string? path = FindJobFile(item.Id.ToString("N") ?? string.Empty);
             if (path is not null)
             {
                 SafeDelete(path);
@@ -229,7 +229,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
         cancellationToken.ThrowIfCancellationRequested();
         EnsureDirectories();
 
-        foreach (var path in EnumerateActiveFiles())
+        foreach (string path in EnumerateActiveFiles())
         {
             SafeDelete(path);
         }
@@ -244,16 +244,16 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
         EnsureDirectories();
         await AutoArchiveIfDueAsync().ConfigureAwait(false);
 
-        var threshold = GetThresholdUtc(since);
+        DateTime threshold = GetThresholdUtc(since);
         var jobs = new List<FailedScrapeJob>();
 
-        foreach (var path in EnumerateActiveFiles())
+        foreach (string path in EnumerateActiveFiles())
         {
-            var job = await ReadJobAsync(path).ConfigureAwait(false);
+            FailedScrapeJob? job = await ReadJobAsync(path).ConfigureAwait(false);
             if (job is null)
                 continue;
 
-            var failedAt = GetFailedAtUtc(job, path);
+            DateTime failedAt = GetFailedAtUtc(job, path);
             if (failedAt >= threshold)
             {
                 jobs.Add(job);
@@ -275,12 +275,12 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
         EnsureDirectories();
         await AutoArchiveIfDueAsync().ConfigureAwait(false);
 
-        var threshold = GetThresholdUtc(since);
+        DateTime threshold = GetThresholdUtc(since);
         var jobs = new List<FailedScrapeJob>();
 
-        foreach (var path in EnumerateActiveFiles())
+        foreach (string path in EnumerateActiveFiles())
         {
-            var job = await ReadJobAsync(path).ConfigureAwait(false);
+            FailedScrapeJob? job = await ReadJobAsync(path).ConfigureAwait(false);
             if (job is null)
             {
                 continue;
@@ -291,7 +291,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
                 continue;
             }
 
-            var failedAt = GetFailedAtUtc(job, path);
+            DateTime failedAt = GetFailedAtUtc(job, path);
             if (failedAt >= threshold)
             {
                 jobs.Add(job);
@@ -327,9 +327,9 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
 
         EnsureDirectories();
 
-        var match = FindJobFile(jobId)
+        string match = FindJobFile(jobId)
             ?? throw new InvalidOperationException($"Failed job '{jobId}' not found.");
-        var job = await ReadJobAsync(match).ConfigureAwait(false)
+        FailedScrapeJob job = await ReadJobAsync(match).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Failed job '{jobId}' could not be loaded.");
 
         job.RetryCount++;
@@ -344,15 +344,15 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
         ValidateLookback(since);
         EnsureDirectories();
 
-        var threshold = GetThresholdUtc(since);
+        DateTime threshold = GetThresholdUtc(since);
 
-        foreach (var path in EnumerateActiveFiles())
+        foreach (string path in EnumerateActiveFiles())
         {
-            var job = await ReadJobAsync(path).ConfigureAwait(false);
+            FailedScrapeJob? job = await ReadJobAsync(path).ConfigureAwait(false);
             if (job is null)
                 continue;
 
-            var failedAt = GetFailedAtUtc(job, path);
+            DateTime failedAt = GetFailedAtUtc(job, path);
             if (failedAt < threshold)
                 continue;
 
@@ -373,9 +373,9 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
 
         EnsureDirectories();
 
-        var archiveMatch = FindJobFile(jobId)
+        string archiveMatch = FindJobFile(jobId)
             ?? throw new InvalidOperationException($"Failed job '{jobId}' not found.");
-        var job = await ReadJobAsync(archiveMatch).ConfigureAwait(false)
+        FailedScrapeJob job = await ReadJobAsync(archiveMatch).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Failed job '{jobId}' could not be loaded.");
 
         await MoveToArchiveAsync(archiveMatch, job).ConfigureAwait(false);
@@ -387,15 +387,15 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
         ValidateLookback(olderThan);
         EnsureDirectories();
 
-        var threshold = GetThresholdUtc(olderThan);
+        DateTime threshold = GetThresholdUtc(olderThan);
 
-        foreach (var path in EnumerateActiveFiles())
+        foreach (string path in EnumerateActiveFiles())
         {
-            var job = await ReadJobAsync(path).ConfigureAwait(false);
+            FailedScrapeJob? job = await ReadJobAsync(path).ConfigureAwait(false);
             if (job is null)
                 continue;
 
-            var failedAt = GetFailedAtUtc(job, path);
+            DateTime failedAt = GetFailedAtUtc(job, path);
             if (failedAt <= threshold)
                 await MoveToArchiveAsync(path, job).ConfigureAwait(false);
         }
@@ -421,7 +421,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
             return;
         }
 
-        var now = DateTime.UtcNow;
+        DateTime now = DateTime.UtcNow;
         lock (_archiveGate)
         {
             if (now - _lastArchiveCheckUtc < _options.ArchiveCheckInterval)
@@ -447,8 +447,8 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
 
     private string GetActiveJobPath(FailedScrapeJob job)
     {
-        var platformKey = NormalizePlatformKey(job.Platform);
-        var fileName = $"{platformKey}_{job.Id}.json";
+        string platformKey = NormalizePlatformKey(job.Platform);
+        string fileName = $"{platformKey}_{job.Id}.json";
         return Path.Combine(_activePath, fileName);
     }
 
@@ -459,7 +459,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
             return "unknown";
         }
 
-        var normalized = new string(platform.Trim().ToLowerInvariant()
+        string normalized = new string(platform.Trim().ToLowerInvariant()
             .Select(c => char.IsLetterOrDigit(c) ? c : '-')
             .ToArray());
 
@@ -481,8 +481,8 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
             return DateTime.MinValue;
         }
 
-        var now = DateTime.UtcNow;
-        var maxSpan = now - DateTime.MinValue;
+        DateTime now = DateTime.UtcNow;
+        TimeSpan maxSpan = now - DateTime.MinValue;
         if (span >= maxSpan)
         {
             return DateTime.MinValue;
@@ -498,28 +498,28 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
             return DateTime.SpecifyKind(job.FailedAt, DateTimeKind.Utc);
         }
 
-        var lastWrite = File.Exists(path) ? File.GetLastWriteTimeUtc(path) : DateTime.UtcNow;
+        DateTime lastWrite = File.Exists(path) ? File.GetLastWriteTimeUtc(path) : DateTime.UtcNow;
         job.FailedAt = lastWrite;
         return lastWrite;
     }
 
     private string? FindJobFile(string jobId)
     {
-        foreach (var path in EnumerateActiveFiles())
+        foreach (string path in EnumerateActiveFiles())
         {
-            var fileName = Path.GetFileNameWithoutExtension(path);
+            string fileName = Path.GetFileNameWithoutExtension(path);
             if (string.IsNullOrWhiteSpace(fileName))
             {
                 continue;
             }
 
-            var underscore = fileName.LastIndexOf('_');
+            int underscore = fileName.LastIndexOf('_');
             if (underscore <= 0 || underscore >= fileName.Length - 1)
             {
                 continue;
             }
 
-            var id = fileName[(underscore + 1)..];
+            string id = fileName[(underscore + 1)..];
             if (string.Equals(id, jobId, StringComparison.OrdinalIgnoreCase))
             {
                 return path;
@@ -533,9 +533,12 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
     {
         try
         {
-            await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
-            var job = await JsonSerializer.DeserializeAsync<FailedScrapeJob>(stream, _serializerOptions).ConfigureAwait(false);
-            return job;
+            FileStream stream = new(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
+            await using (stream.ConfigureAwait(false))
+            {
+                FailedScrapeJob? job = await JsonSerializer.DeserializeAsync<FailedScrapeJob>(stream, _serializerOptions).ConfigureAwait(false);
+                return job;
+            }
         }
         catch (FileNotFoundException)
         {
@@ -554,16 +557,17 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
 
     private async Task WriteJobAsync(string path, FailedScrapeJob job)
     {
-        var directory = Path.GetDirectoryName(path);
+        string? directory = Path.GetDirectoryName(path);
         if (directory is not null)
         {
             Directory.CreateDirectory(directory);
         }
 
-        var tempPath = path + ".tmp-" + Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
+        string tempPath = path + ".tmp-" + Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
         try
         {
-            await using (var stream = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, useAsync: true))
+            FileStream stream = new(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, useAsync: true);
+            await using (stream.ConfigureAwait(false))
             {
                 await JsonSerializer.SerializeAsync(stream, job, _serializerOptions).ConfigureAwait(false);
                 await stream.FlushAsync().ConfigureAwait(false);
@@ -583,12 +587,12 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
     {
         try
         {
-            var failedAt = GetFailedAtUtc(job, path);
-            var bucket = failedAt.ToString("yyyy-MM", CultureInfo.InvariantCulture);
-            var archiveBucketPath = Path.Combine(_archivePath, bucket);
+            DateTime failedAt = GetFailedAtUtc(job, path);
+            string bucket = failedAt.ToString("yyyy-MM", CultureInfo.InvariantCulture);
+            string archiveBucketPath = Path.Combine(_archivePath, bucket);
             Directory.CreateDirectory(archiveBucketPath);
 
-            var destination = Path.Combine(archiveBucketPath, Path.GetFileName(path));
+            string destination = Path.Combine(archiveBucketPath, Path.GetFileName(path));
             destination = GetUniquePath(destination);
 
             await Task.Run(() => File.Move(path, destination, true)).ConfigureAwait(false);
@@ -604,13 +608,13 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
         if (!File.Exists(path))
             return path;
 
-        var directory = Path.GetDirectoryName(path) ?? string.Empty;
-        var fileName = Path.GetFileNameWithoutExtension(path);
-        var extension = Path.GetExtension(path);
+        string directory = Path.GetDirectoryName(path) ?? string.Empty;
+        string fileName = Path.GetFileNameWithoutExtension(path);
+        string extension = Path.GetExtension(path);
 
-        for (var i = 1; i <= 1000; i++)
+        for (int i = 1; i <= 1000; i++)
         {
-            var candidate = Path.Combine(directory, $"{fileName}_{i}{extension}");
+            string candidate = Path.Combine(directory, $"{fileName}_{i}{extension}");
             if (!File.Exists(candidate))
                 return candidate;
         }

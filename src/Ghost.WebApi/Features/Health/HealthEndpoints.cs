@@ -33,7 +33,7 @@ public static class HealthEndpoints
 
     public static void MapHealthEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/jobs");
+        RouteGroupBuilder group = app.MapGroup("/api/jobs");
         group.MapGet("/health", CheckJobsHealth);
     }
 
@@ -50,7 +50,7 @@ public static class HealthEndpoints
         };
 
         // Create a logger from the injected factory so DI doesn't require ILogger directly
-        var logger = loggerFactory.CreateLogger("Health");
+        ILogger logger = loggerFactory.CreateLogger("Health");
 
         // Test each platform with a simple search query
         var testCriteria = new JobSearchCriteria
@@ -67,48 +67,48 @@ public static class HealthEndpoints
             // Test Google Jobs if enabled
             if (IsPlatformEnabled("Google"))
             {
-                var googleStatus = await TestPlatformHealthAsync(
+                PlatformHealthStatus googleStatus = await TestPlatformHealthAsync(
                     "Google",
                     testCriteria with { Sources = new List<string> { "Google" } },
                     jobClient,
                     loggerFactory,
-                    ct);
+                    ct).ConfigureAwait(false);
                 healthStatus.Platforms["Google"] = googleStatus;
             }
 
             // Test Glassdoor if enabled
             if (IsPlatformEnabled("Glassdoor"))
             {
-                var glassdoorStatus = await TestPlatformHealthAsync(
+                PlatformHealthStatus glassdoorStatus = await TestPlatformHealthAsync(
                     "Glassdoor",
                     testCriteria with { Sources = new List<string> { "Glassdoor" } },
                     jobClient,
                     loggerFactory,
-                    ct);
+                    ct).ConfigureAwait(false);
                 healthStatus.Platforms["Glassdoor"] = glassdoorStatus;
             }
 
             // Test LinkedIn if enabled
             if (IsPlatformEnabled("LinkedIn"))
             {
-                var linkedinStatus = await TestPlatformHealthAsync(
+                PlatformHealthStatus linkedinStatus = await TestPlatformHealthAsync(
                     "LinkedIn",
                     testCriteria with { Sources = new List<string> { "LinkedIn" } },
                     jobClient,
                     loggerFactory,
-                    ct);
+                    ct).ConfigureAwait(false);
                 healthStatus.Platforms["LinkedIn"] = linkedinStatus;
             }
 
             // Test Indeed if enabled
             if (IsPlatformEnabled("Indeed"))
             {
-                var indeedStatus = await TestPlatformHealthAsync(
+                PlatformHealthStatus indeedStatus = await TestPlatformHealthAsync(
                     "Indeed",
                     testCriteria with { Sources = new List<string> { "Indeed" } },
                     jobClient,
                     loggerFactory,
-                    ct);
+                    ct).ConfigureAwait(false);
                 healthStatus.Platforms["Indeed"] = indeedStatus;
             }
 
@@ -143,15 +143,15 @@ public static class HealthEndpoints
         };
 
         // Create a logger from the injected factory so DI doesn't require ILogger directly
-        var logger = loggerFactory.CreateLogger("Health");
+        ILogger logger = loggerFactory.CreateLogger("Health");
 
         try
         {
             LogPlatformHealthTest(logger, platformName, null);
 
-            var startTime = DateTime.UtcNow;
-            var result = await jobClient.SearchJobsAsync(criteria, ct);
-            var duration = DateTime.UtcNow - startTime;
+            DateTime startTime = DateTime.UtcNow;
+            IReadOnlyList<JobListing> result = await jobClient.SearchJobsAsync(criteria, ct).ConfigureAwait(false);
+            TimeSpan duration = DateTime.UtcNow - startTime;
 
             status.ResponseTimeMs = (int)duration.TotalMilliseconds;
             status.LastSuccessfulSearch = DateTime.UtcNow;
@@ -194,9 +194,9 @@ public static class HealthEndpoints
         if (platforms.Count == 0)
             return "unknown";
 
-        var hasUnhealthy = platforms.Values.Any(p => p.Status == "unhealthy");
-        var hasDegraded = platforms.Values.Any(p => p.Status == "degraded");
-        var allHealthy = platforms.Values.All(p => p.Status == "healthy");
+        bool hasUnhealthy = platforms.Values.Any(p => p.Status == "unhealthy");
+        bool hasDegraded = platforms.Values.Any(p => p.Status == "degraded");
+        bool allHealthy = platforms.Values.All(p => p.Status == "healthy");
 
         return hasUnhealthy ? "unhealthy" :
                hasDegraded ? "degraded" :

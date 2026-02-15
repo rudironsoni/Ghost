@@ -98,7 +98,7 @@ public sealed partial class PeriodicStatsLogging : IPeriodicStatsLogging, IDispo
 
         try
         {
-            var stats = _statsCollector.GetStats(_currentSpiderId);
+            SpiderStats stats = _statsCollector.GetStats(_currentSpiderId);
 
             LogSpiderStats(
                 stats.SpiderId,

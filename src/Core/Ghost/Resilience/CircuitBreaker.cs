@@ -84,7 +84,7 @@ public sealed class CircuitBreaker : ICircuitBreaker
 
         try
         {
-            var result = await action.Invoke();
+            T? result = await action.Invoke().ConfigureAwait(false);
             RecordSuccess();
             return result;
         }
@@ -157,7 +157,7 @@ public sealed class CircuitBreaker : ICircuitBreaker
         {
             if (_state == CircuitState.Open)
             {
-                var elapsed = DateTime.UtcNow - _stateEnteredAt;
+                TimeSpan elapsed = DateTime.UtcNow - _stateEnteredAt;
                 if (elapsed >= _options.Timeout)
                 {
                     args = TransitionTo(CircuitState.HalfOpen);
@@ -239,7 +239,7 @@ public sealed class CircuitBreaker : ICircuitBreaker
         if (_state == newState)
             return null;
 
-        var previous = _state;
+        CircuitState previous = _state;
         _state = newState;
         _stateEnteredAt = DateTime.UtcNow;
 
@@ -268,7 +268,7 @@ public sealed class CircuitBreaker : ICircuitBreaker
         if (args == null)
             return;
 
-        var handler = StateChanged;
+        EventHandler<CircuitStateChangedEventArgs>? handler = StateChanged;
         handler?.Invoke(this, args);
     }
 }

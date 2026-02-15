@@ -59,12 +59,12 @@ public sealed class RotatingProxyPool : IDisposable
     {
         await EnsureInitializedAsync(ct).ConfigureAwait(false);
 
-        var healthyProxies = GetHealthyProxies();
+        List<ProxyPoolEntry> healthyProxies = GetHealthyProxies();
         if (healthyProxies.Count == 0)
             return null;
 
-        var index = (int)(Interlocked.Increment(ref _roundRobinIndex) % healthyProxies.Count);
-        var entry = healthyProxies[index];
+        int index = (int)(Interlocked.Increment(ref _roundRobinIndex) % healthyProxies.Count);
+        ProxyPoolEntry entry = healthyProxies[index];
         entry.LastUsed = DateTimeOffset.UtcNow;
         entry.UsageCount++;
 
@@ -78,7 +78,7 @@ public sealed class RotatingProxyPool : IDisposable
     {
         await EnsureInitializedAsync(ct).ConfigureAwait(false);
 
-        var healthyProxies = GetHealthyProxies();
+        List<ProxyPoolEntry> healthyProxies = GetHealthyProxies();
         if (healthyProxies.Count == 0)
             return null;
 
@@ -102,7 +102,7 @@ public sealed class RotatingProxyPool : IDisposable
             return null;
 
         // Return the least used proxy from filtered results
-        var entry = healthyProxies.OrderBy(p => p.UsageCount).First();
+        ProxyPoolEntry entry = healthyProxies.OrderBy(p => p.UsageCount).First();
         entry.LastUsed = DateTimeOffset.UtcNow;
         entry.UsageCount++;
 
@@ -116,8 +116,8 @@ public sealed class RotatingProxyPool : IDisposable
     {
         ArgumentNullException.ThrowIfNull(proxy);
 
-        var key = GetProxyKey(proxy);
-        if (!_proxyPool.TryGetValue(key, out var entry))
+        string key = GetProxyKey(proxy);
+        if (!_proxyPool.TryGetValue(key, out ProxyPoolEntry? entry))
             return;
 
         entry.TotalRequests++;
@@ -142,7 +142,7 @@ public sealed class RotatingProxyPool : IDisposable
             }
         }
 
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     /// <summary>
@@ -167,16 +167,16 @@ public sealed class RotatingProxyPool : IDisposable
     private async Task RefreshPoolCoreAsync(CancellationToken ct)
     {
         // Scrape proxies
-        var proxies = await _scraper.FetchProxiesAsync(ct).ConfigureAwait(false);
+        IEnumerable<ProxyInfo> proxies = await _scraper.FetchProxiesAsync(ct).ConfigureAwait(false);
 
         // Health check each proxy
-        var healthCheckTasks = proxies.Select(p => _healthChecker.CheckHealthAsync(p, ct));
-        var results = await Task.WhenAll(healthCheckTasks).ConfigureAwait(false);
+        IEnumerable<Task<ProxyHealthCheckResult>> healthCheckTasks = proxies.Select(p => _healthChecker.CheckHealthAsync(p, ct));
+        ProxyHealthCheckResult[] results = await Task.WhenAll(healthCheckTasks).ConfigureAwait(false);
 
         // Add healthy proxies to pool
-        foreach (var result in results.Where(r => r.IsHealthy))
+        foreach (ProxyHealthCheckResult? result in results.Where(r => r.IsHealthy))
         {
-            var key = GetProxyKey(result.Proxy);
+            string key = GetProxyKey(result.Proxy);
             _proxyPool.TryAdd(key, new ProxyPoolEntry
             {
                 Proxy = result.Proxy,

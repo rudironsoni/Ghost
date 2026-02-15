@@ -13,20 +13,20 @@ public interface IStorage
     /// Gets the name of this storage implementation.
     /// </summary>
     /// <value>A unique identifier for the storage type.</value>
-    string Name { get; }
+    public string Name { get; }
 
     /// <summary>
     /// Gets a value indicating whether this storage is available.
     /// </summary>
     /// <value><c>true</c> if the storage is properly configured and accessible; otherwise, <c>false</c>.</value>
-    bool IsAvailable { get; }
+    public bool IsAvailable { get; }
 
     /// <summary>
     /// Initializes the storage connection and prepares it for use.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task InitializeAsync(CancellationToken cancellationToken = default);
+    public Task InitializeAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Stores a single item.
@@ -36,7 +36,7 @@ public interface IStorage
     /// <param name="context">The storage context with metadata.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation with the storage result.</returns>
-    Task<StorageResult> StoreAsync<T>(T item, StorageContext context, CancellationToken cancellationToken = default);
+    public Task<StorageResult> StoreAsync<T>(T item, StorageContext context, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Stores multiple items in a batch.
@@ -46,7 +46,7 @@ public interface IStorage
     /// <param name="context">The storage context with metadata.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation with the storage result.</returns>
-    Task<StorageResult> StoreBatchAsync<T>(
+    public Task<StorageResult> StoreBatchAsync<T>(
         IEnumerable<T> items,
         StorageContext context,
         CancellationToken cancellationToken = default);
@@ -56,14 +56,14 @@ public interface IStorage
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task FlushAsync(CancellationToken cancellationToken = default);
+    public Task FlushAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Closes the storage connection and releases resources.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task CloseAsync(CancellationToken cancellationToken = default);
+    public Task CloseAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>

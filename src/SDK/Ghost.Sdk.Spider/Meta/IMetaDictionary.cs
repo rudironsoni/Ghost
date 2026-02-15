@@ -24,7 +24,7 @@ public interface IMetaDictionary : IDictionary<string, object>
     /// <returns>The value associated with the specified key, cast to type <typeparamref name="T"/>.</returns>
     /// <exception cref="KeyNotFoundException">The key does not exist in the dictionary.</exception>
     /// <exception cref="InvalidCastException">The value cannot be cast to type <typeparamref name="T"/>.</exception>
-    T GetValue<T>(string key);
+    public T GetValue<T>(string key);
 
     /// <summary>
     /// Sets the value associated with the specified key.
@@ -32,7 +32,7 @@ public interface IMetaDictionary : IDictionary<string, object>
     /// <typeparam name="T">The type of the value to set.</typeparam>
     /// <param name="key">The key of the value to set.</param>
     /// <param name="value">The value to associate with the key.</param>
-    void SetValue<T>(string key, T value);
+    public void SetValue<T>(string key, T value);
 
     /// <summary>
     /// Attempts to get the value associated with the specified key, cast to the specified type.
@@ -48,5 +48,5 @@ public interface IMetaDictionary : IDictionary<string, object>
     /// <c>true</c> if the dictionary contains an element with the specified key
     /// and the value can be cast to type <typeparamref name="T"/>; otherwise, <c>false</c>.
     /// </returns>
-    bool TryGet<T>(string key, out T value);
+    public bool TryGet<T>(string key, out T value);
 }

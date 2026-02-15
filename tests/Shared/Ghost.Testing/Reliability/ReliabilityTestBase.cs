@@ -81,7 +81,7 @@ public abstract class ReliabilityTestBase : IAsyncLifetime, IDisposable
     {
         if (_diagnostics != null)
         {
-            await _diagnostics.DisposeAsync();
+            await _diagnostics.DisposeAsync().ConfigureAwait(false);
         }
 
         Dispose();
@@ -132,7 +132,7 @@ public abstract class ReliabilityTestBase : IAsyncLifetime, IDisposable
             return string.Empty;
         }
 
-        return await _diagnostics.CaptureFailureAsync(page, exception);
+        return await _diagnostics.CaptureFailureAsync(page, exception).ConfigureAwait(false);
     }
 
     /// <summary>

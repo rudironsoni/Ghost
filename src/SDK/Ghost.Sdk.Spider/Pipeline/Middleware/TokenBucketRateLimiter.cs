@@ -104,7 +104,7 @@ public sealed class TokenBucketRateLimiter
                 }
 
                 // Calculate how long to wait for the next token
-                var tokensNeeded = 1.0 - _tokens;
+                double tokensNeeded = 1.0 - _tokens;
                 waitTime = TimeSpan.FromSeconds(tokensNeeded / _tokensPerSecond);
             }
 
@@ -119,12 +119,12 @@ public sealed class TokenBucketRateLimiter
     /// </summary>
     private void RefillTokens()
     {
-        var now = DateTime.UtcNow;
-        var elapsed = (now - _lastRefill).TotalSeconds;
+        DateTime now = DateTime.UtcNow;
+        double elapsed = (now - _lastRefill).TotalSeconds;
 
         if (elapsed > 0)
         {
-            var tokensToAdd = elapsed * _tokensPerSecond;
+            double tokensToAdd = elapsed * _tokensPerSecond;
             _tokens = Math.Min(_capacity, _tokens + tokensToAdd);
             _lastRefill = now;
         }

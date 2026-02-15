@@ -43,7 +43,7 @@ public sealed class HealthReportService : IHealthReportService
     {
         ct.ThrowIfCancellationRequested();
 
-        var platformHealth = _jobScrapers
+        PlatformHealth[] platformHealth = _jobScrapers
             .Where(scraper => !string.IsNullOrWhiteSpace(scraper.PlatformName))
             .GroupBy(scraper => scraper.PlatformName, StringComparer.OrdinalIgnoreCase)
             .Select(group => new PlatformHealth
@@ -55,9 +55,9 @@ public sealed class HealthReportService : IHealthReportService
             .ToArray();
 
         var proxyHealth = new List<ProxyHealth>();
-        foreach (var proxySource in _proxySources)
+        foreach (IProxySource proxySource in _proxySources)
         {
-            proxyHealth.Add(await BuildProxyHealthAsync(proxySource, ct));
+            proxyHealth.Add(await BuildProxyHealthAsync(proxySource, ct).ConfigureAwait(false));
         }
 
         var report = new HealthReport
@@ -71,15 +71,15 @@ public sealed class HealthReportService : IHealthReportService
 
     private async Task<ProxyHealth> BuildProxyHealthAsync(IProxySource proxySource, CancellationToken ct)
     {
-        var sourceName = proxySource.GetType().Name;
+        string sourceName = proxySource.GetType().Name;
 
         try
         {
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeoutCts.CancelAfter(ProbeTimeout);
 
-            var proxies = await proxySource.FetchProxiesAsync(timeoutCts.Token).ConfigureAwait(false);
-            var firstProxy = proxies.FirstOrDefault();
+            IEnumerable<ProxyInfo> proxies = await proxySource.FetchProxiesAsync(timeoutCts.Token).ConfigureAwait(false);
+            ProxyInfo? firstProxy = proxies.FirstOrDefault();
 
             if (firstProxy is null)
             {

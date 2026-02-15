@@ -60,16 +60,16 @@ public sealed class GuestJobSearch : IGuestJobSearch
 
         var ids = new List<string>();
 
-        var q = Uri.EscapeDataString(criteria.Query ?? string.Empty);
-        var loc = Uri.EscapeDataString(criteria.Location ?? string.Empty);
+        string q = Uri.EscapeDataString(criteria.Query ?? string.Empty);
+        string loc = Uri.EscapeDataString(criteria.Location ?? string.Empty);
 
-        for (var offset = 0; ids.Count < limit; offset += 25)
+        for (int offset = 0; ids.Count < limit; offset += 25)
         {
             ct.ThrowIfCancellationRequested();
 
             // Build base URL and append time filter if present
-            var baseUrlDomain = _countryProvider.GetDomain(_options.Value.Country);
-            var baseUrl = $"{baseUrlDomain}/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={q}&location={loc}&start={offset}";
+            string baseUrlDomain = _countryProvider.GetDomain(_options.Value.Country);
+            string baseUrl = $"{baseUrlDomain}/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={q}&location={loc}&start={offset}";
             string? tpr = criteria.PostedDate switch
             {
                 TimePosted.Past24Hours => "r86400",
@@ -77,13 +77,13 @@ public sealed class GuestJobSearch : IGuestJobSearch
                 TimePosted.PastMonth => "r2592000",
                 _ => null
             };
-            var url = tpr is not null ? baseUrl + $"&f_TPR={tpr}" : baseUrl;
+            string url = tpr is not null ? baseUrl + $"&f_TPR={tpr}" : baseUrl;
 
             List<string>? found = null;
-            var success = false;
+            bool success = false;
 
             // Try up to 3 attempts, fetching a fresh proxy/session each time
-            for (var attempt = 1; attempt <= 3 && !success; attempt++)
+            for (int attempt = 1; attempt <= 3 && !success; attempt++)
             {
                 IBrowserSession? session = null;
                 IPage? page = null;
@@ -91,8 +91,8 @@ public sealed class GuestJobSearch : IGuestJobSearch
                 try
                 {
                     s_logSessionCreating(_logger, _options.Value.WarmUpEnabled, null);
-                    session = await _sessionPool.AcquireAsync(ct);
-                    page = await session.NewPageAsync(ct: ct);
+                    session = await _sessionPool.AcquireAsync(ct).ConfigureAwait(false);
+                    page = await session.NewPageAsync(ct: ct).ConfigureAwait(false);
 
                     s_logNavigating(_logger, url, null);
                     if (_options.Value.WarmUpEnabled)
@@ -100,24 +100,24 @@ public sealed class GuestJobSearch : IGuestJobSearch
                         try
                         {
                             // Simple warm-up: visit a safe URL first
-                            var warmUpUrl = "https://www.google.com";
+                            string warmUpUrl = "https://www.google.com";
                             var warmNav = new NavigationOptions { Timeout = 10_000, WaitUntil = WaitUntil.Load };
-                            await page.NavigateAsync(warmUpUrl, warmNav, ct: ct);
+                            await page.NavigateAsync(warmUpUrl, warmNav, ct: ct).ConfigureAwait(false);
                         }
                         catch { }
                     }
 
                     var navOptions = new NavigationOptions { Timeout = 30_000, WaitUntil = WaitUntil.Load };
-                    await page.NavigateAsync(url, navOptions, ct: ct);
+                    await page.NavigateAsync(url, navOptions, ct: ct).ConfigureAwait(false);
 
                     try
                     {
-                        await LinkedInRateLimitDetector.CheckAsync(page);
+                        await LinkedInRateLimitDetector.CheckAsync(page).ConfigureAwait(false);
                         s_logRateLimitPassed(_logger, url, null);
                     }
                     catch { }
 
-                    var html = await page.GetContentAsync(ct);
+                    string html = await page.GetContentAsync(ct).ConfigureAwait(false);
                     if (string.IsNullOrEmpty(html))
                     {
                         success = true;
@@ -140,10 +140,10 @@ public sealed class GuestJobSearch : IGuestJobSearch
 
                     if (found.Count > 0 && !string.IsNullOrEmpty(_options.Value.StorageStatePath))
                     {
-                        try { s_logSavingSession(_logger, _options.Value.StorageStatePath, null); await session.SaveStorageStateAsync(_options.Value.StorageStatePath); } catch { }
+                        try { s_logSavingSession(_logger, _options.Value.StorageStatePath, null); await session.SaveStorageStateAsync(_options.Value.StorageStatePath).ConfigureAwait(false); } catch { }
                     }
 
-                    foreach (var id in found)
+                    foreach (string id in found)
                     {
                         if (ids.Count >= limit) break;
                         if (!ids.Contains(id)) ids.Add(id);
@@ -183,7 +183,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
                 {
                     if (page != null)
                     {
-                        try { await page.DisposeAsync(); } catch { }
+                        try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
                     }
                     if (session != null)
                     {
@@ -210,9 +210,9 @@ public sealed class GuestJobSearch : IGuestJobSearch
     {
         ArgumentNullException.ThrowIfNull(jobId);
         // Try up to 3 attempts, recreating session on Playwright failures (proxy tunnel issues etc.)
-        var domain = _countryProvider.GetDomain(_options.Value.Country);
-        var url = $"{domain}/jobs-guest/jobs/api/jobPosting/{jobId}";
-        for (var attempt = 1; attempt <= 3; attempt++)
+        string domain = _countryProvider.GetDomain(_options.Value.Country);
+        string url = $"{domain}/jobs-guest/jobs/api/jobPosting/{jobId}";
+        for (int attempt = 1; attempt <= 3; attempt++)
         {
             IBrowserSession? session = null;
             IPage? page = null;
@@ -220,8 +220,8 @@ public sealed class GuestJobSearch : IGuestJobSearch
             try
             {
                 s_logSessionCreating(_logger, _options.Value.WarmUpEnabled, null);
-                session = await _sessionPool.AcquireAsync(ct);
-                page = await session.NewPageAsync(ct: ct);
+                session = await _sessionPool.AcquireAsync(ct).ConfigureAwait(false);
+                page = await session.NewPageAsync(ct: ct).ConfigureAwait(false);
 
                 try
                 {
@@ -231,18 +231,18 @@ public sealed class GuestJobSearch : IGuestJobSearch
                         try
                         {
                             // Simple warm-up: visit a safe URL first
-                            var warmUpUrl = "https://www.google.com";
+                            string warmUpUrl = "https://www.google.com";
                             var warmNav = new NavigationOptions { Timeout = 10_000, WaitUntil = WaitUntil.Load };
-                            await page.NavigateAsync(warmUpUrl, warmNav, ct: ct);
+                            await page.NavigateAsync(warmUpUrl, warmNav, ct: ct).ConfigureAwait(false);
                         }
                         catch { }
                     }
 
                     var navOptions = new NavigationOptions { Timeout = 30_000, WaitUntil = WaitUntil.Load };
-                    await page.NavigateAsync(url, navOptions, ct: ct);
-                    try { await LinkedInRateLimitDetector.CheckAsync(page); } catch { }
+                    await page.NavigateAsync(url, navOptions, ct: ct).ConfigureAwait(false);
+                    try { await LinkedInRateLimitDetector.CheckAsync(page).ConfigureAwait(false); } catch { }
                     Console.WriteLine($"[DEBUG] Fetching content for {jobId}...");
-                    var html = await page.GetContentAsync(ct);
+                    string html = await page.GetContentAsync(ct).ConfigureAwait(false);
 
                     // NOTE: debug artifacts removed - production code should not write files during parsing
                     if (string.IsNullOrEmpty(html)) return null;
@@ -256,7 +256,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
                     // Use the JsonLdExtractor implementation from Ghost.Utilities via DI/Activator
                     var extractor = (Ghost.Abstractions.IJsonLdExtractor?)Activator.CreateInstance(Type.GetType("Ghost.Utilities.JsonLdExtractor, Ghost.Core") ?? typeof(Ghost.Utilities.JsonLdExtractor));
                     var parser = new JsonLdParser(extractor!);
-                    var parsed = parser.Parse(html, jobId, url);
+                    JobListing? parsed = parser.Parse(html, jobId, url);
 
                     // If JSON-LD parsing failed to extract critical fields, fall back to DOM scraping
                     // We check Description, Company, or Location as primary signals of a good parse
@@ -269,14 +269,14 @@ public sealed class GuestJobSearch : IGuestJobSearch
                         // Helper to scrape first non-empty selector text
                         static async Task<string?> ScrapeFirstAsync(IPage p, string[] selectors, CancellationToken ct)
                         {
-                            foreach (var sel in selectors)
+                            foreach (string sel in selectors)
                             {
                                 ct.ThrowIfCancellationRequested();
                                 try
                                 {
-                                    var handle = await p.QuerySelectorAsync(sel, ct);
+                                    IElement? handle = await p.QuerySelectorAsync(sel, ct).ConfigureAwait(false);
                                     if (handle is null) continue;
-                                    var txt = await handle.GetTextContentAsync(ct);
+                                    string? txt = await handle.GetTextContentAsync(ct).ConfigureAwait(false);
                                     if (!string.IsNullOrWhiteSpace(txt)) return txt?.Trim();
                                 }
                                 catch { }
@@ -285,7 +285,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
                         }
 
                         // Robust selectors for guest view (updated 2026)
-                        var descSelectors = new[] {
+                        string[] descSelectors = new[] {
                             ".show-more-less-html__markup",
                             ".description__text",
                             "#job-details",
@@ -293,13 +293,13 @@ public sealed class GuestJobSearch : IGuestJobSearch
                             ".core-section-container__content"
                         };
 
-                        var titleSelectors = new[] {
+                        string[] titleSelectors = new[] {
                             ".top-card-layout__title",
                             ".top-card-layout__entity-info h1",
                             "h1"
                         };
 
-                        var companySelectors = new[] {
+                        string[] companySelectors = new[] {
                             ".top-card-layout__first-subline .topcard__org-name-link",
                             ".top-card-layout__company-url",
                             "a[data-tracking-control-name='public_jobs_topcard-org-name']",
@@ -307,7 +307,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
                             ".topcard__org-name-link"
                         };
 
-                        var locationSelectors = new[] {
+                        string[] locationSelectors = new[] {
                             ".top-card-layout__first-subline .topcard__flavor:not(.topcard__org-name-link)",
                             ".top-card-layout__first-subline .topcard__flavor--bullet",
                             ".job-details-jobs-unified-top-card__bullet",
@@ -315,30 +315,30 @@ public sealed class GuestJobSearch : IGuestJobSearch
                             ".topcard__flavor--bullet"
                         };
 
-                        var scrapedDescription = await ScrapeFirstAsync(page, descSelectors, ct);
-                        var scrapedTitle = await ScrapeFirstAsync(page, titleSelectors, ct);
-                        var scrapedCompany = await ScrapeFirstAsync(page, companySelectors, ct);
-                        var scrapedLocation = await ScrapeFirstAsync(page, locationSelectors, ct);
+                        string? scrapedDescription = await ScrapeFirstAsync(page, descSelectors, ct).ConfigureAwait(false);
+                        string? scrapedTitle = await ScrapeFirstAsync(page, titleSelectors, ct).ConfigureAwait(false);
+                        string? scrapedCompany = await ScrapeFirstAsync(page, companySelectors, ct).ConfigureAwait(false);
+                        string? scrapedLocation = await ScrapeFirstAsync(page, locationSelectors, ct).ConfigureAwait(false);
 
                         // Try to scrape criteria for JobType/Experience
                         string? scrapedJobType = null;
                         string? scrapedExperience = null;
 
                         // Prefer the newer criteria item structure
-                        var criteriaList = await page.QuerySelectorAllAsync(".description__job-criteria-list .description__job-criteria-item, .description__job-criteria-list li, .job-details-jobs-unified-top-card__job-insight", ct);
-                        foreach (var item in criteriaList)
+                        IReadOnlyList<IElement> criteriaList = await page.QuerySelectorAllAsync(".description__job-criteria-list .description__job-criteria-item, .description__job-criteria-list li, .job-details-jobs-unified-top-card__job-insight", ct).ConfigureAwait(false);
+                        foreach (IElement item in criteriaList)
                         {
                             try
                             {
-                                var text = await item.GetTextContentAsync(ct);
+                                string? text = await item.GetTextContentAsync(ct).ConfigureAwait(false);
                                 if (!string.IsNullOrEmpty(text))
                                 {
                                     // Normalize and split lines - header on first line, value on second
-                                    var parts = text.Split(s_newlines, StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).Where(p => p.Length > 0).ToArray();
+                                    string[] parts = text.Split(s_newlines, StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).Where(p => p.Length > 0).ToArray();
                                     if (parts.Length >= 2)
                                     {
-                                        var header = parts[0];
-                                        var value = parts[1];
+                                        string header = parts[0];
+                                        string value = parts[1];
                                         if (header.Contains("Employment", StringComparison.OrdinalIgnoreCase) || header.Contains("Employment type", StringComparison.OrdinalIgnoreCase)) scrapedJobType = value;
                                         else if (header.Contains("Seniority", StringComparison.OrdinalIgnoreCase) || header.Contains("Seniority level", StringComparison.OrdinalIgnoreCase)) scrapedExperience = value;
                                     }
@@ -351,7 +351,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
                         string? scrapedSalary = null;
                         try
                         {
-                            var salarySelectors = new[] {
+                            string[] salarySelectors = new[] {
                                 ".main-job-card__salary-info",
                                 ".job-details-jobs-unified-top-card__salary",
                                 ".job-details-jobs-unified-top-card__salary-info",
@@ -363,15 +363,15 @@ public sealed class GuestJobSearch : IGuestJobSearch
                             };
 
                             // Try each selector until we find a non-empty text
-                            foreach (var sel in salarySelectors)
+                            foreach (string? sel in salarySelectors)
                             {
                                 try
                                 {
-                                    var el = await page.QuerySelectorAsync(sel, ct);
+                                    IElement? el = await page.QuerySelectorAsync(sel, ct).ConfigureAwait(false);
                                     if (el is null) continue;
-                                    var raw = await el.GetTextContentAsync(ct);
+                                    string? raw = await el.GetTextContentAsync(ct).ConfigureAwait(false);
                                     if (string.IsNullOrWhiteSpace(raw)) continue;
-                                    var cleaned = System.Text.RegularExpressions.Regex.Replace(raw, "\\s+", " ").Trim();
+                                    string cleaned = System.Text.RegularExpressions.Regex.Replace(raw, "\\s+", " ").Trim();
                                     cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, "\\s*-\\s*", " - ");
                                     scrapedSalary = cleaned;
                                     break;
@@ -385,7 +385,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
                         DateTimeOffset? scrapedPostedAt = null;
                         try
                         {
-                            var postedSelectors = new[] {
+                            string[] postedSelectors = new[] {
                                 "time[datetime]",
                                 "time",
                                 ".posted-time-ago__text",
@@ -394,34 +394,34 @@ public sealed class GuestJobSearch : IGuestJobSearch
                                 "span.posted-time-ago__text"
                             };
 
-                            foreach (var sel in postedSelectors)
+                            foreach (string? sel in postedSelectors)
                             {
                                 try
                                 {
-                                    var el = await page.QuerySelectorAsync(sel, ct);
+                                    IElement? el = await page.QuerySelectorAsync(sel, ct).ConfigureAwait(false);
                                     if (el is null) continue;
-                                    var dtAttr = await el.GetAttributeAsync("datetime", ct);
-                                    if (!string.IsNullOrWhiteSpace(dtAttr) && DateTimeOffset.TryParse(dtAttr, out var dto))
+                                    string? dtAttr = await el.GetAttributeAsync("datetime", ct).ConfigureAwait(false);
+                                    if (!string.IsNullOrWhiteSpace(dtAttr) && DateTimeOffset.TryParse(dtAttr, out DateTimeOffset dto))
                                     {
                                         scrapedPostedAt = dto;
                                         break;
                                     }
 
-                                    var txt = await el.GetTextContentAsync(ct);
+                                    string? txt = await el.GetTextContentAsync(ct).ConfigureAwait(false);
                                     if (string.IsNullOrWhiteSpace(txt)) continue;
 
                                     // Try absolute parse first
-                                    if (DateTimeOffset.TryParse(txt, out var dtParsed))
+                                    if (DateTimeOffset.TryParse(txt, out DateTimeOffset dtParsed))
                                     {
                                         scrapedPostedAt = dtParsed;
                                         break;
                                     }
 
                                     // Try relative times like '3 days ago' or 'Posted 4 hours ago'
-                                    var m = Regex.Match(txt, "(?<n>\\d+)\\s*(minute|minutes|hour|hours|day|days|week|weeks|month|months|year|years)\\s*ago", RegexOptions.IgnoreCase);
-                                    if (m.Success && int.TryParse(m.Groups["n"].Value, out var n))
+                                    Match m = Regex.Match(txt, "(?<n>\\d+)\\s*(minute|minutes|hour|hours|day|days|week|weeks|month|months|year|years)\\s*ago", RegexOptions.IgnoreCase);
+                                    if (m.Success && int.TryParse(m.Groups["n"].Value, out int n))
                                     {
-                                        var unit = m.Groups[2].Value.ToLowerInvariant();
+                                        string unit = m.Groups[2].Value.ToLowerInvariant();
                                         TimeSpan delta = unit.StartsWith("minute", StringComparison.OrdinalIgnoreCase) ? TimeSpan.FromMinutes(n)
                                             : unit.StartsWith("hour", StringComparison.OrdinalIgnoreCase) ? TimeSpan.FromHours(n)
                                             : unit.StartsWith("day", StringComparison.OrdinalIgnoreCase) ? TimeSpan.FromDays(n)
@@ -440,12 +440,12 @@ public sealed class GuestJobSearch : IGuestJobSearch
                         // Regex fallback if selectors failed
                         if (string.IsNullOrWhiteSpace(scrapedCompany))
                         {
-                            var m = Regex.Match(html, "class=\"[^\"]*topcard__org-name-link[^\"]*\">\\s*([^<]+)\\s*<", RegexOptions.IgnoreCase);
+                            Match m = Regex.Match(html, "class=\"[^\"]*topcard__org-name-link[^\"]*\">\\s*([^<]+)\\s*<", RegexOptions.IgnoreCase);
                             if (m.Success) scrapedCompany = m.Groups[1].Value.Trim();
                         }
                         if (string.IsNullOrWhiteSpace(scrapedLocation))
                         {
-                            var m = Regex.Match(html, "class=\"[^\"]*topcard__flavor--bullet[^\"]*\">\\s*([^<]+)\\s*<", RegexOptions.IgnoreCase);
+                            Match m = Regex.Match(html, "class=\"[^\"]*topcard__flavor--bullet[^\"]*\">\\s*([^<]+)\\s*<", RegexOptions.IgnoreCase);
                             if (m.Success) scrapedLocation = m.Groups[1].Value.Trim();
                         }
 
@@ -468,12 +468,12 @@ public sealed class GuestJobSearch : IGuestJobSearch
                         }
                         else
                         {
-                            var desc = string.IsNullOrWhiteSpace(parsed.Description) ? scrapedDescription : parsed.Description;
-                            var title = string.IsNullOrWhiteSpace(parsed.Title) ? (scrapedTitle ?? parsed.Title) : parsed.Title;
-                            var company = string.IsNullOrWhiteSpace(parsed.Company) ? (scrapedCompany ?? parsed.Company) : parsed.Company;
-                            var location = string.IsNullOrWhiteSpace(parsed.Location) ? scrapedLocation : parsed.Location;
-                            var jType = parsed.JobType == JobType.Unknown ? ParseJobType(scrapedJobType) : parsed.JobType;
-                            var exp = parsed.ExperienceLevel == ExperienceLevel.Unknown ? ParseExperienceLevel(scrapedExperience) : parsed.ExperienceLevel;
+                            string? desc = string.IsNullOrWhiteSpace(parsed.Description) ? scrapedDescription : parsed.Description;
+                            string title = string.IsNullOrWhiteSpace(parsed.Title) ? (scrapedTitle ?? parsed.Title) : parsed.Title;
+                            string company = string.IsNullOrWhiteSpace(parsed.Company) ? (scrapedCompany ?? parsed.Company) : parsed.Company;
+                            string? location = string.IsNullOrWhiteSpace(parsed.Location) ? scrapedLocation : parsed.Location;
+                            JobType jType = parsed.JobType == JobType.Unknown ? ParseJobType(scrapedJobType) : parsed.JobType;
+                            ExperienceLevel exp = parsed.ExperienceLevel == ExperienceLevel.Unknown ? ParseExperienceLevel(scrapedExperience) : parsed.ExperienceLevel;
 
                             parsed = parsed with
                             {
@@ -522,7 +522,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
             {
                 if (page != null)
                 {
-                    try { await page.DisposeAsync(); } catch { }
+                    try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
                 }
                 if (session != null)
                 {
@@ -538,7 +538,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
     private static JobType ParseJobType(string? type)
     {
         if (string.IsNullOrEmpty(type)) return JobType.Unknown;
-        var normalized = type.ToUpperInvariant().Replace("_", "").Replace("-", "").Replace(" ", "");
+        string normalized = type.ToUpperInvariant().Replace("_", "").Replace("-", "").Replace(" ", "");
         // Simple containment checks often work better for messy scraped text
         if (normalized.Contains("FULLTIME")) return JobType.FullTime;
         if (normalized.Contains("PARTTIME")) return JobType.PartTime;
@@ -561,7 +561,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
     private static ExperienceLevel ParseExperienceLevel(string? level)
     {
         if (string.IsNullOrEmpty(level)) return ExperienceLevel.Unknown;
-        var n = level.Trim().ToLowerInvariant();
+        string n = level.Trim().ToLowerInvariant();
         if (n.Contains("intern")) return ExperienceLevel.EntryLevel; // map internship to entry level
         if (n.Contains("entry")) return ExperienceLevel.EntryLevel;
         if (n.Contains("associate")) return ExperienceLevel.MidLevel;
@@ -578,21 +578,21 @@ public sealed class GuestJobSearch : IGuestJobSearch
         // data-entity-urn="urn:li:jobPosting:123"
         foreach (Match m in Regex.Matches(html, "data-entity-urn=\"urn:li:jobPosting:(?<id>[0-9]+)\"", RegexOptions.IgnoreCase))
         {
-            var id = m.Groups["id"].Value;
+            string id = m.Groups["id"].Value;
             if (!string.IsNullOrEmpty(id)) ids.Add(id);
         }
 
         // href="/jobs/view/123"
         foreach (Match m in Regex.Matches(html, "/jobs/(?:view|r)/(?<id>[0-9]+)", RegexOptions.IgnoreCase))
         {
-            var id = m.Groups["id"].Value;
+            string id = m.Groups["id"].Value;
             if (!string.IsNullOrEmpty(id) && !ids.Contains(id)) ids.Add(id);
         }
 
         // href with query ?jobId=123
         foreach (Match m in Regex.Matches(html, "[?&](?:jobId|id)=(?<id>[0-9]+)", RegexOptions.IgnoreCase))
         {
-            var id = m.Groups["id"].Value;
+            string id = m.Groups["id"].Value;
             if (!string.IsNullOrEmpty(id) && !ids.Contains(id)) ids.Add(id);
         }
 

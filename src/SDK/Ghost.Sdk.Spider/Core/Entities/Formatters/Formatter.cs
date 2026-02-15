@@ -70,7 +70,7 @@ public abstract class Formatter
     /// <returns>A string describing this formatter.</returns>
     public override string ToString()
     {
-        var name = Name ?? GetType().Name;
+        string name = Name ?? GetType().Name;
         return $"{name} (Order: {Order})";
     }
 }

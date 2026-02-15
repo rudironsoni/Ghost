@@ -44,22 +44,22 @@ public static class RegionDetector
         try
         {
             // Check page content for regulation-specific keywords
-            var pageContent = await page.GetContentAsync();
-            var regulation = DetectFromContent(pageContent);
+            string pageContent = await page.GetContentAsync().ConfigureAwait(false);
+            PrivacyRegulation regulation = DetectFromContent(pageContent);
             if (regulation != PrivacyRegulation.Unknown)
             {
                 return regulation;
             }
 
             // Check for region-specific CMP configurations
-            regulation = await DetectFromCMPAsync(page);
+            regulation = await DetectFromCMPAsync(page).ConfigureAwait(false);
             if (regulation != PrivacyRegulation.Unknown)
             {
                 return regulation;
             }
 
             // Fallback: try to detect from browser geolocation (if available)
-            regulation = await DetectFromGeolocationAsync(page);
+            regulation = await DetectFromGeolocationAsync(page).ConfigureAwait(false);
             return regulation;
         }
         catch
@@ -73,7 +73,7 @@ public static class RegionDetector
     /// </summary>
     private static PrivacyRegulation DetectFromContent(string content)
     {
-        var lowerContent = content.ToLowerInvariant();
+        string lowerContent = content.ToLowerInvariant();
 
         // GDPR indicators
         if (lowerContent.Contains("gdpr") ||
@@ -119,12 +119,12 @@ public static class RegionDetector
         try
         {
             // Check for GDPR-specific CMP attributes
-            var hasGdpr = await page.EvaluateAsync<bool>(@"
+            bool hasGdpr = await page.EvaluateAsync<bool>(@"
                 () => {
                     const gdprElements = document.querySelectorAll('[data-gdpr], [data-cmp-gdpr]');
                     return gdprElements.length > 0;
                 }
-            ");
+            ").ConfigureAwait(false);
 
             if (hasGdpr)
             {
@@ -132,7 +132,7 @@ public static class RegionDetector
             }
 
             // Check for CCPA-specific CMP attributes
-            var hasCcpa = await page.EvaluateAsync<bool>(@"
+            bool hasCcpa = await page.EvaluateAsync<bool>(@"
                 () => {
                     const ccpaElements = document.querySelectorAll('[data-ccpa], [data-cmp-ccpa]');
                     const ccpaLinks = Array.from(document.querySelectorAll('a')).some(a =>
@@ -140,7 +140,7 @@ public static class RegionDetector
                     );
                     return ccpaElements.length > 0 || ccpaLinks;
                 }
-            ");
+            ").ConfigureAwait(false);
 
             if (hasCcpa)
             {
@@ -148,12 +148,12 @@ public static class RegionDetector
             }
 
             // Check for LGPD-specific indicators
-            var hasLgpd = await page.EvaluateAsync<bool>(@"
+            bool hasLgpd = await page.EvaluateAsync<bool>(@"
                 () => {
                     const lgpdElements = document.querySelectorAll('[data-lgpd], [data-cmp-lgpd]');
                     return lgpdElements.length > 0;
                 }
-            ");
+            ").ConfigureAwait(false);
 
             if (hasLgpd)
             {
@@ -176,7 +176,7 @@ public static class RegionDetector
         try
         {
             // Try to get timezone as a proxy for location
-            var timezone = await page.EvaluateAsync<string>(@"
+            string timezone = await page.EvaluateAsync<string>(@"
                 () => {
                     try {
                         return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -184,7 +184,7 @@ public static class RegionDetector
                         return '';
                     }
                 }
-            ");
+            ").ConfigureAwait(false);
 
             if (!string.IsNullOrEmpty(timezone))
             {
@@ -192,7 +192,7 @@ public static class RegionDetector
             }
 
             // Try to get locale
-            var locale = await page.EvaluateAsync<string>(@"
+            string locale = await page.EvaluateAsync<string>(@"
                 () => {
                     try {
                         return navigator.language || navigator.userLanguage || '';
@@ -200,7 +200,7 @@ public static class RegionDetector
                         return '';
                     }
                 }
-            ");
+            ").ConfigureAwait(false);
 
             if (!string.IsNullOrEmpty(locale))
             {
@@ -220,7 +220,7 @@ public static class RegionDetector
     /// </summary>
     private static PrivacyRegulation MapTimezoneToRegulation(string timezone)
     {
-        var tz = timezone.ToLowerInvariant();
+        string tz = timezone.ToLowerInvariant();
 
         // European timezones
         if (tz.StartsWith("europe/", StringComparison.OrdinalIgnoreCase) || tz.Contains("brussels") || tz.Contains("paris") ||
@@ -256,7 +256,7 @@ public static class RegionDetector
     /// </summary>
     private static PrivacyRegulation MapLocaleToRegulation(string locale)
     {
-        var loc = locale.ToLowerInvariant();
+        string loc = locale.ToLowerInvariant();
 
         // European locales
         if (loc.StartsWith("de", StringComparison.OrdinalIgnoreCase) || loc.StartsWith("fr", StringComparison.OrdinalIgnoreCase) || loc.StartsWith("es", StringComparison.OrdinalIgnoreCase) ||

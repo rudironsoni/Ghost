@@ -36,7 +36,7 @@ public class UserAgentRotator : IUserAgentRotator
                 return "GhostSpider/1.0";
             }
 
-            var agent = _userAgents[_currentIndex];
+            string agent = _userAgents[_currentIndex];
             _currentIndex = (_currentIndex + 1) % _userAgents.Count;
             return agent;
         }

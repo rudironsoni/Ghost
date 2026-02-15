@@ -42,7 +42,7 @@ public class RobotsTxt
         ArgumentNullException.ThrowIfNull(userAgent);
 
         // Find the most specific matching user-agent
-        var rules = GetRulesForUserAgent(userAgent);
+        UserAgentRules? rules = GetRulesForUserAgent(userAgent);
         if (rules == null)
             return true; // No rules = allow all
 
@@ -58,25 +58,25 @@ public class RobotsTxt
     {
         ArgumentNullException.ThrowIfNull(userAgent);
 
-        var rules = GetRulesForUserAgent(userAgent);
+        UserAgentRules? rules = GetRulesForUserAgent(userAgent);
         return rules?.CrawlDelay ?? CrawlDelay;
     }
 
     private UserAgentRules? GetRulesForUserAgent(string userAgent)
     {
         // Exact match
-        if (_rules.TryGetValue(userAgent, out var exactRules))
+        if (_rules.TryGetValue(userAgent, out UserAgentRules? exactRules))
             return exactRules;
 
         // Partial match (e.g., user-agent contains "Googlebot")
-        foreach (var (key, rules) in _rules)
+        foreach ((string? key, UserAgentRules? rules) in _rules)
         {
             if (key != "*" && userAgent.Contains(key, StringComparison.OrdinalIgnoreCase))
                 return rules;
         }
 
         // Wildcard match
-        if (_rules.TryGetValue("*", out var wildcardRules))
+        if (_rules.TryGetValue("*", out UserAgentRules? wildcardRules))
             return wildcardRules;
 
         return null;
@@ -131,9 +131,9 @@ public class UserAgentRules
 
         // Find the longest matching rule (most specific)
         PathRule? longestMatch = null;
-        var longestLength = 0;
+        int longestLength = 0;
 
-        foreach (var rule in _rules)
+        foreach (PathRule rule in _rules)
         {
             if (rule.Matches(path) && rule.Pattern.Length > longestLength)
             {
@@ -174,7 +174,7 @@ internal sealed class PathRule
         // Handle wildcard patterns
         if (Pattern.Contains('*'))
         {
-            var regex = "^" + System.Text.RegularExpressions.Regex.Escape(Pattern).Replace("\\*", ".*") + ".*";
+            string regex = "^" + System.Text.RegularExpressions.Regex.Escape(Pattern).Replace("\\*", ".*") + ".*";
             return System.Text.RegularExpressions.Regex.IsMatch(path, regex);
         }
 

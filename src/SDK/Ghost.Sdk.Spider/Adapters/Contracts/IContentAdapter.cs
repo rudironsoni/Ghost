@@ -15,13 +15,13 @@ public interface IContentAdapter
     /// Gets the name of the adapter.
     /// </summary>
     /// <value>A unique identifier for this adapter type (e.g., "StaticHtml", "JavaScript", "GraphQL").</value>
-    string Name { get; }
+    public string Name { get; }
 
     /// <summary>
     /// Gets the content type this adapter is designed to handle.
     /// </summary>
     /// <value>The content type supported by this adapter.</value>
-    ContentType ContentType { get; }
+    public ContentType ContentType { get; }
 
     /// <summary>
     /// Gets a value indicating whether this adapter is available for use.
@@ -33,7 +33,7 @@ public interface IContentAdapter
     /// An adapter may be unavailable if required dependencies are missing, configuration is invalid,
     /// or external resources are not accessible.
     /// </remarks>
-    bool IsAvailable { get; }
+    public bool IsAvailable { get; }
 
     /// <summary>
     /// Determines whether this adapter can handle the specified request.
@@ -49,7 +49,7 @@ public interface IContentAdapter
     /// to determine if they are suitable for handling the request. This supports
     /// automatic adapter selection and fallback strategies.
     /// </remarks>
-    Task<bool> CanHandleAsync(Request request, CancellationToken cancellationToken = default);
+    public Task<bool> CanHandleAsync(Request request, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Extracts content from the specified request.
@@ -71,7 +71,7 @@ public interface IContentAdapter
     /// </remarks>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="request"/> is null.</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled via <paramref name="cancellationToken"/>.</exception>
-    Task<Response> ExtractAsync(Request request, CancellationToken cancellationToken = default);
+    public Task<Response> ExtractAsync(Request request, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Extracts content using the specified options.
@@ -90,5 +90,5 @@ public interface IContentAdapter
     /// </remarks>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="request"/> or <paramref name="options"/> is null.</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled via <paramref name="cancellationToken"/>.</exception>
-    Task<Response> ExtractAsync(Request request, AdapterOptions options, CancellationToken cancellationToken = default);
+    public Task<Response> ExtractAsync(Request request, AdapterOptions options, CancellationToken cancellationToken = default);
 }

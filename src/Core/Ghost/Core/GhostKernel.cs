@@ -35,7 +35,7 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
 
     public static async Task<GhostKernel> CreateAsync(KernelOptions? options = null, CancellationToken ct = default)
     {
-        var opts = options ?? new KernelOptions();
+        KernelOptions opts = options ?? new KernelOptions();
 
         var launchArgs = new List<string>(opts.Args ?? []);
         if (opts.EnableStealth && !opts.DisableDefaultStealthArgs)
@@ -60,7 +60,7 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
         }
 
         // Create Playwright instance and keep it alive
-        var playwright = await Microsoft.Playwright.Playwright.CreateAsync();
+        IPlaywright playwright = await Playwright.CreateAsync().ConfigureAwait(false);
 
         Socks5Bridge? globalProxyBridge = null;
         Microsoft.Playwright.Proxy? browserProxy = null;
@@ -70,8 +70,8 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
             // If a SOCKS5 proxy with authentication is provided at kernel level, create a global bridge
             if (opts.ProxyServer is not null && opts.ProxyServer.StartsWith("socks5://", StringComparison.OrdinalIgnoreCase))
             {
-                var proxyUsername = Environment.GetEnvironmentVariable("DOTNET_GHOST_PROXY_USERNAME");
-                var proxyPassword = Environment.GetEnvironmentVariable("DOTNET_GHOST_PROXY_PASSWORD");
+                string? proxyUsername = Environment.GetEnvironmentVariable("DOTNET_GHOST_PROXY_USERNAME");
+                string? proxyPassword = Environment.GetEnvironmentVariable("DOTNET_GHOST_PROXY_PASSWORD");
 
                 if (!string.IsNullOrEmpty(proxyUsername) && !string.IsNullOrEmpty(proxyPassword))
                 {
@@ -99,13 +99,13 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
                 browserProxy = new Microsoft.Playwright.Proxy { Server = opts.ProxyServer };
             }
 
-            var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+            IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
                 Headless = opts.Headless,
                 SlowMo = opts.SlowMo,
                 Proxy = browserProxy,
                 Args = launchArgs
-            });
+            }).ConfigureAwait(false);
 
             return new GhostKernel(playwright, browser, opts.MaxConcurrentSessions, opts.EnableStealth, opts.Browser, globalProxyBridge);
         }
@@ -119,7 +119,7 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
 
     public async Task<IBrowserSession> NewSessionAsync(SessionOptions? options = null, CancellationToken ct = default)
     {
-        await _sessionLock.WaitAsync(ct);
+        await _sessionLock.WaitAsync(ct).ConfigureAwait(false);
 
         try
         {
@@ -152,7 +152,7 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
                 Locale = options?.Locale ?? "en-US"
             };
 
-            var proxy = options?.Proxy;
+            SessionOptions.ProxySettings? proxy = options?.Proxy;
 
             // If there's a global browser-level SOCKS5 proxy bridge, don't override with session-level proxy
             // Session-level proxies only work for non-SOCKS5 or when no browser-level proxy is set
@@ -191,7 +191,7 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
                     Accuracy = (float)options.Geolocation.Accuracy
                 };
 
-                var perms = ctxOptions.Permissions?.ToList() ?? new List<string>();
+                List<string> perms = ctxOptions.Permissions?.ToList() ?? new List<string>();
                 if (!perms.Contains("geolocation")) perms.Add("geolocation");
                 ctxOptions.Permissions = perms;
             }
@@ -204,7 +204,7 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
                     Accuracy = 50
                 };
 
-                var perms = ctxOptions.Permissions?.ToList() ?? new List<string>();
+                List<string> perms = ctxOptions.Permissions?.ToList() ?? new List<string>();
                 if (!perms.Contains("geolocation")) perms.Add("geolocation");
                 ctxOptions.Permissions = perms;
             }
@@ -218,7 +218,7 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
                     Accuracy = 50f
                 };
                 // Ensure permission
-                var _perms = ctxOptions.Permissions?.ToList() ?? new List<string>();
+                List<string> _perms = ctxOptions.Permissions?.ToList() ?? new List<string>();
                 if (!_perms.Contains("geolocation")) _perms.Add("geolocation");
                 ctxOptions.Permissions = _perms;
             }
@@ -226,31 +226,31 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
             // Ensure geolocation permission if set
             if (ctxOptions.Geolocation is not null)
             {
-                var _perms2 = ctxOptions.Permissions?.ToList() ?? new List<string>();
+                List<string> _perms2 = ctxOptions.Permissions?.ToList() ?? new List<string>();
                 if (!_perms2.Contains("geolocation")) _perms2.Add("geolocation");
                 ctxOptions.Permissions = _perms2;
             }
 
             if (options?.Permissions is not null && options.Permissions.Count > 0)
             {
-                var _perms3 = ctxOptions.Permissions?.ToList() ?? new List<string>();
-                foreach (var p in options.Permissions)
+                List<string> _perms3 = ctxOptions.Permissions?.ToList() ?? new List<string>();
+                foreach (string p in options.Permissions)
                 {
                     if (!_perms3.Contains(p)) _perms3.Add(p);
                 }
                 ctxOptions.Permissions = _perms3;
             }
 
-            var context = await _browser.NewContextAsync(ctxOptions);
+            IBrowserContext context = await _browser.NewContextAsync(ctxOptions).ConfigureAwait(false);
 
             // Inject Stealth Scripts
             if (_enableStealth && profile is not null)
             {
-                var script = StealthScripts.GetInitScript(profile);
-                await context.AddInitScriptAsync(script);
+                string script = StealthScripts.GetInitScript(profile);
+                await context.AddInitScriptAsync(script).ConfigureAwait(false);
             }
 
-            var sessionId = Guid.NewGuid().ToString();
+            string sessionId = Guid.NewGuid().ToString();
             return new BrowserSessionWrapper(context, sessionId, () => _sessionLock.Release(), null);
         }
         catch
@@ -264,13 +264,13 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
     {
         try
         {
-            await _browser.CloseAsync();
+            await _browser.CloseAsync().ConfigureAwait(false);
         }
         catch { }
 
         try
         {
-            await _browser.DisposeAsync();
+            await _browser.DisposeAsync().ConfigureAwait(false);
         }
         catch { }
 
@@ -296,7 +296,7 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
-        await DisposeAsyncCore();
+        await DisposeAsyncCore().ConfigureAwait(false);
         _disposed = true;
         GC.SuppressFinalize(this);
     }

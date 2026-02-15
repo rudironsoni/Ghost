@@ -48,7 +48,7 @@ public sealed class FreeProxyScraper : IProxySource
         var allProxies = new List<ProxyInfo>();
 
         // Scrape from all sources in parallel
-        var tasks = new[]
+        Task<List<ProxyInfo>>[] tasks = new[]
         {
             ScrapeFromFreeProxyListAsync(ct),
             ScrapeFromProxyListDownloadAsync(ct),
@@ -56,9 +56,9 @@ public sealed class FreeProxyScraper : IProxySource
             ScrapeFromProxyScanAsync(ct)
         };
 
-        var results = await Task.WhenAll(tasks).ConfigureAwait(false);
+        List<ProxyInfo>[] results = await Task.WhenAll(tasks).ConfigureAwait(false);
 
-        foreach (var proxies in results)
+        foreach (List<ProxyInfo>? proxies in results)
         {
             allProxies.AddRange(proxies);
         }
@@ -86,7 +86,7 @@ public sealed class FreeProxyScraper : IProxySource
             // For now, we'll use the API endpoint if available, or return empty list.
             // The actual implementation would use AngleSharp or HtmlAgilityPack to parse the HTML table.
 
-            var response = await _httpClient.GetAsync("https://www.free-proxy-list.net/", ct).ConfigureAwait(false);
+            HttpResponseMessage response = await _httpClient.GetAsync("https://www.free-proxy-list.net/", ct).ConfigureAwait(false);
             if (response.IsSuccessStatusCode)
             {
                 // Placeholder: In production, parse HTML table and extract proxy data
@@ -113,17 +113,17 @@ public sealed class FreeProxyScraper : IProxySource
         try
         {
             // HTTP proxies
-            var httpUrl = "https://www.proxy-list.download/api/v1/get?type=http";
-            var httpResponse = await _httpClient.GetStringAsync(httpUrl, ct).ConfigureAwait(false);
+            string httpUrl = "https://www.proxy-list.download/api/v1/get?type=http";
+            string httpResponse = await _httpClient.GetStringAsync(httpUrl, ct).ConfigureAwait(false);
 
-            var httpProxies = ParseProxyList(httpResponse);
+            List<ProxyInfo> httpProxies = ParseProxyList(httpResponse);
             proxies.AddRange(httpProxies);
 
             // HTTPS proxies
-            var httpsUrl = "https://www.proxy-list.download/api/v1/get?type=https";
-            var httpsResponse = await _httpClient.GetStringAsync(httpsUrl, ct).ConfigureAwait(false);
+            string httpsUrl = "https://www.proxy-list.download/api/v1/get?type=https";
+            string httpsResponse = await _httpClient.GetStringAsync(httpsUrl, ct).ConfigureAwait(false);
 
-            var httpsProxies = ParseProxyList(httpsResponse);
+            List<ProxyInfo> httpsProxies = ParseProxyList(httpsResponse);
             proxies.AddRange(httpsProxies);
 
             s_logProxiesScraped(_logger, source, proxies.Count, null);
@@ -146,10 +146,10 @@ public sealed class FreeProxyScraper : IProxySource
 
         try
         {
-            var url = "https://api.proxyscrape.com/v2/?request=get&protocol=http&timeout=5000&country=all&ssl=all&anonymity=all&format=textplain";
-            var response = await _httpClient.GetStringAsync(url, ct).ConfigureAwait(false);
+            string url = "https://api.proxyscrape.com/v2/?request=get&protocol=http&timeout=5000&country=all&ssl=all&anonymity=all&format=textplain";
+            string response = await _httpClient.GetStringAsync(url, ct).ConfigureAwait(false);
 
-            var scrapedProxies = ParseProxyList(response);
+            List<ProxyInfo> scrapedProxies = ParseProxyList(response);
             proxies.AddRange(scrapedProxies);
 
             s_logProxiesScraped(_logger, source, proxies.Count, null);
@@ -172,15 +172,15 @@ public sealed class FreeProxyScraper : IProxySource
 
         try
         {
-            var url = "https://www.proxyscan.io/api/proxy?format=json&limit=100&type=http,https";
-            var response = await _httpClient.GetStringAsync(url, ct).ConfigureAwait(false);
+            string url = "https://www.proxyscan.io/api/proxy?format=json&limit=100&type=http,https";
+            string response = await _httpClient.GetStringAsync(url, ct).ConfigureAwait(false);
 
-            var proxyArray = JsonSerializer.Deserialize<List<ProxyScanProxy>>(response);
+            List<ProxyScanProxy>? proxyArray = JsonSerializer.Deserialize<List<ProxyScanProxy>>(response);
             if (proxyArray != null)
             {
-                foreach (var proxy in proxyArray)
+                foreach (ProxyScanProxy proxy in proxyArray)
                 {
-                    var server = $"http://{proxy.Ip}:{proxy.Port}";
+                    string server = $"http://{proxy.Ip}:{proxy.Port}";
                     proxies.Add(new ProxyInfo(server, null, null));
                 }
             }
@@ -205,19 +205,19 @@ public sealed class FreeProxyScraper : IProxySource
         if (string.IsNullOrWhiteSpace(content))
             return proxies;
 
-        var lines = content.Split(s_lineSeparators, StringSplitOptions.RemoveEmptyEntries);
+        string[] lines = content.Split(s_lineSeparators, StringSplitOptions.RemoveEmptyEntries);
 
-        foreach (var line in lines)
+        foreach (string line in lines)
         {
-            var trimmed = line.Trim();
+            string trimmed = line.Trim();
             if (string.IsNullOrEmpty(trimmed))
                 continue;
 
             // Expected format: ip:port
-            var parts = trimmed.Split(':');
-            if (parts.Length == 2 && int.TryParse(parts[1], out var port))
+            string[] parts = trimmed.Split(':');
+            if (parts.Length == 2 && int.TryParse(parts[1], out int port))
             {
-                var server = $"http://{parts[0]}:{port}";
+                string server = $"http://{parts[0]}:{port}";
                 proxies.Add(new ProxyInfo(server, null, null));
             }
         }

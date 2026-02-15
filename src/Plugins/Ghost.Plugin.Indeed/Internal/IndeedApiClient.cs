@@ -128,7 +128,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _timeProvider = timeProvider ?? TimeProvider.System;
 
-        _baseHeaders = BuildBaseHeaders(_country, _apiKey, out var contentTypeHeader);
+        _baseHeaders = BuildBaseHeaders(_country, _apiKey, out string? contentTypeHeader);
         _contentTypeHeader = contentTypeHeader;
 
         if (handler is SocketsHttpHandler socketsHandler)
@@ -162,14 +162,14 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
 
     private async Task ApplyRateLimitAsync(CancellationToken ct)
     {
-        await _rateLimitSemaphore.WaitAsync(ct);
+        await _rateLimitSemaphore.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            var timeSinceLastRequest = DateTime.UtcNow - _lastRequestTime;
+            TimeSpan timeSinceLastRequest = DateTime.UtcNow - _lastRequestTime;
             if (timeSinceLastRequest < _rateLimitDelay)
             {
-                var waitTime = _rateLimitDelay - timeSinceLastRequest;
-                await Task.Delay(waitTime, ct);
+                TimeSpan waitTime = _rateLimitDelay - timeSinceLastRequest;
+                await Task.Delay(waitTime, ct).ConfigureAwait(false);
             }
             _lastRequestTime = DateTime.UtcNow;
         }
@@ -183,11 +183,11 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
     {
         lock (_metricsLock)
         {
-            var nowTicks = _timeProvider.GetUtcNow().Ticks;
-            var windowTicks = nowTicks - _windowStartTicks;
-            var elapsedSeconds = Math.Max(TimeSpan.FromTicks(windowTicks).TotalSeconds, 1d);
-            var requestsPerSecond = _windowRequestCount / elapsedSeconds;
-            var averageResponseMs = _totalRequests > 0
+            long nowTicks = _timeProvider.GetUtcNow().Ticks;
+            long windowTicks = nowTicks - _windowStartTicks;
+            double elapsedSeconds = Math.Max(TimeSpan.FromTicks(windowTicks).TotalSeconds, 1d);
+            double requestsPerSecond = _windowRequestCount / elapsedSeconds;
+            double averageResponseMs = _totalRequests > 0
                 ? TimeSpan.FromTicks(_totalResponseTicks / _totalRequests).TotalMilliseconds
                 : 0d;
 
@@ -221,7 +221,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         }
 
         contentTypeHeader = null;
-        foreach (var kv in headers)
+        foreach (KeyValuePair<string, string> kv in headers)
         {
             if (ContentHeaderNames.Contains(kv.Key))
             {
@@ -274,7 +274,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
 
     private static void ApplyDefaultHeaders(HttpClient client, IReadOnlyDictionary<string, string> headers)
     {
-        foreach (var kv in headers)
+        foreach (KeyValuePair<string, string> kv in headers)
         {
             if (ContentHeaderNames.Contains(kv.Key))
             {
@@ -307,7 +307,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
             }
         }
 
-        foreach (var kv in _baseHeaders)
+        foreach (KeyValuePair<string, string> kv in _baseHeaders)
         {
             if (ContentHeaderNames.Contains(kv.Key))
             {
@@ -329,7 +329,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
                 _windowStartTicks = _timeProvider.GetUtcNow().Ticks;
             }
 
-            var elapsed = _timeProvider.GetUtcNow().Ticks - _windowStartTicks;
+            long elapsed = _timeProvider.GetUtcNow().Ticks - _windowStartTicks;
             if (elapsed > MetricsWindow.Ticks)
             {
                 _windowStartTicks = _timeProvider.GetUtcNow().Ticks;
@@ -363,14 +363,14 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
     {
         if (_sessionOrchestrator != null)
         {
-            await foreach (var result in SearchWithOrchestratorAsync(query, location, limit))
+            await foreach (JsonElement result in SearchWithOrchestratorAsync(query, location, limit).ConfigureAwait(false))
             {
                 yield return result;
             }
         }
         else
         {
-            await foreach (var result in SearchLegacyAsync(query, location, limit))
+            await foreach (JsonElement result in SearchLegacyAsync(query, location, limit).ConfigureAwait(false))
             {
                 yield return result;
             }
@@ -391,7 +391,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
     {
         string? cursor = null;
         int remaining = limit;
-        var affinityKey = $"indeed_{query}_{location}_{Guid.NewGuid():N}";
+        string affinityKey = $"indeed_{query}_{location}_{Guid.NewGuid():N}";
 
         LogRequestStart(_logger, query, location, null);
 
@@ -415,10 +415,10 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
                 AllowFallback: true
             );
 
-            _currentSessionId = await _sessionOrchestrator!.AllocateSessionWithAffinityAsync(context, affinityOptions, default);
+            _currentSessionId = await _sessionOrchestrator!.AllocateSessionWithAffinityAsync(context, affinityOptions, default).ConfigureAwait(false);
             LogSessionAllocated(_logger, _currentSessionId, null);
 
-            var httpSession = await _sessionOrchestrator.GetHttpSessionAsync(_currentSessionId, default);
+            RotatingProxySession? httpSession = await _sessionOrchestrator.GetHttpSessionAsync(_currentSessionId, default).ConfigureAwait(false);
             if (httpSession == null)
             {
                 LogSessionGetFailed(_logger, _currentSessionId, null);
@@ -427,16 +427,16 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
 
             do
             {
-                await ApplyRateLimitAsync(default);
+                await ApplyRateLimitAsync(default).ConfigureAwait(false);
 
-                var formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, remaining));
+                string formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, remaining));
                 var payload = new { query = formattedQuery };
-                var json = JsonSerializer.Serialize(payload);
+                string json = JsonSerializer.Serialize(payload);
                 LogRequestPayload(_logger, json, null);
 
                 LogSendingRequest(_logger, _apiEndpoint, null);
 
-                foreach (var header in _httpClient.DefaultRequestHeaders)
+                foreach (KeyValuePair<string, IEnumerable<string>> header in _httpClient.DefaultRequestHeaders)
                 {
                     LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
                 }
@@ -456,29 +456,29 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
                 {
                     try
                     {
-                        using var req = CreateRequest(payload);
-                        foreach (var header in req.Headers)
+                        using HttpRequestMessage req = CreateRequest(payload);
+                        foreach (KeyValuePair<string, IEnumerable<string>> header in req.Headers)
                         {
                             LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
                         }
                         if (req.Content?.Headers != null)
                         {
-                            foreach (var header in req.Content.Headers)
+                            foreach (KeyValuePair<string, IEnumerable<string>> header in req.Content.Headers)
                             {
                                 LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
                             }
                         }
-                        resp = await httpSession.ExecuteAsync(() => req, default);
+                        resp = await httpSession.ExecuteAsync(() => req, default).ConfigureAwait(false);
 
                         if ((int)resp.StatusCode == 429)
                         {
-                            await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000));
+                            await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000)).ConfigureAwait(false);
                             continue;
                         }
 
                         LogResponseStatus(_logger, resp.StatusCode.ToString(), null);
 
-                        content = await resp.Content.ReadAsStringAsync();
+                        content = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
                         LogResponseContent(_logger, content, null);
 
                         try { System.IO.File.WriteAllText($"logs/indeed_jobs_search_{attempt}.json", content); } catch { }
@@ -489,7 +489,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
                         {
                             if (attempt < 2)
                             {
-                                await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 2000));
+                                await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 2000)).ConfigureAwait(false);
                                 continue;
                             }
                             break;
@@ -500,7 +500,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
                     }
                     catch (HttpRequestException) when (attempt < 2)
                     {
-                        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000));
+                        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000)).ConfigureAwait(false);
                         continue;
                     }
                     catch (Exception)
@@ -513,7 +513,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
 
                 if (!success || resp == null || !resp.IsSuccessStatusCode || IsBlockedOrConsentRequired(content))
                 {
-                    await CheckAndRecycleSessionAsync();
+                    await CheckAndRecycleSessionAsync().ConfigureAwait(false);
                     break;
                 }
 
@@ -522,7 +522,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
 
                 yield return doc.RootElement.Clone();
 
-                if (!doc.RootElement.TryGetProperty("data", out var data) || !data.TryGetProperty("jobSearch", out var jobSearch) || !jobSearch.TryGetProperty("pageInfo", out var pageInfo) || !pageInfo.TryGetProperty("nextCursor", out var nextCursorEl))
+                if (!doc.RootElement.TryGetProperty("data", out JsonElement data) || !data.TryGetProperty("jobSearch", out JsonElement jobSearch) || !jobSearch.TryGetProperty("pageInfo", out JsonElement pageInfo) || !pageInfo.TryGetProperty("nextCursor", out JsonElement nextCursorEl))
                 {
                     break;
                 }
@@ -537,7 +537,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         {
             if (_currentSessionId != null)
             {
-                await _sessionOrchestrator!.CloseSessionAsync(_currentSessionId, default);
+                await _sessionOrchestrator!.CloseSessionAsync(_currentSessionId, default).ConfigureAwait(false);
                 _currentSessionId = null;
             }
         }
@@ -552,16 +552,16 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
 
         do
         {
-            await ApplyRateLimitAsync(default);
+            await ApplyRateLimitAsync(default).ConfigureAwait(false);
 
-            var formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, remaining));
+            string formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, remaining));
             var payload = new { query = formattedQuery };
-            var json = JsonSerializer.Serialize(payload);
+            string json = JsonSerializer.Serialize(payload);
             LogRequestPayload(_logger, json, null);
 
             LogSendingRequest(_logger, _apiEndpoint, null);
 
-            foreach (var header in _httpClient.DefaultRequestHeaders)
+            foreach (KeyValuePair<string, IEnumerable<string>> header in _httpClient.DefaultRequestHeaders)
             {
                 LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
             }
@@ -580,29 +580,29 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
             {
                 try
                 {
-                    using var attemptReq = CreateRequest(payload);
-                    foreach (var header in attemptReq.Headers)
+                    using HttpRequestMessage attemptReq = CreateRequest(payload);
+                    foreach (KeyValuePair<string, IEnumerable<string>> header in attemptReq.Headers)
                     {
                         LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
                     }
                     if (attemptReq.Content?.Headers != null)
                     {
-                        foreach (var header in attemptReq.Content.Headers)
+                        foreach (KeyValuePair<string, IEnumerable<string>> header in attemptReq.Content.Headers)
                         {
                             LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
                         }
                     }
-                    resp = await _httpClient.SendAsync(attemptReq);
+                    resp = await _httpClient.SendAsync(attemptReq).ConfigureAwait(false);
 
                     if ((int)resp.StatusCode == 429)
                     {
-                        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000));
+                        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000)).ConfigureAwait(false);
                         continue;
                     }
 
                     LogResponseStatus(_logger, resp.StatusCode.ToString(), null);
 
-                    content = await resp.Content.ReadAsStringAsync();
+                    content = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
                     LogResponseContent(_logger, content, null);
 
                     try { System.IO.File.WriteAllText($"logs/indeed_jobs_search_{attempt}.json", content); } catch { }
@@ -613,7 +613,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
                     {
                         if (attempt < 2)
                         {
-                            await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 2000));
+                            await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 2000)).ConfigureAwait(false);
                             continue;
                         }
                         break;
@@ -623,7 +623,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
                 }
                 catch (HttpRequestException) when (attempt < 2)
                 {
-                    await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000));
+                    await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000)).ConfigureAwait(false);
                     continue;
                 }
                 catch (Exception)
@@ -644,7 +644,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
 
             yield return doc.RootElement.Clone();
 
-            if (!doc.RootElement.TryGetProperty("data", out var data) || !data.TryGetProperty("jobSearch", out var jobSearch) || !jobSearch.TryGetProperty("pageInfo", out var pageInfo) || !pageInfo.TryGetProperty("nextCursor", out var nextCursorEl))
+            if (!doc.RootElement.TryGetProperty("data", out JsonElement data) || !data.TryGetProperty("jobSearch", out JsonElement jobSearch) || !jobSearch.TryGetProperty("pageInfo", out JsonElement pageInfo) || !pageInfo.TryGetProperty("nextCursor", out JsonElement nextCursorEl))
             {
                 break;
             }
@@ -665,11 +665,11 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
 
         try
         {
-            var health = await _sessionOrchestrator.GetSessionHealthAsync(_currentSessionId, default);
+            SessionHealthMetrics health = await _sessionOrchestrator.GetSessionHealthAsync(_currentSessionId, default).ConfigureAwait(false);
             if (health.Health == SessionHealth.Unhealthy)
             {
                 LogSessionRecycled(_logger, _currentSessionId, null);
-                await _sessionOrchestrator.RecycleSessionAsync(_currentSessionId, default);
+                await _sessionOrchestrator.RecycleSessionAsync(_currentSessionId, default).ConfigureAwait(false);
                 _currentSessionId = null;
             }
         }
@@ -701,7 +701,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         {
             try
             {
-                await _sessionOrchestrator.CloseSessionAsync(_currentSessionId, default);
+                await _sessionOrchestrator.CloseSessionAsync(_currentSessionId, default).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -746,7 +746,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
 
         // Only check for explicit error indicators at the start of the response
         // Valid job responses will contain {"data":{"jobSearch"...}}
-        var trimmed = responseContent.TrimStart();
+        string trimmed = responseContent.TrimStart();
 
         // If it starts with valid JSON object with "data" property, it's likely a valid response
         if (trimmed.StartsWith("{\"data\":", StringComparison.Ordinal) ||
@@ -773,7 +773,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
     private async Task<JsonElement> SearchPageWithOrchestratorAsync(string query, string location, int limit, string? cursor, CancellationToken ct)
     {
         await EnsureSessionAsync(query, location, ct).ConfigureAwait(false);
-        var httpSession = await _sessionOrchestrator!.GetHttpSessionAsync(_currentSessionId!, ct).ConfigureAwait(false);
+        RotatingProxySession? httpSession = await _sessionOrchestrator!.GetHttpSessionAsync(_currentSessionId!, ct).ConfigureAwait(false);
         if (httpSession is null)
         {
             LogSessionGetFailed(_logger, _currentSessionId ?? "unknown", null);
@@ -781,7 +781,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         }
 
         await ApplyRateLimitAsync(ct).ConfigureAwait(false);
-        var formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, limit));
+        string formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, limit));
         if (!string.IsNullOrWhiteSpace(cursor))
         {
             formattedQuery += $" after: \"{cursor}\"";
@@ -798,7 +798,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         {
             try
             {
-                using var req = CreateRequest(payload);
+                using HttpRequestMessage req = CreateRequest(payload);
                 resp = await httpSession.ExecuteAsync(() => req, ct).ConfigureAwait(false);
                 if ((int)resp.StatusCode == 429)
                 {
@@ -840,7 +840,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
     private async Task<JsonElement> SearchPageLegacyAsync(string query, string location, int limit, string? cursor, CancellationToken ct)
     {
         await ApplyRateLimitAsync(ct).ConfigureAwait(false);
-        var formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, limit));
+        string formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, limit));
         if (!string.IsNullOrWhiteSpace(cursor))
         {
             formattedQuery += $" after: \"{cursor}\"";
@@ -856,7 +856,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         {
             try
             {
-                using var req = CreateRequest(payload);
+                using HttpRequestMessage req = CreateRequest(payload);
                 resp = await _httpClient.SendAsync(req, ct).ConfigureAwait(false);
                 if ((int)resp.StatusCode == 429)
                 {
@@ -905,7 +905,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
             return;
         }
 
-        var affinityKey = $"indeed_{query}_{location}_{Guid.NewGuid():N}";
+        string affinityKey = $"indeed_{query}_{location}_{Guid.NewGuid():N}";
         var context = new SessionAllocationContext(
             PlatformName: "Indeed",
             CountryCode: _country.ToString(),

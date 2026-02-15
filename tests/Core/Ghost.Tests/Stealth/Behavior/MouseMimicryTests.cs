@@ -13,14 +13,14 @@ public class MouseMimicryTests
         // Arrange
         var mouseMimicry = new MouseMimicry();
         var mockMouse = new Mock<IMouse>();
-        var moveCallCount = 0;
+        int moveCallCount = 0;
 
         mockMouse.Setup(m => m.MoveAsync(It.IsAny<float>(), It.IsAny<float>(), It.IsAny<MouseMoveOptions>()))
             .Callback<float, float, MouseMoveOptions>((x, y, opts) => moveCallCount++)
             .Returns(Task.CompletedTask);
 
         // Act
-        await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, 500, 500);
+        await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, 500, 500).ConfigureAwait(false);
 
         // Assert
         // Should make 20-51 move calls (20-50 steps + final position)
@@ -35,7 +35,7 @@ public class MouseMimicryTests
         var mockMouse = new Mock<IMouse>();
 
         // Act
-        await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, 0, 0);
+        await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, 0, 0).ConfigureAwait(false);
 
         // Assert
         mockMouse.Verify(m => m.MoveAsync(It.IsAny<float>(), It.IsAny<float>(), It.IsAny<MouseMoveOptions>()), Times.Never);
@@ -47,10 +47,10 @@ public class MouseMimicryTests
         // Arrange
         var mouseMimicry = new MouseMimicry();
         var mockMouse = new Mock<IMouse>();
-        var targetX = 500f;
-        var targetY = 500f;
-        var lastX = 0f;
-        var lastY = 0f;
+        float targetX = 500f;
+        float targetY = 500f;
+        float lastX = 0f;
+        float lastY = 0f;
 
         mockMouse.Setup(m => m.MoveAsync(It.IsAny<float>(), It.IsAny<float>(), It.IsAny<MouseMoveOptions>()))
             .Callback<float, float, MouseMoveOptions>((x, y, opts) =>
@@ -61,7 +61,7 @@ public class MouseMimicryTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, targetX, targetY);
+        await mouseMimicry.MoveHumanLikeAsync(mockMouse.Object, targetX, targetY).ConfigureAwait(false);
 
         // Assert - last position should be close to target
         Assert.InRange(lastX, targetX - 1, targetX + 1);

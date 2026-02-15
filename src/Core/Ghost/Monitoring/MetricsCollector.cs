@@ -7,14 +7,14 @@ namespace Ghost.Core.Monitoring;
 
 public interface IMetricsCollector
 {
-    void RecordScrapeAttempt(string platform);
-    void RecordScrapeSuccess(string platform);
-    void RecordScrapeFailure(string platform);
-    void RecordCacheHit(string platform);
-    void RecordCacheMiss(string platform);
-    void RecordCircuitBreakerState(string platform, string state);
-    MetricsSnapshot GetSnapshot();
-    void Reset();
+    public void RecordScrapeAttempt(string platform);
+    public void RecordScrapeSuccess(string platform);
+    public void RecordScrapeFailure(string platform);
+    public void RecordCacheHit(string platform);
+    public void RecordCacheMiss(string platform);
+    public void RecordCircuitBreakerState(string platform, string state);
+    public MetricsSnapshot GetSnapshot();
+    public void Reset();
 }
 
 public class MetricsCollector : IMetricsCollector
@@ -24,37 +24,37 @@ public class MetricsCollector : IMetricsCollector
 
     public void RecordScrapeAttempt(string platform)
     {
-        var pm = _metrics.GetOrAdd(platform, _ => new PlatformMetrics());
+        PlatformMetrics pm = _metrics.GetOrAdd(platform, _ => new PlatformMetrics());
         Interlocked.Increment(ref pm.ScrapeAttempts);
     }
 
     public void RecordScrapeSuccess(string platform)
     {
-        var pm = _metrics.GetOrAdd(platform, _ => new PlatformMetrics());
+        PlatformMetrics pm = _metrics.GetOrAdd(platform, _ => new PlatformMetrics());
         Interlocked.Increment(ref pm.ScrapeSuccesses);
     }
 
     public void RecordScrapeFailure(string platform)
     {
-        var pm = _metrics.GetOrAdd(platform, _ => new PlatformMetrics());
+        PlatformMetrics pm = _metrics.GetOrAdd(platform, _ => new PlatformMetrics());
         Interlocked.Increment(ref pm.ScrapeFailures);
     }
 
     public void RecordCacheHit(string platform)
     {
-        var pm = _metrics.GetOrAdd(platform, _ => new PlatformMetrics());
+        PlatformMetrics pm = _metrics.GetOrAdd(platform, _ => new PlatformMetrics());
         Interlocked.Increment(ref pm.CacheHits);
     }
 
     public void RecordCacheMiss(string platform)
     {
-        var pm = _metrics.GetOrAdd(platform, _ => new PlatformMetrics());
+        PlatformMetrics pm = _metrics.GetOrAdd(platform, _ => new PlatformMetrics());
         Interlocked.Increment(ref pm.CacheMisses);
     }
 
     public void RecordCircuitBreakerState(string platform, string state)
     {
-        var pm = _metrics.GetOrAdd(platform, _ => new PlatformMetrics());
+        PlatformMetrics pm = _metrics.GetOrAdd(platform, _ => new PlatformMetrics());
         lock (_lock)
         {
             pm.CircuitBreakerState = state;
@@ -64,7 +64,7 @@ public class MetricsCollector : IMetricsCollector
     public MetricsSnapshot GetSnapshot()
     {
         var platforms = new Dictionary<string, PlatformMetricsSnapshot>();
-        foreach (var (platform, metrics) in _metrics)
+        foreach ((string? platform, PlatformMetrics? metrics) in _metrics)
         {
             platforms[platform] = new PlatformMetricsSnapshot
             {

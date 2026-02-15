@@ -12,10 +12,10 @@ public sealed class HealthReportServiceTests
     [Fact]
     public async Task BuildReportAsync_ShouldIncludePlatformAndProxyHealth()
     {
-        var google = Substitute.For<IJobScraper>();
+        IJobScraper google = Substitute.For<IJobScraper>();
         google.PlatformName.Returns("Google");
 
-        var healthyProxy = Substitute.For<IProxySource>();
+        IProxySource healthyProxy = Substitute.For<IProxySource>();
         healthyProxy
             .FetchProxiesAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IEnumerable<ProxyInfo>>(new[]
@@ -23,14 +23,14 @@ public sealed class HealthReportServiceTests
                 new ProxyInfo("proxy://healthy", null, null)
             }));
 
-        var emptyProxy = Substitute.For<IProxySource>();
+        IProxySource emptyProxy = Substitute.For<IProxySource>();
         emptyProxy
             .FetchProxiesAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IEnumerable<ProxyInfo>>(Array.Empty<ProxyInfo>()));
 
         var sut = new HealthReportService(new[] { healthyProxy, emptyProxy }, new[] { google }, NullLogger<HealthReportService>.Instance);
 
-        var report = await sut.BuildReportAsync(CancellationToken.None);
+        HealthReport report = await sut.BuildReportAsync(CancellationToken.None).ConfigureAwait(false);
 
         report.Platforms.Should().ContainSingle(p => p.Name == "Google" && p.IsHealthy);
         report.Proxies.Should().HaveCount(2);
@@ -41,14 +41,14 @@ public sealed class HealthReportServiceTests
     [Fact]
     public async Task BuildReportAsync_ShouldMarkProxyUnhealthy_WhenProbeThrows()
     {
-        var throwingProxy = Substitute.For<IProxySource>();
+        IProxySource throwingProxy = Substitute.For<IProxySource>();
         throwingProxy
             .FetchProxiesAsync(Arg.Any<CancellationToken>())
             .Returns<Task<IEnumerable<ProxyInfo>>>(_ => throw new InvalidOperationException("probe-failed"));
 
         var sut = new HealthReportService(new[] { throwingProxy }, Array.Empty<IJobScraper>(), NullLogger<HealthReportService>.Instance);
 
-        var report = await sut.BuildReportAsync(CancellationToken.None);
+        HealthReport report = await sut.BuildReportAsync(CancellationToken.None).ConfigureAwait(false);
 
         report.Proxies.Should().ContainSingle();
         report.Proxies[0].IsHealthy.Should().BeFalse();
@@ -61,10 +61,10 @@ public sealed class HealthReportServiceTests
         var sut = new HealthReportService(Array.Empty<IProxySource>(), Array.Empty<IJobScraper>(), NullLogger<HealthReportService>.Instance);
 
         using var cts = new CancellationTokenSource();
-        await cts.CancelAsync();
+        await cts.CancelAsync().ConfigureAwait(false);
 
-        var act = async () => await sut.BuildReportAsync(cts.Token);
+        Func<Task<HealthReport>> act = async () => await sut.BuildReportAsync(cts.Token).ConfigureAwait(false);
 
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
     }
 }

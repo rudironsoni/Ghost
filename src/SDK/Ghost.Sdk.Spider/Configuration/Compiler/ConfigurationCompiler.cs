@@ -50,7 +50,7 @@ public sealed class ConfigurationCompiler
 
         try
         {
-            var config = _yamlDeserializer.Deserialize<SpiderConfiguration>(yamlContent);
+            SpiderConfiguration config = _yamlDeserializer.Deserialize<SpiderConfiguration>(yamlContent);
 
             if (config == null)
             {
@@ -63,7 +63,7 @@ public sealed class ConfigurationCompiler
                 config.Id = Guid.NewGuid().ToString();
             }
 
-            var validationResult = _validator.Validate(config);
+            ValidationResult validationResult = _validator.Validate(config);
 
             if (!validationResult.IsValid)
             {
@@ -96,7 +96,7 @@ public sealed class ConfigurationCompiler
 
         try
         {
-            var config = JsonSerializer.Deserialize<SpiderConfiguration>(jsonContent, _jsonOptions);
+            SpiderConfiguration? config = JsonSerializer.Deserialize<SpiderConfiguration>(jsonContent, _jsonOptions);
 
             if (config == null)
             {
@@ -109,7 +109,7 @@ public sealed class ConfigurationCompiler
                 config.Id = Guid.NewGuid().ToString();
             }
 
-            var validationResult = _validator.Validate(config);
+            ValidationResult validationResult = _validator.Validate(config);
 
             if (!validationResult.IsValid)
             {

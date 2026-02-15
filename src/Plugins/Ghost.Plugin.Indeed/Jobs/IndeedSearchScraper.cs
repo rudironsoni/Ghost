@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
@@ -74,16 +75,16 @@ public class IndeedSearchScraper
     {
         ArgumentNullException.ThrowIfNull(criteria);
 
-        var query = criteria.Query ?? string.Empty;
-        var location = criteria.Location ?? string.Empty;
-        var maxResults = criteria.MaxResults > 0 ? criteria.MaxResults : 25;
+        string query = criteria.Query ?? string.Empty;
+        string location = criteria.Location ?? string.Empty;
+        int maxResults = criteria.MaxResults > 0 ? criteria.MaxResults : 25;
 
         LogSearchStart(_logger, query, location, null);
 
         // Strategy 1: Try GraphQL API first (primary)
         try
         {
-            var apiResults = await SearchViaApiAsync(query, location, maxResults, ct);
+            IReadOnlyList<JobListing> apiResults = await SearchViaApiAsync(query, location, maxResults, ct).ConfigureAwait(false);
             if (apiResults.Count > 0)
             {
                 LogApiSuccess(_logger, apiResults.Count, null);
@@ -100,7 +101,7 @@ public class IndeedSearchScraper
         {
             try
             {
-                var browserResults = await SearchViaBrowserAsync(query, location, maxResults, ct);
+                IReadOnlyList<JobListing> browserResults = await SearchViaBrowserAsync(query, location, maxResults, ct).ConfigureAwait(false);
                 if (browserResults.Count > 0)
                 {
                     LogBrowserSuccess(_logger, browserResults.Count, null);
@@ -126,7 +127,7 @@ public class IndeedSearchScraper
     {
         var results = new List<JobListing>();
 
-        await foreach (var root in _apiClient.SearchAsync(query, location, maxResults))
+        await foreach (JsonElement root in _apiClient.SearchAsync(query, location, maxResults).ConfigureAwait(false))
         {
             ct.ThrowIfCancellationRequested();
 
@@ -153,33 +154,33 @@ public class IndeedSearchScraper
             return Array.Empty<JobListing>();
         }
 
-        var page = await _browserSession.NewPageAsync(null, ct);
+        IPage page = await _browserSession.NewPageAsync(null, ct).ConfigureAwait(false);
         try
         {
             // Build Indeed search URL
-            var encodedQuery = Uri.EscapeDataString(query);
-            var encodedLocation = Uri.EscapeDataString(location);
-            var searchUrl = $"{_options.BaseUrl}/jobs?q={encodedQuery}&l={encodedLocation}";
+            string encodedQuery = Uri.EscapeDataString(query);
+            string encodedLocation = Uri.EscapeDataString(location);
+            string searchUrl = $"{_options.BaseUrl}/jobs?q={encodedQuery}&l={encodedLocation}";
 
-            await page.NavigateAsync(searchUrl, null, ct);
+            await page.NavigateAsync(searchUrl, null, ct).ConfigureAwait(false);
 
             // Wait for job cards to load
-            await page.WaitForSelectorAsync(".job_seen_beacon, .jobsearch-SerpJobCard", null, ct);
+            await page.WaitForSelectorAsync(".job_seen_beacon, .jobsearch-SerpJobCard", null, ct).ConfigureAwait(false);
 
             // Extract job listings from DOM
-            var jobCards = await page.QuerySelectorAllAsync(".job_seen_beacon, .jobsearch-SerpJobCard", ct);
+            IReadOnlyList<IElement> jobCards = await page.QuerySelectorAllAsync(".job_seen_beacon, .jobsearch-SerpJobCard", ct).ConfigureAwait(false);
             var results = new List<JobListing>();
 
-            foreach (var card in jobCards.Take(maxResults))
+            foreach (IElement? card in jobCards.Take(maxResults))
             {
                 try
                 {
-                    var jobId = await card.GetAttributeAsync("data-jk", ct) ?? string.Empty;
-                    var title = await ExtractTextAsync(card, ".jobTitle, h2[class*='jobTitle']", ct);
-                    var company = await ExtractTextAsync(card, ".companyName, [class*='companyName']", ct);
-                    var loc = await ExtractTextAsync(card, ".companyLocation, [class*='companyLocation']", ct);
-                    var salary = await ExtractTextAsync(card, ".salary-snippet, [class*='salary']", ct);
-                    var description = await ExtractTextAsync(card, ".job-snippet, [class*='job-snippet']", ct);
+                    string jobId = await card.GetAttributeAsync("data-jk", ct).ConfigureAwait(false) ?? string.Empty;
+                    string title = await ExtractTextAsync(card, ".jobTitle, h2[class*='jobTitle']", ct).ConfigureAwait(false);
+                    string company = await ExtractTextAsync(card, ".companyName, [class*='companyName']", ct).ConfigureAwait(false);
+                    string loc = await ExtractTextAsync(card, ".companyLocation, [class*='companyLocation']", ct).ConfigureAwait(false);
+                    string salary = await ExtractTextAsync(card, ".salary-snippet, [class*='salary']", ct).ConfigureAwait(false);
+                    string description = await ExtractTextAsync(card, ".job-snippet, [class*='job-snippet']", ct).ConfigureAwait(false);
 
                     if (!string.IsNullOrEmpty(jobId) && !string.IsNullOrEmpty(title))
                     {
@@ -207,7 +208,7 @@ public class IndeedSearchScraper
         }
         finally
         {
-            await page.DisposeAsync();
+            await page.DisposeAsync().ConfigureAwait(false);
         }
     }
 
@@ -218,13 +219,13 @@ public class IndeedSearchScraper
     {
         try
         {
-            var target = await element.QuerySelectorAsync(selector, ct);
+            IElement? target = await element.QuerySelectorAsync(selector, ct).ConfigureAwait(false);
             if (target == null)
             {
                 return string.Empty;
             }
 
-            var text = await target.GetTextContentAsync(ct);
+            string? text = await target.GetTextContentAsync(ct).ConfigureAwait(false);
             return text?.Trim() ?? string.Empty;
         }
         catch

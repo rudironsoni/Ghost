@@ -34,16 +34,16 @@ public sealed class LinkedInAuthenticator
     {
         if (string.IsNullOrEmpty(liAt)) throw new ArgumentNullException(nameof(liAt));
 
-        var pageOpts = _options.GetPageOptions();
-        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        PageOptions? pageOpts = _options.GetPageOptions();
+        IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
         try
         {
-            await page.NavigateAsync(_options.BaseUrl, ct: ct);
+            await page.NavigateAsync(_options.BaseUrl, ct: ct).ConfigureAwait(false);
             // set cookie via document.cookie
-            await page.EvaluateAsync<object>($"document.cookie = 'li_at={liAt}; domain=.linkedin.com; path=/';", ct: ct);
-            await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct);
+            await page.EvaluateAsync<object>($"document.cookie = 'li_at={liAt}; domain=.linkedin.com; path=/';", ct: ct).ConfigureAwait(false);
+            await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct).ConfigureAwait(false);
 
-            var logged = await IsLoggedInAsync(page, ct).ConfigureAwait(false);
+            bool logged = await IsLoggedInAsync(page, ct).ConfigureAwait(false);
             if (!logged)
             {
                 _logger.LoginCookieSetNotLoggedIn();
@@ -51,7 +51,7 @@ public sealed class LinkedInAuthenticator
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 
@@ -60,7 +60,7 @@ public sealed class LinkedInAuthenticator
         ArgumentNullException.ThrowIfNull(page);
 
         // safe urls to warm up the browser/page
-        var safe = new[]
+        string[] safe = new[]
         {
             "https://www.google.com",
             "https://github.com",
@@ -71,17 +71,17 @@ public sealed class LinkedInAuthenticator
         try
         {
             // pick 2 random urls
-            var pick = safe.OrderBy(_ => Random.Shared.Next()).Take(2);
-            foreach (var url in pick)
+            IEnumerable<string> pick = safe.OrderBy(_ => Random.Shared.Next()).Take(2);
+            foreach (string? url in pick)
             {
                 ct.ThrowIfCancellationRequested();
                 s_logWarmUpVisit(_logger, url, null);
-                await page.NavigateAsync(url, new NavigationOptions { WaitUntil = WaitUntil.DomContentLoaded }, ct: ct);
+                await page.NavigateAsync(url, new NavigationOptions { WaitUntil = WaitUntil.DomContentLoaded }, ct: ct).ConfigureAwait(false);
                 // wait a short random delay to simulate browsing
-                var delay = Random.Shared.Next(1500, 3001);
-                await Task.Delay(delay, ct);
+                int delay = Random.Shared.Next(1500, 3001);
+                await Task.Delay(delay, ct).ConfigureAwait(false);
                 // scroll a bit
-                try { await page.EvaluateAsync<object>("window.scrollBy(0,500);", ct: ct); } catch { }
+                try { await page.EvaluateAsync<object>("window.scrollBy(0,500);", ct: ct).ConfigureAwait(false); } catch { }
             }
             s_logWarmUpComplete(_logger, null);
         }
@@ -103,7 +103,7 @@ public sealed class LinkedInAuthenticator
                 return true;
 
             // Or check for nav.global-nav__nav selector
-            var nav = await page.QuerySelectorAsync("nav.global-nav__nav", ct).ConfigureAwait(false);
+            IElement? nav = await page.QuerySelectorAsync("nav.global-nav__nav", ct).ConfigureAwait(false);
             return nav != null;
         }
         catch (OperationCanceledException) { throw; }

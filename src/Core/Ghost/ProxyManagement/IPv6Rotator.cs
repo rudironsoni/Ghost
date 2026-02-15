@@ -91,7 +91,7 @@ public sealed class IPv6Rotator : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        await _lock.WaitAsync(cancellationToken);
+        await _lock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             // Generate random 64-bit host identifier
@@ -99,20 +99,20 @@ public sealed class IPv6Rotator : IDisposable
             _random.NextBytes(hostBytes);
 
             // Construct full IPv6 address: prefix + random host
-            var address = $"{_options.SubnetPrefix}:{hostBytes[0]:x2}{hostBytes[1]:x2}:{hostBytes[2]:x2}{hostBytes[3]:x2}:{hostBytes[4]:x2}{hostBytes[5]:x2}:{hostBytes[6]:x2}{hostBytes[7]:x2}";
+            string address = $"{_options.SubnetPrefix}:{hostBytes[0]:x2}{hostBytes[1]:x2}:{hostBytes[2]:x2}{hostBytes[3]:x2}:{hostBytes[4]:x2}{hostBytes[5]:x2}:{hostBytes[6]:x2}{hostBytes[7]:x2}";
 
             // Normalize address format
             var ipAddress = IPAddress.Parse(address);
-            var normalized = ipAddress.ToString();
+            string normalized = ipAddress.ToString();
 
             // Health check if enabled
             if (_options.EnableHealthCheck)
             {
-                var isHealthy = await CheckAddressHealthAsync(normalized, cancellationToken);
+                bool isHealthy = await CheckAddressHealthAsync(normalized, cancellationToken).ConfigureAwait(false);
                 if (!isHealthy)
                 {
                     // Retry with different address
-                    return await GetRandomAddressAsync(cancellationToken);
+                    return await GetRandomAddressAsync(cancellationToken).ConfigureAwait(false);
                 }
             }
 
@@ -120,7 +120,7 @@ public sealed class IPv6Rotator : IDisposable
             if (_activeAddresses.Count >= _options.MaxPoolSize)
             {
                 // Remove oldest (FIFO)
-                var oldest = _activeAddresses.First();
+                string oldest = _activeAddresses.First();
                 _activeAddresses.Remove(oldest);
             }
             _activeAddresses.Add(normalized);
@@ -143,10 +143,10 @@ public sealed class IPv6Rotator : IDisposable
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
 
-        var tasks = Enumerable.Range(0, count)
+        IEnumerable<Task<string>> tasks = Enumerable.Range(0, count)
             .Select(_ => GetRandomAddressAsync(cancellationToken));
 
-        return await Task.WhenAll(tasks);
+        return await Task.WhenAll(tasks).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -162,7 +162,7 @@ public sealed class IPv6Rotator : IDisposable
         try
         {
             // Parse address
-            if (!IPAddress.TryParse(address, out var ipAddress))
+            if (!IPAddress.TryParse(address, out IPAddress? ipAddress))
             {
                 return false;
             }
@@ -174,8 +174,8 @@ public sealed class IPv6Rotator : IDisposable
                 Ttl = 64
             };
 
-            var timeoutMs = _options.HealthCheckTimeoutSeconds * 1000;
-            var reply = await ping.SendPingAsync(ipAddress, timeoutMs, Array.Empty<byte>(), pingOptions);
+            int timeoutMs = _options.HealthCheckTimeoutSeconds * 1000;
+            PingReply reply = await ping.SendPingAsync(ipAddress, timeoutMs, Array.Empty<byte>(), pingOptions).ConfigureAwait(false);
 
             // Consider address healthy if it responds or if unreachable (not all hosts respond to ping)
             // The key is to filter out addresses that are definitely invalid
@@ -233,7 +233,7 @@ public sealed class IPv6Rotator : IDisposable
                 return false;
             }
 
-            await process.WaitForExitAsync(cancellationToken);
+            await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
             return process.ExitCode == 0;
         }
         catch
@@ -282,7 +282,7 @@ public sealed class IPv6Rotator : IDisposable
                 return false;
             }
 
-            await process.WaitForExitAsync(cancellationToken);
+            await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
             return process.ExitCode == 0;
         }
         catch
@@ -314,14 +314,14 @@ public sealed class IPv6Rotator : IDisposable
     {
         // IPv6 /64 prefix should have 4 groups (64 bits)
         // Example: 2001:db8:1234:5678
-        var parts = prefix.Split(':', StringSplitOptions.RemoveEmptyEntries);
+        string[] parts = prefix.Split(':', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length != 4)
         {
             return false;
         }
 
         // Validate each part is a valid hex value
-        foreach (var part in parts)
+        foreach (string part in parts)
         {
             if (!ushort.TryParse(part, System.Globalization.NumberStyles.HexNumber, null, out _))
             {

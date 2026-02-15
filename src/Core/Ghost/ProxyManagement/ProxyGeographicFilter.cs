@@ -45,7 +45,7 @@ public sealed class ProxyGeographicFilter : IDisposable
 
         // Rate limit to 45 requests per minute (ip-api.com free tier limit)
         _rateLimitSemaphore = new SemaphoreSlim(45, 45);
-        _ = Task.Run(async () => await RefillRateLimitAsync());
+        _ = Task.Run(async () => await RefillRateLimitAsync().ConfigureAwait(false));
     }
 
     /// <summary>
@@ -97,10 +97,10 @@ public sealed class ProxyGeographicFilter : IDisposable
 
         try
         {
-            var url = $"http://ip-api.com/json/{ipAddress}?fields=status,message,country,countryCode,region,regionName,city,lat,lon,timezone,isp,query";
-            var response = await _httpClient.GetStringAsync(url, ct).ConfigureAwait(false);
+            string url = $"http://ip-api.com/json/{ipAddress}?fields=status,message,country,countryCode,region,regionName,city,lat,lon,timezone,isp,query";
+            string response = await _httpClient.GetStringAsync(url, ct).ConfigureAwait(false);
 
-            var geolocation = JsonSerializer.Deserialize<IpApiResponse>(response, s_jsonOptions);
+            IpApiResponse? geolocation = JsonSerializer.Deserialize<IpApiResponse>(response, s_jsonOptions);
 
             if (geolocation == null || geolocation.Status != "success")
             {
@@ -142,17 +142,17 @@ public sealed class ProxyGeographicFilter : IDisposable
 
         var results = new Dictionary<string, ProxyGeolocation>();
 
-        foreach (var proxy in proxies)
+        foreach (ProxyInfo proxy in proxies)
         {
             if (ct.IsCancellationRequested)
                 break;
 
             // Extract IP from proxy server URL
-            var ip = ExtractIpFromProxyUrl(proxy.Server);
+            string? ip = ExtractIpFromProxyUrl(proxy.Server);
             if (string.IsNullOrEmpty(ip))
                 continue;
 
-            var geolocation = await GetGeolocationAsync(ip, ct).ConfigureAwait(false);
+            ProxyGeolocation? geolocation = await GetGeolocationAsync(ip, ct).ConfigureAwait(false);
             if (geolocation != null)
             {
                 results[proxy.Server] = geolocation;
@@ -191,10 +191,10 @@ public sealed class ProxyGeographicFilter : IDisposable
             await Task.Delay(TimeSpan.FromMinutes(1)).ConfigureAwait(false);
 
             // Release tokens back to the semaphore (up to max of 45)
-            var currentCount = _rateLimitSemaphore.CurrentCount;
-            var tokensToAdd = 45 - currentCount;
+            int currentCount = _rateLimitSemaphore.CurrentCount;
+            int tokensToAdd = 45 - currentCount;
 
-            for (var i = 0; i < tokensToAdd; i++)
+            for (int i = 0; i < tokensToAdd; i++)
             {
                 _rateLimitSemaphore.Release();
             }

@@ -10,8 +10,8 @@ public class DeduplicationService : IDeduplicationService
     {
         title ??= string.Empty;
         company ??= string.Empty;
-        var normalized = ($"{title}|{company}").Trim().ToLowerInvariant();
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(normalized));
+        string normalized = ($"{title}|{company}").Trim().ToLowerInvariant();
+        byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(normalized));
         return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 }

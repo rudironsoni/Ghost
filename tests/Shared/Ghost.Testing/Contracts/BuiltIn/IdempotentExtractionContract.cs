@@ -32,7 +32,7 @@ public sealed class IdempotentExtractionContract : ProviderContractBase
         try
         {
             // Test idempotency by running the same extraction twice
-            var (firstRun, secondRun) = await adapter.TestIdempotencyAsync(criteria, ct);
+            (IReadOnlyList<JobListing>? firstRun, IReadOnlyList<JobListing>? secondRun) = await adapter.TestIdempotencyAsync(criteria, ct).ConfigureAwait(false);
 
             context["FirstRunCount"] = firstRun.Count;
             context["SecondRunCount"] = secondRun.Count;
@@ -70,10 +70,10 @@ public sealed class IdempotentExtractionContract : ProviderContractBase
 
                 var inconsistentJobs = new List<string>();
 
-                foreach (var id in firstIds.Intersect(secondIds))
+                foreach (string? id in firstIds.Intersect(secondIds))
                 {
-                    var firstJob = firstRunDict[id];
-                    var secondJob = secondRunDict[id];
+                    JobListing firstJob = firstRunDict[id];
+                    JobListing secondJob = secondRunDict[id];
 
                     if (firstJob.Title != secondJob.Title)
                     {
@@ -97,7 +97,7 @@ public sealed class IdempotentExtractionContract : ProviderContractBase
             // Verify order consistency (if applicable)
             if (firstRun.Count == secondRun.Count && firstRun.Count > 0)
             {
-                var orderMatches = true;
+                bool orderMatches = true;
                 for (int i = 0; i < Math.Min(firstRun.Count, secondRun.Count); i++)
                 {
                     if (firstRun[i].Id != secondRun[i].Id)

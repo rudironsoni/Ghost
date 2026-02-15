@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
+
 namespace Ghost.Sdk.Spider.Core.Entities.Attributes;
 
 /// <summary>
@@ -51,7 +54,7 @@ public class TrimFormatterAttribute : FormatterAttribute
         if (string.IsNullOrEmpty(str))
             return str;
 
-        var trimChars = TrimChars?.ToCharArray();
+        char[]? trimChars = TrimChars?.ToCharArray();
 
         if (TrimStart && !TrimEnd)
             return trimChars != null ? str.TrimStart(trimChars) : str.TrimStart();
@@ -104,7 +107,7 @@ public class ReplaceFormatterAttribute : FormatterAttribute
         if (string.IsNullOrEmpty(str))
             return str;
 
-        var comparison = IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        StringComparison comparison = IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
         return str.Replace(OldValue, NewValue, comparison);
     }
 }
@@ -155,7 +158,7 @@ public class RegexFormatterAttribute : FormatterAttribute
         if (string.IsNullOrEmpty(str))
             return str;
 
-        var options = IgnoreCase ? System.Text.RegularExpressions.RegexOptions.IgnoreCase : System.Text.RegularExpressions.RegexOptions.None;
+        RegexOptions options = IgnoreCase ? System.Text.RegularExpressions.RegexOptions.IgnoreCase : System.Text.RegularExpressions.RegexOptions.None;
         var regex = new System.Text.RegularExpressions.Regex(Pattern, options);
 
         if (Replacement != null)
@@ -163,7 +166,7 @@ public class RegexFormatterAttribute : FormatterAttribute
             return regex.Replace(str, Replacement);
         }
 
-        var match = regex.Match(str);
+        Match match = regex.Match(str);
         if (!match.Success)
             return str;
 
@@ -201,7 +204,7 @@ public class DateTimeFormatterAttribute : FormatterAttribute
         if (value == null)
             return null;
 
-        var culture = Culture != null
+        CultureInfo culture = Culture != null
             ? System.Globalization.CultureInfo.GetCultureInfo(Culture)
             : System.Globalization.CultureInfo.InvariantCulture;
 
@@ -300,7 +303,7 @@ public class LowercaseFormatterAttribute : FormatterAttribute
         if (value is not string str)
             return value;
 
-        var culture = Culture != null
+        CultureInfo culture = Culture != null
             ? System.Globalization.CultureInfo.GetCultureInfo(Culture)
             : System.Globalization.CultureInfo.InvariantCulture;
 
@@ -326,7 +329,7 @@ public class UppercaseFormatterAttribute : FormatterAttribute
         if (value is not string str)
             return value;
 
-        var culture = Culture != null
+        CultureInfo culture = Culture != null
             ? System.Globalization.CultureInfo.GetCultureInfo(Culture)
             : System.Globalization.CultureInfo.InvariantCulture;
 

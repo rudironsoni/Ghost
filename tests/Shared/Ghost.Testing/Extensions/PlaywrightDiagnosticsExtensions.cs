@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using Ghost.Testing.Reliability;
+using Microsoft.Playwright;
 
 namespace Ghost.Testing.Extensions;
 
@@ -28,13 +29,13 @@ public static class PlaywrightDiagnosticsExtensions
         ArgumentNullException.ThrowIfNull(page);
         ArgumentNullException.ThrowIfNull(diagnostics);
 
-        var name = artifactName ?? $"trace-{DateTime.UtcNow:HHmmss-fff}.zip";
-        var path = Path.Combine(diagnostics.GetDiagnosticsRoot(), name);
+        string name = artifactName ?? $"trace-{DateTime.UtcNow:HHmmss-fff}.zip";
+        string path = Path.Combine(diagnostics.GetDiagnosticsRoot(), name);
 
         try
         {
             // Access the underlying Playwright page via reflection
-            var playwrightPage = GetUnderlyingPlaywrightPage(page);
+            Microsoft.Playwright.IPage? playwrightPage = GetUnderlyingPlaywrightPage(page);
             if (playwrightPage == null)
             {
                 diagnostics.AddTimelineEvent("TraceCaptureFailed", "Could not access underlying Playwright page");
@@ -42,16 +43,16 @@ public static class PlaywrightDiagnosticsExtensions
             }
 
             // Start tracing if not already started
-            var context = playwrightPage.Context;
-            await context.Tracing.StartAsync(new Microsoft.Playwright.TracingStartOptions
+            IBrowserContext context = playwrightPage.Context;
+            await context.Tracing.StartAsync(new TracingStartOptions
             {
                 Screenshots = true,
                 Snapshots = true,
                 Sources = true
-            });
+            }).ConfigureAwait(false);
 
             // Stop tracing and save to file
-            await context.Tracing.StopAsync(new Microsoft.Playwright.TracingStopOptions { Path = path });
+            await context.Tracing.StopAsync(new TracingStopOptions { Path = path }).ConfigureAwait(false);
 
             var artifact = new DiagnosticArtifact
             {
@@ -90,20 +91,20 @@ public static class PlaywrightDiagnosticsExtensions
 
         try
         {
-            var playwrightPage = GetUnderlyingPlaywrightPage(page);
+            Microsoft.Playwright.IPage? playwrightPage = GetUnderlyingPlaywrightPage(page);
             if (playwrightPage == null)
             {
                 diagnostics.AddTimelineEvent("TraceStartFailed", "Could not access underlying Playwright page");
                 return;
             }
 
-            var context = playwrightPage.Context;
-            await context.Tracing.StartAsync(new Microsoft.Playwright.TracingStartOptions
+            IBrowserContext context = playwrightPage.Context;
+            await context.Tracing.StartAsync(new TracingStartOptions
             {
                 Screenshots = true,
                 Snapshots = true,
                 Sources = true
-            });
+            }).ConfigureAwait(false);
 
             diagnostics.AddTimelineEvent("TraceStarted", "Playwright tracing started");
             diagnostics.Output?.WriteLine($"[Diagnostics] Playwright tracing started");
@@ -131,20 +132,20 @@ public static class PlaywrightDiagnosticsExtensions
         ArgumentNullException.ThrowIfNull(page);
         ArgumentNullException.ThrowIfNull(diagnostics);
 
-        var name = artifactName ?? $"trace-{DateTime.UtcNow:HHmmss-fff}.zip";
-        var path = Path.Combine(diagnostics.GetDiagnosticsRoot(), name);
+        string name = artifactName ?? $"trace-{DateTime.UtcNow:HHmmss-fff}.zip";
+        string path = Path.Combine(diagnostics.GetDiagnosticsRoot(), name);
 
         try
         {
-            var playwrightPage = GetUnderlyingPlaywrightPage(page);
+            Microsoft.Playwright.IPage? playwrightPage = GetUnderlyingPlaywrightPage(page);
             if (playwrightPage == null)
             {
                 diagnostics.AddTimelineEvent("TraceStopFailed", "Could not access underlying Playwright page");
                 return string.Empty;
             }
 
-            var context = playwrightPage.Context;
-            await context.Tracing.StopAsync(new Microsoft.Playwright.TracingStopOptions { Path = path });
+            IBrowserContext context = playwrightPage.Context;
+            await context.Tracing.StopAsync(new TracingStopOptions { Path = path }).ConfigureAwait(false);
 
             var artifact = new DiagnosticArtifact
             {
@@ -183,19 +184,19 @@ public static class PlaywrightDiagnosticsExtensions
         ArgumentNullException.ThrowIfNull(page);
         ArgumentNullException.ThrowIfNull(diagnostics);
 
-        var name = artifactName ?? $"network-{DateTime.UtcNow:HHmmss-fff}.har";
-        var path = Path.Combine(diagnostics.GetDiagnosticsRoot(), name);
+        string name = artifactName ?? $"network-{DateTime.UtcNow:HHmmss-fff}.har";
+        string path = Path.Combine(diagnostics.GetDiagnosticsRoot(), name);
 
         try
         {
-            var playwrightPage = GetUnderlyingPlaywrightPage(page);
+            Microsoft.Playwright.IPage? playwrightPage = GetUnderlyingPlaywrightPage(page);
             if (playwrightPage == null)
             {
                 diagnostics.AddTimelineEvent("HarCaptureFailed", "Could not access underlying Playwright page");
                 return string.Empty;
             }
 
-            var context = playwrightPage.Context;
+            IBrowserContext context = playwrightPage.Context;
 
             // HAR capture requires starting recording before navigation
             // For now, we'll create a placeholder HAR file with basic metadata
@@ -209,8 +210,8 @@ public static class PlaywrightDiagnosticsExtensions
                 }
             };
 
-            var harJson = JsonSerializer.Serialize(harContent, s_jsonOptions);
-            await File.WriteAllTextAsync(path, harJson, Encoding.UTF8);
+            string harJson = JsonSerializer.Serialize(harContent, s_jsonOptions);
+            await File.WriteAllTextAsync(path, harJson, Encoding.UTF8).ConfigureAwait(false);
 
             var artifact = new DiagnosticArtifact
             {
@@ -245,8 +246,8 @@ public static class PlaywrightDiagnosticsExtensions
         try
         {
             // The PageWrapper class has a private field "_page" of type Microsoft.Playwright.IPage
-            var pageType = page.GetType();
-            var field = pageType.GetField("_page", BindingFlags.NonPublic | BindingFlags.Instance);
+            Type pageType = page.GetType();
+            FieldInfo? field = pageType.GetField("_page", BindingFlags.NonPublic | BindingFlags.Instance);
 
             if (field != null && field.GetValue(page) is Microsoft.Playwright.IPage playwrightPage)
             {
@@ -276,9 +277,9 @@ public static class PlaywrightDiagnosticsExtensions
         ArgumentNullException.ThrowIfNull(diagnostics);
 
         // Stop and save trace
-        await page.StopTracingAsync(diagnostics);
+        await page.StopTracingAsync(diagnostics).ConfigureAwait(false);
 
         // Capture HAR
-        await page.CaptureHarAsync(diagnostics);
+        await page.CaptureHarAsync(diagnostics).ConfigureAwait(false);
     }
 }

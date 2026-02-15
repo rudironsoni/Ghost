@@ -31,7 +31,7 @@ public sealed class AbstractionsContractSmokeTests
     [Fact]
     public async Task Contracts_Compile_WithCancellationFlow()
     {
-        var cancellationToken = CancellationToken.None;
+        CancellationToken cancellationToken = CancellationToken.None;
         var context = new GhostEngineContext("job-2", "spider-b", new Dictionary<string, object?>());
         var request = new GhostRequest("https://example.test", "GET", new Dictionary<string, string>(), null, TimeSpan.FromSeconds(5));
         var response = new GhostResponse("https://example.test", 200, new Dictionary<string, string>(), "body", DateTimeOffset.UtcNow);
@@ -46,22 +46,22 @@ public sealed class AbstractionsContractSmokeTests
         ISignalBus signalBus = new FakeSignalBus();
         IGhostSettings settings = new FakeSettings();
 
-        await scheduler.EnqueueAsync(request, cancellationToken: cancellationToken);
-        var dequeued = await scheduler.DequeueAsync(cancellationToken);
-        var downloaded = await downloader.DownloadAsync(dequeued!, context, cancellationToken);
-        var middlewareResponse = await downloaderMiddleware.InvokeAsync(
+        await scheduler.EnqueueAsync(request, cancellationToken: cancellationToken).ConfigureAwait(false);
+        GhostRequest? dequeued = await scheduler.DequeueAsync(cancellationToken).ConfigureAwait(false);
+        GhostResponse downloaded = await downloader.DownloadAsync(dequeued!, context, cancellationToken).ConfigureAwait(false);
+        GhostResponse middlewareResponse = await downloaderMiddleware.InvokeAsync(
             dequeued!,
             context,
             (_, _, _) => Task.FromResult(downloaded),
-            cancellationToken);
-        var spiderOutput = await spiderMiddleware.InvokeAsync(
+            cancellationToken).ConfigureAwait(false);
+        SpiderOutput spiderOutput = await spiderMiddleware.InvokeAsync(
             middlewareResponse,
             context,
             (res, ctx, ct) => spider.ParseAsync(res, ctx, ct),
-            cancellationToken);
-        var processedItem = await itemPipeline.ProcessAsync(spiderOutput.Items[0], context, cancellationToken);
-        await signalBus.PublishAsync(processedItem, cancellationToken);
-        await engine.RunAsync(spider, context, cancellationToken);
+            cancellationToken).ConfigureAwait(false);
+        ItemEnvelope processedItem = await itemPipeline.ProcessAsync(spiderOutput.Items[0], context, cancellationToken).ConfigureAwait(false);
+        await signalBus.PublishAsync(processedItem, cancellationToken).ConfigureAwait(false);
+        await engine.RunAsync(spider, context, cancellationToken).ConfigureAwait(false);
 
         Assert.NotNull(settings.GetOrDefault("none", "value"));
     }
@@ -82,7 +82,7 @@ public sealed class AbstractionsContractSmokeTests
             GhostEngineContext context,
             [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            await Task.CompletedTask;
+            await Task.CompletedTask.ConfigureAwait(false);
             yield return new GhostRequest("https://example.test", "GET", new Dictionary<string, string>(), null, null);
         }
 

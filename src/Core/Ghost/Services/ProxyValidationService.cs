@@ -52,7 +52,7 @@ public class ProxyValidationService
 
         try
         {
-            using var response = await httpClient.GetAsync("https://httpbin.org/ip", cancellationToken);
+            using HttpResponseMessage response = await httpClient.GetAsync("https://httpbin.org/ip", cancellationToken).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {

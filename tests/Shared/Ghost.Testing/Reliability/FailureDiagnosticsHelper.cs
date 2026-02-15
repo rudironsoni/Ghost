@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using Xunit.Abstractions;
@@ -120,13 +121,13 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(page);
 
-        var name = artifactName ?? $"screenshot-{DateTime.UtcNow:HHmmss-fff}.png";
-        var path = Path.Combine(_diagnosticsRoot, name);
+        string name = artifactName ?? $"screenshot-{DateTime.UtcNow:HHmmss-fff}.png";
+        string path = Path.Combine(_diagnosticsRoot, name);
 
         try
         {
-            var screenshotBytes = await page.ScreenshotAsync();
-            await File.WriteAllBytesAsync(path, screenshotBytes);
+            byte[] screenshotBytes = await page.ScreenshotAsync().ConfigureAwait(false);
+            await File.WriteAllBytesAsync(path, screenshotBytes).ConfigureAwait(false);
 
             var artifact = new DiagnosticArtifact
             {
@@ -160,13 +161,13 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(page);
 
-        var name = artifactName ?? $"dom-snapshot-{DateTime.UtcNow:HHmmss-fff}.html";
-        var path = Path.Combine(_diagnosticsRoot, name);
+        string name = artifactName ?? $"dom-snapshot-{DateTime.UtcNow:HHmmss-fff}.html";
+        string path = Path.Combine(_diagnosticsRoot, name);
 
         try
         {
-            var html = await page.GetContentAsync();
-            await File.WriteAllTextAsync(path, html, Encoding.UTF8);
+            string html = await page.GetContentAsync().ConfigureAwait(false);
+            await File.WriteAllTextAsync(path, html, Encoding.UTF8).ConfigureAwait(false);
 
             var artifact = new DiagnosticArtifact
             {
@@ -200,13 +201,13 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(page);
 
-        var name = artifactName ?? $"console-logs-{DateTime.UtcNow:HHmmss-fff}.json";
-        var path = Path.Combine(_diagnosticsRoot, name);
+        string name = artifactName ?? $"console-logs-{DateTime.UtcNow:HHmmss-fff}.json";
+        string path = Path.Combine(_diagnosticsRoot, name);
 
         try
         {
             // Collect console logs via JavaScript evaluation
-            var logsScript = @"
+            string logsScript = @"
                 (function() {
                     const logs = [];
                     const originalLog = console.log;
@@ -218,8 +219,8 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
                 })();
             ";
 
-            var logs = await page.EvaluateAsync<string>(logsScript);
-            await File.WriteAllTextAsync(path, logs, Encoding.UTF8);
+            string logs = await page.EvaluateAsync<string>(logsScript).ConfigureAwait(false);
+            await File.WriteAllTextAsync(path, logs, Encoding.UTF8).ConfigureAwait(false);
 
             var artifact = new DiagnosticArtifact
             {
@@ -253,12 +254,12 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(page);
 
-        var name = artifactName ?? $"page-metadata-{DateTime.UtcNow:HHmmss-fff}.json";
-        var path = Path.Combine(_diagnosticsRoot, name);
+        string name = artifactName ?? $"page-metadata-{DateTime.UtcNow:HHmmss-fff}.json";
+        string path = Path.Combine(_diagnosticsRoot, name);
 
         try
         {
-            var title = await page.GetTitleAsync();
+            string? title = await page.GetTitleAsync().ConfigureAwait(false);
             var metadata = new
             {
                 Url = page.Url,
@@ -270,8 +271,8 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
                 FixtureId = FixtureId
             };
 
-            var json = JsonSerializer.Serialize(metadata, s_jsonOptions);
-            await File.WriteAllTextAsync(path, json, Encoding.UTF8);
+            string json = JsonSerializer.Serialize(metadata, s_jsonOptions);
+            await File.WriteAllTextAsync(path, json, Encoding.UTF8).ConfigureAwait(false);
 
             var artifact = new DiagnosticArtifact
             {
@@ -305,8 +306,8 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
     {
         if (string.IsNullOrEmpty(logs)) return string.Empty;
 
-        var name = artifactName ?? $"application-logs-{DateTime.UtcNow:HHmmss-fff}.txt";
-        var path = Path.Combine(_diagnosticsRoot, name);
+        string name = artifactName ?? $"application-logs-{DateTime.UtcNow:HHmmss-fff}.txt";
+        string path = Path.Combine(_diagnosticsRoot, name);
 
         try
         {
@@ -340,8 +341,8 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
     /// <returns>The path to the captured timeline.</returns>
     public string CaptureTimeline()
     {
-        var name = $"timeline-{DateTime.UtcNow:HHmmss-fff}.json";
-        var path = Path.Combine(_diagnosticsRoot, name);
+        string name = $"timeline-{DateTime.UtcNow:HHmmss-fff}.json";
+        string path = Path.Combine(_diagnosticsRoot, name);
 
         try
         {
@@ -355,7 +356,7 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
                 Events = _timeline
             };
 
-            var json = JsonSerializer.Serialize(timelineData, s_jsonOptions);
+            string json = JsonSerializer.Serialize(timelineData, s_jsonOptions);
             File.WriteAllText(path, json, Encoding.UTF8);
 
             var artifact = new DiagnosticArtifact
@@ -394,8 +395,8 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
         // Capture exception details
         if (exception != null)
         {
-            var exceptionPath = Path.Combine(_diagnosticsRoot, $"exception-{DateTime.UtcNow:HHmmss-fff}.txt");
-            var exceptionText = $"Exception Type: {exception.GetType().FullName}\n" +
+            string exceptionPath = Path.Combine(_diagnosticsRoot, $"exception-{DateTime.UtcNow:HHmmss-fff}.txt");
+            string exceptionText = $"Exception Type: {exception.GetType().FullName}\n" +
                                $"Message: {exception.Message}\n" +
                                $"Stack Trace:\n{exception.StackTrace}\n";
 
@@ -404,7 +405,7 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
                 exceptionText += $"\nInner Exception:\n{exception.InnerException}";
             }
 
-            await File.WriteAllTextAsync(exceptionPath, exceptionText, Encoding.UTF8);
+            await File.WriteAllTextAsync(exceptionPath, exceptionText, Encoding.UTF8).ConfigureAwait(false);
             _capturedArtifacts.Add(new DiagnosticArtifact
             {
                 Type = ArtifactType.Exception,
@@ -417,19 +418,19 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
         // Capture browser artifacts if page is available
         if (page != null)
         {
-            await CaptureScreenshotAsync(page);
-            await CaptureDomSnapshotAsync(page);
-            await CaptureConsoleLogsAsync(page);
-            await CapturePageMetadataAsync(page);
+            await CaptureScreenshotAsync(page).ConfigureAwait(false);
+            await CaptureDomSnapshotAsync(page).ConfigureAwait(false);
+            await CaptureConsoleLogsAsync(page).ConfigureAwait(false);
+            await CapturePageMetadataAsync(page).ConfigureAwait(false);
         }
 
         // Capture timeline
         CaptureTimeline();
 
         // Generate summary
-        var summaryPath = Path.Combine(_diagnosticsRoot, "diagnostics-summary.txt");
-        var summary = GenerateSummary();
-        await File.WriteAllTextAsync(summaryPath, summary, Encoding.UTF8);
+        string summaryPath = Path.Combine(_diagnosticsRoot, "diagnostics-summary.txt");
+        string summary = GenerateSummary();
+        await File.WriteAllTextAsync(summaryPath, summary, Encoding.UTF8).ConfigureAwait(false);
 
         AddTimelineEvent("DiagnosticsComplete", $"All artifacts captured to {_diagnosticsRoot}");
         Output.WriteLine($"[Diagnostics] Failure diagnostics captured to: {_diagnosticsRoot}");
@@ -446,7 +447,7 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
     private string GenerateSummary()
     {
         var sb = new StringBuilder();
-        var culture = System.Globalization.CultureInfo.InvariantCulture;
+        CultureInfo culture = System.Globalization.CultureInfo.InvariantCulture;
         sb.AppendLine("=== Ghost Test Failure Diagnostics ===");
         sb.AppendLine();
         sb.AppendLine(string.Format(culture, "Test Run ID: {0}", _testRunId));
@@ -459,7 +460,7 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
         sb.AppendLine("=== Captured Artifacts ===");
         sb.AppendLine();
 
-        foreach (var artifact in _capturedArtifacts)
+        foreach (DiagnosticArtifact artifact in _capturedArtifacts)
         {
             sb.AppendLine(string.Format(culture, "[{0}] {1}", artifact.Type, artifact.Name));
             sb.AppendLine(string.Format(culture, "  Path: {0}", artifact.Path));
@@ -470,7 +471,7 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
         sb.AppendLine("=== Timeline ===");
         sb.AppendLine();
 
-        foreach (var @event in _timeline)
+        foreach (TimelineEvent @event in _timeline)
         {
             sb.AppendLine(string.Format(culture, "[{0:HH:mm:ss.fff}] [{1}] {2} (+{3}ms)",
                 @event.Timestamp, @event.EventType, @event.Description, @event.ElapsedMilliseconds));

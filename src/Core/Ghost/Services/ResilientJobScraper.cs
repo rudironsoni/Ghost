@@ -59,7 +59,7 @@ public class ResilientJobScraper : IJobScraper
 
     public Task<IReadOnlyList<JobApplication>> GetApplicationsAsync(ApplicationsFilter? filter = null, CancellationToken ct = default)
     {
-        var filterKey = filter?.ToString() ?? "all";
+        string filterKey = filter?.ToString() ?? "all";
         return ExecuteWithResilienceAsync(() => _innerScraper.GetApplicationsAsync(filter, ct), filterKey, ct);
     }
 
@@ -67,9 +67,9 @@ public class ResilientJobScraper : IJobScraper
     {
         await ExecuteWithResilienceAsync(async () =>
         {
-            await _innerScraper.SaveJobAsync(jobId, ct);
+            await _innerScraper.SaveJobAsync(jobId, ct).ConfigureAwait(false);
             return true;
-        }, jobId, ct);
+        }, jobId, ct).ConfigureAwait(false);
     }
 
     public Task<IReadOnlyList<JobListing>> GetSavedJobsAsync(CancellationToken ct = default)
@@ -85,11 +85,11 @@ public class ResilientJobScraper : IJobScraper
 
         try
         {
-            return await _circuitBreaker.ExecuteAsync(operation);
+            return await _circuitBreaker.ExecuteAsync(operation).ConfigureAwait(false);
         }
         catch (Exception ex) when (_circuitBreaker.State == CircuitState.Open)
         {
-            await EnqueueToDeadLetterQueueAsync(operationKey, ex, ct);
+            await EnqueueToDeadLetterQueueAsync(operationKey, ex, ct).ConfigureAwait(false);
             throw;
         }
         catch (OperationCanceledException)
@@ -98,7 +98,7 @@ public class ResilientJobScraper : IJobScraper
         }
         catch (Exception ex)
         {
-            await EnqueueToDeadLetterQueueAsync(operationKey, ex, ct);
+            await EnqueueToDeadLetterQueueAsync(operationKey, ex, ct).ConfigureAwait(false);
             throw;
         }
     }
@@ -111,7 +111,7 @@ public class ResilientJobScraper : IJobScraper
                 operationKey,
                 exception.Message,
                 exception,
-                ct);
+                ct).ConfigureAwait(false);
 
             _logDlqEnqueued(_logger, PlatformName, exception.Message, exception);
         }

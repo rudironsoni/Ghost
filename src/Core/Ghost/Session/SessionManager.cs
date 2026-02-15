@@ -124,17 +124,17 @@ public sealed class SessionManager : ISessionManager, IDisposable
         ArgumentNullException.ThrowIfNull(context);
         ArgumentException.ThrowIfNullOrWhiteSpace(platform);
 
-        var id = sessionId ?? Guid.NewGuid().ToString();
-        var expiry = ttl ?? _options.DefaultTtl;
+        string id = sessionId ?? Guid.NewGuid().ToString();
+        TimeSpan expiry = ttl ?? _options.DefaultTtl;
 
         try
         {
             // Get cookies
-            var cookies = await context.CookiesAsync();
+            IReadOnlyList<BrowserContextCookiesResult> cookies = await context.CookiesAsync().ConfigureAwait(false);
 
             // Get storage state (includes localStorage and sessionStorage)
-            var storageState = await context.StorageStateAsync();
-            var storageStateJson = JsonSerializer.Deserialize<StorageStateJson>(storageState);
+            string storageState = await context.StorageStateAsync().ConfigureAwait(false);
+            StorageStateJson? storageStateJson = JsonSerializer.Deserialize<StorageStateJson>(storageState);
 
             var session = new BrowserSession
             {
@@ -150,13 +150,13 @@ public sealed class SessionManager : ISessionManager, IDisposable
             // Extract localStorage and sessionStorage from origins
             if (storageStateJson?.Origins != null)
             {
-                foreach (var origin in storageStateJson.Origins)
+                foreach (OriginState origin in storageStateJson.Origins)
                 {
                     if (origin.LocalStorage != null)
                     {
-                        foreach (var item in origin.LocalStorage)
+                        foreach (StorageItem item in origin.LocalStorage)
                         {
-                            var key = $"{origin.Origin}::{item.Name}";
+                            string key = $"{origin.Origin}::{item.Name}";
                             session.LocalStorage[key] = item.Value;
                         }
                     }
@@ -164,12 +164,12 @@ public sealed class SessionManager : ISessionManager, IDisposable
             }
 
             // Serialize session
-            var json = JsonSerializer.Serialize(session, JsonOptions);
+            string json = JsonSerializer.Serialize(session, JsonOptions);
 
             // Optionally compress
             if (_options.EnableCompression)
             {
-                json = await CompressAsync(json);
+                json = await CompressAsync(json).ConfigureAwait(false);
             }
 
             // Optionally encrypt
@@ -181,11 +181,11 @@ public sealed class SessionManager : ISessionManager, IDisposable
             // Store based on backend
             if (_options.Backend == SessionStorageBackend.Redis)
             {
-                await SaveToRedisAsync(platform, id, json, expiry, ct);
+                await SaveToRedisAsync(platform, id, json, expiry, ct).ConfigureAwait(false);
             }
             else
             {
-                await SaveToFileSystemAsync(platform, id, json, ct);
+                await SaveToFileSystemAsync(platform, id, json, ct).ConfigureAwait(false);
             }
 
             _logSessionSaved(_logger, id, platform, null);
@@ -207,7 +207,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
         ArgumentNullException.ThrowIfNull(context);
         ArgumentException.ThrowIfNullOrWhiteSpace(platform);
 
-        var session = await LoadSessionAsync(platform, sessionId, ct);
+        BrowserSession? session = await LoadSessionAsync(platform, sessionId, ct).ConfigureAwait(false);
         if (session == null)
         {
             _logNoSessionFound(_logger, platform, null);
@@ -231,7 +231,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
                     SameSite = c.SameSite
                 }).ToList();
 
-                await context.AddCookiesAsync(cookiesToAdd);
+                await context.AddCookiesAsync(cookiesToAdd).ConfigureAwait(false);
                 _logRestoredCookies(_logger, session.Cookies.Count, session.SessionId, null);
             }
 
@@ -262,11 +262,11 @@ public sealed class SessionManager : ISessionManager, IDisposable
 
             if (_options.Backend == SessionStorageBackend.Redis)
             {
-                json = await LoadFromRedisAsync(platform, sessionId, ct);
+                json = await LoadFromRedisAsync(platform, sessionId, ct).ConfigureAwait(false);
             }
             else
             {
-                json = await LoadFromFileSystemAsync(platform, sessionId, ct);
+                json = await LoadFromFileSystemAsync(platform, sessionId, ct).ConfigureAwait(false);
             }
 
             if (json == null)
@@ -283,10 +283,10 @@ public sealed class SessionManager : ISessionManager, IDisposable
             // Optionally decompress
             if (_options.EnableCompression)
             {
-                json = await DecompressAsync(json);
+                json = await DecompressAsync(json).ConfigureAwait(false);
             }
 
-            var session = JsonSerializer.Deserialize<BrowserSession>(json, JsonOptions);
+            BrowserSession? session = JsonSerializer.Deserialize<BrowserSession>(json, JsonOptions);
 
             if (session == null)
             {
@@ -298,7 +298,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
             if (session.IsExpired())
             {
                 _logSessionExpired(_logger, session.SessionId, platform, null);
-                await DeleteSessionAsync(platform, session.SessionId, ct);
+                await DeleteSessionAsync(platform, session.SessionId, ct).ConfigureAwait(false);
                 return null;
             }
 
@@ -319,11 +319,11 @@ public sealed class SessionManager : ISessionManager, IDisposable
         {
             if (_options.Backend == SessionStorageBackend.Redis)
             {
-                await DeleteFromRedisAsync(platform, sessionId, ct);
+                await DeleteFromRedisAsync(platform, sessionId, ct).ConfigureAwait(false);
             }
             else
             {
-                await DeleteFromFileSystemAsync(platform, sessionId, ct);
+                await DeleteFromFileSystemAsync(platform, sessionId, ct).ConfigureAwait(false);
             }
 
             _logSessionDeleted(_logger, platform, null);
@@ -343,11 +343,11 @@ public sealed class SessionManager : ISessionManager, IDisposable
         {
             if (_options.Backend == SessionStorageBackend.Redis)
             {
-                return await ListSessionsFromRedisAsync(platform, includeExpired, ct);
+                return await ListSessionsFromRedisAsync(platform, includeExpired, ct).ConfigureAwait(false);
             }
             else
             {
-                return await ListSessionsFromFileSystemAsync(platform, includeExpired, ct);
+                return await ListSessionsFromFileSystemAsync(platform, includeExpired, ct).ConfigureAwait(false);
             }
         }
         catch (Exception ex)
@@ -359,7 +359,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
 
     public async Task<int> CleanupExpiredSessionsAsync(CancellationToken ct = default)
     {
-        var count = 0;
+        int count = 0;
 
         try
         {
@@ -371,18 +371,18 @@ public sealed class SessionManager : ISessionManager, IDisposable
             }
             else
             {
-                var platformDirs = Directory.GetDirectories(_options.StoragePath);
-                foreach (var platformDir in platformDirs)
+                string[] platformDirs = Directory.GetDirectories(_options.StoragePath);
+                foreach (string platformDir in platformDirs)
                 {
-                    var platform = Path.GetFileName(platformDir);
-                    var sessions = await ListSessionsAsync(platform, includeExpired: true, ct);
+                    string platform = Path.GetFileName(platformDir);
+                    List<string> sessions = await ListSessionsAsync(platform, includeExpired: true, ct).ConfigureAwait(false);
 
-                    foreach (var sessionId in sessions)
+                    foreach (string sessionId in sessions)
                     {
-                        var session = await LoadSessionAsync(platform, sessionId, ct);
+                        BrowserSession? session = await LoadSessionAsync(platform, sessionId, ct).ConfigureAwait(false);
                         if (session?.IsExpired() == true)
                         {
-                            await DeleteSessionAsync(platform, sessionId, ct);
+                            await DeleteSessionAsync(platform, sessionId, ct).ConfigureAwait(false);
                             count++;
                         }
                     }
@@ -404,8 +404,8 @@ public sealed class SessionManager : ISessionManager, IDisposable
     {
         if (_redisDb == null) throw new InvalidOperationException("Redis not initialized");
 
-        var key = GetRedisKey(platform, sessionId);
-        await _redisDb.StringSetAsync(key, data, expiry);
+        string key = GetRedisKey(platform, sessionId);
+        await _redisDb.StringSetAsync(key, data, expiry).ConfigureAwait(false);
     }
 
     private async Task<string?> LoadFromRedisAsync(string platform, string? sessionId, CancellationToken ct)
@@ -414,18 +414,18 @@ public sealed class SessionManager : ISessionManager, IDisposable
 
         if (sessionId != null)
         {
-            var key = GetRedisKey(platform, sessionId);
-            var value = await _redisDb.StringGetAsync(key);
+            string key = GetRedisKey(platform, sessionId);
+            RedisValue value = await _redisDb.StringGetAsync(key).ConfigureAwait(false);
             return value.HasValue ? value.ToString() : null;
         }
         else
         {
             // Load latest session
-            var sessions = await ListSessionsFromRedisAsync(platform, includeExpired: false, ct);
+            List<string> sessions = await ListSessionsFromRedisAsync(platform, includeExpired: false, ct).ConfigureAwait(false);
             if (sessions.Count == 0) return null;
 
-            var latestKey = GetRedisKey(platform, sessions[0]);
-            var value = await _redisDb.StringGetAsync(latestKey);
+            string latestKey = GetRedisKey(platform, sessions[0]);
+            RedisValue value = await _redisDb.StringGetAsync(latestKey).ConfigureAwait(false);
             return value.HasValue ? value.ToString() : null;
         }
     }
@@ -436,17 +436,17 @@ public sealed class SessionManager : ISessionManager, IDisposable
 
         if (sessionId != null)
         {
-            var key = GetRedisKey(platform, sessionId);
-            await _redisDb.KeyDeleteAsync(key);
+            string key = GetRedisKey(platform, sessionId);
+            await _redisDb.KeyDeleteAsync(key).ConfigureAwait(false);
         }
         else
         {
             // Delete all sessions for platform
-            var sessions = await ListSessionsFromRedisAsync(platform, includeExpired: true, ct);
-            foreach (var id in sessions)
+            List<string> sessions = await ListSessionsFromRedisAsync(platform, includeExpired: true, ct).ConfigureAwait(false);
+            foreach (string id in sessions)
             {
-                var key = GetRedisKey(platform, id);
-                await _redisDb.KeyDeleteAsync(key);
+                string key = GetRedisKey(platform, id);
+                await _redisDb.KeyDeleteAsync(key).ConfigureAwait(false);
             }
         }
     }
@@ -455,13 +455,13 @@ public sealed class SessionManager : ISessionManager, IDisposable
     {
         if (_redis == null) throw new InvalidOperationException("Redis not initialized");
 
-        var pattern = $"ghost:session:{platform}:*";
+        string pattern = $"ghost:session:{platform}:*";
         var keys = new List<string>();
 
-        var server = _redis.GetServer(_redis.GetEndPoints().First());
-        await foreach (var key in server.KeysAsync(pattern: pattern))
+        IServer server = _redis.GetServer(_redis.GetEndPoints().First());
+        await foreach (RedisKey key in server.KeysAsync(pattern: pattern).ConfigureAwait(false))
         {
-            var sessionId = key.ToString().Split(':').Last();
+            string sessionId = key.ToString().Split(':').Last();
             keys.Add(sessionId);
         }
 
@@ -471,33 +471,33 @@ public sealed class SessionManager : ISessionManager, IDisposable
     // FileSystem Backend Methods
     private async Task SaveToFileSystemAsync(string platform, string sessionId, string data, CancellationToken ct)
     {
-        var filePath = GetFilePath(platform, sessionId);
-        var directory = Path.GetDirectoryName(filePath);
+        string filePath = GetFilePath(platform, sessionId);
+        string? directory = Path.GetDirectoryName(filePath);
         if (directory != null)
         {
             Directory.CreateDirectory(directory);
         }
 
-        await File.WriteAllTextAsync(filePath, data, ct);
+        await File.WriteAllTextAsync(filePath, data, ct).ConfigureAwait(false);
     }
 
     private async Task<string?> LoadFromFileSystemAsync(string platform, string? sessionId, CancellationToken ct)
     {
         if (sessionId != null)
         {
-            var filePath = GetFilePath(platform, sessionId);
+            string filePath = GetFilePath(platform, sessionId);
             if (!File.Exists(filePath)) return null;
 
-            return await File.ReadAllTextAsync(filePath, ct);
+            return await File.ReadAllTextAsync(filePath, ct).ConfigureAwait(false);
         }
         else
         {
             // Load latest session
-            var sessions = await ListSessionsFromFileSystemAsync(platform, includeExpired: false, ct);
+            List<string> sessions = await ListSessionsFromFileSystemAsync(platform, includeExpired: false, ct).ConfigureAwait(false);
             if (sessions.Count == 0) return null;
 
-            var latestPath = GetFilePath(platform, sessions[0]);
-            return await File.ReadAllTextAsync(latestPath, ct);
+            string latestPath = GetFilePath(platform, sessions[0]);
+            return await File.ReadAllTextAsync(latestPath, ct).ConfigureAwait(false);
         }
     }
 
@@ -505,7 +505,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
     {
         if (sessionId != null)
         {
-            var filePath = GetFilePath(platform, sessionId);
+            string filePath = GetFilePath(platform, sessionId);
             if (File.Exists(filePath))
             {
                 File.Delete(filePath);
@@ -514,30 +514,30 @@ public sealed class SessionManager : ISessionManager, IDisposable
         else
         {
             // Delete all sessions for platform
-            var platformDir = Path.Combine(_options.StoragePath, platform);
+            string platformDir = Path.Combine(_options.StoragePath, platform);
             if (Directory.Exists(platformDir))
             {
                 Directory.Delete(platformDir, recursive: true);
             }
         }
 
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     private async Task<List<string>> ListSessionsFromFileSystemAsync(string platform, bool includeExpired, CancellationToken ct)
     {
-        var platformDir = Path.Combine(_options.StoragePath, platform);
+        string platformDir = Path.Combine(_options.StoragePath, platform);
         if (!Directory.Exists(platformDir))
         {
             return new List<string>();
         }
 
-        var files = Directory.GetFiles(platformDir, "*.session");
+        string[] files = Directory.GetFiles(platformDir, "*.session");
         var sessionIds = new List<string>();
 
-        foreach (var file in files)
+        foreach (string file in files)
         {
-            var sessionId = Path.GetFileNameWithoutExtension(file);
+            string sessionId = Path.GetFileNameWithoutExtension(file);
             sessionIds.Add(sessionId);
         }
 
@@ -546,7 +546,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
             .OrderByDescending(id => File.GetLastWriteTimeUtc(GetFilePath(platform, id)))
             .ToList();
 
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
         return sessionIds;
     }
 
@@ -563,22 +563,22 @@ public sealed class SessionManager : ISessionManager, IDisposable
 
     private static async Task<string> CompressAsync(string text)
     {
-        var bytes = System.Text.Encoding.UTF8.GetBytes(text);
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes(text);
         using var outputStream = new MemoryStream();
         using (var gzipStream = new GZipStream(outputStream, CompressionLevel.Optimal))
         {
-            await gzipStream.WriteAsync(bytes);
+            await gzipStream.WriteAsync(bytes).ConfigureAwait(false);
         }
         return Convert.ToBase64String(outputStream.ToArray());
     }
 
     private static async Task<string> DecompressAsync(string compressedText)
     {
-        var bytes = Convert.FromBase64String(compressedText);
+        byte[] bytes = Convert.FromBase64String(compressedText);
         using var inputStream = new MemoryStream(bytes);
         using var gzipStream = new GZipStream(inputStream, CompressionMode.Decompress);
         using var outputStream = new MemoryStream();
-        await gzipStream.CopyToAsync(outputStream);
+        await gzipStream.CopyToAsync(outputStream).ConfigureAwait(false);
         return System.Text.Encoding.UTF8.GetString(outputStream.ToArray());
     }
 

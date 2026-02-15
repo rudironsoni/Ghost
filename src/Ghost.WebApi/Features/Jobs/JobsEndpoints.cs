@@ -13,7 +13,7 @@ public static class JobsEndpoints
 {
     public static void MapJobsEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/jobs");
+        RouteGroupBuilder group = app.MapGroup("/api/jobs");
         group.MapPost("/search", SearchJobs);
         group.MapPost("/search-with-errors", SearchJobsWithErrors);
     }
@@ -21,11 +21,11 @@ public static class JobsEndpoints
     private static async Task<IResult> SearchJobs(JobSearchCriteria criteria, [FromServices] IJobClient client, [FromServices] ILoggerFactory loggerFactory, CancellationToken ct)
     {
         var sw = Stopwatch.StartNew();
-        var status = "SUCCESS";
+        string status = "SUCCESS";
         Exception? caughtEx = null;
         try
         {
-            var result = await client.SearchJobsAsync(criteria, ct);
+            IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria, ct).ConfigureAwait(false);
             var response = new
             {
                 jobs = result,
@@ -52,18 +52,18 @@ public static class JobsEndpoints
             sw.Stop();
             try
             {
-                var logger = loggerFactory?.CreateLogger("JobsEndpoints");
-                var platform = client?.PlatformName ?? "Unknown";
-                var timeMs = sw.ElapsedMilliseconds;
-                var query = criteria?.Query ?? string.Empty;
+                ILogger? logger = loggerFactory?.CreateLogger("JobsEndpoints");
+                string platform = client?.PlatformName ?? "Unknown";
+                long timeMs = sw.ElapsedMilliseconds;
+                string query = criteria?.Query ?? string.Empty;
                 // Use LoggerMessage-style delegate to satisfy CA1848/CA2254 and avoid dynamic templates
-                var jobsLog = LoggerMessage.Define<string, string, long, string>(
+                Action<ILogger, string, string, long, string, Exception?> jobsLog = LoggerMessage.Define<string, string, long, string>(
                     LogLevel.Information,
                     new EventId(1, nameof(SearchJobs)),
                     "Platform={Platform} Status={Status} TimeMs={TimeMs} Query={Query}");
 
                 // Define an exception logger delegate to avoid CA1848 when logging exceptions
-                var exceptionLog = LoggerMessage.Define<string>(LogLevel.Information, new EventId(2, nameof(SearchJobs)), "Exception: {Message}");
+                Action<ILogger, string, Exception?> exceptionLog = LoggerMessage.Define<string>(LogLevel.Information, new EventId(2, nameof(SearchJobs)), "Exception: {Message}");
 
                 if (caughtEx != null)
                 {
@@ -84,12 +84,12 @@ public static class JobsEndpoints
         // Check if the client supports structured error reporting
         if (client is AggregatedJobClient aggregatedClient)
         {
-            var result = await aggregatedClient.SearchJobsWithErrorsAsync(criteria, ct);
+            JobSearchResult result = await aggregatedClient.SearchJobsWithErrorsAsync(criteria, ct).ConfigureAwait(false);
             return Results.Ok(result);
         }
 
         // Fallback to regular search if structured reporting not supported
-        var jobs = await client.SearchJobsAsync(criteria, ct);
+        IReadOnlyList<JobListing> jobs = await client.SearchJobsAsync(criteria, ct).ConfigureAwait(false);
         var fallbackResult = new JobSearchResult
         {
             Jobs = jobs,

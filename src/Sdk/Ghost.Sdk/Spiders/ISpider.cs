@@ -13,14 +13,14 @@ public interface ISpider
     /// Gets the name of this spider.
     /// </summary>
     /// <value>A unique identifier for the spider.</value>
-    string Name { get; }
+    public string Name { get; }
 
     /// <summary>
     /// Called when the spider starts executing.
     /// </summary>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Task representing the asynchronous operation.</returns>
-    Task StartAsync(CancellationToken ct);
+    public Task StartAsync(CancellationToken ct);
 
     /// <summary>
     /// Parses a response and extracts data.
@@ -28,5 +28,5 @@ public interface ISpider
     /// <param name="response">The response to parse.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Task representing the asynchronous operation.</returns>
-    Task ParseAsync(Response response, CancellationToken ct);
+    public Task ParseAsync(Response response, CancellationToken ct);
 }

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
@@ -53,7 +54,7 @@ public class IndeedJobClient : Ghost.Abstractions.IJobScraper
         // Use multi-strategy scraper if available (API + browser fallback)
         if (_searchScraper != null)
         {
-            var results = await _searchScraper.SearchAsync(criteria, ct);
+            IReadOnlyList<JobListing> results = await _searchScraper.SearchAsync(criteria, ct).ConfigureAwait(false);
             LogParsedCount(_logger, results.Count, null);
             return results;
         }
@@ -62,10 +63,10 @@ public class IndeedJobClient : Ghost.Abstractions.IJobScraper
         var list = new List<JobListing>();
         int rawCount = 0;
         int parsedCount = 0;
-        await foreach (var root in _api.SearchAsync(criteria.Query ?? string.Empty, criteria.Location ?? string.Empty, criteria.MaxResults))
+        await foreach (JsonElement root in _api.SearchAsync(criteria.Query ?? string.Empty, criteria.Location ?? string.Empty, criteria.MaxResults).ConfigureAwait(false))
         {
             // count raw items (results array length) if present
-            if (root.TryGetProperty("data", out var data) && data.TryGetProperty("jobSearch", out var jobSearch) && jobSearch.TryGetProperty("results", out var results))
+            if (root.TryGetProperty("data", out JsonElement data) && data.TryGetProperty("jobSearch", out JsonElement jobSearch) && jobSearch.TryGetProperty("results", out JsonElement results))
             {
                 rawCount += results.GetArrayLength();
             }
@@ -89,12 +90,12 @@ public class IndeedJobClient : Ghost.Abstractions.IJobScraper
         [EnumeratorCancellation] CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(criteria);
-        var query = criteria.Query ?? string.Empty;
-        var location = criteria.Location ?? string.Empty;
-        var limit = criteria.MaxResults > 0 ? criteria.MaxResults : 25;
+        string query = criteria.Query ?? string.Empty;
+        string location = criteria.Location ?? string.Empty;
+        int limit = criteria.MaxResults > 0 ? criteria.MaxResults : 25;
 
-        var firstPage = await FetchPageAsync(query, location, limit, null, null, ct).ConfigureAwait(false);
-        foreach (var job in firstPage.Jobs)
+        PageResult firstPage = await FetchPageAsync(query, location, limit, null, null, ct).ConfigureAwait(false);
+        foreach (JobListing job in firstPage.Jobs)
         {
             yield return job;
         }
@@ -106,23 +107,23 @@ public class IndeedJobClient : Ghost.Abstractions.IJobScraper
 
         var semaphore = new SemaphoreSlim(5, 5);
         var tasks = new List<Task<PageResult>>();
-        var nextCursor = firstPage.NextCursor;
-        var hasNext = firstPage.HasNext;
+        string? nextCursor = firstPage.NextCursor;
+        bool hasNext = firstPage.HasNext;
 
         while (hasNext || tasks.Count > 0)
         {
             while (hasNext && tasks.Count < 5)
             {
-                var cursor = nextCursor;
+                string? cursor = nextCursor;
                 tasks.Add(FetchPageAsync(query, location, limit, cursor, semaphore, ct));
                 hasNext = false;
                 nextCursor = null;
             }
 
-            var completed = await Task.WhenAny(tasks).ConfigureAwait(false);
+            Task<PageResult> completed = await Task.WhenAny(tasks).ConfigureAwait(false);
             tasks.Remove(completed);
-            var page = await completed.ConfigureAwait(false);
-            foreach (var job in page.Jobs)
+            PageResult page = await completed.ConfigureAwait(false);
+            foreach (JobListing job in page.Jobs)
             {
                 yield return job;
             }
@@ -140,7 +141,7 @@ public class IndeedJobClient : Ghost.Abstractions.IJobScraper
         // Use details scraper if available
         if (_detailsScraper != null)
         {
-            return await _detailsScraper.GetDetailsAsync(jobId, ct);
+            return await _detailsScraper.GetDetailsAsync(jobId, ct).ConfigureAwait(false);
         }
 
         // Fallback to stub implementation
@@ -167,10 +168,10 @@ public class IndeedJobClient : Ghost.Abstractions.IJobScraper
 
         try
         {
-            var root = await _api.SearchPageAsync(query, location, limit, cursor, ct).ConfigureAwait(false);
+            JsonElement root = await _api.SearchPageAsync(query, location, limit, cursor, ct).ConfigureAwait(false);
             var parsed = IndeedJobParser.ParseJobs(root).ToList();
-            var pageInfo = TryGetPageInfo(root);
-            var hasNext = pageInfo.HasNext && !string.IsNullOrWhiteSpace(pageInfo.NextCursor);
+            PageInfo pageInfo = TryGetPageInfo(root);
+            bool hasNext = pageInfo.HasNext && !string.IsNullOrWhiteSpace(pageInfo.NextCursor);
             return new PageResult(parsed, pageInfo.NextCursor, hasNext);
         }
         finally
@@ -181,12 +182,12 @@ public class IndeedJobClient : Ghost.Abstractions.IJobScraper
 
     private static PageInfo TryGetPageInfo(System.Text.Json.JsonElement root)
     {
-        if (root.TryGetProperty("data", out var data)
-            && data.TryGetProperty("jobSearch", out var jobSearch)
-            && jobSearch.TryGetProperty("pageInfo", out var pageInfo))
+        if (root.TryGetProperty("data", out JsonElement data)
+            && data.TryGetProperty("jobSearch", out JsonElement jobSearch)
+            && jobSearch.TryGetProperty("pageInfo", out JsonElement pageInfo))
         {
-            var nextCursor = pageInfo.TryGetProperty("nextCursor", out var nextCursorEl) ? nextCursorEl.GetString() : null;
-            var hasNext = pageInfo.TryGetProperty("hasNextPage", out var hasNextEl) && hasNextEl.ValueKind == System.Text.Json.JsonValueKind.True;
+            string? nextCursor = pageInfo.TryGetProperty("nextCursor", out JsonElement nextCursorEl) ? nextCursorEl.GetString() : null;
+            bool hasNext = pageInfo.TryGetProperty("hasNextPage", out JsonElement hasNextEl) && hasNextEl.ValueKind == System.Text.Json.JsonValueKind.True;
             return new PageInfo(nextCursor, hasNext);
         }
 

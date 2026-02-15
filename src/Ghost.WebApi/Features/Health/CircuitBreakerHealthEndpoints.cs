@@ -22,7 +22,7 @@ public static class CircuitBreakerHealthEndpoints
 {
     public static void MapCircuitBreakerHealth(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/health/circuit-breakers")
+        RouteGroupBuilder group = app.MapGroup("/api/health/circuit-breakers")
             .WithTags("Health")
             .WithOpenApi();
 
@@ -67,7 +67,7 @@ public static class CircuitBreakerHealthEndpoints
     {
         ct.ThrowIfCancellationRequested();
 
-        var breaker = circuitBreakers.FirstOrDefault(cb =>
+        ICircuitBreaker? breaker = circuitBreakers.FirstOrDefault(cb =>
             cb.Platform.Equals(platform, StringComparison.OrdinalIgnoreCase));
 
         if (breaker == null)
@@ -89,9 +89,9 @@ public static class CircuitBreakerHealthEndpoints
         if (statuses.Count == 0)
             return "unknown";
 
-        var healthy = statuses.Count(s => s.IsHealthy);
-        var open = statuses.Count(s => s.State == "Open");
-        var halfOpen = statuses.Count(s => s.State == "HalfOpen");
+        int healthy = statuses.Count(s => s.IsHealthy);
+        int open = statuses.Count(s => s.State == "Open");
+        int halfOpen = statuses.Count(s => s.State == "HalfOpen");
 
         if (open > 0)
             return "unhealthy";

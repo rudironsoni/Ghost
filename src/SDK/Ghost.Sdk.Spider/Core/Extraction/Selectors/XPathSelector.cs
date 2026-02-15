@@ -36,12 +36,12 @@ public class XPathSelector : ISelector
         doc.LoadHtml(content);
 
         // Try the expression as-is first
-        var nodes = doc.DocumentNode.SelectNodes(Expression);
+        HtmlNodeCollection? nodes = doc.DocumentNode.SelectNodes(Expression);
 
         // If no results and expression starts with @, try from first element
         if ((nodes == null || nodes.Count == 0) && Expression.StartsWith('@'))
         {
-            var firstElement = doc.DocumentNode.FirstChild;
+            HtmlNode firstElement = doc.DocumentNode.FirstChild;
             if (firstElement != null && firstElement.NodeType == HtmlNodeType.Element)
             {
                 nodes = firstElement.SelectNodes(Expression);
@@ -52,9 +52,9 @@ public class XPathSelector : ISelector
             return new List<string>();
 
         var results = new List<string>();
-        foreach (var node in nodes)
+        foreach (HtmlNode? node in nodes)
         {
-            var value = ExtractValue(node);
+            string? value = ExtractValue(node);
             if (value != null)
                 results.Add(value);
         }
@@ -72,12 +72,12 @@ public class XPathSelector : ISelector
         doc.LoadHtml(content);
 
         // Try the expression as-is first
-        var node = doc.DocumentNode.SelectSingleNode(Expression);
+        HtmlNode? node = doc.DocumentNode.SelectSingleNode(Expression);
 
         // If no result and expression starts with @, try from first element
         if (node == null && Expression.StartsWith('@'))
         {
-            var firstElement = doc.DocumentNode.FirstChild;
+            HtmlNode firstElement = doc.DocumentNode.FirstChild;
             if (firstElement != null && firstElement.NodeType == HtmlNodeType.Element)
             {
                 node = firstElement.SelectSingleNode(Expression);
@@ -116,9 +116,9 @@ public class XPathSelector : ISelector
         if (Expression.StartsWith('@'))
         {
             // Extract the attribute name from expressions like "@data-id" or "@href"
-            var attrName = Expression.TrimStart('@');
+            string attrName = Expression.TrimStart('@');
             // Handle more complex cases like "@data-id" with predicates
-            var spaceIndex = attrName.IndexOf('[');
+            int spaceIndex = attrName.IndexOf('[');
             if (spaceIndex > 0)
                 attrName = attrName.Substring(0, spaceIndex);
 

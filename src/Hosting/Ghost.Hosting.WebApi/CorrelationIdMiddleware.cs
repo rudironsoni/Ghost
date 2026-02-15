@@ -30,14 +30,14 @@ public sealed class CorrelationIdMiddleware
         ArgumentNullException.ThrowIfNull(context);
 
         // Extract or generate correlation ID
-        var correlationId = context.Request.Headers[CorrelationIdHeader].FirstOrDefault()
+        string correlationId = context.Request.Headers[CorrelationIdHeader].FirstOrDefault()
                             ?? Guid.NewGuid().ToString();
 
         // Add to response headers
         context.Response.Headers.TryAdd(CorrelationIdHeader, correlationId);
 
         // Add to current activity (OpenTelemetry span)
-        var activity = Activity.Current;
+        Activity? activity = Activity.Current;
         if (activity is not null)
         {
             activity.SetTag("correlation.id", correlationId);
@@ -56,7 +56,7 @@ public sealed class CorrelationIdMiddleware
                 _logger.LogDebug("Processing request with correlation ID: {CorrelationId}", correlationId);
             }
 #pragma warning restore CA1848
-            await _next(context);
+            await _next(context).ConfigureAwait(false);
         }
     }
 }

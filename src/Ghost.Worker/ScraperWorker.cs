@@ -58,17 +58,17 @@ public sealed partial class ScraperWorker : BackgroundService
     {
         LogWorkerStarting(_config.WorkerId, _config.NodeName, _config.MaxConcurrentJobs);
 
-        var db = _redis.GetDatabase();
-        var queueKey = _config.RedisQueueKey;
+        IDatabase db = _redis.GetDatabase();
+        string queueKey = _config.RedisQueueKey;
 
-        var workers = Enumerable
+        Task[] workers = Enumerable
             .Range(0, _config.MaxConcurrentJobs)
             .Select(_ => RunWorkerLoopAsync(db, queueKey, stoppingToken))
             .ToArray();
 
         try
         {
-            await Task.WhenAll(workers);
+            await Task.WhenAll(workers).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -84,15 +84,15 @@ public sealed partial class ScraperWorker : BackgroundService
         {
             try
             {
-                var jobJson = await db.ListRightPopAsync(queueKey);
+                RedisValue jobJson = await db.ListRightPopAsync(queueKey).ConfigureAwait(false);
 
                 if (jobJson.IsNullOrEmpty)
                 {
-                    await Task.Delay(_config.PollIntervalMs, stoppingToken);
+                    await Task.Delay(_config.PollIntervalMs, stoppingToken).ConfigureAwait(false);
                     continue;
                 }
 
-                await ProcessJobAsync(jobJson!, stoppingToken);
+                await ProcessJobAsync(jobJson!, stoppingToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -101,31 +101,31 @@ public sealed partial class ScraperWorker : BackgroundService
             catch (Exception ex)
             {
                 LogUnhandledJobError(ex);
-                await Task.Delay(1000, stoppingToken);
+                await Task.Delay(1000, stoppingToken).ConfigureAwait(false);
             }
         }
     }
 
     private async Task ProcessJobAsync(string jobJson, CancellationToken cancellationToken)
     {
-        var startTime = DateTimeOffset.UtcNow;
+        DateTimeOffset startTime = DateTimeOffset.UtcNow;
         string jobId = "unknown";
 
         try
         {
             // Deserialize job request
-            var jobRequest = JsonConvert.DeserializeObject<JobRequest>(jobJson)
+            JobRequest jobRequest = JsonConvert.DeserializeObject<JobRequest>(jobJson)
                 ?? throw new ArgumentNullException(nameof(jobJson));
 
             jobId = jobRequest.JobId;
             LogProcessingJob(jobRequest.JobId, jobRequest.Platform, jobRequest.SearchQuery);
 
             // Update job status to processing
-            await UpdateJobStatusAsync(jobRequest.JobId, JobStatus.Processing, cancellationToken);
+            await UpdateJobStatusAsync(jobRequest.JobId, JobStatus.Processing, cancellationToken).ConfigureAwait(false);
 
             // Resolve the appropriate job client for the platform
-            await using var scope = _serviceProvider.CreateAsyncScope();
-            var jobClient = ResolveJobClient(scope.ServiceProvider, jobRequest.Platform)
+            await using AsyncServiceScope scope = _serviceProvider.CreateAsyncScope().ConfigureAwait(false);
+            IJobClient jobClient = ResolveJobClient(scope.ServiceProvider, jobRequest.Platform)
                 ?? throw new NotSupportedException($"Platform '{jobRequest.Platform}' is not supported");
 
             // Execute scraping with platform-specific criteria
@@ -136,24 +136,24 @@ public sealed partial class ScraperWorker : BackgroundService
                 MaxResults = jobRequest.MaxResults
             };
 
-            var results = await jobClient.SearchJobsAsync(criteria, cancellationToken);
+            IReadOnlyList<JobListing> results = await jobClient.SearchJobsAsync(criteria, cancellationToken).ConfigureAwait(false);
 
             // Store results
-            await StoreResultsAsync(jobRequest.JobId, results, cancellationToken);
+            await StoreResultsAsync(jobRequest.JobId, results, cancellationToken).ConfigureAwait(false);
 
             // Update job status to completed
-            await UpdateJobStatusAsync(jobRequest.JobId, JobStatus.Completed, cancellationToken);
+            await UpdateJobStatusAsync(jobRequest.JobId, JobStatus.Completed, cancellationToken).ConfigureAwait(false);
 
-            var duration = DateTimeOffset.UtcNow - startTime;
+            TimeSpan duration = DateTimeOffset.UtcNow - startTime;
             LogJobCompleted(jobRequest.JobId, duration.TotalMilliseconds, results.Count);
         }
         catch (Exception ex)
         {
-            var duration = DateTimeOffset.UtcNow - startTime;
+            TimeSpan duration = DateTimeOffset.UtcNow - startTime;
             LogJobFailed(ex, jobId, duration.TotalMilliseconds);
 
             // Update job status to failed
-            await UpdateJobStatusAsync(jobId, JobStatus.Failed, cancellationToken, ex.Message);
+            await UpdateJobStatusAsync(jobId, JobStatus.Failed, cancellationToken, ex.Message).ConfigureAwait(false);
         }
     }
 
@@ -170,12 +170,12 @@ public sealed partial class ScraperWorker : BackgroundService
 
     private async Task StoreResultsAsync(string jobId, IReadOnlyList<JobListing> results, CancellationToken cancellationToken)
     {
-        var db = _redis.GetDatabase();
-        var resultsKey = $"job:results:{jobId}";
+        IDatabase db = _redis.GetDatabase();
+        string resultsKey = $"job:results:{jobId}";
 
         // Store results as JSON in Redis (with expiration)
-        var resultsJson = JsonConvert.SerializeObject(results);
-        await db.StringSetAsync(resultsKey, resultsJson, TimeSpan.FromHours(_config.ResultsExpirationHours));
+        string resultsJson = JsonConvert.SerializeObject(results);
+        await db.StringSetAsync(resultsKey, resultsJson, TimeSpan.FromHours(_config.ResultsExpirationHours)).ConfigureAwait(false);
 
         LogResultsStored(results.Count, jobId);
     }
@@ -186,8 +186,8 @@ public sealed partial class ScraperWorker : BackgroundService
         CancellationToken cancellationToken,
         string? errorMessage = null)
     {
-        var db = _redis.GetDatabase();
-        var statusKey = $"job:status:{jobId}";
+        IDatabase db = _redis.GetDatabase();
+        string statusKey = $"job:status:{jobId}";
 
         var statusData = new
         {
@@ -197,8 +197,8 @@ public sealed partial class ScraperWorker : BackgroundService
             ErrorMessage = errorMessage
         };
 
-        var statusJson = JsonConvert.SerializeObject(statusData);
-        await db.StringSetAsync(statusKey, statusJson, TimeSpan.FromHours(_config.ResultsExpirationHours));
+        string statusJson = JsonConvert.SerializeObject(statusData);
+        await db.StringSetAsync(statusKey, statusJson, TimeSpan.FromHours(_config.ResultsExpirationHours)).ConfigureAwait(false);
     }
 
 }

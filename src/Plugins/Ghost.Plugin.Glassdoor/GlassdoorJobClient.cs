@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -26,15 +27,15 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
             // Simpler: create new CookieContainer and swap via local variable (this instance is readonly, so we use Add to clear)
             // Remove cookies by enumerating domains and expiring them
             // Best-effort: enumerate all cookies from known Glassdoor domains
-            var domains = new[] {
+            string[] domains = new[] {
                 ".glassdoor.com", "glassdoor.com", "www.glassdoor.com"
             };
-            foreach (var d in domains)
+            foreach (string? d in domains)
             {
                 try
                 {
                     var uri = new Uri($"https://{d}");
-                    var cookies = _cookieContainer.GetCookies(uri);
+                    CookieCollection cookies = _cookieContainer.GetCookies(uri);
                     foreach (System.Net.Cookie c in cookies)
                     {
                         c.Expired = true;
@@ -52,9 +53,9 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
             using var client = new System.Net.Http.HttpClient(handler);
             client.Timeout = TimeSpan.FromSeconds(30); // Set explicit timeout
             client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (compatible; GhostBot/1.0)");
-            var resp = await client.GetAsync("https://www.glassdoor.com/index.htm", ct).ConfigureAwait(false);
+            HttpResponseMessage resp = await client.GetAsync("https://www.glassdoor.com/index.htm", ct).ConfigureAwait(false);
             resp.EnsureSuccessStatusCode();
-            var html = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            string html = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             // Try extract CSRF token using common patterns
             // Example patterns: "csrfToken":"..." or name="csrf-token" value="..."
@@ -62,12 +63,12 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
             try
             {
                 // simple search
-                var marker = "csrfToken\":\"";
-                var idx = html.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+                string marker = "csrfToken\":\"";
+                int idx = html.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
                 if (idx >= 0)
                 {
                     idx += marker.Length;
-                    var end = html.IndexOf('"', idx);
+                    int end = html.IndexOf('"', idx);
                     if (end > idx)
                         token = html.Substring(idx, end - idx);
                 }
@@ -80,7 +81,7 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
                     if (idx >= 0)
                     {
                         idx += marker.Length;
-                        var end = html.IndexOf('"', idx);
+                        int end = html.IndexOf('"', idx);
                         if (end > idx)
                             token = html.Substring(idx, end - idx);
                     }
@@ -159,22 +160,22 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
             // Use a simple user-agent to avoid trivial bot blocks
             http.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; GhostBot/1.0)");
 
-            using var resp = await http.GetAsync("https://www.glassdoor.com", ct).ConfigureAwait(false);
+            using HttpResponseMessage resp = await http.GetAsync("https://www.glassdoor.com", ct).ConfigureAwait(false);
             resp.EnsureSuccessStatusCode();
-            var html = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            string html = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             // 1) <meta name="csrf-token" content="..." />
-            var meta = Regex.Match(html, "<meta\\s+name=[\"']csrf-token[\"']\\s+content=[\"'](?<token>[^\"']+)[\"'][^>]*>", RegexOptions.IgnoreCase);
+            Match meta = Regex.Match(html, "<meta\\s+name=[\"']csrf-token[\"']\\s+content=[\"'](?<token>[^\"']+)[\"'][^>]*>", RegexOptions.IgnoreCase);
             if (meta.Success)
                 return meta.Groups["token"].Value;
 
             // 2) <input ... name="csrf" value="..." /> or name="csrf-token"
-            var input = Regex.Match(html, "<input[^>]*name=[\"'](?:(?:csrf(?:-token)?)|csrf)[\"'][^>]*value=[\"'](?<token>[^\"']+)[\"'][^>]*>", RegexOptions.IgnoreCase);
+            Match input = Regex.Match(html, "<input[^>]*name=[\"'](?:(?:csrf(?:-token)?)|csrf)[\"'][^>]*value=[\"'](?<token>[^\"']+)[\"'][^>]*>", RegexOptions.IgnoreCase);
             if (input.Success)
                 return input.Groups["token"].Value;
 
             // 3) JS patterns: var csrfToken = "..." or csrf_token = '...'
-            var js = Regex.Match(html, "(?:csrfToken|csrf_token|CSRFToken)\\s*[:=]\\s*[\"'](?<token>[^\"']+)[\"']", RegexOptions.IgnoreCase);
+            Match js = Regex.Match(html, "(?:csrfToken|csrf_token|CSRFToken)\\s*[:=]\\s*[\"'](?<token>[^\"']+)[\"']", RegexOptions.IgnoreCase);
             if (js.Success)
                 return js.Groups["token"].Value;
 
@@ -201,7 +202,7 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
             s_logBrowserFallbackStarting(_logger, null);
             try
             {
-                var browserJobs = await _searchScraper.SearchAsync(criteria, criteria.MaxResults > 0 ? criteria.MaxResults : 20, ct).ConfigureAwait(false);
+                IReadOnlyList<JobListing> browserJobs = await _searchScraper.SearchAsync(criteria, criteria.MaxResults > 0 ? criteria.MaxResults : 20, ct).ConfigureAwait(false);
                 s_logBrowserResult(_logger, browserJobs.Count, null);
                 s_logFinalResult(_logger, browserJobs.Count, null);
                 return browserJobs;
@@ -214,15 +215,15 @@ public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
         }
 
         // Primary attempt: try GraphQL API using current CSRF token
-        var currentToken = _csrfToken;
+        string? currentToken = _csrfToken;
         s_logApiCsrfToken(_logger, currentToken != null, null);
         string? payload = await _api.SearchAsync(criteria.Query ?? string.Empty, criteria.Location, currentToken, ct).ConfigureAwait(false);
         s_logApiPayloadLength(_logger, payload?.Length ?? 0, null);
-        var jobs = Internal.GlassdoorJobParser.ParseSearchResponse(payload);
+        IReadOnlyList<JobListing> jobs = Internal.GlassdoorJobParser.ParseSearchResponse(payload);
         s_logJobsParsed(_logger, jobs.Count, null);
 
         // If GraphQL returned a server error (or empty) try refreshing session and retrying up to 3 times
-        var attempts = 0;
+        int attempts = 0;
         const int maxRetries = 3;
 
         while ((jobs.Count == 0 || payload == null) && _options.Enabled && attempts < maxRetries)

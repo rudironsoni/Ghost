@@ -45,27 +45,27 @@ public sealed class RetryMiddleware : IPipelineMiddleware
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        _maxRetries = configuration.TryGetValue("MaxRetries", out var mr) && mr is int maxRetries
+        _maxRetries = configuration.TryGetValue("MaxRetries", out object? mr) && mr is int maxRetries
             ? maxRetries
             : 3;
 
-        _initialDelayMs = configuration.TryGetValue("InitialDelayMs", out var id) && id is int initialDelay
+        _initialDelayMs = configuration.TryGetValue("InitialDelayMs", out object? id) && id is int initialDelay
             ? initialDelay
             : 1000;
 
-        _maxDelayMs = configuration.TryGetValue("MaxDelayMs", out var md) && md is int maxDelay
+        _maxDelayMs = configuration.TryGetValue("MaxDelayMs", out object? md) && md is int maxDelay
             ? maxDelay
             : 30000;
 
-        _backoffMultiplier = configuration.TryGetValue("BackoffMultiplier", out var bm) && bm is double backoffMultiplier
+        _backoffMultiplier = configuration.TryGetValue("BackoffMultiplier", out object? bm) && bm is double backoffMultiplier
             ? backoffMultiplier
             : 2.0;
 
-        _useJitter = configuration.TryGetValue("UseJitter", out var uj) && uj is bool useJitter
+        _useJitter = configuration.TryGetValue("UseJitter", out object? uj) && uj is bool useJitter
             ? useJitter
             : true;
 
-        _retryOnTimeout = configuration.TryGetValue("RetryOnTimeout", out var rot) && rot is bool retryOnTimeout
+        _retryOnTimeout = configuration.TryGetValue("RetryOnTimeout", out object? rot) && rot is bool retryOnTimeout
             ? retryOnTimeout
             : true;
 
@@ -84,13 +84,13 @@ public sealed class RetryMiddleware : IPipelineMiddleware
     public async Task InvokeAsync(PipelineContext context, PipelineDelegate continuation)
     {
         var exceptions = new List<Exception>();
-        var attempt = 0;
+        int attempt = 0;
 
         while (attempt <= _maxRetries)
         {
             try
             {
-                await continuation(context);
+                await continuation(context).ConfigureAwait(false);
 
                 // Success - record the attempt if it was a retry
                 if (attempt > 0 && context.StateBox != null)
@@ -124,10 +124,10 @@ public sealed class RetryMiddleware : IPipelineMiddleware
                 }
 
                 // Calculate delay with exponential backoff
-                var delay = CalculateDelay(attempt);
+                int delay = CalculateDelay(attempt);
 
                 // Wait before retrying
-                await Task.Delay(delay, context.CancellationToken);
+                await Task.Delay(delay, context.CancellationToken).ConfigureAwait(false);
 
                 // Increment retry counter in state box if available
                 context.StateBox?.IncrementRetryCount();
@@ -160,7 +160,7 @@ public sealed class RetryMiddleware : IPipelineMiddleware
     private int CalculateDelay(int attempt)
     {
         // Calculate exponential backoff: initialDelay * (multiplier ^ (attempt - 1))
-        var delay = _initialDelayMs * Math.Pow(_backoffMultiplier, attempt - 1);
+        double delay = _initialDelayMs * Math.Pow(_backoffMultiplier, attempt - 1);
 
         // Cap at max delay
         delay = Math.Min(delay, _maxDelayMs);
@@ -168,8 +168,8 @@ public sealed class RetryMiddleware : IPipelineMiddleware
         // Add jitter if enabled (±25% of the delay)
         if (_useJitter)
         {
-            var jitterRange = delay * 0.25;
-            var jitter = (_random.NextDouble() * 2 - 1) * jitterRange; // Random between -25% and +25%
+            double jitterRange = delay * 0.25;
+            double jitter = (_random.NextDouble() * 2 - 1) * jitterRange; // Random between -25% and +25%
             delay += jitter;
         }
 

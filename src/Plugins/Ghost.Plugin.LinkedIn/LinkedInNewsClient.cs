@@ -29,29 +29,29 @@ public sealed class LinkedInNewsClient : INewsClient
     {
         try
         {
-            var page = await _session.NewPageAsync(ct: ct);
+            IPage page = await _session.NewPageAsync(ct: ct).ConfigureAwait(false);
             try
             {
-                await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct);
-                await page.WaitForLoadStateAsync(ct: ct);
+                await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct).ConfigureAwait(false);
+                await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
-                var nodes = await page.QuerySelectorAllAsync(".feed-shared-update-v2", ct: ct);
+                IReadOnlyList<IElement> nodes = await page.QuerySelectorAllAsync(".feed-shared-update-v2", ct: ct).ConfigureAwait(false);
                 var list = new List<NewsArticle>();
-                foreach (var n in nodes.Take(filter?.MaxResults ?? 20))
+                foreach (IElement? n in nodes.Take(filter?.MaxResults ?? 20))
                 {
                     try
                     {
-                        var titleEl = await n.QuerySelectorAsync("h3", ct);
+                        IElement? titleEl = await n.QuerySelectorAsync("h3", ct).ConfigureAwait(false);
                         string title;
                         if (titleEl is not null)
-                            title = await titleEl.GetTextContentAsync(ct) ?? string.Empty;
+                            title = await titleEl.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty;
                         else
                             title = string.Empty;
 
-                        var aEl = await n.QuerySelectorAsync("a", ct);
+                        IElement? aEl = await n.QuerySelectorAsync("a", ct).ConfigureAwait(false);
                         string url;
                         if (aEl is not null)
-                            url = await aEl.GetAttributeAsync("href", ct) ?? string.Empty;
+                            url = await aEl.GetAttributeAsync("href", ct).ConfigureAwait(false) ?? string.Empty;
                         else
                             url = string.Empty;
                         list.Add(new NewsArticle { Id = Guid.NewGuid().ToString(), Title = title, Url = url });
@@ -63,7 +63,7 @@ public sealed class LinkedInNewsClient : INewsClient
             }
             finally
             {
-                try { await page.DisposeAsync(); } catch { }
+                try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
             }
         }
         catch (OperationCanceledException)
@@ -87,34 +87,34 @@ public sealed class LinkedInNewsClient : INewsClient
     {
         try
         {
-            var pageOpts = _options.GetPageOptions();
-            var page = await _session.NewPageAsync(pageOpts, ct: ct);
+            PageOptions? pageOpts = _options.GetPageOptions();
+            IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
             try
             {
-                var q = System.Uri.EscapeDataString(query);
-                await page.NavigateAsync($"{_options.BaseUrl}/search/results/content/?keywords={q}", ct: ct);
-                await page.WaitForLoadStateAsync(ct: ct);
+                string q = System.Uri.EscapeDataString(query);
+                await page.NavigateAsync($"{_options.BaseUrl}/search/results/content/?keywords={q}", ct: ct).ConfigureAwait(false);
+                await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
                 // Search results for content usually appear as update cards
                 // Selectors: .search-results-container .search-update-card, or reusing feed classes
-                var nodes = await page.QuerySelectorAllAsync(".search-update-card, .feed-shared-update-v2", ct: ct);
+                IReadOnlyList<IElement> nodes = await page.QuerySelectorAllAsync(".search-update-card, .feed-shared-update-v2", ct: ct).ConfigureAwait(false);
                 var list = new List<NewsArticle>();
-                foreach (var n in nodes.Take(options?.MaxResults ?? 20))
+                foreach (IElement? n in nodes.Take(options?.MaxResults ?? 20))
                 {
                     try
                     {
                         // Title usually in the update text or a shared article title
                         // .update-components-text is common for the post text
                         // article titles often in .update-components-article__title
-                        var titleEl = await n.QuerySelectorAsync(".update-components-article__title, .update-components-text span[dir='ltr']", ct);
+                        IElement? titleEl = await n.QuerySelectorAsync(".update-components-article__title, .update-components-text span[dir='ltr']", ct).ConfigureAwait(false);
                         string title = titleEl is not null
-                            ? await titleEl.GetTextContentAsync(ct) ?? string.Empty
+                            ? await titleEl.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty
                             : string.Empty;
 
                         // Link
-                        var aEl = await n.QuerySelectorAsync("a.app-aware-link", ct);
+                        IElement? aEl = await n.QuerySelectorAsync("a.app-aware-link", ct).ConfigureAwait(false);
                         string url = aEl is not null
-                            ? await aEl.GetAttributeAsync("href", ct) ?? string.Empty
+                            ? await aEl.GetAttributeAsync("href", ct).ConfigureAwait(false) ?? string.Empty
                             : string.Empty;
 
                         if (!string.IsNullOrWhiteSpace(title) || !string.IsNullOrWhiteSpace(url))
@@ -129,7 +129,7 @@ public sealed class LinkedInNewsClient : INewsClient
             }
             finally
             {
-                try { await page.DisposeAsync(); } catch { }
+                try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
             }
         }
         catch (OperationCanceledException)
@@ -147,7 +147,7 @@ public sealed class LinkedInNewsClient : INewsClient
     private static List<NewsArticle> GenerateMockArticles(int count)
     {
         var mockArticles = new List<NewsArticle>();
-        var titles = new[]
+        string[] titles = new[]
         {
             "Tech Industry Sees Major Growth in AI Development",
             "Remote Work Trends Continue to Shape Corporate Culture",

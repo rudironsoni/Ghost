@@ -41,8 +41,8 @@ public abstract class Spider
 
         try
         {
-            var httpResponse = await httpClient.GetAsync(request.Url, ct);
-            var content = await httpResponse.Content.ReadAsStringAsync(ct);
+            HttpResponseMessage httpResponse = await httpClient.GetAsync(request.Url, ct).ConfigureAwait(false);
+            string content = await httpResponse.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             return new Response
             {
@@ -186,8 +186,8 @@ public class SitemapSpider : Spider, ISitemapSpider
         ArgumentException.ThrowIfNullOrWhiteSpace(SitemapUrl);
 
         _currentDepth = 0;
-        await ProcessSitemapAsync(SitemapUrl, ct);
-        await base.StartAsync(ct);
+        await ProcessSitemapAsync(SitemapUrl, ct).ConfigureAwait(false);
+        await base.StartAsync(ct).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -204,7 +204,7 @@ public class SitemapSpider : Spider, ISitemapSpider
         }
 
         // Fetch sitemap
-        var response = await DownloadAsync(new Request { Url = sitemapUrl }, ct);
+        Response response = await DownloadAsync(new Request { Url = sitemapUrl }, ct).ConfigureAwait(false);
 
         if (!response.IsSuccess)
         {
@@ -213,23 +213,23 @@ public class SitemapSpider : Spider, ISitemapSpider
         }
 
         // Parse sitemap
-        var urls = await ParseSitemapAsync(response.Body, ct);
+        IEnumerable<string> urls = await ParseSitemapAsync(response.Body, ct).ConfigureAwait(false);
 
         // Process discovered URLs
         var urlList = urls.ToList();
-        foreach (var url in urlList)
+        foreach (string? url in urlList)
         {
             // Check if this is a nested sitemap (if FollowSitemapIndex is enabled)
             if (Options.FollowSitemapIndex && IsSitemapUrl(url))
             {
                 _currentDepth++;
-                await ProcessSitemapAsync(url, ct);
+                await ProcessSitemapAsync(url, ct).ConfigureAwait(false);
                 _currentDepth--;
             }
             else
             {
                 // Schedule regular URL for crawling
-                await ScheduleRequestAsync(new Request { Url = url }, ct);
+                await ScheduleRequestAsync(new Request { Url = url }, ct).ConfigureAwait(false);
             }
         }
     }
@@ -260,10 +260,10 @@ public class SitemapSpider : Spider, ISitemapSpider
             var ns = XNamespace.Get(SitemapNamespace);
 
             // Handle sitemap index - extract nested sitemap URLs
-            var sitemaps = doc.Descendants(ns + "sitemap");
-            foreach (var sitemap in sitemaps)
+            IEnumerable<XElement> sitemaps = doc.Descendants(ns + "sitemap");
+            foreach (XElement sitemap in sitemaps)
             {
-                var loc = sitemap.Element(ns + "loc")?.Value;
+                string? loc = sitemap.Element(ns + "loc")?.Value;
                 if (!string.IsNullOrEmpty(loc))
                 {
                     urls.Add(loc);
@@ -271,21 +271,21 @@ public class SitemapSpider : Spider, ISitemapSpider
             }
 
             // Handle URL set - extract page URLs
-            var urlElements = doc.Descendants(ns + "url");
-            foreach (var urlElement in urlElements)
+            IEnumerable<XElement> urlElements = doc.Descendants(ns + "url");
+            foreach (XElement urlElement in urlElements)
             {
-                var loc = urlElement.Element(ns + "loc")?.Value;
+                string? loc = urlElement.Element(ns + "loc")?.Value;
                 if (string.IsNullOrEmpty(loc))
                     continue;
 
                 // Apply lastmod filter if configured
                 if (Options.LastModAfter.HasValue)
                 {
-                    var lastModElement = urlElement.Element(ns + "lastmod");
+                    XElement? lastModElement = urlElement.Element(ns + "lastmod");
                     if (lastModElement != null &&
-                        DateTime.TryParse(lastModElement.Value, out var lastMod))
+                        DateTime.TryParse(lastModElement.Value, out DateTime lastMod))
                     {
-                        var age = DateTime.UtcNow - lastMod;
+                        TimeSpan age = DateTime.UtcNow - lastMod;
                         if (age <= Options.LastModAfter.Value)
                         {
                             urls.Add(loc);
@@ -317,7 +317,7 @@ public class SitemapSpider : Spider, ISitemapSpider
         if (string.IsNullOrWhiteSpace(url))
             return false;
 
-        var urlLower = url.ToLowerInvariant();
+        string urlLower = url.ToLowerInvariant();
         return urlLower.Contains("sitemap", StringComparison.Ordinal) && urlLower.EndsWith(".xml", StringComparison.Ordinal);
     }
 }

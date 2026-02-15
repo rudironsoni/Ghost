@@ -71,7 +71,7 @@ public class DateTimeFormatter : Formatter
         if (value == null)
             return null;
 
-        var culture = GetCultureInfo();
+        CultureInfo culture = GetCultureInfo();
         DateTime dateTime;
 
         if (value is DateTime dt)

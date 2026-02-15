@@ -30,7 +30,7 @@ public sealed class TLSFingerprintService
     /// <returns>A randomized JA3 profile.</returns>
     public JA3Profile GenerateProfile(string? browserType = null)
     {
-        var profile = _randomizer.GenerateRandomProfile(browserType);
+        JA3Profile profile = _randomizer.GenerateRandomProfile(browserType);
 
         if (_logger.IsEnabled(LogLevel.Debug))
         {
@@ -60,11 +60,11 @@ public sealed class TLSFingerprintService
         try
         {
             // Get the first page or create one
-            var pages = context.Pages;
-            var page = pages.Count > 0 ? pages[0] : await context.NewPageAsync();
+            IReadOnlyList<Microsoft.Playwright.IPage> pages = context.Pages;
+            Microsoft.Playwright.IPage page = pages.Count > 0 ? pages[0] : await context.NewPageAsync().ConfigureAwait(false);
 
             // Create CDP session
-            var client = await page.Context.NewCDPSessionAsync(page);
+            ICDPSession client = await page.Context.NewCDPSessionAsync(page).ConfigureAwait(false);
 
             // Note: Direct TLS cipher modification is not supported via CDP
             // This would require:
@@ -83,7 +83,7 @@ public sealed class TLSFingerprintService
             }
 
             // We can set some related fingerprints via CDP
-            await ConfigureNetworkEmulation(client, profile);
+            await ConfigureNetworkEmulation(client, profile).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -99,7 +99,7 @@ public sealed class TLSFingerprintService
     {
         // Set HTTP/2 settings to match TLS profile
         // Modern browsers with TLS 1.3 support HTTP/2
-        var supportsHttp2 = profile.TLSVersion >= 771;
+        bool supportsHttp2 = profile.TLSVersion >= 771;
 
         if (_logger.IsEnabled(LogLevel.Debug))
         {
@@ -111,7 +111,7 @@ public sealed class TLSFingerprintService
         }
 
         // Additional CDP commands for network behavior can be added here
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     /// <summary>

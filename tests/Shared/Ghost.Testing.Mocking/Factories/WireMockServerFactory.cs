@@ -116,7 +116,7 @@ public static class WireMockServerFactory
     /// <param name="servers">The servers to dispose.</param>
     public static void DisposeMany(params WireMockServer?[] servers)
     {
-        foreach (var server in servers)
+        foreach (WireMockServer? server in servers)
         {
             Dispose(server);
         }

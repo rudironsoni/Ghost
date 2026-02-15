@@ -42,7 +42,7 @@ public class GoogleIntegrationTests : IClassFixture<PlatformIntegrationTestFixtu
 
         // Act
         _output.WriteLine($"Searching Google for: {criteria.Query}");
-        var results = await _client.SearchJobsAsync(criteria, cts.Token);
+        IReadOnlyList<JobListing> results = await _client.SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -55,14 +55,14 @@ public class GoogleIntegrationTests : IClassFixture<PlatformIntegrationTestFixtu
         results.AssertNoDuplicateJobs();
 
         // Validate freshness for all jobs
-        foreach (var job in results)
+        foreach (JobListing job in results)
         {
             job.AssertFreshData(TimeSpan.FromDays(90));
         }
 
         // Output sample data for human verification
         _output.WriteLine("\n=== Sample Job Data ===");
-        var sampleJob = results[0];
+        JobListing sampleJob = results[0];
         _output.WriteLine($"ID: {sampleJob.Id}");
         _output.WriteLine($"Title: {sampleJob.Title}");
         _output.WriteLine($"Company: {sampleJob.Company}");
@@ -86,7 +86,7 @@ public class GoogleIntegrationTests : IClassFixture<PlatformIntegrationTestFixtu
 
         // Act
         _output.WriteLine($"Searching Google for: {criteria.Query} in {criteria.Location}");
-        var results = await _client.SearchJobsAsync(criteria, cts.Token);
+        IReadOnlyList<JobListing> results = await _client.SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -104,7 +104,7 @@ public class GoogleIntegrationTests : IClassFixture<PlatformIntegrationTestFixtu
 
         // Output sample locations for human verification
         _output.WriteLine("\n=== Sample Locations ===");
-        foreach (var job in results.Take(3))
+        foreach (JobListing? job in results.Take(3))
         {
             _output.WriteLine($"{job.Title} at {job.Company}: {job.Location ?? "No location"}");
         }
@@ -122,16 +122,16 @@ public class GoogleIntegrationTests : IClassFixture<PlatformIntegrationTestFixtu
         var searchCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 
         // First, search for a job to get a valid ID
-        var searchResults = await _client.SearchJobsAsync(searchCriteria, searchCts.Token);
+        IReadOnlyList<JobListing> searchResults = await _client.SearchJobsAsync(searchCriteria, searchCts.Token).ConfigureAwait(false);
         searchResults.Should().NotBeEmpty("need at least one job to test details endpoint");
 
-        var jobId = searchResults[0].Id;
+        string jobId = searchResults[0].Id;
         _output.WriteLine($"Testing GetJobDetails for job ID: {jobId}");
 
         var detailsCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 
         // Act
-        var jobDetails = await _client.GetJobDetailsAsync(jobId, detailsCts.Token);
+        JobListing jobDetails = await _client.GetJobDetailsAsync(jobId, detailsCts.Token).ConfigureAwait(false);
 
         // Assert
         jobDetails.Should().NotBeNull("job details should not be null");

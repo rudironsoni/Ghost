@@ -80,7 +80,7 @@ public class InMemoryRequestQueue : IRequestQueue
                 return Task.FromResult<Request?>(null);
             }
 
-            var request = _queue.Dequeue();
+            Request request = _queue.Dequeue();
             return Task.FromResult<Request?>(request);
         }
     }
@@ -95,7 +95,7 @@ public class InMemoryRequestQueue : IRequestQueue
                 return Task.FromResult<Request?>(null);
             }
 
-            var request = _queue.Peek();
+            Request request = _queue.Peek();
             return Task.FromResult<Request?>(request);
         }
     }
@@ -118,7 +118,7 @@ public class InMemoryRequestQueue : IRequestQueue
     {
         ArgumentNullException.ThrowIfNull(url);
 
-        var contains = _seenUrls.ContainsKey(url);
+        bool contains = _seenUrls.ContainsKey(url);
         return Task.FromResult(contains);
     }
 }

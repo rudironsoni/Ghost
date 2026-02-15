@@ -21,7 +21,7 @@ public class ExtensionDependencyFilteringTests
     public void ServiceCollectionWithAllExtensionsDisabledShouldRegisterNoJobScrapers()
     {
         var services = new ServiceCollection();
-        var config = new ConfigurationBuilder()
+        IConfigurationRoot config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:Extension1:Enabled"] = "false",
@@ -43,9 +43,9 @@ public class ExtensionDependencyFilteringTests
             services.AddSingleton<IJobScraper, MockJobScraper3>();
         }
 
-        var serviceProvider = services.BuildServiceProvider();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
 
-        var scraper = serviceProvider.GetService<IJobScraper>();
+        IJobScraper? scraper = serviceProvider.GetService<IJobScraper>();
         scraper.Should().BeNull("No scrapers should be registered when all are disabled");
     }
 
@@ -53,7 +53,7 @@ public class ExtensionDependencyFilteringTests
     public void ServiceCollectionWithSomeExtensionsEnabledShouldRegisterOnlyEnabledOnes()
     {
         var services = new ServiceCollection();
-        var config = new ConfigurationBuilder()
+        IConfigurationRoot config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:Extension1:Enabled"] = "true",
@@ -75,7 +75,7 @@ public class ExtensionDependencyFilteringTests
             services.AddSingleton<MockJobScraper3>();
         }
 
-        var serviceProvider = services.BuildServiceProvider();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
 
         serviceProvider.GetRequiredService<MockJobScraper1>().Should().NotBeNull();
         serviceProvider.GetRequiredService<MockJobScraper3>().Should().NotBeNull();
@@ -86,7 +86,7 @@ public class ExtensionDependencyFilteringTests
     [Fact]
     public void ConfigurationValueWhenFalseShouldPreventConditionalRegistration()
     {
-        var config = new ConfigurationBuilder()
+        IConfigurationRoot config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:Sample:Enabled"] = "false",
@@ -94,8 +94,8 @@ public class ExtensionDependencyFilteringTests
             })
             .Build();
 
-        var isEnabled = config.GetValue<bool>("Ghost:Extensions:Sample:Enabled");
-        var setting = config.GetValue<string>("Ghost:Extensions:Sample:Setting", string.Empty);
+        bool isEnabled = config.GetValue<bool>("Ghost:Extensions:Sample:Enabled");
+        string setting = config.GetValue<string>("Ghost:Extensions:Sample:Setting", string.Empty);
 
         isEnabled.Should().BeFalse("Configuration should parse false correctly");
         setting.Should().Be("some-value", "Other settings remain accessible even when extension is disabled");
@@ -105,7 +105,7 @@ public class ExtensionDependencyFilteringTests
     public void ConditionalRegistrationWithBooleanCheckShouldSkipDisabledExtensions()
     {
         var services = new ServiceCollection();
-        var config = new ConfigurationBuilder()
+        IConfigurationRoot config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:ProviderA:Enabled"] = "false",
@@ -138,7 +138,7 @@ public class ExtensionDependencyFilteringTests
     public void ServiceProviderWithNoServiceShouldThrowOnResolution()
     {
         var services = new ServiceCollection();
-        var serviceProvider = services.BuildServiceProvider();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
 
         Action resolveService = () => serviceProvider.GetRequiredService<IJobScraper>();
         resolveService.Should().Throw<InvalidOperationException>("Unregistered services should throw");
@@ -150,7 +150,7 @@ public class ExtensionDependencyFilteringTests
         var services = new ServiceCollection();
         var enabledServices = new List<Type> { typeof(MockJobScraper1), typeof(MockJobScraper2) };
 
-        foreach (var serviceType in enabledServices)
+        foreach (Type serviceType in enabledServices)
         {
             if (serviceType == typeof(MockJobScraper1))
             {
@@ -162,7 +162,7 @@ public class ExtensionDependencyFilteringTests
             }
         }
 
-        var serviceProvider = services.BuildServiceProvider();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
 
         serviceProvider.GetRequiredService<MockJobScraper1>().Should().NotBeNull();
         serviceProvider.GetRequiredService<MockJobScraper2>().Should().NotBeNull();

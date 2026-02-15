@@ -16,7 +16,7 @@ public static class DetailedHealthEndpoints
     {
         ArgumentNullException.ThrowIfNull(app);
 
-        var group = app.MapGroup("/api/health");
+        RouteGroupBuilder group = app.MapGroup("/api/health");
 
         group.MapGet("/detailed", GetDetailedReport);
         group.MapGet("/platforms", GetPlatformHealth);
@@ -30,7 +30,7 @@ public static class DetailedHealthEndpoints
         [FromServices] IHealthReportService reportService,
         CancellationToken ct)
     {
-        var report = await reportService.BuildReportAsync(ct).ConfigureAwait(false);
+        HealthReport report = await reportService.BuildReportAsync(ct).ConfigureAwait(false);
         return Results.Ok(report);
     }
 
@@ -38,7 +38,7 @@ public static class DetailedHealthEndpoints
         [FromServices] IHealthReportService reportService,
         CancellationToken ct)
     {
-        var report = await reportService.BuildReportAsync(ct).ConfigureAwait(false);
+        HealthReport report = await reportService.BuildReportAsync(ct).ConfigureAwait(false);
         return Results.Ok(report.Platforms);
     }
 
@@ -46,14 +46,14 @@ public static class DetailedHealthEndpoints
         [FromServices] IHealthReportService reportService,
         CancellationToken ct)
     {
-        var report = await reportService.BuildReportAsync(ct).ConfigureAwait(false);
+        HealthReport report = await reportService.BuildReportAsync(ct).ConfigureAwait(false);
         return Results.Ok(report.Proxies);
     }
 
     private static IResult GetMetrics(
         [FromServices] MetricsService metricsService)
     {
-        var snapshot = metricsService.GetSnapshot();
+        MetricsSnapshot snapshot = metricsService.GetSnapshot();
         return Results.Ok(snapshot);
     }
 }

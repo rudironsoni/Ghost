@@ -30,9 +30,9 @@ public sealed class PaginationContract : ProviderContractBase
         var context = new Dictionary<string, object>();
 
         // Test pagination with different page counts
-        var page1Jobs = await adapter.SearchWithPaginationAsync(criteria, maxPages: 1, ct);
-        var page3Jobs = await adapter.SearchWithPaginationAsync(criteria, maxPages: 3, ct);
-        var page5Jobs = await adapter.SearchWithPaginationAsync(criteria, maxPages: 5, ct);
+        IReadOnlyList<JobListing> page1Jobs = await adapter.SearchWithPaginationAsync(criteria, maxPages: 1, ct).ConfigureAwait(false);
+        IReadOnlyList<JobListing> page3Jobs = await adapter.SearchWithPaginationAsync(criteria, maxPages: 3, ct).ConfigureAwait(false);
+        IReadOnlyList<JobListing> page5Jobs = await adapter.SearchWithPaginationAsync(criteria, maxPages: 5, ct).ConfigureAwait(false);
 
         context["Page1Count"] = page1Jobs.Count;
         context["Page3Count"] = page3Jobs.Count;

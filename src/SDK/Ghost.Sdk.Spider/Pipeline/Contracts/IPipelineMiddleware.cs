@@ -48,5 +48,5 @@ public interface IPipelineMiddleware
     /// <exception cref="OperationCanceledException">
     /// Thrown when the operation is cancelled via the context's cancellation token.
     /// </exception>
-    Task InvokeAsync(PipelineContext context, PipelineDelegate continuation);
+    public Task InvokeAsync(PipelineContext context, PipelineDelegate continuation);
 }

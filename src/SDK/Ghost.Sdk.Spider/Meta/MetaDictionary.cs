@@ -75,7 +75,7 @@ public class MetaDictionary : Dictionary<string, object>, IMetaDictionary
     /// </returns>
     public bool TryGet<T>(string key, out T value)
     {
-        if (TryGetValue(key, out var obj) && obj is T typed)
+        if (TryGetValue(key, out object? obj) && obj is T typed)
         {
             value = typed;
             return true;

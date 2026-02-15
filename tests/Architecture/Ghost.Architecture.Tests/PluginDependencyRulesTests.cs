@@ -10,7 +10,7 @@ namespace Ghost.Architecture.Tests
         [Fact]
         public void EngineAbstractions_ShouldNotDependOnHosting()
         {
-            var result = Types
+            TestResult result = Types
                 .InAssembly(typeof(IGhostEngine).Assembly)
                 .ShouldNot()
                 .HaveDependencyOn("Ghost.Hosting")
@@ -22,7 +22,7 @@ namespace Ghost.Architecture.Tests
         [Fact]
         public void NegativeControl_PluginTypeDependingOnHosting_ShouldFailRule()
         {
-            var result = Types
+            TestResult result = Types
                 .InAssembly(typeof(Ghost.Plugin.Fixtures.IllegalPluginDependency).Assembly)
                 .That()
                 .ResideInNamespace("Ghost.Plugin.Fixtures")

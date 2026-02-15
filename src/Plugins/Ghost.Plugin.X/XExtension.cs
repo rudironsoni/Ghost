@@ -57,7 +57,7 @@ public class XExtension : Ghost.Contracts.IExtension
         services.AddSingleton<IBrowserSessionPool, BrowserSessionPool>();
         services.AddSingleton<BrowserSessionPoolOptions>(sp =>
         {
-            var options = sp.GetService<IOptions<BrowserSessionPoolOptions>>()?.Value ?? new BrowserSessionPoolOptions();
+            BrowserSessionPoolOptions options = sp.GetService<IOptions<BrowserSessionPoolOptions>>()?.Value ?? new BrowserSessionPoolOptions();
             return options;
         });
 
@@ -71,7 +71,7 @@ public class XExtension : Ghost.Contracts.IExtension
         // Register internal services
         services.AddSingleton<XPostContentSplitter>(sp =>
         {
-            var options = sp.GetRequiredService<IOptions<XOptions>>();
+            IOptions<XOptions> options = sp.GetRequiredService<IOptions<XOptions>>();
             return new XPostContentSplitter(options.Value.MaxTweetLength);
         });
 
@@ -123,7 +123,7 @@ public static class XServiceCollectionExtensions
         // Register internal services
         services.AddSingleton<XPostContentSplitter>(sp =>
         {
-            var options = sp.GetService<IOptions<XOptions>>()?.Value ?? new XOptions();
+            XOptions options = sp.GetService<IOptions<XOptions>>()?.Value ?? new XOptions();
             return new XPostContentSplitter(options.MaxTweetLength);
         });
 
@@ -162,7 +162,7 @@ public static class XServiceCollectionExtensions
         // Register internal services
         services.AddSingleton<XPostContentSplitter>(sp =>
         {
-            var options = sp.GetRequiredService<IOptions<XOptions>>();
+            IOptions<XOptions> options = sp.GetRequiredService<IOptions<XOptions>>();
             return new XPostContentSplitter(options.Value.MaxTweetLength);
         });
 
@@ -196,9 +196,9 @@ public static class XServiceCollectionExtensions
         services.AddSingleton<IXAccountManager>(sp =>
         {
             var manager = new XAccountManager(sp.GetRequiredService<ILogger<XAccountManager>>());
-            var accountOptions = sp.GetRequiredService<IEnumerable<XAccountOptions>>();
+            IEnumerable<XAccountOptions> accountOptions = sp.GetRequiredService<IEnumerable<XAccountOptions>>();
 
-            foreach (var account in accountOptions)
+            foreach (XAccountOptions account in accountOptions)
             {
                 manager.RegisterAccount(account.AccountId, account);
             }
@@ -235,7 +235,7 @@ public partial class XHealthCheckService : BackgroundService
         {
             try
             {
-                var result = await _healthCheck.CheckHealthAsync(stoppingToken);
+                HealthCheckResult result = await _healthCheck.CheckHealthAsync(stoppingToken).ConfigureAwait(false);
 
                 if (result.Status == HealthStatus.Unhealthy)
                 {
@@ -249,7 +249,7 @@ public partial class XHealthCheckService : BackgroundService
                 }
 
                 // Log metrics periodically
-                var metrics = _metrics.GetMetrics();
+                XMetrics metrics = _metrics.GetMetrics();
                 if (metrics.TotalRequests > 0)
                 {
                     Log.Metrics(_logger,
@@ -263,7 +263,7 @@ public partial class XHealthCheckService : BackgroundService
                 Log.HealthCheckServiceError(_logger, ex);
             }
 
-            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken).ConfigureAwait(false);
         }
     }
 }

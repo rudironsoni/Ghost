@@ -36,7 +36,7 @@ public sealed class RetryBehaviorContract : ProviderContractBase
                 .Select(_ => adapter.TestRetryBehaviorAsync(criteria, ct))
                 .ToList();
 
-            var results = await Task.WhenAll(tasks);
+            IReadOnlyList<JobListing>[] results = await Task.WhenAll(tasks).ConfigureAwait(false);
 
             context["RequestCount"] = results.Length;
             context["SuccessfulRequests"] = results.Count(r => r.Count > 0);
@@ -51,11 +51,11 @@ public sealed class RetryBehaviorContract : ProviderContractBase
             // Verify that results are consistent across retries
             if (successfulResults.Count >= 2)
             {
-                var firstResult = successfulResults[0];
-                var secondResult = successfulResults[1];
+                IReadOnlyList<JobListing> firstResult = successfulResults[0];
+                IReadOnlyList<JobListing> secondResult = successfulResults[1];
 
                 // Check if we're getting consistent job counts
-                var countVariance = Math.Abs(firstResult.Count - secondResult.Count);
+                int countVariance = Math.Abs(firstResult.Count - secondResult.Count);
                 context["CountVariance"] = countVariance;
 
                 // Large variance might indicate pagination issues or inconsistent retry behavior

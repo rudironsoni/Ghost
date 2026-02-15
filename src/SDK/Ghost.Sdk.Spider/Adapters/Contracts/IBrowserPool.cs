@@ -14,19 +14,19 @@ public interface IBrowserPool : IAsyncDisposable
     /// Gets the maximum number of concurrent browser instances allowed.
     /// </summary>
     /// <value>The maximum pool size.</value>
-    int MaxPoolSize { get; }
+    public int MaxPoolSize { get; }
 
     /// <summary>
     /// Gets the number of currently active browser instances.
     /// </summary>
     /// <value>The current number of active browsers.</value>
-    int ActiveCount { get; }
+    public int ActiveCount { get; }
 
     /// <summary>
     /// Gets the number of idle browser instances available for use.
     /// </summary>
     /// <value>The count of idle browsers ready for acquisition.</value>
-    int IdleCount { get; }
+    public int IdleCount { get; }
 
     /// <summary>
     /// Acquires a browser session from the pool.
@@ -44,7 +44,7 @@ public interface IBrowserPool : IAsyncDisposable
     /// <exception cref="OperationCanceledException">
     /// Thrown when the operation is canceled via <paramref name="cancellationToken"/>.
     /// </exception>
-    Task<IBrowserSession> AcquireAsync(CancellationToken cancellationToken = default);
+    public Task<IBrowserSession> AcquireAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Returns a browser session to the pool for reuse.
@@ -57,7 +57,7 @@ public interface IBrowserPool : IAsyncDisposable
     /// If the session is in an invalid state, it will be disposed and removed from the pool.
     /// </remarks>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="session"/> is null.</exception>
-    Task ReleaseAsync(IBrowserSession session, CancellationToken cancellationToken = default);
+    public Task ReleaseAsync(IBrowserSession session, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Initializes the browser pool and prepares browser instances.
@@ -68,7 +68,7 @@ public interface IBrowserPool : IAsyncDisposable
     /// This method should be called before using the pool. It may pre-create browser
     /// instances to reduce latency for the first requests.
     /// </remarks>
-    Task InitializeAsync(CancellationToken cancellationToken = default);
+    public Task InitializeAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Clears all idle browser instances from the pool.
@@ -79,7 +79,7 @@ public interface IBrowserPool : IAsyncDisposable
     /// This method disposes all idle browsers but does not affect active sessions.
     /// Use this to free resources when the pool is not expected to be used for a while.
     /// </remarks>
-    Task ClearAsync(CancellationToken cancellationToken = default);
+    public Task ClearAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets statistics about the browser pool's performance and resource usage.
@@ -95,5 +95,5 @@ public interface IBrowserPool : IAsyncDisposable
     /// <item>BrowsersDisposed: Total browsers disposed</item>
     /// </list>
     /// </remarks>
-    Dictionary<string, object> GetStatistics();
+    public Dictionary<string, object> GetStatistics();
 }

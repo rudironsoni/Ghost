@@ -19,7 +19,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var exception = new HttpRequestException("Network error");
 
         // Act
-        var result = ErrorCategorizationService.CategorizeError(exception, "Google");
+        PlatformError result = ErrorCategorizationService.CategorizeError(exception, "Google");
 
         // Assert
         result.Should().NotBeNull();
@@ -37,7 +37,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var exception = new TaskCanceledException("Request timed out");
 
         // Act
-        var result = ErrorCategorizationService.CategorizeError(exception, "Glassdoor");
+        PlatformError result = ErrorCategorizationService.CategorizeError(exception, "Glassdoor");
 
         // Assert
         result.Should().NotBeNull();
@@ -55,7 +55,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var exception = new UnauthorizedAccessException("Authentication failed");
 
         // Act
-        var result = ErrorCategorizationService.CategorizeError(exception, "LinkedIn");
+        PlatformError result = ErrorCategorizationService.CategorizeError(exception, "LinkedIn");
 
         // Assert
         result.Should().NotBeNull();
@@ -73,7 +73,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var exception = new ArgumentException("Invalid argument");
 
         // Act
-        var result = ErrorCategorizationService.CategorizeError(exception, "Indeed");
+        PlatformError result = ErrorCategorizationService.CategorizeError(exception, "Indeed");
 
         // Assert
         result.Should().NotBeNull();
@@ -91,7 +91,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var exception = new InvalidOperationException("Parse error");
 
         // Act
-        var result = ErrorCategorizationService.CategorizeError(exception, "Google");
+        PlatformError result = ErrorCategorizationService.CategorizeError(exception, "Google");
 
         // Assert
         result.Should().NotBeNull();
@@ -109,7 +109,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var exception = new OperationCanceledException("Request was cancelled");
 
         // Act
-        var result = ErrorCategorizationService.CategorizeError(exception, "Glassdoor");
+        PlatformError result = ErrorCategorizationService.CategorizeError(exception, "Glassdoor");
 
         // Assert
         result.Should().NotBeNull();
@@ -127,7 +127,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var exception = new NotImplementedException("Unknown error");
 
         // Act
-        var result = ErrorCategorizationService.CategorizeError(exception, "LinkedIn");
+        PlatformError result = ErrorCategorizationService.CategorizeError(exception, "LinkedIn");
 
         // Assert
         result.Should().NotBeNull();
@@ -145,7 +145,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
 
         // Act
-        var result = ErrorCategorizationService.CategorizeHttpError(response, "Google");
+        PlatformError result = ErrorCategorizationService.CategorizeHttpError(response, "Google");
 
         // Assert
         result.Should().NotBeNull();
@@ -163,7 +163,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var response = new HttpResponseMessage(HttpStatusCode.Forbidden);
 
         // Act
-        var result = ErrorCategorizationService.CategorizeHttpError(response, "Glassdoor");
+        PlatformError result = ErrorCategorizationService.CategorizeHttpError(response, "Glassdoor");
 
         // Assert
         result.Should().NotBeNull();
@@ -181,7 +181,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var response = new HttpResponseMessage(HttpStatusCode.NotFound);
 
         // Act
-        var result = ErrorCategorizationService.CategorizeHttpError(response, "LinkedIn");
+        PlatformError result = ErrorCategorizationService.CategorizeHttpError(response, "LinkedIn");
 
         // Assert
         result.Should().NotBeNull();
@@ -199,7 +199,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
 
         // Act
-        var result = ErrorCategorizationService.CategorizeHttpError(response, "Indeed");
+        PlatformError result = ErrorCategorizationService.CategorizeHttpError(response, "Indeed");
 
         // Assert
         result.Should().NotBeNull();
@@ -217,7 +217,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var response = new HttpResponseMessage(HttpStatusCode.InternalServerError);
 
         // Act
-        var result = ErrorCategorizationService.CategorizeHttpError(response, "Google");
+        PlatformError result = ErrorCategorizationService.CategorizeHttpError(response, "Google");
 
         // Assert
         result.Should().NotBeNull();
@@ -235,7 +235,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var response = new HttpResponseMessage(HttpStatusCode.BadGateway);
 
         // Act
-        var result = ErrorCategorizationService.CategorizeHttpError(response, "Glassdoor");
+        PlatformError result = ErrorCategorizationService.CategorizeHttpError(response, "Glassdoor");
 
         // Assert
         result.Should().NotBeNull();
@@ -253,7 +253,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var response = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
 
         // Act
-        var result = ErrorCategorizationService.CategorizeHttpError(response, "LinkedIn");
+        PlatformError result = ErrorCategorizationService.CategorizeHttpError(response, "LinkedIn");
 
         // Assert
         result.Should().NotBeNull();
@@ -271,7 +271,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var response = new HttpResponseMessage(HttpStatusCode.GatewayTimeout);
 
         // Act
-        var result = ErrorCategorizationService.CategorizeHttpError(response, "Indeed");
+        PlatformError result = ErrorCategorizationService.CategorizeHttpError(response, "Indeed");
 
         // Assert
         result.Should().NotBeNull();
@@ -289,7 +289,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var response = new HttpResponseMessage(HttpStatusCode.BadRequest);
 
         // Act
-        var result = ErrorCategorizationService.CategorizeHttpError(response, "Google");
+        PlatformError result = ErrorCategorizationService.CategorizeHttpError(response, "Google");
 
         // Assert
         result.Should().NotBeNull();
@@ -307,7 +307,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var response = new HttpResponseMessage((HttpStatusCode)418);
 
         // Act
-        var result = ErrorCategorizationService.CategorizeHttpError(response, "Glassdoor");
+        PlatformError result = ErrorCategorizationService.CategorizeHttpError(response, "Glassdoor");
 
         // Assert
         result.Should().NotBeNull();
@@ -323,11 +323,11 @@ public class ErrorCategorizationServiceIntegrationTests
     {
         // Arrange
         var exception = new HttpRequestException("Network error");
-        var before = DateTime.UtcNow;
+        DateTime before = DateTime.UtcNow;
 
         // Act
-        var result = ErrorCategorizationService.CategorizeError(exception, "Google");
-        var after = DateTime.UtcNow;
+        PlatformError result = ErrorCategorizationService.CategorizeError(exception, "Google");
+        DateTime after = DateTime.UtcNow;
 
         // Assert
         result.Timestamp.Should().BeOnOrAfter(before);
@@ -339,11 +339,11 @@ public class ErrorCategorizationServiceIntegrationTests
     {
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.InternalServerError);
-        var before = DateTime.UtcNow;
+        DateTime before = DateTime.UtcNow;
 
         // Act
-        var result = ErrorCategorizationService.CategorizeHttpError(response, "Google");
-        var after = DateTime.UtcNow;
+        PlatformError result = ErrorCategorizationService.CategorizeHttpError(response, "Google");
+        DateTime after = DateTime.UtcNow;
 
         // Assert
         result.Timestamp.Should().BeOnOrAfter(before);
@@ -357,7 +357,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var exception = new HttpRequestException("Network error");
 
         // Act
-        var result = ErrorCategorizationService.CategorizeError(exception, "Google");
+        PlatformError result = ErrorCategorizationService.CategorizeError(exception, "Google");
 
         // Assert
         result.TechnicalDetails.Should().NotBeNull();
@@ -372,7 +372,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var response = new HttpResponseMessage(HttpStatusCode.InternalServerError);
 
         // Act
-        var result = ErrorCategorizationService.CategorizeHttpError(response, "Google");
+        PlatformError result = ErrorCategorizationService.CategorizeHttpError(response, "Google");
 
         // Assert
         result.TechnicalDetails.Should().NotBeNull();
@@ -388,7 +388,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var exception = new HttpRequestException("Network error", innerException);
 
         // Act
-        var result = ErrorCategorizationService.CategorizeError(exception, "Google");
+        PlatformError result = ErrorCategorizationService.CategorizeError(exception, "Google");
 
         // Assert
         result.TechnicalDetails.Should().NotBeNull();
@@ -403,7 +403,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var exception = new ArgumentNullException("param", "Parameter cannot be null");
 
         // Act
-        var result = ErrorCategorizationService.CategorizeError(exception, "Google");
+        PlatformError result = ErrorCategorizationService.CategorizeError(exception, "Google");
 
         // Assert
         result.Should().NotBeNull();
@@ -421,7 +421,7 @@ public class ErrorCategorizationServiceIntegrationTests
         var exception = new HttpRequestException("A complex error message with details: timeout after 30 seconds");
 
         // Act
-        var result = ErrorCategorizationService.CategorizeError(exception, "Google");
+        PlatformError result = ErrorCategorizationService.CategorizeError(exception, "Google");
 
         // Assert
         result.Should().NotBeNull();
@@ -441,7 +441,7 @@ public class ErrorCategorizationServiceIntegrationTests
         };
 
         // Act
-        var result = ErrorCategorizationService.CategorizeHttpError(response, "Google");
+        PlatformError result = ErrorCategorizationService.CategorizeHttpError(response, "Google");
 
         // Assert
         result.TechnicalDetails.Should().Contain("Custom Error Message");

@@ -68,12 +68,12 @@ public class UrlDecodeFormatter : Formatter
         }
 
         // Decode multiple times until no more changes or max iterations reached
-        var decoded = str;
-        var iterations = 0;
+        string decoded = str;
+        int iterations = 0;
 
         while (iterations < MaxDecodeIterations)
         {
-            var nextDecode = DecodeUrl(decoded);
+            string nextDecode = DecodeUrl(decoded);
             if (nextDecode == decoded) // No more changes
                 break;
 
@@ -86,14 +86,14 @@ public class UrlDecodeFormatter : Formatter
 
     private string DecodeUrl(string str)
     {
-        var decoded = WebUtility.UrlDecode(str);
+        string? decoded = WebUtility.UrlDecode(str);
 
         // UrlDecode handles + as space by default, but we may want to control this
         if (!DecodePlusAsSpace && decoded != null)
         {
             // Manually encode + back if we don't want them decoded
             // This is a bit hacky but necessary due to WebUtility.UrlDecode behavior
-            var original = str;
+            string original = str;
             if (original.Contains('+') && !original.Contains("%2B"))
             {
                 // Only restore + if they weren't encoded as %2B

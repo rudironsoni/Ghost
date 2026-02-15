@@ -59,8 +59,8 @@ public class JavaScriptAdapter : IContentAdapter
     {
         _logger?.LogInitializingBrowser();
 
-        var playwright = await Playwright.CreateAsync().ConfigureAwait(false);
-        var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+        IPlaywright playwright = await Playwright.CreateAsync().ConfigureAwait(false);
+        IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
             Headless = true,
             Args = BrowserArgs
@@ -75,11 +75,11 @@ public class JavaScriptAdapter : IContentAdapter
         if (request == null)
             return Task.FromResult(false);
 
-        if (!Uri.TryCreate(request.Url, UriKind.Absolute, out var uri))
+        if (!Uri.TryCreate(request.Url, UriKind.Absolute, out Uri? uri))
             return Task.FromResult(false);
 
-        var scheme = uri.Scheme.ToLowerInvariant();
-        var canHandle = scheme is "http" or "https";
+        string scheme = uri.Scheme.ToLowerInvariant();
+        bool canHandle = scheme is "http" or "https";
 
         if (canHandle && request.ExpectedContentType != ContentType.Unknown)
         {
@@ -104,7 +104,7 @@ public class JavaScriptAdapter : IContentAdapter
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(options);
 
-        var startTime = DateTimeOffset.UtcNow;
+        DateTimeOffset startTime = DateTimeOffset.UtcNow;
         IPage? page = null;
 
         try
@@ -112,8 +112,8 @@ public class JavaScriptAdapter : IContentAdapter
             if (_logger != null)
                 JavaScriptAdapterLogMessages.LogExtractingContent(_logger, request.Url);
 
-            var browser = await _browserLazy.Value.ConfigureAwait(false);
-            var context = await browser.NewContextAsync(new BrowserNewContextOptions
+            IBrowser browser = await _browserLazy.Value.ConfigureAwait(false);
+            IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
             {
                 UserAgent = options.UserAgent,
                 IgnoreHTTPSErrors = !options.ValidateSslCertificate,
@@ -138,7 +138,7 @@ public class JavaScriptAdapter : IContentAdapter
                 WaitUntil = WaitUntilState.NetworkIdle
             };
 
-            var playwrightResponse = await page.GotoAsync(request.Url, navigationOptions).ConfigureAwait(false);
+            IResponse? playwrightResponse = await page.GotoAsync(request.Url, navigationOptions).ConfigureAwait(false);
 
             ArgumentNullException.ThrowIfNull(playwrightResponse, nameof(playwrightResponse));
 
@@ -146,8 +146,8 @@ public class JavaScriptAdapter : IContentAdapter
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle).ConfigureAwait(false);
 
             // Extract content
-            var content = await page.ContentAsync().ConfigureAwait(false);
-            var finalUrl = page.Url;
+            string content = await page.ContentAsync().ConfigureAwait(false);
+            string finalUrl = page.Url;
 
             var contentResult = new ContentResult
             {
@@ -177,8 +177,8 @@ public class JavaScriptAdapter : IContentAdapter
             };
 
             // Get response headers
-            var headers = await playwrightResponse.AllHeadersAsync().ConfigureAwait(false);
-            foreach (var header in headers)
+            Dictionary<string, string> headers = await playwrightResponse.AllHeadersAsync().ConfigureAwait(false);
+            foreach (KeyValuePair<string, string> header in headers)
             {
                 response.Headers[header.Key] = header.Value;
             }
@@ -248,7 +248,7 @@ public class JavaScriptAdapter : IContentAdapter
 
         if (_browserLazy.IsValueCreated)
         {
-            var browser = await _browserLazy.Value.ConfigureAwait(false);
+            IBrowser browser = await _browserLazy.Value.ConfigureAwait(false);
             await browser.CloseAsync().ConfigureAwait(false);
             await browser.DisposeAsync().ConfigureAwait(false);
         }

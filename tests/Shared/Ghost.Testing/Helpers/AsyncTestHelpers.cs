@@ -15,16 +15,16 @@ public static class AsyncTestHelpers
         TimeSpan? interval = null)
     {
         interval ??= TimeSpan.FromMilliseconds(100);
-        var deadline = DateTime.UtcNow.Add(timeout);
+        DateTime deadline = DateTime.UtcNow.Add(timeout);
 
         while (DateTime.UtcNow < deadline)
         {
-            if (await condition())
+            if (await condition().ConfigureAwait(false))
             {
                 return true;
             }
 
-            await Task.Delay(interval.Value);
+            await Task.Delay(interval.Value).ConfigureAwait(false);
         }
 
         return false;
@@ -36,7 +36,7 @@ public static class AsyncTestHelpers
     public static async Task<T> WithTimeoutAsync<T>(Task<T> task, TimeSpan timeout)
     {
         using var cts = new CancellationTokenSource(timeout);
-        var completedTask = await Task.WhenAny(task, Task.Delay(timeout, cts.Token));
+        Task completedTask = await Task.WhenAny(task, Task.Delay(timeout, cts.Token)).ConfigureAwait(false);
 
         if (completedTask != task)
         {
@@ -44,7 +44,7 @@ public static class AsyncTestHelpers
         }
 
         cts.Cancel();
-        return await task;
+        return await task.ConfigureAwait(false);
     }
 
     /// <summary>
@@ -56,14 +56,14 @@ public static class AsyncTestHelpers
         TimeSpan? initialDelay = null)
     {
         initialDelay ??= TimeSpan.FromMilliseconds(100);
-        var attempts = 0;
+        int attempts = 0;
         Exception? lastException = null;
 
         while (attempts < maxAttempts)
         {
             try
             {
-                return await operation();
+                return await operation().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -77,7 +77,7 @@ public static class AsyncTestHelpers
 
                 var delay = TimeSpan.FromMilliseconds(
                     initialDelay.Value.TotalMilliseconds * Math.Pow(2, attempts - 1));
-                await Task.Delay(delay);
+                await Task.Delay(delay).ConfigureAwait(false);
             }
         }
 

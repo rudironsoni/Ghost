@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using Ghost.Contracts.Jobs;
 
 namespace Ghost.Plugin.InfoJobs.Internal;
@@ -69,11 +70,11 @@ public static class InfoJobsConstants
         if (string.IsNullOrWhiteSpace(salaryText))
             return new SalaryInfo(0, "EUR");
 
-        var specialCases = new[] { "no especificado", "a convenir", "salario competitivo", "según experiencia" };
+        string[] specialCases = new[] { "no especificado", "a convenir", "salario competitivo", "según experiencia" };
         if (specialCases.Any(sc => salaryText.ToLower(CultureInfo.InvariantCulture).Contains(sc, StringComparison.OrdinalIgnoreCase)))
             return new SalaryInfo(0, "EUR");
 
-        var cleanText = salaryText
+        string cleanText = salaryText
             .Replace(".", "")
             .Replace(",", ".")
             .Replace("€", "")
@@ -85,19 +86,19 @@ public static class InfoJobsConstants
             .Replace("netos", "")
             .Replace("anuales", "");
 
-        var rangeMatch = System.Text.RegularExpressions.Regex.Match(cleanText, @"(\d+)\s*-\s*(\d+)");
+        Match rangeMatch = System.Text.RegularExpressions.Regex.Match(cleanText, @"(\d+)\s*-\s*(\d+)");
         if (rangeMatch.Success)
         {
-            var min = decimal.Parse(rangeMatch.Groups[1].Value, CultureInfo.InvariantCulture);
-            var max = decimal.Parse(rangeMatch.Groups[2].Value, CultureInfo.InvariantCulture);
-            var average = (min + max) / 2;
+            decimal min = decimal.Parse(rangeMatch.Groups[1].Value, CultureInfo.InvariantCulture);
+            decimal max = decimal.Parse(rangeMatch.Groups[2].Value, CultureInfo.InvariantCulture);
+            decimal average = (min + max) / 2;
             return new SalaryInfo(average, "EUR");
         }
 
-        var singleMatch = System.Text.RegularExpressions.Regex.Match(cleanText, @"(\d+(?:\.\d+)?)");
+        Match singleMatch = System.Text.RegularExpressions.Regex.Match(cleanText, @"(\d+(?:\.\d+)?)");
         if (singleMatch.Success)
         {
-            var amount = decimal.Parse(singleMatch.Groups[1].Value, CultureInfo.InvariantCulture);
+            decimal amount = decimal.Parse(singleMatch.Groups[1].Value, CultureInfo.InvariantCulture);
             return new SalaryInfo(amount, "EUR");
         }
 
@@ -109,7 +110,7 @@ public static class InfoJobsConstants
         if (string.IsNullOrWhiteSpace(spanishType))
             return JobType.Unknown;
 
-        var lowerType = spanishType.ToLower(CultureInfo.InvariantCulture);
+        string lowerType = spanishType.ToLower(CultureInfo.InvariantCulture);
 
         if (lowerType.Contains("contrato en prácticas", StringComparison.OrdinalIgnoreCase) ||
             lowerType.Contains("contrato de prácticas", StringComparison.OrdinalIgnoreCase))
@@ -121,7 +122,7 @@ public static class InfoJobsConstants
         if (lowerType.Contains("obra o servicio", StringComparison.OrdinalIgnoreCase))
             return JobType.Contract;
 
-        foreach (var mapping in JobTypeMapping)
+        foreach (KeyValuePair<string, JobType> mapping in JobTypeMapping)
         {
             if (lowerType.Contains(mapping.Key, StringComparison.OrdinalIgnoreCase))
                 return mapping.Value;

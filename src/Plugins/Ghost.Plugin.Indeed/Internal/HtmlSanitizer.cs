@@ -11,15 +11,15 @@ public static class HtmlSanitizer
         if (string.IsNullOrWhiteSpace(html))
             return string.Empty;
 
-        var text = RemoveScriptsAndStyles(html);
+        string text = RemoveScriptsAndStyles(html);
         var sb = new StringBuilder(text.Length);
-        var insideTag = false;
-        var lastWasSpace = false;
-        var pendingNewlines = 0;
+        bool insideTag = false;
+        bool lastWasSpace = false;
+        int pendingNewlines = 0;
 
-        for (var i = 0; i < text.Length; i++)
+        for (int i = 0; i < text.Length; i++)
         {
-            var ch = text[i];
+            char ch = text[i];
 
             if (insideTag)
             {
@@ -35,7 +35,7 @@ public static class HtmlSanitizer
             {
                 insideTag = true;
 
-                if (TryReadTagName(text, i + 1, out var tagName, out var isClosing))
+                if (TryReadTagName(text, i + 1, out string? tagName, out bool isClosing))
                 {
                     if (IsNewlineTag(tagName, isClosing))
                     {
@@ -69,7 +69,7 @@ public static class HtmlSanitizer
             lastWasSpace = false;
         }
 
-        var cleaned = DecodeHtmlEntities(sb.ToString());
+        string cleaned = DecodeHtmlEntities(sb.ToString());
         cleaned = NormalizeWhitespace(cleaned);
         return cleaned;
     }
@@ -84,7 +84,7 @@ public static class HtmlSanitizer
 
     private static string RemoveScriptsAndStyles(string html)
     {
-        var text = html;
+        string text = html;
         text = RemoveTagContent(text, "script");
         text = RemoveTagContent(text, "style");
         return text;
@@ -92,15 +92,15 @@ public static class HtmlSanitizer
 
     private static string RemoveTagContent(string html, string tagName)
     {
-        var span = html.AsSpan();
+        ReadOnlySpan<char> span = html.AsSpan();
         var result = new StringBuilder(html.Length);
-        var index = 0;
-        var tagOpen = "<" + tagName;
-        var tagClose = "</" + tagName;
+        int index = 0;
+        string tagOpen = "<" + tagName;
+        string tagClose = "</" + tagName;
 
         while (index < span.Length)
         {
-            var openIndex = IndexOfIgnoreCase(span, tagOpen.AsSpan(), index);
+            int openIndex = IndexOfIgnoreCase(span, tagOpen.AsSpan(), index);
             if (openIndex < 0)
             {
                 result.Append(span[index..]);
@@ -108,15 +108,15 @@ public static class HtmlSanitizer
             }
 
             result.Append(span[index..openIndex]);
-            var openEnd = IndexOf(span, '>', openIndex + tagOpen.Length);
+            int openEnd = IndexOf(span, '>', openIndex + tagOpen.Length);
             if (openEnd < 0)
                 break;
 
-            var closeIndex = IndexOfIgnoreCase(span, tagClose.AsSpan(), openEnd + 1);
+            int closeIndex = IndexOfIgnoreCase(span, tagClose.AsSpan(), openEnd + 1);
             if (closeIndex < 0)
                 break;
 
-            var closeEnd = IndexOf(span, '>', closeIndex + tagClose.Length);
+            int closeEnd = IndexOf(span, '>', closeIndex + tagClose.Length);
             if (closeEnd < 0)
                 break;
 
@@ -134,7 +134,7 @@ public static class HtmlSanitizer
         if (startIndex >= text.Length)
             return false;
 
-        var index = startIndex;
+        int index = startIndex;
         while (index < text.Length && char.IsWhiteSpace(text[index]))
             index++;
 
@@ -144,7 +144,7 @@ public static class HtmlSanitizer
             index++;
         }
 
-        var nameStart = index;
+        int nameStart = index;
         while (index < text.Length && char.IsLetterOrDigit(text[index]))
             index++;
 
@@ -163,19 +163,19 @@ public static class HtmlSanitizer
         if (!isClosing)
             return false;
 
-        var isHeader = tagName.Length == 2 && tagName[0] == 'h' && tagName[1] >= '1' && tagName[1] <= '6';
+        bool isHeader = tagName.Length == 2 && tagName[0] == 'h' && tagName[1] >= '1' && tagName[1] <= '6';
         return tagName is "p" or "div" or "li" || isHeader;
     }
 
     private static void AppendNewlines(StringBuilder sb, int count)
     {
-        var last = sb.Length > 0 ? sb[^1] : '\0';
+        char last = sb.Length > 0 ? sb[^1] : '\0';
         if (last == '\n')
         {
             count = Math.Max(0, count - 1);
         }
 
-        for (var i = 0; i < count; i++)
+        for (int i = 0; i < count; i++)
             sb.Append('\n');
     }
 
@@ -185,12 +185,12 @@ public static class HtmlSanitizer
             return string.Empty;
 
         var sb = new StringBuilder(text.Length);
-        var lastWasSpace = false;
-        var newlineCount = 0;
+        bool lastWasSpace = false;
+        int newlineCount = 0;
 
-        for (var i = 0; i < text.Length; i++)
+        for (int i = 0; i < text.Length; i++)
         {
-            var ch = text[i];
+            char ch = text[i];
             if (ch == '\n')
             {
                 if (newlineCount < 2)
@@ -224,7 +224,7 @@ public static class HtmlSanitizer
 
     private static int IndexOf(ReadOnlySpan<char> source, char value, int startIndex)
     {
-        for (var i = startIndex; i < source.Length; i++)
+        for (int i = startIndex; i < source.Length; i++)
         {
             if (source[i] == value)
                 return i;
@@ -238,10 +238,10 @@ public static class HtmlSanitizer
         if (value.Length == 0)
             return startIndex;
 
-        for (var i = startIndex; i <= source.Length - value.Length; i++)
+        for (int i = startIndex; i <= source.Length - value.Length; i++)
         {
-            var match = true;
-            for (var j = 0; j < value.Length; j++)
+            bool match = true;
+            for (int j = 0; j < value.Length; j++)
             {
                 if (char.ToLowerInvariant(source[i + j]) != char.ToLowerInvariant(value[j]))
                 {

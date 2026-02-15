@@ -60,27 +60,27 @@ public sealed class StealthMiddleware : IPipelineMiddleware
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        _userAgents = configuration.TryGetValue("UserAgents", out var ua) && ua is List<string> userAgents && userAgents.Count > 0
+        _userAgents = configuration.TryGetValue("UserAgents", out object? ua) && ua is List<string> userAgents && userAgents.Count > 0
             ? userAgents
             : DefaultUserAgents;
 
-        _matchTimezone = configuration.TryGetValue("MatchTimezone", out var mt) && mt is bool matchTimezone
+        _matchTimezone = configuration.TryGetValue("MatchTimezone", out object? mt) && mt is bool matchTimezone
             ? matchTimezone
             : true;
 
-        _randomDelay = configuration.TryGetValue("RandomDelay", out var rd) && rd is bool randomDelay
+        _randomDelay = configuration.TryGetValue("RandomDelay", out object? rd) && rd is bool randomDelay
             ? randomDelay
             : true;
 
-        _minDelayMs = configuration.TryGetValue("MinDelayMs", out var minDelay) && minDelay is int min
+        _minDelayMs = configuration.TryGetValue("MinDelayMs", out object? minDelay) && minDelay is int min
             ? min
             : 500;
 
-        _maxDelayMs = configuration.TryGetValue("MaxDelayMs", out var maxDelay) && maxDelay is int max
+        _maxDelayMs = configuration.TryGetValue("MaxDelayMs", out object? maxDelay) && maxDelay is int max
             ? max
             : 2000;
 
-        _enableFingerprinting = configuration.TryGetValue("EnableFingerprinting", out var ef) && ef is bool enableFingerprinting
+        _enableFingerprinting = configuration.TryGetValue("EnableFingerprinting", out object? ef) && ef is bool enableFingerprinting
             ? enableFingerprinting
             : true;
 
@@ -96,7 +96,7 @@ public sealed class StealthMiddleware : IPipelineMiddleware
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task InvokeAsync(PipelineContext context, PipelineDelegate continuation)
     {
-        var request = context.GetRequestAs<Request>();
+        Request? request = context.GetRequestAs<Request>();
         if (request != null && _enableFingerprinting)
         {
             ApplyBrowserFingerprint(request);
@@ -104,11 +104,11 @@ public sealed class StealthMiddleware : IPipelineMiddleware
 
         if (_randomDelay)
         {
-            var delay = _random.Next(_minDelayMs, _maxDelayMs);
-            await Task.Delay(delay, context.CancellationToken);
+            int delay = _random.Next(_minDelayMs, _maxDelayMs);
+            await Task.Delay(delay, context.CancellationToken).ConfigureAwait(false);
         }
 
-        await continuation(context);
+        await continuation(context).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -118,7 +118,7 @@ public sealed class StealthMiddleware : IPipelineMiddleware
     private void ApplyBrowserFingerprint(Request request)
     {
         // Rotate user agent
-        var userAgent = GetNextUserAgent();
+        string userAgent = GetNextUserAgent();
         request.Headers["User-Agent"] = userAgent;
 
         // Add realistic browser headers if not already present
@@ -181,7 +181,7 @@ public sealed class StealthMiddleware : IPipelineMiddleware
         lock (_lock)
         {
             _currentUserAgentIndex = _currentUserAgentIndex % _userAgents.Count;
-            var userAgent = _userAgents[_currentUserAgentIndex];
+            string userAgent = _userAgents[_currentUserAgentIndex];
             _currentUserAgentIndex++;
             return userAgent;
         }

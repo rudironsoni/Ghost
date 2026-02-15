@@ -11,7 +11,7 @@ public interface IOffsiteMiddleware
     /// <param name="url">The target URL to check.</param>
     /// <param name="baseDomain">The base domain for comparison.</param>
     /// <returns>True if the URL should be followed, false otherwise.</returns>
-    bool ShouldFollowUrl(string url, string baseDomain);
+    public bool ShouldFollowUrl(string url, string baseDomain);
 
     /// <summary>
     /// Checks if two URLs belong to the same domain.
@@ -19,5 +19,5 @@ public interface IOffsiteMiddleware
     /// <param name="url1">The first URL to compare.</param>
     /// <param name="url2">The second URL to compare.</param>
     /// <returns>True if both URLs belong to the same domain, false otherwise.</returns>
-    bool IsSameDomain(string url1, string url2);
+    public bool IsSameDomain(string url1, string url2);
 }

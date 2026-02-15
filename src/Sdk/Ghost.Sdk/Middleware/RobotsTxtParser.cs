@@ -15,29 +15,29 @@ public static class RobotsTxtParser
         ArgumentNullException.ThrowIfNull(content);
 
         var robotsTxt = new RobotsTxt();
-        var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        string[] lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
         UserAgentRules? currentRules = null;
         var currentUserAgents = new List<string>();
 
-        foreach (var rawLine in lines)
+        foreach (string rawLine in lines)
         {
-            var line = rawLine.Trim();
+            string line = rawLine.Trim();
 
             // Skip empty lines and comments
             if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
                 continue;
 
             // Split on first colon
-            var colonIndex = line.IndexOf(':');
+            int colonIndex = line.IndexOf(':');
             if (colonIndex < 0)
                 continue;
 
-            var directive = line[..colonIndex].Trim();
-            var value = line[(colonIndex + 1)..].Trim();
+            string directive = line[..colonIndex].Trim();
+            string value = line[(colonIndex + 1)..].Trim();
 
             // Remove inline comments
-            var commentIndex = value.IndexOf('#');
+            int commentIndex = value.IndexOf('#');
             if (commentIndex >= 0)
                 value = value[..commentIndex].Trim();
 
@@ -50,7 +50,7 @@ public static class RobotsTxtParser
                     // Save previous user-agent rules
                     if (currentRules != null && currentUserAgents.Count > 0)
                     {
-                        foreach (var ua in currentUserAgents)
+                        foreach (string ua in currentUserAgents)
                         {
                             robotsTxt.AddRules(ua, currentRules);
                         }
@@ -71,7 +71,7 @@ public static class RobotsTxtParser
                     break;
 
                 case "crawl-delay":
-                    if (double.TryParse(value, out var delay))
+                    if (double.TryParse(value, out double delay))
                     {
                         if (currentRules != null)
                         {
@@ -97,7 +97,7 @@ public static class RobotsTxtParser
         // Save final user-agent rules
         if (currentRules != null && currentUserAgents.Count > 0)
         {
-            foreach (var ua in currentUserAgents)
+            foreach (string ua in currentUserAgents)
             {
                 robotsTxt.AddRules(ua, currentRules);
             }

@@ -51,13 +51,13 @@ public class ReplaceFormatter : Formatter
         // Try to use as regex pattern
         try
         {
-            var options = IgnoreCase ? RegexOptions.IgnoreCase : RegexOptions.None;
+            RegexOptions options = IgnoreCase ? RegexOptions.IgnoreCase : RegexOptions.None;
             return Regex.Replace(str, OldValue, NewValue, options);
         }
         catch (ArgumentException)
         {
             // If it's not a valid regex, fall back to simple string replacement
-            var comparison = IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+            StringComparison comparison = IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
             return str.Replace(OldValue, NewValue, comparison);
         }
     }

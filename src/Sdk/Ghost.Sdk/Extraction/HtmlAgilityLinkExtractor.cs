@@ -20,7 +20,7 @@ public sealed class HtmlAgilityLinkExtractor : ILinkExtractor
         ArgumentNullException.ThrowIfNull(html);
         ArgumentNullException.ThrowIfNull(baseUrl);
 
-        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var baseUri))
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri? baseUri))
         {
             throw new ArgumentException("Base URL must be a valid absolute URI.", nameof(baseUrl));
         }
@@ -28,18 +28,18 @@ public sealed class HtmlAgilityLinkExtractor : ILinkExtractor
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
-        var nodes = GetTargetNodes(doc);
+        IEnumerable<HtmlNode> nodes = GetTargetNodes(doc);
         var links = new HashSet<string>();
 
-        foreach (var node in nodes)
+        foreach (HtmlNode node in nodes)
         {
-            var href = node.GetAttributeValue("href", string.Empty);
+            string href = node.GetAttributeValue("href", string.Empty);
             if (string.IsNullOrWhiteSpace(href) || href.StartsWith('#') || href.StartsWith("javascript:", StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
 
-            if (!TryResolveUrl(baseUri, href, out var absoluteUrl))
+            if (!TryResolveUrl(baseUri, href, out string? absoluteUrl))
             {
                 continue;
             }
@@ -66,7 +66,7 @@ public sealed class HtmlAgilityLinkExtractor : ILinkExtractor
 
         if (_options.UniqueOnly)
         {
-            foreach (var link in links)
+            foreach (string link in links)
             {
                 yield return link;
             }
@@ -78,17 +78,17 @@ public sealed class HtmlAgilityLinkExtractor : ILinkExtractor
         // If XPath restrictions are specified, only search within those nodes
         if (_options.RestrictXpaths is not null && _options.RestrictXpaths.Count > 0)
         {
-            foreach (var xpath in _options.RestrictXpaths)
+            foreach (string xpath in _options.RestrictXpaths)
             {
-                var containerNodes = doc.DocumentNode.SelectNodes(xpath);
+                HtmlNodeCollection? containerNodes = doc.DocumentNode.SelectNodes(xpath);
                 if (containerNodes is not null)
                 {
-                    foreach (var container in containerNodes)
+                    foreach (HtmlNode? container in containerNodes)
                     {
-                        var linkNodes = container.SelectNodes(".//a[@href]");
+                        HtmlNodeCollection? linkNodes = container.SelectNodes(".//a[@href]");
                         if (linkNodes is not null)
                         {
-                            foreach (var node in linkNodes)
+                            foreach (HtmlNode? node in linkNodes)
                             {
                                 yield return node;
                             }
@@ -100,10 +100,10 @@ public sealed class HtmlAgilityLinkExtractor : ILinkExtractor
         else
         {
             // Extract all <a> tags with href attribute
-            var nodes = doc.DocumentNode.SelectNodes("//a[@href]");
+            HtmlNodeCollection? nodes = doc.DocumentNode.SelectNodes("//a[@href]");
             if (nodes is not null)
             {
-                foreach (var node in nodes)
+                foreach (HtmlNode? node in nodes)
                 {
                     yield return node;
                 }
@@ -117,7 +117,7 @@ public sealed class HtmlAgilityLinkExtractor : ILinkExtractor
 
         try
         {
-            if (Uri.TryCreate(href, UriKind.Absolute, out var uri))
+            if (Uri.TryCreate(href, UriKind.Absolute, out Uri? uri))
             {
                 absoluteUrl = uri.AbsoluteUri;
                 return true;
@@ -139,13 +139,13 @@ public sealed class HtmlAgilityLinkExtractor : ILinkExtractor
 
     private static string StripFragment(string url)
     {
-        var fragmentIndex = url.IndexOf('#');
+        int fragmentIndex = url.IndexOf('#');
         return fragmentIndex >= 0 ? url[..fragmentIndex] : url;
     }
 
     private bool PassesFilters(string url)
     {
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
         {
             return false;
         }
@@ -153,7 +153,7 @@ public sealed class HtmlAgilityLinkExtractor : ILinkExtractor
         // Check denied extensions
         if (_options.DenyExtensions is not null && _options.DenyExtensions.Count > 0)
         {
-            var extension = Path.GetExtension(uri.AbsolutePath).ToLowerInvariant();
+            string extension = Path.GetExtension(uri.AbsolutePath).ToLowerInvariant();
             if (_options.DenyExtensions.Any(ext => ext.Equals(extension, StringComparison.OrdinalIgnoreCase)))
             {
                 return false;
@@ -163,7 +163,7 @@ public sealed class HtmlAgilityLinkExtractor : ILinkExtractor
         // Check allowed extensions
         if (_options.AllowedExtensions is not null && _options.AllowedExtensions.Count > 0)
         {
-            var extension = Path.GetExtension(uri.AbsolutePath).ToLowerInvariant();
+            string extension = Path.GetExtension(uri.AbsolutePath).ToLowerInvariant();
             // Empty string means no extension
             if (string.IsNullOrEmpty(extension))
             {
@@ -181,7 +181,7 @@ public sealed class HtmlAgilityLinkExtractor : ILinkExtractor
         // Check allowed domains
         if (_options.AllowedDomains is not null && _options.AllowedDomains.Count > 0)
         {
-            var host = uri.Host.ToLowerInvariant();
+            string host = uri.Host.ToLowerInvariant();
             if (!_options.AllowedDomains.Any(domain => host.Equals(domain, StringComparison.OrdinalIgnoreCase) || host.EndsWith($".{domain}", StringComparison.OrdinalIgnoreCase)))
             {
                 return false;

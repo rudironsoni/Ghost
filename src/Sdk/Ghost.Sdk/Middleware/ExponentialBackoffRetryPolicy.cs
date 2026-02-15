@@ -45,8 +45,8 @@ public class ExponentialBackoffRetryPolicy : IRetryPolicy
     {
         ArgumentNullException.ThrowIfNull(operation);
 
-        var attempt = 0;
-        var delay = _options.InitialDelay;
+        int attempt = 0;
+        TimeSpan delay = _options.InitialDelay;
 
         while (true)
         {

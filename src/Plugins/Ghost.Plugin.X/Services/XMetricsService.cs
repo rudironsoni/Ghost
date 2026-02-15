@@ -7,11 +7,11 @@ namespace Ghost.Plugin.X.Services;
 /// </summary>
 public interface IXMetricsService
 {
-    void RecordPost(string postId, DateTime timestamp, bool success, TimeSpan duration);
-    void RecordError(string errorCode, string operation);
-    void RecordRateLimit(TimeSpan retryAfter);
-    XMetrics GetMetrics();
-    void Reset();
+    public void RecordPost(string postId, DateTime timestamp, bool success, TimeSpan duration);
+    public void RecordError(string errorCode, string operation);
+    public void RecordRateLimit(TimeSpan retryAfter);
+    public XMetrics GetMetrics();
+    public void Reset();
 }
 
 /// <summary>

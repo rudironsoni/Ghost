@@ -45,8 +45,8 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
     /// <returns>Job search result with jobs and error information</returns>
     public async Task<JobSearchResult> SearchJobsWithErrorsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
     {
-        var startTime = DateTime.UtcNow;
-        var criteriaNonNull = criteria ?? new JobSearchCriteria();
+        DateTime startTime = DateTime.UtcNow;
+        JobSearchCriteria criteriaNonNull = criteria ?? new JobSearchCriteria();
 
         // Log how many scrapers were injected
         try
@@ -54,7 +54,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             if (_logger.IsEnabled(LogLevel.Information))
             {
                 _logger.LogInformation("Injected scrapers count: {Count}", _scrapers?.Count ?? 0);
-                foreach (var s in _scrapers ?? Enumerable.Empty<IJobScraper>())
+                foreach (IJobScraper s in _scrapers ?? Enumerable.Empty<IJobScraper>())
                 {
                     _logger.LogInformation("Available scraper: '{Name}' (Type: {Type})", s.PlatformName, s.GetType().Name);
                 }
@@ -101,42 +101,42 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         catch { }
 
         var platformErrors = new ConcurrentBag<PlatformError>();
-        var successfulPlatforms = 0;
-        var totalPlatforms = scrapersToRun?.Count() ?? 0;
+        int successfulPlatforms = 0;
+        int totalPlatforms = scrapersToRun?.Count() ?? 0;
 
-        var tasks = (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => Task.Run(async () =>
+        Task<IReadOnlyList<JobListing>>[] tasks = (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => Task.Run(async () =>
         {
             try
             {
-                var result = await s.SearchJobsAsync(criteriaNonNull, ct).ConfigureAwait(false);
+                IReadOnlyList<JobListing> result = await s.SearchJobsAsync(criteriaNonNull, ct).ConfigureAwait(false);
                 Interlocked.Increment(ref successfulPlatforms);
                 return result;
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception ex)
             {
-                var error = ErrorCategorizationService.CategorizeError(ex, s.PlatformName ?? "Unknown");
+                PlatformError error = ErrorCategorizationService.CategorizeError(ex, s.PlatformName ?? "Unknown");
                 platformErrors.Add(error);
                 s_logScraperFailed(_logger, s.PlatformName ?? "Unknown", ex);
                 return (IReadOnlyList<JobListing>)new List<JobListing>();
             }
         }, ct)).ToArray();
 
-        var results = await Task.WhenAll(tasks);
+        IReadOnlyList<JobListing>[] results = await Task.WhenAll(tasks).ConfigureAwait(false);
 
         var all = results.SelectMany(r => r ?? new List<JobListing>()).ToList();
 
         // dedupe by generated id
         var map = new Dictionary<string, JobListing>();
-        foreach (var job in all)
+        foreach (JobListing? job in all)
         {
-            var id = _dedupe.GenerateId(job.Title ?? string.Empty, job.Company ?? string.Empty);
+            string id = _dedupe.GenerateId(job.Title ?? string.Empty, job.Company ?? string.Empty);
             if (!map.ContainsKey(id)) map[id] = job;
         }
 
-        var executionTime = DateTime.UtcNow - startTime;
+        TimeSpan executionTime = DateTime.UtcNow - startTime;
         var platformErrorsList = platformErrors.ToList();
-        var success = platformErrorsList.Count < totalPlatforms || all.Count > 0;
+        bool success = platformErrorsList.Count < totalPlatforms || all.Count > 0;
 
         return new JobSearchResult
         {
@@ -158,7 +158,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
     public async Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
     {
         // ensure we have a non-null criteria to pass to scrapers
-        var criteriaNonNull = criteria ?? new JobSearchCriteria();
+        JobSearchCriteria criteriaNonNull = criteria ?? new JobSearchCriteria();
 
         // log how many scrapers were injected
         try
@@ -167,7 +167,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             {
                 _logger.LogInformation("Injected scrapers count: {Count}", _scrapers?.Count ?? 0);
                 // log each injected scraper name and type for debugging
-                foreach (var s in _scrapers ?? Enumerable.Empty<IJobScraper>())
+                foreach (IJobScraper s in _scrapers ?? Enumerable.Empty<IJobScraper>())
                 {
                     _logger.LogInformation("Available scraper: '{Name}' (Type: {Type})", s.PlatformName, s.GetType().Name);
                 }
@@ -216,7 +216,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         }
         catch { }
 
-        var tasks = (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => Task.Run(async () =>
+        Task<IReadOnlyList<JobListing>>[] tasks = (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => Task.Run(async () =>
         {
             try
             {
@@ -230,15 +230,15 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             }
         }, ct)).ToArray();
 
-        var results = await Task.WhenAll(tasks);
+        IReadOnlyList<JobListing>[] results = await Task.WhenAll(tasks).ConfigureAwait(false);
 
         var all = results.SelectMany(r => r ?? new List<JobListing>()).ToList();
 
         // dedupe by generated id
         var map = new Dictionary<string, JobListing>();
-        foreach (var job in all)
+        foreach (JobListing? job in all)
         {
-            var id = _dedupe.GenerateId(job.Title ?? string.Empty, job.Company ?? string.Empty);
+            string id = _dedupe.GenerateId(job.Title ?? string.Empty, job.Company ?? string.Empty);
             if (!map.ContainsKey(id)) map[id] = job;
         }
 
@@ -250,11 +250,11 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         // naive: query scrapers sequentially until one returns details
         return Task.Run(async () =>
         {
-            foreach (var s in _scrapers)
+            foreach (IJobScraper s in _scrapers)
             {
                 try
                 {
-                    var details = await s.GetJobDetailsAsync(jobId, ct).ConfigureAwait(false);
+                    JobListing details = await s.GetJobDetailsAsync(jobId, ct).ConfigureAwait(false);
                     if (details != null && !string.IsNullOrEmpty(details.Title)) return details;
                 }
                 catch (OperationCanceledException) { throw; }

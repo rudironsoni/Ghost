@@ -22,9 +22,9 @@ public sealed class PaginationMiddleware
         // Add pagination state to context
         if (context.Request.Path.StartsWithSegments("/scenario/pagination"))
         {
-            var page = int.TryParse(context.Request.Query["page"], out var p) ? p : 1;
-            var pageSize = int.TryParse(context.Request.Query["pageSize"], out var ps) ? ps : 10;
-            var cursor = context.Request.Query["cursor"].ToString();
+            int page = int.TryParse(context.Request.Query["page"], out int p) ? p : 1;
+            int pageSize = int.TryParse(context.Request.Query["pageSize"], out int ps) ? ps : 10;
+            string cursor = context.Request.Query["cursor"].ToString();
 
             context.Items["Page"] = page;
             context.Items["PageSize"] = pageSize;
@@ -37,6 +37,6 @@ public sealed class PaginationMiddleware
             }
         }
 
-        await _next(context);
+        await _next(context).ConfigureAwait(false);
     }
 }

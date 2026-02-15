@@ -11,5 +11,5 @@ public interface ILinkExtractor
     /// <param name="html">The HTML content to parse.</param>
     /// <param name="baseUrl">The base URL for resolving relative links.</param>
     /// <returns>A collection of absolute URLs extracted from the HTML.</returns>
-    IEnumerable<string> ExtractLinks(string html, string baseUrl);
+    public IEnumerable<string> ExtractLinks(string html, string baseUrl);
 }

@@ -73,7 +73,7 @@ public sealed class GoogleJobsBrowserClient
 
     private static string GetRandomUserAgent()
     {
-        var agents = new[]
+        string[] agents = new[]
         {
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0.0.0",
@@ -87,13 +87,13 @@ public sealed class GoogleJobsBrowserClient
     {
         try
         {
-            var script = $@"() => {{
+            string script = $@"() => {{
                 document.cookie = '{GoogleJobsConstants.ConsentCookie}; domain={GoogleJobsConstants.CookieDomain}; path={GoogleJobsConstants.CookiePath}; Secure; SameSite=None';
                 document.cookie = '{GoogleJobsConstants.SocsCookie}; domain={GoogleJobsConstants.CookieDomain}; path={GoogleJobsConstants.CookiePath}; Secure; SameSite=None';
                 return 'ok';
             }}";
 
-            await page.EvaluateAsync<string>(script, null, ct);
+            await page.EvaluateAsync<string>(script, null, ct).ConfigureAwait(false);
         }
         catch
         {
@@ -115,29 +115,29 @@ public sealed class GoogleJobsBrowserClient
 
         s_logSessionCreating(_logger, null);
 
-        var session = await _kernel.NewSessionAsync(sessionOptions, ct);
-        var page = await session.NewPageAsync(ct: ct);
+        IBrowserSession session = await _kernel.NewSessionAsync(sessionOptions, ct).ConfigureAwait(false);
+        IPage page = await session.NewPageAsync(ct: ct).ConfigureAwait(false);
 
         try
         {
             s_logCookieInjection(_logger, null);
-            await InjectConsentCookiesAsync(page, ct);
+            await InjectConsentCookiesAsync(page, ct).ConfigureAwait(false);
 
-            var q = Uri.EscapeDataString(query);
-            var loc = string.IsNullOrEmpty(location) ? "" : Uri.EscapeDataString(location);
-            var url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs&udm=8&gl=us&hl=en&pws=0";
+            string q = Uri.EscapeDataString(query);
+            string loc = string.IsNullOrEmpty(location) ? "" : Uri.EscapeDataString(location);
+            string url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs&udm=8&gl=us&hl=en&pws=0";
 
             // rotate user agent per-request to appear more human-like
             try
             {
-                var ua = GetRandomUserAgent();
+                string ua = GetRandomUserAgent();
                 s_logUserAgentRotation(_logger, ua, null);
                 // Set user agent via Playwright's SetExtraHTTPHeaders isn't available on IPage in this environment,
                 // so set a common header via Evaluate to override navigator.userAgent and rely on session-level
                 // options where available. Best-effort only.
                 try
                 {
-                    await page.EvaluateAsync<string>("(ua) => { try { Object.defineProperty(navigator, 'userAgent', {get: () => ua}); return 'ok'; } catch(e) { return 'err'; } }", ua, ct);
+                    await page.EvaluateAsync<string>("(ua) => { try { Object.defineProperty(navigator, 'userAgent', {get: () => ua}); return 'ok'; } catch(e) { return 'err'; } }", ua, ct).ConfigureAwait(false);
                 }
                 catch { }
 
@@ -145,7 +145,7 @@ public sealed class GoogleJobsBrowserClient
                 try
                 {
                     // fallback: evaluate a basic userAgent override without cancellation token
-                    await page.EvaluateAsync<string>("() => { try { Object.defineProperty(navigator, 'userAgent', {get: () => '" + ua + "'}); return 'ok'; } catch(e) { return 'err'; } }", null, ct);
+                    await page.EvaluateAsync<string>("() => { try { Object.defineProperty(navigator, 'userAgent', {get: () => '" + ua + "'}); return 'ok'; } catch(e) { return 'err'; } }", null, ct).ConfigureAwait(false);
                 }
                 catch { }
             }
@@ -153,8 +153,8 @@ public sealed class GoogleJobsBrowserClient
 
             s_logNavigating(_logger, url, null);
 
-            await page.NavigateAsync(url, ct: ct);
-            await page.WaitForLoadStateAsync(ct: ct);
+            await page.NavigateAsync(url, ct: ct).ConfigureAwait(false);
+            await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
             _sessionRequestCount++;
             if (_sessionRequestCount >= MaxRequestsPerSession)
@@ -162,24 +162,24 @@ public sealed class GoogleJobsBrowserClient
                 _sessionRequestCount = 0;
             }
 
-            var isConsentPage = await IsConsentPageAsync(page, ct);
+            bool isConsentPage = await IsConsentPageAsync(page, ct).ConfigureAwait(false);
             if (isConsentPage)
             {
                 s_logConsentDetected(_logger, url, null);
                 // Try handling consent page with retries and human-like actions
-                var handled = await RetryAsync(async () => await HandleConsentPageAsync(page, ct), 4, ct);
+                bool handled = await RetryAsync(async () => await HandleConsentPageAsync(page, ct).ConfigureAwait(false), 4, ct).ConfigureAwait(false);
                 if (!handled)
                 {
                     s_logError(_logger, "Failed to handle consent page", null);
                     return jobs;
                 }
 
-                await page.WaitForLoadStateAsync(ct: ct);
-                await RandomDelayAsync(800, 1800, ct);
+                await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
+                await RandomDelayAsync(800, 1800, ct).ConfigureAwait(false);
             }
 
-            await WaitForJobListingsAsync(page, ct);
-            jobs = await ExtractJobsFromPageAsync(page, maxResults, ct);
+            await WaitForJobListingsAsync(page, ct).ConfigureAwait(false);
+            jobs = await ExtractJobsFromPageAsync(page, maxResults, ct).ConfigureAwait(false);
 
             s_logJobsFound(_logger, jobs.Count, null);
             s_logSearchCompleted(_logger, jobs.Count, null);
@@ -199,8 +199,8 @@ public sealed class GoogleJobsBrowserClient
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch (Exception ex) { s_logPageDisposeFailed(_logger, ex); }
-            try { await session.DisposeAsync(); } catch (Exception ex) { s_logSessionDisposeFailed(_logger, ex); }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { s_logPageDisposeFailed(_logger, ex); }
+            try { await session.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { s_logSessionDisposeFailed(_logger, ex); }
         }
     }
 
@@ -208,13 +208,13 @@ public sealed class GoogleJobsBrowserClient
     {
         try
         {
-            var url = page.Url;
+            string url = page.Url;
             if (url.Contains("consent.google.com") || url.Contains("consent.youtube.com"))
             {
                 return true;
             }
 
-            var html = await page.GetContentAsync(ct);
+            string html = await page.GetContentAsync(ct).ConfigureAwait(false);
             if (string.IsNullOrEmpty(html))
             {
                 return false;
@@ -237,10 +237,10 @@ public sealed class GoogleJobsBrowserClient
         try
         {
             // Strategy 1: Try rejecting explicitly
-            await RandomDelayAsync(200, 600, ct);
-            await SimulateGlobalMouseMovementAsync(page, ct);
+            await RandomDelayAsync(200, 600, ct).ConfigureAwait(false);
+            await SimulateGlobalMouseMovementAsync(page, ct).ConfigureAwait(false);
 
-            var rejectSelectors = new[]
+            string[] rejectSelectors = new[]
             {
                 "button:has-text(\"Reject all\")",
                 "button[aria-label*=\"Reject\"]",
@@ -249,17 +249,17 @@ public sealed class GoogleJobsBrowserClient
                 "[data-action=\"reject\"]"
             };
 
-            foreach (var sel in rejectSelectors)
+            foreach (string? sel in rejectSelectors)
             {
                 try
                 {
-                    var btn = await page.QuerySelectorAsync(sel, ct);
+                    IElement? btn = await page.QuerySelectorAsync(sel, ct).ConfigureAwait(false);
                     if (btn != null)
                     {
-                        await RandomDelayAsync(120, 450, ct);
-                        await SimulateGlobalMouseMovementAsync(page, ct);
-                        await btn.ClickAsync(ct: ct);
-                        await RandomDelayAsync(800, 1400, ct);
+                        await RandomDelayAsync(120, 450, ct).ConfigureAwait(false);
+                        await SimulateGlobalMouseMovementAsync(page, ct).ConfigureAwait(false);
+                        await btn.ClickAsync(ct: ct).ConfigureAwait(false);
+                        await RandomDelayAsync(800, 1400, ct).ConfigureAwait(false);
                         return true;
                     }
                 }
@@ -267,35 +267,35 @@ public sealed class GoogleJobsBrowserClient
             }
 
             // Strategy 2: Customize -> Confirm
-            var customizeSelectors = new[]
+            string[] customizeSelectors = new[]
             {
                 "button:has-text(\"Customize\")",
                 "div[role=\\\"button\\\"]:has-text(\"Customize\")",
                 "button:has-text(\"Manage options\")"
             };
 
-            foreach (var sel in customizeSelectors)
+            foreach (string? sel in customizeSelectors)
             {
                 try
                 {
-                    var btn = await page.QuerySelectorAsync(sel, ct);
+                    IElement? btn = await page.QuerySelectorAsync(sel, ct).ConfigureAwait(false);
                     if (btn != null)
                     {
-                        await SimulateGlobalMouseMovementAsync(page, ct);
-                        await btn.ClickAsync(ct: ct);
-                        await RandomDelayAsync(600, 1200, ct);
+                        await SimulateGlobalMouseMovementAsync(page, ct).ConfigureAwait(false);
+                        await btn.ClickAsync(ct: ct).ConfigureAwait(false);
+                        await RandomDelayAsync(600, 1200, ct).ConfigureAwait(false);
 
-                        var confirmSelectors = new[] { "button:has-text(\"Confirm\")", "button:has-text(\"Done\")", "div[role=\\\"button\\\"]:has-text(\"Confirm\")" };
-                        foreach (var csel in confirmSelectors)
+                        string[] confirmSelectors = new[] { "button:has-text(\"Confirm\")", "button:has-text(\"Done\")", "div[role=\\\"button\\\"]:has-text(\"Confirm\")" };
+                        foreach (string? csel in confirmSelectors)
                         {
                             try
                             {
-                                var cbtn = await page.QuerySelectorAsync(csel, ct);
+                                IElement? cbtn = await page.QuerySelectorAsync(csel, ct).ConfigureAwait(false);
                                 if (cbtn != null)
                                 {
-                                    await SimulateGlobalMouseMovementAsync(page, ct);
-                                    await cbtn.ClickAsync(ct: ct);
-                                    await RandomDelayAsync(800, 1300, ct);
+                                    await SimulateGlobalMouseMovementAsync(page, ct).ConfigureAwait(false);
+                                    await cbtn.ClickAsync(ct: ct).ConfigureAwait(false);
+                                    await RandomDelayAsync(800, 1300, ct).ConfigureAwait(false);
                                     return true;
                                 }
                             }
@@ -307,21 +307,21 @@ public sealed class GoogleJobsBrowserClient
             }
 
             // Strategy 3: Search for any negative/decline textual button
-            var buttons = await page.QuerySelectorAllAsync("button, div[role=\\\"button\\\"]", ct);
-            foreach (var button in buttons)
+            IReadOnlyList<IElement> buttons = await page.QuerySelectorAllAsync("button, div[role=\\\"button\\\"]", ct).ConfigureAwait(false);
+            foreach (IElement button in buttons)
             {
                 try
                 {
-                    var text = await button.GetTextContentAsync(ct);
+                    string? text = await button.GetTextContentAsync(ct).ConfigureAwait(false);
                     if (!string.IsNullOrEmpty(text))
                     {
-                        var lowerText = text.ToLowerInvariant();
+                        string lowerText = text.ToLowerInvariant();
                         if (lowerText.Contains("reject") || lowerText.Contains("decline") || lowerText.Contains("no thanks") || lowerText.Contains("dismiss"))
                         {
-                            await SimulateGlobalMouseMovementAsync(page, ct);
-                            await RandomDelayAsync(80, 300, ct);
-                            await button.ClickAsync(ct: ct);
-                            await RandomDelayAsync(800, 1200, ct);
+                            await SimulateGlobalMouseMovementAsync(page, ct).ConfigureAwait(false);
+                            await RandomDelayAsync(80, 300, ct).ConfigureAwait(false);
+                            await button.ClickAsync(ct: ct).ConfigureAwait(false);
+                            await RandomDelayAsync(800, 1200, ct).ConfigureAwait(false);
                             return true;
                         }
                     }
@@ -333,7 +333,7 @@ public sealed class GoogleJobsBrowserClient
             // Strategy 4: Try focusing first actionable negative button via JS and click it
             try
             {
-                var script = @"() => {
+                string script = @"() => {
                     const texts = ['reject','decline','no thanks','dismiss','no, thanks','not now'];
                     const buttons = Array.from(document.querySelectorAll('button, [role=""button""]'));
                     for (const b of buttons) {
@@ -345,11 +345,11 @@ public sealed class GoogleJobsBrowserClient
                     return false;
                 }";
 
-                var clicked = await page.EvaluateAsync<bool>(script, null, ct);
+                bool clicked = await page.EvaluateAsync<bool>(script, null, ct).ConfigureAwait(false);
                 if (clicked)
                 {
-                    await RandomDelayAsync(800, 1500, ct);
-                    var still = await IsConsentPageAsync(page, ct);
+                    await RandomDelayAsync(800, 1500, ct).ConfigureAwait(false);
+                    bool still = await IsConsentPageAsync(page, ct).ConfigureAwait(false);
                     if (!still) return true;
                 }
             }
@@ -360,12 +360,12 @@ public sealed class GoogleJobsBrowserClient
             {
                 // Use a null logger here since this method is static and instance logger isn't available
                 s_logCookieInjection(Microsoft.Extensions.Logging.Abstractions.NullLogger<GoogleJobsBrowserClient>.Instance, null);
-                await InjectConsentCookiesAsync(page, ct);
-                await RandomDelayAsync(400, 900, ct);
-                await page.ReloadAsync(ct: ct);
-                await RandomDelayAsync(1000, 2000, ct);
+                await InjectConsentCookiesAsync(page, ct).ConfigureAwait(false);
+                await RandomDelayAsync(400, 900, ct).ConfigureAwait(false);
+                await page.ReloadAsync(ct: ct).ConfigureAwait(false);
+                await RandomDelayAsync(1000, 2000, ct).ConfigureAwait(false);
 
-                var still2 = await IsConsentPageAsync(page, ct);
+                bool still2 = await IsConsentPageAsync(page, ct).ConfigureAwait(false);
                 if (!still2) return true;
             }
             catch { }
@@ -382,8 +382,8 @@ public sealed class GoogleJobsBrowserClient
     {
         try
         {
-            var ms = s_random.Next(Math.Max(1, minMs), Math.Max(minMs + 1, maxMs + 1));
-            await Task.Delay(ms, ct);
+            int ms = s_random.Next(Math.Max(1, minMs), Math.Max(minMs + 1, maxMs + 1));
+            await Task.Delay(ms, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException) { throw; }
         catch { }
@@ -394,7 +394,7 @@ public sealed class GoogleJobsBrowserClient
         try
         {
             // Dispatch synthetic mousemove events via page.evaluate to mimic activity
-            var script = @"() => {
+            string script = @"() => {
                 const steps = Math.floor(Math.random()*5)+3;
                 for (let i=0;i<steps;i++){
                     const x = Math.floor(Math.random()*window.innerWidth);
@@ -405,49 +405,29 @@ public sealed class GoogleJobsBrowserClient
                 return true;
             }";
 
-            await page.EvaluateAsync<string>(script, null, ct);
-            await RandomDelayAsync(40, 160, ct);
-        }
-        catch { }
-    }
-
-    private static async Task HumanLikeScrollAsync(IPage page, CancellationToken ct)
-    {
-        try
-        {
-            var height = await page.EvaluateAsync<int>("() => document.body.scrollHeight", null, ct);
-            var viewport = await page.EvaluateAsync<int>("() => window.innerHeight", null, ct);
-            var maxScroll = Math.Max(0, height - viewport);
-            if (maxScroll <= 0) return;
-
-            var passes = s_random.Next(2, 5);
-            for (var i = 0; i < passes; i++)
-            {
-                var pos = s_random.Next(0, maxScroll);
-                await page.EvaluateAsync<string>("(y) => window.scrollTo({top: y, behavior: 'smooth'})", pos, ct);
-                await RandomDelayAsync(300, 900, ct);
-            }
+            await page.EvaluateAsync<string>(script, null, ct).ConfigureAwait(false);
+            await RandomDelayAsync(40, 160, ct).ConfigureAwait(false);
         }
         catch { }
     }
 
     private static async Task<bool> RetryAsync(Func<Task<bool>> action, int maxAttempts, CancellationToken ct)
     {
-        var attempt = 0;
-        var backoff = 300;
+        int attempt = 0;
+        int backoff = 300;
         while (attempt < maxAttempts)
         {
             ct.ThrowIfCancellationRequested();
             try
             {
-                var ok = await action();
+                bool ok = await action().ConfigureAwait(false);
                 if (ok) return true;
             }
             catch { }
 
             attempt++;
-            var delay = backoff * (int)Math.Pow(2, attempt - 1);
-            try { await Task.Delay(delay + s_random.Next(0, 200), ct); } catch { }
+            int delay = backoff * (int)Math.Pow(2, attempt - 1);
+            try { await Task.Delay(delay + s_random.Next(0, 200), ct).ConfigureAwait(false); } catch { }
         }
 
         return false;
@@ -458,13 +438,13 @@ public sealed class GoogleJobsBrowserClient
         try
         {
             var timeout = TimeSpan.FromSeconds(10);
-            var startTime = DateTime.UtcNow;
+            DateTime startTime = DateTime.UtcNow;
 
             while (DateTime.UtcNow - startTime < timeout)
             {
                 ct.ThrowIfCancellationRequested();
 
-                var selectors = new[]
+                string[] selectors = new[]
                 {
                     "[data-ved]",
                     "[data-async-fc]",
@@ -473,11 +453,11 @@ public sealed class GoogleJobsBrowserClient
                     "div[role=\"listitem\"]",
                 };
 
-                foreach (var selector in selectors)
+                foreach (string? selector in selectors)
                 {
                     try
                     {
-                        var elements = await page.QuerySelectorAllAsync(selector, ct);
+                        IReadOnlyList<IElement> elements = await page.QuerySelectorAllAsync(selector, ct).ConfigureAwait(false);
                         if (elements.Count > 0)
                         {
                             return;
@@ -486,7 +466,7 @@ public sealed class GoogleJobsBrowserClient
                     catch { }
                 }
 
-                await Task.Delay(500, ct);
+                await Task.Delay(500, ct).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException)
@@ -504,13 +484,13 @@ public sealed class GoogleJobsBrowserClient
 
         try
         {
-            var html = await page.GetContentAsync(ct);
+            string html = await page.GetContentAsync(ct).ConfigureAwait(false);
 
             if (!string.IsNullOrEmpty(html))
             {
-                var parsedJobs = GoogleJobsParser.ParseFromHtml(html, _logger);
+                IReadOnlyList<JobListing> parsedJobs = GoogleJobsParser.ParseFromHtml(html, _logger);
 
-                foreach (var job in parsedJobs.Take(maxResults))
+                foreach (JobListing? job in parsedJobs.Take(maxResults))
                 {
                     jobs.Add(job);
                 }
@@ -518,7 +498,7 @@ public sealed class GoogleJobsBrowserClient
 
             if (jobs.Count == 0)
             {
-                jobs = await ExtractJobsFromDomAsync(page, maxResults, ct);
+                jobs = await ExtractJobsFromDomAsync(page, maxResults, ct).ConfigureAwait(false);
             }
         }
         catch (Exception ex)
@@ -535,17 +515,17 @@ public sealed class GoogleJobsBrowserClient
 
         try
         {
-            var jobElements = await page.QuerySelectorAllAsync(
+            IReadOnlyList<IElement> jobElements = await page.QuerySelectorAllAsync(
                 "[data-ved] div[role=\"listitem\"], " +
                 ".gws-plugins-horizon-jobs__li-ed, " +
                 "div[data-async-fc] div[role=\"listitem\"], " +
-                "div[jsname] div[role=\"listitem\"]", ct);
+                "div[jsname] div[role=\"listitem\"]", ct).ConfigureAwait(false);
 
-            foreach (var element in jobElements.Take(maxResults))
+            foreach (IElement? element in jobElements.Take(maxResults))
             {
                 try
                 {
-                    var job = await ExtractJobFromElementAsync(element, ct);
+                    JobListing? job = await ExtractJobFromElementAsync(element, ct).ConfigureAwait(false);
                     if (job != null && !string.IsNullOrEmpty(job.Title))
                     {
                         jobs.Add(job);
@@ -563,18 +543,18 @@ public sealed class GoogleJobsBrowserClient
     {
         try
         {
-            var titleSelectors = new[] { "h3", "[role=\"heading\"]", ".BjJfJf", "div[jsname=\"Cpkphb\"]" };
-            var companySelectors = new[] { ".vNEEBe", "div[jsname=\"V7iZ7c\"]", "span:has-text(\"·\")" };
-            var locationSelectors = new[] { ".Qk3sIe", "div[jsname=\"s2gQvd\"]", "span:has-text(\",\")" };
-            var descriptionSelectors = new[] { ".HBvzbc", "div[jsname=\"o7OJ4\"]", ".YgLbBe" };
+            string[] titleSelectors = new[] { "h3", "[role=\"heading\"]", ".BjJfJf", "div[jsname=\"Cpkphb\"]" };
+            string[] companySelectors = new[] { ".vNEEBe", "div[jsname=\"V7iZ7c\"]", "span:has-text(\"·\")" };
+            string[] locationSelectors = new[] { ".Qk3sIe", "div[jsname=\"s2gQvd\"]", "span:has-text(\",\")" };
+            string[] descriptionSelectors = new[] { ".HBvzbc", "div[jsname=\"o7OJ4\"]", ".YgLbBe" };
 
             string? title = null;
-            foreach (var selector in titleSelectors)
+            foreach (string? selector in titleSelectors)
             {
-                var el = await element.QuerySelectorAsync(selector, ct);
+                IElement? el = await element.QuerySelectorAsync(selector, ct).ConfigureAwait(false);
                 if (el != null)
                 {
-                    title = await el.GetTextContentAsync(ct);
+                    title = await el.GetTextContentAsync(ct).ConfigureAwait(false);
                     if (!string.IsNullOrWhiteSpace(title))
                     {
                         title = title.Trim();
@@ -589,12 +569,12 @@ public sealed class GoogleJobsBrowserClient
             }
 
             string? company = null;
-            foreach (var selector in companySelectors)
+            foreach (string? selector in companySelectors)
             {
-                var el = await element.QuerySelectorAsync(selector, ct);
+                IElement? el = await element.QuerySelectorAsync(selector, ct).ConfigureAwait(false);
                 if (el != null)
                 {
-                    company = await el.GetTextContentAsync(ct);
+                    company = await el.GetTextContentAsync(ct).ConfigureAwait(false);
                     if (!string.IsNullOrWhiteSpace(company))
                     {
                         company = company.Trim();
@@ -604,12 +584,12 @@ public sealed class GoogleJobsBrowserClient
             }
 
             string? location = null;
-            foreach (var selector in locationSelectors)
+            foreach (string? selector in locationSelectors)
             {
-                var el = await element.QuerySelectorAsync(selector, ct);
+                IElement? el = await element.QuerySelectorAsync(selector, ct).ConfigureAwait(false);
                 if (el != null)
                 {
-                    location = await el.GetTextContentAsync(ct);
+                    location = await el.GetTextContentAsync(ct).ConfigureAwait(false);
                     if (!string.IsNullOrWhiteSpace(location))
                     {
                         location = location.Trim();
@@ -619,12 +599,12 @@ public sealed class GoogleJobsBrowserClient
             }
 
             string? description = null;
-            foreach (var selector in descriptionSelectors)
+            foreach (string? selector in descriptionSelectors)
             {
-                var el = await element.QuerySelectorAsync(selector, ct);
+                IElement? el = await element.QuerySelectorAsync(selector, ct).ConfigureAwait(false);
                 if (el != null)
                 {
-                    description = await el.GetTextContentAsync(ct);
+                    description = await el.GetTextContentAsync(ct).ConfigureAwait(false);
                     if (!string.IsNullOrWhiteSpace(description))
                     {
                         description = description.Trim();
@@ -633,7 +613,7 @@ public sealed class GoogleJobsBrowserClient
                 }
             }
 
-            var id = $"{title}-{company}".ToLowerInvariant()
+            string id = $"{title}-{company}".ToLowerInvariant()
                 .Replace(" ", "-")
                 .Replace(",", "")
                 .Replace(".", "");

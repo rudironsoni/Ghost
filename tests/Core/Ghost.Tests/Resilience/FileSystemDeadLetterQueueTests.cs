@@ -14,12 +14,12 @@ public class FileSystemDeadLetterQueueTests
     [Fact]
     public async Task EnqueueAsyncPersistsJobWithDefaults()
     {
-        var root = CreateTempRoot();
-        var dlq = CreateQueue(root);
+        string root = CreateTempRoot();
+        FileSystemDeadLetterQueue dlq = CreateQueue(root);
         var job = new FailedScrapeJob { Platform = "LinkedIn", Query = "dev", Location = "remote", Error = "err" };
 
-        await dlq.EnqueueAsync(job);
-        var jobs = await dlq.GetFailedJobsAsync(TimeSpan.FromMinutes(5));
+        await dlq.EnqueueAsync(job).ConfigureAwait(false);
+        IReadOnlyList<FailedScrapeJob> jobs = await dlq.GetFailedJobsAsync(TimeSpan.FromMinutes(5)).ConfigureAwait(false);
 
         jobs.Should().ContainSingle();
         jobs[0].Id.Should().NotBeNullOrWhiteSpace();
@@ -29,13 +29,13 @@ public class FileSystemDeadLetterQueueTests
     [Fact]
     public async Task GetFailedJobsByPlatformAsyncFiltersByPlatform()
     {
-        var root = CreateTempRoot();
-        var dlq = CreateQueue(root);
+        string root = CreateTempRoot();
+        FileSystemDeadLetterQueue dlq = CreateQueue(root);
 
-        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "LinkedIn", Query = "q1", Location = "r", Error = "e" });
-        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "Indeed", Query = "q2", Location = "r", Error = "e" });
+        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "LinkedIn", Query = "q1", Location = "r", Error = "e" }).ConfigureAwait(false);
+        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "Indeed", Query = "q2", Location = "r", Error = "e" }).ConfigureAwait(false);
 
-        var jobs = await dlq.GetFailedJobsByPlatformAsync("LinkedIn", TimeSpan.FromMinutes(5));
+        IReadOnlyList<FailedScrapeJob> jobs = await dlq.GetFailedJobsByPlatformAsync("LinkedIn", TimeSpan.FromMinutes(5)).ConfigureAwait(false);
 
         jobs.Should().ContainSingle();
         jobs[0].Platform.Should().Be("LinkedIn");
@@ -44,8 +44,8 @@ public class FileSystemDeadLetterQueueTests
     [Fact]
     public async Task GetFailedJobsAsyncRespectsSinceWindow()
     {
-        var root = CreateTempRoot();
-        var dlq = CreateQueue(root);
+        string root = CreateTempRoot();
+        FileSystemDeadLetterQueue dlq = CreateQueue(root);
         var job = new FailedScrapeJob
         {
             Platform = "LinkedIn",
@@ -55,9 +55,9 @@ public class FileSystemDeadLetterQueueTests
             FailedAt = DateTime.UtcNow.AddDays(-2)
         };
 
-        await dlq.EnqueueAsync(job);
-        var recentJobs = await dlq.GetFailedJobsAsync(TimeSpan.FromHours(12));
-        var allJobs = await dlq.GetFailedJobsAsync(TimeSpan.FromDays(7));
+        await dlq.EnqueueAsync(job).ConfigureAwait(false);
+        IReadOnlyList<FailedScrapeJob> recentJobs = await dlq.GetFailedJobsAsync(TimeSpan.FromHours(12)).ConfigureAwait(false);
+        IReadOnlyList<FailedScrapeJob> allJobs = await dlq.GetFailedJobsAsync(TimeSpan.FromDays(7)).ConfigureAwait(false);
 
         recentJobs.Should().BeEmpty();
         allJobs.Should().ContainSingle();
@@ -66,12 +66,12 @@ public class FileSystemDeadLetterQueueTests
     [Fact]
     public async Task GetJobAsyncReturnsJobWhenFound()
     {
-        var root = CreateTempRoot();
-        var dlq = CreateQueue(root);
+        string root = CreateTempRoot();
+        FileSystemDeadLetterQueue dlq = CreateQueue(root);
         var job = new FailedScrapeJob { Platform = "Indeed", Query = "q", Location = "l", Error = "e" };
 
-        await dlq.EnqueueAsync(job);
-        var fetched = await dlq.GetJobAsync(job.Id);
+        await dlq.EnqueueAsync(job).ConfigureAwait(false);
+        FailedScrapeJob? fetched = await dlq.GetJobAsync(job.Id).ConfigureAwait(false);
 
         fetched.Should().NotBeNull();
         fetched!.Id.Should().Be(job.Id);
@@ -80,14 +80,14 @@ public class FileSystemDeadLetterQueueTests
     [Fact]
     public async Task RetryAsyncIncrementsRetryCountAndTimestamp()
     {
-        var root = CreateTempRoot();
-        var dlq = CreateQueue(root);
+        string root = CreateTempRoot();
+        FileSystemDeadLetterQueue dlq = CreateQueue(root);
         var job = new FailedScrapeJob { Platform = "Indeed", Query = "q", Location = "l", Error = "e" };
 
-        await dlq.EnqueueAsync(job);
-        await dlq.RetryAsync(job.Id);
+        await dlq.EnqueueAsync(job).ConfigureAwait(false);
+        await dlq.RetryAsync(job.Id).ConfigureAwait(false);
 
-        var fetched = await dlq.GetJobAsync(job.Id);
+        FailedScrapeJob? fetched = await dlq.GetJobAsync(job.Id).ConfigureAwait(false);
         fetched!.RetryCount.Should().Be(1);
         fetched.LastRetryAt.Should().NotBeNull();
     }
@@ -95,8 +95,8 @@ public class FileSystemDeadLetterQueueTests
     [Fact]
     public async Task RetryAllAsyncIncrementsForMatchingWindow()
     {
-        var root = CreateTempRoot();
-        var dlq = CreateQueue(root);
+        string root = CreateTempRoot();
+        FileSystemDeadLetterQueue dlq = CreateQueue(root);
 
         var recent = new FailedScrapeJob { Platform = "LinkedIn", Query = "q", Location = "l", Error = "e" };
         var older = new FailedScrapeJob
@@ -108,13 +108,13 @@ public class FileSystemDeadLetterQueueTests
             FailedAt = DateTime.UtcNow.AddDays(-10)
         };
 
-        await dlq.EnqueueAsync(recent);
-        await dlq.EnqueueAsync(older);
+        await dlq.EnqueueAsync(recent).ConfigureAwait(false);
+        await dlq.EnqueueAsync(older).ConfigureAwait(false);
 
-        await dlq.RetryAllAsync(TimeSpan.FromDays(2));
+        await dlq.RetryAllAsync(TimeSpan.FromDays(2)).ConfigureAwait(false);
 
-        var recentJob = await dlq.GetJobAsync(recent.Id);
-        var olderJob = await dlq.GetJobAsync(older.Id);
+        FailedScrapeJob? recentJob = await dlq.GetJobAsync(recent.Id).ConfigureAwait(false);
+        FailedScrapeJob? olderJob = await dlq.GetJobAsync(older.Id).ConfigureAwait(false);
 
         recentJob!.RetryCount.Should().Be(1);
         olderJob!.RetryCount.Should().Be(0);
@@ -123,17 +123,17 @@ public class FileSystemDeadLetterQueueTests
     [Fact]
     public async Task ArchiveAsyncMovesJobToArchive()
     {
-        var root = CreateTempRoot();
-        var dlq = CreateQueue(root);
+        string root = CreateTempRoot();
+        FileSystemDeadLetterQueue dlq = CreateQueue(root);
         var job = new FailedScrapeJob { Platform = "LinkedIn", Query = "q", Location = "l", Error = "e" };
 
-        await dlq.EnqueueAsync(job);
-        await dlq.ArchiveAsync(job.Id);
+        await dlq.EnqueueAsync(job).ConfigureAwait(false);
+        await dlq.ArchiveAsync(job.Id).ConfigureAwait(false);
 
-        var fetched = await dlq.GetJobAsync(job.Id);
+        FailedScrapeJob? fetched = await dlq.GetJobAsync(job.Id).ConfigureAwait(false);
         fetched.Should().BeNull();
 
-        var archiveRoot = Path.Combine(root, "archived");
+        string archiveRoot = Path.Combine(root, "archived");
         Directory.Exists(archiveRoot).Should().BeTrue();
         Directory.EnumerateFiles(archiveRoot, "*.json", SearchOption.AllDirectories).Should().ContainSingle();
     }
@@ -141,8 +141,8 @@ public class FileSystemDeadLetterQueueTests
     [Fact]
     public async Task ArchiveAllAsyncMovesOldJobsOnly()
     {
-        var root = CreateTempRoot();
-        var dlq = CreateQueue(root);
+        string root = CreateTempRoot();
+        FileSystemDeadLetterQueue dlq = CreateQueue(root);
 
         var oldJob = new FailedScrapeJob
         {
@@ -161,25 +161,25 @@ public class FileSystemDeadLetterQueueTests
             FailedAt = DateTime.UtcNow
         };
 
-        await dlq.EnqueueAsync(oldJob);
-        await dlq.EnqueueAsync(newJob);
+        await dlq.EnqueueAsync(oldJob).ConfigureAwait(false);
+        await dlq.EnqueueAsync(newJob).ConfigureAwait(false);
 
-        await dlq.ArchiveAllAsync(TimeSpan.FromDays(3));
+        await dlq.ArchiveAllAsync(TimeSpan.FromDays(3)).ConfigureAwait(false);
 
-        var remaining = await dlq.GetFailedJobsAsync(TimeSpan.FromDays(30));
+        IReadOnlyList<FailedScrapeJob> remaining = await dlq.GetFailedJobsAsync(TimeSpan.FromDays(30)).ConfigureAwait(false);
         remaining.Should().ContainSingle(job => job.Id == newJob.Id);
     }
 
     [Fact]
     public async Task GetQueueDepthAsyncReturnsActiveCount()
     {
-        var root = CreateTempRoot();
-        var dlq = CreateQueue(root);
+        string root = CreateTempRoot();
+        FileSystemDeadLetterQueue dlq = CreateQueue(root);
 
-        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "LinkedIn", Query = "q", Location = "l", Error = "e" });
-        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "Indeed", Query = "q", Location = "l", Error = "e" });
+        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "LinkedIn", Query = "q", Location = "l", Error = "e" }).ConfigureAwait(false);
+        await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "Indeed", Query = "q", Location = "l", Error = "e" }).ConfigureAwait(false);
 
-        var depth = await dlq.GetQueueDepthAsync();
+        int depth = await dlq.GetQueueDepthAsync().ConfigureAwait(false);
 
         depth.Should().Be(2);
     }
@@ -187,8 +187,8 @@ public class FileSystemDeadLetterQueueTests
     [Fact]
     public async Task EnqueueAsyncUsesDeterministicFileName()
     {
-        var root = CreateTempRoot();
-        var dlq = CreateQueue(root);
+        string root = CreateTempRoot();
+        FileSystemDeadLetterQueue dlq = CreateQueue(root);
         var job = new FailedScrapeJob
         {
             Id = "abc12345",
@@ -198,9 +198,9 @@ public class FileSystemDeadLetterQueueTests
             Error = "e"
         };
 
-        await dlq.EnqueueAsync(job);
+        await dlq.EnqueueAsync(job).ConfigureAwait(false);
 
-        var activePath = Path.Combine(root, "active");
+        string activePath = Path.Combine(root, "active");
         Directory.EnumerateFiles(activePath, "*.json").Single()
             .Should().Contain("linkedin_abc12345.json");
     }
@@ -208,24 +208,24 @@ public class FileSystemDeadLetterQueueTests
     [Fact]
     public async Task EnqueueAsyncThrowsWhenJobIsNull()
     {
-        var root = CreateTempRoot();
-        var dlq = CreateQueue(root);
+        string root = CreateTempRoot();
+        FileSystemDeadLetterQueue dlq = CreateQueue(root);
 
-        await Assert.ThrowsAsync<ArgumentNullException>(() => dlq.EnqueueAsync(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => dlq.EnqueueAsync(null!)).ConfigureAwait(false);
     }
 
     [Fact]
     public async Task GetFailedJobsAsyncThrowsOnNegativeSince()
     {
-        var root = CreateTempRoot();
-        var dlq = CreateQueue(root);
+        string root = CreateTempRoot();
+        FileSystemDeadLetterQueue dlq = CreateQueue(root);
 
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => dlq.GetFailedJobsAsync(TimeSpan.FromSeconds(-1)));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => dlq.GetFailedJobsAsync(TimeSpan.FromSeconds(-1))).ConfigureAwait(false);
     }
 
     private static string CreateTempRoot()
     {
-        var root = Path.Combine(Path.GetTempPath(), "ghost-dlq-tests", Guid.NewGuid().ToString("N"));
+        string root = Path.Combine(Path.GetTempPath(), "ghost-dlq-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         return root;
     }

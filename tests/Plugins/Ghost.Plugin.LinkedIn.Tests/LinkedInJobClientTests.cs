@@ -27,7 +27,7 @@ public class LinkedInJobClientTests
         var logger = new Mock<ILogger<LinkedInJobClient>>();
         var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
         var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), logger.Object, new JavaScriptAdapter(), new EntityParser());
-        var jobs = await client.SearchJobsAsync(new JobSearchCriteria { Query = "developer" }, CancellationToken.None);
+        IReadOnlyList<JobListing> jobs = await client.SearchJobsAsync(new JobSearchCriteria { Query = "developer" }, CancellationToken.None).ConfigureAwait(false);
         jobs.Should().BeAssignableTo<System.Collections.Generic.IEnumerable<JobListing>>();
     }
 
@@ -52,7 +52,7 @@ public class LinkedInJobClientTests
         var logger = new Mock<ILogger<LinkedInJobClient>>();
         var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
         var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), logger.Object, new JavaScriptAdapter(), new EntityParser());
-        var result = await client.ApplyAsync("job:1", new ApplicationDetails { ApplicantName = "Test", ApplicantEmail = "a@b.com" }, CancellationToken.None);
+        JobApplication result = await client.ApplyAsync("job:1", new ApplicationDetails { ApplicantName = "Test", ApplicantEmail = "a@b.com" }, CancellationToken.None).ConfigureAwait(false);
         result.Should().BeNull();
     }
 
@@ -76,7 +76,7 @@ public class LinkedInJobClientTests
         var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), null!, new JavaScriptAdapter(), new EntityParser());
 
         // Act
-        await client.GetJobDetailsAsync("123");
+        await client.GetJobDetailsAsync("123").ConfigureAwait(false);
 
         // Assert
         mockSession.Verify(s => s.NewPageAsync(It.Is<PageOptions>(p =>
@@ -102,7 +102,7 @@ public class LinkedInJobClientTests
             .Returns(Task.CompletedTask);
 
         // Mock HTML content with Easy Apply button for EntityParser
-        var htmlContent = @"
+        string htmlContent = @"
             <html>
             <body>
                 <div class='top-card-layout__title'>Software Engineer</div>
@@ -123,7 +123,7 @@ public class LinkedInJobClientTests
         var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), null!, new JavaScriptAdapter(), new EntityParser());
 
         // Act
-        var result = await client.GetJobDetailsAsync("123");
+        JobListing result = await client.GetJobDetailsAsync("123").ConfigureAwait(false);
 
         // Assert
         result.Should().NotBeNull();

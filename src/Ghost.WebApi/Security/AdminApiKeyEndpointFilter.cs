@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 
 namespace Ghost.WebApi.Security;
 
@@ -22,13 +23,13 @@ public sealed class AdminApiKeyEndpointFilter : IEndpointFilter
 
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
-        var options = _options.CurrentValue;
+        AdminApiKeyOptions options = _options.CurrentValue;
         if (!options.Enabled)
         {
-            return await next(context);
+            return await next(context).ConfigureAwait(false);
         }
 
-        var expectedApiKey = options.ApiKey;
+        string? expectedApiKey = options.ApiKey;
         if (string.IsNullOrWhiteSpace(expectedApiKey))
         {
             expectedApiKey = Environment.GetEnvironmentVariable("GHOST_ADMIN_API_KEY");
@@ -43,7 +44,7 @@ public sealed class AdminApiKeyEndpointFilter : IEndpointFilter
                 detail: "Admin API key is not configured.");
         }
 
-        if (!context.HttpContext.Request.Headers.TryGetValue(options.HeaderName, out var providedKey))
+        if (!context.HttpContext.Request.Headers.TryGetValue(options.HeaderName, out StringValues providedKey))
         {
             return Results.Unauthorized();
         }
@@ -53,6 +54,6 @@ public sealed class AdminApiKeyEndpointFilter : IEndpointFilter
             return Results.Unauthorized();
         }
 
-        return await next(context);
+        return await next(context).ConfigureAwait(false);
     }
 }

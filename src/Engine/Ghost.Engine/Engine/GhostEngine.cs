@@ -42,9 +42,9 @@ public sealed class GhostEngine : IGhostEngine
     public async Task RunAsync(ISpider spider, GhostEngineContext context, CancellationToken cancellationToken = default)
     {
         // Consume start requests into scheduler
-        await foreach (var startRequest in spider.StartRequestsAsync(context, cancellationToken))
+        await foreach (GhostRequest startRequest in spider.StartRequestsAsync(context, cancellationToken).ConfigureAwait(false))
         {
-            await _scheduler.EnqueueAsync(startRequest, priority: 0, cancellationToken);
+            await _scheduler.EnqueueAsync(startRequest, priority: 0, cancellationToken).ConfigureAwait(false);
         }
 
         // Process requests until scheduler is empty and no in-flight requests
@@ -55,11 +55,11 @@ public sealed class GhostEngine : IGhostEngine
             // Check unified backpressure
             if (IsUnderBackpressure())
             {
-                await Task.Delay(10, cancellationToken);
+                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
                 continue;
             }
 
-            var request = await _scheduler.DequeueAsync(cancellationToken);
+            GhostRequest? request = await _scheduler.DequeueAsync(cancellationToken).ConfigureAwait(false);
             if (request == null)
             {
                 // No more requests and no in-flight work
@@ -67,23 +67,23 @@ public sealed class GhostEngine : IGhostEngine
                 {
                     break;
                 }
-                await Task.Delay(10, cancellationToken);
+                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
                 continue;
             }
 
             // Process request
-            var task = ProcessRequestAsync(request, spider, context, cancellationToken);
+            Task task = ProcessRequestAsync(request, spider, context, cancellationToken);
             processingTasks.Add(task);
         }
 
         // Wait for all processing to complete
-        await Task.WhenAll(processingTasks);
+        await Task.WhenAll(processingTasks).ConfigureAwait(false);
     }
 
     private bool IsUnderBackpressure()
     {
-        var inFlight = Volatile.Read(ref _inFlightCount);
-        var pendingItems = Volatile.Read(ref _pendingItemsCount);
+        int inFlight = Volatile.Read(ref _inFlightCount);
+        int pendingItems = Volatile.Read(ref _pendingItemsCount);
 
         return inFlight >= _options.MaxInFlight || pendingItems >= _options.MaxPendingItems;
     }
@@ -98,24 +98,24 @@ public sealed class GhostEngine : IGhostEngine
         try
         {
             // Process through downloader middleware chain
-            var response = await ExecuteDownloaderMiddlewareChainAsync(request, context, cancellationToken);
+            GhostResponse response = await ExecuteDownloaderMiddlewareChainAsync(request, context, cancellationToken).ConfigureAwait(false);
 
             // Process through spider middleware chain
-            var output = await ExecuteSpiderMiddlewareChainAsync(response, spider, context, cancellationToken);
+            SpiderOutput output = await ExecuteSpiderMiddlewareChainAsync(response, spider, context, cancellationToken).ConfigureAwait(false);
 
             // Re-enqueue returned requests
-            foreach (var newRequest in output.Requests)
+            foreach (GhostRequest newRequest in output.Requests)
             {
-                await _scheduler.EnqueueAsync(newRequest, priority: 0, cancellationToken);
+                await _scheduler.EnqueueAsync(newRequest, priority: 0, cancellationToken).ConfigureAwait(false);
             }
 
             // Send items through ordered pipeline chain
-            foreach (var item in output.Items)
+            foreach (ItemEnvelope item in output.Items)
             {
                 Interlocked.Increment(ref _pendingItemsCount);
                 try
                 {
-                    await ExecuteItemPipelineChainAsync(item, context, cancellationToken);
+                    await ExecuteItemPipelineChainAsync(item, context, cancellationToken).ConfigureAwait(false);
                 }
                 finally
                 {
@@ -136,18 +136,18 @@ public sealed class GhostEngine : IGhostEngine
     {
         Func<GhostRequest, GhostEngineContext, CancellationToken, Task<GhostResponse>> next = async (req, ctx, ct) =>
         {
-            return await _downloader.DownloadAsync(req, ctx, ct);
+            return await _downloader.DownloadAsync(req, ctx, ct).ConfigureAwait(false);
         };
 
         // Apply middlewares in reverse order (last added = first to execute)
         for (int i = _downloaderMiddlewares.Count - 1; i >= 0; i--)
         {
-            var middleware = _downloaderMiddlewares[i];
-            var currentNext = next;
-            next = async (req, ctx, ct) => await middleware.InvokeAsync(req, ctx, currentNext, ct);
+            IDownloaderMiddleware middleware = _downloaderMiddlewares[i];
+            Func<GhostRequest, GhostEngineContext, CancellationToken, Task<GhostResponse>> currentNext = next;
+            next = async (req, ctx, ct) => await middleware.InvokeAsync(req, ctx, currentNext, ct).ConfigureAwait(false);
         }
 
-        return await next(request, context, cancellationToken);
+        return await next(request, context, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<SpiderOutput> ExecuteSpiderMiddlewareChainAsync(
@@ -158,18 +158,18 @@ public sealed class GhostEngine : IGhostEngine
     {
         Func<GhostResponse, GhostEngineContext, CancellationToken, Task<SpiderOutput>> next = async (resp, ctx, ct) =>
         {
-            return await spider.ParseAsync(resp, ctx, ct);
+            return await spider.ParseAsync(resp, ctx, ct).ConfigureAwait(false);
         };
 
         // Apply middlewares in reverse order (last added = first to execute)
         for (int i = _spiderMiddlewares.Count - 1; i >= 0; i--)
         {
-            var middleware = _spiderMiddlewares[i];
-            var currentNext = next;
-            next = async (resp, ctx, ct) => await middleware.InvokeAsync(resp, ctx, currentNext, ct);
+            ISpiderMiddleware middleware = _spiderMiddlewares[i];
+            Func<GhostResponse, GhostEngineContext, CancellationToken, Task<SpiderOutput>> currentNext = next;
+            next = async (resp, ctx, ct) => await middleware.InvokeAsync(resp, ctx, currentNext, ct).ConfigureAwait(false);
         }
 
-        return await next(response, context, cancellationToken);
+        return await next(response, context, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task ExecuteItemPipelineChainAsync(
@@ -177,11 +177,11 @@ public sealed class GhostEngine : IGhostEngine
         GhostEngineContext context,
         CancellationToken cancellationToken)
     {
-        var currentItem = item;
+        ItemEnvelope currentItem = item;
 
-        foreach (var pipeline in _itemPipelines)
+        foreach (IItemPipeline pipeline in _itemPipelines)
         {
-            currentItem = await pipeline.ProcessAsync(currentItem, context, cancellationToken);
+            currentItem = await pipeline.ProcessAsync(currentItem, context, cancellationToken).ConfigureAwait(false);
         }
     }
 }

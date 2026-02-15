@@ -60,17 +60,17 @@ public class IndeedJobDetailsScraper
 
         LogFetchingDetails(_logger, jobId, null);
 
-        var page = await _browserSession.NewPageAsync(null, ct);
+        IPage page = await _browserSession.NewPageAsync(null, ct).ConfigureAwait(false);
         try
         {
-            var jobUrl = $"{_options.BaseUrl}/viewjob?jk={jobId}";
-            await page.NavigateAsync(jobUrl, null, ct);
+            string jobUrl = $"{_options.BaseUrl}/viewjob?jk={jobId}";
+            await page.NavigateAsync(jobUrl, null, ct).ConfigureAwait(false);
 
             // Wait for the main job content to load
-            await page.WaitForSelectorAsync("#jobDescriptionText, .jobsearch-JobComponent", null, ct);
+            await page.WaitForSelectorAsync("#jobDescriptionText, .jobsearch-JobComponent", null, ct).ConfigureAwait(false);
 
             // Try to extract JSON-LD structured data first (most reliable)
-            var jobListing = await ExtractFromJsonLdAsync(page, jobId, ct);
+            JobListing? jobListing = await ExtractFromJsonLdAsync(page, jobId, ct).ConfigureAwait(false);
             if (jobListing != null)
             {
                 LogDetailsSuccess(_logger, jobId, null);
@@ -78,7 +78,7 @@ public class IndeedJobDetailsScraper
             }
 
             // Fallback: Extract from DOM
-            jobListing = await ExtractFromDomAsync(page, jobId, jobUrl, ct);
+            jobListing = await ExtractFromDomAsync(page, jobId, jobUrl, ct).ConfigureAwait(false);
             LogDetailsSuccess(_logger, jobId, null);
             return jobListing;
         }
@@ -89,7 +89,7 @@ public class IndeedJobDetailsScraper
         }
         finally
         {
-            await page.DisposeAsync();
+            await page.DisposeAsync().ConfigureAwait(false);
         }
     }
 
@@ -105,15 +105,15 @@ public class IndeedJobDetailsScraper
                 return null;
             }
 
-            var html = await page.GetContentAsync(ct);
-            var jsonLdElements = _jsonLdExtractor.ExtractRaw(html);
+            string html = await page.GetContentAsync(ct).ConfigureAwait(false);
+            IEnumerable<JsonElement> jsonLdElements = _jsonLdExtractor.ExtractRaw(html);
 
             // Find JobPosting schema
-            foreach (var element in jsonLdElements)
+            foreach (JsonElement element in jsonLdElements)
             {
-                if (element.TryGetProperty("@type", out var typeEl))
+                if (element.TryGetProperty("@type", out JsonElement typeEl))
                 {
-                    var typeStr = typeEl.GetString();
+                    string? typeStr = typeEl.GetString();
                     if (typeStr == "JobPosting")
                     {
                         return ParseJobPostingFromJsonLd(element, jobId);
@@ -134,10 +134,10 @@ public class IndeedJobDetailsScraper
         return new JobListing
         {
             Id = jobId,
-            Title = jsonLd.TryGetProperty("title", out var title) ? title.GetString() ?? string.Empty : string.Empty,
+            Title = jsonLd.TryGetProperty("title", out JsonElement title) ? title.GetString() ?? string.Empty : string.Empty,
             Company = ExtractCompanyFromJsonLd(jsonLd),
             Location = ExtractLocationFromJsonLd(jsonLd),
-            Description = jsonLd.TryGetProperty("description", out var desc) ? desc.GetString() ?? string.Empty : string.Empty,
+            Description = jsonLd.TryGetProperty("description", out JsonElement desc) ? desc.GetString() ?? string.Empty : string.Empty,
             Salary = ExtractSalaryFromJsonLd(jsonLd),
             Url = $"{_options.BaseUrl}/viewjob?jk={jobId}",
             Source = "Indeed",
@@ -153,34 +153,34 @@ public class IndeedJobDetailsScraper
         CancellationToken ct)
     {
         // Extract title
-        var title = await ExtractTextFromPageAsync(
+        string title = await ExtractTextFromPageAsync(
             page,
             "h1.jobsearch-JobInfoHeader-title, .jobsearch-JobComponent-title, h1[class*='jobTitle']",
-            ct);
+            ct).ConfigureAwait(false);
 
         // Extract company
-        var company = await ExtractTextFromPageAsync(
+        string company = await ExtractTextFromPageAsync(
             page,
             "[data-company-name], .jobsearch-InlineCompanyRating-companyHeader, [class*='companyName']",
-            ct);
+            ct).ConfigureAwait(false);
 
         // Extract location
-        var location = await ExtractTextFromPageAsync(
+        string location = await ExtractTextFromPageAsync(
             page,
             "[data-testid='job-location'], .jobsearch-JobInfoHeader-subtitle-location, [class*='companyLocation']",
-            ct);
+            ct).ConfigureAwait(false);
 
         // Extract description (full text)
-        var description = await ExtractTextFromPageAsync(
+        string description = await ExtractTextFromPageAsync(
             page,
             "#jobDescriptionText, .jobsearch-jobDescriptionText, [id*='jobDescriptionText']",
-            ct);
+            ct).ConfigureAwait(false);
 
         // Extract salary
-        var salary = await ExtractTextFromPageAsync(
+        string salary = await ExtractTextFromPageAsync(
             page,
             "#salaryInfoAndJobType, .jobsearch-JobMetadataHeader-item, [class*='salary']",
-            ct);
+            ct).ConfigureAwait(false);
 
         return new JobListing
         {
@@ -203,13 +203,13 @@ public class IndeedJobDetailsScraper
     {
         try
         {
-            var element = await page.QuerySelectorAsync(selector, ct);
+            IElement? element = await page.QuerySelectorAsync(selector, ct).ConfigureAwait(false);
             if (element == null)
             {
                 return string.Empty;
             }
 
-            var text = await element.GetTextContentAsync(ct);
+            string? text = await element.GetTextContentAsync(ct).ConfigureAwait(false);
             return text?.Trim() ?? string.Empty;
         }
         catch
@@ -220,9 +220,9 @@ public class IndeedJobDetailsScraper
 
     private static string ExtractCompanyFromJsonLd(JsonElement jsonLd)
     {
-        if (jsonLd.TryGetProperty("hiringOrganization", out var org))
+        if (jsonLd.TryGetProperty("hiringOrganization", out JsonElement org))
         {
-            if (org.TryGetProperty("name", out var name))
+            if (org.TryGetProperty("name", out JsonElement name))
             {
                 return name.GetString() ?? string.Empty;
             }
@@ -233,15 +233,15 @@ public class IndeedJobDetailsScraper
 
     private static string ExtractLocationFromJsonLd(JsonElement jsonLd)
     {
-        if (jsonLd.TryGetProperty("jobLocation", out var loc))
+        if (jsonLd.TryGetProperty("jobLocation", out JsonElement loc))
         {
-            if (loc.TryGetProperty("address", out var address))
+            if (loc.TryGetProperty("address", out JsonElement address))
             {
-                if (address.TryGetProperty("addressLocality", out var city) &&
-                    address.TryGetProperty("addressRegion", out var region))
+                if (address.TryGetProperty("addressLocality", out JsonElement city) &&
+                    address.TryGetProperty("addressRegion", out JsonElement region))
                 {
-                    var cityStr = city.GetString() ?? string.Empty;
-                    var regionStr = region.GetString() ?? string.Empty;
+                    string cityStr = city.GetString() ?? string.Empty;
+                    string regionStr = region.GetString() ?? string.Empty;
                     return $"{cityStr}, {regionStr}".Trim(',', ' ');
                 }
             }
@@ -252,19 +252,19 @@ public class IndeedJobDetailsScraper
 
     private static string ExtractSalaryFromJsonLd(JsonElement jsonLd)
     {
-        if (jsonLd.TryGetProperty("baseSalary", out var salary))
+        if (jsonLd.TryGetProperty("baseSalary", out JsonElement salary))
         {
-            if (salary.TryGetProperty("value", out var value))
+            if (salary.TryGetProperty("value", out JsonElement value))
             {
-                if (value.TryGetProperty("minValue", out var min) &&
-                    value.TryGetProperty("maxValue", out var max))
+                if (value.TryGetProperty("minValue", out JsonElement min) &&
+                    value.TryGetProperty("maxValue", out JsonElement max))
                 {
-                    var currency = value.TryGetProperty("currency", out var curr) ? curr.GetString() : "USD";
+                    string? currency = value.TryGetProperty("currency", out JsonElement curr) ? curr.GetString() : "USD";
                     return $"${min.GetDecimal()} - ${max.GetDecimal()} {currency}";
                 }
-                else if (value.TryGetProperty("value", out var single))
+                else if (value.TryGetProperty("value", out JsonElement single))
                 {
-                    var currency = value.TryGetProperty("currency", out var curr) ? curr.GetString() : "USD";
+                    string? currency = value.TryGetProperty("currency", out JsonElement curr) ? curr.GetString() : "USD";
                     return $"${single.GetDecimal()} {currency}";
                 }
             }
@@ -275,10 +275,10 @@ public class IndeedJobDetailsScraper
 
     private static DateTimeOffset ExtractPostedDateFromJsonLd(JsonElement jsonLd)
     {
-        if (jsonLd.TryGetProperty("datePosted", out var datePosted))
+        if (jsonLd.TryGetProperty("datePosted", out JsonElement datePosted))
         {
-            var dateStr = datePosted.GetString();
-            if (!string.IsNullOrEmpty(dateStr) && DateTimeOffset.TryParse(dateStr, out var date))
+            string? dateStr = datePosted.GetString();
+            if (!string.IsNullOrEmpty(dateStr) && DateTimeOffset.TryParse(dateStr, out DateTimeOffset date))
             {
                 return date;
             }
@@ -289,9 +289,9 @@ public class IndeedJobDetailsScraper
 
     private static bool CheckIfRemote(JsonElement jsonLd)
     {
-        if (jsonLd.TryGetProperty("jobLocationType", out var locType))
+        if (jsonLd.TryGetProperty("jobLocationType", out JsonElement locType))
         {
-            var locTypeStr = locType.GetString();
+            string? locTypeStr = locType.GetString();
             return locTypeStr?.Contains("TELECOMMUTE", StringComparison.OrdinalIgnoreCase) == true;
         }
 

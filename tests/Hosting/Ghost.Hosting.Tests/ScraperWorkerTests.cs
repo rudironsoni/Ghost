@@ -1,3 +1,4 @@
+using System.Reflection;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,7 +28,7 @@ public class ScraperWorkerTests
         services.AddKeyedScoped<IJobClient>("linkedin", (sp, _) =>
             new FakeJobClient(sp.GetRequiredService<ScopedDependency>(), cts));
 
-        await using var serviceProvider = services.BuildServiceProvider(validateScopes: true);
+        await using ServiceProvider serviceProvider = services.BuildServiceProvider(validateScopes: true).ConfigureAwait(false);
 
         var db = new Mock<IDatabase>();
         db.SetupSequence(x => x.ListRightPopAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
@@ -62,11 +63,11 @@ public class ScraperWorkerTests
             serviceProvider,
             config);
 
-        var executeAsync = typeof(Ghost.Worker.ScraperWorker).GetMethod("ExecuteAsync", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        MethodInfo? executeAsync = typeof(Ghost.Worker.ScraperWorker).GetMethod("ExecuteAsync", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         executeAsync.Should().NotBeNull();
         var runTask = (Task?)executeAsync!.Invoke(worker, new object[] { cts.Token });
         runTask.Should().NotBeNull();
-        await runTask!;
+        await runTask.ConfigureAwait(false)!;
 
         holder.Latest.Should().NotBeNull();
         holder.Latest!.Disposed.Should().BeTrue();

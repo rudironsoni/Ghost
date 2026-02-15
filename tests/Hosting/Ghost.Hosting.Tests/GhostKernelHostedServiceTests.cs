@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -14,7 +15,7 @@ public class GhostKernelHostedServiceTests
 {
     private static GhostKernel CreateKernel(IPlaywright playwright, IBrowser browser)
     {
-        var ctor = typeof(GhostKernel).GetConstructor(
+        ConstructorInfo ctor = typeof(GhostKernel).GetConstructor(
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
             null,
             new[] { typeof(IPlaywright), typeof(IBrowser), typeof(int), typeof(bool), typeof(string), typeof(Ghost.Net.Socks5Bridge) },
@@ -28,13 +29,13 @@ public class GhostKernelHostedServiceTests
         var playwrightMock = new Mock<IPlaywright>();
         var browserMock = new Mock<IBrowser>();
 
-        var kernel = CreateKernel(playwrightMock.Object, browserMock.Object);
+        GhostKernel kernel = CreateKernel(playwrightMock.Object, browserMock.Object);
 
         var lifetimeMock = new Mock<IHostApplicationLifetime>();
 
         var service = new GhostKernelHostedService(kernel, lifetimeMock.Object);
 
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(CancellationToken.None).ConfigureAwait(false);
 
         // kernel.DisposeAsync will close browser and dispose playwright; verify browser closed/disposed
         browserMock.Verify(b => b.CloseAsync(), Times.Once);
@@ -47,7 +48,7 @@ public class GhostKernelHostedServiceTests
     {
         var playwrightMock = new Mock<IPlaywright>();
         var browserMock = new Mock<IBrowser>();
-        var kernel = CreateKernel(playwrightMock.Object, browserMock.Object);
+        GhostKernel kernel = CreateKernel(playwrightMock.Object, browserMock.Object);
 
         var lifetimeMock = new Mock<IHostApplicationLifetime>();
         var cts = new CancellationTokenSource();
@@ -59,7 +60,7 @@ public class GhostKernelHostedServiceTests
         cts.Cancel();
 
         // Give a small delay for any registered callbacks to run
-        await Task.Delay(10);
+        await Task.Delay(10).ConfigureAwait(false);
 
         // If the hosted service registered for ApplicationStopping and invoked DisposeAsync,
         // the kernel's DisposeAsync will result in browser/playwright cleanup. Verify those were called.

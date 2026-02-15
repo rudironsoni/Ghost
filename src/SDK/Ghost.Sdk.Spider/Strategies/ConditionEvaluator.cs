@@ -24,9 +24,9 @@ public class ConditionEvaluator
         bool result = true;
         LogicalOperator currentOperator = LogicalOperator.And;
 
-        foreach (var condition in conditions)
+        foreach (ConditionConfiguration condition in conditions)
         {
-            var conditionResult = EvaluateCondition(condition, context, attempts);
+            bool conditionResult = EvaluateCondition(condition, context, attempts);
 
             if (condition.Negate)
             {
@@ -82,13 +82,13 @@ public class ConditionEvaluator
     /// </summary>
     private static bool EvaluateTimeout(ConditionConfiguration condition, List<StrategyAttempt> attempts)
     {
-        var lastAttempt = attempts.LastOrDefault();
+        StrategyAttempt? lastAttempt = attempts.LastOrDefault();
         if (lastAttempt == null)
         {
             return false;
         }
 
-        var timeoutOccurred = lastAttempt.Exception is TimeoutException ||
+        bool timeoutOccurred = lastAttempt.Exception is TimeoutException ||
                              (lastAttempt.ErrorMessage?.Contains("timeout", StringComparison.OrdinalIgnoreCase) ?? false);
 
         return timeoutOccurred;
@@ -112,13 +112,13 @@ public class ConditionEvaluator
     /// </summary>
     private static bool EvaluateElementNotFound(ConditionConfiguration condition, List<StrategyAttempt> attempts)
     {
-        var lastAttempt = attempts.LastOrDefault();
+        StrategyAttempt? lastAttempt = attempts.LastOrDefault();
         if (lastAttempt == null)
         {
             return false;
         }
 
-        var elementNotFound = lastAttempt.ErrorMessage?.Contains("element not found", StringComparison.OrdinalIgnoreCase) ?? false;
+        bool elementNotFound = lastAttempt.ErrorMessage?.Contains("element not found", StringComparison.OrdinalIgnoreCase) ?? false;
         elementNotFound |= lastAttempt.ErrorMessage?.Contains("selector not found", StringComparison.OrdinalIgnoreCase) ?? false;
 
         return elementNotFound;
@@ -150,7 +150,7 @@ public class ConditionEvaluator
             return false;
         }
 
-        var pattern = condition.Value.ToString() ?? string.Empty;
+        string pattern = condition.Value.ToString() ?? string.Empty;
         return CompareStrings(context.Content, pattern, condition.Operator);
     }
 
@@ -159,7 +159,7 @@ public class ConditionEvaluator
     /// </summary>
     private static bool EvaluatePreviousSuccess(List<StrategyAttempt> attempts)
     {
-        var lastAttempt = attempts.LastOrDefault();
+        StrategyAttempt? lastAttempt = attempts.LastOrDefault();
         return lastAttempt?.Success ?? false;
     }
 
@@ -168,7 +168,7 @@ public class ConditionEvaluator
     /// </summary>
     private static bool EvaluatePreviousFailed(List<StrategyAttempt> attempts)
     {
-        var lastAttempt = attempts.LastOrDefault();
+        StrategyAttempt? lastAttempt = attempts.LastOrDefault();
         return lastAttempt != null && !lastAttempt.Success;
     }
 
@@ -195,8 +195,8 @@ public class ConditionEvaluator
             return false;
         }
 
-        var elapsed = DateTime.UtcNow - context.Timestamp;
-        var threshold = condition.Value switch
+        TimeSpan elapsed = DateTime.UtcNow - context.Timestamp;
+        TimeSpan threshold = condition.Value switch
         {
             TimeSpan ts => ts,
             int seconds => TimeSpan.FromSeconds(seconds),
@@ -219,7 +219,7 @@ public class ConditionEvaluator
         }
 
         // Check if the field exists in context state
-        if (context.State.TryGetValue(condition.Field, out var value))
+        if (context.State.TryGetValue(condition.Field, out object? value))
         {
             return condition.Value == null || CompareValues(value, condition.Value, condition.Operator);
         }
@@ -239,9 +239,9 @@ public class ConditionEvaluator
     private static bool CompareValues(object actual, object expected, ConditionOperator op)
     {
         // Convert to comparable types
-        if (actual is IComparable actualComparable && TryConvertToComparable(expected, actual.GetType(), out var expectedComparable))
+        if (actual is IComparable actualComparable && TryConvertToComparable(expected, actual.GetType(), out IComparable? expectedComparable))
         {
-            var comparison = actualComparable.CompareTo(expectedComparable);
+            int comparison = actualComparable.CompareTo(expectedComparable);
 
             return op switch
             {
@@ -308,7 +308,7 @@ public class ConditionEvaluator
                 return result != null;
             }
 
-            var converted = Convert.ChangeType(value, targetType, System.Globalization.CultureInfo.InvariantCulture);
+            object converted = Convert.ChangeType(value, targetType, System.Globalization.CultureInfo.InvariantCulture);
             result = converted as IComparable;
             return result != null;
         }

@@ -9,17 +9,17 @@ public interface IConsoleCommand
     /// <summary>
     /// Gets the command name (used to invoke the command).
     /// </summary>
-    string Name { get; }
+    public string Name { get; }
 
     /// <summary>
     /// Gets the command description (shown in help text).
     /// </summary>
-    string Description { get; }
+    public string Description { get; }
 
     /// <summary>
     /// Gets the usage information (shown in help text).
     /// </summary>
-    string Usage { get; }
+    public string Usage { get; }
 
     /// <summary>
     /// Executes the command.
@@ -28,5 +28,5 @@ public interface IConsoleCommand
     /// <param name="context">Console context with access to spider state.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The command output string.</returns>
-    Task<string> ExecuteAsync(string[] args, ConsoleContext context, CancellationToken ct = default);
+    public Task<string> ExecuteAsync(string[] args, ConsoleContext context, CancellationToken ct = default);
 }

@@ -1,4 +1,5 @@
 using System.Reflection;
+using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
 using Ghost.Sdk.Spider.Core.Entities;
 using Ghost.Sdk.Spider.Core.Entities.Attributes;
@@ -21,24 +22,24 @@ public class EntityParser
     /// <returns>A list of extracted entities.</returns>
     public static List<T> Parse<T>(ExtractionContext context) where T : EntityBase<T>, new()
     {
-        var metadata = EntityBase<T>.GetMetadata();
+        EntityMetadata metadata = EntityBase<T>.GetMetadata();
         var entities = new List<T>();
 
         // If no entity selector is defined, treat the entire content as a single entity
         if (metadata.EntitySelector == null)
         {
-            var entity = ParseSingleEntity<T>(context.Content, metadata, context);
+            T? entity = ParseSingleEntity<T>(context.Content, metadata, context);
             if (entity != null)
                 entities.Add(entity);
             return entities;
         }
 
         // Select entity nodes based on the entity selector
-        var entityNodes = SelectEntityNodes(context.Content, metadata.EntitySelector);
+        List<string> entityNodes = SelectEntityNodes(context.Content, metadata.EntitySelector);
 
-        foreach (var nodeContent in entityNodes)
+        foreach (string nodeContent in entityNodes)
         {
-            var entity = ParseSingleEntity<T>(nodeContent, metadata, context);
+            T? entity = ParseSingleEntity<T>(nodeContent, metadata, context);
             if (entity != null)
                 entities.Add(entity);
         }
@@ -54,12 +55,12 @@ public class EntityParser
     /// <returns>The extracted entity, or null if extraction fails.</returns>
     public static T? ParseSingle<T>(ExtractionContext context) where T : EntityBase<T>, new()
     {
-        var metadata = EntityBase<T>.GetMetadata();
+        EntityMetadata metadata = EntityBase<T>.GetMetadata();
 
         // If an entity selector is defined, use it to find the first matching entity
         if (metadata.EntitySelector != null)
         {
-            var entityNodes = SelectEntityNodes(context.Content, metadata.EntitySelector);
+            List<string> entityNodes = SelectEntityNodes(context.Content, metadata.EntitySelector);
             if (entityNodes.Count == 0)
                 return null;
 
@@ -85,10 +86,10 @@ public class EntityParser
         else if (selector.Type == SelectorType.JsonPath)
         {
             // For JSON, we can use the regular selector as it preserves structure
-            var selectorInstance = CreateSelector(selector.Expression, selector.Type, null);
+            ISelector selectorInstance = CreateSelector(selector.Expression, selector.Type, null);
             if (selector.TakeFirst)
             {
-                var firstNode = selectorInstance.SelectFirst(content);
+                string? firstNode = selectorInstance.SelectFirst(content);
                 return firstNode != null ? new List<string> { firstNode } : new List<string>();
             }
             return selectorInstance.SelectValues(content);
@@ -100,11 +101,11 @@ public class EntityParser
     private static List<string> SelectEntityNodesWithCss(string content, string expression, bool takeFirst)
     {
         var parser = new AngleSharp.Html.Parser.HtmlParser();
-        var document = parser.ParseDocument(content);
-        var elements = document.QuerySelectorAll(expression);
+        AngleSharp.Html.Dom.IHtmlDocument document = parser.ParseDocument(content);
+        IHtmlCollection<IElement> elements = document.QuerySelectorAll(expression);
 
         var results = new List<string>();
-        foreach (var element in elements)
+        foreach (IElement element in elements)
         {
             // Return the outer HTML to preserve structure for nested selectors
             results.Add(element.OuterHtml);
@@ -119,12 +120,12 @@ public class EntityParser
         var doc = new HtmlDocument();
         doc.LoadHtml(content);
 
-        var nodes = doc.DocumentNode.SelectNodes(expression);
+        HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(expression);
         if (nodes == null || nodes.Count == 0)
             return new List<string>();
 
         var results = new List<string>();
-        foreach (var node in nodes)
+        foreach (HtmlNode? node in nodes)
         {
             // Return the outer HTML to preserve structure for nested selectors
             results.Add(node.OuterHtml);
@@ -148,11 +149,11 @@ public class EntityParser
             .OrderBy(p => p.FieldAttribute?.Order ?? int.MaxValue)
             .ToList();
 
-        foreach (var propertyMeta in orderedProperties)
+        foreach (PropertyMetadata? propertyMeta in orderedProperties)
         {
             try
             {
-                var value = ExtractPropertyValue(content, propertyMeta, context);
+                object? value = ExtractPropertyValue(content, propertyMeta, context);
                 if (value != null || !propertyMeta.FieldAttribute?.IgnoreNull == true)
                 {
                     SetPropertyValue(entity, propertyMeta, value);
@@ -174,8 +175,8 @@ public class EntityParser
 
     private static object? ExtractPropertyValue(string content, PropertyMetadata propertyMeta, ExtractionContext context)
     {
-        var selector = propertyMeta.ValueSelector;
-        var selectorInstance = CreateSelector(selector.Expression, selector.Type, selector.Attribute);
+        ValueSelectorAttribute selector = propertyMeta.ValueSelector;
+        ISelector selectorInstance = CreateSelector(selector.Expression, selector.Type, selector.Attribute);
 
         // Extract raw value(s)
         object? rawValue;
@@ -185,7 +186,7 @@ public class EntityParser
         }
         else
         {
-            var values = selectorInstance.SelectValues(content);
+            List<string> values = selectorInstance.SelectValues(content);
             rawValue = values.Count > 0 ? values : null;
         }
 
@@ -202,7 +203,7 @@ public class EntityParser
                 .OrderBy(f => f.Order)
                 .ToList();
 
-            foreach (var formatter in orderedFormatters)
+            foreach (FormatterAttribute? formatter in orderedFormatters)
             {
                 rawValue = formatter.Format(rawValue);
             }
@@ -273,7 +274,7 @@ public class EntityParser
             return null;
 
         // Handle nullable types
-        var underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+        Type underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
 
         // If already the correct type
         if (value.GetType() == underlyingType)
@@ -310,34 +311,34 @@ public class EntityParser
 
             // Numeric types
             if (underlyingType == typeof(int))
-                return int.TryParse(strValue, out var intVal) ? intVal : null;
+                return int.TryParse(strValue, out int intVal) ? intVal : null;
 
             if (underlyingType == typeof(long))
-                return long.TryParse(strValue, out var longVal) ? longVal : null;
+                return long.TryParse(strValue, out long longVal) ? longVal : null;
 
             if (underlyingType == typeof(double))
-                return double.TryParse(strValue, out var doubleVal) ? doubleVal : null;
+                return double.TryParse(strValue, out double doubleVal) ? doubleVal : null;
 
             if (underlyingType == typeof(decimal))
-                return decimal.TryParse(strValue, out var decimalVal) ? decimalVal : null;
+                return decimal.TryParse(strValue, out decimal decimalVal) ? decimalVal : null;
 
             if (underlyingType == typeof(float))
-                return float.TryParse(strValue, out var floatVal) ? floatVal : null;
+                return float.TryParse(strValue, out float floatVal) ? floatVal : null;
 
             // Boolean
             if (underlyingType == typeof(bool))
-                return bool.TryParse(strValue, out var boolVal) ? boolVal : null;
+                return bool.TryParse(strValue, out bool boolVal) ? boolVal : null;
 
             // DateTime
             if (underlyingType == typeof(DateTime))
-                return DateTime.TryParse(strValue, out var dateVal) ? dateVal : null;
+                return DateTime.TryParse(strValue, out DateTime dateVal) ? dateVal : null;
 
             if (underlyingType == typeof(DateTimeOffset))
-                return DateTimeOffset.TryParse(strValue, out var dateOffsetVal) ? dateOffsetVal : null;
+                return DateTimeOffset.TryParse(strValue, out DateTimeOffset dateOffsetVal) ? dateOffsetVal : null;
 
             // Guid
             if (underlyingType == typeof(Guid))
-                return Guid.TryParse(strValue, out var guidVal) ? guidVal : null;
+                return Guid.TryParse(strValue, out Guid guidVal) ? guidVal : null;
 
             // Enum
             if (underlyingType.IsEnum)

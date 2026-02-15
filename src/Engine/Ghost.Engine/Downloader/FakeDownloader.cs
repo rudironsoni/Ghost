@@ -19,7 +19,7 @@ public sealed class FakeDownloader : IDownloader
     public Task<GhostResponse> DownloadAsync(GhostRequest request, GhostEngineContext context, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var response = _responseFactory!(request);
+        GhostResponse response = _responseFactory!(request);
         return Task.FromResult(response);
     }
 

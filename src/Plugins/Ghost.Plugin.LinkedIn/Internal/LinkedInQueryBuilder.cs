@@ -22,10 +22,10 @@ internal static class LinkedInQueryBuilder
     /// <returns>Absolute LinkedIn guest search URL.</returns>
     public static string BuildSearchUrl(string query, string location, int offset = 0, TimeSpan? postedWithin = null)
     {
-        var normalizedQuery = NormalizeQuery(query ?? string.Empty);
-        var encodedQuery = Uri.EscapeDataString(normalizedQuery);
-        var encodedLocation = Uri.EscapeDataString(location ?? string.Empty);
-        var start = Math.Max(0, offset);
+        string normalizedQuery = NormalizeQuery(query ?? string.Empty);
+        string encodedQuery = Uri.EscapeDataString(normalizedQuery);
+        string encodedLocation = Uri.EscapeDataString(location ?? string.Empty);
+        int start = Math.Max(0, offset);
 
         var parameters = new List<string>(4)
         {
@@ -34,7 +34,7 @@ internal static class LinkedInQueryBuilder
             $"start={start}"
         };
 
-        var tpr = BuildPostedWithinFilter(postedWithin);
+        string? tpr = BuildPostedWithinFilter(postedWithin);
         if (!string.IsNullOrEmpty(tpr))
         {
             parameters.Add($"f_TPR={tpr}");
@@ -47,12 +47,12 @@ internal static class LinkedInQueryBuilder
     {
         if (string.IsNullOrWhiteSpace(query)) return string.Empty;
 
-        var tokens = Tokenize(query);
+        List<string> tokens = Tokenize(query);
         if (tokens.Count == 0) return string.Empty;
 
-        for (var i = 0; i < tokens.Count; i++)
+        for (int i = 0; i < tokens.Count; i++)
         {
-            var token = tokens[i];
+            string token = tokens[i];
             if (IsQuotedToken(token)) continue;
 
             if (IsBooleanOperator(token))
@@ -68,7 +68,7 @@ internal static class LinkedInQueryBuilder
     {
         var tokens = new List<string>();
         var current = new StringBuilder();
-        var inQuotes = false;
+        bool inQuotes = false;
 
         void Flush()
         {
@@ -79,7 +79,7 @@ internal static class LinkedInQueryBuilder
             }
         }
 
-        foreach (var ch in input)
+        foreach (char ch in input)
         {
             if (ch == '"')
             {
@@ -140,7 +140,7 @@ internal static class LinkedInQueryBuilder
         var builder = new StringBuilder();
         string? previous = null;
 
-        foreach (var token in tokens)
+        foreach (string token in tokens)
         {
             if (builder.Length == 0)
             {
@@ -197,10 +197,10 @@ internal static class LinkedInQueryBuilder
     {
         if (!postedWithin.HasValue) return null;
 
-        var span = postedWithin.Value;
+        TimeSpan span = postedWithin.Value;
         if (span <= TimeSpan.Zero) return null;
 
-        var seconds = (long)Math.Round(span.TotalSeconds);
+        long seconds = (long)Math.Round(span.TotalSeconds);
         if (seconds <= 0) return null;
 
         if (seconds > int.MaxValue) seconds = int.MaxValue;

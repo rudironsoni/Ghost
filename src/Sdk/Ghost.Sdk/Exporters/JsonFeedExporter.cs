@@ -39,13 +39,13 @@ public sealed class JsonFeedExporter : IFeedExporter
         ArgumentNullException.ThrowIfNull(items);
         ArgumentNullException.ThrowIfNull(output);
 
-        await using var writer = new StreamWriter(output, leaveOpen: true);
+        await using var writer = new StreamWriter(output, leaveOpen: true).ConfigureAwait(false);
 
-        foreach (var item in items)
+        foreach (T? item in items)
         {
             ct.ThrowIfCancellationRequested();
 
-            var json = JsonSerializer.Serialize(item, _options);
+            string json = JsonSerializer.Serialize(item, _options);
             await writer.WriteLineAsync(json).ConfigureAwait(false);
         }
 

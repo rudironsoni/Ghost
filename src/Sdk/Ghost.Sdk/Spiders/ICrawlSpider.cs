@@ -17,7 +17,7 @@ public interface ICrawlSpider : ISpider
     /// Gets the collection of crawl rules.
     /// </summary>
     /// <value>List of rules that control crawling behavior.</value>
-    List<CrawlRule> Rules { get; }
+    public List<CrawlRule> Rules { get; }
 
     /// <summary>
     /// Adds a crawl rule to the spider.
@@ -29,5 +29,5 @@ public interface ICrawlSpider : ISpider
     /// Rules are evaluated in the order they are added. When a URL matches a rule's
     /// followCondition, the parseAction is invoked to extract items from the response.
     /// </remarks>
-    void AddRule(string name, Func<string, bool> followCondition, Func<Response, IEnumerable<Item>> parseAction);
+    public void AddRule(string name, Func<string, bool> followCondition, Func<Response, IEnumerable<Item>> parseAction);
 }

@@ -18,7 +18,7 @@ public static class DlqEndpoints
     /// </summary>
     public static void MapDlqEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/admin/dlq")
+        RouteGroupBuilder group = app.MapGroup("/api/admin/dlq")
             .WithTags("Admin");
 
         group.MapGet(string.Empty, GetJobs)
@@ -39,13 +39,13 @@ public static class DlqEndpoints
         [FromServices] IGenericDeadLetterQueue dlq)
     {
         count = count > 0 ? Math.Min(count, 100) : 10;
-        var items = await dlq.PeekAsync(count).ConfigureAwait(false);
+        List<DeadLetterItem> items = await dlq.PeekAsync(count).ConfigureAwait(false);
         return Results.Ok(items);
     }
 
     private static async Task<IResult> GetStats([FromServices] IGenericDeadLetterQueue dlq)
     {
-        var depth = await dlq.GetCountAsync().ConfigureAwait(false);
+        int depth = await dlq.GetCountAsync().ConfigureAwait(false);
         return Results.Ok(new { ActiveCount = depth, Timestamp = DateTime.UtcNow });
     }
 

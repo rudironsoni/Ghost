@@ -25,7 +25,7 @@ public sealed class CookieMiddleware : ICookieMiddleware
     {
         ArgumentNullException.ThrowIfNull(domain);
 
-        if (_cookies.TryGetValue(domain, out var domainCookies))
+        if (_cookies.TryGetValue(domain, out List<Cookie>? domainCookies))
         {
             lock (domainCookies)
             {
@@ -45,7 +45,7 @@ public sealed class CookieMiddleware : ICookieMiddleware
         ArgumentNullException.ThrowIfNull(domain);
         ArgumentNullException.ThrowIfNull(cookie);
 
-        var domainCookies = _cookies.GetOrAdd(domain, _ => new List<Cookie>());
+        List<Cookie> domainCookies = _cookies.GetOrAdd(domain, _ => new List<Cookie>());
         lock (domainCookies)
         {
             // Remove existing cookie with the same name
@@ -75,18 +75,18 @@ public sealed class CookieMiddleware : ICookieMiddleware
             json = File.ReadAllText(filePath);
         }
 
-        var cookieData = JsonSerializer.Deserialize<Dictionary<string, List<Cookie>>>(json);
+        Dictionary<string, List<Cookie>>? cookieData = JsonSerializer.Deserialize<Dictionary<string, List<Cookie>>>(json);
         if (cookieData is null)
         {
             return;
         }
 
-        foreach (var (domain, domainCookies) in cookieData)
+        foreach ((string? domain, List<Cookie>? domainCookies) in cookieData)
         {
             _cookies[domain] = new List<Cookie>(domainCookies);
         }
 
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     /// <summary>
@@ -107,14 +107,14 @@ public sealed class CookieMiddleware : ICookieMiddleware
                 }
             });
 
-        var json = JsonSerializer.Serialize(cookieData, s_jsonOptions);
+        string json = JsonSerializer.Serialize(cookieData, s_jsonOptions);
 
         lock (_fileLock)
         {
             File.WriteAllText(filePath, json);
         }
 
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     /// <summary>

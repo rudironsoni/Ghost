@@ -33,7 +33,7 @@ public sealed class RotatingWebProxy : IWebProxy, IDisposable
 
     public Uri GetProxy(Uri destination)
     {
-        var proxy = GetCachedProxy();
+        ProxyInfo? proxy = GetCachedProxy();
 
         if (proxy is null)
             return destination; // direct connection
@@ -88,7 +88,7 @@ public sealed class RotatingWebProxy : IWebProxy, IDisposable
     {
         try
         {
-            var proxy = await _provider.GetProxyAsync("US").ConfigureAwait(false);
+            ProxyInfo? proxy = await _provider.GetProxyAsync("US").ConfigureAwait(false);
 
             lock (_lock)
             {

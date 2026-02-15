@@ -133,8 +133,8 @@ public static class MalformedPayloadProfile
         this WireMockServer server,
         string path = "/binary-as-text")
     {
-        var binaryData = new byte[] { 0xFF, 0xFE, 0x00, 0x01, 0x02, 0x03 };
-        var corruptedText = System.Text.Encoding.UTF8.GetString(binaryData);
+        byte[] binaryData = new byte[] { 0xFF, 0xFE, 0x00, 0x01, 0x02, 0x03 };
+        string corruptedText = System.Text.Encoding.UTF8.GetString(binaryData);
 
         server
             .Given(Request.Create()
@@ -155,8 +155,8 @@ public static class MalformedPayloadProfile
         this WireMockServer server,
         string path = "/truncated")
     {
-        var largeContent = new string('A', 10000);
-        var truncatedContent = largeContent[..100]; // First 100 chars only
+        string largeContent = new string('A', 10000);
+        string truncatedContent = largeContent[..100]; // First 100 chars only
 
         server
             .Given(Request.Create()

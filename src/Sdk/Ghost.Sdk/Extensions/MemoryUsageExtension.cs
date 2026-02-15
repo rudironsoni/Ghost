@@ -51,10 +51,10 @@ public sealed partial class MemoryUsageExtension : IMemoryUsageExtension
     /// <inheritdoc/>
     public Task<bool> CheckMemoryAsync(CancellationToken ct = default)
     {
-        var current = GC.GetTotalMemory(forceFullCollection: false);
+        long current = GC.GetTotalMemory(forceFullCollection: false);
 
         // Update peak memory
-        var currentPeak = Interlocked.Read(ref _peakBytes);
+        long currentPeak = Interlocked.Read(ref _peakBytes);
         if (current > currentPeak)
         {
             Interlocked.Exchange(ref _peakBytes, current);
@@ -70,7 +70,7 @@ public sealed partial class MemoryUsageExtension : IMemoryUsageExtension
         // Check warning threshold
         if (MaxMemoryBytes > 0)
         {
-            var usagePercent = (current / (double)MaxMemoryBytes) * 100;
+            double usagePercent = (current / (double)MaxMemoryBytes) * 100;
             if (usagePercent >= _options.WarningThresholdPercent && !_warningLogged)
             {
                 LogMemoryWarning(current, MaxMemoryBytes, usagePercent);
@@ -85,7 +85,7 @@ public sealed partial class MemoryUsageExtension : IMemoryUsageExtension
                     GC.Collect();
 
                     // Re-check after GC
-                    var afterGc = GC.GetTotalMemory(forceFullCollection: false);
+                    long afterGc = GC.GetTotalMemory(forceFullCollection: false);
                     LogGarbageCollectionCompleted(current, afterGc);
                 }
             }
@@ -97,7 +97,7 @@ public sealed partial class MemoryUsageExtension : IMemoryUsageExtension
     /// <inheritdoc/>
     public MemoryStats GetStats()
     {
-        var current = GC.GetTotalMemory(forceFullCollection: false);
+        long current = GC.GetTotalMemory(forceFullCollection: false);
         return new MemoryStats
         {
             CurrentBytes = current,

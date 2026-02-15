@@ -12,7 +12,7 @@ public sealed class SessionManagerTests
     public async Task SaveSessionAsync_WithValidContext_SavesSession()
     {
         // Arrange
-        var options = Options.Create(new SessionManagerOptions
+        IOptions<SessionManagerOptions> options = Options.Create(new SessionManagerOptions
         {
             Backend = SessionStorageBackend.FileSystem,
             StoragePath = Path.Combine(Path.GetTempPath(), $"ghost-test-{Guid.NewGuid()}"),
@@ -42,19 +42,19 @@ public sealed class SessionManagerTests
         mockContext.Setup(c => c.StorageStateAsync()).ReturnsAsync("{\"cookies\":[],\"origins\":[]}");
 
         // Act
-        var sessionId = await manager.SaveSessionAsync(mockContext.Object, "TestPlatform");
+        string sessionId = await manager.SaveSessionAsync(mockContext.Object, "TestPlatform").ConfigureAwait(false);
 
         // Assert
         Assert.NotNull(sessionId);
         Assert.NotEmpty(sessionId);
 
         // Verify session was saved
-        var sessions = await manager.ListSessionsAsync("TestPlatform");
+        List<string> sessions = await manager.ListSessionsAsync("TestPlatform").ConfigureAwait(false);
         Assert.Single(sessions);
         Assert.Equal(sessionId, sessions[0]);
 
         // Cleanup
-        await manager.DeleteSessionAsync("TestPlatform", sessionId);
+        await manager.DeleteSessionAsync("TestPlatform", sessionId).ConfigureAwait(false);
         manager.Dispose();
         Directory.Delete(options.Value.StoragePath, recursive: true);
     }
@@ -63,7 +63,7 @@ public sealed class SessionManagerTests
     public async Task LoadSessionAsync_WithSavedSession_ReturnsSession()
     {
         // Arrange
-        var options = Options.Create(new SessionManagerOptions
+        IOptions<SessionManagerOptions> options = Options.Create(new SessionManagerOptions
         {
             Backend = SessionStorageBackend.FileSystem,
             StoragePath = Path.Combine(Path.GetTempPath(), $"ghost-test-{Guid.NewGuid()}"),
@@ -77,10 +77,10 @@ public sealed class SessionManagerTests
         mockContext.Setup(c => c.CookiesAsync()).ReturnsAsync(new List<BrowserContextCookiesResult>());
         mockContext.Setup(c => c.StorageStateAsync()).ReturnsAsync("{\"cookies\":[],\"origins\":[]}");
 
-        var sessionId = await manager.SaveSessionAsync(mockContext.Object, "TestPlatform");
+        string sessionId = await manager.SaveSessionAsync(mockContext.Object, "TestPlatform").ConfigureAwait(false);
 
         // Act
-        var session = await manager.LoadSessionAsync("TestPlatform", sessionId);
+        BrowserSession? session = await manager.LoadSessionAsync("TestPlatform", sessionId).ConfigureAwait(false);
 
         // Assert
         Assert.NotNull(session);
@@ -89,7 +89,7 @@ public sealed class SessionManagerTests
         Assert.False(session.IsExpired());
 
         // Cleanup
-        await manager.DeleteSessionAsync("TestPlatform", sessionId);
+        await manager.DeleteSessionAsync("TestPlatform", sessionId).ConfigureAwait(false);
         manager.Dispose();
         Directory.Delete(options.Value.StoragePath, recursive: true);
     }
@@ -98,7 +98,7 @@ public sealed class SessionManagerTests
     public async Task LoadSessionAsync_WithExpiredSession_ReturnsNull()
     {
         // Arrange
-        var options = Options.Create(new SessionManagerOptions
+        IOptions<SessionManagerOptions> options = Options.Create(new SessionManagerOptions
         {
             Backend = SessionStorageBackend.FileSystem,
             StoragePath = Path.Combine(Path.GetTempPath(), $"ghost-test-{Guid.NewGuid()}"),
@@ -113,13 +113,13 @@ public sealed class SessionManagerTests
         mockContext.Setup(c => c.CookiesAsync()).ReturnsAsync(new List<BrowserContextCookiesResult>());
         mockContext.Setup(c => c.StorageStateAsync()).ReturnsAsync("{\"cookies\":[],\"origins\":[]}");
 
-        var sessionId = await manager.SaveSessionAsync(mockContext.Object, "TestPlatform");
+        string sessionId = await manager.SaveSessionAsync(mockContext.Object, "TestPlatform").ConfigureAwait(false);
 
         // Wait for session to expire
-        await Task.Delay(10);
+        await Task.Delay(10).ConfigureAwait(false);
 
         // Act
-        var session = await manager.LoadSessionAsync("TestPlatform", sessionId);
+        BrowserSession? session = await manager.LoadSessionAsync("TestPlatform", sessionId).ConfigureAwait(false);
 
         // Assert
         Assert.Null(session);
@@ -133,7 +133,7 @@ public sealed class SessionManagerTests
     public async Task DeleteSessionAsync_RemovesSession()
     {
         // Arrange
-        var options = Options.Create(new SessionManagerOptions
+        IOptions<SessionManagerOptions> options = Options.Create(new SessionManagerOptions
         {
             Backend = SessionStorageBackend.FileSystem,
             StoragePath = Path.Combine(Path.GetTempPath(), $"ghost-test-{Guid.NewGuid()}"),
@@ -147,13 +147,13 @@ public sealed class SessionManagerTests
         mockContext.Setup(c => c.CookiesAsync()).ReturnsAsync(new List<BrowserContextCookiesResult>());
         mockContext.Setup(c => c.StorageStateAsync()).ReturnsAsync("{\"cookies\":[],\"origins\":[]}");
 
-        var sessionId = await manager.SaveSessionAsync(mockContext.Object, "TestPlatform");
+        string sessionId = await manager.SaveSessionAsync(mockContext.Object, "TestPlatform").ConfigureAwait(false);
 
         // Act
-        await manager.DeleteSessionAsync("TestPlatform", sessionId);
+        await manager.DeleteSessionAsync("TestPlatform", sessionId).ConfigureAwait(false);
 
         // Assert
-        var sessions = await manager.ListSessionsAsync("TestPlatform");
+        List<string> sessions = await manager.ListSessionsAsync("TestPlatform").ConfigureAwait(false);
         Assert.Empty(sessions);
 
         // Cleanup

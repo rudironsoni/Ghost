@@ -85,7 +85,7 @@ public class GraphQLField
     /// <returns>A string describing this field.</returns>
     public override string ToString()
     {
-        var args = HasArguments() ? $"({string.Join(", ", Args.Select(a => a.Name))})" : string.Empty;
+        string args = HasArguments() ? $"({string.Join(", ", Args.Select(a => a.Name))})" : string.Empty;
         return $"{Name}{args}: {Type}";
     }
 }

@@ -31,7 +31,7 @@ public sealed class InMemoryRequestScheduler : IRequestScheduler
             return;
         }
 
-        var queue = _priorityQueues.GetOrAdd(priority, _ => new ConcurrentQueue<GhostRequest>());
+        ConcurrentQueue<GhostRequest> queue = _priorityQueues.GetOrAdd(priority, _ => new ConcurrentQueue<GhostRequest>());
         queue.Enqueue(request);
 
         Interlocked.Increment(ref _totalPending);
@@ -46,7 +46,7 @@ public sealed class InMemoryRequestScheduler : IRequestScheduler
             Interlocked.Exchange(ref _maxPriority, priority);
         }
 
-        await ValueTask.CompletedTask;
+        await ValueTask.CompletedTask.ConfigureAwait(false);
     }
 
     public async ValueTask<GhostRequest?> DequeueAsync(CancellationToken cancellationToken = default)
@@ -56,9 +56,9 @@ public sealed class InMemoryRequestScheduler : IRequestScheduler
         // Try to dequeue from highest priority (lowest number) to lowest
         for (int priority = Volatile.Read(ref _minPriority); priority <= Volatile.Read(ref _maxPriority); priority++)
         {
-            if (_priorityQueues.TryGetValue(priority, out var queue))
+            if (_priorityQueues.TryGetValue(priority, out ConcurrentQueue<GhostRequest>? queue))
             {
-                if (queue.TryDequeue(out var request))
+                if (queue.TryDequeue(out GhostRequest? request))
                 {
                     Interlocked.Decrement(ref _totalPending);
                     return request;
@@ -66,12 +66,12 @@ public sealed class InMemoryRequestScheduler : IRequestScheduler
             }
         }
 
-        return await ValueTask.FromResult<GhostRequest?>(null);
+        return await ValueTask.FromResult<GhostRequest?>(null).ConfigureAwait(false);
     }
 
     public async ValueTask<int> CountAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return await ValueTask.FromResult(Volatile.Read(ref _totalPending));
+        return await ValueTask.FromResult(Volatile.Read(ref _totalPending)).ConfigureAwait(false);
     }
 }

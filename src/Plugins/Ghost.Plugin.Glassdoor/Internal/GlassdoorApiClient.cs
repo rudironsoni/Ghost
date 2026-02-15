@@ -106,11 +106,11 @@ public sealed class GlassdoorApiClient : IDisposable
     {
         if (_sessionOrchestrator != null)
         {
-            return await GetCsrfTokenWithOrchestratorAsync(ct);
+            return await GetCsrfTokenWithOrchestratorAsync(ct).ConfigureAwait(false);
         }
         else
         {
-            return await GetCsrfTokenLegacyAsync(ct);
+            return await GetCsrfTokenLegacyAsync(ct).ConfigureAwait(false);
         }
     }
 
@@ -131,11 +131,11 @@ public sealed class GlassdoorApiClient : IDisposable
                 }
             );
 
-            var sessionId = await _sessionOrchestrator!.AllocateSessionAsync(context, ct);
+            string sessionId = await _sessionOrchestrator!.AllocateSessionAsync(context, ct).ConfigureAwait(false);
 
             try
             {
-                var httpSession = await _sessionOrchestrator.GetHttpSessionAsync(sessionId, ct);
+                RotatingProxySession? httpSession = await _sessionOrchestrator.GetHttpSessionAsync(sessionId, ct).ConfigureAwait(false);
                 if (httpSession == null)
                 {
                     LogTokenExtraction($"Failed to get HTTP session {sessionId}");
@@ -144,14 +144,14 @@ public sealed class GlassdoorApiClient : IDisposable
 
                 var request = new HttpRequestMessage(HttpMethod.Get, "https://www.glassdoor.com/index.htm?loc=US");
                 request.Headers.Host = "www.glassdoor.com";
-                foreach (var header in GlassdoorConstants.CsrfHeaders)
+                foreach (KeyValuePair<string, string> header in GlassdoorConstants.CsrfHeaders)
                 {
                     request.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
 
-                var res = await _retryPolicy.ExecuteAsync(async () =>
+                HttpResponseMessage res = await _retryPolicy.ExecuteAsync(async () =>
                     await httpSession.ExecuteAsync(() => request, ct).ConfigureAwait(false)).ConfigureAwait(false);
-                var html = await res.Content.ReadAsStringAsync(ct);
+                string html = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
                 try { System.IO.File.WriteAllText("logs/glassdoor_csrf.html", html); } catch { }
 
@@ -162,14 +162,14 @@ public sealed class GlassdoorApiClient : IDisposable
                     LogTokenExtraction("Detected consent or blocked page, trying alternative approach");
 
                     var altRequest = new HttpRequestMessage(HttpMethod.Get, "https://www.glassdoor.com/index.htm");
-                    foreach (var header in GlassdoorConstants.AlternativeHeaders)
+                    foreach (KeyValuePair<string, string> header in GlassdoorConstants.AlternativeHeaders)
                     {
                         altRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
                     }
 
-                    var altRes = await _retryPolicy.ExecuteAsync(async () =>
+                    HttpResponseMessage altRes = await _retryPolicy.ExecuteAsync(async () =>
                         await httpSession.ExecuteAsync(() => altRequest, ct).ConfigureAwait(false)).ConfigureAwait(false);
-                    html = await altRes.Content.ReadAsStringAsync(ct);
+                    html = await altRes.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
                     try { System.IO.File.WriteAllText("logs/glassdoor_csrf_alt.html", html); } catch { }
 
@@ -185,7 +185,7 @@ public sealed class GlassdoorApiClient : IDisposable
                 {
                     LogTokenExtraction($"Successfully extracted token: {token.Substring(0, Math.Min(10, token.Length))}... (length: {token.Length})");
 
-                    var isValid = await ValidateTokenWithOrchestratorAsync(token, httpSession, ct);
+                    bool isValid = await ValidateTokenWithOrchestratorAsync(token, httpSession, ct).ConfigureAwait(false);
                     if (isValid)
                     {
                         LogTokenExtraction("Token validation successful");
@@ -203,7 +203,7 @@ public sealed class GlassdoorApiClient : IDisposable
             }
             finally
             {
-                await _sessionOrchestrator.CloseSessionAsync(sessionId, ct);
+                await _sessionOrchestrator.CloseSessionAsync(sessionId, ct).ConfigureAwait(false);
             }
         }
         catch (Exception ex)
@@ -222,13 +222,13 @@ public sealed class GlassdoorApiClient : IDisposable
 
             var request = new HttpRequestMessage(HttpMethod.Get, "https://www.glassdoor.com/index.htm?loc=US");
             request.Headers.Host = "www.glassdoor.com";
-            foreach (var header in GlassdoorConstants.CsrfHeaders)
+            foreach (KeyValuePair<string, string> header in GlassdoorConstants.CsrfHeaders)
             {
                 request.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
 
-            var res = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(request, ct).ConfigureAwait(false)).ConfigureAwait(false);
-            var html = await res.Content.ReadAsStringAsync(ct);
+            HttpResponseMessage res = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(request, ct).ConfigureAwait(false)).ConfigureAwait(false);
+            string html = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             // DEBUG: Write raw HTML to file
             try { System.IO.File.WriteAllText("logs/glassdoor_csrf.html", html); } catch { }
@@ -242,13 +242,13 @@ public sealed class GlassdoorApiClient : IDisposable
 
                 // Try alternative approach with different headers
                 var altRequest = new HttpRequestMessage(HttpMethod.Get, "https://www.glassdoor.com/index.htm");
-                foreach (var header in GlassdoorConstants.AlternativeHeaders)
+                foreach (KeyValuePair<string, string> header in GlassdoorConstants.AlternativeHeaders)
                 {
                     altRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
 
-                var altRes = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(altRequest, ct).ConfigureAwait(false)).ConfigureAwait(false);
-                html = await altRes.Content.ReadAsStringAsync(ct);
+                HttpResponseMessage altRes = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(altRequest, ct).ConfigureAwait(false)).ConfigureAwait(false);
+                html = await altRes.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
                 try { System.IO.File.WriteAllText("logs/glassdoor_csrf_alt.html", html); } catch { }
 
@@ -267,7 +267,7 @@ public sealed class GlassdoorApiClient : IDisposable
                 LogTokenExtraction($"Successfully extracted token: {token.Substring(0, Math.Min(10, token.Length))}... (length: {token.Length})");
 
                 // Validate the token by testing it against the API
-                var isValid = await ValidateTokenAsync(token, ct);
+                bool isValid = await ValidateTokenAsync(token, ct).ConfigureAwait(false);
                 if (isValid)
                 {
                     LogTokenExtraction("Token validation successful");
@@ -298,7 +298,7 @@ public sealed class GlassdoorApiClient : IDisposable
     {
         try
         {
-            var logMessage = $"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff}] {message}\n";
+            string logMessage = $"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff}] {message}\n";
             System.IO.File.AppendAllText("logs/glassdoor_token_extraction.log", logMessage);
         }
         catch { }
@@ -313,7 +313,7 @@ public sealed class GlassdoorApiClient : IDisposable
         {
             LogTokenExtraction($"Validating token: {token.Substring(0, Math.Min(10, token.Length))}...");
 
-            var testPayload = JsonSerializer.Serialize(new[]
+            string testPayload = JsonSerializer.Serialize(new[]
             {
                 new
                 {
@@ -341,18 +341,18 @@ public sealed class GlassdoorApiClient : IDisposable
                 Content = new StringContent(testPayload, Encoding.UTF8, new MediaTypeHeaderValue("application/json"))
             };
 
-            foreach (var header in GlassdoorConstants.GraphHeaders)
+            foreach (KeyValuePair<string, string> header in GlassdoorConstants.GraphHeaders)
             {
                 request.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
 
             request.Headers.TryAddWithoutValidation("gd-csrf-token", token);
 
-            var res = await _retryPolicy.ExecuteAsync(async () =>
+            HttpResponseMessage res = await _retryPolicy.ExecuteAsync(async () =>
                 await httpSession.ExecuteAsync(() => request, ct).ConfigureAwait(false)).ConfigureAwait(false);
-            var json = await res.Content.ReadAsStringAsync(ct);
+            string json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
-            var (hasErrors, shouldRetry) = ParseGraphQLErrors(json);
+            (bool hasErrors, bool shouldRetry) = ParseGraphQLErrors(json);
 
             if (hasErrors)
             {
@@ -383,7 +383,7 @@ public sealed class GlassdoorApiClient : IDisposable
             LogTokenExtraction($"Validating token: {token.Substring(0, Math.Min(10, token.Length))}...");
 
             // Create a minimal test payload
-            var testPayload = JsonSerializer.Serialize(new[]
+            string testPayload = JsonSerializer.Serialize(new[]
             {
                 new
                 {
@@ -411,18 +411,18 @@ public sealed class GlassdoorApiClient : IDisposable
                 Content = new StringContent(testPayload, Encoding.UTF8, new MediaTypeHeaderValue("application/json"))
             };
 
-            foreach (var header in GlassdoorConstants.GraphHeaders)
+            foreach (KeyValuePair<string, string> header in GlassdoorConstants.GraphHeaders)
             {
                 request.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
 
             request.Headers.TryAddWithoutValidation("gd-csrf-token", token);
 
-            var res = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(request, ct).ConfigureAwait(false)).ConfigureAwait(false);
-            var json = await res.Content.ReadAsStringAsync(ct);
+            HttpResponseMessage res = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(request, ct).ConfigureAwait(false)).ConfigureAwait(false);
+            string json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             // Check if response is valid (not an auth error)
-            var (hasErrors, shouldRetry) = ParseGraphQLErrors(json);
+            (bool hasErrors, bool shouldRetry) = ParseGraphQLErrors(json);
 
             if (hasErrors)
             {
@@ -455,11 +455,11 @@ public sealed class GlassdoorApiClient : IDisposable
             return null;
 
         // Primary pattern from JobSpy - most reliable
-        var primaryPattern = "\"token\"\\s*:\\s*\"([^\"]+)\"";
-        var match = Regex.Match(html, primaryPattern);
+        string primaryPattern = "\"token\"\\s*:\\s*\"([^\"]+)\"";
+        Match match = Regex.Match(html, primaryPattern);
         if (match.Success && match.Groups.Count > 1)
         {
-            var token = match.Groups[1].Value;
+            string token = match.Groups[1].Value;
             if (!string.IsNullOrEmpty(token) && token.Length > 10)
             {
                 return token;
@@ -467,7 +467,7 @@ public sealed class GlassdoorApiClient : IDisposable
         }
 
         // Enhanced fallback patterns for different HTML structures
-        var fallbackPatterns = new[]
+        string[] fallbackPatterns = new[]
         {
             "<meta[^>]*csrf-token[^>]*content=\"([^\"]+)\"[^>]*>",
             "window\\.\\w+\\s*=\\s*\\{\\s*\"token\"\\s*:\\s*\"([^\"]+)\"",
@@ -483,16 +483,16 @@ public sealed class GlassdoorApiClient : IDisposable
             "<script[^>]*>(.*?token.*?)</script>"
         };
 
-        foreach (var pattern in fallbackPatterns)
+        foreach (string? pattern in fallbackPatterns)
         {
             match = Regex.Match(html, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
             if (match.Success && match.Groups.Count > 1)
             {
-                var token = match.Groups[1].Value;
+                string token = match.Groups[1].Value;
                 if (!string.IsNullOrEmpty(token) && token.Length > 10)
                 {
                     // Try to extract token from JSON content if it's a JSON object
-                    var extractedToken = ExtractTokenFromJsonContent(token);
+                    string? extractedToken = ExtractTokenFromJsonContent(token);
                     if (!string.IsNullOrEmpty(extractedToken))
                     {
                         return extractedToken;
@@ -503,13 +503,13 @@ public sealed class GlassdoorApiClient : IDisposable
         }
 
         // JSON-based extraction: Parse all JSON script tags and search recursively
-        var jsonScriptPattern = @"<script[^>]*type\s*=\s*[""']application/json[""'][^>]*>(.*?)</script>";
-        var jsonMatches = Regex.Matches(html, jsonScriptPattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        string jsonScriptPattern = @"<script[^>]*type\s*=\s*[""']application/json[""'][^>]*>(.*?)</script>";
+        MatchCollection jsonMatches = Regex.Matches(html, jsonScriptPattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
         foreach (Match jsonMatch in jsonMatches)
         {
-            var jsonContent = jsonMatch.Groups[1].Value;
-            var token = ExtractTokenFromJsonRecursively(jsonContent);
+            string jsonContent = jsonMatch.Groups[1].Value;
+            string? token = ExtractTokenFromJsonRecursively(jsonContent);
             if (!string.IsNullOrEmpty(token))
             {
                 return token;
@@ -542,7 +542,7 @@ public sealed class GlassdoorApiClient : IDisposable
     {
         if (element.ValueKind == JsonValueKind.String)
         {
-            var value = element.GetString();
+            string? value = element.GetString();
             if (!string.IsNullOrEmpty(value) && value.Length > 10 && (value.Contains("csrf") || value.Contains("token")))
             {
                 return value;
@@ -550,12 +550,12 @@ public sealed class GlassdoorApiClient : IDisposable
         }
         else if (element.ValueKind == JsonValueKind.Object)
         {
-            foreach (var property in element.EnumerateObject())
+            foreach (JsonProperty property in element.EnumerateObject())
             {
-                var propertyName = property.Name.ToLowerInvariant();
+                string propertyName = property.Name.ToLowerInvariant();
                 if (propertyName.Contains("token") || propertyName.Contains("csrf"))
                 {
-                    var token = FindTokenInJsonElement(property.Value);
+                    string? token = FindTokenInJsonElement(property.Value);
                     if (!string.IsNullOrEmpty(token))
                     {
                         return token;
@@ -563,7 +563,7 @@ public sealed class GlassdoorApiClient : IDisposable
                 }
                 else
                 {
-                    var token = FindTokenInJsonElement(property.Value);
+                    string? token = FindTokenInJsonElement(property.Value);
                     if (!string.IsNullOrEmpty(token))
                     {
                         return token;
@@ -573,9 +573,9 @@ public sealed class GlassdoorApiClient : IDisposable
         }
         else if (element.ValueKind == JsonValueKind.Array)
         {
-            foreach (var item in element.EnumerateArray())
+            foreach (JsonElement item in element.EnumerateArray())
             {
-                var token = FindTokenInJsonElement(item);
+                string? token = FindTokenInJsonElement(item);
                 if (!string.IsNullOrEmpty(token))
                 {
                     return token;
@@ -598,19 +598,19 @@ public sealed class GlassdoorApiClient : IDisposable
         catch
         {
             // If JSON parsing fails, try regex patterns on the raw content
-            var tokenPatterns = new[]
+            string[] tokenPatterns = new[]
             {
                 "\"token\"\\s*:\\s*\"([^\"]+)\"",
                 "\"csrf\"\\s*:\\s*\"([^\"]+)\"",
                 "\"gd-csrf-token\"\\s*:\\s*\"([^\"]+)\""
             };
 
-            foreach (var pattern in tokenPatterns)
+            foreach (string? pattern in tokenPatterns)
             {
-                var match = Regex.Match(jsonContent, pattern, RegexOptions.IgnoreCase);
+                Match match = Regex.Match(jsonContent, pattern, RegexOptions.IgnoreCase);
                 if (match.Success && match.Groups.Count > 1)
                 {
-                    var token = match.Groups[1].Value;
+                    string token = match.Groups[1].Value;
                     if (!string.IsNullOrEmpty(token) && token.Length > 10)
                     {
                         return token;
@@ -638,16 +638,16 @@ public sealed class GlassdoorApiClient : IDisposable
         // visibility.
 
         // Default location ID for remote (from JobSpy)
-        var defaultLocationId = 11047;
-        var defaultLocationType = "STATE";
+        int defaultLocationId = 11047;
+        string defaultLocationType = "STATE";
 
-        var resolvedLocationId = defaultLocationId;
-        var resolvedLocationType = defaultLocationType;
+        int resolvedLocationId = defaultLocationId;
+        string resolvedLocationType = defaultLocationType;
 
         if (!string.IsNullOrWhiteSpace(location))
         {
             // Normalize
-            var loc = location.Trim().ToLowerInvariant();
+            string loc = location.Trim().ToLowerInvariant();
 
             // Basic mapping for common locations. These IDs are best-effort and
             // may need refinement; they are chosen to change the search scope
@@ -684,8 +684,8 @@ public sealed class GlassdoorApiClient : IDisposable
                     break;
                 case var s when s.StartsWith("province:", StringComparison.Ordinal) || s.StartsWith("state:", StringComparison.Ordinal):
                     // Allow callers to pass "state:11047" or "province:5" to force an id
-                    var parts = s.Split(':', 2);
-                    if (parts.Length == 2 && int.TryParse(parts[1], out var parsedId))
+                    string[] parts = s.Split(':', 2);
+                    if (parts.Length == 2 && int.TryParse(parts[1], out int parsedId))
                     {
                         resolvedLocationId = parsedId;
                         resolvedLocationType = s.StartsWith("province:", StringComparison.Ordinal) ? "PROVINCE" : "STATE";
@@ -741,7 +741,7 @@ public sealed class GlassdoorApiClient : IDisposable
         try
         {
             LogTokenExtraction($"SearchAsync: Attempting simple HTTP scraper first");
-            var result = await SearchWithSimpleHttpAsync(keyword, location, ct);
+            string? result = await SearchWithSimpleHttpAsync(keyword, location, ct).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(result))
             {
                 LogTokenExtraction($"Simple HTTP scraper succeeded for query: {keyword}");
@@ -758,12 +758,12 @@ public sealed class GlassdoorApiClient : IDisposable
         if (_sessionOrchestrator != null)
         {
             LogTokenExtraction($"SearchAsync: Using SessionOrchestrator approach");
-            return await SearchWithOrchestratorAsync(keyword, location, csrfToken, ct);
+            return await SearchWithOrchestratorAsync(keyword, location, csrfToken, ct).ConfigureAwait(false);
         }
         else
         {
             LogTokenExtraction($"SearchAsync: Using Legacy approach");
-            return await SearchLegacyAsync(keyword, location, csrfToken, ct);
+            return await SearchLegacyAsync(keyword, location, csrfToken, ct).ConfigureAwait(false);
         }
     }
 
@@ -778,9 +778,9 @@ public sealed class GlassdoorApiClient : IDisposable
         try
         {
             // Build the search URL
-            var encodedKeyword = Uri.EscapeDataString(keyword);
-            var encodedLocation = Uri.EscapeDataString(location ?? "");
-            var searchUrl = $"https://www.glassdoor.com/Job/jobs.htm?sc.keyword={encodedKeyword}";
+            string encodedKeyword = Uri.EscapeDataString(keyword);
+            string encodedLocation = Uri.EscapeDataString(location ?? "");
+            string searchUrl = $"https://www.glassdoor.com/Job/jobs.htm?sc.keyword={encodedKeyword}";
 
             if (!string.IsNullOrWhiteSpace(location))
             {
@@ -816,10 +816,10 @@ public sealed class GlassdoorApiClient : IDisposable
             request.Headers.TryAddWithoutValidation("Sec-Fetch-Site", "none");
             request.Headers.TryAddWithoutValidation("Sec-Fetch-User", "?1");
 
-            var response = await httpClient.SendAsync(request, ct);
+            HttpResponseMessage response = await httpClient.SendAsync(request, ct).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var html = await response.Content.ReadAsStringAsync(ct);
+            string html = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             // Log the HTML for debugging
             try { System.IO.File.WriteAllText("logs/glassdoor_simple_http.html", html); } catch { }
@@ -827,7 +827,7 @@ public sealed class GlassdoorApiClient : IDisposable
             LogTokenExtraction($"Simple HTTP: Received {html.Length} characters");
 
             // Parse the HTML to extract job data
-            var jobsJson = ParseHtmlToJobsJson(html);
+            string? jobsJson = ParseHtmlToJobsJson(html);
 
             if (!string.IsNullOrEmpty(jobsJson))
             {
@@ -860,7 +860,7 @@ public sealed class GlassdoorApiClient : IDisposable
 
             // Look for embedded JSON data in script tags (modern Glassdoor often embeds data)
             // Pattern 1: Look for window.gdInitialState or similar
-            var jsonPatterns = new[]
+            string[] jsonPatterns = new[]
             {
                 @"window\.gdInitialState\s*=\s*({.*?});",
                 @"window\.__INITIAL_STATE__\s*=\s*({.*?});",
@@ -869,16 +869,16 @@ public sealed class GlassdoorApiClient : IDisposable
                 @"<script[^>]*id\s*=\s*[""']__NEXT_DATA__[""'][^>]*type\s*=\s*[""']application/json[""'][^>]*>(.*?)</script>"
             };
 
-            foreach (var pattern in jsonPatterns)
+            foreach (string? pattern in jsonPatterns)
             {
-                var match = Regex.Match(html, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                Match match = Regex.Match(html, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
                 if (match.Success && match.Groups.Count > 1)
                 {
-                    var jsonContent = match.Groups[1].Value;
+                    string jsonContent = match.Groups[1].Value;
                     try
                     {
                         using var doc = JsonDocument.Parse(jsonContent);
-                        var extractedJobs = ExtractJobsFromJsonElement(doc.RootElement);
+                        List<object> extractedJobs = ExtractJobsFromJsonElement(doc.RootElement);
                         if (extractedJobs.Count > 0)
                         {
                             jobs.AddRange(extractedJobs);
@@ -899,7 +899,7 @@ public sealed class GlassdoorApiClient : IDisposable
                 return null;
 
             // Return JSON in a format compatible with existing parser
-            var result = JsonSerializer.Serialize(new
+            string result = JsonSerializer.Serialize(new
             {
                 data = new
                 {
@@ -929,7 +929,7 @@ public sealed class GlassdoorApiClient : IDisposable
             // Recursively search for job data in the JSON structure
             if (element.ValueKind == JsonValueKind.Object)
             {
-                foreach (var prop in element.EnumerateObject())
+                foreach (JsonProperty prop in element.EnumerateObject())
                 {
                     // Look for properties that likely contain job listings
                     if (prop.Name.Contains("job", StringComparison.OrdinalIgnoreCase) ||
@@ -938,9 +938,9 @@ public sealed class GlassdoorApiClient : IDisposable
                     {
                         if (prop.Value.ValueKind == JsonValueKind.Array)
                         {
-                            foreach (var item in prop.Value.EnumerateArray())
+                            foreach (JsonElement item in prop.Value.EnumerateArray())
                             {
-                                var job = ExtractJobFromElement(item);
+                                object? job = ExtractJobFromElement(item);
                                 if (job != null)
                                     jobs.Add(job);
                             }
@@ -958,9 +958,9 @@ public sealed class GlassdoorApiClient : IDisposable
             }
             else if (element.ValueKind == JsonValueKind.Array)
             {
-                foreach (var item in element.EnumerateArray())
+                foreach (JsonElement item in element.EnumerateArray())
                 {
-                    var job = ExtractJobFromElement(item);
+                    object? job = ExtractJobFromElement(item);
                     if (job != null)
                         jobs.Add(job);
                     else
@@ -996,21 +996,21 @@ public sealed class GlassdoorApiClient : IDisposable
                 link = GetJsonString(element, "jobLink", "link", "url");
 
                 // Check for nested structures (header, job, employer, etc.)
-                if (element.TryGetProperty("jobview", out var jobview))
+                if (element.TryGetProperty("jobview", out JsonElement jobview))
                 {
-                    if (jobview.TryGetProperty("header", out var header))
+                    if (jobview.TryGetProperty("header", out JsonElement header))
                     {
                         title ??= GetJsonString(header, "jobTitleText", "jobTitle");
                         location ??= GetJsonString(header, "locationName", "location");
                         link ??= GetJsonString(header, "jobLink");
 
-                        if (header.TryGetProperty("employer", out var employer))
+                        if (header.TryGetProperty("employer", out JsonElement employer))
                         {
                             company ??= GetJsonString(employer, "name");
                         }
                     }
 
-                    if (jobview.TryGetProperty("job", out var job))
+                    if (jobview.TryGetProperty("job", out JsonElement job))
                     {
                         id ??= GetJsonString(job, "listingId");
                         description ??= GetJsonString(job, "description");
@@ -1048,11 +1048,11 @@ public sealed class GlassdoorApiClient : IDisposable
 
     private static string? GetJsonString(JsonElement element, params string[] keys)
     {
-        foreach (var key in keys)
+        foreach (string key in keys)
         {
-            if (element.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.String)
+            if (element.TryGetProperty(key, out JsonElement value) && value.ValueKind == JsonValueKind.String)
             {
-                var str = value.GetString();
+                string? str = value.GetString();
                 if (!string.IsNullOrWhiteSpace(str))
                     return str;
             }
@@ -1068,9 +1068,9 @@ public sealed class GlassdoorApiClient : IDisposable
         {
             // Use regex to find job card data attributes or structured data
             // Pattern: Look for data-* attributes with job information
-            var jobCardPattern = @"<(?:li|div|article)[^>]*(?:data-job-id|data-id|id)[^>]*=[\""']([^\""']+)[\""'][^>]*>.*?(?:data-job-title|class[\""'][^>]*job-title)[^>]*>([^<]+)<.*?(?:data-employer-name|class[\""'][^>]*employer)[^>]*>([^<]+)<.*?(?:data-location|class[\""'][^>]*location)[^>]*>([^<]+)<";
+            string jobCardPattern = @"<(?:li|div|article)[^>]*(?:data-job-id|data-id|id)[^>]*=[\""']([^\""']+)[\""'][^>]*>.*?(?:data-job-title|class[\""'][^>]*job-title)[^>]*>([^<]+)<.*?(?:data-employer-name|class[\""'][^>]*employer)[^>]*>([^<]+)<.*?(?:data-location|class[\""'][^>]*location)[^>]*>([^<]+)<";
 
-            var matches = Regex.Matches(html, jobCardPattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            MatchCollection matches = Regex.Matches(html, jobCardPattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
             foreach (Match match in matches)
             {
@@ -1101,8 +1101,8 @@ public sealed class GlassdoorApiClient : IDisposable
             // Alternative pattern: Look for structured data (JSON-LD)
             if (jobs.Count == 0)
             {
-                var jsonLdPattern = @"<script[^>]*type\s*=\s*[""']application/ld\+json[""'][^>]*>(.*?)</script>";
-                var jsonLdMatches = Regex.Matches(html, jsonLdPattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                string jsonLdPattern = @"<script[^>]*type\s*=\s*[""']application/ld\+json[""'][^>]*>(.*?)</script>";
+                MatchCollection jsonLdMatches = Regex.Matches(html, jsonLdPattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
                 foreach (Match match in jsonLdMatches)
                 {
@@ -1110,19 +1110,19 @@ public sealed class GlassdoorApiClient : IDisposable
                     {
                         try
                         {
-                            var jsonContent = match.Groups[1].Value;
+                            string jsonContent = match.Groups[1].Value;
                             using var doc = JsonDocument.Parse(jsonContent);
-                            var root = doc.RootElement;
+                            JsonElement root = doc.RootElement;
 
                             // Check if it's a JobPosting
-                            if (root.TryGetProperty("@type", out var type) &&
+                            if (root.TryGetProperty("@type", out JsonElement type) &&
                                 type.GetString()?.Contains("JobPosting", StringComparison.OrdinalIgnoreCase) == true)
                             {
-                                var title = GetJsonString(root, "title", "name");
-                                var company = GetJsonString(root, "hiringOrganization", "companyName");
-                                var location = GetJsonString(root, "jobLocation", "addressLocality");
-                                var description = GetJsonString(root, "description");
-                                var id = GetJsonString(root, "identifier", "jobId");
+                                string? title = GetJsonString(root, "title", "name");
+                                string? company = GetJsonString(root, "hiringOrganization", "companyName");
+                                string? location = GetJsonString(root, "jobLocation", "addressLocality");
+                                string? description = GetJsonString(root, "description");
+                                string? id = GetJsonString(root, "identifier", "jobId");
 
                                 if (!string.IsNullOrEmpty(title))
                                 {
@@ -1159,7 +1159,7 @@ public sealed class GlassdoorApiClient : IDisposable
 
     private async Task<string?> SearchWithOrchestratorAsync(string keyword, string? location, string? csrfToken, CancellationToken ct)
     {
-        var affinityKey = $"glassdoor_{keyword}_{location}_{Guid.NewGuid():N}";
+        string affinityKey = $"glassdoor_{keyword}_{location}_{Guid.NewGuid():N}";
 
         try
         {
@@ -1181,28 +1181,28 @@ public sealed class GlassdoorApiClient : IDisposable
                 AllowFallback: true
             );
 
-            _currentSessionId = await _sessionOrchestrator!.AllocateSessionWithAffinityAsync(context, affinityOptions, ct);
+            _currentSessionId = await _sessionOrchestrator!.AllocateSessionWithAffinityAsync(context, affinityOptions, ct).ConfigureAwait(false);
             if (_logger != null) LogSessionAllocated(_logger, _currentSessionId, null);
 
-            var httpSession = await _sessionOrchestrator.GetHttpSessionAsync(_currentSessionId, ct);
+            RotatingProxySession? httpSession = await _sessionOrchestrator.GetHttpSessionAsync(_currentSessionId, ct).ConfigureAwait(false);
             if (httpSession == null)
             {
                 if (_logger != null) LogSessionGetFailed(_logger, _currentSessionId, null);
                 return null;
             }
 
-            var token = csrfToken ?? await GetCsrfTokenWithOrchestratorAsync(ct);
+            string? token = csrfToken ?? await GetCsrfTokenWithOrchestratorAsync(ct).ConfigureAwait(false);
 
-            var payload = BuildSearchPayload(keyword, location);
+            string payload = BuildSearchPayload(keyword, location);
 
-            await ApplyRateLimitAsync(ct);
+            await ApplyRateLimitAsync(ct).ConfigureAwait(false);
 
             var request = new HttpRequestMessage(HttpMethod.Post, GlassdoorConstants.ApiUrl)
             {
                 Content = new StringContent(payload, Encoding.UTF8, new MediaTypeHeaderValue("application/json"))
             };
 
-            foreach (var header in GlassdoorConstants.GraphHeaders)
+            foreach (KeyValuePair<string, string> header in GlassdoorConstants.GraphHeaders)
             {
                 request.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
@@ -1214,14 +1214,14 @@ public sealed class GlassdoorApiClient : IDisposable
 
             try
             {
-                var res = await _retryPolicy.ExecuteAsync(async () =>
+                HttpResponseMessage res = await _retryPolicy.ExecuteAsync(async () =>
                 {
                     var retryRequest = new HttpRequestMessage(HttpMethod.Post, GlassdoorConstants.ApiUrl)
                     {
                         Content = new StringContent(payload, Encoding.UTF8, new MediaTypeHeaderValue("application/json"))
                     };
 
-                    foreach (var header in GlassdoorConstants.GraphHeaders)
+                    foreach (KeyValuePair<string, string> header in GlassdoorConstants.GraphHeaders)
                     {
                         retryRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
                     }
@@ -1234,15 +1234,15 @@ public sealed class GlassdoorApiClient : IDisposable
                     return await httpSession.ExecuteAsync(() => retryRequest, ct).ConfigureAwait(false);
                 }).ConfigureAwait(false);
 
-                var json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                string json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
                 try { System.IO.File.WriteAllText($"logs/glassdoor_search.json", json); } catch { }
 
-                var (hasErrors, shouldRetry) = ParseGraphQLErrors(json);
+                (bool hasErrors, bool shouldRetry) = ParseGraphQLErrors(json);
 
                 if (hasErrors)
                 {
-                    await CheckAndRecycleSessionAsync();
+                    await CheckAndRecycleSessionAsync().ConfigureAwait(false);
                     return null;
                 }
 
@@ -1263,7 +1263,7 @@ public sealed class GlassdoorApiClient : IDisposable
                 {
                     LogSearchFailed(_logger, ex);
                 }
-                await CheckAndRecycleSessionAsync();
+                await CheckAndRecycleSessionAsync().ConfigureAwait(false);
                 return null;
             }
         }
@@ -1271,7 +1271,7 @@ public sealed class GlassdoorApiClient : IDisposable
         {
             if (_currentSessionId != null)
             {
-                await _sessionOrchestrator!.CloseSessionAsync(_currentSessionId, ct);
+                await _sessionOrchestrator!.CloseSessionAsync(_currentSessionId, ct).ConfigureAwait(false);
                 _currentSessionId = null;
             }
         }
@@ -1280,22 +1280,22 @@ public sealed class GlassdoorApiClient : IDisposable
     private async Task<string?> SearchLegacyAsync(string keyword, string? location, string? csrfToken, CancellationToken ct)
     {
         LogTokenExtraction($"SearchLegacyAsync: Starting with keyword='{keyword}', location='{location}'");
-        var token = csrfToken ?? await GetCsrfTokenAsync(ct);
+        string? token = csrfToken ?? await GetCsrfTokenAsync(ct).ConfigureAwait(false);
         LogTokenExtraction($"SearchLegacyAsync: Got token={token?.Substring(0, Math.Min(10, token?.Length ?? 0)) ?? "null"}");
 
         // Build payload based on JobSpy's structure
-        var payload = BuildSearchPayload(keyword, location);
+        string payload = BuildSearchPayload(keyword, location);
         LogTokenExtraction($"SearchLegacyAsync: Built payload length={payload.Length}");
 
         // Apply rate limiting before the request
-        await ApplyRateLimitAsync(ct);
+        await ApplyRateLimitAsync(ct).ConfigureAwait(false);
 
         var request = new HttpRequestMessage(HttpMethod.Post, GlassdoorConstants.ApiUrl)
         {
             Content = new StringContent(payload, Encoding.UTF8, new MediaTypeHeaderValue("application/json"))
         };
 
-        foreach (var header in GlassdoorConstants.GraphHeaders)
+        foreach (KeyValuePair<string, string> header in GlassdoorConstants.GraphHeaders)
         {
             request.Headers.TryAddWithoutValidation(header.Key, header.Value);
         }
@@ -1309,7 +1309,7 @@ public sealed class GlassdoorApiClient : IDisposable
         {
             LogTokenExtraction($"SearchLegacyAsync: Sending POST request to {GlassdoorConstants.ApiUrl}");
             // Use EnhancedRetryPolicy for automatic retry with exponential backoff
-            var res = await _retryPolicy.ExecuteAsync(async () =>
+            HttpResponseMessage res = await _retryPolicy.ExecuteAsync(async () =>
             {
                 // Create a new request for each retry attempt
                 var retryRequest = new HttpRequestMessage(HttpMethod.Post, GlassdoorConstants.ApiUrl)
@@ -1317,7 +1317,7 @@ public sealed class GlassdoorApiClient : IDisposable
                     Content = new StringContent(payload, Encoding.UTF8, new MediaTypeHeaderValue("application/json"))
                 };
 
-                foreach (var header in GlassdoorConstants.GraphHeaders)
+                foreach (KeyValuePair<string, string> header in GlassdoorConstants.GraphHeaders)
                 {
                     retryRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
@@ -1331,14 +1331,14 @@ public sealed class GlassdoorApiClient : IDisposable
             }).ConfigureAwait(false);
 
             LogTokenExtraction($"SearchLegacyAsync: Got response StatusCode={res.StatusCode}");
-            var json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            string json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
             LogTokenExtraction($"SearchLegacyAsync: Response length={json.Length}");
 
             // DEBUG: Write raw JSON to file
             try { System.IO.File.WriteAllText($"logs/glassdoor_search.json", json); } catch { }
 
             // Parse GraphQL response for errors
-            var (hasErrors, shouldRetry) = ParseGraphQLErrors(json);
+            (bool hasErrors, bool shouldRetry) = ParseGraphQLErrors(json);
             LogTokenExtraction($"SearchLegacyAsync: ParseGraphQLErrors returned hasErrors={hasErrors}, shouldRetry={shouldRetry}");
 
             if (hasErrors)
@@ -1382,14 +1382,14 @@ public sealed class GlassdoorApiClient : IDisposable
     /// </summary>
     private async Task ApplyRateLimitAsync(CancellationToken ct)
     {
-        await _rateLimitSemaphore.WaitAsync(ct);
+        await _rateLimitSemaphore.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            var timeSinceLastRequest = DateTime.UtcNow - _lastRequestTime;
+            TimeSpan timeSinceLastRequest = DateTime.UtcNow - _lastRequestTime;
             if (timeSinceLastRequest < _rateLimitDelay)
             {
-                var waitTime = _rateLimitDelay - timeSinceLastRequest;
-                await Task.Delay(waitTime, ct);
+                TimeSpan waitTime = _rateLimitDelay - timeSinceLastRequest;
+                await Task.Delay(waitTime, ct).ConfigureAwait(false);
             }
             _lastRequestTime = DateTime.UtcNow;
         }
@@ -1439,7 +1439,7 @@ public sealed class GlassdoorApiClient : IDisposable
         try
         {
             using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
+            JsonElement root = doc.RootElement;
 
             // Handle case where root is an array (not a GraphQL response)
             if (root.ValueKind == JsonValueKind.Array)
@@ -1448,14 +1448,14 @@ public sealed class GlassdoorApiClient : IDisposable
             }
 
             // Check for GraphQL errors array
-            if (root.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Array)
+            if (root.TryGetProperty("errors", out JsonElement errors) && errors.ValueKind == JsonValueKind.Array)
             {
-                foreach (var error in errors.EnumerateArray())
+                foreach (JsonElement error in errors.EnumerateArray())
                 {
                     if (error.ValueKind == JsonValueKind.Object)
                     {
                         // Extract error message
-                        var message = error.TryGetProperty("message", out var msg)
+                        string message = error.TryGetProperty("message", out JsonElement msg)
                             ? msg.GetString() ?? ""
                             : "";
 
@@ -1484,7 +1484,7 @@ public sealed class GlassdoorApiClient : IDisposable
             }
 
             // Check for success indicator
-            if (root.TryGetProperty("data", out var data) && data.ValueKind != JsonValueKind.Null)
+            if (root.TryGetProperty("data", out JsonElement data) && data.ValueKind != JsonValueKind.Null)
             {
                 return (false, false); // Success - no errors
             }
@@ -1507,11 +1507,11 @@ public sealed class GlassdoorApiClient : IDisposable
 
         try
         {
-            var health = await _sessionOrchestrator.GetSessionHealthAsync(_currentSessionId, default);
+            SessionHealthMetrics health = await _sessionOrchestrator.GetSessionHealthAsync(_currentSessionId, default).ConfigureAwait(false);
             if (health.Health == SessionHealth.Unhealthy)
             {
                 if (_logger != null) LogSessionRecycled(_logger, _currentSessionId, null);
-                await _sessionOrchestrator.RecycleSessionAsync(_currentSessionId, default);
+                await _sessionOrchestrator.RecycleSessionAsync(_currentSessionId, default).ConfigureAwait(false);
                 _currentSessionId = null;
             }
         }

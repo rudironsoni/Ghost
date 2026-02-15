@@ -88,7 +88,7 @@ public static class RateLimitProfile
         string path = "/date-limit",
         int delaySeconds = 120)
     {
-        var retryAfterDate = DateTimeOffset.UtcNow.AddSeconds(delaySeconds).ToString("R");
+        string retryAfterDate = DateTimeOffset.UtcNow.AddSeconds(delaySeconds).ToString("R");
 
         server
             .Given(Request.Create()

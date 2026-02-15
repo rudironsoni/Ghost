@@ -23,5 +23,5 @@ public interface IRetryPolicy
     /// <exception cref="Exception">
     /// Throws the last exception encountered if all retry attempts are exhausted.
     /// </exception>
-    Task<T> ExecuteAsync<T>(Func<Task<T>> operation, CancellationToken ct = default);
+    public Task<T> ExecuteAsync<T>(Func<Task<T>> operation, CancellationToken ct = default);
 }

@@ -13,7 +13,7 @@ public class HealthReportServiceTests
     {
         var service = new HealthReportService(Array.Empty<IProxySource>(), Array.Empty<IJobScraper>(), NullLogger<HealthReportService>.Instance);
 
-        var report = await service.BuildReportAsync(CancellationToken.None);
+        HealthReport report = await service.BuildReportAsync(CancellationToken.None).ConfigureAwait(false);
 
         report.Platforms.Should().BeEmpty();
         report.Proxies.Should().BeEmpty();
@@ -22,7 +22,7 @@ public class HealthReportServiceTests
     [Fact]
     public async Task BuildReportAsyncReturnsOneProxyEntryPerSource()
     {
-        var sources = new[]
+        TestProxySource[] sources = new[]
         {
             new TestProxySource(),
             new TestProxySource(),
@@ -30,7 +30,7 @@ public class HealthReportServiceTests
         };
         var service = new HealthReportService(sources, Array.Empty<IJobScraper>(), NullLogger<HealthReportService>.Instance);
 
-        var report = await service.BuildReportAsync(CancellationToken.None);
+        HealthReport report = await service.BuildReportAsync(CancellationToken.None).ConfigureAwait(false);
 
         report.Proxies.Should().HaveCount(3);
     }
@@ -40,7 +40,7 @@ public class HealthReportServiceTests
     {
         var service = new HealthReportService(new[] { new TestProxySource(new[] { new ProxyInfo("proxy://one", null, null) }) }, Array.Empty<IJobScraper>(), NullLogger<HealthReportService>.Instance);
 
-        var report = await service.BuildReportAsync(CancellationToken.None);
+        HealthReport report = await service.BuildReportAsync(CancellationToken.None).ConfigureAwait(false);
 
         report.Proxies.Should().AllSatisfy(proxy => proxy.IsHealthy.Should().BeTrue());
     }
@@ -52,9 +52,9 @@ public class HealthReportServiceTests
         cts.Cancel();
         var service = new HealthReportService(Array.Empty<IProxySource>(), Array.Empty<IJobScraper>(), NullLogger<HealthReportService>.Instance);
 
-        var act = () => service.BuildReportAsync(cts.Token);
+        Func<Task<HealthReport>> act = () => service.BuildReportAsync(cts.Token);
 
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
     }
 
     private sealed class TestProxySource : IProxySource

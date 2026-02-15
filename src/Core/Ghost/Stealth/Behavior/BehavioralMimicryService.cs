@@ -60,13 +60,13 @@ public sealed partial class BehavioralMimicryService
         LogNavigating(url);
 
         // Small delay before navigation (simulates thinking/URL typing)
-        await Timing.ReadingDelayAsync(cancellationToken);
+        await Timing.ReadingDelayAsync(cancellationToken).ConfigureAwait(false);
 
         // Navigate
-        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle }).ConfigureAwait(false);
 
         // Delay after navigation (simulates page scanning)
-        await Timing.NavigationDelayAsync(cancellationToken);
+        await Timing.NavigationDelayAsync(cancellationToken).ConfigureAwait(false);
 
         LogNavigationCompleted(url);
     }
@@ -91,13 +91,13 @@ public sealed partial class BehavioralMimicryService
         LogFillingFormField();
 
         // Click the field to focus it
-        await Click.ClickHumanLikeAsync(page.Mouse, element, cancellationToken);
+        await Click.ClickHumanLikeAsync(page.Mouse, element, cancellationToken).ConfigureAwait(false);
 
         // Delay before typing (simulates thinking)
-        await Timing.FormFieldDelayAsync(cancellationToken);
+        await Timing.FormFieldDelayAsync(cancellationToken).ConfigureAwait(false);
 
         // Type with human-like speed (50-150ms per character)
-        await element.PressSequentiallyAsync(text, new() { Delay = Random.Shared.Next(50, 151) });
+        await element.PressSequentiallyAsync(text, new() { Delay = Random.Shared.Next(50, 151) }).ConfigureAwait(false);
 
         LogFormFieldFilled();
     }
@@ -119,13 +119,13 @@ public sealed partial class BehavioralMimicryService
         LogScrollingAndClicking();
 
         // Scroll element into view
-        await Scroll.ScrollIntoViewHumanLikeAsync(element, page.Mouse, cancellationToken);
+        await Scroll.ScrollIntoViewHumanLikeAsync(element, page.Mouse, cancellationToken).ConfigureAwait(false);
 
         // Brief pause after scrolling (simulates locating element)
-        await Timing.ReadingDelayAsync(cancellationToken);
+        await Timing.ReadingDelayAsync(cancellationToken).ConfigureAwait(false);
 
         // Click the element
-        await Click.ClickHumanLikeAsync(page.Mouse, element, cancellationToken);
+        await Click.ClickHumanLikeAsync(page.Mouse, element, cancellationToken).ConfigureAwait(false);
 
         LogClickCompleted();
     }
@@ -150,15 +150,15 @@ public sealed partial class BehavioralMimicryService
 
         LogSimulatingReading(durationSeconds);
 
-        var endTime = DateTime.UtcNow.AddSeconds(durationSeconds);
+        DateTime endTime = DateTime.UtcNow.AddSeconds(durationSeconds);
 
         while (DateTime.UtcNow < endTime && !cancellationToken.IsCancellationRequested)
         {
             // Random micro-scroll
-            await Scroll.MicroScrollAsync(page.Mouse, cancellationToken);
+            await Scroll.MicroScrollAsync(page.Mouse, cancellationToken).ConfigureAwait(false);
 
             // Reading pause (1-3 seconds)
-            await Timing.CustomDelayAsync(1000, 3000, cancellationToken);
+            await Timing.CustomDelayAsync(1000, 3000, cancellationToken).ConfigureAwait(false);
         }
 
         LogReadingCompleted();
@@ -178,10 +178,10 @@ public sealed partial class BehavioralMimicryService
         LogWaitingForPageLoad();
 
         // Wait for network to be idle
-        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle).ConfigureAwait(false);
 
         // Human-like delay after page load (simulates scanning page)
-        await Timing.NavigationDelayAsync(cancellationToken);
+        await Timing.NavigationDelayAsync(cancellationToken).ConfigureAwait(false);
 
         LogPageLoadCompleted();
     }

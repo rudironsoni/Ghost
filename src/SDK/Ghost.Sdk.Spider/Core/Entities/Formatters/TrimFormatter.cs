@@ -45,7 +45,7 @@ public class TrimFormatter : Formatter
         if (string.IsNullOrEmpty(str))
             return str;
 
-        var trimChars = TrimChars?.ToCharArray();
+        char[]? trimChars = TrimChars?.ToCharArray();
 
         if (TrimStart && !TrimEnd)
             return trimChars != null ? str.TrimStart(trimChars) : str.TrimStart();

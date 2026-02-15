@@ -35,7 +35,7 @@ public class JmesPathSelector : ISelector
 
         try
         {
-            var result = _jmesPath.Transform(content, Expression);
+            string result = _jmesPath.Transform(content, Expression);
 
             if (string.IsNullOrEmpty(result))
                 return new List<string>();
@@ -45,16 +45,16 @@ public class JmesPathSelector : ISelector
             if (parsedResult is JArray array)
             {
                 var results = new List<string>();
-                foreach (var item in array)
+                foreach (JToken item in array)
                 {
-                    var value = ExtractValue(item);
+                    string? value = ExtractValue(item);
                     if (value != null)
                         results.Add(value);
                 }
                 return results;
             }
 
-            var singleValue = ExtractValue(parsedResult);
+            string? singleValue = ExtractValue(parsedResult);
             return singleValue != null ? new List<string> { singleValue } : new List<string>();
         }
         catch
@@ -71,7 +71,7 @@ public class JmesPathSelector : ISelector
 
         try
         {
-            var result = _jmesPath.Transform(content, Expression);
+            string result = _jmesPath.Transform(content, Expression);
 
             if (string.IsNullOrEmpty(result))
                 return null;

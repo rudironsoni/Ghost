@@ -37,10 +37,10 @@ public sealed class ConfigurationLoader
             throw new FileNotFoundException($"Configuration file not found: {filePath}", filePath);
         }
 
-        var content = await File.ReadAllTextAsync(filePath, cancellationToken);
-        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+        string content = await File.ReadAllTextAsync(filePath, cancellationToken).ConfigureAwait(false);
+        string extension = Path.GetExtension(filePath).ToLowerInvariant();
 
-        var result = extension switch
+        ConfigurationCompilationResult result = extension switch
         {
             ".yaml" or ".yml" => _compiler.CompileFromYaml(content),
             ".json" => _compiler.CompileFromJson(content),
@@ -50,7 +50,7 @@ public sealed class ConfigurationLoader
 
         if (!result.IsSuccess)
         {
-            var errorMessage = string.Join(Environment.NewLine, result.Errors);
+            string errorMessage = string.Join(Environment.NewLine, result.Errors);
             throw new InvalidOperationException(
                 $"Configuration validation failed:{Environment.NewLine}{errorMessage}");
         }
@@ -66,11 +66,11 @@ public sealed class ConfigurationLoader
     /// <exception cref="InvalidOperationException">Thrown when compilation fails.</exception>
     public SpiderConfiguration LoadFromYaml(string yamlContent)
     {
-        var result = _compiler.CompileFromYaml(yamlContent);
+        ConfigurationCompilationResult result = _compiler.CompileFromYaml(yamlContent);
 
         if (!result.IsSuccess)
         {
-            var errorMessage = string.Join(Environment.NewLine, result.Errors);
+            string errorMessage = string.Join(Environment.NewLine, result.Errors);
             throw new InvalidOperationException(
                 $"Configuration validation failed:{Environment.NewLine}{errorMessage}");
         }
@@ -86,11 +86,11 @@ public sealed class ConfigurationLoader
     /// <exception cref="InvalidOperationException">Thrown when compilation fails.</exception>
     public SpiderConfiguration LoadFromJson(string jsonContent)
     {
-        var result = _compiler.CompileFromJson(jsonContent);
+        ConfigurationCompilationResult result = _compiler.CompileFromJson(jsonContent);
 
         if (!result.IsSuccess)
         {
-            var errorMessage = string.Join(Environment.NewLine, result.Errors);
+            string errorMessage = string.Join(Environment.NewLine, result.Errors);
             throw new InvalidOperationException(
                 $"Configuration validation failed:{Environment.NewLine}{errorMessage}");
         }
@@ -122,10 +122,10 @@ public sealed class ConfigurationLoader
                 return false;
             }
 
-            var content = File.ReadAllText(filePath);
-            var extension = Path.GetExtension(filePath).ToLowerInvariant();
+            string content = File.ReadAllText(filePath);
+            string extension = Path.GetExtension(filePath).ToLowerInvariant();
 
-            var result = extension switch
+            ConfigurationCompilationResult result = extension switch
             {
                 ".yaml" or ".yml" => _compiler.CompileFromYaml(content),
                 ".json" => _compiler.CompileFromJson(content),
@@ -162,10 +162,10 @@ public sealed class ConfigurationLoader
 
         try
         {
-            var content = await File.ReadAllTextAsync(filePath, cancellationToken);
-            var extension = Path.GetExtension(filePath).ToLowerInvariant();
+            string content = await File.ReadAllTextAsync(filePath, cancellationToken).ConfigureAwait(false);
+            string extension = Path.GetExtension(filePath).ToLowerInvariant();
 
-            var result = extension switch
+            ConfigurationCompilationResult result = extension switch
             {
                 ".yaml" or ".yml" => _compiler.CompileFromYaml(content),
                 ".json" => _compiler.CompileFromJson(content),

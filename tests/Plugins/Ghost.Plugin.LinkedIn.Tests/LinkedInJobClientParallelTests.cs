@@ -19,11 +19,11 @@ public class LinkedInJobClientParallelTests
         var searchPage = new Mock<IPage>();
 
         // Mock job nodes (3 jobs total across search results)
-        var job1 = CreateMockJobNode("123", "Software Engineer", "Tech Corp", "San Francisco, CA");
-        var job2 = CreateMockJobNode("456", "Senior Developer", "Innovation Labs", "Remote");
-        var job3 = CreateMockJobNode("789", "DevOps Engineer", "Cloud Systems", "New York, NY");
+        Mock<IElement> job1 = CreateMockJobNode("123", "Software Engineer", "Tech Corp", "San Francisco, CA");
+        Mock<IElement> job2 = CreateMockJobNode("456", "Senior Developer", "Innovation Labs", "Remote");
+        Mock<IElement> job3 = CreateMockJobNode("789", "DevOps Engineer", "Cloud Systems", "New York, NY");
 
-        var jobNodes = new[] { job1.Object, job2.Object, job3.Object };
+        IElement[] jobNodes = new[] { job1.Object, job2.Object, job3.Object };
 
         // Setup search page to return job nodes
         searchPage.Setup(p => p.QuerySelectorAllAsync(
@@ -38,9 +38,9 @@ public class LinkedInJobClientParallelTests
             .ReturnsAsync(new object());
 
         // Mock detail pages for each job (returned by GetJobDetailsAsync)
-        var detailPage1 = CreateMockDetailPage("123");
-        var detailPage2 = CreateMockDetailPage("456");
-        var detailPage3 = CreateMockDetailPage("789");
+        Mock<IPage> detailPage1 = CreateMockDetailPage("123");
+        Mock<IPage> detailPage2 = CreateMockDetailPage("456");
+        Mock<IPage> detailPage3 = CreateMockDetailPage("789");
 
         session.SetupSequence(s => s.NewPageAsync(It.IsAny<PageOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(searchPage.Object)
@@ -48,12 +48,12 @@ public class LinkedInJobClientParallelTests
             .ReturnsAsync(detailPage2.Object)
             .ReturnsAsync(detailPage3.Object);
 
-        var options = Options.Create(new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.Browser });
+        IOptions<LinkedInOptions> options = Options.Create(new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.Browser });
         var client = new LinkedInJobClient(session.Object, options, NullLogger<LinkedInJobClient>.Instance, new JavaScriptAdapter(), new EntityParser());
 
         var criteria = new JobSearchCriteria { Query = "dev", Location = "remote", MaxResults = 50 };
-        var count = 0;
-        await foreach (var _ in client.SearchJobsParallelAsync(criteria, CancellationToken.None))
+        int count = 0;
+        await foreach (JobListing _ in client.SearchJobsParallelAsync(criteria, CancellationToken.None).ConfigureAwait(false))
         {
             count++;
         }

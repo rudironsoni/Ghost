@@ -30,9 +30,9 @@ public partial class XAuthenticator
         try
         {
             // Check for logged-in indicators
-            var accountMenu = await page.QuerySelectorAsync("[data-testid='AppTabBar_More_Menu']", ct)
-                ?? await page.QuerySelectorAsync("[data-testid='SideNav_AccountSwitcher_Button']", ct)
-                ?? await page.QuerySelectorAsync("[data-testid='PrimaryColumn']", ct);
+            IElement? accountMenu = await page.QuerySelectorAsync("[data-testid='AppTabBar_More_Menu']", ct).ConfigureAwait(false)
+                ?? await page.QuerySelectorAsync("[data-testid='SideNav_AccountSwitcher_Button']", ct).ConfigureAwait(false)
+                ?? await page.QuerySelectorAsync("[data-testid='PrimaryColumn']", ct).ConfigureAwait(false);
 
             if (accountMenu != null)
             {
@@ -41,8 +41,8 @@ public partial class XAuthenticator
             }
 
             // Check for login button which indicates logged out state
-            var loginButton = await page.QuerySelectorAsync("a[href='/login']", ct)
-                ?? await page.QuerySelectorAsync("[data-testid='loginButton']", ct);
+            IElement? loginButton = await page.QuerySelectorAsync("a[href='/login']", ct).ConfigureAwait(false)
+                ?? await page.QuerySelectorAsync("[data-testid='loginButton']", ct).ConfigureAwait(false);
 
             if (loginButton != null)
             {
@@ -77,11 +77,11 @@ public partial class XAuthenticator
             try
             {
                 Log.LoadingStorageState(_logger, _options.StorageStatePath);
-                await _session.SaveStorageStateAsync(_options.StorageStatePath);
+                await _session.SaveStorageStateAsync(_options.StorageStatePath).ConfigureAwait(false);
 
                 // Reload page to apply cookies
-                await page.NavigateAsync(_options.BaseUrl, ct: ct);
-                await page.WaitForLoadStateAsync(ct: ct);
+                await page.NavigateAsync(_options.BaseUrl, ct: ct).ConfigureAwait(false);
+                await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
                 if (await IsLoggedInAsync(page, ct).ConfigureAwait(false))
                 {
@@ -112,20 +112,20 @@ public partial class XAuthenticator
         try
         {
             Log.WarmingUp(_logger);
-            var page = await _session.NewPageAsync(ct: ct);
+            IPage page = await _session.NewPageAsync(ct: ct).ConfigureAwait(false);
 
             try
             {
-                await page.NavigateAsync(_options.BaseUrl, ct: ct);
-                await page.WaitForLoadStateAsync(ct: ct);
+                await page.NavigateAsync(_options.BaseUrl, ct: ct).ConfigureAwait(false);
+                await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
                 // Check if logged in
-                var isLoggedIn = await IsLoggedInAsync(page, ct);
+                bool isLoggedIn = await IsLoggedInAsync(page, ct).ConfigureAwait(false);
                 Log.WarmUpComplete(_logger, isLoggedIn);
             }
             finally
             {
-                try { await page.DisposeAsync(); } catch { }
+                try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
             }
         }
         catch (Exception ex)
@@ -148,13 +148,13 @@ public partial class XAuthenticator
         try
         {
             // Ensure directory exists
-            var directory = Path.GetDirectoryName(_options.StorageStatePath);
+            string? directory = Path.GetDirectoryName(_options.StorageStatePath);
             if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
             }
 
-            await _session.SaveStorageStateAsync(_options.StorageStatePath);
+            await _session.SaveStorageStateAsync(_options.StorageStatePath).ConfigureAwait(false);
             Log.AuthenticationStateSaved(_logger, _options.StorageStatePath);
         }
         catch (Exception ex)

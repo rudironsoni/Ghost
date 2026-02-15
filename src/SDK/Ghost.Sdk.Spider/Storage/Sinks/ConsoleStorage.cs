@@ -70,7 +70,7 @@ public class ConsoleStorage : IStorage
 
         try
         {
-            var json = JsonConvert.SerializeObject(item, _jsonSettings);
+            string json = JsonConvert.SerializeObject(item, _jsonSettings);
 
             Console.WriteLine("=".PadRight(80, '='));
             Console.WriteLine($"Spider: {context.SpiderName}");
@@ -103,7 +103,7 @@ public class ConsoleStorage : IStorage
     {
         var stopwatch = Stopwatch.StartNew();
         var itemList = items.ToList();
-        var count = 0;
+        int count = 0;
 
         try
         {
@@ -115,7 +115,7 @@ public class ConsoleStorage : IStorage
             Console.WriteLine("=".PadRight(80, '='));
             Console.WriteLine();
 
-            foreach (var item in itemList)
+            foreach (T? item in itemList)
             {
                 await StoreAsync(item, context, cancellationToken).ConfigureAwait(false);
                 count++;

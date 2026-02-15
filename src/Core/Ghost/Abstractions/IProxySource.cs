@@ -6,5 +6,5 @@ namespace Ghost.Abstractions;
 
 public interface IProxySource
 {
-    Task<IEnumerable<ProxyInfo>> FetchProxiesAsync(CancellationToken ct);
+    public Task<IEnumerable<ProxyInfo>> FetchProxiesAsync(CancellationToken ct);
 }

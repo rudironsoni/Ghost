@@ -22,7 +22,7 @@ internal static class LinkedInRateLimitDetector
 
         try
         {
-            var url = page.Url ?? string.Empty;
+            string url = page.Url ?? string.Empty;
             if (!string.IsNullOrEmpty(url))
             {
                 if (url.Contains("/check/challenge", StringComparison.OrdinalIgnoreCase) || url.Contains("/checkpoint/", StringComparison.OrdinalIgnoreCase))
@@ -35,13 +35,13 @@ internal static class LinkedInRateLimitDetector
             string html = string.Empty;
             try
             {
-                html = await page.GetContentAsync();
+                html = await page.GetContentAsync().ConfigureAwait(false);
             }
             catch { }
 
             if (!string.IsNullOrEmpty(html))
             {
-                var lower = html.ToLowerInvariant();
+                string lower = html.ToLowerInvariant();
                 if (lower.Contains("security check") || lower.Contains("too many requests"))
                 {
                     throw new LinkedInRateLimitException("LinkedIn rate limit or security check detected in page content.");

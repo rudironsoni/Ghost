@@ -5,5 +5,5 @@ namespace Ghost.Engine.Abstractions.Pipelines;
 
 public interface IItemPipeline
 {
-    Task<ItemEnvelope> ProcessAsync(ItemEnvelope item, GhostEngineContext context, CancellationToken cancellationToken = default);
+    public Task<ItemEnvelope> ProcessAsync(ItemEnvelope item, GhostEngineContext context, CancellationToken cancellationToken = default);
 }

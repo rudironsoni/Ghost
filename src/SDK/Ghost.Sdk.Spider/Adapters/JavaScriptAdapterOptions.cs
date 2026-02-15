@@ -124,7 +124,7 @@ public class JavaScriptAdapterOptions : AdapterOptions
             throw new ArgumentException("WaitUntil cannot be null or whitespace.", nameof(WaitUntil));
         }
 
-        var validWaitStates = new[] { "load", "domcontentloaded", "networkidle" };
+        string[] validWaitStates = new[] { "load", "domcontentloaded", "networkidle" };
         if (!validWaitStates.Contains(WaitUntil.ToLowerInvariant()))
         {
             throw new ArgumentException(

@@ -38,7 +38,7 @@ public static class JobDataQualityAssertions
         var jobList = jobs.ToList();
         jobList.Should().NotBeEmpty("job results must contain at least one job");
 
-        foreach (var job in jobList)
+        foreach (JobListing? job in jobList)
         {
             job.AssertRealJobData();
         }
@@ -53,8 +53,8 @@ public static class JobDataQualityAssertions
     {
         job.Should().NotBeNull("job listing must not be null");
 
-        var age = maxAge ?? TimeSpan.FromDays(90);
-        var cutoffDate = DateTimeOffset.UtcNow.Subtract(age);
+        TimeSpan age = maxAge ?? TimeSpan.FromDays(90);
+        DateTimeOffset cutoffDate = DateTimeOffset.UtcNow.Subtract(age);
 
         job.PostedAt.Should().NotBe(default, "PostedAt must be set to a valid date");
         job.PostedAt.Should().BeAfter(cutoffDate,
@@ -75,7 +75,7 @@ public static class JobDataQualityAssertions
 
         job.Id.Should().NotBeNullOrEmpty("job Id must not be null or empty");
 
-        var id = job.Id.Trim();
+        string id = job.Id.Trim();
         id.Should().NotBeEmpty("job Id must not be empty or whitespace");
 
         id.Should().MatchRegex(PlatformIdPattern,
@@ -85,7 +85,7 @@ public static class JobDataQualityAssertions
             $"Pattern: {{platform}}-{{alphanumeric}}");
 
         // Verify the platform prefix matches
-        var platformPrefix = id.Split('-')[0];
+        string platformPrefix = id.Split('-')[0];
         platformPrefix.Should().Be(expectedPlatform,
             $"job Id platform prefix must match expected platform. " +
             $"Expected: '{expectedPlatform}', " +
@@ -168,7 +168,7 @@ public static class JobDataQualityAssertions
             $"Expected format: http://... or https://...");
 
         // Additional validation: URL should not be localhost or invalid schemes
-        var lowerUrl = job.Url!.ToLowerInvariant();
+        string lowerUrl = job.Url!.ToLowerInvariant();
         lowerUrl.Should().NotStartWith("http://localhost",
             "job Url should not point to localhost");
         lowerUrl.Should().NotStartWith("https://localhost",

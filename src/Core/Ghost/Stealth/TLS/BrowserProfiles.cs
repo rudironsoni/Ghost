@@ -185,8 +185,8 @@ public static class BrowserProfiles
     public static JA3Profile GetRandomProfile(Random? random = null)
     {
         random ??= Random.Shared;
-        var profiles = AllProfiles;
-        var index = random.Next(profiles.Count);
+        IReadOnlyList<JA3Profile> profiles = AllProfiles;
+        int index = random.Next(profiles.Count);
         return profiles[index].Clone();
     }
 }

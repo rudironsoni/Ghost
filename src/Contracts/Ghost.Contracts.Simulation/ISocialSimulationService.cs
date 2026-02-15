@@ -10,7 +10,7 @@ public interface ISocialSimulationService
     /// <summary>
     /// Gets a value indicating whether simulation mode is currently enabled.
     /// </summary>
-    bool IsSimulationMode { get; }
+    public bool IsSimulationMode { get; }
 
     /// <summary>
     /// Simulates posting content to a social platform.
@@ -18,7 +18,7 @@ public interface ISocialSimulationService
     /// <param name="request">The post creation request.</param>
     /// <param name="platform">The target platform name.</param>
     /// <returns>A task representing the simulation result.</returns>
-    Task<SimulationResult> SimulatePostAsync(CreatePostRequest request, string platform);
+    public Task<SimulationResult> SimulatePostAsync(CreatePostRequest request, string platform);
 
     /// <summary>
     /// Simulates a generic social media action.
@@ -27,32 +27,32 @@ public interface ISocialSimulationService
     /// <param name="context">The action context.</param>
     /// <param name="platform">The target platform name.</param>
     /// <returns>A task representing the simulation result.</returns>
-    Task<SimulationResult> SimulateActionAsync(string action, object context, string platform);
+    public Task<SimulationResult> SimulateActionAsync(string action, object context, string platform);
 
     /// <summary>
     /// Gets all recorded simulation actions.
     /// </summary>
     /// <returns>A read-only list of simulation records.</returns>
-    IReadOnlyList<SimulationRecord> GetRecordedActions();
+    public IReadOnlyList<SimulationRecord> GetRecordedActions();
 
     /// <summary>
     /// Gets recorded simulation actions for a specific platform.
     /// </summary>
     /// <param name="platform">The platform name.</param>
     /// <returns>A read-only list of simulation records.</returns>
-    IReadOnlyList<SimulationRecord> GetRecordedActions(string platform);
+    public IReadOnlyList<SimulationRecord> GetRecordedActions(string platform);
 
     /// <summary>
     /// Gets recorded simulation actions for a specific session.
     /// </summary>
     /// <param name="sessionId">The session identifier.</param>
     /// <returns>A read-only list of simulation records.</returns>
-    IReadOnlyList<SimulationRecord> GetRecordedActionsBySession(string sessionId);
+    public IReadOnlyList<SimulationRecord> GetRecordedActionsBySession(string sessionId);
 
     /// <summary>
     /// Clears all recorded simulation actions.
     /// </summary>
-    void ClearRecordedActions();
+    public void ClearRecordedActions();
 
     /// <summary>
     /// Captures a screenshot of the current state during simulation.
@@ -60,7 +60,7 @@ public interface ISocialSimulationService
     /// <param name="action">The action being performed.</param>
     /// <param name="platform">The platform name.</param>
     /// <returns>A task representing the screenshot data.</returns>
-    Task<byte[]> CaptureScreenshotAsync(string action, string platform);
+    public Task<byte[]> CaptureScreenshotAsync(string action, string platform);
 
     /// <summary>
     /// Validates content against platform-specific rules.
@@ -68,7 +68,7 @@ public interface ISocialSimulationService
     /// <param name="request">The post creation request.</param>
     /// <param name="platform">The platform name.</param>
     /// <returns>A task representing the validation result.</returns>
-    Task<ValidationResult> ValidateContentAsync(CreatePostRequest request, string platform);
+    public Task<ValidationResult> ValidateContentAsync(CreatePostRequest request, string platform);
 
     /// <summary>
     /// Generates a preview of how the post would appear.
@@ -76,33 +76,33 @@ public interface ISocialSimulationService
     /// <param name="request">The post creation request.</param>
     /// <param name="platform">The platform name.</param>
     /// <returns>A task representing the preview HTML.</returns>
-    Task<string> GeneratePreviewAsync(CreatePostRequest request, string platform);
+    public Task<string> GeneratePreviewAsync(CreatePostRequest request, string platform);
 
     /// <summary>
     /// Starts a new simulation session.
     /// </summary>
     /// <param name="sessionId">Optional session identifier.</param>
     /// <returns>The session identifier.</returns>
-    string StartSession(string? sessionId = null);
+    public string StartSession(string? sessionId = null);
 
     /// <summary>
     /// Ends the current simulation session.
     /// </summary>
     /// <param name="sessionId">The session identifier.</param>
-    Task EndSessionAsync(string sessionId);
+    public Task EndSessionAsync(string sessionId);
 
     /// <summary>
     /// Exports simulation records to a file.
     /// </summary>
     /// <param name="filePath">The output file path.</param>
     /// <returns>A task representing the export operation.</returns>
-    Task ExportRecordsAsync(string filePath);
+    public Task ExportRecordsAsync(string filePath);
 
     /// <summary>
     /// Gets simulation statistics.
     /// </summary>
     /// <returns>Statistics about recorded simulations.</returns>
-    SimulationStatistics GetStatistics();
+    public SimulationStatistics GetStatistics();
 }
 
 /// <summary>

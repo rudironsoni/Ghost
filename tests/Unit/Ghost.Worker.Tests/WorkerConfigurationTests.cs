@@ -27,7 +27,7 @@ public sealed class WorkerConfigurationTests
     {
         // Arrange
         var services = new ServiceCollection();
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new[]
             {
                 new KeyValuePair<string, string?>("Worker:ShutdownTimeoutSeconds", "30"),
@@ -37,10 +37,10 @@ public sealed class WorkerConfigurationTests
 
         services.Configure<WorkerConfiguration>(configuration.GetSection("Worker"));
 
-        var serviceProvider = services.BuildServiceProvider();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
 
         // Act
-        var options = serviceProvider.GetRequiredService<IOptions<WorkerConfiguration>>().Value;
+        WorkerConfiguration options = serviceProvider.GetRequiredService<IOptions<WorkerConfiguration>>().Value;
 
         // Assert
         options.ShutdownTimeoutSeconds.Should().Be(30);

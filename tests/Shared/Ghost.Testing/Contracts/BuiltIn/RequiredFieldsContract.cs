@@ -25,7 +25,7 @@ public sealed class RequiredFieldsContract : ProviderContractBase
             Location = "remote"
         };
 
-        var jobs = await adapter.GetJobsAsync(criteria, ct);
+        IReadOnlyList<JobListing> jobs = await adapter.GetJobsAsync(criteria, ct).ConfigureAwait(false);
 
         if (jobs.Count == 0)
         {
@@ -38,7 +38,7 @@ public sealed class RequiredFieldsContract : ProviderContractBase
             ["TotalJobs"] = jobs.Count
         };
 
-        foreach (var job in jobs)
+        foreach (JobListing job in jobs)
         {
             // Validate required fields
             if (string.IsNullOrWhiteSpace(job.Id))

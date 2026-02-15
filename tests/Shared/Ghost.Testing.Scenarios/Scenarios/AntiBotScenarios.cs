@@ -1,3 +1,4 @@
+using Ghost.Testing.Scenarios.Models;
 using Ghost.Testing.Scenarios.Server;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -13,13 +14,13 @@ public static class AntiBotScenarios
     {
         logger.LogInformation("Scenario: antibot/simple-challenge");
 
-        var verified = context.Request.Cookies.ContainsKey("ghost_verified");
+        bool verified = context.Request.Cookies.ContainsKey("ghost_verified");
 
         if (verified)
         {
-            var jobs = TestData.GetJobPostings(0, 10);
+            List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
 
-            var html = $$"""
+            string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,7 +46,7 @@ public static class AntiBotScenarios
             return Results.Content(html, "text/html");
         }
 
-        var challengeHtml = """
+        string challengeHtml = """
 <!DOCTYPE html>
 <html lang="en">
 <head>

@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Web;
@@ -39,8 +40,8 @@ internal class HttpRequestBuilder
     /// <exception cref="InvalidOperationException">Thrown when the request URL is invalid.</exception>
     public HttpRequestMessage Build()
     {
-        var uri = BuildUri();
-        var method = GetHttpMethod();
+        Uri uri = BuildUri();
+        HttpMethod method = GetHttpMethod();
 
         var httpRequest = new HttpRequestMessage(method, uri);
 
@@ -58,7 +59,7 @@ internal class HttpRequestBuilder
     /// <exception cref="InvalidOperationException">Thrown when the URL is invalid.</exception>
     private Uri BuildUri()
     {
-        if (!Uri.TryCreate(_request.Url, UriKind.Absolute, out var baseUri))
+        if (!Uri.TryCreate(_request.Url, UriKind.Absolute, out Uri? baseUri))
         {
             throw new InvalidOperationException($"Invalid URL: {_request.Url}");
         }
@@ -66,7 +67,7 @@ internal class HttpRequestBuilder
         // Extract existing query parameters from the URL
         if (!string.IsNullOrEmpty(baseUri.Query))
         {
-            var existingParams = HttpUtility.ParseQueryString(baseUri.Query);
+            NameValueCollection existingParams = HttpUtility.ParseQueryString(baseUri.Query);
             foreach (string? key in existingParams.Keys)
             {
                 if (key != null)
@@ -77,11 +78,11 @@ internal class HttpRequestBuilder
         }
 
         // Extract query parameters from metadata if provided
-        if (_request.Metadata.TryGetValue("QueryParameters", out var queryParamsObj))
+        if (_request.Metadata.TryGetValue("QueryParameters", out object? queryParamsObj))
         {
             if (queryParamsObj is Dictionary<string, string> queryParams)
             {
-                foreach (var (key, value) in queryParams)
+                foreach ((string? key, string? value) in queryParams)
                 {
                     _queryParameters[key] = value;
                 }
@@ -92,9 +93,9 @@ internal class HttpRequestBuilder
         if (_queryParameters.Count > 0)
         {
             var uriBuilder = new UriBuilder(baseUri);
-            var queryString = HttpUtility.ParseQueryString(uriBuilder.Query);
+            NameValueCollection queryString = HttpUtility.ParseQueryString(uriBuilder.Query);
 
-            foreach (var (key, value) in _queryParameters)
+            foreach ((string? key, string? value) in _queryParameters)
             {
                 queryString[key] = value;
             }
@@ -133,7 +134,7 @@ internal class HttpRequestBuilder
     private void ConfigureHeaders(HttpRequestMessage httpRequest)
     {
         // Add default headers from options
-        foreach (var (name, value) in _options.CustomHeaders)
+        foreach ((string? name, string? value) in _options.CustomHeaders)
         {
             TryAddHeader(httpRequest, name, value);
         }
@@ -163,13 +164,13 @@ internal class HttpRequestBuilder
         }
 
         // Add request-specific headers (these override defaults)
-        foreach (var (name, value) in _request.Headers)
+        foreach ((string? name, string? value) in _request.Headers)
         {
             TryAddHeader(httpRequest, name, value);
         }
 
         // Add referer if provided in metadata
-        if (_request.Metadata.TryGetValue("Referer", out var referer) && referer is string refererStr)
+        if (_request.Metadata.TryGetValue("Referer", out object? referer) && referer is string refererStr)
         {
             httpRequest.Headers.Referrer = new Uri(refererStr, UriKind.RelativeOrAbsolute);
         }
@@ -203,17 +204,17 @@ internal class HttpRequestBuilder
         var cookies = new List<string>();
 
         // Add cookies from options
-        foreach (var (name, value) in _options.Cookies)
+        foreach ((string? name, string? value) in _options.Cookies)
         {
             cookies.Add($"{name}={value}");
         }
 
         // Add cookies from request metadata
-        if (_request.Metadata.TryGetValue("Cookies", out var requestCookiesObj))
+        if (_request.Metadata.TryGetValue("Cookies", out object? requestCookiesObj))
         {
             if (requestCookiesObj is Dictionary<string, string> requestCookies)
             {
-                foreach (var (name, value) in requestCookies)
+                foreach ((string? name, string? value) in requestCookies)
                 {
                     cookies.Add($"{name}={value}");
                 }
@@ -249,7 +250,7 @@ internal class HttpRequestBuilder
         }
 
         // Check if form data is provided in metadata
-        if (_request.Metadata.TryGetValue("FormData", out var formDataObj))
+        if (_request.Metadata.TryGetValue("FormData", out object? formDataObj))
         {
             if (formDataObj is Dictionary<string, string> formData)
             {
@@ -259,7 +260,7 @@ internal class HttpRequestBuilder
         }
 
         // Check content type from request headers or metadata
-        var contentType = GetContentType();
+        string contentType = GetContentType();
 
         // Create appropriate content based on content type
         if (contentType.StartsWith("application/json", StringComparison.OrdinalIgnoreCase))
@@ -299,13 +300,13 @@ internal class HttpRequestBuilder
     private string GetContentType()
     {
         // Check request headers first
-        if (_request.Headers.TryGetValue("Content-Type", out var contentType))
+        if (_request.Headers.TryGetValue("Content-Type", out string? contentType))
         {
             return contentType;
         }
 
         // Check metadata
-        if (_request.Metadata.TryGetValue("ContentType", out var contentTypeObj))
+        if (_request.Metadata.TryGetValue("ContentType", out object? contentTypeObj))
         {
             if (contentTypeObj is string contentTypeStr)
             {

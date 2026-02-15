@@ -13,7 +13,7 @@ public class JA3RandomizerTests
         var randomizer = new JA3Randomizer();
 
         // Act
-        var profile = randomizer.GenerateRandomProfile();
+        JA3Profile profile = randomizer.GenerateRandomProfile();
 
         // Assert
         profile.Should().NotBeNull();
@@ -29,7 +29,7 @@ public class JA3RandomizerTests
         var randomizer = new JA3Randomizer();
 
         // Act
-        var profile = randomizer.GenerateRandomProfile("chrome");
+        JA3Profile profile = randomizer.GenerateRandomProfile("chrome");
 
         // Assert
         profile.Should().NotBeNull();
@@ -43,7 +43,7 @@ public class JA3RandomizerTests
         var randomizer = new JA3Randomizer();
 
         // Act
-        var profile = randomizer.GenerateRandomProfile("firefox");
+        JA3Profile profile = randomizer.GenerateRandomProfile("firefox");
 
         // Assert
         profile.Should().NotBeNull();
@@ -57,12 +57,12 @@ public class JA3RandomizerTests
         var randomizer = new JA3Randomizer();
 
         // Act
-        var hash1 = randomizer.GenerateRandomProfile().ToJA3Hash();
-        var hash2 = randomizer.GenerateRandomProfile().ToJA3Hash();
-        var hash3 = randomizer.GenerateRandomProfile().ToJA3Hash();
+        string hash1 = randomizer.GenerateRandomProfile().ToJA3Hash();
+        string hash2 = randomizer.GenerateRandomProfile().ToJA3Hash();
+        string hash3 = randomizer.GenerateRandomProfile().ToJA3Hash();
 
         // Assert - At least some should be different
-        var hashes = new[] { hash1, hash2, hash3 };
+        string[] hashes = new[] { hash1, hash2, hash3 };
         hashes.Distinct().Should().HaveCountGreaterThan(1);
     }
 
@@ -73,7 +73,7 @@ public class JA3RandomizerTests
         var randomizer = new JA3Randomizer();
 
         // Act
-        var profile = randomizer.GenerateRandomProfile();
+        JA3Profile profile = randomizer.GenerateRandomProfile();
         var tls13Ciphers = profile.CipherSuites.Where(c => c >= 4865 && c <= 4867).ToList();
 
         // Assert
@@ -87,7 +87,7 @@ public class JA3RandomizerTests
         var randomizer = new JA3Randomizer();
 
         // Act
-        var profile = randomizer.GenerateRandomProfile();
+        JA3Profile profile = randomizer.GenerateRandomProfile();
 
         // Assert
         profile.Extensions.Should().Contain(0, "server_name extension must be present");
@@ -100,7 +100,7 @@ public class JA3RandomizerTests
         var randomizer = new JA3Randomizer();
 
         // Act
-        var profile = randomizer.GenerateRandomProfile();
+        JA3Profile profile = randomizer.GenerateRandomProfile();
 
         // Assert
         profile.Extensions[0].Should().Be(0, "server_name extension must be first");
@@ -114,7 +114,7 @@ public class JA3RandomizerTests
         const int count = 10;
 
         // Act
-        var profiles = randomizer.GenerateMultipleProfiles(count);
+        IReadOnlyList<JA3Profile> profiles = randomizer.GenerateMultipleProfiles(count);
 
         // Assert
         profiles.Should().HaveCount(count);
@@ -128,12 +128,12 @@ public class JA3RandomizerTests
         const int count = 100;
 
         // Act
-        var profiles = randomizer.GenerateMultipleProfiles(count);
+        IReadOnlyList<JA3Profile> profiles = randomizer.GenerateMultipleProfiles(count);
         var hashes = profiles.Select(p => p.ToJA3Hash()).ToList();
-        var uniqueCount = hashes.Distinct().Count();
+        int uniqueCount = hashes.Distinct().Count();
 
         // Assert - Test statistical distribution: expect >95% unique hashes
-        var uniqueRatio = uniqueCount / (double)count;
+        double uniqueRatio = uniqueCount / (double)count;
         uniqueRatio.Should().BeGreaterThan(0.95,
             $"Expected >95% unique hashes from random generation, got {uniqueRatio:P2} ({uniqueCount}/{count} unique)");
     }
@@ -145,7 +145,7 @@ public class JA3RandomizerTests
         var randomizer = new JA3Randomizer();
 
         // Act
-        var act = () => randomizer.GenerateMultipleProfiles(0);
+        Func<IReadOnlyList<JA3Profile>> act = () => randomizer.GenerateMultipleProfiles(0);
 
         // Assert
         act.Should().Throw<ArgumentOutOfRangeException>();
@@ -158,7 +158,7 @@ public class JA3RandomizerTests
         var randomizer = new JA3Randomizer();
 
         // Act
-        var act = () => randomizer.GenerateMultipleProfiles(-1);
+        Func<IReadOnlyList<JA3Profile>> act = () => randomizer.GenerateMultipleProfiles(-1);
 
         // Assert
         act.Should().Throw<ArgumentOutOfRangeException>();
@@ -173,8 +173,8 @@ public class JA3RandomizerTests
         var randomizer2 = new JA3Randomizer(seed);
 
         // Act
-        var profile1 = randomizer1.GenerateRandomProfile();
-        var profile2 = randomizer2.GenerateRandomProfile();
+        JA3Profile profile1 = randomizer1.GenerateRandomProfile();
+        JA3Profile profile2 = randomizer2.GenerateRandomProfile();
 
         // Assert
         profile1.ToJA3Hash().Should().Be(profile2.ToJA3Hash());
@@ -185,12 +185,12 @@ public class JA3RandomizerTests
     {
         // Arrange
         var randomizer = new JA3Randomizer();
-        var browsers = new[] { "chrome", "firefox", "safari", "edge" };
+        string[] browsers = new[] { "chrome", "firefox", "safari", "edge" };
 
         // Act & Assert
-        foreach (var browser in browsers)
+        foreach (string? browser in browsers)
         {
-            var profile = randomizer.GenerateRandomProfile(browser);
+            JA3Profile profile = randomizer.GenerateRandomProfile(browser);
             profile.Should().NotBeNull();
             profile.CipherSuites.Should().NotBeEmpty();
             profile.Extensions.Should().NotBeEmpty();

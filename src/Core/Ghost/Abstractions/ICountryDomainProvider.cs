@@ -4,6 +4,6 @@ namespace Ghost.Abstractions;
 
 public interface ICountryDomainProvider
 {
-    string GetDomain(CountryCode country);
-    string GetLocale(CountryCode country);
+    public string GetDomain(CountryCode country);
+    public string GetLocale(CountryCode country);
 }

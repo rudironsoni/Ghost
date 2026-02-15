@@ -29,14 +29,14 @@ public sealed class RealBrowserFixture : IAsyncLifetime
             Headless = true
         };
 
-        _kernel = await GhostKernel.CreateAsync(options);
+        _kernel = await GhostKernel.CreateAsync(options).ConfigureAwait(false);
     }
 
     public async Task DisposeAsync()
     {
         if (_kernel != null)
         {
-            await _kernel.DisposeAsync();
+            await _kernel.DisposeAsync().ConfigureAwait(false);
         }
     }
 
@@ -51,6 +51,6 @@ public sealed class RealBrowserFixture : IAsyncLifetime
             throw new InvalidOperationException("Fixture not initialized");
         }
 
-        return await _kernel.NewSessionAsync(options);
+        return await _kernel.NewSessionAsync(options).ConfigureAwait(false);
     }
 }

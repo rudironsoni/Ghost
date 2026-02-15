@@ -25,7 +25,7 @@ public static class ServiceCollectionExtensions
 
         // Try to get an IConfiguration already registered, without building the provider
         IConfiguration? configuration = null;
-        var configDescriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IConfiguration));
+        ServiceDescriptor? configDescriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IConfiguration));
         if (configDescriptor?.ImplementationInstance is IConfiguration existingConfig)
         {
             configuration = existingConfig;

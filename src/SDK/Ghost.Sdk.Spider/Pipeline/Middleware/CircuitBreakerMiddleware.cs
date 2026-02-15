@@ -49,19 +49,19 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        _failureThreshold = configuration.TryGetValue("FailureThreshold", out var ft) && ft is int failureThreshold
+        _failureThreshold = configuration.TryGetValue("FailureThreshold", out object? ft) && ft is int failureThreshold
             ? failureThreshold
             : 5;
 
-        _successThreshold = configuration.TryGetValue("SuccessThreshold", out var st) && st is int successThreshold
+        _successThreshold = configuration.TryGetValue("SuccessThreshold", out object? st) && st is int successThreshold
             ? successThreshold
             : 2;
 
-        _timeout = configuration.TryGetValue("Timeout", out var to) && to is int timeout
+        _timeout = configuration.TryGetValue("Timeout", out object? to) && to is int timeout
             ? TimeSpan.FromSeconds(timeout)
             : TimeSpan.FromSeconds(60);
 
-        _samplingDuration = configuration.TryGetValue("SamplingDuration", out var sd) && sd is int samplingDuration
+        _samplingDuration = configuration.TryGetValue("SamplingDuration", out object? sd) && sd is int samplingDuration
             ? TimeSpan.FromSeconds(samplingDuration)
             : TimeSpan.FromSeconds(30);
 
@@ -96,7 +96,7 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
 
         try
         {
-            await continuation(context);
+            await continuation(context).ConfigureAwait(false);
 
             // Record success
             lock (_lock)
@@ -133,7 +133,7 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
         }
 
         // Clean up old failures outside the sampling window
-        var cutoff = DateTime.UtcNow - _samplingDuration;
+        DateTime cutoff = DateTime.UtcNow - _samplingDuration;
         while (_recentFailures.Count > 0 && _recentFailures.Peek() < cutoff)
         {
             _recentFailures.Dequeue();

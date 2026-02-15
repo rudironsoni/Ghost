@@ -79,7 +79,7 @@ public sealed class IndeedMultiStrategyParser
             };
 
             // Parse entities using EntityParser
-            var entities = EntityParser.Parse<IndeedJobEntity>(context);
+            List<IndeedJobEntity> entities = EntityParser.Parse<IndeedJobEntity>(context);
 
             if (entities.Count == 0)
             {
@@ -88,7 +88,7 @@ public sealed class IndeedMultiStrategyParser
             }
 
             // Convert entities to JobListing objects
-            var jobListings = ConvertEntitiesToJobListings(entities, baseUrl ?? _baseUrl);
+            List<JobListing> jobListings = ConvertEntitiesToJobListings(entities, baseUrl ?? _baseUrl);
 
             LogJobsExtracted(_logger, jobListings.Count, null);
 
@@ -108,7 +108,7 @@ public sealed class IndeedMultiStrategyParser
     {
         var jobListings = new List<JobListing>();
 
-        foreach (var entity in entities)
+        foreach (IndeedJobEntity entity in entities)
         {
             try
             {
@@ -120,7 +120,7 @@ public sealed class IndeedMultiStrategyParser
                 }
 
                 // Construct URL from base URL and job key
-                var jobUrl = string.IsNullOrWhiteSpace(entity.JobKey)
+                string? jobUrl = string.IsNullOrWhiteSpace(entity.JobKey)
                     ? null
                     : $"{baseUrl}/viewjob?jk={entity.JobKey}";
 
@@ -176,7 +176,7 @@ public sealed class IndeedMultiStrategyParser
         if (string.IsNullOrWhiteSpace(jobTypeStr))
             return JobType.Unknown;
 
-        var normalized = jobTypeStr.ToLowerInvariant();
+        string normalized = jobTypeStr.ToLowerInvariant();
 
         if (normalized.Contains("full", StringComparison.OrdinalIgnoreCase))
             return JobType.FullTime;
@@ -201,7 +201,7 @@ public sealed class IndeedMultiStrategyParser
         if (string.IsNullOrWhiteSpace(remoteLabel))
             return false;
 
-        var normalized = remoteLabel.ToLowerInvariant();
+        string normalized = remoteLabel.ToLowerInvariant();
         return normalized.Contains("remote", StringComparison.OrdinalIgnoreCase);
     }
 
@@ -217,10 +217,10 @@ public sealed class IndeedMultiStrategyParser
         dateStr = dateStr.Trim().ToLowerInvariant();
 
         // Try to parse relative dates
-        var relativeMatch = Regex.Match(dateStr, @"(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago", RegexOptions.IgnoreCase);
-        if (relativeMatch.Success && int.TryParse(relativeMatch.Groups[1].Value, out var count))
+        Match relativeMatch = Regex.Match(dateStr, @"(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago", RegexOptions.IgnoreCase);
+        if (relativeMatch.Success && int.TryParse(relativeMatch.Groups[1].Value, out int count))
         {
-            var unit = relativeMatch.Groups[2].Value.ToLowerInvariant();
+            string unit = relativeMatch.Groups[2].Value.ToLowerInvariant();
             return unit switch
             {
                 "second" => DateTimeOffset.UtcNow.AddSeconds(-count),
@@ -242,7 +242,7 @@ public sealed class IndeedMultiStrategyParser
             return DateTimeOffset.UtcNow.AddDays(-1);
 
         // Try to parse as absolute date
-        var formats = new[]
+        string[] formats = new[]
         {
             "yyyy-MM-dd",
             "yyyy-MM-dd HH:mm:ss",
@@ -255,9 +255,9 @@ public sealed class IndeedMultiStrategyParser
             "MMMM dd, yyyy"
         };
 
-        foreach (var format in formats)
+        foreach (string? format in formats)
         {
-            if (DateTimeOffset.TryParseExact(dateStr, format, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var result))
+            if (DateTimeOffset.TryParseExact(dateStr, format, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTimeOffset result))
                 return result;
         }
 

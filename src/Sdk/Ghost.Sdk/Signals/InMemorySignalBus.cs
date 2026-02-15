@@ -42,12 +42,12 @@ public sealed class InMemorySignalBus : ISignalBus, IAsyncDisposable
         ArgumentNullException.ThrowIfNull(handler);
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        var signalType = typeof(T);
+        Type signalType = typeof(T);
         var subscription = new Subscription<T>(this, signalType, handler);
 
         lock (_subscriptions)
         {
-            if (!_subscriptions.TryGetValue(signalType, out var subscriptions))
+            if (!_subscriptions.TryGetValue(signalType, out List<SubscriptionInfo>? subscriptions))
             {
                 subscriptions = new List<SubscriptionInfo>();
                 _subscriptions[signalType] = subscriptions;
@@ -90,7 +90,7 @@ public sealed class InMemorySignalBus : ISignalBus, IAsyncDisposable
     {
         lock (_subscriptions)
         {
-            if (_subscriptions.TryGetValue(signalType, out var subscriptions))
+            if (_subscriptions.TryGetValue(signalType, out List<SubscriptionInfo>? subscriptions))
             {
                 subscriptions.RemoveAll(s => s.Id == subscriptionId);
                 if (subscriptions.Count == 0)
@@ -103,13 +103,13 @@ public sealed class InMemorySignalBus : ISignalBus, IAsyncDisposable
 
     private async Task ProcessSignalsAsync(CancellationToken ct)
     {
-        await foreach (var envelope in _channel.Reader.ReadAllAsync(ct).ConfigureAwait(false))
+        await foreach (SignalEnvelope? envelope in _channel.Reader.ReadAllAsync(ct).ConfigureAwait(false))
         {
             List<SubscriptionInfo>? subscriptionsCopy;
 
             lock (_subscriptions)
             {
-                if (!_subscriptions.TryGetValue(envelope.SignalType, out var subscriptions) || subscriptions.Count == 0)
+                if (!_subscriptions.TryGetValue(envelope.SignalType, out List<SubscriptionInfo>? subscriptions) || subscriptions.Count == 0)
                 {
                     continue;
                 }
@@ -118,7 +118,7 @@ public sealed class InMemorySignalBus : ISignalBus, IAsyncDisposable
             }
 
             // Process handlers in parallel
-            var tasks = subscriptionsCopy.Select(sub => InvokeHandlerAsync(sub, envelope));
+            IEnumerable<Task> tasks = subscriptionsCopy.Select(sub => InvokeHandlerAsync(sub, envelope));
             await Task.WhenAll(tasks).ConfigureAwait(false);
         }
     }

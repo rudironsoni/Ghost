@@ -15,20 +15,20 @@ internal sealed class LinkedInTextExtractor : ITextExtractor
             Ghost.IElement? el = null;
             if (!string.IsNullOrEmpty(selector))
             {
-                el = await element.QuerySelectorAsync(selector);
+                el = await element.QuerySelectorAsync(selector).ConfigureAwait(false);
             }
             el ??= element;
 
-            var span = await el.QuerySelectorAsync("span[aria-hidden=\"true\"]");
+            IElement? span = await el.QuerySelectorAsync("span[aria-hidden=\"true\"]").ConfigureAwait(false);
             string? text = null;
             if (span != null)
             {
-                text = await span.GetTextContentAsync();
+                text = await span.GetTextContentAsync().ConfigureAwait(false);
             }
 
             if (string.IsNullOrWhiteSpace(text))
             {
-                text = await el.GetTextContentAsync();
+                text = await el.GetTextContentAsync().ConfigureAwait(false);
             }
 
             return (text ?? string.Empty).Trim();
@@ -44,7 +44,7 @@ internal sealed class LinkedInTextExtractor : ITextExtractor
         if (element is null) return string.Empty;
         try
         {
-            return (await element.GetTextContentAsync() ?? string.Empty).Trim();
+            return (await element.GetTextContentAsync().ConfigureAwait(false) ?? string.Empty).Trim();
         }
         catch
         {

@@ -40,10 +40,10 @@ public sealed class JA3Profile
     /// </summary>
     public string ToJA3String()
     {
-        var cipherStr = string.Join("-", CipherSuites);
-        var extStr = string.Join("-", Extensions);
-        var curveStr = string.Join("-", EllipticCurves);
-        var formatStr = string.Join("-", ECPointFormats);
+        string cipherStr = string.Join("-", CipherSuites);
+        string extStr = string.Join("-", Extensions);
+        string curveStr = string.Join("-", EllipticCurves);
+        string formatStr = string.Join("-", ECPointFormats);
 
         return $"{TLSVersion},{cipherStr},{extStr},{curveStr},{formatStr}";
     }
@@ -55,9 +55,9 @@ public sealed class JA3Profile
 #pragma warning disable CA5351 // Do Not Use Broken Cryptographic Algorithms - MD5 is JA3 standard
     public string ToJA3Hash()
     {
-        var ja3String = ToJA3String();
-        var bytes = Encoding.UTF8.GetBytes(ja3String);
-        var hash = MD5.HashData(bytes);
+        string ja3String = ToJA3String();
+        byte[] bytes = Encoding.UTF8.GetBytes(ja3String);
+        byte[] hash = MD5.HashData(bytes);
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
 #pragma warning restore CA5351

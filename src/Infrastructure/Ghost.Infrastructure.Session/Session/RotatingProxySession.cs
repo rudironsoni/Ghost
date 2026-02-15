@@ -43,7 +43,7 @@ public class RotatingProxySession : IDisposable
 
     private static HttpClient CreateDefaultHttpClient(RotatingProxySessionOptions options)
     {
-        var handler = CreateHttpMessageHandler(options);
+        SocketsHttpHandler handler = CreateHttpMessageHandler(options);
         return new HttpClient(handler)
         {
             Timeout = options.Timeout
@@ -71,14 +71,6 @@ public class RotatingProxySession : IDisposable
     }
 
     /// <summary>
-    /// Creates an HTTP message handler with proxy rotation and TLS configuration
-    /// </summary>
-    private SocketsHttpHandler CreateHttpMessageHandler()
-    {
-        return CreateHttpMessageHandler(_options);
-    }
-
-    /// <summary>
     /// Set default headers to mimic real browsers
     /// </summary>
     private void SetDefaultHeaders()
@@ -93,23 +85,23 @@ public class RotatingProxySession : IDisposable
     /// </summary>
     public async Task<HttpResponseMessage> ExecuteAsync(Func<HttpRequestMessage> requestFactory, CancellationToken cancellationToken = default)
     {
-        var policy = CreateRetryPolicy();
+        AsyncRetryPolicy<HttpResponseMessage> policy = CreateRetryPolicy();
 
         return await policy.ExecuteAsync(async () =>
         {
-            var request = requestFactory();
+            HttpRequestMessage request = requestFactory();
 
             // Rotate proxy if enabled
             if (_options.EnableProxyRotation)
             {
-                await RotateProxyAsync();
+                await RotateProxyAsync().ConfigureAwait(false);
             }
 
             // Apply jitter delay
-            await ApplyJitterDelay(cancellationToken);
+            await ApplyJitterDelay(cancellationToken).ConfigureAwait(false);
 
-            return await _httpClient.SendAsync(request, cancellationToken);
-        });
+            return await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        }).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -146,7 +138,7 @@ public class RotatingProxySession : IDisposable
         // Refresh proxy pool if needed
         if (_currentProxyIndex == 0 && _options.RefreshProxyPoolOnCycle)
         {
-            await RefreshProxyPoolAsync();
+            await RefreshProxyPoolAsync().ConfigureAwait(false);
         }
     }
 
@@ -157,7 +149,7 @@ public class RotatingProxySession : IDisposable
     {
         try
         {
-            var proxy = await _proxyProvider.GetProxyAsync(_options.DefaultCountryCode);
+            ProxyInfo? proxy = await _proxyProvider.GetProxyAsync(_options.DefaultCountryCode).ConfigureAwait(false);
             _proxyPool.Clear();
             if (proxy != null)
             {
@@ -178,8 +170,8 @@ public class RotatingProxySession : IDisposable
         if (_options.JitterMinMs > 0 && _options.JitterMaxMs > 0)
         {
             var random = new Random();
-            var delay = random.Next(_options.JitterMinMs, _options.JitterMaxMs + 1);
-            await Task.Delay(delay, cancellationToken);
+            int delay = random.Next(_options.JitterMinMs, _options.JitterMaxMs + 1);
+            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
         }
     }
 

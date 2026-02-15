@@ -192,7 +192,7 @@ public class BrowserPoolOptions
             throw new ArgumentException("BrowserType cannot be null or whitespace.", nameof(BrowserType));
         }
 
-        var supportedBrowsers = new[] { "chromium", "firefox", "webkit" };
+        string[] supportedBrowsers = new[] { "chromium", "firefox", "webkit" };
         if (!supportedBrowsers.Contains(BrowserType.ToLowerInvariant()))
         {
             throw new ArgumentException(

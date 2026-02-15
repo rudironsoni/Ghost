@@ -47,8 +47,8 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
         _output.WriteLine($"Query: {criteria.Query}");
         _output.WriteLine($"Max Results: {criteria.MaxResults}");
 
-        var results = await _serviceProvider.GetRequiredService<IJobClient>()
-            .SearchJobsAsync(criteria, cts.Token);
+        IReadOnlyList<JobListing> results = await _serviceProvider.GetRequiredService<IJobClient>()
+            .SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
 
         // Assert
         results.Should().NotBeNull("aggregated results should not be null");
@@ -70,7 +70,7 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
         _output.WriteLine($"\n=== Platform Distribution ===");
         _output.WriteLine($"Platforms contributing data: {platformGroups.Count}");
 
-        foreach (var group in platformGroups)
+        foreach (IGrouping<string, JobListing>? group in platformGroups)
         {
             _output.WriteLine($"  - {group.Key}: {group.Count()} jobs ({(group.Count() * 100.0 / results.Count):F1}%)");
         }
@@ -80,16 +80,16 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
             "aggregated search should return results from multiple platforms");
 
         // Validate that no single platform dominates excessively (>80%)
-        var topPlatform = platformGroups.First();
-        var topPlatformPercentage = (topPlatform.Count() * 100.0) / results.Count;
+        IGrouping<string, JobListing> topPlatform = platformGroups.First();
+        double topPlatformPercentage = (topPlatform.Count() * 100.0) / results.Count;
         _output.WriteLine($"\nTop platform: {topPlatform.Key} ({topPlatformPercentage:F1}%)");
 
         // Output sample jobs from each platform
         _output.WriteLine("\n=== Sample Jobs by Platform ===");
-        foreach (var group in platformGroups)
+        foreach (IGrouping<string, JobListing>? group in platformGroups)
         {
             _output.WriteLine($"\n{group.Key} ({group.Count()} jobs):");
-            foreach (var job in group.Take(2))
+            foreach (JobListing? job in group.Take(2))
             {
                 _output.WriteLine($"  - {job.Title} at {job.Company}");
             }
@@ -107,7 +107,7 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
     public async Task PlatformCoverage_Verifies_AllPlatforms_Are_Healthy()
     {
         // Arrange
-        var platforms = new[] { "linkedin", "indeed", "glassdoor", "infojobs" };
+        string[] platforms = new[] { "linkedin", "indeed", "glassdoor", "infojobs" };
         var criteria = new JobSearchCriteria
         {
             Query = "developer",
@@ -119,12 +119,12 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
         _output.WriteLine($"Testing {platforms.Length} platforms");
         _output.WriteLine($"Query: {criteria.Query}");
 
-        var healthyPlatforms = 0;
-        var unhealthyPlatforms = 0;
+        int healthyPlatforms = 0;
+        int unhealthyPlatforms = 0;
         var platformResults = new System.Collections.Generic.Dictionary<string, PlatformHealthResult>();
 
         // Test each platform individually
-        foreach (var platform in platforms)
+        foreach (string? platform in platforms)
         {
             _output.WriteLine($"\n--- Testing Platform: {platform} ---");
 
@@ -163,7 +163,7 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
             IReadOnlyList<JobListing> searchResults;
             try
             {
-                searchResults = await platformClient.SearchJobsAsync(criteria, cts.Token);
+                searchResults = await platformClient.SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -229,7 +229,7 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
         _output.WriteLine($"Healthy platforms: {healthyPlatforms}/{platforms.Length}");
         _output.WriteLine($"Unhealthy platforms: {unhealthyPlatforms}/{platforms.Length}");
 
-        foreach (var result in platformResults.Values.OrderBy(r => r.Platform))
+        foreach (PlatformHealthResult? result in platformResults.Values.OrderBy(r => r.Platform))
         {
             if (result.IsHealthy)
             {
@@ -264,8 +264,8 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
         _output.WriteLine($"=== Testing Data Diversity Across Platforms ===");
         _output.WriteLine($"Query: {criteria.Query}");
 
-        var results = await _serviceProvider.GetRequiredService<IJobClient>()
-            .SearchJobsAsync(criteria, cts.Token);
+        IReadOnlyList<JobListing> results = await _serviceProvider.GetRequiredService<IJobClient>()
+            .SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
 
         // Assert
         results.Should().NotBeNull("results should not be null");
@@ -289,12 +289,12 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
 
         // 1. Title diversity
         var uniqueTitles = results.Select(j => j.Title).Distinct().ToList();
-        var titleDiversityRatio = (double)uniqueTitles.Count / results.Count;
+        double titleDiversityRatio = (double)uniqueTitles.Count / results.Count;
         _output.WriteLine($"Unique titles: {uniqueTitles.Count}/{results.Count} ({titleDiversityRatio:P1})");
 
         // 2. Company diversity
         var uniqueCompanies = results.Select(j => j.Company).Distinct().ToList();
-        var companyDiversityRatio = (double)uniqueCompanies.Count / results.Count;
+        double companyDiversityRatio = (double)uniqueCompanies.Count / results.Count;
         _output.WriteLine($"Unique companies: {uniqueCompanies.Count}/{results.Count} ({companyDiversityRatio:P1})");
 
         // 3. Location diversity
@@ -306,7 +306,7 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
         _output.WriteLine($"Unique locations: {uniqueLocations.Count}");
 
         // 4. Platform diversity
-        var platformDiversityRatio = (double)platformGroups.Count / Math.Max(1, results.Count);
+        double platformDiversityRatio = (double)platformGroups.Count / Math.Max(1, results.Count);
         _output.WriteLine($"Platform diversity: {platformGroups.Count} platforms");
 
         // Validate diversity thresholds
@@ -343,19 +343,19 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
                 _output.WriteLine("\nSample potential duplicates:");
                 foreach (var dup in potentialCrossPlatformDuplicates.Take(3))
                 {
-                    var platforms = string.Join(", ", dup.Select(j => j.Platform).Distinct());
+                    string platforms = string.Join(", ", dup.Select(j => j.Platform).Distinct());
                     _output.WriteLine($"  - {dup.Key.Title} at {dup.Key.Company} [{platforms}]");
                 }
             }
 
             // Note: Some cross-platform duplicates are expected (same job posted on multiple platforms)
             // We just want to ensure not ALL jobs are duplicates
-            var uniqueJobSignatures = jobSignatures
+            int uniqueJobSignatures = jobSignatures
                 .Select(j => $"{j.Title}|{j.Company}|{j.Location}")
                 .Distinct()
                 .Count();
 
-            var signatureDiversityRatio = (double)uniqueJobSignatures / results.Count;
+            double signatureDiversityRatio = (double)uniqueJobSignatures / results.Count;
             _output.WriteLine($"\nUnique job signatures (title|company|location): {uniqueJobSignatures}/{results.Count} ({signatureDiversityRatio:P1})");
 
             uniqueJobSignatures.Should().BeGreaterThan(results.Count / 2,
@@ -369,7 +369,7 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
             .Take(5)
             .ToList();
 
-        foreach (var job in sampleJobs)
+        foreach (JobListing? job in sampleJobs)
         {
             _output.WriteLine($"- {job.Title} at {job.Company} ({job.Source})");
         }

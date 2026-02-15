@@ -10,13 +10,13 @@ public class TimingMimicryTests
     {
         // Arrange
         var timing = new TimingMimicry();
-        var startTime = DateTime.UtcNow;
+        DateTime startTime = DateTime.UtcNow;
 
         // Act
-        await timing.NavigationDelayAsync();
+        await timing.NavigationDelayAsync().ConfigureAwait(false);
 
         // Assert
-        var elapsed = DateTime.UtcNow - startTime;
+        TimeSpan elapsed = DateTime.UtcNow - startTime;
         Assert.InRange(elapsed.TotalMilliseconds, 1900, 5200); // 2000-5000ms + buffer
     }
 
@@ -25,13 +25,13 @@ public class TimingMimicryTests
     {
         // Arrange
         var timing = new TimingMimicry();
-        var startTime = DateTime.UtcNow;
+        DateTime startTime = DateTime.UtcNow;
 
         // Act
-        await timing.PreClickDelayAsync();
+        await timing.PreClickDelayAsync().ConfigureAwait(false);
 
         // Assert
-        var elapsed = DateTime.UtcNow - startTime;
+        TimeSpan elapsed = DateTime.UtcNow - startTime;
         Assert.InRange(elapsed.TotalMilliseconds, 400, 1700); // 500-1500ms + buffer
     }
 
@@ -40,13 +40,13 @@ public class TimingMimicryTests
     {
         // Arrange
         var timing = new TimingMimicry();
-        var startTime = DateTime.UtcNow;
+        DateTime startTime = DateTime.UtcNow;
 
         // Act
-        await timing.PostClickDelayAsync();
+        await timing.PostClickDelayAsync().ConfigureAwait(false);
 
         // Assert
-        var elapsed = DateTime.UtcNow - startTime;
+        TimeSpan elapsed = DateTime.UtcNow - startTime;
         Assert.InRange(elapsed.TotalMilliseconds, 900, 3500); // 1000-3000ms + buffer for CI scheduler jitter
     }
 
@@ -55,13 +55,13 @@ public class TimingMimicryTests
     {
         // Arrange
         var timing = new TimingMimicry();
-        var startTime = DateTime.UtcNow;
+        DateTime startTime = DateTime.UtcNow;
 
         // Act
-        await timing.CustomDelayAsync(100, 200);
+        await timing.CustomDelayAsync(100, 200).ConfigureAwait(false);
 
         // Assert
-        var elapsed = DateTime.UtcNow - startTime;
+        TimeSpan elapsed = DateTime.UtcNow - startTime;
         Assert.InRange(elapsed.TotalMilliseconds, 90, 800); // 100-200ms + buffer for CI scheduler jitter
     }
 
@@ -73,7 +73,7 @@ public class TimingMimicryTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            async () => await timing.CustomDelayAsync(100, 50));
+            async () => await timing.CustomDelayAsync(100, 50).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     [Fact]
@@ -84,6 +84,6 @@ public class TimingMimicryTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            async () => await timing.CustomDelayAsync(-1, 100));
+            async () => await timing.CustomDelayAsync(-1, 100).ConfigureAwait(false)).ConfigureAwait(false);
     }
 }

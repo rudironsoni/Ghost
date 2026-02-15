@@ -16,7 +16,7 @@ public interface ICloseCondition
     /// Gets the human-readable name of this condition.
     /// </summary>
     /// <value>A descriptive name used in logging and diagnostics.</value>
-    string Name { get; }
+    public string Name { get; }
 
     /// <summary>
     /// Determines whether this condition has been met.
@@ -30,5 +30,5 @@ public interface ICloseCondition
     /// This method should execute quickly and avoid blocking operations.
     /// It will be called frequently during spider execution.
     /// </remarks>
-    Task<bool> IsMetAsync(SpiderContext context, CancellationToken ct = default);
+    public Task<bool> IsMetAsync(SpiderContext context, CancellationToken ct = default);
 }

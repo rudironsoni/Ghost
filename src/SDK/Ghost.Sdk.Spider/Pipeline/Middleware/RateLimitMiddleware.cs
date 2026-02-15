@@ -1,3 +1,4 @@
+using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 
 namespace Ghost.Sdk.Spider.Pipeline.Middleware;
@@ -43,19 +44,19 @@ public sealed class RateLimitMiddleware : IPipelineMiddleware
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        _capacity = configuration.TryGetValue("Capacity", out var cap) && cap is int capacity
+        _capacity = configuration.TryGetValue("Capacity", out object? cap) && cap is int capacity
             ? capacity
             : 10;
 
-        _tokensPerSecond = configuration.TryGetValue("TokensPerSecond", out var tps) && tps is double tokensPerSecond
+        _tokensPerSecond = configuration.TryGetValue("TokensPerSecond", out object? tps) && tps is double tokensPerSecond
             ? tokensPerSecond
             : 1.0;
 
-        _perDomain = configuration.TryGetValue("PerDomain", out var pd) && pd is bool perDomain
+        _perDomain = configuration.TryGetValue("PerDomain", out object? pd) && pd is bool perDomain
             ? perDomain
             : true;
 
-        _waitWhenExceeded = configuration.TryGetValue("WaitWhenExceeded", out var wwe) && wwe is bool waitWhenExceeded
+        _waitWhenExceeded = configuration.TryGetValue("WaitWhenExceeded", out object? wwe) && wwe is bool waitWhenExceeded
             ? waitWhenExceeded
             : true;
 
@@ -74,12 +75,12 @@ public sealed class RateLimitMiddleware : IPipelineMiddleware
     /// </exception>
     public async Task InvokeAsync(PipelineContext context, PipelineDelegate continuation)
     {
-        var limiter = GetLimiter(context);
+        TokenBucketRateLimiter limiter = GetLimiter(context);
 
         if (_waitWhenExceeded)
         {
             // Wait for a token to become available
-            await limiter.AcquireAsync(context.CancellationToken);
+            await limiter.AcquireAsync(context.CancellationToken).ConfigureAwait(false);
         }
         else
         {
@@ -91,7 +92,7 @@ public sealed class RateLimitMiddleware : IPipelineMiddleware
             }
         }
 
-        await continuation(context);
+        await continuation(context).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -106,13 +107,13 @@ public sealed class RateLimitMiddleware : IPipelineMiddleware
             return _globalLimiter;
         }
 
-        var request = context.GetRequestAs<Adapters.Contracts.Request>();
+        Request? request = context.GetRequestAs<Adapters.Contracts.Request>();
         if (request == null)
         {
             return _globalLimiter;
         }
 
-        var domain = ExtractDomain(request.Url);
+        string domain = ExtractDomain(request.Url);
         if (string.IsNullOrEmpty(domain))
         {
             return _globalLimiter;
@@ -120,7 +121,7 @@ public sealed class RateLimitMiddleware : IPipelineMiddleware
 
         lock (_lock)
         {
-            if (!_domainLimiters.TryGetValue(domain, out var limiter))
+            if (!_domainLimiters.TryGetValue(domain, out TokenBucketRateLimiter? limiter))
             {
                 limiter = new TokenBucketRateLimiter(_capacity, _tokensPerSecond);
                 _domainLimiters[domain] = limiter;

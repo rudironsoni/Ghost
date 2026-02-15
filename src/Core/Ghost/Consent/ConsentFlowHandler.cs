@@ -53,14 +53,14 @@ public class ConsentFlowHandler
 
         for (int i = 0; i < config.Steps.Length; i++)
         {
-            var stepSelector = config.Steps[i];
+            string stepSelector = config.Steps[i];
             if (_logger.IsEnabled(LogLevel.Debug))
             {
                 _logger.LogDebug("Executing step {StepNumber}/{TotalSteps}: {Selector}",
                     i + 1, config.Steps.Length, stepSelector);
             }
 
-            var success = await ExecuteStepAsync(page, stepSelector, config);
+            bool success = await ExecuteStepAsync(page, stepSelector, config).ConfigureAwait(false);
             if (!success)
             {
                 if (_logger.IsEnabled(LogLevel.Warning))
@@ -73,7 +73,7 @@ public class ConsentFlowHandler
             // Wait between steps
             if (i < config.Steps.Length - 1)
             {
-                await Task.Delay(_stepDelayMs);
+                await Task.Delay(_stepDelayMs).ConfigureAwait(false);
             }
         }
 
@@ -91,7 +91,7 @@ public class ConsentFlowHandler
     private async Task<bool> ExecuteStepAsync(IPage page, string selector, CMPConfig config)
     {
         // Try regular DOM first
-        var clicked = await TryClickRegularAsync(page, selector);
+        bool clicked = await TryClickRegularAsync(page, selector).ConfigureAwait(false);
         if (clicked)
         {
             if (_logger.IsEnabled(LogLevel.Debug))
@@ -102,7 +102,7 @@ public class ConsentFlowHandler
         }
 
         // Try shadow DOM
-        clicked = await TryClickShadowDOMAsync(page, selector);
+        clicked = await TryClickShadowDOMAsync(page, selector).ConfigureAwait(false);
         if (clicked)
         {
             if (_logger.IsEnabled(LogLevel.Debug))
@@ -115,7 +115,7 @@ public class ConsentFlowHandler
         // Try iframe if configured
         if (config.IsIframe)
         {
-            clicked = await TryClickIframeAsync(page, selector, config);
+            clicked = await TryClickIframeAsync(page, selector, config).ConfigureAwait(false);
             if (clicked)
             {
                 if (_logger.IsEnabled(LogLevel.Debug))
@@ -140,23 +140,23 @@ public class ConsentFlowHandler
     {
         try
         {
-            var element = await page.QuerySelectorAsync(selector);
+            IElement? element = await page.QuerySelectorAsync(selector).ConfigureAwait(false);
             if (element != null)
             {
-                var isVisible = await element.IsVisibleAsync();
-                var isEnabled = await element.IsEnabledAsync();
+                bool isVisible = await element.IsVisibleAsync().ConfigureAwait(false);
+                bool isEnabled = await element.IsEnabledAsync().ConfigureAwait(false);
 
                 if (isVisible && isEnabled)
                 {
                     try
                     {
-                        await element.ClickAsync();
+                        await element.ClickAsync().ConfigureAwait(false);
                         return true;
                     }
                     catch
                     {
                         // Fallback to JavaScript click
-                        await page.EvaluateAsync<object>($"document.querySelector('{selector.Replace("'", "\\'")}')?.click()");
+                        await page.EvaluateAsync<object>($"document.querySelector('{selector.Replace("'", "\\'")}')?.click()").ConfigureAwait(false);
                         return true;
                     }
                 }
@@ -180,7 +180,7 @@ public class ConsentFlowHandler
     {
         try
         {
-            return await ShadowDOMHelper.ClickInShadowDOMAsync(page, selector);
+            return await ShadowDOMHelper.ClickInShadowDOMAsync(page, selector).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -204,8 +204,8 @@ public class ConsentFlowHandler
                 return false;
             }
 
-            var iframeSelector = config.Detectors[0]; // First detector is the iframe selector
-            var clicked = await page.EvaluateAsync<bool>($@"
+            string iframeSelector = config.Detectors[0]; // First detector is the iframe selector
+            bool clicked = await page.EvaluateAsync<bool>($@"
                 () => {{
                     var iframe = document.querySelector('{iframeSelector.Replace("'", "\\'")}');
                     if (iframe && iframe.contentDocument) {{
@@ -217,7 +217,7 @@ public class ConsentFlowHandler
                     }}
                     return false;
                 }}
-            ");
+            ").ConfigureAwait(false);
 
             return clicked;
         }
@@ -242,10 +242,10 @@ public class ConsentFlowHandler
         // Check regular DOM
         try
         {
-            var element = await page.QuerySelectorAsync(selector);
+            IElement? element = await page.QuerySelectorAsync(selector).ConfigureAwait(false);
             if (element != null)
             {
-                var isVisible = await element.IsVisibleAsync();
+                bool isVisible = await element.IsVisibleAsync().ConfigureAwait(false);
                 if (isVisible)
                 {
                     return true;
@@ -262,7 +262,7 @@ public class ConsentFlowHandler
         {
             try
             {
-                var found = await ShadowDOMHelper.FindInShadowDOMAsync(page, selector);
+                bool found = await ShadowDOMHelper.FindInShadowDOMAsync(page, selector).ConfigureAwait(false);
                 if (found)
                 {
                     return true;

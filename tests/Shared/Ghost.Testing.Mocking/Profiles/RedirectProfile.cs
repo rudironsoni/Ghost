@@ -73,9 +73,9 @@ public static class RedirectProfile
     {
         for (int i = 0; i < chainLength; i++)
         {
-            var currentPath = $"/redirect{i}";
-            var nextPath = i < chainLength - 1 ? $"/redirect{i + 1}" : "/final";
-            var statusCode = i % 2 == 0 ? 301 : 302;
+            string currentPath = $"/redirect{i}";
+            string nextPath = i < chainLength - 1 ? $"/redirect{i + 1}" : "/final";
+            int statusCode = i % 2 == 0 ? 301 : 302;
 
             server
                 .Given(Request.Create()

@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using Microsoft.Extensions.Logging;
+using Polly;
 
 namespace Ghost.Http;
 
@@ -26,8 +27,8 @@ public class StealthHttpClient
         using var req = new HttpRequestMessage(HttpMethod.Get, uri);
         AddDefaultHeaders(req);
 
-        var policy = RetryPolicy.CreatePolicy(_options.MaxRetries, _options.BackoffFactor);
-        return await policy.ExecuteAsync(async () => await _client.SendAsync(await CloneRequestAsync(req), HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false)).ConfigureAwait(false);
+        IAsyncPolicy<HttpResponseMessage> policy = RetryPolicy.CreatePolicy(_options.MaxRetries, _options.BackoffFactor);
+        return await policy.ExecuteAsync(async () => await _client.SendAsync(await CloneRequestAsync(req).ConfigureAwait(false), HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     public async Task<HttpResponseMessage> PostAsync(string uri, HttpContent content, CancellationToken ct = default)
@@ -37,8 +38,8 @@ public class StealthHttpClient
         using var req = new HttpRequestMessage(HttpMethod.Post, uri) { Content = content };
         AddDefaultHeaders(req);
 
-        var policy = RetryPolicy.CreatePolicy(_options.MaxRetries, _options.BackoffFactor);
-        return await policy.ExecuteAsync(async () => await _client.SendAsync(await CloneRequestAsync(req), HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false)).ConfigureAwait(false);
+        IAsyncPolicy<HttpResponseMessage> policy = RetryPolicy.CreatePolicy(_options.MaxRetries, _options.BackoffFactor);
+        return await policy.ExecuteAsync(async () => await _client.SendAsync(await CloneRequestAsync(req).ConfigureAwait(false), HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     private static void AddDefaultHeaders(HttpRequestMessage req)
@@ -51,7 +52,7 @@ public class StealthHttpClient
 
     private async Task ApplyJitter(CancellationToken ct)
     {
-        var delay = _rng.Next(_options.DelayMinMs, _options.DelayMaxMs + 1);
+        int delay = _rng.Next(_options.DelayMinMs, _options.DelayMaxMs + 1);
         try
         {
             await Task.Delay(delay, ct).ConfigureAwait(false);
@@ -70,14 +71,14 @@ public class StealthHttpClient
     {
         var clone = new HttpRequestMessage(req.Method, req.RequestUri);
         // copy headers
-        foreach (var h in req.Headers)
+        foreach (KeyValuePair<string, IEnumerable<string>> h in req.Headers)
             clone.Headers.TryAddWithoutValidation(h.Key, h.Value);
 
         if (req.Content != null)
         {
-            var contentStream = await req.Content.ReadAsStreamAsync();
+            Stream contentStream = await req.Content.ReadAsStreamAsync().ConfigureAwait(false);
             clone.Content = new StreamContent(contentStream);
-            foreach (var h in req.Content.Headers)
+            foreach (KeyValuePair<string, IEnumerable<string>> h in req.Content.Headers)
                 clone.Content.Headers.TryAddWithoutValidation(h.Key, h.Value);
         }
 

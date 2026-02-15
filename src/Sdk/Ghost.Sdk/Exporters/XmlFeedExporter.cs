@@ -46,7 +46,7 @@ public sealed class XmlFeedExporter : IFeedExporter
         var itemsList = items.ToList();
 
         // Determine the element name for individual items
-        var itemElementName = typeof(T).Name.ToLowerInvariant();
+        string itemElementName = typeof(T).Name.ToLowerInvariant();
         if (itemElementName.EndsWith("item", StringComparison.OrdinalIgnoreCase))
         {
             itemElementName = itemElementName[..^4]; // Remove "item" suffix
@@ -59,11 +59,11 @@ public sealed class XmlFeedExporter : IFeedExporter
         // Create XML document
         var root = new XElement(_rootElementName);
 
-        foreach (var item in itemsList)
+        foreach (T? item in itemsList)
         {
             ct.ThrowIfCancellationRequested();
 
-            var itemElement = CreateItemElement(item, itemElementName);
+            XElement itemElement = CreateItemElement(item, itemElementName);
             root.Add(itemElement);
         }
 
@@ -81,7 +81,7 @@ public sealed class XmlFeedExporter : IFeedExporter
             OmitXmlDeclaration = false
         };
 
-        await using var writer = XmlWriter.Create(output, settings);
+        await using var writer = XmlWriter.Create(output, settings).ConfigureAwait(false);
         await document.WriteToAsync(writer, ct).ConfigureAwait(false);
         await writer.FlushAsync().ConfigureAwait(false);
     }
@@ -98,13 +98,13 @@ public sealed class XmlFeedExporter : IFeedExporter
             return element;
         }
 
-        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        IEnumerable<PropertyInfo> properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanRead);
 
-        foreach (var property in properties)
+        foreach (PropertyInfo? property in properties)
         {
-            var value = property.GetValue(item);
-            var propertyName = ToCamelCase(property.Name);
+            object? value = property.GetValue(item);
+            string propertyName = ToCamelCase(property.Name);
 
             if (value == null)
             {
@@ -117,7 +117,7 @@ public sealed class XmlFeedExporter : IFeedExporter
             else if (value is System.Collections.IEnumerable enumerable and not string)
             {
                 var listElement = new XElement(propertyName);
-                foreach (var listItem in enumerable)
+                foreach (object? listItem in enumerable)
                 {
                     if (listItem != null)
                     {

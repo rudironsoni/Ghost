@@ -40,7 +40,7 @@ public sealed class InMemoryDupeFilter : IDupeFilter
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var fingerprint = RequestFingerprinter.CreateFingerprint(request);
+        string fingerprint = RequestFingerprinter.CreateFingerprint(request);
         return IsDuplicateAsync(fingerprint, ct);
     }
 
@@ -63,7 +63,7 @@ public sealed class InMemoryDupeFilter : IDupeFilter
 
         // TryAdd returns false if key already exists (duplicate)
         // Returns true if key was added (not a duplicate)
-        var wasAdded = _seenFingerprints.TryAdd(fingerprint, 0);
+        bool wasAdded = _seenFingerprints.TryAdd(fingerprint, 0);
 
         // Return true if it's a duplicate (was NOT added)
         return Task.FromResult(!wasAdded);

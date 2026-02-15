@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +28,7 @@ public sealed class DedupeContract : ProviderContractBase
         };
 
         // Get jobs from multiple pages to test deduplication
-        var jobs = await adapter.SearchWithPaginationAsync(criteria, maxPages: 3, ct);
+        IReadOnlyList<JobListing> jobs = await adapter.SearchWithPaginationAsync(criteria, maxPages: 3, ct).ConfigureAwait(false);
 
         if (jobs.Count == 0)
         {
@@ -110,19 +111,19 @@ public sealed class DedupeContract : ProviderContractBase
             return string.Empty;
         }
 
-        var normalized = url.ToLowerInvariant().Trim();
+        string normalized = url.ToLowerInvariant().Trim();
 
         // Remove common tracking parameters
-        var trackingParams = new[] { "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid" };
+        string[] trackingParams = new[] { "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid" };
         var uri = new System.Uri(normalized);
-        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        NameValueCollection query = System.Web.HttpUtility.ParseQueryString(uri.Query);
 
-        foreach (var param in trackingParams)
+        foreach (string? param in trackingParams)
         {
             query.Remove(param);
         }
 
-        var newQuery = query.ToString();
+        string? newQuery = query.ToString();
         var newUri = new System.UriBuilder(uri)
         {
             Query = newQuery

@@ -109,7 +109,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
     {
         await EnsureInitializedAsync(token).ConfigureAwait(false);
 
-        var healthyProxies = GetHealthyProxies(countryCode);
+        List<ProxyInfo> healthyProxies = GetHealthyProxies(countryCode);
         if (healthyProxies.Count == 0)
         {
             if (!_usingFallback && _fallbackSources != null)
@@ -122,7 +122,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
                 return null;
         }
 
-        var strategy = _options.RotationStrategy ?? "RoundRobin";
+        string strategy = _options.RotationStrategy ?? "RoundRobin";
         ProxyInfo? selectedProxy = strategy.ToLowerInvariant() switch
         {
             "roundrobin" => SelectRoundRobin(healthyProxies),
@@ -148,8 +148,8 @@ public sealed class ProxyHealthIntelligence : IDisposable
         if (proxy == null)
             return;
 
-        var key = GetProxyKey(proxy);
-        var metrics = _healthMetrics.GetOrAdd(key, _ => new ProxyHealthMetrics
+        string key = GetProxyKey(proxy);
+        ProxyHealthMetrics metrics = _healthMetrics.GetOrAdd(key, _ => new ProxyHealthMetrics
         {
             ProxyKey = key,
             FirstSeen = DateTimeOffset.UtcNow
@@ -177,7 +177,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
             }
         }
 
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     /// <summary>
@@ -188,7 +188,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
         if (proxy == null)
             return;
 
-        var key = GetProxyKey(proxy);
+        string key = GetProxyKey(proxy);
         _blacklist.TryAdd(key, true);
         s_logProxyBlacklisted(_logger, proxy.Server, null);
     }
@@ -201,7 +201,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
         if (proxy == null)
             return;
 
-        var key = GetProxyKey(proxy);
+        string key = GetProxyKey(proxy);
         _blacklist.TryRemove(key, out _);
     }
 
@@ -213,7 +213,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
         if (proxy == null)
             return;
 
-        var key = GetProxyKey(proxy);
+        string key = GetProxyKey(proxy);
         lock (_whitelist)
         {
             _whitelist.Add(key);
@@ -236,8 +236,8 @@ public sealed class ProxyHealthIntelligence : IDisposable
         if (proxy == null)
             return null;
 
-        var key = GetProxyKey(proxy);
-        return _healthMetrics.TryGetValue(key, out var metrics) ? metrics : null;
+        string key = GetProxyKey(proxy);
+        return _healthMetrics.TryGetValue(key, out ProxyHealthMetrics? metrics) ? metrics : null;
     }
 
     private async Task EnsureInitializedAsync(CancellationToken token)
@@ -269,14 +269,14 @@ public sealed class ProxyHealthIntelligence : IDisposable
 
     private async Task LoadProxiesFromSourcesAsync(IEnumerable<IProxySource> sources, CancellationToken token)
     {
-        foreach (var source in sources)
+        foreach (IProxySource source in sources)
         {
             try
             {
-                var proxies = await source.FetchProxiesAsync(token).ConfigureAwait(false);
-                foreach (var proxy in proxies)
+                IEnumerable<ProxyInfo> proxies = await source.FetchProxiesAsync(token).ConfigureAwait(false);
+                foreach (ProxyInfo proxy in proxies)
                 {
-                    var key = GetProxyKey(proxy);
+                    string key = GetProxyKey(proxy);
                     _proxyPool.TryAdd(key, proxy);
                     _healthMetrics.GetOrAdd(key, _ => new ProxyHealthMetrics
                     {
@@ -312,16 +312,16 @@ public sealed class ProxyHealthIntelligence : IDisposable
 
         lock (_whitelist)
         {
-            foreach (var whitelistedKey in _whitelist)
+            foreach (string whitelistedKey in _whitelist)
             {
-                if (_proxyPool.TryGetValue(whitelistedKey, out var proxy) && !_blacklist.ContainsKey(whitelistedKey))
+                if (_proxyPool.TryGetValue(whitelistedKey, out ProxyInfo? proxy) && !_blacklist.ContainsKey(whitelistedKey))
                 {
                     healthy.Add(proxy);
                 }
             }
         }
 
-        foreach (var kvp in _proxyPool)
+        foreach (KeyValuePair<string, ProxyInfo> kvp in _proxyPool)
         {
             if (_blacklist.ContainsKey(kvp.Key))
                 continue;
@@ -329,9 +329,9 @@ public sealed class ProxyHealthIntelligence : IDisposable
             if (_whitelist.Contains(kvp.Key))
                 continue;
 
-            if (_healthMetrics.TryGetValue(kvp.Key, out var metrics))
+            if (_healthMetrics.TryGetValue(kvp.Key, out ProxyHealthMetrics? metrics))
             {
-                var successRate = metrics.TotalRequests > 0
+                double successRate = metrics.TotalRequests > 0
                     ? (double)metrics.SuccessfulRequests / metrics.TotalRequests
                     : 1.0;
 
@@ -354,7 +354,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
         if (proxies.Count == 0)
             return null!;
 
-        var index = (int)(Interlocked.Increment(ref _roundRobinIndex) % proxies.Count);
+        int index = (int)(Interlocked.Increment(ref _roundRobinIndex) % proxies.Count);
         return proxies[index];
     }
 
@@ -363,7 +363,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
         if (proxies.Count == 0)
             return null!;
 
-        var bestProxy = proxies
+        ProxyInfo bestProxy = proxies
             .Select(p => new
             {
                 Proxy = p,
@@ -388,7 +388,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
         if (proxies.Count == 0)
             return null!;
 
-        var random = Random.Shared;
+        Random random = Random.Shared;
         return proxies[random.Next(proxies.Count)];
     }
 
@@ -397,7 +397,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
         if (proxies.Count == 0)
             return null!;
 
-        var leastUsed = proxies
+        ProxyInfo leastUsed = proxies
             .Select(p => new
             {
                 Proxy = p,
@@ -418,7 +418,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
     private void StartBackgroundHealthCheck()
     {
         s_logHealthCheckStarted(_logger, null);
-        _healthCheckTask = Task.Run(async () => await PerformBackgroundHealthCheckAsync(_healthCheckCts.Token), _healthCheckCts.Token);
+        _healthCheckTask = Task.Run(async () => await PerformBackgroundHealthCheckAsync(_healthCheckCts.Token).ConfigureAwait(false), _healthCheckCts.Token);
     }
 
     private async Task PerformBackgroundHealthCheckAsync(CancellationToken token)
@@ -431,13 +431,13 @@ public sealed class ProxyHealthIntelligence : IDisposable
             {
                 await Task.Delay(interval, token).ConfigureAwait(false);
 
-                foreach (var kvp in _proxyPool)
+                foreach (KeyValuePair<string, ProxyInfo> kvp in _proxyPool)
                 {
                     if (token.IsCancellationRequested)
                         break;
 
-                    var proxy = kvp.Value;
-                    var key = kvp.Key;
+                    ProxyInfo proxy = kvp.Value;
+                    string key = kvp.Key;
 
                     if (_blacklist.ContainsKey(key))
                         continue;
@@ -456,10 +456,10 @@ public sealed class ProxyHealthIntelligence : IDisposable
                         using var handler = new HttpClientHandler { Proxy = webProxy };
                         using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(10) };
 
-                        var response = await client.GetAsync("https://httpbin.org/ip", token).ConfigureAwait(false);
+                        HttpResponseMessage response = await client.GetAsync("https://httpbin.org/ip", token).ConfigureAwait(false);
                         sw.Stop();
 
-                        var success = response.IsSuccessStatusCode;
+                        bool success = response.IsSuccessStatusCode;
                         await ReportProxyResultAsync(proxy, success, sw.Elapsed, response.StatusCode).ConfigureAwait(false);
 
                         if (success)
@@ -545,7 +545,7 @@ public class ProxyHealthMetrics
                 return 0.0;
 
             var sorted = LatencyHistory.OrderBy(x => x).ToList();
-            var mid = sorted.Count / 2;
+            int mid = sorted.Count / 2;
             return sorted.Count % 2 == 0
                 ? (sorted[mid - 1] + sorted[mid]) / 2.0
                 : sorted[mid];
@@ -560,7 +560,7 @@ public class ProxyHealthMetrics
                 return 0.0;
 
             var sorted = LatencyHistory.OrderBy(x => x).ToList();
-            var index = (int)Math.Ceiling(sorted.Count * 0.95) - 1;
+            int index = (int)Math.Ceiling(sorted.Count * 0.95) - 1;
             return sorted[Math.Max(0, index)];
         }
     }

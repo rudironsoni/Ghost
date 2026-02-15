@@ -20,7 +20,7 @@ public interface IMemoryUsageExtension
     /// When current memory usage exceeds this value, <see cref="CheckMemoryAsync"/>
     /// will return <c>false</c> and signal the spider to stop.
     /// </remarks>
-    long MaxMemoryBytes { get; set; }
+    public long MaxMemoryBytes { get; set; }
 
     /// <summary>
     /// Checks if current memory usage is within acceptable limits.
@@ -35,7 +35,7 @@ public interface IMemoryUsageExtension
     /// memory consumption. It may trigger warnings or garbage collection based on
     /// configured thresholds.
     /// </remarks>
-    Task<bool> CheckMemoryAsync(CancellationToken ct = default);
+    public Task<bool> CheckMemoryAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Gets current memory usage statistics.
@@ -45,5 +45,5 @@ public interface IMemoryUsageExtension
     /// The returned statistics include current memory consumption, peak usage since
     /// monitoring began, and the configured limit. Useful for logging and diagnostics.
     /// </remarks>
-    MemoryStats GetStats();
+    public MemoryStats GetStats();
 }

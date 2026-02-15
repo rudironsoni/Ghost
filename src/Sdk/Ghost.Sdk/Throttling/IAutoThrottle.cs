@@ -21,7 +21,7 @@ public interface IAutoThrottle
     /// The returned delay is calculated based on recent server response latencies
     /// and will be bounded by the configured minimum and maximum delay values.
     /// </remarks>
-    Task<double> GetDelayAsync(CancellationToken ct = default);
+    public Task<double> GetDelayAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Records a server response latency measurement for adaptive adjustment.
@@ -34,5 +34,5 @@ public interface IAutoThrottle
     /// adaptive algorithm. The throttle will automatically adjust the delay based
     /// on a rolling window of latency measurements.
     /// </remarks>
-    Task RecordLatencyAsync(TimeSpan latency, CancellationToken ct = default);
+    public Task RecordLatencyAsync(TimeSpan latency, CancellationToken ct = default);
 }

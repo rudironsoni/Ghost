@@ -56,7 +56,7 @@ public sealed class RFPDupeFilter : IDupeFilter
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var fingerprint = RequestFingerprinter.CreateFingerprint(request);
+        string fingerprint = RequestFingerprinter.CreateFingerprint(request);
         return _storage.IsDuplicateAsync(fingerprint, ct);
     }
 

@@ -48,7 +48,7 @@ public class GhostEngineTests
         var context = new GhostEngineContext("test-job", "test-spider", new Dictionary<string, object?>());
 
         // Act
-        await engine.RunAsync(spider, context);
+        await engine.RunAsync(spider, context).ConfigureAwait(false);
 
         // Assert
         processedRequests.Should().HaveCount(3, "should process 3 start requests");
@@ -81,7 +81,7 @@ public class GhostEngineTests
         var context = new GhostEngineContext("test-job", "test-spider", new Dictionary<string, object?>());
 
         // Act
-        await engine.RunAsync(spider, context);
+        await engine.RunAsync(spider, context).ConfigureAwait(false);
 
         // Assert
         counter.MaxInFlightObserved.Should().Be(1, "should never exceed MaxInFlight");
@@ -108,7 +108,7 @@ public class GhostEngineTests
         var context = new GhostEngineContext("test-job", "test-spider", new Dictionary<string, object?>());
 
         // Act
-        await engine.RunAsync(spider, context);
+        await engine.RunAsync(spider, context).ConfigureAwait(false);
 
         // Assert
         // Middlewares should execute in reverse order of addition (last added = first to execute)
@@ -140,7 +140,7 @@ public class GhostEngineTests
         // Act & Assert
         // Should throw TaskCanceledException when cancelled
         await Assert.ThrowsAsync<TaskCanceledException>(() =>
-            engine.RunAsync(spider, context, cts.Token));
+            engine.RunAsync(spider, context, cts.Token)).ConfigureAwait(false);
     }
 
     // Test helpers
@@ -181,14 +181,14 @@ public class GhostEngineTests
         {
             for (int i = 0; i < 5; i++)
             {
-                await Task.Delay(10, cancellationToken);
+                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
                 yield return new GhostRequest($"http://example.com/{i}", "GET", new Dictionary<string, string>(), null, null);
             }
         }
 
         public async Task<SpiderOutput> ParseAsync(GhostResponse response, GhostEngineContext context, CancellationToken cancellationToken = default)
         {
-            await Task.Delay(50, cancellationToken); // Simulate slow processing
+            await Task.Delay(50, cancellationToken).ConfigureAwait(false); // Simulate slow processing
             return new SpiderOutput(EmptyRequests, EmptyItems);
         }
     }
@@ -204,7 +204,7 @@ public class GhostEngineTests
             while (!cancellationToken.IsCancellationRequested)
             {
                 yield return new GhostRequest($"http://example.com/{Interlocked.Increment(ref _counter)}", "GET", new Dictionary<string, string>(), null, null);
-                await Task.Delay(10, cancellationToken);
+                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -244,14 +244,14 @@ public class GhostEngineTests
 
         public async Task<GhostResponse> DownloadAsync(GhostRequest request, GhostEngineContext context, CancellationToken cancellationToken = default)
         {
-            var current = Interlocked.Increment(ref _counter.InFlightCount);
-            var max = _counter.MaxInFlightObserved;
+            int current = Interlocked.Increment(ref _counter.InFlightCount);
+            int max = _counter.MaxInFlightObserved;
             if (current > max)
             {
                 Interlocked.CompareExchange(ref _counter.MaxInFlightObserved, current, max);
             }
 
-            await Task.Delay(50, cancellationToken);
+            await Task.Delay(50, cancellationToken).ConfigureAwait(false);
 
             Interlocked.Decrement(ref _counter.InFlightCount);
 

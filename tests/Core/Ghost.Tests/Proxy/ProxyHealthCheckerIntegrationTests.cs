@@ -19,8 +19,8 @@ public class ProxyHealthCheckerIntegrationTests
     [Fact]
     public async Task CheckAllProxiesAsyncReturnsAllStatusesWhenCredentialsMissing()
     {
-        var previousUser = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_USERNAME");
-        var previousPassword = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_PASSWORD");
+        string? previousUser = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_USERNAME");
+        string? previousPassword = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_PASSWORD");
 
         try
         {
@@ -29,7 +29,7 @@ public class ProxyHealthCheckerIntegrationTests
 
             using var httpClient = new HttpClient();
             var checker = new ProxyHealthChecker(httpClient, NullLogger<ProxyHealthChecker>.Instance);
-            var report = await checker.CheckAllProxiesAsync();
+            ProxyHealthReport report = await checker.CheckAllProxiesAsync().ConfigureAwait(false);
 
             report.Should().NotBeNull();
             report.Proxies.Should().HaveCount(12);
@@ -49,18 +49,18 @@ public class ProxyHealthCheckerIntegrationTests
         using var httpClient = new HttpClient();
         var checker = new ProxyHealthChecker(httpClient, NullLogger<ProxyHealthChecker>.Instance);
         await FluentActions.Invoking(() => checker.MeasureLatencyAsync(" "))
-            .Should().ThrowAsync<ArgumentException>();
+            .Should().ThrowAsync<ArgumentException>().ConfigureAwait(false);
     }
 
     [Fact]
     public async Task MeasureLatencyAsyncHandlesUnreachableProxyGracefully()
     {
-        var proxyHost = "127.0.0.1";
-        var port = GetFreePort();
+        string proxyHost = "127.0.0.1";
+        int port = GetFreePort();
 
-        var proxyUrl = $"socks5://{proxyHost}:{port}";
-        var previousUser = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_USERNAME");
-        var previousPassword = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_PASSWORD");
+        string proxyUrl = $"socks5://{proxyHost}:{port}";
+        string? previousUser = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_USERNAME");
+        string? previousPassword = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_PASSWORD");
 
         try
         {
@@ -70,7 +70,7 @@ public class ProxyHealthCheckerIntegrationTests
             using var httpClient = new HttpClient();
             var checker = new ProxyHealthChecker(httpClient, NullLogger<ProxyHealthChecker>.Instance);
 
-            var latency = await checker.MeasureLatencyAsync(proxyUrl);
+            long latency = await checker.MeasureLatencyAsync(proxyUrl).ConfigureAwait(false);
 
             latency.Should().BeLessThanOrEqualTo(0);
         }
@@ -85,7 +85,7 @@ public class ProxyHealthCheckerIntegrationTests
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
-        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
         return port;
     }
 

@@ -18,13 +18,13 @@ public interface ICrawlSpider
     /// Gets the collection of rules that control crawling behavior.
     /// </summary>
     /// <value>List of rules defining URL matching and processing logic.</value>
-    List<IRule> Rules { get; }
+    public List<IRule> Rules { get; }
 
     /// <summary>
     /// Adds a rule to the spider's rule collection.
     /// </summary>
     /// <param name="rule">The rule to add.</param>
-    void AddRule(IRule rule);
+    public void AddRule(IRule rule);
 }
 
 /// <summary>
@@ -40,17 +40,17 @@ public interface IRule
     /// Gets the regex pattern for matching URLs.
     /// </summary>
     /// <value>Regular expression to match against URLs.</value>
-    Regex Pattern { get; }
+    public Regex Pattern { get; }
 
     /// <summary>
     /// Gets the callback function to execute when a URL matches the pattern.
     /// </summary>
     /// <value>Async function that extracts items from the response.</value>
-    Func<Response, Task<IEnumerable<object>>> Callback { get; }
+    public Func<Response, Task<IEnumerable<object>>> Callback { get; }
 
     /// <summary>
     /// Gets a value indicating whether to follow links discovered on pages matching this rule.
     /// </summary>
     /// <value><c>true</c> to extract and follow links; <c>false</c> to stop crawling at this page.</value>
-    bool Follow { get; }
+    public bool Follow { get; }
 }
