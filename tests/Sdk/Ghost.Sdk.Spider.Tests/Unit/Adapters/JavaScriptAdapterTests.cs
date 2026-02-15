@@ -2,7 +2,7 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Microsoft.Extensions.Logging;
-using Microsoft.Playwright;
+using Patchright;
 using Moq;
 using Xunit;
 

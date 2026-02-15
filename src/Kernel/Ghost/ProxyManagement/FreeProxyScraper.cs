@@ -13,7 +13,7 @@ namespace Ghost.ProxyManagement;
 /// Scrapes free proxies from multiple public sources.
 /// Targets 1000+ proxies daily with $0 cost.
 /// </summary>
-public sealed class FreeProxyScraper : IProxySource
+public class FreeProxyScraper : IProxySource
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<FreeProxyScraper> _logger;
@@ -42,7 +42,7 @@ public sealed class FreeProxyScraper : IProxySource
     /// <summary>
     /// Fetches proxies from all configured sources.
     /// </summary>
-    public async Task<IEnumerable<ProxyInfo>> FetchProxiesAsync(CancellationToken ct)
+    public virtual async Task<IEnumerable<ProxyInfo>> FetchProxiesAsync(CancellationToken ct)
     {
         var allProxies = new List<ProxyInfo>();
 
