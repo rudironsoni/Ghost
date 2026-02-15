@@ -98,7 +98,7 @@ public class IndeedApiClientMetricsTests
         var handler = new NoopHandler();
         var client = CreateClient(handler);
 
-        using var request = CreateRequest(client);
+        using HttpRequestMessage request = CreateRequest(client);
 
         Assert.True(request.Content?.Headers.Contains("Content-Type"));
     }
@@ -109,7 +109,7 @@ public class IndeedApiClientMetricsTests
         var handler = new NoopHandler();
         var client = CreateClient(handler);
 
-        using var request = CreateRequest(client);
+        using HttpRequestMessage request = CreateRequest(client);
 
         Assert.True(request.Headers.Contains("User-Agent"));
         Assert.True(request.Headers.Contains("indeed-api-key"));
@@ -121,7 +121,7 @@ public class IndeedApiClientMetricsTests
         var handler = new NoopHandler();
         var client = CreateClient(handler);
 
-        using var request = CreateRequest(client);
+        using HttpRequestMessage request = CreateRequest(client);
         var metrics = client.GetMetrics();
 
         Assert.True(metrics.RequestsPerSecond >= 0);
@@ -151,14 +151,14 @@ public class IndeedApiClientMetricsTests
             Task.FromResult<ProxyInfo?>(null);
     }
 
-private sealed class NoopHandler : HttpMessageHandler
-{
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-        Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent("{\"data\":{\"jobSearch\":{\"pageInfo\":{\"nextCursor\":null,\"hasNextPage\":false}}}}")
-        });
-}
+    private sealed class NoopHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{\"data\":{\"jobSearch\":{\"pageInfo\":{\"nextCursor\":null,\"hasNextPage\":false}}}}")
+            });
+    }
 
     private sealed class ResponseHandler : HttpMessageHandler
     {

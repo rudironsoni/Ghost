@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Xunit;
 using Ghost.Platform.Indeed.Internal;
+using Xunit;
 
 namespace Ghost.Platform.Indeed.Tests;
 
@@ -9,7 +9,7 @@ public class IndeedJobParserTests
     [Fact]
     public void ParsesSampleResponse()
     {
-        var json = @"{
+        string json = @"{
   ""data"": {
     ""jobSearch"": {
       ""results"": [
@@ -29,7 +29,7 @@ public class IndeedJobParserTests
 
         using var doc = JsonDocument.Parse(json);
         var list = IndeedJobParser.ParseJobs(doc.RootElement);
-        var arr = System.Linq.Enumerable.ToArray(list);
+        TSource[] arr = System.Linq.Enumerable.ToArray(list);
         Assert.Single(arr);
         Assert.Equal("Software Engineer", arr[0].Title);
         Assert.Equal("ACME", arr[0].Company);

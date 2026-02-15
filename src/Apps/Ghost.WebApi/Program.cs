@@ -1,6 +1,6 @@
-using Ghost.Kernel;
 using Ghost.Hosting;
 using Ghost.Hosting.WebApi;
+using Ghost.Kernel;
 using Ghost.Monitoring;
 using Ghost.Resilience;
 using Ghost.Utilities;

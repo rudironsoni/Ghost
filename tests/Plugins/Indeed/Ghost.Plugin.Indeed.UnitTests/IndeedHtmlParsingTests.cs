@@ -52,20 +52,20 @@ public class IndeedHtmlParsingTests
     [Fact]
     public void StripHtmlTagsPerformsUnderOneMillisecondOnAverage()
     {
-        var html = "<div><p>Job &amp; description</p><ul><li>One</li><li>Two</li></ul><script>bad()</script></div>";
+        string html = "<div><p>Job &amp; description</p><ul><li>One</li><li>Two</li></ul><script>bad()</script></div>";
 
-        for (var i = 0; i < 10; i++)
+        for (int i = 0; i < 10; i++)
             _ = HtmlSanitizer.StripHtmlTags(html);
 
         var sw = Stopwatch.StartNew();
-        var iterations = 1000;
+        int iterations = 1000;
         string? last = null;
-        for (var i = 0; i < iterations; i++)
+        for (int i = 0; i < iterations; i++)
             last = HtmlSanitizer.StripHtmlTags(html);
         sw.Stop();
 
         Assert.Equal("Job & description\n\nOne\nTwo", last);
-        var averageMs = sw.Elapsed.TotalMilliseconds / iterations;
+        double averageMs = sw.Elapsed.TotalMilliseconds / iterations;
         Assert.True(averageMs < 1, $"Expected < 1ms avg but was {averageMs:F4}ms");
     }
 }

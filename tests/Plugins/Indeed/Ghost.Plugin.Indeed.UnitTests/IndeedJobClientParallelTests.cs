@@ -23,7 +23,7 @@ public class IndeedJobClientParallelTests
         var client = new IndeedJobClient(api, NullLogger<IndeedJobClient>.Instance);
 
         var criteria = new JobSearchCriteria { Query = "dev", Location = "remote", MaxResults = 50 };
-        var count = 0;
+        int count = 0;
         await foreach (var _ in client.SearchJobsParallelAsync(criteria, CancellationToken.None))
         {
             count++;
@@ -46,7 +46,7 @@ public class IndeedJobClientParallelTests
 
     private static HttpResponseMessage ResponseWithJobs(string? cursor, bool hasNext)
     {
-        var json = JsonSerializer.Serialize(new
+        string json = JsonSerializer.Serialize(new
         {
             data = new
             {
@@ -89,7 +89,7 @@ public class IndeedJobClientParallelTests
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var response = _responses[Math.Min(_index, _responses.Length - 1)];
+            HttpResponseMessage response = _responses[Math.Min(_index, _responses.Length - 1)];
             _index++;
             return Task.FromResult(response);
         }

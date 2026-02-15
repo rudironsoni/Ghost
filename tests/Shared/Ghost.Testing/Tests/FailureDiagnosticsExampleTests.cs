@@ -85,7 +85,7 @@ public class FailureDiagnosticsExampleTests : ReliabilityTestBase
             await page.NavigateAsync("https://example.com");
 
             // Simulate a failure condition
-            IElement elementExists = await page.QuerySelectorAsync(".non-existent-element")?? throw new InvalidOperationException("Expected element not found");
+            IElement elementExists = await page.QuerySelectorAsync(".non-existent-element") ?? throw new InvalidOperationException("Expected element not found");
         }
         catch (Exception ex)
         {

@@ -1,8 +1,8 @@
 using System.Net.Http;
 using Ghost.Contracts;
-using Ghost.Kernel;
 using Ghost.Hosting;
 using Ghost.Http;
+using Ghost.Kernel;
 using Ghost.Plugin.Glassdoor.Internal;
 using Ghost.Plugin.Glassdoor.Jobs;
 using Microsoft.Extensions.Configuration;

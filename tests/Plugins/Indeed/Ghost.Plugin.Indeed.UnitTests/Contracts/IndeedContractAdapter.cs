@@ -3,8 +3,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
-using Ghost.Testing.Contracts;
 using Ghost.Platform.Indeed;
+using Ghost.Testing.Contracts;
 
 namespace Ghost.Platform.Indeed.Tests.Contracts;
 
@@ -59,7 +59,7 @@ public sealed class IndeedContractAdapter : IProviderContractAdapter
                 // In a real implementation, you'd use Indeed's pagination parameters
             };
 
-            var jobs = await _jobClient.SearchJobsAsync(pageCriteria, ct);
+            IReadOnlyList<JobListing> jobs = await _jobClient.SearchJobsAsync(pageCriteria, ct);
 
             if (jobs.Count == 0)
             {
@@ -69,7 +69,7 @@ public sealed class IndeedContractAdapter : IProviderContractAdapter
             allJobs.AddRange(jobs);
 
             // Check if we've seen all these jobs before (pagination exhausted)
-            var newJobIds = jobs.Select(j => j.Id).Except(allJobs.Take(allJobs.Count - jobs.Count).Select(j => j.Id));
+            IEnumerable<string> newJobIds = jobs.Select(j => j.Id).Except(allJobs.Take(allJobs.Count - jobs.Count).Select(j => j.Id));
             if (!newJobIds.Any())
             {
                 break;
@@ -104,8 +104,8 @@ public sealed class IndeedContractAdapter : IProviderContractAdapter
         JobSearchCriteria criteria,
         CancellationToken ct = default)
     {
-        var first = await _jobClient.SearchJobsAsync(criteria, ct);
-        var second = await _jobClient.SearchJobsAsync(criteria, ct);
+        IReadOnlyList<JobListing> first = await _jobClient.SearchJobsAsync(criteria, ct);
+        IReadOnlyList<JobListing> second = await _jobClient.SearchJobsAsync(criteria, ct);
         return (first, second);
     }
 }

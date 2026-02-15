@@ -1,13 +1,13 @@
+using Ghost.Contracts.Jobs;
+using Ghost.Platform.Common.Session;
+using Ghost.Platform.Indeed;
+using Ghost.Platform.Indeed.Internal;
+using Ghost.Platform.Indeed.Tests.Contracts;
 using Ghost.Testing.Contracts;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
 using Xunit;
 using Xunit.Abstractions;
-using Ghost.Platform.Indeed;
-using Ghost.Contracts.Jobs;
-using Ghost.Platform.Indeed.Tests.Contracts;
-using NSubstitute;
-using Microsoft.Extensions.Logging;
-using Ghost.Platform.Common.Session;
-using Ghost.Platform.Indeed.Internal;
 
 namespace Ghost.Platform.Indeed.Tests.Contracts;
 
@@ -30,14 +30,14 @@ public class IndeedProviderContractTests : ProviderContractTests<IndeedContractA
     protected override IndeedContractAdapter CreateAdapter()
     {
         // Add substitutes for dependencies
-        var proxyProvider = Substitute.For<IProxyProvider>();
+        IProxyProvider proxyProvider = Substitute.For<IProxyProvider>();
         var sessionOrchestrator = Substitute.For<ISessionOrchestrator>();
-        var browserSession = Substitute.For<IBrowserSession>();
-        var jsonLdExtractor = Substitute.For<IJsonLdExtractor>();
-        var logger = Substitute.For<ILogger<IndeedJobClient>>();
-        var apiLogger = Substitute.For<ILogger<IndeedApiClient>>();
-        var scraperLogger = Substitute.For<ILogger<Jobs.IndeedSearchScraper>>();
-        var detailsLogger = Substitute.For<ILogger<Jobs.IndeedJobDetailsScraper>>();
+        IBrowserSession browserSession = Substitute.For<IBrowserSession>();
+        IJsonLdExtractor jsonLdExtractor = Substitute.For<IJsonLdExtractor>();
+        ILogger<IndeedJobClient> logger = Substitute.For<ILogger<IndeedJobClient>>();
+        ILogger<IndeedApiClient> apiLogger = Substitute.For<ILogger<IndeedApiClient>>();
+        ILogger<Jobs.IndeedSearchScraper> scraperLogger = Substitute.For<ILogger<Jobs.IndeedSearchScraper>>();
+        ILogger<Jobs.IndeedJobDetailsScraper> detailsLogger = Substitute.For<ILogger<Jobs.IndeedJobDetailsScraper>>();
 
         // Add Indeed options
         var options = new IndeedOptions { Enabled = true, Country = Ghost.Models.CountryCode.US };
