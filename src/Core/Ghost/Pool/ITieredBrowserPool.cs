@@ -8,22 +8,22 @@ public interface ITieredBrowserPool : IAsyncDisposable
     /// <summary>
     /// Acquire a browser session from the specified tier
     /// </summary>
-    Task<IBrowserSession> AcquireBrowserAsync(Tier tier = Tier.Hot, CancellationToken ct = default);
+    public Task<IBrowserSession> AcquireBrowserAsync(Tier tier = Tier.Hot, CancellationToken ct = default);
 
     /// <summary>
     /// Return a browser session to the pool
     /// </summary>
-    Task ReturnBrowserAsync(IBrowserSession session, CancellationToken ct = default);
+    public Task ReturnBrowserAsync(IBrowserSession session, CancellationToken ct = default);
 
     /// <summary>
     /// Get the current health status of the pool
     /// </summary>
-    Task<PoolHealth> GetHealthAsync(CancellationToken ct = default);
+    public Task<PoolHealth> GetHealthAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Force warm-up of a specific tier
     /// </summary>
-    Task WarmUpAsync(Tier tier, int count, CancellationToken ct = default);
+    public Task WarmUpAsync(Tier tier, int count, CancellationToken ct = default);
 }
 
 /// <summary>

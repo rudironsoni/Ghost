@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using Ghost.Contracts.Jobs;
 using Ghost.Extensions;
 using Ghost.Plugin.LinkedIn.Entities;
@@ -75,17 +76,17 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
         ArgumentNullException.ThrowIfNull(criteria);
 
         var list = new List<JobListing>();
-        var strategy = _options.ScrapingStrategy;
+        JobScrapingStrategy strategy = _options.ScrapingStrategy;
         if (!string.IsNullOrEmpty(criteria.Strategy))
         {
-            if (Enum.TryParse<JobScrapingStrategy>(criteria.Strategy, ignoreCase: true, out var parsed))
+            if (Enum.TryParse<JobScrapingStrategy>(criteria.Strategy, ignoreCase: true, out JobScrapingStrategy parsed))
             {
                 strategy = parsed;
             }
         }
 
-        var e = SearchJobsWithStrategyAsync(criteria.Query ?? string.Empty, criteria.Location ?? string.Empty, criteria.MaxResults, strategy, ct);
-        await foreach (var item in e.ConfigureAwait(false))
+        IAsyncEnumerable<JobListing> e = SearchJobsWithStrategyAsync(criteria.Query ?? string.Empty, criteria.Location ?? string.Empty, criteria.MaxResults, strategy, ct);
+        await foreach (JobListing? item in e.ConfigureAwait(false))
         {
             list.Add(item);
         }
@@ -99,7 +100,7 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
     {
         ArgumentNullException.ThrowIfNull(criteria);
         var list = new List<JobListing>();
-        await foreach (var job in SearchJobsWithStrategyAsync(criteria.Query ?? string.Empty, criteria.Location ?? "", criteria.MaxResults, strategyOverride, ct))
+        await foreach (JobListing job in SearchJobsWithStrategyAsync(criteria.Query ?? string.Empty, criteria.Location ?? "", criteria.MaxResults, strategyOverride, ct).ConfigureAwait(false))
         {
             list.Add(job);
         }
@@ -127,7 +128,7 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
 
     private async Task<JobListing> GetJobDetailsBrowserAsync(string jobId, CancellationToken ct = default)
     {
-        var url = $"{_options.BaseUrl}/jobs/view/{jobId}";
+        string url = $"{_options.BaseUrl}/jobs/view/{jobId}";
 
         // Create a Spider request with middleware pipeline
         var request = new Request(url)
@@ -137,7 +138,7 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
         };
 
         // Build pipeline with middleware
-        var pipeline = new PipelineBuilder()
+        CompiledPipeline pipeline = new PipelineBuilder()
             .Use(new StealthMiddleware(new Dictionary<string, object>
             {
                 ["RandomDelay"] = true,
@@ -164,14 +165,14 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
         IPage? page = null;
         try
         {
-            var pageOpts = _options.GetPageOptions();
-            page = await _session.NewPageAsync(pageOpts, ct: ct);
+            PageOptions? pageOpts = _options.GetPageOptions();
+            page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
 
             var navOptions = new NavigationOptions { Timeout = 30_000, WaitUntil = WaitUntil.Load };
-            await page.NavigateAsync(url, navOptions, ct: ct);
-            await page.WaitForLoadStateAsync(ct: ct);
+            await page.NavigateAsync(url, navOptions, ct: ct).ConfigureAwait(false);
+            await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
-            var html = await page.GetContentAsync(ct);
+            string html = await page.GetContentAsync(ct).ConfigureAwait(false);
 
             // Extract using EntityParser with LinkedInJobEntity from Entities namespace
             var context = new ExtractionContext
@@ -181,7 +182,7 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
                 Timestamp = DateTime.UtcNow
             };
 
-            var entity = EntityParser.ParseSingle<LinkedInJobEntity>(context);
+            LinkedInJobEntity? entity = EntityParser.ParseSingle<LinkedInJobEntity>(context);
 
             if (entity == null || !entity.Validate())
             {
@@ -189,14 +190,14 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
             }
 
             // Extract Job ID if not present
-            var extractedJobId = entity.ExtractJobIdFromUrl() ?? jobId;
+            string extractedJobId = entity.ExtractJobIdFromUrl() ?? jobId;
 
             // Check for Easy Apply
             bool isEasyApply = entity.IsEasyApply;
 
             // Parse JobType and ExperienceLevel from entity
-            var jobType = entity.ParseJobType();
-            var experienceLevel = entity.ParseExperienceLevel();
+            JobType jobType = entity.ParseJobType();
+            ExperienceLevel experienceLevel = entity.ParseExperienceLevel();
 
             // Parse PostedAt
             DateTimeOffset postedAt = entity.PostedAt ?? DateTimeOffset.UtcNow;
@@ -230,7 +231,7 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
         {
             if (page != null)
             {
-                try { await page.DisposeAsync(); } catch { }
+                try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
             }
         }
     }
@@ -245,11 +246,11 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
 
     private async Task<JobApplication> ApplyInternalAsync(string jobId, ApplicationDetails details, CancellationToken ct)
     {
-        var pageOpts = _options.GetPageOptions();
+        PageOptions? pageOpts = _options.GetPageOptions();
         IPage? page = null;
         try
         {
-            page = await _session.NewPageAsync(pageOpts, ct: ct);
+            page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is Microsoft.Playwright.PlaywrightException ||
                                     ex.Message.Contains("TargetClosedException", StringComparison.OrdinalIgnoreCase) ||
@@ -263,18 +264,18 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
 
         try
         {
-            var url = $"{_options.BaseUrl}/jobs/view/{jobId}";
+            string url = $"{_options.BaseUrl}/jobs/view/{jobId}";
             var navOptions = new NavigationOptions { Timeout = 30_000, WaitUntil = WaitUntil.Load };
-            await page.NavigateAsync(url, navOptions, ct: ct);
-            await page.WaitForLoadStateAsync(ct: ct);
+            await page.NavigateAsync(url, navOptions, ct: ct).ConfigureAwait(false);
+            await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
-            var buttons = await page.QuerySelectorAllAsync("button", ct: ct);
+            IReadOnlyList<IElement> buttons = await page.QuerySelectorAllAsync("button", ct: ct).ConfigureAwait(false);
             IElement? applyBtn = null;
-            foreach (var b in buttons)
+            foreach (IElement b in buttons)
             {
                 try
                 {
-                    var txt = await b.GetTextContentAsync(ct) ?? string.Empty;
+                    string txt = await b.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty;
                     if (!string.IsNullOrEmpty(txt) && txt.Contains("Easy Apply", StringComparison.OrdinalIgnoreCase))
                     {
                         applyBtn = b;
@@ -292,8 +293,8 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
                 return null!;
             }
 
-            await applyBtn.HumanClickAsync(ct: ct);
-            try { await page.WaitForLoadStateAsync(ct: ct); } catch { }
+            await applyBtn.HumanClickAsync(ct: ct).ConfigureAwait(false);
+            try { await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false); } catch { }
 
             return new JobApplication
             {
@@ -307,7 +308,7 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 
@@ -328,7 +329,7 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
 
     public async IAsyncEnumerable<JobListing> SearchJobsAsync(string keywords, string location, int limit = 25, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
     {
-        await foreach (var job in SearchJobsWithStrategyAsync(keywords, location, limit, _options.ScrapingStrategy, ct))
+        await foreach (JobListing job in SearchJobsWithStrategyAsync(keywords, location, limit, _options.ScrapingStrategy, ct).ConfigureAwait(false))
         {
             yield return job;
         }
@@ -341,12 +342,12 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
         ArgumentNullException.ThrowIfNull(criteria);
 
         // Spider-only implementation: use Browser strategy
-        await foreach (var job in SearchJobsWithStrategyAsync(
+        await foreach (JobListing job in SearchJobsWithStrategyAsync(
             criteria.Query ?? string.Empty,
             criteria.Location ?? string.Empty,
             criteria.MaxResults > 0 ? criteria.MaxResults : 25,
             JobScrapingStrategy.Browser,
-            ct))
+            ct).ConfigureAwait(false))
         {
             yield return job;
         }
@@ -373,10 +374,10 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
             }
         };
 
-        var browserResult = await _strategyRouter.ExecuteStrategyAsync("Browser", browserContext, ct);
+        ExtractionResult browserResult = await _strategyRouter.ExecuteStrategyAsync("Browser", browserContext, ct).ConfigureAwait(false);
         if (browserResult.Success && browserResult.Data is List<JobListing> browserJobs)
         {
-            foreach (var job in browserJobs)
+            foreach (JobListing job in browserJobs)
             {
                 yield return job;
             }
@@ -385,53 +386,53 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
 
     private async Task<ExtractionResult> BrowserStrategyAsync(StrategyContext context, CancellationToken ct)
     {
-        var startTime = DateTimeOffset.UtcNow;
+        DateTimeOffset startTime = DateTimeOffset.UtcNow;
         var list = new List<JobListing>();
         IPage? page = null;
 
         try
         {
-            var keywords = (string)context.Metadata["keywords"];
-            var location = (string)context.Metadata["location"];
-            var limit = (int)context.Metadata["limit"];
+            string keywords = (string)context.Metadata["keywords"];
+            string location = (string)context.Metadata["location"];
+            int limit = (int)context.Metadata["limit"];
 
-            var pageOpts = _options.GetPageOptions();
-            page = await _session.NewPageAsync(pageOpts, ct: ct);
+            PageOptions? pageOpts = _options.GetPageOptions();
+            page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
 
             try
             {
-                await page.EvaluateAsync<object>("() => { document.cookie.split(';').forEach(function(c) { document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/'); }); }", ct: ct);
+                await page.EvaluateAsync<object>("() => { document.cookie.split(';').forEach(function(c) { document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/'); }); }", ct: ct).ConfigureAwait(false);
             }
             catch { }
 
-            var url = BuildBrowserSearchUrl(keywords, location);
+            string url = BuildBrowserSearchUrl(keywords, location);
             var navOptions = new NavigationOptions { Timeout = 30_000, WaitUntil = WaitUntil.Load };
-            await page.NavigateAsync(url, navOptions, ct: ct);
-            await page.WaitForLoadStateAsync(ct: ct);
+            await page.NavigateAsync(url, navOptions, ct: ct).ConfigureAwait(false);
+            await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
-            var pageTitle = await page.EvaluateAsync<string>("document.title", ct: ct);
-            var nodes = await page.QuerySelectorAllAsync(".jobs-search-results__list-item, .jobs-search__results-list li, .base-card", ct: ct);
+            string pageTitle = await page.EvaluateAsync<string>("document.title", ct: ct).ConfigureAwait(false);
+            IReadOnlyList<IElement> nodes = await page.QuerySelectorAllAsync(".jobs-search-results__list-item, .jobs-search__results-list li, .base-card", ct: ct).ConfigureAwait(false);
 
             if (nodes.Count == 0)
             {
                 s_logZeroJobsFound(_logger, pageTitle ?? "Unknown", null);
             }
 
-            var count = 0;
-            foreach (var n in nodes)
+            int count = 0;
+            foreach (IElement n in nodes)
             {
                 if (count++ >= limit) break;
                 try
                 {
                     string id = Guid.NewGuid().ToString();
-                    var idEl = await n.QuerySelectorAsync("[data-id], [data-entity-urn]", ct);
+                    IElement? idEl = await n.QuerySelectorAsync("[data-id], [data-entity-urn]", ct).ConfigureAwait(false);
                     if (idEl != null)
                     {
-                        var dataId = await idEl.GetAttributeAsync("data-id", ct);
-                        var urn = await idEl.GetAttributeAsync("data-entity-urn", ct);
+                        string? dataId = await idEl.GetAttributeAsync("data-id", ct).ConfigureAwait(false);
+                        string? urn = await idEl.GetAttributeAsync("data-entity-urn", ct).ConfigureAwait(false);
                         if (!string.IsNullOrEmpty(urn))
                         {
-                            var m = System.Text.RegularExpressions.Regex.Match(urn, @"\d+");
+                            Match m = System.Text.RegularExpressions.Regex.Match(urn, @"\d+");
                             if (m.Success) id = m.Value;
                         }
                         else if (!string.IsNullOrEmpty(dataId))
@@ -440,24 +441,24 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
                         }
                     }
 
-                    var titleEl = await n.QuerySelectorAsync(".job-card-list__title, .base-search-card__title", ct);
-                    string title = titleEl is not null ? (await titleEl.GetTextContentAsync(ct))?.Trim() ?? string.Empty : string.Empty;
+                    IElement? titleEl = await n.QuerySelectorAsync(".job-card-list__title, .base-search-card__title", ct).ConfigureAwait(false);
+                    string title = titleEl is not null ? (await titleEl.GetTextContentAsync(ct).ConfigureAwait(false))?.Trim() ?? string.Empty : string.Empty;
 
-                    var companyEl = await n.QuerySelectorAsync(".job-card-container__company-name, .base-search-card__subtitle", ct);
-                    string company = companyEl is not null ? (await companyEl.GetTextContentAsync(ct))?.Trim() ?? string.Empty : string.Empty;
+                    IElement? companyEl = await n.QuerySelectorAsync(".job-card-container__company-name, .base-search-card__subtitle", ct).ConfigureAwait(false);
+                    string company = companyEl is not null ? (await companyEl.GetTextContentAsync(ct).ConfigureAwait(false))?.Trim() ?? string.Empty : string.Empty;
 
-                    var locationEl = await n.QuerySelectorAsync(".job-card-container__metadata-item, .job-search-card__location", ct);
-                    string locationText = locationEl is not null ? (await locationEl.GetTextContentAsync(ct))?.Trim() ?? string.Empty : string.Empty;
+                    IElement? locationEl = await n.QuerySelectorAsync(".job-card-container__metadata-item, .job-search-card__location", ct).ConfigureAwait(false);
+                    string locationText = locationEl is not null ? (await locationEl.GetTextContentAsync(ct).ConfigureAwait(false))?.Trim() ?? string.Empty : string.Empty;
 
                     string? jobUrl = null;
-                    var linkEl = await n.QuerySelectorAsync("a.base-card__full-link, a.job-card-list__title", ct);
+                    IElement? linkEl = await n.QuerySelectorAsync("a.base-card__full-link, a.job-card-list__title", ct).ConfigureAwait(false);
                     if (linkEl != null)
                     {
-                        jobUrl = await linkEl.GetAttributeAsync("href", ct);
+                        jobUrl = await linkEl.GetAttributeAsync("href", ct).ConfigureAwait(false);
 
                         if (Guid.TryParse(id, out _) && !string.IsNullOrEmpty(jobUrl))
                         {
-                            var urlIdMatch = System.Text.RegularExpressions.Regex.Match(jobUrl, @"-(\d{6,})(?:\?|$)");
+                            Match urlIdMatch = System.Text.RegularExpressions.Regex.Match(jobUrl, @"-(\d{6,})(?:\?|$)");
                             if (urlIdMatch.Success && urlIdMatch.Groups[1].Success)
                             {
                                 id = urlIdMatch.Groups[1].Value;
@@ -484,19 +485,19 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
                 }
             }
 
-            await page.DisposeAsync();
+            await page.DisposeAsync().ConfigureAwait(false);
             page = null;
 
             // Deep-fetch details for each job using EntityParser
             var uniqueJobs = list.GroupBy(j => j.Id).Select(g => g.First()).ToList();
             var detailedJobs = new List<JobListing>();
-            foreach (var shallow in uniqueJobs)
+            foreach (JobListing? shallow in uniqueJobs)
             {
                 ct.ThrowIfCancellationRequested();
                 JobListing? deepJob = null;
                 try
                 {
-                    deepJob = await GetJobDetailsBrowserAsync(shallow.Id, ct);
+                    deepJob = await GetJobDetailsBrowserAsync(shallow.Id, ct).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) { throw; }
                 catch (Exception ex)
@@ -523,15 +524,15 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
         {
             if (page != null)
             {
-                try { await page.DisposeAsync(); } catch { }
+                try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
             }
         }
     }
 
     private string BuildBrowserSearchUrl(string keywords, string location)
     {
-        var q = System.Uri.EscapeDataString(keywords);
-        var loc = System.Uri.EscapeDataString(location);
+        string q = System.Uri.EscapeDataString(keywords);
+        string loc = System.Uri.EscapeDataString(location);
         return $"{_options.BaseUrl}/jobs/search?keywords={q}&location={loc}";
     }
 
@@ -539,15 +540,15 @@ public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
     {
         var random = new Random();
         var mockJobs = new List<JobListing>();
-        var jobTitles = new[] { "Software Engineer", "Senior Developer", "Full Stack Engineer", "DevOps Engineer", "Data Scientist" };
-        var companies = new[] { "Tech Corp", "Innovation Labs", "Digital Solutions Inc", "Cloud Systems", "Data Dynamics" };
-        var locations = new[] { "San Francisco, CA", "Remote", "New York, NY", "Seattle, WA", "Austin, TX" };
+        string[] jobTitles = new[] { "Software Engineer", "Senior Developer", "Full Stack Engineer", "DevOps Engineer", "Data Scientist" };
+        string[] companies = new[] { "Tech Corp", "Innovation Labs", "Digital Solutions Inc", "Cloud Systems", "Data Dynamics" };
+        string[] locations = new[] { "San Francisco, CA", "Remote", "New York, NY", "Seattle, WA", "Austin, TX" };
 
         for (int i = 0; i < Math.Min(count, 5); i++)
         {
-            var title = jobTitles[i % jobTitles.Length];
-            var company = companies[i % companies.Length];
-            var loc = string.IsNullOrWhiteSpace(location) ? locations[i % locations.Length] : location;
+            string title = jobTitles[i % jobTitles.Length];
+            string company = companies[i % companies.Length];
+            string loc = string.IsNullOrWhiteSpace(location) ? locations[i % locations.Length] : location;
 
             mockJobs.Add(new JobListing
             {

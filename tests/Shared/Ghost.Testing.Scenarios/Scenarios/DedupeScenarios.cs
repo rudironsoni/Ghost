@@ -13,10 +13,10 @@ public static class DedupeScenarios
     {
         logger.LogInformation("Scenario: dedupe/query-reorder");
 
-        var query = context.Request.Query;
-        var sortedQuery = string.Join("&", query.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}={kv.Value}"));
+        IQueryCollection query = context.Request.Query;
+        string sortedQuery = string.Join("&", query.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}={kv.Value}"));
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -63,15 +63,15 @@ public static class DedupeScenarios
     {
         logger.LogInformation("Scenario: dedupe/tracking-params");
 
-        var query = context.Request.Query;
-        var trackingParams = new[] { "utm_source", "utm_medium", "utm_campaign", "fbclid", "gclid", "ref" };
+        IQueryCollection query = context.Request.Query;
+        string[] trackingParams = new[] { "utm_source", "utm_medium", "utm_campaign", "fbclid", "gclid", "ref" };
 
-        var cleanQuery = string.Join("&", query
+        string cleanQuery = string.Join("&", query
             .Where(kv => !trackingParams.Contains(kv.Key))
             .OrderBy(kv => kv.Key)
             .Select(kv => $"{kv.Key}={kv.Value}"));
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -120,10 +120,10 @@ public static class DedupeScenarios
     {
         logger.LogInformation("Scenario: dedupe/redirect-chain");
 
-        var step = context.Request.Query["step"].FirstOrDefault() ?? "0";
-        var finalUrl = "/scenario/dedupe/redirect-chain?step=final";
+        string step = context.Request.Query["step"].FirstOrDefault() ?? "0";
+        string finalUrl = "/scenario/dedupe/redirect-chain?step=final";
 
-        var html = step switch
+        string? html = step switch
         {
             "0" => $$"""
 <!DOCTYPE html>
@@ -267,10 +267,10 @@ public static class DedupeScenarios
     {
         logger.LogInformation("Scenario: dedupe/multiple-aliases");
 
-        var alias = context.Request.Query["alias"].FirstOrDefault() ?? "default";
-        var canonicalId = "job-dedupe-alias-001";
+        string alias = context.Request.Query["alias"].FirstOrDefault() ?? "default";
+        string canonicalId = "job-dedupe-alias-001";
 
-        var aliasInfo = alias switch
+        string aliasInfo = alias switch
         {
             "slug1" => "senior-software-engineer-remote",
             "slug2" => "senior-software-engineer-remote-2024",
@@ -280,7 +280,7 @@ public static class DedupeScenarios
             _ => "default"
         };
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -331,10 +331,10 @@ public static class DedupeScenarios
     {
         logger.LogInformation("Scenario: dedupe/temporal-changes");
 
-        var version = context.Request.Query["version"].FirstOrDefault() ?? "v1";
-        var canonicalId = "job-dedupe-temporal-001";
+        string version = context.Request.Query["version"].FirstOrDefault() ?? "v1";
+        string canonicalId = "job-dedupe-temporal-001";
 
-        var versionInfo = version switch
+        (string, string, string) versionInfo = version switch
         {
             "v1" => ("Original Posting", "Software Engineer", "2024-01-15"),
             "v2" => ("Updated Title", "Senior Software Engineer", "2024-02-01"),
@@ -342,9 +342,9 @@ public static class DedupeScenarios
             _ => ("Unknown", "Unknown", "Unknown")
         };
 
-        var (status, title, date) = versionInfo;
+        (string? status, string? title, string? date) = versionInfo;
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -394,12 +394,12 @@ public static class DedupeScenarios
     {
         logger.LogInformation("Scenario: dedupe/mixed-case-params");
 
-        var query = context.Request.Query;
-        var normalizedQuery = string.Join("&", query
+        IQueryCollection query = context.Request.Query;
+        string normalizedQuery = string.Join("&", query
             .OrderBy(kv => kv.Key.ToLowerInvariant())
             .Select(kv => $"{kv.Key.ToLowerInvariant()}={kv.Value}"));
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -448,12 +448,12 @@ public static class DedupeScenarios
     {
         logger.LogInformation("Scenario: dedupe/array-params");
 
-        var query = context.Request.Query;
-        var skills = query["skills"].ToArray();
-        var sortedSkills = skills.OrderBy(s => s).ToArray();
-        var normalizedSkills = string.Join(",", sortedSkills);
+        IQueryCollection query = context.Request.Query;
+        string?[] skills = query["skills"].ToArray();
+        string?[] sortedSkills = skills.OrderBy(s => s).ToArray();
+        string normalizedSkills = string.Join(",", sortedSkills);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -501,15 +501,15 @@ public static class DedupeScenarios
     {
         logger.LogInformation("Scenario: dedupe/session-tracking");
 
-        var query = context.Request.Query;
-        var sessionParams = new[] { "sessionid", "sid", "user_session", "click_id", "cid", "referral_id" };
+        IQueryCollection query = context.Request.Query;
+        string[] sessionParams = new[] { "sessionid", "sid", "user_session", "click_id", "cid", "referral_id" };
 
-        var cleanQuery = string.Join("&", query
+        string cleanQuery = string.Join("&", query
             .Where(kv => !sessionParams.Contains(kv.Key.ToLowerInvariant()))
             .OrderBy(kv => kv.Key)
             .Select(kv => $"{kv.Key}={kv.Value}"));
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -560,15 +560,15 @@ public static class DedupeScenarios
     {
         logger.LogInformation("Scenario: dedupe/ab-test-variants");
 
-        var query = context.Request.Query;
-        var abTestParams = new[] { "ab_test", "variant", "experiment", "test_group", "bucket" };
+        IQueryCollection query = context.Request.Query;
+        string[] abTestParams = new[] { "ab_test", "variant", "experiment", "test_group", "bucket" };
 
-        var cleanQuery = string.Join("&", query
+        string cleanQuery = string.Join("&", query
             .Where(kv => !abTestParams.Contains(kv.Key.ToLowerInvariant()))
             .OrderBy(kv => kv.Key)
             .Select(kv => $"{kv.Key}={kv.Value}"));
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>

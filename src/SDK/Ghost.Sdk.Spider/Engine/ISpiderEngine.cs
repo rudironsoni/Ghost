@@ -17,7 +17,7 @@ public interface ISpiderEngine
     /// <param name="spider">The spider to execute.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation with the spider result.</returns>
-    Task<SpiderResult> StartAsync(Spider spider, CancellationToken cancellationToken = default);
+    public Task<SpiderResult> StartAsync(Spider spider, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Stops the spider engine gracefully.
@@ -25,25 +25,25 @@ public interface ISpiderEngine
     /// <param name="timeout">Maximum time to wait for graceful shutdown.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task StopAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
+    public Task StopAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Pauses spider execution.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task PauseAsync(CancellationToken cancellationToken = default);
+    public Task PauseAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Resumes spider execution.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task ResumeAsync(CancellationToken cancellationToken = default);
+    public Task ResumeAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the current execution context for the running spider.
     /// </summary>
     /// <returns>The execution context, or null if no spider is running.</returns>
-    ExecutionContext? GetCurrentContext();
+    public ExecutionContext? GetCurrentContext();
 }

@@ -9,7 +9,7 @@ public class CMPDatabaseTests
     public void GetAllConfigs_ReturnsNonEmptyList()
     {
         // Act
-        var configs = CMPDatabase.GetAllConfigs();
+        IReadOnlyList<CMPConfig> configs = CMPDatabase.GetAllConfigs();
 
         // Assert
         Assert.NotNull(configs);
@@ -20,7 +20,7 @@ public class CMPDatabaseTests
     public void GetAllConfigs_ReturnsAtLeast25Configs()
     {
         // Act
-        var configs = CMPDatabase.GetAllConfigs();
+        IReadOnlyList<CMPConfig> configs = CMPDatabase.GetAllConfigs();
 
         // Assert
         Assert.True(configs.Count >= 25, $"Expected at least 25 CMP configs, but found {configs.Count}");
@@ -40,7 +40,7 @@ public class CMPDatabaseTests
     public void GetConfig_WithValidName_ReturnsConfig(string name)
     {
         // Act
-        var config = CMPDatabase.GetConfig(name);
+        CMPConfig? config = CMPDatabase.GetConfig(name);
 
         // Assert
         Assert.NotNull(config);
@@ -51,7 +51,7 @@ public class CMPDatabaseTests
     public void GetConfig_WithUnknownName_ReturnsNull()
     {
         // Act
-        var config = CMPDatabase.GetConfig("unknown-cmp");
+        CMPConfig? config = CMPDatabase.GetConfig("unknown-cmp");
 
         // Assert
         Assert.Null(config);
@@ -61,9 +61,9 @@ public class CMPDatabaseTests
     public void GetConfig_IsCaseInsensitive()
     {
         // Act
-        var config1 = CMPDatabase.GetConfig("onetrust-cookiepro");
-        var config2 = CMPDatabase.GetConfig("ONETRUST-COOKIEPRO");
-        var config3 = CMPDatabase.GetConfig("OneTrust-CookiePro");
+        CMPConfig? config1 = CMPDatabase.GetConfig("onetrust-cookiepro");
+        CMPConfig? config2 = CMPDatabase.GetConfig("ONETRUST-COOKIEPRO");
+        CMPConfig? config3 = CMPDatabase.GetConfig("OneTrust-CookiePro");
 
         // Assert
         Assert.NotNull(config1);
@@ -77,10 +77,10 @@ public class CMPDatabaseTests
     public void GetAllConfigs_EachConfigHasRequiredProperties()
     {
         // Act
-        var configs = CMPDatabase.GetAllConfigs();
+        IReadOnlyList<CMPConfig> configs = CMPDatabase.GetAllConfigs();
 
         // Assert
-        foreach (var config in configs)
+        foreach (CMPConfig config in configs)
         {
             Assert.NotNull(config.Name);
             Assert.NotEmpty(config.Name);
@@ -95,7 +95,7 @@ public class CMPDatabaseTests
     public void GetAllConfigs_ContainsOneTrustVariants()
     {
         // Act
-        var configs = CMPDatabase.GetAllConfigs();
+        IReadOnlyList<CMPConfig> configs = CMPDatabase.GetAllConfigs();
         var oneTrustConfigs = configs.Where(c => c.Name.Contains("onetrust", StringComparison.OrdinalIgnoreCase)).ToList();
 
         // Assert
@@ -107,7 +107,7 @@ public class CMPDatabaseTests
     public void GetAllConfigs_ContainsCookieBot()
     {
         // Act
-        var configs = CMPDatabase.GetAllConfigs();
+        IReadOnlyList<CMPConfig> configs = CMPDatabase.GetAllConfigs();
 
         // Assert
         Assert.Contains(configs, c => c.Name == "cookiebot");
@@ -117,7 +117,7 @@ public class CMPDatabaseTests
     public void GetAllConfigs_ContainsCookieYes()
     {
         // Act
-        var configs = CMPDatabase.GetAllConfigs();
+        IReadOnlyList<CMPConfig> configs = CMPDatabase.GetAllConfigs();
 
         // Assert
         Assert.Contains(configs, c => c.Name == "cookieyes");
@@ -127,7 +127,7 @@ public class CMPDatabaseTests
     public void GetAllConfigs_ContainsGenericFallbacks()
     {
         // Act
-        var configs = CMPDatabase.GetAllConfigs();
+        IReadOnlyList<CMPConfig> configs = CMPDatabase.GetAllConfigs();
 
         // Assert
         Assert.Contains(configs, c => c.Name == "generic-accept");
@@ -138,7 +138,7 @@ public class CMPDatabaseTests
     public void GetAllConfigs_OneTrustHasCorrectSelectors()
     {
         // Act
-        var config = CMPDatabase.GetConfig("onetrust-cookiepro");
+        CMPConfig? config = CMPDatabase.GetConfig("onetrust-cookiepro");
 
         // Assert
         Assert.NotNull(config);
@@ -150,7 +150,7 @@ public class CMPDatabaseTests
     public void GetAllConfigs_CookieBotHasCorrectSelectors()
     {
         // Act
-        var config = CMPDatabase.GetConfig("cookiebot");
+        CMPConfig? config = CMPDatabase.GetConfig("cookiebot");
 
         // Assert
         Assert.NotNull(config);

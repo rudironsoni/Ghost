@@ -47,7 +47,7 @@ public class RotatingProxyProvider : IProxyProvider
     public async Task<ProxyInfo?> GetProxyAsync(string countryCode, CancellationToken token = default)
     {
         // Lazy initialize proxies on first call
-        var snapshot = _proxies;
+        ProxyInfo[]? snapshot = _proxies;
         if (snapshot == null || snapshot.Length == 0)
         {
             await EnsureInitializedAsync(token).ConfigureAwait(false);
@@ -59,9 +59,9 @@ public class RotatingProxyProvider : IProxyProvider
             return null;
 
         // Round-robin selection using atomic increment
-        var idx = (int)(Interlocked.Increment(ref _index) % snapshot.Length);
+        int idx = (int)(Interlocked.Increment(ref _index) % snapshot.Length);
         if (idx < 0) idx = 0;
-        var proxy = snapshot[idx];
+        ProxyInfo? proxy = snapshot[idx];
         s_logReturningProxy(_logger, proxy?.ToString() ?? string.Empty, snapshot.Length, idx, null);
         return proxy;
     }
@@ -69,7 +69,7 @@ public class RotatingProxyProvider : IProxyProvider
     private async Task EnsureInitializedAsync(CancellationToken token)
     {
         // Fast-path check
-        var snapshot = _proxies;
+        ProxyInfo[]? snapshot = _proxies;
         if (snapshot != null && snapshot.Length > 0)
             return;
 
@@ -82,11 +82,11 @@ public class RotatingProxyProvider : IProxyProvider
                 return;
 
             var list = new List<ProxyInfo>();
-            foreach (var src in _sources)
+            foreach (IProxySource src in _sources)
             {
                 try
                 {
-                    var proxies = await src.FetchProxiesAsync(token).ConfigureAwait(false);
+                    IEnumerable<ProxyInfo> proxies = await src.FetchProxiesAsync(token).ConfigureAwait(false);
                     if (proxies != null)
                         list.AddRange(proxies);
                 }

@@ -21,7 +21,7 @@ public sealed class StaticProxyProvider : IProxyProvider
             return Task.FromResult<ProxyInfo?>(null);
         }
 
-        var index = Interlocked.Increment(ref _index) % _proxies.Count;
+        int index = Interlocked.Increment(ref _index) % _proxies.Count;
         return Task.FromResult<ProxyInfo?>(_proxies[index]);
     }
 }

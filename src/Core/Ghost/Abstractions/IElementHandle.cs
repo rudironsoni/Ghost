@@ -8,7 +8,7 @@ namespace Ghost;
 // directly with low-level page element handles.
 public interface IElementHandle : IAsyncDisposable
 {
-    Task<IElementHandle?> QuerySelectorAsync(string selector, CancellationToken ct = default);
-    Task<IReadOnlyList<IElementHandle>> QuerySelectorAllAsync(string selector, CancellationToken ct = default);
-    Task<string?> TextContentAsync(CancellationToken ct = default);
+    public Task<IElementHandle?> QuerySelectorAsync(string selector, CancellationToken ct = default);
+    public Task<IReadOnlyList<IElementHandle>> QuerySelectorAllAsync(string selector, CancellationToken ct = default);
+    public Task<string?> TextContentAsync(CancellationToken ct = default);
 }

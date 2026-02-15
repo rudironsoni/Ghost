@@ -20,7 +20,7 @@ public class JA3ProfileTests
         };
 
         // Act
-        var ja3String = profile.ToJA3String();
+        string ja3String = profile.ToJA3String();
 
         // Assert
         ja3String.Should().Be("771,4865-4866-4867,0-23-65281,29-23-24,0");
@@ -40,7 +40,7 @@ public class JA3ProfileTests
         };
 
         // Act
-        var hash = profile.ToJA3Hash();
+        string hash = profile.ToJA3Hash();
 
         // Assert
         hash.Should().NotBeNullOrEmpty();
@@ -71,8 +71,8 @@ public class JA3ProfileTests
         };
 
         // Act
-        var hash1 = profile1.ToJA3Hash();
-        var hash2 = profile2.ToJA3Hash();
+        string hash1 = profile1.ToJA3Hash();
+        string hash2 = profile2.ToJA3Hash();
 
         // Assert
         hash1.Should().Be(hash2);
@@ -101,8 +101,8 @@ public class JA3ProfileTests
         };
 
         // Act
-        var hash1 = profile1.ToJA3Hash();
-        var hash2 = profile2.ToJA3Hash();
+        string hash1 = profile1.ToJA3Hash();
+        string hash2 = profile2.ToJA3Hash();
 
         // Assert
         hash1.Should().NotBe(hash2);
@@ -122,7 +122,7 @@ public class JA3ProfileTests
         };
 
         // Act
-        var clone = original.Clone();
+        JA3Profile clone = original.Clone();
         clone.CipherSuites.Add(4867);
 
         // Assert
@@ -145,7 +145,7 @@ public class JA3ProfileTests
         };
 
         // Act
-        var ja3String = profile.ToJA3String();
+        string ja3String = profile.ToJA3String();
 
         // Assert
         ja3String.Should().Be("771,,,,");

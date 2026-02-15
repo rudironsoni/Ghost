@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Ghost.Contracts.Jobs;
 using Ghost.Sdk.Spider.Core.Entities;
 using Ghost.Sdk.Spider.Core.Entities.Attributes;
@@ -216,8 +217,8 @@ public class LinkedInJobEntity : EntityBase<LinkedInJobEntity>
     public override bool Validate()
     {
         // At minimum, we need either a JobId or Url, and a Title
-        var hasIdentifier = !string.IsNullOrWhiteSpace(JobId) || !string.IsNullOrWhiteSpace(Url);
-        var hasTitle = !string.IsNullOrWhiteSpace(Title);
+        bool hasIdentifier = !string.IsNullOrWhiteSpace(JobId) || !string.IsNullOrWhiteSpace(Url);
+        bool hasTitle = !string.IsNullOrWhiteSpace(Title);
 
         return hasIdentifier && hasTitle;
     }
@@ -231,7 +232,7 @@ public class LinkedInJobEntity : EntityBase<LinkedInJobEntity>
         if (string.IsNullOrWhiteSpace(JobTypeRaw))
             return JobType.Unknown;
 
-        var normalized = JobTypeRaw.Trim().Replace(" ", "").Replace("-", "");
+        string normalized = JobTypeRaw.Trim().Replace(" ", "").Replace("-", "");
 
         return normalized.ToLowerInvariant() switch
         {
@@ -252,7 +253,7 @@ public class LinkedInJobEntity : EntityBase<LinkedInJobEntity>
         if (string.IsNullOrWhiteSpace(ExperienceLevelRaw))
             return ExperienceLevel.Unknown;
 
-        var normalized = ExperienceLevelRaw.Trim().Replace(" ", "").Replace("-", "");
+        string normalized = ExperienceLevelRaw.Trim().Replace(" ", "").Replace("-", "");
 
         return normalized.ToLowerInvariant() switch
         {
@@ -277,21 +278,21 @@ public class LinkedInJobEntity : EntityBase<LinkedInJobEntity>
             return null;
 
         // Pattern 1: /jobs/view/{id}
-        var viewMatch = System.Text.RegularExpressions.Regex.Match(
+        Match viewMatch = System.Text.RegularExpressions.Regex.Match(
             Url,
             @"/jobs/(?:view|r)/(?<id>[0-9]+)");
         if (viewMatch.Success)
             return viewMatch.Groups["id"].Value;
 
         // Pattern 2: ?jobId={id}
-        var queryMatch = System.Text.RegularExpressions.Regex.Match(
+        Match queryMatch = System.Text.RegularExpressions.Regex.Match(
             Url,
             @"[?&](?:jobId|id)=(?<id>[0-9]+)");
         if (queryMatch.Success)
             return queryMatch.Groups["id"].Value;
 
         // Pattern 3: URL ending with -{id}
-        var endingMatch = System.Text.RegularExpressions.Regex.Match(
+        Match endingMatch = System.Text.RegularExpressions.Regex.Match(
             Url,
             @"-(\d{6,})(?:\?|$)");
         if (endingMatch.Success)

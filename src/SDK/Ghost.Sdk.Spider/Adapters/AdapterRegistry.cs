@@ -61,9 +61,9 @@ public class AdapterRegistry
         {
             _adaptersByName[name] = adapterType;
 
-            foreach (var contentType in supportedContentTypes)
+            foreach (ContentType contentType in supportedContentTypes)
             {
-                if (!_adaptersByContentType.TryGetValue(contentType, out var adapters))
+                if (!_adaptersByContentType.TryGetValue(contentType, out List<Type>? adapters))
                 {
                     adapters = new List<Type>();
                     _adaptersByContentType[contentType] = adapters;
@@ -88,7 +88,7 @@ public class AdapterRegistry
 
         lock (_lock)
         {
-            return _adaptersByName.TryGetValue(name, out var type) ? type : null;
+            return _adaptersByName.TryGetValue(name, out Type? type) ? type : null;
         }
     }
 
@@ -101,7 +101,7 @@ public class AdapterRegistry
     {
         lock (_lock)
         {
-            return _adaptersByContentType.TryGetValue(contentType, out var adapters)
+            return _adaptersByContentType.TryGetValue(contentType, out List<Type>? adapters)
                 ? adapters.ToList()
                 : Enumerable.Empty<Type>();
         }
@@ -145,7 +145,7 @@ public class AdapterRegistry
 
         lock (_lock)
         {
-            if (!_adaptersByName.TryGetValue(name, out var adapterType))
+            if (!_adaptersByName.TryGetValue(name, out Type? adapterType))
             {
                 return false;
             }
@@ -153,7 +153,7 @@ public class AdapterRegistry
             _adaptersByName.Remove(name);
 
             // Remove from content type mappings
-            foreach (var contentTypeList in _adaptersByContentType.Values)
+            foreach (List<Type> contentTypeList in _adaptersByContentType.Values)
             {
                 contentTypeList.Remove(adapterType);
             }
@@ -177,13 +177,13 @@ public class AdapterRegistry
                        !t.IsInterface)
             .ToList();
 
-        var count = 0;
-        foreach (var type in adapterTypes)
+        int count = 0;
+        foreach (Type? type in adapterTypes)
         {
-            var name = type.Name.Replace("Adapter", string.Empty);
+            string name = type.Name.Replace("Adapter", string.Empty);
 
             // Try to determine supported content types from the type
-            var supportedTypes = DetermineSupportedContentTypes(type);
+            ContentType[] supportedTypes = DetermineSupportedContentTypes(type);
 
             Register(type, name, supportedTypes);
             count++;
@@ -203,7 +203,7 @@ public class AdapterRegistry
     private static ContentType[] DetermineSupportedContentTypes(Type adapterType)
     {
         // Default heuristics based on adapter name
-        var name = adapterType.Name.ToLowerInvariant();
+        string name = adapterType.Name.ToLowerInvariant();
         var types = new List<ContentType>();
 
         if (name.Contains("html") || name.Contains("static"))

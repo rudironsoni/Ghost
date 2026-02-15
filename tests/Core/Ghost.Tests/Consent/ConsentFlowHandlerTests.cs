@@ -35,7 +35,7 @@ public class ConsentFlowHandlerTests
         // Act & Assert
 #pragma warning disable CS8604 // Possible null reference argument
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await handler.ExecuteMultiStepFlowAsync(page, config));
+            async () => await handler.ExecuteMultiStepFlowAsync(page, config).ConfigureAwait(false)).ConfigureAwait(false);
 #pragma warning restore CS8604
     }
 
@@ -50,7 +50,7 @@ public class ConsentFlowHandlerTests
         // Act & Assert
 #pragma warning disable CS8604 // Possible null reference argument
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await handler.ExecuteMultiStepFlowAsync(mockPage.Object, config));
+            async () => await handler.ExecuteMultiStepFlowAsync(mockPage.Object, config).ConfigureAwait(false)).ConfigureAwait(false);
 #pragma warning restore CS8604
     }
 
@@ -70,7 +70,7 @@ public class ConsentFlowHandlerTests
         };
 
         // Act
-        var result = await handler.ExecuteMultiStepFlowAsync(mockPage.Object, config);
+        bool result = await handler.ExecuteMultiStepFlowAsync(mockPage.Object, config).ConfigureAwait(false);
 
         // Assert
         Assert.False(result);
@@ -92,7 +92,7 @@ public class ConsentFlowHandlerTests
         };
 
         // Act
-        var result = await handler.ExecuteMultiStepFlowAsync(mockPage.Object, config);
+        bool result = await handler.ExecuteMultiStepFlowAsync(mockPage.Object, config).ConfigureAwait(false);
 
         // Assert
         Assert.False(result);
@@ -107,7 +107,7 @@ public class ConsentFlowHandlerTests
         // Act & Assert
 #pragma warning disable CS8604 // Possible null reference argument
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await ConsentFlowHandler.DetectElementAsync(page, ".test"));
+            async () => await ConsentFlowHandler.DetectElementAsync(page, ".test").ConfigureAwait(false)).ConfigureAwait(false);
 #pragma warning restore CS8604
     }
 
@@ -120,7 +120,7 @@ public class ConsentFlowHandlerTests
         // Act & Assert
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await ConsentFlowHandler.DetectElementAsync(mockPage.Object, null));
+            async () => await ConsentFlowHandler.DetectElementAsync(mockPage.Object, null).ConfigureAwait(false)).ConfigureAwait(false);
 #pragma warning restore CS8625
     }
 
@@ -132,7 +132,7 @@ public class ConsentFlowHandlerTests
         mockPage.Setup(p => p.QuerySelectorAsync(It.IsAny<string>())).ReturnsAsync((IElement?)null);
 
         // Act
-        var result = await ConsentFlowHandler.DetectElementAsync(mockPage.Object, ".not-found", checkShadowDOM: false);
+        bool result = await ConsentFlowHandler.DetectElementAsync(mockPage.Object, ".not-found", checkShadowDOM: false).ConfigureAwait(false);
 
         // Assert
         Assert.False(result);
@@ -156,7 +156,7 @@ public class ConsentFlowHandlerTests
         };
 
         // Act
-        var result = await handler.ExecuteMultiStepFlowAsync(mockPage.Object, config);
+        bool result = await handler.ExecuteMultiStepFlowAsync(mockPage.Object, config).ConfigureAwait(false);
 
         // Assert
         Assert.False(result);

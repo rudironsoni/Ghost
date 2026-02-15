@@ -24,7 +24,7 @@ public class FakePage : IPage
 
     public Task<IElement?> QuerySelectorAsync(string selector, CancellationToken ct = default)
     {
-        if (_elements.TryGetValue(selector, out var element))
+        if (_elements.TryGetValue(selector, out FakeElement? element))
         {
             return Task.FromResult<IElement?>(element);
         }

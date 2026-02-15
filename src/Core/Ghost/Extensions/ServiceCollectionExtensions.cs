@@ -1,4 +1,5 @@
 using Ghost.Abstractions;
+using Ghost.Core;
 using Ghost.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,7 +21,7 @@ public static class ServiceCollectionExtensions
         // Use Lazy<T> to defer initialization until first use
         services.AddSingleton(sp =>
         {
-            var opts = sp.GetRequiredService<Ghost.Core.KernelOptions>();
+            KernelOptions opts = sp.GetRequiredService<Ghost.Core.KernelOptions>();
             return new Lazy<Ghost.Core.GhostKernel>(() =>
             {
                 // This will be executed on first access, not during DI registration

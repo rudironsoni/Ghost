@@ -23,12 +23,12 @@ internal sealed class PageWrapper : IPage
 
     public string Url => _page.Url;
 
-    public async Task<string?> GetTitleAsync(CancellationToken ct = default) => await _page.TitleAsync();
+    public async Task<string?> GetTitleAsync(CancellationToken ct = default) => await _page.TitleAsync().ConfigureAwait(false);
 
     public async Task NavigateAsync(string url, NavigationOptions? options = null, CancellationToken ct = default)
     {
-        var nav = options ?? new NavigationOptions();
-        await _page.GotoAsync(url, new Microsoft.Playwright.PageGotoOptions { Timeout = nav.Timeout, WaitUntil = Map(nav.WaitUntil) });
+        NavigationOptions nav = options ?? new NavigationOptions();
+        await _page.GotoAsync(url, new PageGotoOptions { Timeout = nav.Timeout, WaitUntil = Map(nav.WaitUntil) }).ConfigureAwait(false);
     }
 
     private static Microsoft.Playwright.WaitUntilState Map(WaitUntil w) => w switch
@@ -44,25 +44,25 @@ internal sealed class PageWrapper : IPage
 
     public async Task<IElement?> QuerySelectorAsync(string selector, CancellationToken ct = default)
     {
-        var handle = await _page.QuerySelectorAsync(selector);
+        Microsoft.Playwright.IElementHandle? handle = await _page.QuerySelectorAsync(selector).ConfigureAwait(false);
         return handle is null ? null : new ElementWrapper(handle);
     }
 
     public async Task<IReadOnlyList<IElement>> QuerySelectorAllAsync(string selector, CancellationToken ct = default)
     {
-        var handles = await _page.QuerySelectorAllAsync(selector);
+        IReadOnlyList<Microsoft.Playwright.IElementHandle> handles = await _page.QuerySelectorAllAsync(selector).ConfigureAwait(false);
         return handles.Select(h => (IElement)new ElementWrapper(h)).ToList();
     }
 
     public Task ClickAsync(string selector, ClickOptions? options = null, CancellationToken ct = default)
     {
-        var o = options ?? new ClickOptions();
+        ClickOptions o = options ?? new ClickOptions();
         return _page.ClickAsync(selector, new Microsoft.Playwright.PageClickOptions { Button = ParseButton(o.Button), ClickCount = o.ClickCount, Delay = o.Delay, Modifiers = o.Modifiers.Select(ParseModifier).ToArray() });
     }
 
     public Task TypeAsync(string selector, string text, TypeOptions? options = null, CancellationToken ct = default)
     {
-        var o = options ?? new TypeOptions();
+        TypeOptions o = options ?? new TypeOptions();
         // Use dynamic to avoid calling obsolete API overloads directly
         return ((dynamic)_page).TypeAsync(selector, text, new Microsoft.Playwright.PageTypeOptions { Delay = o.Delay });
     }
@@ -78,7 +78,7 @@ internal sealed class PageWrapper : IPage
 
     public async Task<IElement> WaitForSelectorAsync(string selector, WaitOptions? options = null, CancellationToken ct = default)
     {
-        var handle = await _page.WaitForSelectorAsync(selector, new Microsoft.Playwright.PageWaitForSelectorOptions { Timeout = options?.Timeout ?? 30_000, State = MapState(options?.State ?? WaitState.Load) });
+        Microsoft.Playwright.IElementHandle? handle = await _page.WaitForSelectorAsync(selector, new PageWaitForSelectorOptions { Timeout = options?.Timeout ?? 30_000, State = MapState(options?.State ?? WaitState.Load) }).ConfigureAwait(false);
         return new ElementWrapper(handle!);
     }
 
@@ -109,19 +109,19 @@ internal sealed class PageWrapper : IPage
 
     public async Task<T> EvaluateAsync<T>(string script, object? arg = null, CancellationToken ct = default)
     {
-        var res = await _page.EvaluateAsync<T>(script, arg);
+        T? res = await _page.EvaluateAsync<T>(script, arg).ConfigureAwait(false);
         return res;
     }
 
     public async Task<object?> EvaluateHandleAsync(string script, object? arg = null, CancellationToken ct = default)
     {
-        var handle = await _page.EvaluateHandleAsync(script, arg);
+        IJSHandle handle = await _page.EvaluateHandleAsync(script, arg).ConfigureAwait(false);
         return handle;
     }
 
     public Task<byte[]> ScreenshotAsync(ScreenshotOptions? options = null, CancellationToken ct = default)
     {
-        var o = options ?? new ScreenshotOptions();
+        ScreenshotOptions o = options ?? new ScreenshotOptions();
         return _page.ScreenshotAsync(new Microsoft.Playwright.PageScreenshotOptions { Type = ParseScreenshotType(o.Type), Quality = o.Quality, FullPage = o.FullPage });
     }
 
@@ -163,7 +163,7 @@ internal sealed class PageWrapper : IPage
         if (_disposed) return;
         try
         {
-            await _page.CloseAsync();
+            await _page.CloseAsync().ConfigureAwait(false);
         }
         catch (Exception)
         {

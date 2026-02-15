@@ -20,7 +20,7 @@ public class BrowserFixture : IAsyncDisposable
 
     public async Task<IBrowserSession> CreateSessionAsync(SessionOptions? options = null)
     {
-        return await _kernel.NewSessionAsync(options);
+        return await _kernel.NewSessionAsync(options).ConfigureAwait(false);
     }
 
     public ValueTask DisposeAsync()

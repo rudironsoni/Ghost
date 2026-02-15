@@ -18,10 +18,10 @@ public static class ErrorCategorizationService
     /// <returns>Structured error information</returns>
     public static PlatformError CategorizeError(Exception exception, string platformName)
     {
-        var errorCategory = DetermineErrorCategory(exception);
-        var message = GetErrorMessage(exception);
-        var suggestion = GetErrorSuggestion(errorCategory, exception);
-        var retryable = IsRetryable(errorCategory, exception);
+        string errorCategory = DetermineErrorCategory(exception);
+        string message = GetErrorMessage(exception);
+        string suggestion = GetErrorSuggestion(errorCategory, exception);
+        bool retryable = IsRetryable(errorCategory, exception);
 
         return new PlatformError
         {
@@ -43,11 +43,11 @@ public static class ErrorCategorizationService
     /// <returns>Structured error information</returns>
     public static PlatformError CategorizeHttpError(HttpResponseMessage response, string platformName)
     {
-        var statusCode = (int)response.StatusCode;
-        var errorCategory = DetermineHttpErrorCategory(statusCode);
-        var message = GetHttpErrorMessage(response.StatusCode);
-        var suggestion = GetErrorSuggestion(errorCategory, null);
-        var retryable = IsRetryable(errorCategory, null);
+        int statusCode = (int)response.StatusCode;
+        string errorCategory = DetermineHttpErrorCategory(statusCode);
+        string message = GetHttpErrorMessage(response.StatusCode);
+        string suggestion = GetErrorSuggestion(errorCategory, null);
+        bool retryable = IsRetryable(errorCategory, null);
 
         return new PlatformError
         {

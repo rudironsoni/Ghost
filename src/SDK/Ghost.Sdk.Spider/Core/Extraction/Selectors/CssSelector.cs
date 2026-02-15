@@ -1,4 +1,5 @@
 using AngleSharp.Dom;
+using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 
 namespace Ghost.Sdk.Spider.Core.Extraction.Selectors;
@@ -36,13 +37,13 @@ public class CssSelector : ISelector
         if (string.IsNullOrWhiteSpace(content))
             return new List<string>();
 
-        var document = _parser.ParseDocument(content);
-        var elements = document.QuerySelectorAll(Expression);
+        IHtmlDocument document = _parser.ParseDocument(content);
+        IHtmlCollection<IElement> elements = document.QuerySelectorAll(Expression);
 
         var results = new List<string>();
-        foreach (var element in elements)
+        foreach (IElement element in elements)
         {
-            var value = ExtractValue(element);
+            string? value = ExtractValue(element);
             if (value != null)
                 results.Add(value);
         }
@@ -56,8 +57,8 @@ public class CssSelector : ISelector
         if (string.IsNullOrWhiteSpace(content))
             return null;
 
-        var document = _parser.ParseDocument(content);
-        var element = document.QuerySelector(Expression);
+        IHtmlDocument document = _parser.ParseDocument(content);
+        IElement? element = document.QuerySelector(Expression);
 
         return element != null ? ExtractValue(element) : null;
     }
@@ -67,7 +68,7 @@ public class CssSelector : ISelector
     {
         try
         {
-            var document = _parser.ParseDocument("<html></html>");
+            IHtmlDocument document = _parser.ParseDocument("<html></html>");
             document.QuerySelector(Expression);
             return true;
         }

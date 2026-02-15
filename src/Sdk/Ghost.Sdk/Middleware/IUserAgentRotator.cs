@@ -9,17 +9,17 @@ public interface IUserAgentRotator
     /// Gets the next user agent in the rotation sequence.
     /// </summary>
     /// <returns>A user agent string.</returns>
-    string GetNextUserAgent();
+    public string GetNextUserAgent();
 
     /// <summary>
     /// Adds a user agent to the rotation pool.
     /// </summary>
     /// <param name="userAgent">The user agent string to add.</param>
-    void AddUserAgent(string userAgent);
+    public void AddUserAgent(string userAgent);
 
     /// <summary>
     /// Removes a user agent from the rotation pool.
     /// </summary>
     /// <param name="userAgent">The user agent string to remove.</param>
-    void RemoveUserAgent(string userAgent);
+    public void RemoveUserAgent(string userAgent);
 }

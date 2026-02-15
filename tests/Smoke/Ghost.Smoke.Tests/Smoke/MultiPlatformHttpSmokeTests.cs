@@ -40,10 +40,10 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
 
         // Act
         _output.WriteLine($"Searching all platforms via API for: {searchRequest.query}");
-        var results = await _fixture.PostAsync<object, List<JobListing>>(
+        List<JobListing>? results = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output);
+            _output).ConfigureAwait(false);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -56,7 +56,7 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         results.AssertNoDuplicateJobs();
 
         // Validate freshness for all jobs
-        foreach (var job in results)
+        foreach (JobListing job in results)
         {
             job.AssertFreshData(TimeSpan.FromDays(90));
         }
@@ -93,10 +93,10 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
 
         // Act
         _output.WriteLine($"Searching for deduplication via API for: {searchRequest.query}");
-        var results = await _fixture.PostAsync<object, List<JobListing>>(
+        List<JobListing>? results = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output);
+            _output).ConfigureAwait(false);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -138,10 +138,10 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
 
         // Act
         _output.WriteLine($"Searching all platforms via API for: {searchRequest.query} in {searchRequest.location}");
-        var results = await _fixture.PostAsync<object, List<JobListing>>(
+        List<JobListing>? results = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output);
+            _output).ConfigureAwait(false);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -193,10 +193,10 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         };
 
         // First, search for jobs to get valid IDs from different platforms
-        var searchResults = await _fixture.PostAsync<object, List<JobListing>>(
+        List<JobListing>? searchResults = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output);
+            _output).ConfigureAwait(false);
 
         searchResults.Should().NotBeEmpty("need at least one job to test details endpoint");
 
@@ -210,11 +210,11 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         _output.WriteLine($"\n=== Testing Job Details from {jobsByPlatform.Count} Platforms ===");
 
         // Act & Assert - Get details for each job
-        foreach (var job in jobsByPlatform)
+        foreach (JobListing? job in jobsByPlatform)
         {
             _output.WriteLine($"\nTesting {job.Source} job: {job.Id}");
 
-            var jobDetails = await _fixture.GetAsync<JobListing>($"/api/jobs/{job.Id}", _output);
+            JobListing? jobDetails = await _fixture.GetAsync<JobListing>($"/api/jobs/{job.Id}", _output).ConfigureAwait(false);
 
             jobDetails.Should().NotBeNull("job details should not be null");
             jobDetails!.Id.Should().Be(job.Id, "job ID should match the requested ID");

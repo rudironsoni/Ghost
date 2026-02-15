@@ -4,5 +4,5 @@ namespace Ghost.Engine.Abstractions.Engine;
 
 public interface IGhostEngine
 {
-    Task RunAsync(ISpider spider, GhostEngineContext context, CancellationToken cancellationToken = default);
+    public Task RunAsync(ISpider spider, GhostEngineContext context, CancellationToken cancellationToken = default);
 }

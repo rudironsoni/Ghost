@@ -17,7 +17,7 @@ public interface IScheduler
     /// <param name="cronExpression">The cron expression (e.g., "0 0 * * *" for daily at midnight).</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation with the schedule ID.</returns>
-    Task<string> ScheduleCronAsync(
+    public Task<string> ScheduleCronAsync(
         string spiderName,
         Engine.Spider spider,
         string cronExpression,
@@ -32,7 +32,7 @@ public interface IScheduler
     /// <param name="startDelay">Optional delay before the first execution.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation with the schedule ID.</returns>
-    Task<string> ScheduleIntervalAsync(
+    public Task<string> ScheduleIntervalAsync(
         string spiderName,
         Engine.Spider spider,
         TimeSpan interval,
@@ -47,7 +47,7 @@ public interface IScheduler
     /// <param name="runAt">The UTC time to run the spider.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation with the schedule ID.</returns>
-    Task<string> ScheduleOnceAsync(
+    public Task<string> ScheduleOnceAsync(
         string spiderName,
         Engine.Spider spider,
         DateTimeOffset runAt,
@@ -60,7 +60,7 @@ public interface IScheduler
     /// <param name="spider">The spider instance to execute.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation with the execution ID.</returns>
-    Task<string> TriggerNowAsync(
+    public Task<string> TriggerNowAsync(
         string spiderName,
         Engine.Spider spider,
         CancellationToken cancellationToken = default);
@@ -71,7 +71,7 @@ public interface IScheduler
     /// <param name="scheduleId">The schedule ID returned from a schedule method.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task UnscheduleAsync(string scheduleId, CancellationToken cancellationToken = default);
+    public Task UnscheduleAsync(string scheduleId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Pauses a scheduled spider.
@@ -79,7 +79,7 @@ public interface IScheduler
     /// <param name="scheduleId">The schedule ID.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task PauseAsync(string scheduleId, CancellationToken cancellationToken = default);
+    public Task PauseAsync(string scheduleId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Resumes a paused spider.
@@ -87,14 +87,14 @@ public interface IScheduler
     /// <param name="scheduleId">The schedule ID.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task ResumeAsync(string scheduleId, CancellationToken cancellationToken = default);
+    public Task ResumeAsync(string scheduleId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets information about all scheduled spiders.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation with the schedule information.</returns>
-    Task<IEnumerable<ScheduleInfo>> GetSchedulesAsync(CancellationToken cancellationToken = default);
+    public Task<IEnumerable<ScheduleInfo>> GetSchedulesAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets information about a specific schedule.
@@ -102,7 +102,7 @@ public interface IScheduler
     /// <param name="scheduleId">The schedule ID.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation with the schedule information.</returns>
-    Task<ScheduleInfo?> GetScheduleAsync(string scheduleId, CancellationToken cancellationToken = default);
+    public Task<ScheduleInfo?> GetScheduleAsync(string scheduleId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

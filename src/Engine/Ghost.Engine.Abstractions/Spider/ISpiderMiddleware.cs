@@ -5,7 +5,7 @@ namespace Ghost.Engine.Abstractions.Spider;
 
 public interface ISpiderMiddleware
 {
-    Task<SpiderOutput> InvokeAsync(
+    public Task<SpiderOutput> InvokeAsync(
         GhostResponse response,
         GhostEngineContext context,
         Func<GhostResponse, GhostEngineContext, CancellationToken, Task<SpiderOutput>> nextStep,

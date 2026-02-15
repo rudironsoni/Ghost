@@ -11,27 +11,27 @@ public interface IXAccountManager
     /// <summary>
     /// Registers an account for use.
     /// </summary>
-    void RegisterAccount(string accountId, XAccountOptions options);
+    public void RegisterAccount(string accountId, XAccountOptions options);
 
     /// <summary>
     /// Gets the next available account using round-robin rotation.
     /// </summary>
-    XAccount? GetNextAccount();
+    public XAccount? GetNextAccount();
 
     /// <summary>
     /// Marks an account as rate-limited.
     /// </summary>
-    void MarkRateLimited(string accountId, TimeSpan duration);
+    public void MarkRateLimited(string accountId, TimeSpan duration);
 
     /// <summary>
     /// Gets all registered accounts.
     /// </summary>
-    IReadOnlyList<XAccount> GetAllAccounts();
+    public IReadOnlyList<XAccount> GetAllAccounts();
 
     /// <summary>
     /// Gets account by ID.
     /// </summary>
-    XAccount? GetAccount(string accountId);
+    public XAccount? GetAccount(string accountId);
 }
 
 /// <summary>
@@ -159,9 +159,9 @@ public partial class XAccountManager : IXAccountManager
             // Try to find an available account
             for (int i = 0; i < _accountIds.Count; i++)
             {
-                var index = (_currentIndex + i) % _accountIds.Count;
-                var accountId = _accountIds[index];
-                var account = _accounts[accountId];
+                int index = (_currentIndex + i) % _accountIds.Count;
+                string accountId = _accountIds[index];
+                XAccount account = _accounts[accountId];
 
                 if (account.CanPost())
                 {
@@ -180,7 +180,7 @@ public partial class XAccountManager : IXAccountManager
     {
         lock (_lock)
         {
-            if (_accounts.TryGetValue(accountId, out var account))
+            if (_accounts.TryGetValue(accountId, out XAccount? account))
             {
                 account.IsRateLimited = true;
                 account.RateLimitExpiresAt = DateTime.UtcNow.Add(duration);
@@ -201,7 +201,7 @@ public partial class XAccountManager : IXAccountManager
     {
         lock (_lock)
         {
-            return _accounts.TryGetValue(accountId, out var account) ? account : null;
+            return _accounts.TryGetValue(accountId, out XAccount? account) ? account : null;
         }
     }
 
@@ -212,7 +212,7 @@ public partial class XAccountManager : IXAccountManager
     {
         lock (_lock)
         {
-            if (_accounts.TryGetValue(accountId, out var account))
+            if (_accounts.TryGetValue(accountId, out XAccount? account))
             {
                 account.PostsThisHour++;
                 account.TotalPosts++;
@@ -234,7 +234,7 @@ public partial class XAccountManager : IXAccountManager
     {
         lock (_lock)
         {
-            if (_accounts.TryGetValue(accountId, out var account))
+            if (_accounts.TryGetValue(accountId, out XAccount? account))
             {
                 account.FailedPosts++;
             }

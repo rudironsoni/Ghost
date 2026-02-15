@@ -8,5 +8,5 @@ public interface IHealthReportService
     /// <summary>
     /// Builds a detailed health report.
     /// </summary>
-    Task<HealthReport> BuildReportAsync(CancellationToken ct);
+    public Task<HealthReport> BuildReportAsync(CancellationToken ct);
 }

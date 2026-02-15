@@ -7,8 +7,8 @@ namespace Ghost.Core.Configuration;
 
 public interface INordVpnCredentialProvider
 {
-    NordVpnCredentials? GetCredentials();
-    bool ValidateCredentials(out string? errorMessage);
+    public NordVpnCredentials? GetCredentials();
+    public bool ValidateCredentials(out string? errorMessage);
 }
 
 public class NordVpnCredentials
@@ -42,27 +42,27 @@ public class ConfigurationNordVpnCredentialProvider : INordVpnCredentialProvider
 
     public NordVpnCredentials? GetCredentials()
     {
-        var section = _configuration.GetSection("Ghost:Proxy:NordVPN");
+        IConfigurationSection section = _configuration.GetSection("Ghost:Proxy:NordVPN");
         if (!section.Exists())
         {
             return null;
         }
 
-        var username = section["Username"];
-        var password = section["Password"];
-        var serversSection = section.GetSection("Servers");
+        string? username = section["Username"];
+        string? password = section["Password"];
+        IConfigurationSection serversSection = section.GetSection("Servers");
 
         var servers = new List<NordVpnServer>();
         if (serversSection.Exists())
         {
-            foreach (var child in serversSection.GetChildren())
+            foreach (IConfigurationSection child in serversSection.GetChildren())
             {
                 if (child["Host"] is string host)
                 {
                     servers.Add(new NordVpnServer
                     {
                         Host = host,
-                        Port = int.TryParse(child["Port"], out var port) ? port : 80
+                        Port = int.TryParse(child["Port"], out int port) ? port : 80
                     });
                 }
             }
@@ -84,7 +84,7 @@ public class ConfigurationNordVpnCredentialProvider : INordVpnCredentialProvider
     public bool ValidateCredentials(out string? errorMessage)
     {
         errorMessage = null;
-        var credentials = GetCredentials();
+        NordVpnCredentials? credentials = GetCredentials();
 
         if (credentials == null)
         {

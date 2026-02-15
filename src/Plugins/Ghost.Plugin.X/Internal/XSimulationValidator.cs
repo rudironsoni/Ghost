@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Ghost.Contracts.Simulation;
 using Ghost.Contracts.Social;
@@ -55,11 +56,11 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         // Validate content length per tweet
         if (!string.IsNullOrWhiteSpace(request.Content))
         {
-            var parts = _contentSplitter.Split(request.Content);
+            IReadOnlyList<string> parts = _contentSplitter.Split(request.Content);
 
-            foreach (var (part, index) in parts.Select((p, i) => (p, i)))
+            foreach ((string? part, int index) in parts.Select((p, i) => (p, i)))
             {
-                var effectiveLength = CalculateEffectiveLength(part);
+                int effectiveLength = CalculateEffectiveLength(part);
 
                 if (effectiveLength > _options.MaxTweetLength)
                 {
@@ -100,10 +101,10 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         if (request.MediaUrls?.Count > 0)
         {
             // Check media count
-            var imageCount = 0;
-            var videoCount = 0;
+            int imageCount = 0;
+            int videoCount = 0;
 
-            foreach (var url in request.MediaUrls)
+            foreach (string url in request.MediaUrls)
             {
                 if (!File.Exists(url))
                 {
@@ -117,7 +118,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
                     continue;
                 }
 
-                var extension = Path.GetExtension(url).ToLowerInvariant();
+                string extension = Path.GetExtension(url).ToLowerInvariant();
                 var fileInfo = new FileInfo(url);
 
                 // Check supported formats
@@ -203,10 +204,10 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         // Check for potentially problematic content
         if (!string.IsNullOrWhiteSpace(request.Content))
         {
-            var content = request.Content.ToLowerInvariant();
+            string content = request.Content.ToLowerInvariant();
 
             // Check for excessive hashtags
-            var hashtagCount = Regex.Count(request.Content, @"#\w+");
+            int hashtagCount = Regex.Count(request.Content, @"#\w+");
             if (hashtagCount > 5)
             {
                 warnings.Add(new ValidationError
@@ -219,7 +220,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
             }
 
             // Check for excessive mentions
-            var mentionCount = Regex.Count(request.Content, @"@\w+");
+            int mentionCount = Regex.Count(request.Content, @"@\w+");
             if (mentionCount > 5)
             {
                 warnings.Add(new ValidationError
@@ -241,12 +242,12 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         if (warnings.Count > 0)
         {
             // Use reflection to set warnings since Success() creates a valid result
-            var resultType = result.GetType();
-            var warningsProperty = resultType.GetProperty("Warnings");
+            Type resultType = result.GetType();
+            PropertyInfo? warningsProperty = resultType.GetProperty("Warnings");
             warningsProperty?.SetValue(result, warnings.AsReadOnly());
         }
 
-        return await Task.FromResult(result);
+        return await Task.FromResult(result).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -273,11 +274,11 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
             ["Account Menu"] = "[data-testid='AppTabBar_More_Menu']"
         };
 
-        foreach (var (name, selector) in requiredSelectors)
+        foreach ((string? name, string? selector) in requiredSelectors)
         {
             try
             {
-                var element = await browserPage.QuerySelectorAsync(selector);
+                IElement? element = await browserPage.QuerySelectorAsync(selector).ConfigureAwait(false);
                 if (element == null)
                 {
                     errors.Add(new ValidationError
@@ -312,7 +313,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
     /// <inheritdoc />
     public async Task<string> GeneratePreviewAsync(CreatePostRequest request)
     {
-        var parts = _contentSplitter.Split(request.Content);
+        IReadOnlyList<string> parts = _contentSplitter.Split(request.Content);
         var html = new System.Text.StringBuilder();
 
         html.AppendLine("<!DOCTYPE html>");
@@ -370,11 +371,11 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
             if (i == 0 && request.MediaUrls?.Count > 0)
             {
                 html.AppendLine("<div class='media'>");
-                foreach (var url in request.MediaUrls.Take(4))
+                foreach (string? url in request.MediaUrls.Take(4))
                 {
                     if (File.Exists(url))
                     {
-                        var extension = Path.GetExtension(url).ToLowerInvariant();
+                        string extension = Path.GetExtension(url).ToLowerInvariant();
                         if (_options.SupportedImageFormats.Contains(extension))
                         {
                             html.AppendLine($"<img src='file://{url}' alt='Media' />");
@@ -393,7 +394,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         }
 
         // Add character count info
-        var totalChars = parts.Sum(p => CalculateEffectiveLength(p));
+        int totalChars = parts.Sum(p => CalculateEffectiveLength(p));
         html.AppendLine($"<p><strong>Total character count: {totalChars}</strong></p>");
 
         if (request.MediaUrls?.Count > 0)
@@ -404,7 +405,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         html.AppendLine("</body>");
         html.AppendLine("</html>");
 
-        return await Task.FromResult(html.ToString());
+        return await Task.FromResult(html.ToString()).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -413,7 +414,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Validate content
-        var validationResult = await ValidatePostAsync(request);
+        ValidationResult validationResult = await ValidatePostAsync(request).ConfigureAwait(false);
 
         if (!validationResult.IsValid)
         {
@@ -423,7 +424,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         }
 
         // Simulate the posting process
-        var parts = _contentSplitter.Split(request.Content);
+        IReadOnlyList<string> parts = _contentSplitter.Split(request.Content);
         var simulatedIds = new List<string>();
 
         // Generate simulated tweet IDs
@@ -443,7 +444,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         stopwatch.Stop();
 
         // Generate preview HTML
-        var previewHtml = await GeneratePreviewAsync(request);
+        string previewHtml = await GeneratePreviewAsync(request).ConfigureAwait(false);
 
         return new SimulationResult
         {
@@ -476,13 +477,13 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         }
 
         // X treats all URLs as 23 characters (https://t.co/XXXXXXXXXX)
-        var urlPattern = @"https?://[^\s]+";
-        var urls = Regex.Matches(content, urlPattern);
-        var urlPlaceholderLength = 23;
-        var urlTotalLength = urls.Count * urlPlaceholderLength;
+        string urlPattern = @"https?://[^\s]+";
+        MatchCollection urls = Regex.Matches(content, urlPattern);
+        int urlPlaceholderLength = 23;
+        int urlTotalLength = urls.Count * urlPlaceholderLength;
 
         // Remove URLs and calculate remaining content length
-        var contentWithoutUrls = Regex.Replace(content, urlPattern, "");
+        string contentWithoutUrls = Regex.Replace(content, urlPattern, "");
 
         return urlTotalLength + contentWithoutUrls.Length;
     }

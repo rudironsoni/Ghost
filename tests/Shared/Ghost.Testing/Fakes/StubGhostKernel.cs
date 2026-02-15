@@ -15,9 +15,9 @@ public sealed class StubGhostKernel : IGhostKernel
 
     public async ValueTask DisposeAsync()
     {
-        foreach (var session in _sessions)
+        foreach (IBrowserSession session in _sessions)
         {
-            await session.DisposeAsync();
+            await session.DisposeAsync().ConfigureAwait(false);
         }
         _sessions.Clear();
     }

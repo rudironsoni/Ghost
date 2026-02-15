@@ -12,7 +12,7 @@ public interface IConsentHandler
     /// </summary>
     /// <param name="page">The Playwright page instance.</param>
     /// <returns>The CMP identifier if detected, otherwise null.</returns>
-    Task<string?> DetectCMPAsync(IPage page);
+    public Task<string?> DetectCMPAsync(IPage page);
 
     /// <summary>
     /// Accepts consent for a specific CMP type.
@@ -20,12 +20,12 @@ public interface IConsentHandler
     /// <param name="page">The Playwright page instance.</param>
     /// <param name="cmpType">The CMP identifier to handle.</param>
     /// <returns>True if consent was successfully accepted, otherwise false.</returns>
-    Task<bool> AcceptConsentAsync(IPage page, string cmpType);
+    public Task<bool> AcceptConsentAsync(IPage page, string cmpType);
 
     /// <summary>
     /// Detects and handles consent on the page automatically.
     /// </summary>
     /// <param name="page">The Playwright page instance.</param>
     /// <returns>True if consent was detected and accepted, otherwise false.</returns>
-    Task<bool> HandleConsentAsync(IPage page);
+    public Task<bool> HandleConsentAsync(IPage page);
 }

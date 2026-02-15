@@ -155,8 +155,8 @@ public class ReconnectionPolicy
             return ApplyJitter(InitialDelay);
         }
 
-        var delay = InitialDelay.TotalMilliseconds * Math.Pow(BackoffMultiplier, attemptNumber);
-        var cappedDelay = Math.Min(delay, MaxDelay.TotalMilliseconds);
+        double delay = InitialDelay.TotalMilliseconds * Math.Pow(BackoffMultiplier, attemptNumber);
+        double cappedDelay = Math.Min(delay, MaxDelay.TotalMilliseconds);
         var timeSpan = TimeSpan.FromMilliseconds(cappedDelay);
 
         return ApplyJitter(timeSpan);
@@ -174,9 +174,9 @@ public class ReconnectionPolicy
             return delay;
         }
 
-        var jitterRange = delay.TotalMilliseconds * 0.25; // +/- 25%
-        var jitter = (Random.Shared.NextDouble() * 2 - 1) * jitterRange;
-        var jitteredDelay = delay.TotalMilliseconds + jitter;
+        double jitterRange = delay.TotalMilliseconds * 0.25; // +/- 25%
+        double jitter = (Random.Shared.NextDouble() * 2 - 1) * jitterRange;
+        double jitteredDelay = delay.TotalMilliseconds + jitter;
 
         return TimeSpan.FromMilliseconds(Math.Max(0, jitteredDelay));
     }

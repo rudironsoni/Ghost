@@ -54,7 +54,7 @@ public class MessageBuffer
 
             if (_maxWaitTime > TimeSpan.Zero)
             {
-                var elapsed = DateTimeOffset.UtcNow - _firstMessageTime;
+                TimeSpan elapsed = DateTimeOffset.UtcNow - _firstMessageTime;
                 return elapsed >= _maxWaitTime;
             }
 
@@ -127,7 +127,7 @@ public class MessageBuffer
 
         lock (_lock)
         {
-            while (_messages.TryDequeue(out var message))
+            while (_messages.TryDequeue(out WebSocketMessage? message))
             {
                 messages.Add(message);
             }
@@ -152,7 +152,7 @@ public class MessageBuffer
     /// </remarks>
     public string ToJsonArray(bool includeMetadata = false)
     {
-        var messages = Peek();
+        WebSocketMessage[] messages = Peek();
 
         if (messages.Length == 0)
         {
@@ -173,14 +173,14 @@ public class MessageBuffer
 
         var contentArray = new List<object>();
 
-        foreach (var message in messages)
+        foreach (WebSocketMessage message in messages)
         {
             if (message.IsText)
             {
                 // Try to parse as JSON
                 try
                 {
-                    var jsonElement = JsonSerializer.Deserialize<JsonElement>(message.Content);
+                    JsonElement jsonElement = JsonSerializer.Deserialize<JsonElement>(message.Content);
                     contentArray.Add(jsonElement);
                 }
                 catch
@@ -208,7 +208,7 @@ public class MessageBuffer
     /// <returns>A JSON array string containing all buffered messages.</returns>
     public string FlushToJsonArray(bool includeMetadata = false)
     {
-        var json = ToJsonArray(includeMetadata);
+        string json = ToJsonArray(includeMetadata);
         Flush();
         return json;
     }
@@ -235,9 +235,9 @@ public class MessageBuffer
     /// <returns>A tuple containing message count, total size, and age of oldest message.</returns>
     public (int MessageCount, long TotalSize, TimeSpan Age) GetStatistics()
     {
-        var messages = Peek();
-        var totalSize = messages.Sum(m => (long)m.Size);
-        var age = IsEmpty ? TimeSpan.Zero : DateTimeOffset.UtcNow - _firstMessageTime;
+        WebSocketMessage[] messages = Peek();
+        long totalSize = messages.Sum(m => (long)m.Size);
+        TimeSpan age = IsEmpty ? TimeSpan.Zero : DateTimeOffset.UtcNow - _firstMessageTime;
 
         return (messages.Length, totalSize, age);
     }

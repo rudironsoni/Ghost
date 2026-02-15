@@ -28,7 +28,7 @@ public class ScrollScenarioTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _scenarioServer = await ScenarioServer.CreateAsync();
+        _scenarioServer = await ScenarioServer.CreateAsync().ConfigureAwait(false);
         _output.WriteLine($"Scenario server started at {_scenarioServer.BaseUrl}");
     }
 
@@ -36,7 +36,7 @@ public class ScrollScenarioTests : IAsyncLifetime
     {
         if (_scenarioServer != null)
         {
-            await _scenarioServer.StopAsync();
+            await _scenarioServer.StopAsync().ConfigureAwait(false);
             _scenarioServer.Dispose();
         }
     }
@@ -45,24 +45,24 @@ public class ScrollScenarioTests : IAsyncLifetime
     public async Task AutoThreshold_ScrollTriggersFetch_LoadsMoreItems()
     {
         // Arrange
-        await using var session = await _browserFixture.CreateSessionAsync();
-        var page = await session.NewPageAsync();
-        var url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/auto-threshold";
+        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/auto-threshold";
 
         // Act
-        await page.NavigateAsync(url);
+        await page.NavigateAsync(url).ConfigureAwait(false);
 
         // Verify initial items are loaded
-        var initialJobs = await page.QuerySelectorAllAsync(".job");
+        IReadOnlyList<IElement> initialJobs = await page.QuerySelectorAllAsync(".job").ConfigureAwait(false);
         Assert.True(initialJobs.Count >= 15, $"Expected at least 15 initial jobs, got {initialJobs.Count}");
         _output.WriteLine($"Initial jobs loaded: {initialJobs.Count}");
 
         // Scroll to trigger auto-fetch
-        await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)");
-        await Task.Delay(500); // Wait for fetch to complete
+        await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)").ConfigureAwait(false);
+        await Task.Delay(500).ConfigureAwait(false); // Wait for fetch to complete
 
         // Assert - More items should be loaded
-        var jobsAfterScroll = await page.QuerySelectorAllAsync(".job");
+        IReadOnlyList<IElement> jobsAfterScroll = await page.QuerySelectorAllAsync(".job").ConfigureAwait(false);
         Assert.True(jobsAfterScroll.Count > initialJobs.Count,
             $"Expected more jobs after scroll. Initial: {initialJobs.Count}, After: {jobsAfterScroll.Count}");
 
@@ -73,25 +73,25 @@ public class ScrollScenarioTests : IAsyncLifetime
     public async Task AutoThreshold_MultipleScrolls_LoadsAllItems()
     {
         // Arrange
-        await using var session = await _browserFixture.CreateSessionAsync();
-        var page = await session.NewPageAsync();
-        var url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/auto-threshold";
+        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/auto-threshold";
 
         // Act
-        await page.NavigateAsync(url);
+        await page.NavigateAsync(url).ConfigureAwait(false);
 
-        var previousCount = 0;
-        var scrollCount = 0;
-        var maxScrolls = 10; // Prevent infinite loop
+        int previousCount = 0;
+        int scrollCount = 0;
+        int maxScrolls = 10; // Prevent infinite loop
 
         // Scroll until no more items are loaded
         while (scrollCount < maxScrolls)
         {
-            await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)");
-            await Task.Delay(500);
+            await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)").ConfigureAwait(false);
+            await Task.Delay(500).ConfigureAwait(false);
 
-            var currentJobs = await page.QuerySelectorAllAsync(".job");
-            var currentCount = currentJobs.Count;
+            IReadOnlyList<IElement> currentJobs = await page.QuerySelectorAllAsync(".job").ConfigureAwait(false);
+            int currentCount = currentJobs.Count;
 
             _output.WriteLine($"Scroll {scrollCount + 1}: {currentCount} jobs");
 
@@ -106,14 +106,14 @@ public class ScrollScenarioTests : IAsyncLifetime
         }
 
         // Assert - Completeness: All items should be extracted
-        var finalJobs = await page.QuerySelectorAllAsync(".job");
+        IReadOnlyList<IElement> finalJobs = await page.QuerySelectorAllAsync(".job").ConfigureAwait(false);
         Assert.True(finalJobs.Count >= 100, $"Expected at least 100 jobs, got {finalJobs.Count}");
 
         // Assert - Dedupe: No duplicates
         var jobIds = new HashSet<string>();
-        foreach (var job in finalJobs)
+        foreach (IElement job in finalJobs)
         {
-            var jobId = await job.GetAttributeAsync("data-job-id");
+            string? jobId = await job.GetAttributeAsync("data-job-id").ConfigureAwait(false);
             Assert.NotNull(jobId);
             Assert.False(jobIds.Contains(jobId), $"Duplicate job ID found: {jobId}");
             jobIds.Add(jobId);
@@ -126,24 +126,24 @@ public class ScrollScenarioTests : IAsyncLifetime
     public async Task AutoThreshold_Termination_StopsAtEnd()
     {
         // Arrange
-        await using var session = await _browserFixture.CreateSessionAsync();
-        var page = await session.NewPageAsync();
-        var url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/auto-threshold";
+        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/auto-threshold";
 
         // Act
-        await page.NavigateAsync(url);
+        await page.NavigateAsync(url).ConfigureAwait(false);
 
         // Scroll to the end
-        var previousCount = 0;
-        var stableCount = 0;
+        int previousCount = 0;
+        int stableCount = 0;
 
         for (int i = 0; i < 20; i++)
         {
-            await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)");
-            await Task.Delay(500);
+            await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)").ConfigureAwait(false);
+            await Task.Delay(500).ConfigureAwait(false);
 
-            var currentJobs = await page.QuerySelectorAllAsync(".job");
-            var currentCount = currentJobs.Count;
+            IReadOnlyList<IElement> currentJobs = await page.QuerySelectorAllAsync(".job").ConfigureAwait(false);
+            int currentCount = currentJobs.Count;
 
             if (currentCount == previousCount)
             {
@@ -163,10 +163,10 @@ public class ScrollScenarioTests : IAsyncLifetime
         }
 
         // Assert - Termination: Loading indicator should be hidden
-        var loadingIndicator = await page.QuerySelectorAsync("#loading");
+        IElement? loadingIndicator = await page.QuerySelectorAsync("#loading").ConfigureAwait(false);
         Assert.NotNull(loadingIndicator);
 
-        var loadingStyle = await loadingIndicator.GetAttributeAsync("style");
+        string? loadingStyle = await loadingIndicator.GetAttributeAsync("style").ConfigureAwait(false);
         Assert.Contains("display: none;", loadingStyle ?? "");
 
         _output.WriteLine("Auto-threshold termination test passed");
@@ -176,27 +176,27 @@ public class ScrollScenarioTests : IAsyncLifetime
     public async Task ButtonDriven_ClickLoadMore_LoadsMoreItems()
     {
         // Arrange
-        await using var session = await _browserFixture.CreateSessionAsync();
-        var page = await session.NewPageAsync();
-        var url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/button-driven";
+        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/button-driven";
 
         // Act
-        await page.NavigateAsync(url);
+        await page.NavigateAsync(url).ConfigureAwait(false);
 
         // Verify initial items are loaded
-        var initialJobs = await page.QuerySelectorAllAsync(".job");
+        IReadOnlyList<IElement> initialJobs = await page.QuerySelectorAllAsync(".job").ConfigureAwait(false);
         Assert.True(initialJobs.Count >= 10, $"Expected at least 10 initial jobs, got {initialJobs.Count}");
         _output.WriteLine($"Initial jobs loaded: {initialJobs.Count}");
 
         // Click "Load More" button
-        var loadMoreButton = await page.QuerySelectorAsync("#load-more-btn");
+        IElement? loadMoreButton = await page.QuerySelectorAsync("#load-more-btn").ConfigureAwait(false);
         Assert.NotNull(loadMoreButton);
 
-        await loadMoreButton.ClickAsync();
-        await Task.Delay(500); // Wait for fetch to complete
+        await loadMoreButton.ClickAsync().ConfigureAwait(false);
+        await Task.Delay(500).ConfigureAwait(false); // Wait for fetch to complete
 
         // Assert - More items should be loaded
-        var jobsAfterClick = await page.QuerySelectorAllAsync(".job");
+        IReadOnlyList<IElement> jobsAfterClick = await page.QuerySelectorAllAsync(".job").ConfigureAwait(false);
         Assert.True(jobsAfterClick.Count > initialJobs.Count,
             $"Expected more jobs after click. Initial: {initialJobs.Count}, After: {jobsAfterClick.Count}");
 
@@ -207,56 +207,56 @@ public class ScrollScenarioTests : IAsyncLifetime
     public async Task ButtonDriven_MultipleClicks_LoadsAllItems()
     {
         // Arrange
-        await using var session = await _browserFixture.CreateSessionAsync();
-        var page = await session.NewPageAsync();
-        var url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/button-driven";
+        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/button-driven";
 
         // Act
-        await page.NavigateAsync(url);
+        await page.NavigateAsync(url).ConfigureAwait(false);
 
-        var clickCount = 0;
-        var maxClicks = 20;
+        int clickCount = 0;
+        int maxClicks = 20;
 
         // Click "Load More" until button is disabled or text changes
         while (clickCount < maxClicks)
         {
-            var loadMoreBtn = await page.QuerySelectorAsync("#load-more-btn");
+            IElement? loadMoreBtn = await page.QuerySelectorAsync("#load-more-btn").ConfigureAwait(false);
             if (loadMoreBtn == null)
             {
                 break;
             }
 
-            var btnText = await loadMoreBtn.GetTextContentAsync();
+            string? btnText = await loadMoreBtn.GetTextContentAsync().ConfigureAwait(false);
             if (btnText?.Contains("No More") == true)
             {
                 break;
             }
 
             // Check if button is disabled by checking the disabled attribute
-            var isDisabledAttr = await loadMoreBtn.GetAttributeAsync("disabled");
+            string? isDisabledAttr = await loadMoreBtn.GetAttributeAsync("disabled").ConfigureAwait(false);
             if (isDisabledAttr != null)
             {
-                await Task.Delay(500); // Wait for loading to complete
+                await Task.Delay(500).ConfigureAwait(false); // Wait for loading to complete
                 continue;
             }
 
-            await loadMoreBtn.ClickAsync();
-            await Task.Delay(500);
+            await loadMoreBtn.ClickAsync().ConfigureAwait(false);
+            await Task.Delay(500).ConfigureAwait(false);
             clickCount++;
 
-            var currentJobs = await page.QuerySelectorAllAsync(".job");
+            IReadOnlyList<IElement> currentJobs = await page.QuerySelectorAllAsync(".job").ConfigureAwait(false);
             _output.WriteLine($"Click {clickCount}: {currentJobs.Count} jobs");
         }
 
         // Assert - Completeness: All items should be extracted
-        var finalJobs = await page.QuerySelectorAllAsync(".job");
+        IReadOnlyList<IElement> finalJobs = await page.QuerySelectorAllAsync(".job").ConfigureAwait(false);
         Assert.True(finalJobs.Count >= 100, $"Expected at least 100 jobs, got {finalJobs.Count}");
 
         // Assert - Dedupe: No duplicates
         var jobIds = new HashSet<string>();
-        foreach (var job in finalJobs)
+        foreach (IElement job in finalJobs)
         {
-            var jobId = await job.GetAttributeAsync("data-job-id");
+            string? jobId = await job.GetAttributeAsync("data-job-id").ConfigureAwait(false);
             Assert.NotNull(jobId);
             Assert.False(jobIds.Contains(jobId), $"Duplicate job ID found: {jobId}");
             jobIds.Add(jobId);
@@ -269,45 +269,45 @@ public class ScrollScenarioTests : IAsyncLifetime
     public async Task ButtonDriven_Termination_DisablesButtonAtEnd()
     {
         // Arrange
-        await using var session = await _browserFixture.CreateSessionAsync();
-        var page = await session.NewPageAsync();
-        var url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/button-driven";
+        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/button-driven";
 
         // Act
-        await page.NavigateAsync(url);
+        await page.NavigateAsync(url).ConfigureAwait(false);
 
         // Click until end
         for (int i = 0; i < 50; i++)
         {
-            var loadMoreBtn = await page.QuerySelectorAsync("#load-more-btn");
+            IElement? loadMoreBtn = await page.QuerySelectorAsync("#load-more-btn").ConfigureAwait(false);
             if (loadMoreBtn == null)
             {
                 break;
             }
 
-            var btnText = await loadMoreBtn.GetTextContentAsync();
+            string? btnText = await loadMoreBtn.GetTextContentAsync().ConfigureAwait(false);
             if (btnText?.Contains("No More") == true)
             {
                 break;
             }
 
             // Check if button is disabled (loading state)
-            var isDisabledAttr = await loadMoreBtn.GetAttributeAsync("disabled");
+            string? isDisabledAttr = await loadMoreBtn.GetAttributeAsync("disabled").ConfigureAwait(false);
             if (isDisabledAttr != null)
             {
-                await Task.Delay(500); // Wait for loading to complete
+                await Task.Delay(500).ConfigureAwait(false); // Wait for loading to complete
                 continue;
             }
 
-            await loadMoreBtn.ClickAsync();
-            await Task.Delay(500);
+            await loadMoreBtn.ClickAsync().ConfigureAwait(false);
+            await Task.Delay(500).ConfigureAwait(false);
         }
 
         // Assert - Termination: Button should show "No More Jobs"
-        var finalBtn = await page.QuerySelectorAsync("#load-more-btn");
+        IElement? finalBtn = await page.QuerySelectorAsync("#load-more-btn").ConfigureAwait(false);
         Assert.NotNull(finalBtn);
 
-        var finalBtnText = await finalBtn.GetTextContentAsync();
+        string? finalBtnText = await finalBtn.GetTextContentAsync().ConfigureAwait(false);
         Assert.Contains("No More", finalBtnText ?? "");
 
         _output.WriteLine("Button-driven termination test passed");
@@ -317,20 +317,20 @@ public class ScrollScenarioTests : IAsyncLifetime
     public async Task Virtualized_ScrollUpdatesDOM_ReplacesItems()
     {
         // Arrange
-        await using var session = await _browserFixture.CreateSessionAsync();
-        var page = await session.NewPageAsync();
-        var url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/virtualized";
+        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/virtualized";
 
         // Act
-        await page.NavigateAsync(url);
+        await page.NavigateAsync(url).ConfigureAwait(false);
 
         // Get initial visible items
-        var initialJobs = await page.QuerySelectorAllAsync(".job");
+        IReadOnlyList<IElement> initialJobs = await page.QuerySelectorAllAsync(".job").ConfigureAwait(false);
         var initialJobIds = new List<string>();
 
-        foreach (var job in initialJobs)
+        foreach (IElement job in initialJobs)
         {
-            var jobId = await job.GetAttributeAsync("data-job-id");
+            string? jobId = await job.GetAttributeAsync("data-job-id").ConfigureAwait(false);
             if (jobId != null)
             {
                 initialJobIds.Add(jobId);
@@ -340,16 +340,16 @@ public class ScrollScenarioTests : IAsyncLifetime
         _output.WriteLine($"Initial visible jobs: {initialJobIds.Count}");
 
         // Scroll down
-        await page.EvaluateAsync<string>("document.getElementById('viewport').scrollTop = 500");
-        await Task.Delay(300);
+        await page.EvaluateAsync<string>("document.getElementById('viewport').scrollTop = 500").ConfigureAwait(false);
+        await Task.Delay(300).ConfigureAwait(false);
 
         // Get items after scroll
-        var jobsAfterScroll = await page.QuerySelectorAllAsync(".job");
+        IReadOnlyList<IElement> jobsAfterScroll = await page.QuerySelectorAllAsync(".job").ConfigureAwait(false);
         var afterScrollJobIds = new List<string>();
 
-        foreach (var job in jobsAfterScroll)
+        foreach (IElement job in jobsAfterScroll)
         {
-            var jobId = await job.GetAttributeAsync("data-job-id");
+            string? jobId = await job.GetAttributeAsync("data-job-id").ConfigureAwait(false);
             if (jobId != null)
             {
                 afterScrollJobIds.Add(jobId);
@@ -370,25 +370,25 @@ public class ScrollScenarioTests : IAsyncLifetime
     public async Task Virtualized_MultipleScrolls_CoversAllRange()
     {
         // Arrange
-        await using var session = await _browserFixture.CreateSessionAsync();
-        var page = await session.NewPageAsync();
-        var url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/virtualized";
+        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/virtualized";
 
         // Act
-        await page.NavigateAsync(url);
+        await page.NavigateAsync(url).ConfigureAwait(false);
 
         var allSeenJobIds = new HashSet<string>();
-        var scrollPositions = new[] { 0, 500, 1000, 2000, 4000, 6000, 8000 };
+        int[] scrollPositions = new[] { 0, 500, 1000, 2000, 4000, 6000, 8000 };
 
-        foreach (var scrollPos in scrollPositions)
+        foreach (int scrollPos in scrollPositions)
         {
-            await page.EvaluateAsync<string>($"document.getElementById('viewport').scrollTop = {scrollPos}");
-            await Task.Delay(300);
+            await page.EvaluateAsync<string>($"document.getElementById('viewport').scrollTop = {scrollPos}").ConfigureAwait(false);
+            await Task.Delay(300).ConfigureAwait(false);
 
-            var jobs = await page.QuerySelectorAllAsync(".job");
-            foreach (var job in jobs)
+            IReadOnlyList<IElement> jobs = await page.QuerySelectorAllAsync(".job").ConfigureAwait(false);
+            foreach (IElement job in jobs)
             {
-                var jobId = await job.GetAttributeAsync("data-job-id");
+                string? jobId = await job.GetAttributeAsync("data-job-id").ConfigureAwait(false);
                 if (jobId != null)
                 {
                     allSeenJobIds.Add(jobId);
@@ -408,27 +408,27 @@ public class ScrollScenarioTests : IAsyncLifetime
     public async Task Virtualized_Dedupe_NoDuplicatesInViewport()
     {
         // Arrange
-        await using var session = await _browserFixture.CreateSessionAsync();
-        var page = await session.NewPageAsync();
-        var url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/virtualized";
+        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/virtualized";
 
         // Act
-        await page.NavigateAsync(url);
+        await page.NavigateAsync(url).ConfigureAwait(false);
 
         // Check multiple scroll positions for duplicates
-        var scrollPositions = new[] { 0, 500, 1000, 2000, 4000 };
+        int[] scrollPositions = new[] { 0, 500, 1000, 2000, 4000 };
 
-        foreach (var scrollPos in scrollPositions)
+        foreach (int scrollPos in scrollPositions)
         {
-            await page.EvaluateAsync<string>($"document.getElementById('viewport').scrollTop = {scrollPos}");
-            await Task.Delay(300);
+            await page.EvaluateAsync<string>($"document.getElementById('viewport').scrollTop = {scrollPos}").ConfigureAwait(false);
+            await Task.Delay(300).ConfigureAwait(false);
 
-            var jobs = await page.QuerySelectorAllAsync(".job");
+            IReadOnlyList<IElement> jobs = await page.QuerySelectorAllAsync(".job").ConfigureAwait(false);
             var jobIds = new HashSet<string>();
 
-            foreach (var job in jobs)
+            foreach (IElement job in jobs)
             {
-                var jobId = await job.GetAttributeAsync("data-job-id");
+                string? jobId = await job.GetAttributeAsync("data-job-id").ConfigureAwait(false);
                 Assert.NotNull(jobId);
                 Assert.False(jobIds.Contains(jobId), $"Duplicate job ID found at scroll {scrollPos}: {jobId}");
                 jobIds.Add(jobId);
@@ -444,49 +444,49 @@ public class ScrollScenarioTests : IAsyncLifetime
     public async Task DuplicateChunkReplay_LoadsChunks_DetectsDuplicates()
     {
         // Arrange
-        await using var session = await _browserFixture.CreateSessionAsync();
-        var page = await session.NewPageAsync();
-        var url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/duplicate-chunk";
+        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/duplicate-chunk";
 
         // Act
-        await page.NavigateAsync(url);
+        await page.NavigateAsync(url).ConfigureAwait(false);
 
         // Get initial stats
-        var initialTotal = await page.EvaluateAsync<string>("document.getElementById('total-count').textContent");
-        var initialUnique = await page.EvaluateAsync<string>("document.getElementById('unique-count').textContent");
-        var initialDuplicates = await page.EvaluateAsync<string>("document.getElementById('duplicate-count').textContent");
+        string initialTotal = await page.EvaluateAsync<string>("document.getElementById('total-count').textContent").ConfigureAwait(false);
+        string initialUnique = await page.EvaluateAsync<string>("document.getElementById('unique-count').textContent").ConfigureAwait(false);
+        string initialDuplicates = await page.EvaluateAsync<string>("document.getElementById('duplicate-count').textContent").ConfigureAwait(false);
 
         _output.WriteLine($"Initial - Total: {initialTotal}, Unique: {initialUnique}, Duplicates: {initialDuplicates}");
 
         // Click "Load More" multiple times to trigger duplicate chunks
         for (int i = 0; i < 5; i++)
         {
-            var loadMoreBtn = await page.QuerySelectorAsync("#load-more-btn");
+            IElement? loadMoreBtn = await page.QuerySelectorAsync("#load-more-btn").ConfigureAwait(false);
             if (loadMoreBtn == null)
             {
                 break;
             }
 
-            var btnText = await loadMoreBtn.GetTextContentAsync();
+            string? btnText = await loadMoreBtn.GetTextContentAsync().ConfigureAwait(false);
             if (btnText?.Contains("No More") == true)
             {
                 break;
             }
 
-            await loadMoreBtn.ClickAsync();
-            await Task.Delay(500);
+            await loadMoreBtn.ClickAsync().ConfigureAwait(false);
+            await Task.Delay(500).ConfigureAwait(false);
 
-            var total = await page.EvaluateAsync<string>("document.getElementById('total-count').textContent");
-            var unique = await page.EvaluateAsync<string>("document.getElementById('unique-count').textContent");
-            var duplicates = await page.EvaluateAsync<string>("document.getElementById('duplicate-count').textContent");
+            string total = await page.EvaluateAsync<string>("document.getElementById('total-count').textContent").ConfigureAwait(false);
+            string unique = await page.EvaluateAsync<string>("document.getElementById('unique-count').textContent").ConfigureAwait(false);
+            string duplicates = await page.EvaluateAsync<string>("document.getElementById('duplicate-count').textContent").ConfigureAwait(false);
 
             _output.WriteLine($"After click {i + 1} - Total: {total}, Unique: {unique}, Duplicates: {duplicates}");
         }
 
         // Assert - Duplicates should be detected
-        var finalTotal = await page.EvaluateAsync<string>("document.getElementById('total-count').textContent");
-        var finalUnique = await page.EvaluateAsync<string>("document.getElementById('unique-count').textContent");
-        var finalDuplicates = await page.EvaluateAsync<string>("document.getElementById('duplicate-count').textContent");
+        string? finalTotal = await page.EvaluateAsync<string>("document.getElementById('total-count').textContent").ConfigureAwait(false);
+        string? finalUnique = await page.EvaluateAsync<string>("document.getElementById('unique-count').textContent").ConfigureAwait(false);
+        string? finalDuplicates = await page.EvaluateAsync<string>("document.getElementById('duplicate-count').textContent").ConfigureAwait(false);
 
         Assert.True(int.Parse(finalDuplicates ?? "0", CultureInfo.InvariantCulture) > 0, $"Expected duplicates to be detected, got {finalDuplicates}");
         Assert.True(int.Parse(finalUnique ?? "0", CultureInfo.InvariantCulture) < int.Parse(finalTotal ?? "0", CultureInfo.InvariantCulture), $"Unique count should be less than total. Unique: {finalUnique}, Total: {finalTotal}");
@@ -498,28 +498,28 @@ public class ScrollScenarioTests : IAsyncLifetime
     public async Task DuplicateChunkReplay_Dedupe_HighlightsDuplicateItems()
     {
         // Arrange
-        await using var session = await _browserFixture.CreateSessionAsync();
-        var page = await session.NewPageAsync();
-        var url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/duplicate-chunk";
+        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/duplicate-chunk";
 
         // Act
-        await page.NavigateAsync(url);
+        await page.NavigateAsync(url).ConfigureAwait(false);
 
         // Click "Load More" to trigger duplicate chunks
         for (int i = 0; i < 4; i++)
         {
-            var loadMoreBtn = await page.QuerySelectorAsync("#load-more-btn");
+            IElement? loadMoreBtn = await page.QuerySelectorAsync("#load-more-btn").ConfigureAwait(false);
             if (loadMoreBtn == null)
             {
                 break;
             }
 
-            await loadMoreBtn.ClickAsync();
-            await Task.Delay(500);
+            await loadMoreBtn.ClickAsync().ConfigureAwait(false);
+            await Task.Delay(500).ConfigureAwait(false);
         }
 
         // Assert - Duplicate items should be highlighted
-        var duplicateJobs = await page.QuerySelectorAllAsync(".job.duplicate");
+        IReadOnlyList<IElement> duplicateJobs = await page.QuerySelectorAllAsync(".job.duplicate").ConfigureAwait(false);
         Assert.True(duplicateJobs.Count > 0, $"Expected duplicate jobs to be highlighted, got {duplicateJobs.Count}");
 
         _output.WriteLine($"Duplicate jobs highlighted: {duplicateJobs.Count}");
@@ -529,34 +529,34 @@ public class ScrollScenarioTests : IAsyncLifetime
     public async Task DuplicateChunkReplay_Completeness_AllItemsExtracted()
     {
         // Arrange
-        await using var session = await _browserFixture.CreateSessionAsync();
-        var page = await session.NewPageAsync();
-        var url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/duplicate-chunk";
+        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/duplicate-chunk";
 
         // Act
-        await page.NavigateAsync(url);
+        await page.NavigateAsync(url).ConfigureAwait(false);
 
         // Click until end
         for (int i = 0; i < 20; i++)
         {
-            var loadMoreBtn = await page.QuerySelectorAsync("#load-more-btn");
+            IElement? loadMoreBtn = await page.QuerySelectorAsync("#load-more-btn").ConfigureAwait(false);
             if (loadMoreBtn == null)
             {
                 break;
             }
 
-            var btnText = await loadMoreBtn.GetTextContentAsync();
+            string? btnText = await loadMoreBtn.GetTextContentAsync().ConfigureAwait(false);
             if (btnText?.Contains("No More") == true)
             {
                 break;
             }
 
-            await loadMoreBtn.ClickAsync();
-            await Task.Delay(500);
+            await loadMoreBtn.ClickAsync().ConfigureAwait(false);
+            await Task.Delay(500).ConfigureAwait(false);
         }
 
         // Assert - Completeness: All unique items should be extracted
-        var finalUnique = await page.EvaluateAsync<string>("document.getElementById('unique-count').textContent");
+        string? finalUnique = await page.EvaluateAsync<string>("document.getElementById('unique-count').textContent").ConfigureAwait(false);
         Assert.True(int.Parse(finalUnique ?? "0", CultureInfo.InvariantCulture) >= 50, $"Expected at least 50 unique jobs, got {finalUnique}");
 
         _output.WriteLine($"Total unique jobs extracted: {finalUnique}");
@@ -566,7 +566,7 @@ public class ScrollScenarioTests : IAsyncLifetime
     public async Task AllScrollVariants_AreAccessibleViaServer()
     {
         // Arrange
-        var expectedScenarios = new[]
+        string[] expectedScenarios = new[]
         {
             "/scenario/scroll/auto-threshold",
             "/scenario/scroll/button-driven",
@@ -575,14 +575,14 @@ public class ScrollScenarioTests : IAsyncLifetime
         };
 
         // Act
-        await using var session = await _browserFixture.CreateSessionAsync();
-        var page = await session.NewPageAsync();
+        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
 
-        foreach (var scenario in expectedScenarios)
+        foreach (string? scenario in expectedScenarios)
         {
-            var url = $"{_scenarioServer!.BaseUrl}{scenario}";
-            await page.NavigateAsync(url);
-            var title = await page.GetTitleAsync();
+            string url = $"{_scenarioServer!.BaseUrl}{scenario}";
+            await page.NavigateAsync(url).ConfigureAwait(false);
+            string? title = await page.GetTitleAsync().ConfigureAwait(false);
             Assert.NotNull(title);
             _output.WriteLine($"✓ {scenario} is accessible");
         }

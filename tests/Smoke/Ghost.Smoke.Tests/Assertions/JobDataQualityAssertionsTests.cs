@@ -38,7 +38,7 @@ public class JobDataQualityAssertionsTests
     public void AssertRealJobData_WithValidJob_ShouldNotThrow()
     {
         // Arrange
-        var job = CreateValidJob();
+        JobListing job = CreateValidJob();
 
         // Act & Assert
         Action act = () => job.AssertRealJobData();
@@ -85,7 +85,7 @@ public class JobDataQualityAssertionsTests
     public void AssertRealJobResults_WithValidJobs_ShouldNotThrow()
     {
         // Arrange
-        var jobs = new[]
+        JobListing[] jobs = new[]
         {
             CreateValidJob("LinkedIn"),
             CreateValidJob("Indeed"),
@@ -113,7 +113,7 @@ public class JobDataQualityAssertionsTests
     public void AssertRealJobResults_WithEmptyCollection_ShouldThrow()
     {
         // Arrange
-        var jobs = Array.Empty<JobListing>();
+        JobListing[] jobs = Array.Empty<JobListing>();
 
         // Act & Assert
         Action act = () => jobs.AssertRealJobResults();
@@ -125,7 +125,7 @@ public class JobDataQualityAssertionsTests
     public void AssertRealJobResults_WithInvalidJob_ShouldThrow()
     {
         // Arrange
-        var jobs = new[]
+        JobListing[] jobs = new[]
         {
             CreateValidJob(),
             new JobListing
@@ -152,7 +152,7 @@ public class JobDataQualityAssertionsTests
     public void AssertFreshData_WithRecentJob_ShouldNotThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { PostedAt = DateTimeOffset.UtcNow.AddDays(-10) };
+        JobListing job = CreateValidJob() with { PostedAt = DateTimeOffset.UtcNow.AddDays(-10) };
 
         // Act & Assert
         Action act = () => job.AssertFreshData(TimeSpan.FromDays(90));
@@ -163,7 +163,7 @@ public class JobDataQualityAssertionsTests
     public void AssertFreshData_WithDefaultMaxAge_ShouldNotThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { PostedAt = DateTimeOffset.UtcNow.AddDays(-30) };
+        JobListing job = CreateValidJob() with { PostedAt = DateTimeOffset.UtcNow.AddDays(-30) };
 
         // Act & Assert
         Action act = () => job.AssertFreshData();
@@ -174,7 +174,7 @@ public class JobDataQualityAssertionsTests
     public void AssertFreshData_WithOldJob_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { PostedAt = DateTimeOffset.UtcNow.AddDays(-100) };
+        JobListing job = CreateValidJob() with { PostedAt = DateTimeOffset.UtcNow.AddDays(-100) };
 
         // Act & Assert
         Action act = () => job.AssertFreshData(TimeSpan.FromDays(90));
@@ -187,7 +187,7 @@ public class JobDataQualityAssertionsTests
     public void AssertFreshData_WithDefaultPostedAt_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { PostedAt = default };
+        JobListing job = CreateValidJob() with { PostedAt = default };
 
         // Act & Assert
         Action act = () => job.AssertFreshData();
@@ -215,7 +215,7 @@ public class JobDataQualityAssertionsTests
     public void AssertValidPlatformId_WithValidId_ShouldNotThrow()
     {
         // Arrange
-        var job = CreateValidJob("LinkedIn") with { Id = "LinkedIn-job12345" };
+        JobListing job = CreateValidJob("LinkedIn") with { Id = "LinkedIn-job12345" };
 
         // Act & Assert
         Action act = () => job.AssertValidPlatformId("LinkedIn");
@@ -226,7 +226,7 @@ public class JobDataQualityAssertionsTests
     public void AssertValidPlatformId_WithDifferentPlatformPrefix_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob("LinkedIn") with { Id = "Indeed-job12345" }; // Wrong platform prefix
+        JobListing job = CreateValidJob("LinkedIn") with { Id = "Indeed-job12345" }; // Wrong platform prefix
 
         // Act & Assert
         Action act = () => job.AssertValidPlatformId("LinkedIn");
@@ -240,7 +240,7 @@ public class JobDataQualityAssertionsTests
     public void AssertValidPlatformId_WithEmptyId_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { Id = "" };
+        JobListing job = CreateValidJob() with { Id = "" };
 
         // Act & Assert
         Action act = () => job.AssertValidPlatformId("LinkedIn");
@@ -252,7 +252,7 @@ public class JobDataQualityAssertionsTests
     public void AssertValidPlatformId_WithInvalidFormat_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { Id = "invalid_id_no_dash" };
+        JobListing job = CreateValidJob() with { Id = "invalid_id_no_dash" };
 
         // Act & Assert
         Action act = () => job.AssertValidPlatformId("LinkedIn");
@@ -264,7 +264,7 @@ public class JobDataQualityAssertionsTests
     public void AssertValidPlatformId_WithWhitespaceId_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { Id = "   " };
+        JobListing job = CreateValidJob() with { Id = "   " };
 
         // Act & Assert
         Action act = () => job.AssertValidPlatformId("LinkedIn");
@@ -280,7 +280,7 @@ public class JobDataQualityAssertionsTests
     public void AssertNoDuplicateJobs_WithUniqueJobs_ShouldNotThrow()
     {
         // Arrange
-        var jobs = new[]
+        JobListing[] jobs = new[]
         {
             CreateValidJob("LinkedIn"),
             CreateValidJob("Indeed"),
@@ -296,10 +296,10 @@ public class JobDataQualityAssertionsTests
     public void AssertNoDuplicateJobs_WithDuplicates_ShouldThrow()
     {
         // Arrange
-        var job1 = CreateValidJob("LinkedIn");
-        var job2 = CreateValidJob("Indeed") with { Id = job1.Id }; // Same ID
+        JobListing job1 = CreateValidJob("LinkedIn");
+        JobListing job2 = CreateValidJob("Indeed") with { Id = job1.Id }; // Same ID
 
-        var jobs = new[] { job1, job2 };
+        JobListing[] jobs = new[] { job1, job2 };
 
         // Act & Assert
         Action act = () => jobs.AssertNoDuplicateJobs();
@@ -312,11 +312,11 @@ public class JobDataQualityAssertionsTests
     public void AssertNoDuplicateJobs_WithMultipleDuplicates_ShouldThrow()
     {
         // Arrange
-        var job1 = CreateValidJob("LinkedIn");
-        var job2 = CreateValidJob("Indeed") with { Id = job1.Id };
-        var job3 = CreateValidJob("Glassdoor") with { Id = job1.Id };
+        JobListing job1 = CreateValidJob("LinkedIn");
+        JobListing job2 = CreateValidJob("Indeed") with { Id = job1.Id };
+        JobListing job3 = CreateValidJob("Glassdoor") with { Id = job1.Id };
 
-        var jobs = new[] { job1, job2, job3 };
+        JobListing[] jobs = new[] { job1, job2, job3 };
 
         // Act & Assert
         Action act = () => jobs.AssertNoDuplicateJobs();
@@ -345,7 +345,7 @@ public class JobDataQualityAssertionsTests
     public void AssertRequiredFields_WithAllFields_ShouldNotThrow()
     {
         // Arrange
-        var job = CreateValidJob();
+        JobListing job = CreateValidJob();
 
         // Act & Assert
         Action act = () => job.AssertRequiredFields();
@@ -375,7 +375,7 @@ public class JobDataQualityAssertionsTests
     public void AssertRequiredFields_WithEmptyId_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { Id = "" };
+        JobListing job = CreateValidJob() with { Id = "" };
 
         // Act & Assert
         Action act = () => job.AssertRequiredFields();
@@ -387,7 +387,7 @@ public class JobDataQualityAssertionsTests
     public void AssertRequiredFields_WithWhitespaceId_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { Id = "   " };
+        JobListing job = CreateValidJob() with { Id = "   " };
 
         // Act & Assert
         Action act = () => job.AssertRequiredFields();
@@ -399,7 +399,7 @@ public class JobDataQualityAssertionsTests
     public void AssertRequiredFields_WithShortTitle_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { Title = "Dev" }; // Less than 5 chars
+        JobListing job = CreateValidJob() with { Title = "Dev" }; // Less than 5 chars
 
         // Act & Assert
         Action act = () => job.AssertRequiredFields();
@@ -412,7 +412,7 @@ public class JobDataQualityAssertionsTests
     public void AssertRequiredFields_WithLongTitle_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { Title = new string('A', 201) }; // More than 200 chars
+        JobListing job = CreateValidJob() with { Title = new string('A', 201) }; // More than 200 chars
 
         // Act & Assert
         Action act = () => job.AssertRequiredFields();
@@ -425,7 +425,7 @@ public class JobDataQualityAssertionsTests
     public void AssertRequiredFields_WithEmptyCompany_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { Company = "" };
+        JobListing job = CreateValidJob() with { Company = "" };
 
         // Act & Assert
         Action act = () => job.AssertRequiredFields();
@@ -456,7 +456,7 @@ public class JobDataQualityAssertionsTests
     public void AssertRequiredFields_WithInvalidUrl_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { Url = "not-a-valid-url" };
+        JobListing job = CreateValidJob() with { Url = "not-a-valid-url" };
 
         // Act & Assert
         Action act = () => job.AssertRequiredFields();
@@ -491,7 +491,7 @@ public class JobDataQualityAssertionsTests
     public void AssertUrlReachable_WithValidUrl_ShouldNotThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { Url = "https://example.com/job/12345" };
+        JobListing job = CreateValidJob() with { Url = "https://example.com/job/12345" };
 
         // Act & Assert
         Action act = () => job.AssertUrlReachable();
@@ -502,7 +502,7 @@ public class JobDataQualityAssertionsTests
     public void AssertUrlReachable_WithHttpUrl_ShouldNotThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { Url = "http://example.com/job/12345" };
+        JobListing job = CreateValidJob() with { Url = "http://example.com/job/12345" };
 
         // Act & Assert
         Action act = () => job.AssertUrlReachable();
@@ -532,7 +532,7 @@ public class JobDataQualityAssertionsTests
     public void AssertUrlReachable_WithEmptyUrl_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { Url = "" };
+        JobListing job = CreateValidJob() with { Url = "" };
 
         // Act & Assert
         Action act = () => job.AssertUrlReachable();
@@ -544,7 +544,7 @@ public class JobDataQualityAssertionsTests
     public void AssertUrlReachable_WithInvalidUrl_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { Url = "not-a-valid-url" };
+        JobListing job = CreateValidJob() with { Url = "not-a-valid-url" };
 
         // Act & Assert
         Action act = () => job.AssertUrlReachable();
@@ -556,7 +556,7 @@ public class JobDataQualityAssertionsTests
     public void AssertUrlReachable_WithLocalhostUrl_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { Url = "http://localhost:5000/job/12345" };
+        JobListing job = CreateValidJob() with { Url = "http://localhost:5000/job/12345" };
 
         // Act & Assert
         Action act = () => job.AssertUrlReachable();
@@ -568,7 +568,7 @@ public class JobDataQualityAssertionsTests
     public void AssertUrlReachable_WithFileUrl_ShouldThrow()
     {
         // Arrange
-        var job = CreateValidJob() with { Url = "file:///path/to/file.html" };
+        JobListing job = CreateValidJob() with { Url = "file:///path/to/file.html" };
 
         // Act & Assert
         Action act = () => job.AssertUrlReachable();

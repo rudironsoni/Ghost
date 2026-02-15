@@ -19,14 +19,14 @@ public sealed class ConsentMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        var path = context.Request.Path.Value ?? string.Empty;
-        var isStatefulScenario = path.Contains("/scenario/consent/stateful-persistence", StringComparison.OrdinalIgnoreCase)
+        string path = context.Request.Path.Value ?? string.Empty;
+        bool isStatefulScenario = path.Contains("/scenario/consent/stateful-persistence", StringComparison.OrdinalIgnoreCase)
             || path.Contains("/scenario/consent/reconsent-policy-change", StringComparison.OrdinalIgnoreCase);
 
         // Most consent scenarios should always render a first-visit experience.
         // Only stateful/re-consent scenarios should honor persisted consent cookies.
-        var hasConsent = isStatefulScenario
-            && context.Request.Cookies.TryGetValue("ghost_consent", out var consentValue)
+        bool hasConsent = isStatefulScenario
+            && context.Request.Cookies.TryGetValue("ghost_consent", out string? consentValue)
             && !string.IsNullOrWhiteSpace(consentValue);
 
         // Add consent state to items for downstream handlers
@@ -37,6 +37,6 @@ public sealed class ConsentMiddleware
             _logger.LogDebug("Request has consent cookie");
         }
 
-        await _next(context);
+        await _next(context).ConfigureAwait(false);
     }
 }

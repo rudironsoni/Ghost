@@ -38,7 +38,7 @@ public class SessionFactory
     /// </summary>
     public RotatingProxySession CreatePlatformSession(string platformName)
     {
-        var options = CreatePlatformSpecificOptions(platformName);
+        RotatingProxySessionOptions options = CreatePlatformSpecificOptions(platformName);
         return CreateSession(options);
     }
 

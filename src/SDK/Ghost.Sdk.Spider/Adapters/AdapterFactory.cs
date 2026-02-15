@@ -110,10 +110,10 @@ public class AdapterFactory
         _logger.LogCreatingAdapter(request.RequestId, request.Url);
 
         // Check for adapter preference in metadata
-        if (request.Metadata.TryGetValue("AdapterPreference", out var preference) &&
+        if (request.Metadata.TryGetValue("AdapterPreference", out object? preference) &&
             preference is string preferredName)
         {
-            var preferredAdapter = await TryCreateAdapterByNameAsync(preferredName, request, cancellationToken);
+            IContentAdapter? preferredAdapter = await TryCreateAdapterByNameAsync(preferredName, request, cancellationToken).ConfigureAwait(false);
             if (preferredAdapter != null)
             {
                 _logger.LogUsingPreferredAdapter(preferredName, request.RequestId);
@@ -126,10 +126,10 @@ public class AdapterFactory
         // Try to find adapter by expected content type
         if (request.ExpectedContentType != ContentType.Unknown)
         {
-            var adapterByType = await TryCreateAdapterByContentTypeAsync(
+            IContentAdapter? adapterByType = await TryCreateAdapterByContentTypeAsync(
                 request.ExpectedContentType,
                 request,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             if (adapterByType != null)
             {
@@ -139,7 +139,7 @@ public class AdapterFactory
         }
 
         // Try all available adapters
-        var adapter = await TryCreateAnyAdapterAsync(request, cancellationToken);
+        IContentAdapter? adapter = await TryCreateAnyAdapterAsync(request, cancellationToken).ConfigureAwait(false);
         if (adapter != null)
         {
             _logger.LogSelectedAdapter(adapter.Name, request.RequestId);
@@ -166,14 +166,14 @@ public class AdapterFactory
 
         _logger.LogCreatingAdapterByName(adapterName);
 
-        var adapterType = _registry.GetAdapterType(adapterName);
+        Type? adapterType = _registry.GetAdapterType(adapterName);
         if (adapterType == null)
         {
             _logger.LogAdapterTypeNotFound(adapterName);
             return null;
         }
 
-        var adapter = CreateAdapterInstance(adapterType);
+        IContentAdapter? adapter = CreateAdapterInstance(adapterType);
         if (adapter == null || !adapter.IsAvailable)
         {
             _logger.LogAdapterNotAvailable(adapterName);
@@ -196,12 +196,12 @@ public class AdapterFactory
     {
         _logger.LogCreatingAdaptersForContentType(contentType);
 
-        var adapterTypes = _registry.GetAdaptersByContentType(contentType);
+        IEnumerable<Type> adapterTypes = _registry.GetAdaptersByContentType(contentType);
         var adapters = new List<IContentAdapter>();
 
-        foreach (var adapterType in adapterTypes)
+        foreach (Type adapterType in adapterTypes)
         {
-            var adapter = CreateAdapterInstance(adapterType);
+            IContentAdapter? adapter = CreateAdapterInstance(adapterType);
             if (adapter != null && adapter.IsAvailable)
             {
                 adapters.Add(adapter);
@@ -226,12 +226,12 @@ public class AdapterFactory
     {
         _logger.LogGettingAllAdapters();
 
-        var adapterTypes = _registry.GetAllAdapterTypes();
+        IEnumerable<Type> adapterTypes = _registry.GetAllAdapterTypes();
         var adapters = new List<IContentAdapter>();
 
-        foreach (var adapterType in adapterTypes)
+        foreach (Type adapterType in adapterTypes)
         {
-            var adapter = CreateAdapterInstance(adapterType);
+            IContentAdapter? adapter = CreateAdapterInstance(adapterType);
             if (adapter != null && adapter.IsAvailable)
             {
                 adapters.Add(adapter);
@@ -247,13 +247,13 @@ public class AdapterFactory
         Request request,
         CancellationToken cancellationToken)
     {
-        var adapter = CreateAdapterByName(adapterName);
+        IContentAdapter? adapter = CreateAdapterByName(adapterName);
         if (adapter == null)
         {
             return null;
         }
 
-        var canHandle = await adapter.CanHandleAsync(request, cancellationToken);
+        bool canHandle = await adapter.CanHandleAsync(request, cancellationToken).ConfigureAwait(false);
         return canHandle ? adapter : null;
     }
 
@@ -262,11 +262,11 @@ public class AdapterFactory
         Request request,
         CancellationToken cancellationToken)
     {
-        var adapters = CreateAdaptersByContentType(contentType);
+        IEnumerable<IContentAdapter> adapters = CreateAdaptersByContentType(contentType);
 
-        foreach (var adapter in adapters)
+        foreach (IContentAdapter adapter in adapters)
         {
-            var canHandle = await adapter.CanHandleAsync(request, cancellationToken);
+            bool canHandle = await adapter.CanHandleAsync(request, cancellationToken).ConfigureAwait(false);
             if (canHandle)
             {
                 return adapter;
@@ -280,11 +280,11 @@ public class AdapterFactory
         Request request,
         CancellationToken cancellationToken)
     {
-        var adapters = GetAllAvailableAdapters();
+        IEnumerable<IContentAdapter> adapters = GetAllAvailableAdapters();
 
-        foreach (var adapter in adapters)
+        foreach (IContentAdapter adapter in adapters)
         {
-            var canHandle = await adapter.CanHandleAsync(request, cancellationToken);
+            bool canHandle = await adapter.CanHandleAsync(request, cancellationToken).ConfigureAwait(false);
             if (canHandle)
             {
                 return adapter;

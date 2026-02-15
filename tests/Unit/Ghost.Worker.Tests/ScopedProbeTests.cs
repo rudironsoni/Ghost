@@ -70,13 +70,13 @@ public sealed class ScopedProbeTests
 
         // Act
         var disposeTask = Task.Run(() => probe.Dispose());
-        await probe.DisposeStartedTask;
+        await probe.DisposeStartedTask.ConfigureAwait(false);
 
         // Assert
         probe.DisposeStarted.Should().BeTrue();
 
         // Cleanup
-        await disposeTask;
+        await disposeTask.ConfigureAwait(false);
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public sealed class ScopedProbeTests
         using var probe = new ScopedProbe();
 
         // Act
-        var state = probe.GetState();
+        string state = probe.GetState();
 
         // Assert
         state.Should().Contain("Started: False");
@@ -100,7 +100,7 @@ public sealed class ScopedProbeTests
         var probe = new ScopedProbe();
 
         // Act
-        await probe.DisposeAsync();
+        await probe.DisposeAsync().ConfigureAwait(false);
 
         // Assert
         probe.DisposeStarted.Should().BeTrue();

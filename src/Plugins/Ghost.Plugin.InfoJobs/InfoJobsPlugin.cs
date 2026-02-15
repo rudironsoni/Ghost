@@ -1,7 +1,9 @@
 using Ghost.Hosting;
 using Ghost.Http;
+using Ghost.Plugin.InfoJobs.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Ghost.Plugin.InfoJobs;
 
@@ -45,8 +47,8 @@ public sealed class InfoJobsPlugin : IExtension
             services.AddHttpClient<Internal.InfoJobsApiClient>()
                 .AddTypedClient((httpClient, sp) =>
                 {
-                    var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<InfoJobsOptions>>().Value;
-                    var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Internal.InfoJobsApiClient>>();
+                    InfoJobsOptions options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<InfoJobsOptions>>().Value;
+                    ILogger<InfoJobsApiClient> logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Internal.InfoJobsApiClient>>();
                     return new Internal.InfoJobsApiClient(httpClient, options, logger);
                 })
                 .ConfigurePrimaryHttpMessageHandler(() =>

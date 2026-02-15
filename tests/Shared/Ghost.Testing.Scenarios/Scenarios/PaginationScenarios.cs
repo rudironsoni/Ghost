@@ -1,3 +1,4 @@
+using Ghost.Testing.Scenarios.Models;
 using Ghost.Testing.Scenarios.Server;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -13,14 +14,14 @@ public static class PaginationScenarios
     {
         logger.LogInformation("Scenario: pagination/numbered");
 
-        var page = context.Items["Page"] as int? ?? 1;
-        var pageSize = context.Items["PageSize"] as int? ?? 10;
+        int page = context.Items["Page"] as int? ?? 1;
+        int pageSize = context.Items["PageSize"] as int? ?? 10;
 
-        var offset = (page - 1) * pageSize;
-        var jobs = TestData.GetJobPostings(offset, pageSize);
-        var totalPages = (int)Math.Ceiling((double)TestData.TotalJobCount / pageSize);
+        int offset = (page - 1) * pageSize;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(offset, pageSize);
+        int totalPages = (int)Math.Ceiling((double)TestData.TotalJobCount / pageSize);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -82,17 +83,17 @@ public static class PaginationScenarios
     {
         logger.LogInformation("Scenario: pagination/cursor");
 
-        var cursor = context.Items["Cursor"] as string ?? "";
-        var pageSize = context.Items["PageSize"] as int? ?? 10;
+        string cursor = context.Items["Cursor"] as string ?? "";
+        int pageSize = context.Items["PageSize"] as int? ?? 10;
 
-        var offset = string.IsNullOrEmpty(cursor) ? 0 : Convert.FromBase64String(cursor)[0] * pageSize;
-        var jobs = TestData.GetJobPostings(offset, pageSize);
+        int offset = string.IsNullOrEmpty(cursor) ? 0 : Convert.FromBase64String(cursor)[0] * pageSize;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(offset, pageSize);
 
-        var nextCursor = offset + pageSize < TestData.TotalJobCount
+        string? nextCursor = offset + pageSize < TestData.TotalJobCount
             ? Convert.ToBase64String(new byte[] { (byte)((offset / pageSize) + 1) })
             : null;
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -143,12 +144,12 @@ public static class PaginationScenarios
     {
         logger.LogInformation("Scenario: pagination/mixed");
 
-        var page = context.Items["Page"] as int? ?? 1;
-        var pageSize = 8;
-        var offset = (page - 1) * pageSize;
-        var jobs = TestData.GetJobPostings(offset, pageSize);
+        int page = context.Items["Page"] as int? ?? 1;
+        int pageSize = 8;
+        int offset = (page - 1) * pageSize;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(offset, pageSize);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>

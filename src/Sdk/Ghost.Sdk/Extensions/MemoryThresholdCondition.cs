@@ -46,7 +46,7 @@ public sealed class MemoryThresholdCondition : ICloseCondition
         ArgumentNullException.ThrowIfNull(context);
 
         using var process = System.Diagnostics.Process.GetCurrentProcess();
-        var currentMemory = process.WorkingSet64;
+        long currentMemory = process.WorkingSet64;
 
         return Task.FromResult(currentMemory >= MaxMemoryBytes);
     }

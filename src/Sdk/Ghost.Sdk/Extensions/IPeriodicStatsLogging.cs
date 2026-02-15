@@ -18,7 +18,7 @@ public interface IPeriodicStatsLogging
     /// Can be adjusted dynamically during execution. Changes take effect after
     /// the current interval completes.
     /// </remarks>
-    TimeSpan Interval { get; set; }
+    public TimeSpan Interval { get; set; }
 
     /// <summary>
     /// Starts periodic logging for the specified spider.
@@ -30,7 +30,7 @@ public interface IPeriodicStatsLogging
     /// the current statistics. Safe to call multiple times - subsequent calls
     /// restart the timer with the current spider ID.
     /// </remarks>
-    void StartLogging(string spiderId);
+    public void StartLogging(string spiderId);
 
     /// <summary>
     /// Stops periodic logging and releases timer resources.
@@ -38,5 +38,5 @@ public interface IPeriodicStatsLogging
     /// <remarks>
     /// Safe to call multiple times. Does nothing if logging is not active.
     /// </remarks>
-    void StopLogging();
+    public void StopLogging();
 }

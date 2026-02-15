@@ -11,7 +11,6 @@ public static class GhostKernelInstrumentation
 {
     private const string SessionTag = "ghost.session.id";
     private const string OperationTag = "ghost.operation";
-    private const string BrowserTag = "ghost.browser";
     private const string StealthTag = "ghost.stealth.enabled";
     private const string ProxyTag = "ghost.proxy.enabled";
     private const string ErrorTag = "ghost.error";
@@ -21,7 +20,7 @@ public static class GhostKernelInstrumentation
     /// </summary>
     public static Activity? StartSessionActivity(string sessionId, bool enableStealth, bool hasProxy)
     {
-        var activity = OpenTelemetryConfiguration.ActivitySource.StartActivity(
+        Activity? activity = OpenTelemetryConfiguration.ActivitySource.StartActivity(
             "GhostKernel.NewSession",
             ActivityKind.Internal);
 
@@ -38,7 +37,7 @@ public static class GhostKernelInstrumentation
     /// </summary>
     public static Activity? StartNavigationActivity(string sessionId, string url)
     {
-        var activity = OpenTelemetryConfiguration.ActivitySource.StartActivity(
+        Activity? activity = OpenTelemetryConfiguration.ActivitySource.StartActivity(
             "GhostKernel.Navigate",
             ActivityKind.Internal);
 
@@ -54,7 +53,7 @@ public static class GhostKernelInstrumentation
     /// </summary>
     public static Activity? StartScrapingActivity(string sessionId, string platform, string operation)
     {
-        var activity = OpenTelemetryConfiguration.ActivitySource.StartActivity(
+        Activity? activity = OpenTelemetryConfiguration.ActivitySource.StartActivity(
             $"GhostKernel.Scrape.{platform}",
             ActivityKind.Internal);
 
@@ -138,7 +137,7 @@ public static class GhostKernelInstrumentation
             return;
         }
 
-        foreach (var (key, value) in tags)
+        foreach ((string? key, object? value) in tags)
         {
             activity.SetTag(key, value);
         }

@@ -25,7 +25,7 @@ public sealed class JA3Randomizer
     public JA3Profile GenerateRandomProfile(string? browserHint = null)
     {
         // Pick base browser profile
-        var baseProfile = browserHint?.ToLowerInvariant() switch
+        JA3Profile baseProfile = browserHint?.ToLowerInvariant() switch
         {
             "chrome" => BrowserProfiles.Chrome120.Clone(),
             "firefox" => BrowserProfiles.Firefox121.Clone(),
@@ -55,7 +55,7 @@ public sealed class JA3Randomizer
         var tls13Ciphers = new List<int>();
         var otherCiphers = new List<int>();
 
-        foreach (var cipher in profile.CipherSuites)
+        foreach (int cipher in profile.CipherSuites)
         {
             if (cipher >= 4865 && cipher <= 4867)
                 tls13Ciphers.Add(cipher);
@@ -87,7 +87,7 @@ public sealed class JA3Randomizer
         var critical = new List<int>();
         var shuffleable = new List<int>();
 
-        foreach (var ext in profile.Extensions)
+        foreach (int ext in profile.Extensions)
         {
             if (criticalExtensions.Contains(ext))
                 critical.Add(ext);
@@ -115,7 +115,7 @@ public sealed class JA3Randomizer
         var x25519 = new List<int>();
         var others = new List<int>();
 
-        foreach (var curve in profile.EllipticCurves)
+        foreach (int curve in profile.EllipticCurves)
         {
             if (curve == 29)
                 x25519.Add(curve);
@@ -141,13 +141,13 @@ public sealed class JA3Randomizer
         var seenHashes = new HashSet<string>();
 
         // Try to generate unique profiles
-        var maxAttempts = count * 10; // Prevent infinite loop
-        var attempts = 0;
+        int maxAttempts = count * 10; // Prevent infinite loop
+        int attempts = 0;
 
         while (profiles.Count < count && attempts < maxAttempts)
         {
-            var profile = GenerateRandomProfile();
-            var hash = profile.ToJA3Hash();
+            JA3Profile profile = GenerateRandomProfile();
+            string hash = profile.ToJA3Hash();
 
             if (seenHashes.Add(hash))
             {
@@ -165,10 +165,10 @@ public sealed class JA3Randomizer
     /// </summary>
     private void Shuffle<T>(List<T> list)
     {
-        var n = list.Count;
-        for (var i = n - 1; i > 0; i--)
+        int n = list.Count;
+        for (int i = n - 1; i > 0; i--)
         {
-            var j = _random.Next(i + 1);
+            int j = _random.Next(i + 1);
             (list[i], list[j]) = (list[j], list[i]);
         }
     }

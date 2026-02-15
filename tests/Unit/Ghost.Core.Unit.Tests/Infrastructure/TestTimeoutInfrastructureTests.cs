@@ -36,7 +36,7 @@ public class TestTimeoutInfrastructureTests
     public void TestTimeoutAttribute_ZeroTimeout_ThrowsArgumentOutOfRange()
     {
         // Act & Assert
-        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+        ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
             new TestTimeoutAttribute(0));
 
         Assert.Equal("milliseconds", exception.ParamName);
@@ -46,7 +46,7 @@ public class TestTimeoutInfrastructureTests
     public void TestTimeoutAttribute_NegativeTimeout_ThrowsArgumentOutOfRange()
     {
         // Act & Assert
-        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+        ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
             new TestTimeoutAttribute(-1000));
 
         Assert.Equal("milliseconds", exception.ParamName);
@@ -57,7 +57,7 @@ public class TestTimeoutInfrastructureTests
     {
         // This test verifies that Ghost.runsettings exists and has timeout configuration
         // The actual timeout is configured in Ghost.runsettings as 300000ms (5 minutes)
-        var runSettingsPath = Path.Combine(
+        string runSettingsPath = Path.Combine(
             Directory.GetCurrentDirectory(),
             "..", "..", "..", "..", "..", "Ghost.runsettings");
 

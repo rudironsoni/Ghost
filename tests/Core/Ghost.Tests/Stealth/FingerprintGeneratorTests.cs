@@ -9,7 +9,7 @@ public class FingerprintGeneratorTests
     [Fact]
     public void GenerateReturnsCoherentProfile()
     {
-        var profile = FingerprintGenerator.Generate();
+        FingerprintProfile profile = FingerprintGenerator.Generate();
 
         profile.Should().NotBeNull();
         profile.UserAgent.Should().Contain(profile.ChromeVersion);
@@ -33,8 +33,8 @@ public class FingerprintGeneratorTests
     [Fact]
     public void GenerateProducesDifferentProfiles()
     {
-        var p1 = FingerprintGenerator.Generate();
-        var p2 = FingerprintGenerator.Generate();
+        FingerprintProfile p1 = FingerprintGenerator.Generate();
+        FingerprintProfile p2 = FingerprintGenerator.Generate();
 
         // Very unlikely to be identical given the seed randomization
         p1.Seed.Should().NotBe(p2.Seed);

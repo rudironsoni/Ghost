@@ -18,7 +18,7 @@ public sealed class SimpleLinkExtractor : ILinkExtractor
         ArgumentNullException.ThrowIfNull(html);
         ArgumentNullException.ThrowIfNull(baseUrl);
 
-        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var baseUri))
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri? baseUri))
         {
             throw new ArgumentException("Base URL must be a valid absolute URI.", nameof(baseUrl));
         }
@@ -26,7 +26,7 @@ public sealed class SimpleLinkExtractor : ILinkExtractor
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
-        var nodes = doc.DocumentNode.SelectNodes("//a[@href]");
+        HtmlNodeCollection? nodes = doc.DocumentNode.SelectNodes("//a[@href]");
         if (nodes is null)
         {
             yield break;
@@ -34,15 +34,15 @@ public sealed class SimpleLinkExtractor : ILinkExtractor
 
         var seen = new HashSet<string>();
 
-        foreach (var node in nodes)
+        foreach (HtmlNode? node in nodes)
         {
-            var href = node.GetAttributeValue("href", string.Empty);
+            string href = node.GetAttributeValue("href", string.Empty);
             if (string.IsNullOrWhiteSpace(href) || href.StartsWith('#') || href.StartsWith("javascript:", StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
 
-            if (!TryResolveUrl(baseUri, href, out var absoluteUrl))
+            if (!TryResolveUrl(baseUri, href, out string? absoluteUrl))
             {
                 continue;
             }
@@ -60,7 +60,7 @@ public sealed class SimpleLinkExtractor : ILinkExtractor
 
         try
         {
-            if (Uri.TryCreate(href, UriKind.Absolute, out var uri))
+            if (Uri.TryCreate(href, UriKind.Absolute, out Uri? uri))
             {
                 absoluteUrl = uri.AbsoluteUri;
                 return true;

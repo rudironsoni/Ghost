@@ -47,8 +47,8 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _output.WriteLine($"Query: {criteria.Query}");
         _output.WriteLine($"Max Results: {criteria.MaxResults}");
 
-        var searchResults = await _serviceProvider.GetRequiredService<IJobClient>()
-            .SearchJobsAsync(criteria, cts.Token);
+        IReadOnlyList<JobListing> searchResults = await _serviceProvider.GetRequiredService<IJobClient>()
+            .SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
 
         // Assert - Step 1: Validate search results
         searchResults.Should().NotBeNull("search results should not be null");
@@ -61,7 +61,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         searchResults.AssertNoDuplicateJobs();
 
         // Act - Step 2: Get details for the first job
-        var firstJob = searchResults[0];
+        JobListing firstJob = searchResults[0];
         _output.WriteLine($"\n=== Step 2: Getting details for first job ===");
         _output.WriteLine($"Job ID: {firstJob.Id}");
         _output.WriteLine($"Title: {firstJob.Title}");
@@ -69,8 +69,8 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _output.WriteLine($"Source: {firstJob.Source}");
 
         var detailsCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        var jobDetails = await _serviceProvider.GetRequiredService<IJobClient>()
-            .GetJobDetailsAsync(firstJob.Id, detailsCts.Token);
+        JobListing jobDetails = await _serviceProvider.GetRequiredService<IJobClient>()
+            .GetJobDetailsAsync(firstJob.Id, detailsCts.Token).ConfigureAwait(false);
 
         // Assert - Step 2: Validate job details
         jobDetails.Should().NotBeNull("job details should not be null");
@@ -139,8 +139,8 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _output.WriteLine($"Location: {criteria.Location}");
         _output.WriteLine($"Remote Only: {criteria.RemoteOnly}");
 
-        var results = await _serviceProvider.GetRequiredService<IJobClient>()
-            .SearchJobsAsync(criteria, cts.Token);
+        IReadOnlyList<JobListing> results = await _serviceProvider.GetRequiredService<IJobClient>()
+            .SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -169,7 +169,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
 
             // Output sample locations
             _output.WriteLine("\n=== Sample Locations ===");
-            foreach (var job in results.Take(5))
+            foreach (JobListing? job in results.Take(5))
             {
                 _output.WriteLine($"{job.Title} at {job.Company}: {job.Location ?? "No location"} (Remote: {job.Remote})");
             }
@@ -177,7 +177,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
 
         // Validate that results match the query
         _output.WriteLine($"\n=== Query Relevance Validation ===");
-        var queryLower = criteria.Query!.ToLowerInvariant();
+        string queryLower = criteria.Query!.ToLowerInvariant();
         var relevantJobs = results.Where(j =>
             (j.Title?.Contains(queryLower, StringComparison.OrdinalIgnoreCase) ?? false) ||
             (j.Company?.Contains(queryLower, StringComparison.OrdinalIgnoreCase) ?? false) ||
@@ -187,7 +187,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
 
         // Output sample titles
         _output.WriteLine("\n=== Sample Job Titles ===");
-        foreach (var job in results.Take(5))
+        foreach (JobListing? job in results.Take(5))
         {
             _output.WriteLine($"- {job.Title} at {job.Company}");
         }
@@ -209,8 +209,8 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _output.WriteLine($"Query: {criteria.Query}");
         _output.WriteLine($"Max Results: {criteria.MaxResults}");
 
-        var results = await _serviceProvider.GetRequiredService<IJobClient>()
-            .SearchJobsAsync(criteria, cts.Token);
+        IReadOnlyList<JobListing> results = await _serviceProvider.GetRequiredService<IJobClient>()
+            .SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -232,7 +232,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _output.WriteLine($"\n=== Platform Distribution ===");
         _output.WriteLine($"Platforms contributing data: {platformGroups.Count}");
 
-        foreach (var group in platformGroups)
+        foreach (IGrouping<string, JobListing>? group in platformGroups)
         {
             _output.WriteLine($"  - {group.Key}: {group.Count()} jobs");
         }
@@ -243,10 +243,10 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
 
         // Output sample jobs from each platform
         _output.WriteLine("\n=== Sample Jobs by Platform ===");
-        foreach (var group in platformGroups.Take(3))
+        foreach (IGrouping<string, JobListing>? group in platformGroups.Take(3))
         {
             _output.WriteLine($"\nPlatform: {group.Key} ({group.Count()} jobs)");
-            foreach (var job in group.Take(2))
+            foreach (JobListing? job in group.Take(2))
             {
                 _output.WriteLine($"  - {job.Title} at {job.Company}");
             }
@@ -254,8 +254,8 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
 
         // Validate freshness across all results
         _output.WriteLine($"\n=== Freshness Validation ===");
-        var freshJobs = 0;
-        foreach (var job in results)
+        int freshJobs = 0;
+        foreach (JobListing job in results)
         {
             try
             {
@@ -275,7 +275,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
     public async Task GetJobDetails_ByPlatformId_Returns_ValidData()
     {
         // Arrange
-        var platforms = new[] { "linkedin", "indeed", "glassdoor", "infojobs" };
+        string[] platforms = new[] { "linkedin", "indeed", "glassdoor", "infojobs" };
         var criteria = new JobSearchCriteria
         {
             Query = "engineer",
@@ -285,7 +285,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
 
         _output.WriteLine($"=== Testing GetJobDetails for each platform ===");
 
-        foreach (var platform in platforms)
+        foreach (string? platform in platforms)
         {
             _output.WriteLine($"\n--- Platform: {platform} ---");
 
@@ -311,7 +311,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
             IReadOnlyList<JobListing> searchResults;
             try
             {
-                searchResults = await platformClient.SearchJobsAsync(criteria, searchCts.Token);
+                searchResults = await platformClient.SearchJobsAsync(criteria, searchCts.Token).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -328,14 +328,14 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
             _output.WriteLine($"  Found {searchResults.Count} jobs");
 
             // Get details for the first job
-            var firstJob = searchResults[0];
+            JobListing firstJob = searchResults[0];
             _output.WriteLine($"  Testing job ID: {firstJob.Id}");
 
             var detailsCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             JobListing? jobDetails = null;
             try
             {
-                jobDetails = await platformClient.GetJobDetailsAsync(firstJob.Id, detailsCts.Token);
+                jobDetails = await platformClient.GetJobDetailsAsync(firstJob.Id, detailsCts.Token).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

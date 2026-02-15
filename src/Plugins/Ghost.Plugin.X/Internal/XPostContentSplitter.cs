@@ -38,13 +38,13 @@ public sealed class XPostContentSplitter
         }
 
         // Split into sentences while respecting URLs
-        var sentences = ExtractSentences(content);
+        List<string> sentences = ExtractSentences(content);
         var parts = new List<string>();
         var currentPart = new StringBuilder();
 
-        foreach (var sentence in sentences)
+        foreach (string sentence in sentences)
         {
-            var estimatedLength = EstimateLength(currentPart.ToString() + sentence);
+            int estimatedLength = EstimateLength(currentPart.ToString() + sentence);
 
             if (estimatedLength <= _maxLength)
             {
@@ -68,7 +68,7 @@ public sealed class XPostContentSplitter
                 if (EstimateLength(sentence) > _maxLength)
                 {
                     // Split long sentence at word boundaries
-                    var chunks = SplitLongSentence(sentence);
+                    List<string> chunks = SplitLongSentence(sentence);
                     parts.AddRange(chunks);
                 }
                 else
@@ -99,34 +99,34 @@ public sealed class XPostContentSplitter
     private List<string> ExtractSentences(string content)
     {
         var sentences = new List<string>();
-        var urlPattern = @"https?://[^\s]+";
+        string urlPattern = @"https?://[^\s]+";
         var urls = Regex.Matches(content, urlPattern).Select(m => m.Value).ToList();
 
         // Replace URLs with placeholders
-        var tempContent = content;
-        var urlIndex = 0;
+        string tempContent = content;
+        int urlIndex = 0;
         var urlMap = new Dictionary<string, string>();
 
-        foreach (var url in urls)
+        foreach (string? url in urls)
         {
-            var placeholder = $"{{URL{urlIndex}}}";
+            string placeholder = $"{{URL{urlIndex}}}";
             urlMap[placeholder] = url;
             tempContent = tempContent.Replace(url, placeholder);
             urlIndex++;
         }
 
         // Split by sentence boundaries
-        var sentencePattern = @"(?<=[.!?])\s+";
+        string sentencePattern = @"(?<=[.!?])\s+";
         var rawSentences = Regex.Split(tempContent, sentencePattern)
             .Select(s => s.Trim())
             .Where(s => !string.IsNullOrWhiteSpace(s))
             .ToList();
 
         // Restore URLs
-        foreach (var sentence in rawSentences)
+        foreach (string? sentence in rawSentences)
         {
-            var restored = sentence;
-            foreach (var kvp in urlMap)
+            string restored = sentence;
+            foreach (KeyValuePair<string, string> kvp in urlMap)
             {
                 restored = restored.Replace(kvp.Key, kvp.Value);
             }
@@ -146,10 +146,10 @@ public sealed class XPostContentSplitter
             return 0;
         }
 
-        var urlPattern = @"https?://[^\s]+";
-        var urls = Regex.Matches(content, urlPattern);
-        var urlLength = urls.Count * _urlPlaceholder.Length;
-        var nonUrlContent = Regex.Replace(content, urlPattern, "");
+        string urlPattern = @"https?://[^\s]+";
+        MatchCollection urls = Regex.Matches(content, urlPattern);
+        int urlLength = urls.Count * _urlPlaceholder.Length;
+        string nonUrlContent = Regex.Replace(content, urlPattern, "");
 
         return urlLength + nonUrlContent.Length;
     }
@@ -160,12 +160,12 @@ public sealed class XPostContentSplitter
     private List<string> SplitLongSentence(string sentence)
     {
         var chunks = new List<string>();
-        var words = sentence.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        string[] words = sentence.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var currentChunk = new StringBuilder();
 
-        foreach (var word in words)
+        foreach (string word in words)
         {
-            var testChunk = currentChunk.Length > 0
+            string testChunk = currentChunk.Length > 0
                 ? currentChunk + " " + word
                 : word;
 
@@ -188,7 +188,7 @@ public sealed class XPostContentSplitter
                 // If single word is too long, split it into chunks
                 if (EstimateLength(word) > _maxLength)
                 {
-                    var wordChunks = SplitLongWord(word);
+                    List<string> wordChunks = SplitLongWord(word);
                     chunks.AddRange(wordChunks);
                 }
                 else
@@ -212,12 +212,12 @@ public sealed class XPostContentSplitter
     private List<string> SplitLongWord(string word)
     {
         var chunks = new List<string>();
-        var position = 0;
+        int position = 0;
 
         while (position < word.Length)
         {
-            var remainingLength = word.Length - position;
-            var chunkSize = Math.Min(_maxLength, remainingLength);
+            int remainingLength = word.Length - position;
+            int chunkSize = Math.Min(_maxLength, remainingLength);
 
             chunks.Add(word.Substring(position, chunkSize));
             position += chunkSize;
@@ -232,18 +232,18 @@ public sealed class XPostContentSplitter
     private List<string> AddThreadNumbering(List<string> parts)
     {
         var numbered = new List<string>();
-        var totalParts = parts.Count;
+        int totalParts = parts.Count;
 
         for (int i = 0; i < parts.Count; i++)
         {
-            var partNumber = i + 1;
-            var suffix = $" ({partNumber}/{totalParts})";
+            int partNumber = i + 1;
+            string suffix = $" ({partNumber}/{totalParts})";
 
             // Check if we need to trim content to fit the numbering
-            var content = parts[i];
+            string content = parts[i];
             if (EstimateLength(content + suffix) > _maxLength)
             {
-                var maxContentLength = _maxLength - suffix.Length - 3; // -3 for "..."
+                int maxContentLength = _maxLength - suffix.Length - 3; // -3 for "..."
                 content = content[..maxContentLength] + "...";
             }
 
@@ -281,7 +281,7 @@ public sealed class XPostContentSplitter
             return 0;
         }
 
-        var parts = Split(content);
+        IReadOnlyList<string> parts = Split(content);
         return parts.Count;
     }
 }

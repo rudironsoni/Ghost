@@ -77,19 +77,19 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
     {
         ArgumentNullException.ThrowIfNull(criteria);
 
-        var strategy = _options.Strategy;
+        JobSearchStrategy strategy = _options.Strategy;
         s_logSearchStarted(_logger, strategy.ToString(), criteria.Query ?? string.Empty, criteria.Location, criteria.MaxResults, null);
         s_logStrategyAttempt(_logger, strategy.ToString(), null);
 
         try
         {
-            var result = strategy switch
+            IReadOnlyList<JobListing> result = strategy switch
             {
-                JobSearchStrategy.BrowserFirst => await TryBrowserFirstAsync(criteria, ct),
-                JobSearchStrategy.HttpFirst => await TryHttpFirstAsync(criteria, ct),
-                JobSearchStrategy.BrowserOnly => await TryBrowserOnlyAsync(criteria, ct),
-                JobSearchStrategy.HttpOnly => await TryHttpOnlyAsync(criteria, ct),
-                _ => await TryBrowserFirstAsync(criteria, ct)
+                JobSearchStrategy.BrowserFirst => await TryBrowserFirstAsync(criteria, ct).ConfigureAwait(false),
+                JobSearchStrategy.HttpFirst => await TryHttpFirstAsync(criteria, ct).ConfigureAwait(false),
+                JobSearchStrategy.BrowserOnly => await TryBrowserOnlyAsync(criteria, ct).ConfigureAwait(false),
+                JobSearchStrategy.HttpOnly => await TryHttpOnlyAsync(criteria, ct).ConfigureAwait(false),
+                _ => await TryBrowserFirstAsync(criteria, ct).ConfigureAwait(false)
             };
 
             s_logSearchCompleted(_logger, result.Count, null);
@@ -112,16 +112,16 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
         if (_browserClient == null)
         {
             s_logStrategyFailed(_logger, "BrowserFirst", null);
-            return await TryHttpOnlyAsync(criteria, ct);
+            return await TryHttpOnlyAsync(criteria, ct).ConfigureAwait(false);
         }
 
         try
         {
-            var results = await _browserClient.SearchAsync(
+            IReadOnlyList<JobListing> results = await _browserClient.SearchAsync(
                 criteria.Query ?? string.Empty,
                 criteria.Location ?? string.Empty,
                 criteria.MaxResults > 0 ? criteria.MaxResults : 25,
-                ct);
+                ct).ConfigureAwait(false);
 
             if (results.Count > 0)
             {
@@ -130,7 +130,7 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
             }
 
             s_logStrategyFailed(_logger, "BrowserFirst", null);
-            return await TryHttpOnlyAsync(criteria, ct);
+            return await TryHttpOnlyAsync(criteria, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -139,7 +139,7 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
         catch
         {
             s_logStrategyFailed(_logger, "BrowserFirst", null);
-            return await TryHttpOnlyAsync(criteria, ct);
+            return await TryHttpOnlyAsync(criteria, ct).ConfigureAwait(false);
         }
     }
 
@@ -147,10 +147,10 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
     {
         try
         {
-            var results = await _api.SearchAsync(
+            IReadOnlyList<JobListing> results = await _api.SearchAsync(
                 criteria.Query ?? string.Empty,
                 criteria.Location ?? string.Empty,
-                ct);
+                ct).ConfigureAwait(false);
 
             if (results.Count > 0)
             {
@@ -159,7 +159,7 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
             }
 
             s_logStrategyFailed(_logger, "HttpFirst", null);
-            return await TryBrowserOnlyAsync(criteria, ct);
+            return await TryBrowserOnlyAsync(criteria, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -168,7 +168,7 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
         catch
         {
             s_logStrategyFailed(_logger, "HttpFirst", null);
-            return await TryBrowserOnlyAsync(criteria, ct);
+            return await TryBrowserOnlyAsync(criteria, ct).ConfigureAwait(false);
         }
     }
 
@@ -182,11 +182,11 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
 
         try
         {
-            var results = await _browserClient.SearchAsync(
+            IReadOnlyList<JobListing> results = await _browserClient.SearchAsync(
                 criteria.Query ?? string.Empty,
                 criteria.Location ?? string.Empty,
                 criteria.MaxResults > 0 ? criteria.MaxResults : 25,
-                ct);
+                ct).ConfigureAwait(false);
 
             s_logStrategySuccess(_logger, "BrowserOnly", results.Count, null);
             return results;
@@ -206,10 +206,10 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
     {
         try
         {
-            var results = await _api.SearchAsync(
+            IReadOnlyList<JobListing> results = await _api.SearchAsync(
                 criteria.Query ?? string.Empty,
                 criteria.Location ?? string.Empty,
-                ct);
+                ct).ConfigureAwait(false);
 
             s_logStrategySuccess(_logger, "HttpOnly", results.Count, null);
             return results;
@@ -232,11 +232,11 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
         // Try to use browser client if available (preferred for job details)
         if (_browserClient != null)
         {
-            return await GetJobDetailsViaBrowserAsync(jobId, ct);
+            return await GetJobDetailsViaBrowserAsync(jobId, ct).ConfigureAwait(false);
         }
 
         // Fallback to API client
-        return await GetJobDetailsViaApiAsync(jobId, ct);
+        return await GetJobDetailsViaApiAsync(jobId, ct).ConfigureAwait(false);
     }
 
     private async Task<JobListing> GetJobDetailsViaBrowserAsync(string jobId, CancellationToken ct)
@@ -248,11 +248,11 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
         // or use a different approach.
 
         // Search with a generic query to get results
-        var results = await _browserClient!.SearchAsync("jobs", string.Empty, 1, ct);
+        IReadOnlyList<JobListing> results = await _browserClient!.SearchAsync("jobs", string.Empty, 1, ct).ConfigureAwait(false);
 
         if (results.Count > 0)
         {
-            var job = results[0];
+            JobListing job = results[0];
             // Update the ID to match the requested ID for test compatibility
             return job with { Id = jobId, Source = "Google" };
         }
@@ -263,11 +263,11 @@ public sealed class GoogleJobClient : Ghost.Abstractions.IJobScraper
     private async Task<JobListing> GetJobDetailsViaApiAsync(string jobId, CancellationToken ct)
     {
         // Similar fallback for API-only mode - search with a generic query
-        var results = await _api.SearchAsync("jobs", string.Empty, ct);
+        IReadOnlyList<JobListing> results = await _api.SearchAsync("jobs", string.Empty, ct).ConfigureAwait(false);
 
         if (results.Count > 0)
         {
-            var job = results[0];
+            JobListing job = results[0];
             // Update the ID to match the requested ID for test compatibility
             return job with { Id = jobId, Source = "Google" };
         }

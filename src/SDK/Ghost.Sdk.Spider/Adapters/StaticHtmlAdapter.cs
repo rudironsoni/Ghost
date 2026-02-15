@@ -90,11 +90,11 @@ public class StaticHtmlAdapter : IContentAdapter
             return Task.FromResult(false);
 
         // Can handle HTTP/HTTPS URLs
-        if (!Uri.TryCreate(request.Url, UriKind.Absolute, out var uri))
+        if (!Uri.TryCreate(request.Url, UriKind.Absolute, out Uri? uri))
             return Task.FromResult(false);
 
-        var scheme = uri.Scheme.ToLowerInvariant();
-        var canHandle = scheme is "http" or "https";
+        string scheme = uri.Scheme.ToLowerInvariant();
+        bool canHandle = scheme is "http" or "https";
 
         // Prefer handling static HTML content
         if (canHandle && request.ExpectedContentType != ContentType.Unknown)
@@ -122,24 +122,24 @@ public class StaticHtmlAdapter : IContentAdapter
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(options);
 
-        var staticOptions = options as StaticHtmlAdapterOptions ?? _defaultOptions;
-        var startTime = DateTimeOffset.UtcNow;
+        StaticHtmlAdapterOptions staticOptions = options as StaticHtmlAdapterOptions ?? _defaultOptions;
+        DateTimeOffset startTime = DateTimeOffset.UtcNow;
 
         try
         {
             if (_logger != null)
                 StaticHtmlAdapterLogMessages.LogExtractingContent(_logger, request.Url);
 
-            using var httpRequest = CreateHttpRequestMessage(request, staticOptions);
+            using HttpRequestMessage httpRequest = CreateHttpRequestMessage(request, staticOptions);
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cts.CancelAfter(request.Timeout);
 
-            using var httpResponse = await _httpClient.SendAsync(
+            using HttpResponseMessage httpResponse = await _httpClient.SendAsync(
                 httpRequest,
                 HttpCompletionOption.ResponseContentRead,
                 cts.Token).ConfigureAwait(false);
 
-            var response = await CreateResponseAsync(
+            Response response = await CreateResponseAsync(
                 httpResponse,
                 request,
                 startTime,
@@ -191,7 +191,7 @@ public class StaticHtmlAdapter : IContentAdapter
         _httpClient.DefaultRequestHeaders.Add("Accept-Encoding", options.AcceptEncoding);
 
         // Add custom headers
-        foreach (var header in options.CustomHeaders)
+        foreach (KeyValuePair<string, string> header in options.CustomHeaders)
         {
             _httpClient.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
         }
@@ -202,7 +202,7 @@ public class StaticHtmlAdapter : IContentAdapter
         var httpRequest = new HttpRequestMessage(new HttpMethod(request.Method), request.Url);
 
         // Add request-specific headers (override defaults)
-        foreach (var header in request.Headers)
+        foreach (KeyValuePair<string, string> header in request.Headers)
         {
             httpRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
         }
@@ -210,7 +210,7 @@ public class StaticHtmlAdapter : IContentAdapter
         // Add cookies
         if (options.Cookies.Count > 0)
         {
-            var cookieHeader = string.Join("; ", options.Cookies.Select(c => $"{c.Key}={c.Value}"));
+            string cookieHeader = string.Join("; ", options.Cookies.Select(c => $"{c.Key}={c.Value}"));
             httpRequest.Headers.TryAddWithoutValidation("Cookie", cookieHeader);
         }
 
@@ -223,7 +223,7 @@ public class StaticHtmlAdapter : IContentAdapter
             httpRequest.Content = new StringContent(request.Body);
 
             // Set content type if specified in headers
-            if (request.Headers.TryGetValue("Content-Type", out var contentType))
+            if (request.Headers.TryGetValue("Content-Type", out string? contentType))
             {
                 httpRequest.Content!.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
             }
@@ -238,9 +238,9 @@ public class StaticHtmlAdapter : IContentAdapter
         DateTimeOffset startTime,
         CancellationToken cancellationToken)
     {
-        var content = await httpResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        var contentType = httpResponse.Content.Headers.ContentType?.MediaType ?? "text/html";
-        var encoding = httpResponse.Content.Headers.ContentType?.CharSet ?? "utf-8";
+        string content = await httpResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        string contentType = httpResponse.Content.Headers.ContentType?.MediaType ?? "text/html";
+        string encoding = httpResponse.Content.Headers.ContentType?.CharSet ?? "utf-8";
 
         var contentResult = new ContentResult
         {
@@ -270,12 +270,12 @@ public class StaticHtmlAdapter : IContentAdapter
         };
 
         // Copy response headers
-        foreach (var header in httpResponse.Headers)
+        foreach (KeyValuePair<string, IEnumerable<string>> header in httpResponse.Headers)
         {
             response.Headers[header.Key] = string.Join(", ", header.Value);
         }
 
-        foreach (var header in httpResponse.Content.Headers)
+        foreach (KeyValuePair<string, IEnumerable<string>> header in httpResponse.Content.Headers)
         {
             response.Headers[header.Key] = string.Join(", ", header.Value);
         }

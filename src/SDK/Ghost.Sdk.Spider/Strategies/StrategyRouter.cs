@@ -92,11 +92,11 @@ public class StrategyRouter : IStrategyRouter
         _logger?.LogExecutingStrategies(context.Url);
 
         // Execute strategies in order until one succeeds
-        foreach (var (name, strategy) in _strategies.OrderBy(s => s.Key))
+        foreach ((string? name, Func<StrategyContext, CancellationToken, Task<ExtractionResult>>? strategy) in _strategies.OrderBy(s => s.Key))
         {
             try
             {
-                var result = await ExecuteStrategyInternalAsync(name, strategy, context, cancellationToken)
+                ExtractionResult result = await ExecuteStrategyInternalAsync(name, strategy, context, cancellationToken)
                     .ConfigureAwait(false);
 
                 if (result.Success)
@@ -130,7 +130,7 @@ public class StrategyRouter : IStrategyRouter
         ArgumentNullException.ThrowIfNull(strategyName);
         ArgumentNullException.ThrowIfNull(context);
 
-        if (!_strategies.TryGetValue(strategyName, out var strategy))
+        if (!_strategies.TryGetValue(strategyName, out Func<StrategyContext, CancellationToken, Task<ExtractionResult>>? strategy))
         {
             throw new InvalidOperationException($"Strategy not found: {strategyName}");
         }
@@ -148,20 +148,20 @@ public class StrategyRouter : IStrategyRouter
         ArgumentNullException.ThrowIfNull(chain);
         ArgumentNullException.ThrowIfNull(context);
 
-        var chainStartTime = DateTimeOffset.UtcNow;
+        DateTimeOffset chainStartTime = DateTimeOffset.UtcNow;
         var results = new List<ExtractionResult>();
         var aggregatedData = new Dictionary<string, object>();
 
-        foreach (var strategyConfig in chain.Strategies)
+        foreach (StrategyConfiguration strategyConfig in chain.Strategies)
         {
-            var strategyName = strategyConfig.Name;
-            if (!_strategies.TryGetValue(strategyName, out var strategy))
+            string strategyName = strategyConfig.Name;
+            if (!_strategies.TryGetValue(strategyName, out Func<StrategyContext, CancellationToken, Task<ExtractionResult>>? strategy))
             {
                 _logger?.LogStrategyNotFoundInChain(strategyName);
                 continue;
             }
 
-            var result = await ExecuteStrategyInternalAsync(strategyName, strategy, context, cancellationToken)
+            ExtractionResult result = await ExecuteStrategyInternalAsync(strategyName, strategy, context, cancellationToken)
                 .ConfigureAwait(false);
 
             results.Add(result);
@@ -179,8 +179,8 @@ public class StrategyRouter : IStrategyRouter
             }
         }
 
-        var chainDuration = DateTimeOffset.UtcNow - chainStartTime;
-        var allSucceeded = results.All(r => r.Success);
+        TimeSpan chainDuration = DateTimeOffset.UtcNow - chainStartTime;
+        bool allSucceeded = results.All(r => r.Success);
 
         return new ExtractionResult
         {
@@ -210,7 +210,7 @@ public class StrategyRouter : IStrategyRouter
     {
         lock (_metricsLock)
         {
-            foreach (var metric in _metrics.Values)
+            foreach (StrategyMetrics metric in _metrics.Values)
             {
                 metric.Reset();
             }
@@ -225,12 +225,12 @@ public class StrategyRouter : IStrategyRouter
         StrategyContext context,
         CancellationToken cancellationToken)
     {
-        var startTime = DateTimeOffset.UtcNow;
+        DateTimeOffset startTime = DateTimeOffset.UtcNow;
 
         try
         {
-            var result = await strategy(context, cancellationToken).ConfigureAwait(false);
-            var duration = DateTimeOffset.UtcNow - startTime;
+            ExtractionResult result = await strategy(context, cancellationToken).ConfigureAwait(false);
+            TimeSpan duration = DateTimeOffset.UtcNow - startTime;
 
             UpdateMetrics(name, result.Success, duration);
 
@@ -238,7 +238,7 @@ public class StrategyRouter : IStrategyRouter
         }
         catch (Exception ex)
         {
-            var duration = DateTimeOffset.UtcNow - startTime;
+            TimeSpan duration = DateTimeOffset.UtcNow - startTime;
             UpdateMetrics(name, false, duration);
 
             return ExtractionResult.CreateFailure(
@@ -253,7 +253,7 @@ public class StrategyRouter : IStrategyRouter
     {
         lock (_metricsLock)
         {
-            if (_metrics.TryGetValue(strategyName, out var metrics))
+            if (_metrics.TryGetValue(strategyName, out StrategyMetrics? metrics))
             {
                 if (success)
                     metrics.RecordSuccess(duration, DateTime.UtcNow);

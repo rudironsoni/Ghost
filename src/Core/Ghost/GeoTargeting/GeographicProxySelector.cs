@@ -87,11 +87,11 @@ public sealed class GeographicProxySelector : IDisposable
 
         await EnsureInitializedAsync(token).ConfigureAwait(false);
 
-        var normalizedCountry = countryCode.ToUpperInvariant();
-        var region = _countryRegionMapping.GetRegionForCountry(normalizedCountry);
+        string normalizedCountry = countryCode.ToUpperInvariant();
+        string region = _countryRegionMapping.GetRegionForCountry(normalizedCountry);
 
-        var pool = _geoPoolCache.GetOrAdd(region, _ => new GeographicProxyPool(region, _options));
-        var proxy = pool.SelectProxy(_healthIntelligence, normalizedCountry);
+        GeographicProxyPool pool = _geoPoolCache.GetOrAdd(region, _ => new GeographicProxyPool(region, _options));
+        ProxyInfo? proxy = pool.SelectProxy(_healthIntelligence, normalizedCountry);
 
         if (proxy == null)
         {
@@ -113,13 +113,13 @@ public sealed class GeographicProxySelector : IDisposable
 
         await EnsureInitializedAsync(token).ConfigureAwait(false);
 
-        var normalizedCountry = countryCode.ToUpperInvariant();
-        var normalizedRegion = string.IsNullOrWhiteSpace(regionCode)
+        string normalizedCountry = countryCode.ToUpperInvariant();
+        string normalizedRegion = string.IsNullOrWhiteSpace(regionCode)
             ? _countryRegionMapping.GetRegionForCountry(normalizedCountry)
             : regionCode.ToUpperInvariant();
 
-        var pool = _geoPoolCache.GetOrAdd(normalizedRegion, _ => new GeographicProxyPool(normalizedRegion, _options));
-        var candidates = pool.GetAllProxies(_healthIntelligence);
+        GeographicProxyPool pool = _geoPoolCache.GetOrAdd(normalizedRegion, _ => new GeographicProxyPool(normalizedRegion, _options));
+        List<ProxyInfo> candidates = pool.GetAllProxies(_healthIntelligence);
 
         if (candidates.Count == 0)
         {
@@ -134,7 +134,7 @@ public sealed class GeographicProxySelector : IDisposable
             validProxies = candidates;
         }
 
-        var selected = SelectByLatencyMetrics(validProxies, normalizedRegion);
+        ProxyInfo? selected = SelectByLatencyMetrics(validProxies, normalizedRegion);
 
         if (selected != null)
         {
@@ -153,10 +153,10 @@ public sealed class GeographicProxySelector : IDisposable
         ArgumentNullException.ThrowIfNull(proxy);
         ArgumentException.ThrowIfNullOrWhiteSpace(regionCode);
 
-        var normalizedRegion = regionCode.ToUpperInvariant();
-        var key = GetMetricsKey(proxy, normalizedRegion);
+        string normalizedRegion = regionCode.ToUpperInvariant();
+        string key = GetMetricsKey(proxy, normalizedRegion);
 
-        var metrics = _locationMetrics.GetOrAdd(key, _ => new ProxyLocationMetrics
+        ProxyLocationMetrics metrics = _locationMetrics.GetOrAdd(key, _ => new ProxyLocationMetrics
         {
             ProxyKey = proxy.Server,
             RegionCode = normalizedRegion,
@@ -167,7 +167,7 @@ public sealed class GeographicProxySelector : IDisposable
 
         s_logLocationLatency(_logger, normalizedRegion, metrics.AverageLatency, null);
 
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     /// <summary>
@@ -180,12 +180,12 @@ public sealed class GeographicProxySelector : IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(countryCode);
         ArgumentException.ThrowIfNullOrWhiteSpace(regionCode);
 
-        var normalizedCountry = countryCode.ToUpperInvariant();
-        var normalizedRegion = regionCode.ToUpperInvariant();
+        string normalizedCountry = countryCode.ToUpperInvariant();
+        string normalizedRegion = regionCode.ToUpperInvariant();
 
-        var proxyHostname = ExtractHostFromProxyServer(proxy.Server);
+        string proxyHostname = ExtractHostFromProxyServer(proxy.Server);
 
-        var isLocationValid = ValidateProxyHostLocation(proxyHostname, normalizedCountry, normalizedRegion);
+        bool isLocationValid = ValidateProxyHostLocation(proxyHostname, normalizedCountry, normalizedRegion);
 
         if (isLocationValid)
         {
@@ -206,7 +206,7 @@ public sealed class GeographicProxySelector : IDisposable
     {
         var stats = new Dictionary<string, RegionTargetingStats>();
 
-        foreach (var region in _geoPoolCache.Keys)
+        foreach (string region in _geoPoolCache.Keys)
         {
             var regionMetrics = _locationMetrics
                 .Where(kvp => kvp.Key.EndsWith("|" + region, StringComparison.OrdinalIgnoreCase))
@@ -238,8 +238,8 @@ public sealed class GeographicProxySelector : IDisposable
         if (string.IsNullOrWhiteSpace(regionCode))
             return null;
 
-        var key = GetMetricsKey(proxy, regionCode.ToUpperInvariant());
-        return _locationMetrics.TryGetValue(key, out var metrics) ? metrics : null;
+        string key = GetMetricsKey(proxy, regionCode.ToUpperInvariant());
+        return _locationMetrics.TryGetValue(key, out ProxyLocationMetrics? metrics) ? metrics : null;
     }
 
     /// <summary>
@@ -264,8 +264,8 @@ public sealed class GeographicProxySelector : IDisposable
                 return;
 
             // Build geographic pools for configured regions
-            var regions = _countryRegionMapping.GetAllRegions();
-            foreach (var region in regions)
+            IEnumerable<string> regions = _countryRegionMapping.GetAllRegions();
+            foreach (string region in regions)
             {
                 _geoPoolCache.TryAdd(region, new GeographicProxyPool(region, _options));
             }
@@ -298,8 +298,8 @@ public sealed class GeographicProxySelector : IDisposable
 
     private double GetProxyLatencyForRegion(ProxyInfo proxy, string regionCode)
     {
-        var key = GetMetricsKey(proxy, regionCode);
-        if (_locationMetrics.TryGetValue(key, out var metrics))
+        string key = GetMetricsKey(proxy, regionCode);
+        if (_locationMetrics.TryGetValue(key, out ProxyLocationMetrics? metrics))
         {
             return metrics.AverageLatency;
         }
@@ -323,12 +323,12 @@ public sealed class GeographicProxySelector : IDisposable
         {
             if (proxyServer.Contains("://", StringComparison.OrdinalIgnoreCase))
             {
-                var parts = proxyServer.Split(SchemeSeparator, StringSplitOptions.None);
+                string[] parts = proxyServer.Split(SchemeSeparator, StringSplitOptions.None);
                 if (parts.Length > 1)
                     proxyServer = parts[1];
             }
 
-            var hostParts = proxyServer.Split(':');
+            string[] hostParts = proxyServer.Split(':');
             return hostParts[0].ToLowerInvariant();
         }
         catch
@@ -342,9 +342,9 @@ public sealed class GeographicProxySelector : IDisposable
         if (string.IsNullOrEmpty(hostname))
             return true;
 
-        var lowerHostname = hostname.ToLowerInvariant();
-        var countryLower = countryCode.ToLowerInvariant();
-        var regionLower = regionCode.ToLowerInvariant();
+        string lowerHostname = hostname.ToLowerInvariant();
+        string countryLower = countryCode.ToLowerInvariant();
+        string regionLower = regionCode.ToLowerInvariant();
 
         return lowerHostname.Contains(countryLower) ||
                lowerHostname.Contains(regionLower) ||
@@ -386,14 +386,14 @@ public class CountryRegionMapping
         if (string.IsNullOrWhiteSpace(countryCode))
             return "UNKNOWN";
 
-        var normalized = countryCode.ToUpperInvariant();
+        string normalized = countryCode.ToUpperInvariant();
 
-        if (_countryToRegionMap.TryGetValue(normalized, out var region))
+        if (_countryToRegionMap.TryGetValue(normalized, out string? region))
         {
             return region;
         }
 
-        if (_options.CustomCountryRegionMappings?.TryGetValue(normalized, out var customRegion) == true)
+        if (_options.CustomCountryRegionMappings?.TryGetValue(normalized, out string? customRegion) == true)
         {
             return customRegion;
         }
@@ -417,7 +417,7 @@ public class CountryRegionMapping
         if (string.IsNullOrWhiteSpace(regionCode))
             return Enumerable.Empty<string>();
 
-        var normalized = regionCode.ToUpperInvariant();
+        string normalized = regionCode.ToUpperInvariant();
         return _countryToRegionMap
             .Where(kvp => kvp.Value.Equals(normalized, StringComparison.OrdinalIgnoreCase))
             .Select(kvp => kvp.Key);
@@ -658,12 +658,12 @@ public class GeographicProxyPool
 
     private bool IsProxyBlacklisted(ProxyInfo proxy, ProxyHealthIntelligence healthIntelligence)
     {
-        var metrics = healthIntelligence.GetMetrics(proxy);
+        ProxyHealthMetrics? metrics = healthIntelligence.GetMetrics(proxy);
         if (metrics == null)
             return false;
 
         // Consider proxy blacklisted if success rate is too low
-        var threshold = _options.MinProxySuccessRatePercent ?? 50;
+        int threshold = _options.MinProxySuccessRatePercent ?? 50;
         return metrics.SuccessRate * 100 < threshold;
     }
 }
@@ -714,7 +714,7 @@ public class ProxyLocationMetrics
                     return 0;
 
                 var sorted = _latencyHistory.OrderBy(x => x).ToList();
-                var index = (int)Math.Ceiling(sorted.Count * 0.95) - 1;
+                int index = (int)Math.Ceiling(sorted.Count * 0.95) - 1;
                 return sorted[Math.Max(0, index)];
             }
         }

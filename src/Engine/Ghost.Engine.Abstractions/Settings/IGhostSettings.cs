@@ -2,7 +2,7 @@ namespace Ghost.Engine.Abstractions.Settings;
 
 public interface IGhostSettings
 {
-    bool TryGet<T>(string key, out T? value);
+    public bool TryGet<T>(string key, out T? value);
 
-    T GetOrDefault<T>(string key, T defaultValue);
+    public T GetOrDefault<T>(string key, T defaultValue);
 }

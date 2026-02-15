@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Ghost.Abstractions;
 using Ghost.ConsentManagement;
@@ -89,13 +90,13 @@ public sealed class GlassdoorSearchScraper : IDisposable
         s_logSearchStarting(_logger, criteria.Query, criteria.Location, limit, null);
 
         var jobs = new List<JobListing>();
-        var query = Uri.EscapeDataString(criteria.Query ?? string.Empty);
-        var location = Uri.EscapeDataString(criteria.Location ?? string.Empty);
+        string query = Uri.EscapeDataString(criteria.Query ?? string.Empty);
+        string location = Uri.EscapeDataString(criteria.Location ?? string.Empty);
 
-        var url = BuildSearchUrl(query, location);
+        string url = BuildSearchUrl(query, location);
 
         // Try up to 5 attempts with proxy rotation for 70% success rate
-        for (var attempt = 1; attempt <= 5 && jobs.Count < limit; attempt++)
+        for (int attempt = 1; attempt <= 5 && jobs.Count < limit; attempt++)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -105,7 +106,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
             try
             {
                 // Apply heavy rate limiting (5-10 seconds between requests)
-                await ApplyHeavyRateLimitAsync(ct);
+                await ApplyHeavyRateLimitAsync(ct).ConfigureAwait(false);
 
                 // Check if proxy rotation needed
                 if (ShouldRotateProxy())
@@ -114,47 +115,47 @@ public sealed class GlassdoorSearchScraper : IDisposable
                     _requestCount = 0;
                 }
 
-                var sessionOptions = await CreateHeavyStealthSessionOptionsAsync(ct);
+                SessionOptions sessionOptions = await CreateHeavyStealthSessionOptionsAsync(ct).ConfigureAwait(false);
                 s_logCreatingSession(_logger, attempt, null);
 
-                session = await _kernel.NewSessionAsync(sessionOptions, ct);
-                page = await session.NewPageAsync(ct: ct);
+                session = await _kernel.NewSessionAsync(sessionOptions, ct).ConfigureAwait(false);
+                page = await session.NewPageAsync(ct: ct).ConfigureAwait(false);
 
                 s_logNavigating(_logger, url, null);
-                await page.NavigateAsync(url, ct: ct);
+                await page.NavigateAsync(url, ct: ct).ConfigureAwait(false);
 
                 // CRITICAL: Extended wait for Cloudflare/Datadome check (15 seconds for heavy protection)
                 s_logCloudflareWait(_logger, 15, null);
-                await Task.Delay(15000, ct);
+                await Task.Delay(15000, ct).ConfigureAwait(false);
 
                 // Perform VERY realistic human-like scrolling with longer delays
-                await PerformHumanLikeScrollingAsync(page, ct);
+                await PerformHumanLikeScrollingAsync(page, ct).ConfigureAwait(false);
 
                 // Final wait for dynamic content (5 seconds)
-                await Task.Delay(5000, ct);
+                await Task.Delay(5000, ct).ConfigureAwait(false);
 
-                var html = await page.GetContentAsync(ct);
+                string html = await page.GetContentAsync(ct).ConfigureAwait(false);
 
                 // Handle consent dialogs
                 if (IsConsentPage(html))
                 {
-                    await _consentService.WaitAndHandleConsentAsync(page, maxWaitMs: 10000, checkIntervalMs: 500);
-                    await Task.Delay(3000, ct); // Extended wait after consent
-                    html = await page.GetContentAsync(ct);
+                    await _consentService.WaitAndHandleConsentAsync(page, maxWaitMs: 10000, checkIntervalMs: 500).ConfigureAwait(false);
+                    await Task.Delay(3000, ct).ConfigureAwait(false); // Extended wait after consent
+                    html = await page.GetContentAsync(ct).ConfigureAwait(false);
                 }
 
-                var pageJobs = await ExtractJobsFromPageAsync(page, html, ct);
+                List<JobListing> pageJobs = await ExtractJobsFromPageAsync(page, html, ct).ConfigureAwait(false);
 
                 // Check if we're still blocked and need additional wait
                 if (pageJobs.Count == 0 && IsBlockedPage(html))
                 {
                     s_logCloudflareWait(_logger, 10, null);
-                    await Task.Delay(10000, ct);
-                    html = await page.GetContentAsync(ct);
-                    pageJobs = await ExtractJobsFromPageAsync(page, html, ct);
+                    await Task.Delay(10000, ct).ConfigureAwait(false);
+                    html = await page.GetContentAsync(ct).ConfigureAwait(false);
+                    pageJobs = await ExtractJobsFromPageAsync(page, html, ct).ConfigureAwait(false);
                 }
 
-                foreach (var job in pageJobs)
+                foreach (JobListing job in pageJobs)
                 {
                     if (jobs.Count >= limit) break;
                     jobs.Add(job);
@@ -172,8 +173,8 @@ public sealed class GlassdoorSearchScraper : IDisposable
                 // If still no jobs and not max attempts, increase backoff
                 if (jobs.Count < limit && attempt < 5)
                 {
-                    var backoffSeconds = attempt * 5; // 5s, 10s, 15s, 20s
-                    await Task.Delay(TimeSpan.FromSeconds(backoffSeconds), ct);
+                    int backoffSeconds = attempt * 5; // 5s, 10s, 15s, 20s
+                    await Task.Delay(TimeSpan.FromSeconds(backoffSeconds), ct).ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException)
@@ -188,18 +189,18 @@ public sealed class GlassdoorSearchScraper : IDisposable
                     break;
                 }
                 // Exponential backoff with jitter
-                var backoffMs = (int)(Math.Pow(2, attempt) * 1000 + Random.Shared.Next(1000, 3000));
-                await Task.Delay(backoffMs, ct);
+                int backoffMs = (int)(Math.Pow(2, attempt) * 1000 + Random.Shared.Next(1000, 3000));
+                await Task.Delay(backoffMs, ct).ConfigureAwait(false);
             }
             finally
             {
                 if (page != null)
                 {
-                    try { await page.DisposeAsync(); } catch { /* ignore */ }
+                    try { await page.DisposeAsync().ConfigureAwait(false); } catch { /* ignore */ }
                 }
                 if (session != null)
                 {
-                    try { await session.DisposeAsync(); } catch { /* ignore */ }
+                    try { await session.DisposeAsync().ConfigureAwait(false); } catch { /* ignore */ }
                 }
             }
         }
@@ -209,7 +210,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
 
     private static string BuildSearchUrl(string query, string location)
     {
-        var baseUrl = "https://www.glassdoor.com/Job/jobs.htm";
+        string baseUrl = "https://www.glassdoor.com/Job/jobs.htm";
         var parameters = new List<string>();
 
         if (!string.IsNullOrEmpty(query))
@@ -254,7 +255,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
         {
             try
             {
-                var proxy = await _proxyProvider.GetProxyAsync("US", ct);
+                ProxyInfo? proxy = await _proxyProvider.GetProxyAsync("US", ct).ConfigureAwait(false);
                 if (proxy != null)
                 {
                     options.Proxy = new SessionOptions.ProxySettings(
@@ -275,16 +276,16 @@ public sealed class GlassdoorSearchScraper : IDisposable
 
     private async Task ApplyHeavyRateLimitAsync(CancellationToken ct)
     {
-        await _rateLimitSemaphore.WaitAsync(ct);
+        await _rateLimitSemaphore.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            var timeSinceLastRequest = DateTime.UtcNow - _lastRequestTime;
+            TimeSpan timeSinceLastRequest = DateTime.UtcNow - _lastRequestTime;
             if (timeSinceLastRequest < _heavyRateLimitDelay)
             {
-                var waitTime = _heavyRateLimitDelay - timeSinceLastRequest;
+                TimeSpan waitTime = _heavyRateLimitDelay - timeSinceLastRequest;
                 // Add jitter (random 0-2 seconds)
                 var jitter = TimeSpan.FromSeconds(Random.Shared.Next(0, 2000) / 1000.0);
-                await Task.Delay(waitTime + jitter, ct);
+                await Task.Delay(waitTime + jitter, ct).ConfigureAwait(false);
             }
             _lastRequestTime = DateTime.UtcNow;
         }
@@ -302,25 +303,25 @@ public sealed class GlassdoorSearchScraper : IDisposable
     private async Task PerformHumanLikeScrollingAsync(IPage page, CancellationToken ct)
     {
         // Scroll down in realistic steps with variable delays
-        var scrollSteps = new[] { 400, 800, 1200, 1600, 2000 };
+        int[] scrollSteps = new[] { 400, 800, 1200, 1600, 2000 };
 
         for (int i = 0; i < scrollSteps.Length; i++)
         {
             s_logHumanScroll(_logger, i + 1, null);
-            await page.EvaluateAsync<object>($"() => window.scrollTo({{ top: {scrollSteps[i]}, behavior: 'smooth' }})", null, ct);
+            await page.EvaluateAsync<object>($"() => window.scrollTo({{ top: {scrollSteps[i]}, behavior: 'smooth' }})", null, ct).ConfigureAwait(false);
 
             // Variable delay between 1.5-3 seconds with jitter
-            var delayMs = Random.Shared.Next(1500, 3000);
-            await Task.Delay(delayMs, ct);
+            int delayMs = Random.Shared.Next(1500, 3000);
+            await Task.Delay(delayMs, ct).ConfigureAwait(false);
         }
 
         // Scroll back up slightly (human behavior)
-        await page.EvaluateAsync<object>("() => window.scrollTo({ top: 600, behavior: 'smooth' })", null, ct);
-        await Task.Delay(Random.Shared.Next(1000, 2000), ct);
+        await page.EvaluateAsync<object>("() => window.scrollTo({ top: 600, behavior: 'smooth' })", null, ct).ConfigureAwait(false);
+        await Task.Delay(Random.Shared.Next(1000, 2000), ct).ConfigureAwait(false);
 
         // Final scroll down
-        await page.EvaluateAsync<object>("() => window.scrollTo({ top: 2400, behavior: 'smooth' })", null, ct);
-        await Task.Delay(Random.Shared.Next(2000, 3000), ct);
+        await page.EvaluateAsync<object>("() => window.scrollTo({ top: 2400, behavior: 'smooth' })", null, ct).ConfigureAwait(false);
+        await Task.Delay(Random.Shared.Next(2000, 3000), ct).ConfigureAwait(false);
     }
 
     private static bool IsConsentPage(string html)
@@ -328,7 +329,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
         if (string.IsNullOrEmpty(html))
             return false;
 
-        var consentIndicators = new[]
+        string[] consentIndicators = new[]
         {
             "consent",
             "cookie policy",
@@ -340,7 +341,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
             "gdpr"
         };
 
-        var lowerHtml = html.ToLowerInvariant();
+        string lowerHtml = html.ToLowerInvariant();
         return consentIndicators.Any(indicator => lowerHtml.Contains(indicator));
     }
 
@@ -363,7 +364,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
         try
         {
             // Enhanced JavaScript extraction with comprehensive selectors for current Glassdoor structure
-            var script = """
+            string script = """
                 () => {
                     const jobs = [];
                     const debugInfo = { selectorsTried: [], foundElements: 0, errors: [] };
@@ -575,27 +576,27 @@ public sealed class GlassdoorSearchScraper : IDisposable
                 }
             """;
 
-            var result = await page.EvaluateAsync<Dictionary<string, object>>(script, null, ct);
+            Dictionary<string, object> result = await page.EvaluateAsync<Dictionary<string, object>>(script, null, ct).ConfigureAwait(false);
 
             if (result != null)
             {
                 // Extract jobs list
-                if (result.TryGetValue("jobs", out var jobsObj) && jobsObj is List<object> extractedJobsList)
+                if (result.TryGetValue("jobs", out object? jobsObj) && jobsObj is List<object> extractedJobsList)
                 {
-                    foreach (var jobObj in extractedJobsList)
+                    foreach (object jobObj in extractedJobsList)
                     {
                         if (jobObj is Dictionary<string, object> jobData)
                         {
                             var job = new JobListing
                             {
-                                Id = jobData.TryGetValue("jobId", out var id) && !string.IsNullOrEmpty(id?.ToString())
+                                Id = jobData.TryGetValue("jobId", out object? id) && !string.IsNullOrEmpty(id?.ToString())
                                     ? id.ToString()!
                                     : Guid.NewGuid().ToString(),
-                                Title = jobData.TryGetValue("title", out var title) ? title?.ToString() ?? string.Empty : string.Empty,
-                                Company = jobData.TryGetValue("company", out var company) ? company?.ToString() ?? string.Empty : string.Empty,
-                                Location = jobData.TryGetValue("location", out var loc) ? loc?.ToString() : null,
-                                Salary = jobData.TryGetValue("salary", out var salary) ? salary?.ToString() : null,
-                                Url = jobData.TryGetValue("url", out var url) ? url?.ToString() : null,
+                                Title = jobData.TryGetValue("title", out object? title) ? title?.ToString() ?? string.Empty : string.Empty,
+                                Company = jobData.TryGetValue("company", out object? company) ? company?.ToString() ?? string.Empty : string.Empty,
+                                Location = jobData.TryGetValue("location", out object? loc) ? loc?.ToString() : null,
+                                Salary = jobData.TryGetValue("salary", out object? salary) ? salary?.ToString() : null,
+                                Url = jobData.TryGetValue("url", out object? url) ? url?.ToString() : null,
                                 Source = "Glassdoor"
                             };
 
@@ -605,9 +606,9 @@ public sealed class GlassdoorSearchScraper : IDisposable
                 }
 
                 // Log debug info if available
-                if (result.TryGetValue("debugInfo", out var debugObj))
+                if (result.TryGetValue("debugInfo", out object? debugObj))
                 {
-                    var debugJson = System.Text.Json.JsonSerializer.Serialize(debugObj);
+                    string debugJson = System.Text.Json.JsonSerializer.Serialize(debugObj);
                     s_logExtractionDebug(_logger, debugJson, null);
                 }
             }
@@ -638,23 +639,23 @@ public sealed class GlassdoorSearchScraper : IDisposable
         try
         {
             // Try to extract job data from embedded JSON in script tags first
-            var jsonPatterns = new[]
+            string[] jsonPatterns = new[]
             {
                 @"window\.__INITIAL_STATE__\s*=\s*({.*?});",
                 @"window\.__NEXT_DATA__\s*=\s*({.*?});",
                 @"<script[^>]*id\s*=\s*[""']__NEXT_DATA__[""'][^>]*type\s*=\s*[""']application/json[""'][^>]*>(.*?)</script>"
             };
 
-            foreach (var pattern in jsonPatterns)
+            foreach (string? pattern in jsonPatterns)
             {
-                var match = Regex.Match(html, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                Match match = Regex.Match(html, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
                 if (match.Success && match.Groups.Count > 1)
                 {
                     try
                     {
-                        var jsonContent = match.Groups[1].Value;
+                        string jsonContent = match.Groups[1].Value;
                         using var doc = System.Text.Json.JsonDocument.Parse(jsonContent);
-                        var extractedJobs = ExtractJobsFromJsonElement(doc.RootElement);
+                        List<JobListing> extractedJobs = ExtractJobsFromJsonElement(doc.RootElement);
                         if (extractedJobs.Count > 0)
                         {
                             return extractedJobs;
@@ -665,7 +666,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
             }
 
             // Fallback: Parse HTML structure for job cards with multiple patterns
-            var jobCardPatterns = new[]
+            string[] jobCardPatterns = new[]
             {
                 // Pattern 1: data-test attributes (most common)
                 @"<(?:li|div|article)[^>]*(?:data-test=[""']jobListing[""']|data-job-id=[""'][^""']+[""'])[^>]*>.*?data-test=[""']job-title[""'][^>]*>([^<]+)<.*?data-test=[""']employer-name[""'][^>]*>([^<]+)<.*?(?:data-test=[""']job-location[""'][^>]*>([^<]+)<|class=[""'][^""']*location[^""']*[""'][^>]*>([^<]+)<)",
@@ -677,20 +678,20 @@ public sealed class GlassdoorSearchScraper : IDisposable
                 @"<(?:li|div|article)[^>]*class=[""'][^""']*(?:job|Job)[^""']*[""'][^>]*>.*?<a[^>]*href=[""'][^""']*job[^""']*[""'][^>]*>([^<]+)</a>.*?<(?:span|div)[^>]*class=[""'][^""']*(?:employer|company)[^""']*[""'][^>]*>([^<]+)<"
             };
 
-            foreach (var pattern in jobCardPatterns)
+            foreach (string? pattern in jobCardPatterns)
             {
-                var matches = Regex.Matches(html, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                MatchCollection matches = Regex.Matches(html, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
                 if (matches.Count > 0)
                 {
                     foreach (Match match in matches)
                     {
                         try
                         {
-                            var title = string.Empty;
-                            var company = string.Empty;
-                            var location = string.Empty;
-                            var url = string.Empty;
-                            var jobId = string.Empty;
+                            string title = string.Empty;
+                            string company = string.Empty;
+                            string location = string.Empty;
+                            string url = string.Empty;
+                            string jobId = string.Empty;
 
                             // Extract based on pattern groups
                             if (match.Groups.Count >= 3)
@@ -709,11 +710,11 @@ public sealed class GlassdoorSearchScraper : IDisposable
                             }
 
                             // Try to extract URL and job ID from the match
-                            var urlMatch = Regex.Match(match.Value, @"href=[""']([^""']+)[""']");
+                            Match urlMatch = Regex.Match(match.Value, @"href=[""']([^""']+)[""']");
                             if (urlMatch.Success)
                             {
                                 url = urlMatch.Groups[1].Value;
-                                var idMatch = Regex.Match(url, @"/job-listing/([^\/\?]+)");
+                                Match idMatch = Regex.Match(url, @"/job-listing/([^\/\?]+)");
                                 if (idMatch.Success)
                                 {
                                     jobId = idMatch.Groups[1].Value;
@@ -761,7 +762,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
             // Recursively search for job data in the JSON structure
             if (element.ValueKind == System.Text.Json.JsonValueKind.Object)
             {
-                foreach (var prop in element.EnumerateObject())
+                foreach (JsonProperty prop in element.EnumerateObject())
                 {
                     // Look for properties that likely contain job listings
                     if (prop.Name.Contains("job", StringComparison.OrdinalIgnoreCase) ||
@@ -770,9 +771,9 @@ public sealed class GlassdoorSearchScraper : IDisposable
                     {
                         if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.Array)
                         {
-                            foreach (var item in prop.Value.EnumerateArray())
+                            foreach (JsonElement item in prop.Value.EnumerateArray())
                             {
-                                var job = ExtractJobFromJsonElement(item);
+                                JobListing? job = ExtractJobFromJsonElement(item);
                                 if (job != null)
                                     jobs.Add(job);
                             }
@@ -790,9 +791,9 @@ public sealed class GlassdoorSearchScraper : IDisposable
             }
             else if (element.ValueKind == System.Text.Json.JsonValueKind.Array)
             {
-                foreach (var item in element.EnumerateArray())
+                foreach (JsonElement item in element.EnumerateArray())
                 {
-                    var job = ExtractJobFromJsonElement(item);
+                    JobListing? job = ExtractJobFromJsonElement(item);
                     if (job != null)
                         jobs.Add(job);
                     else
@@ -825,21 +826,21 @@ public sealed class GlassdoorSearchScraper : IDisposable
                 url = GetJsonString(element, "jobLink", "link", "url");
 
                 // Check for nested structures
-                if (element.TryGetProperty("jobview", out var jobview))
+                if (element.TryGetProperty("jobview", out JsonElement jobview))
                 {
-                    if (jobview.TryGetProperty("header", out var header))
+                    if (jobview.TryGetProperty("header", out JsonElement header))
                     {
                         title ??= GetJsonString(header, "jobTitleText", "jobTitle");
                         location ??= GetJsonString(header, "locationName", "location");
                         url ??= GetJsonString(header, "jobLink");
 
-                        if (header.TryGetProperty("employer", out var employer))
+                        if (header.TryGetProperty("employer", out JsonElement employer))
                         {
                             company ??= GetJsonString(employer, "name");
                         }
                     }
 
-                    if (jobview.TryGetProperty("job", out var job))
+                    if (jobview.TryGetProperty("job", out JsonElement job))
                     {
                         id ??= GetJsonString(job, "listingId");
                     }
@@ -867,13 +868,13 @@ public sealed class GlassdoorSearchScraper : IDisposable
 
     private static string? GetJsonString(System.Text.Json.JsonElement element, params string[] keys)
     {
-        foreach (var key in keys)
+        foreach (string key in keys)
         {
             try
             {
-                if (element.TryGetProperty(key, out var value) && value.ValueKind == System.Text.Json.JsonValueKind.String)
+                if (element.TryGetProperty(key, out JsonElement value) && value.ValueKind == System.Text.Json.JsonValueKind.String)
                 {
-                    var str = value.GetString();
+                    string? str = value.GetString();
                     if (!string.IsNullOrWhiteSpace(str))
                         return str;
                 }
@@ -885,7 +886,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
 
     private static string GetRandomUserAgent()
     {
-        var userAgents = new[]
+        string[] userAgents = new[]
         {
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
@@ -898,14 +899,14 @@ public sealed class GlassdoorSearchScraper : IDisposable
 
     private static string GetRandomTimezone()
     {
-        var timezones = new[] { "America/New_York", "America/Chicago", "America/Los_Angeles", "America/Denver" };
+        string[] timezones = new[] { "America/New_York", "America/Chicago", "America/Los_Angeles", "America/Denver" };
         return timezones[Random.Shared.Next(timezones.Length)];
     }
 
     private static SessionOptions.GeolocationSettings GetRandomUSGeolocation()
     {
         // Major US cities
-        var locations = new[]
+        (double, double)[] locations = new[]
         {
             (40.7128, -74.0060),  // New York
             (41.8781, -87.6298),  // Chicago
@@ -914,7 +915,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
             (33.4484, -112.0740)  // Phoenix
         };
 
-        var (lat, lon) = locations[Random.Shared.Next(locations.Length)];
+        (double lat, double lon) = locations[Random.Shared.Next(locations.Length)];
         return new SessionOptions.GeolocationSettings(lat, lon, 100);
     }
 

@@ -57,7 +57,7 @@ public class ProxyManager : IProxyManager
         }
 
         // Round-robin selection
-        var index = Interlocked.Increment(ref _currentIndex) % available.Count;
+        int index = Interlocked.Increment(ref _currentIndex) % available.Count;
         return Task.FromResult<WebProxy?>(available[index]);
     }
 
@@ -75,8 +75,8 @@ public class ProxyManager : IProxyManager
     {
         ArgumentNullException.ThrowIfNull(proxy);
 
-        var key = GetProxyKey(proxy);
-        if (_proxies.TryGetValue(key, out var info))
+        string key = GetProxyKey(proxy);
+        if (_proxies.TryGetValue(key, out ProxyInfo? info))
         {
             // Reset failure count on success
             Interlocked.Exchange(ref info.FailureCount, 0);
@@ -101,8 +101,8 @@ public class ProxyManager : IProxyManager
     {
         ArgumentNullException.ThrowIfNull(proxy);
 
-        var key = GetProxyKey(proxy);
-        if (_proxies.TryGetValue(key, out var info))
+        string key = GetProxyKey(proxy);
+        if (_proxies.TryGetValue(key, out ProxyInfo? info))
         {
             Interlocked.Increment(ref info.FailureCount);
             info.LastFailure = DateTime.UtcNow;
@@ -133,7 +133,7 @@ public class ProxyManager : IProxyManager
             proxy.Credentials = new NetworkCredential(username, password);
         }
 
-        var key = $"{host}:{port}";
+        string key = $"{host}:{port}";
         _proxies[key] = new ProxyInfo { Proxy = proxy, FailureCount = 0 };
     }
 
@@ -157,7 +157,7 @@ public class ProxyManager : IProxyManager
         // Check if retry period has elapsed
         if (info.LastFailure.HasValue)
         {
-            var timeSinceFailure = DateTime.UtcNow - info.LastFailure.Value;
+            TimeSpan timeSinceFailure = DateTime.UtcNow - info.LastFailure.Value;
             if (timeSinceFailure >= _options.RetryAfter)
             {
                 // Reset failure count after retry period
@@ -177,7 +177,7 @@ public class ProxyManager : IProxyManager
     /// <returns>A string key in the format "host:port".</returns>
     private static string GetProxyKey(WebProxy proxy)
     {
-        var address = proxy.Address;
+        Uri? address = proxy.Address;
         return address != null
             ? $"{address.Host}:{address.Port}"
             : string.Empty;

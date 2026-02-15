@@ -73,22 +73,22 @@ public sealed class LinkedInHttpClient
         ArgumentNullException.ThrowIfNull(keywords);
 
         var jobs = new List<JobListing>();
-        var q = Uri.EscapeDataString(keywords);
-        var loc = Uri.EscapeDataString(location);
+        string q = Uri.EscapeDataString(keywords);
+        string loc = Uri.EscapeDataString(location);
 
-        for (var offset = 0; jobs.Count < limit; offset += 25)
+        for (int offset = 0; jobs.Count < limit; offset += 25)
         {
             ct.ThrowIfCancellationRequested();
 
-            var baseUrlDomain = _countryProvider.GetDomain(_options.Country);
-            var url = $"{baseUrlDomain}/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={q}&location={loc}&start={offset}";
+            string baseUrlDomain = _countryProvider.GetDomain(_options.Country);
+            string url = $"{baseUrlDomain}/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={q}&location={loc}&start={offset}";
 
             s_logFetching(_logger, url, null);
 
             try
             {
-                var response = await _httpClient.GetAsync(url, ct);
-                var html = await response.Content.ReadAsStringAsync(ct);
+                HttpResponseMessage response = await _httpClient.GetAsync(url, ct).ConfigureAwait(false);
+                string html = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
                 if (string.IsNullOrEmpty(html))
                 {
@@ -103,13 +103,13 @@ public sealed class LinkedInHttpClient
                     break;
                 }
 
-                var foundJobs = ParseJobListingsFromHtml(html, baseUrlDomain);
+                List<JobListing> foundJobs = ParseJobListingsFromHtml(html, baseUrlDomain);
                 if (foundJobs.Count == 0)
                 {
                     break;
                 }
 
-                foreach (var job in foundJobs)
+                foreach (JobListing job in foundJobs)
                 {
                     if (jobs.Count >= limit) break;
                     jobs.Add(job);
@@ -142,15 +142,15 @@ public sealed class LinkedInHttpClient
     {
         ArgumentNullException.ThrowIfNull(jobId);
 
-        var domain = _countryProvider.GetDomain(_options.Country);
-        var url = $"{domain}/jobs-guest/jobs/api/jobPosting/{jobId}";
+        string domain = _countryProvider.GetDomain(_options.Country);
+        string url = $"{domain}/jobs-guest/jobs/api/jobPosting/{jobId}";
 
         s_logFetching(_logger, url, null);
 
         try
         {
-            var response = await _httpClient.GetAsync(url, ct);
-            var html = await response.Content.ReadAsStringAsync(ct);
+            HttpResponseMessage response = await _httpClient.GetAsync(url, ct).ConfigureAwait(false);
+            string html = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             if (string.IsNullOrEmpty(html))
             {
@@ -187,31 +187,31 @@ public sealed class LinkedInHttpClient
 
         // Find all job cards in the HTML
         // The structure is: <li><div class="base-card ..."><a class="base-card__full-link" href="/jobs/view/1234567890/">
-        var jobCardPattern = @"<li>\s*<div[^>]*class=""[^""]*base-card[^""]*""[^>]*>.*?<a[^>]*class=""[^""]*base-card__full-link[^""]*""[^>]*href=""(/jobs/view/\d+/?)""";
-        var matches = Regex.Matches(html, jobCardPattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        string jobCardPattern = @"<li>\s*<div[^>]*class=""[^""]*base-card[^""]*""[^>]*>.*?<a[^>]*class=""[^""]*base-card__full-link[^""]*""[^>]*href=""(/jobs/view/\d+/?)""";
+        MatchCollection matches = Regex.Matches(html, jobCardPattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
         foreach (Match match in matches)
         {
             try
             {
-                var hrefMatch = Regex.Match(match.Value, @"href=""(/jobs/view/(\d+)/?)""");
+                Match hrefMatch = Regex.Match(match.Value, @"href=""(/jobs/view/(\d+)/?)""");
                 if (!hrefMatch.Success) continue;
 
-                var jobId = hrefMatch.Groups[2].Value;
-                var relativeUrl = hrefMatch.Groups[1].Value;
-                var fullUrl = $"{baseUrlDomain}{relativeUrl}";
+                string jobId = hrefMatch.Groups[2].Value;
+                string relativeUrl = hrefMatch.Groups[1].Value;
+                string fullUrl = $"{baseUrlDomain}{relativeUrl}";
 
                 // Extract title from the sr-only span or other elements
-                var titleMatch = Regex.Match(match.Value, @"<span[^>]*class=""[^""]*sr-only[^""]*""[^>]*>([^<]+)</span>");
-                var title = titleMatch.Success ? titleMatch.Groups[1].Value.Trim() : string.Empty;
+                Match titleMatch = Regex.Match(match.Value, @"<span[^>]*class=""[^""]*sr-only[^""]*""[^>]*>([^<]+)</span>");
+                string title = titleMatch.Success ? titleMatch.Groups[1].Value.Trim() : string.Empty;
 
                 // Try to extract company name from the job card
-                var companyMatch = Regex.Match(match.Value, @"class=""[^""]*base-search-card__subtitle[^""]*""[^>]*>([^<]+)</");
-                var company = companyMatch.Success ? companyMatch.Groups[1].Value.Trim() : string.Empty;
+                Match companyMatch = Regex.Match(match.Value, @"class=""[^""]*base-search-card__subtitle[^""]*""[^>]*>([^<]+)</");
+                string company = companyMatch.Success ? companyMatch.Groups[1].Value.Trim() : string.Empty;
 
                 // Try to extract location
-                var locationMatch = Regex.Match(match.Value, @"class=""[^""]*job-search-card__location[^""]*""[^>]*>([^<]+)</");
-                var location = locationMatch.Success ? locationMatch.Groups[1].Value.Trim() : string.Empty;
+                Match locationMatch = Regex.Match(match.Value, @"class=""[^""]*job-search-card__location[^""]*""[^>]*>([^<]+)</");
+                string location = locationMatch.Success ? locationMatch.Groups[1].Value.Trim() : string.Empty;
 
                 if (!string.IsNullOrEmpty(jobId))
                 {
@@ -243,14 +243,14 @@ public sealed class LinkedInHttpClient
         try
         {
             // Try to extract using JSON-LD first
-            var jsonLdMatch = Regex.Match(html, @"<script[^>]*type=""application/ld\+json""[^>]*>(.*?)</script>", RegexOptions.Singleline);
+            Match jsonLdMatch = Regex.Match(html, @"<script[^>]*type=""application/ld\+json""[^>]*>(.*?)</script>", RegexOptions.Singleline);
             if (jsonLdMatch.Success)
             {
-                var jsonLd = jsonLdMatch.Groups[1].Value;
+                string jsonLd = jsonLdMatch.Groups[1].Value;
                 // Simple extraction from JSON-LD (in production, use proper JSON parser)
-                var titleMatch = Regex.Match(jsonLd, @"""title""\s*:\s*""([^""]+)""");
-                var companyMatch = Regex.Match(jsonLd, @"""hiringOrganization""\s*:\s*\{[^}]*""name""\s*:\s*""([^""]+)""");
-                var descMatch = Regex.Match(jsonLd, @"""description""\s*:\s*""([^""]+)""");
+                Match titleMatch = Regex.Match(jsonLd, @"""title""\s*:\s*""([^""]+)""");
+                Match companyMatch = Regex.Match(jsonLd, @"""hiringOrganization""\s*:\s*\{[^}]*""name""\s*:\s*""([^""]+)""");
+                Match descMatch = Regex.Match(jsonLd, @"""description""\s*:\s*""([^""]+)""");
 
                 if (titleMatch.Success || companyMatch.Success)
                 {
@@ -267,15 +267,15 @@ public sealed class LinkedInHttpClient
             }
 
             // Fallback to DOM scraping using regex
-            var titleSelectors = new[] {
+            string[] titleSelectors = new[] {
                 @"class=""[^""]*top-card-layout__title[^""]*""[^>]*>([^<]+)</",
                 @"<h1[^>]*>([^<]+)</h1>"
             };
 
             string title = string.Empty;
-            foreach (var selector in titleSelectors)
+            foreach (string? selector in titleSelectors)
             {
-                var m = Regex.Match(html, selector);
+                Match m = Regex.Match(html, selector);
                 if (m.Success)
                 {
                     title = m.Groups[1].Value.Trim();
@@ -283,15 +283,15 @@ public sealed class LinkedInHttpClient
                 }
             }
 
-            var companySelectors = new[] {
+            string[] companySelectors = new[] {
                 @"class=""[^""]*topcard__org-name-link[^""]*""[^>]*>([^<]+)</",
                 @"class=""[^""]*top-card-layout__first-subline[^""]*""[^>]*>.*?<a[^>]*>([^<]+)</"
             };
 
             string company = string.Empty;
-            foreach (var selector in companySelectors)
+            foreach (string? selector in companySelectors)
             {
-                var m = Regex.Match(html, selector);
+                Match m = Regex.Match(html, selector);
                 if (m.Success)
                 {
                     company = m.Groups[1].Value.Trim();
@@ -299,15 +299,15 @@ public sealed class LinkedInHttpClient
                 }
             }
 
-            var locationSelectors = new[] {
+            string[] locationSelectors = new[] {
                 @"class=""[^""]*topcard__flavor--bullet[^""]*""[^>]*>([^<]+)</",
                 @"class=""[^""]*job-search-card__location[^""]*""[^>]*>([^<]+)</"
             };
 
             string location = string.Empty;
-            foreach (var selector in locationSelectors)
+            foreach (string? selector in locationSelectors)
             {
-                var m = Regex.Match(html, selector);
+                Match m = Regex.Match(html, selector);
                 if (m.Success)
                 {
                     location = m.Groups[1].Value.Trim();
@@ -315,15 +315,15 @@ public sealed class LinkedInHttpClient
                 }
             }
 
-            var descSelectors = new[] {
+            string[] descSelectors = new[] {
                 @"class=""[^""]*show-more-less-html__markup[^""]*""[^>]*>(.*?)</div>",
                 @"class=""[^""]*description__text[^""]*""[^>]*>(.*?)</div>"
             };
 
             string description = string.Empty;
-            foreach (var selector in descSelectors)
+            foreach (string? selector in descSelectors)
             {
-                var m = Regex.Match(html, selector, RegexOptions.Singleline);
+                Match m = Regex.Match(html, selector, RegexOptions.Singleline);
                 if (m.Success)
                 {
                     description = m.Groups[1].Value;

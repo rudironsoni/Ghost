@@ -6,11 +6,11 @@ namespace Ghost.Services;
 
 public interface IHttpConnectionPool
 {
-    Task<HttpClient> AcquireAsync(CancellationToken cancellationToken = default);
-    Task ReleaseAsync(HttpClient client, bool healthy = true);
-    Task PruneUnhealthyAsync(CancellationToken cancellationToken = default);
-    int AvailableCount { get; }
-    int InUseCount { get; }
+    public Task<HttpClient> AcquireAsync(CancellationToken cancellationToken = default);
+    public Task ReleaseAsync(HttpClient client, bool healthy = true);
+    public Task PruneUnhealthyAsync(CancellationToken cancellationToken = default);
+    public int AvailableCount { get; }
+    public int InUseCount { get; }
 }
 
 public sealed class HttpConnectionPool : IHttpConnectionPool
@@ -41,11 +41,11 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
 
     public async Task<HttpClient> AcquireAsync(CancellationToken cancellationToken = default)
     {
-        while (_available.TryTake(out var pooled))
+        while (_available.TryTake(out PooledConnection? pooled))
         {
             Interlocked.Decrement(ref _availableCount);
 
-            if (await IsHealthyAsync(pooled, cancellationToken))
+            if (await IsHealthyAsync(pooled, cancellationToken).ConfigureAwait(false))
             {
                 _inTryAdd(pooled.Client, pooled);
                 _poolStatus(_logger, _availableCount, _inUse.Count, null);
@@ -56,7 +56,7 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
             Interlocked.Increment(ref _totalPruned);
         }
 
-        var newConnection = CreateConnection();
+        PooledConnection newConnection = CreateConnection();
         Interlocked.Increment(ref _totalCreated);
         _inUse.TryAdd(newConnection.Client, newConnection);
         _poolStatus(_logger, _availableCount, _inUse.Count, null);
@@ -65,7 +65,7 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
 
     public Task ReleaseAsync(HttpClient client, bool healthy = true)
     {
-        if (!_inUse.TryRemove(client, out var pooled))
+        if (!_inUse.TryRemove(client, out PooledConnection? pooled))
         {
             DisposeClient(client);
             return Task.CompletedTask;
@@ -99,11 +99,11 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
         var healthy = new List<PooledConnection>();
         var toPrune = new List<PooledConnection>();
 
-        while (_available.TryTake(out var pooled))
+        while (_available.TryTake(out PooledConnection? pooled))
         {
             Interlocked.Decrement(ref _availableCount);
 
-            if (await IsHealthyAsync(pooled, cancellationToken))
+            if (await IsHealthyAsync(pooled, cancellationToken).ConfigureAwait(false))
             {
                 healthy.Add(pooled);
             }
@@ -114,13 +114,13 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
             }
         }
 
-        foreach (var healthyConnection in healthy)
+        foreach (PooledConnection healthyConnection in healthy)
         {
             _available.Add(healthyConnection);
             Interlocked.Increment(ref _availableCount);
         }
 
-        foreach (var pruned in toPrune)
+        foreach (PooledConnection pruned in toPrune)
         {
             DisposeConnection(pruned);
         }
@@ -167,7 +167,7 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
             try
             {
                 using var request = new HttpRequestMessage(HttpMethod.Head, "https://www.google.com/");
-                using var response = await pooled.Client.SendAsync(request, cts.Token);
+                using HttpResponseMessage response = await pooled.Client.SendAsync(request, cts.Token).ConfigureAwait(false);
                 return response.IsSuccessStatusCode;
             }
             catch (OperationCanceledException) when (cts.IsCancellationRequested)

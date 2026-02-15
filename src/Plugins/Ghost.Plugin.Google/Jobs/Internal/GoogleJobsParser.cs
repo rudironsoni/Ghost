@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Ghost.Contracts.Jobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -79,37 +80,6 @@ public static class GoogleJobsParser
         LoggerMessage.Define<int, string>(LogLevel.Debug, new EventId(23, nameof(LogHtmlSample)), "HTML sample (first {Size} chars): {Sample}");
 
     /// <summary>
-    /// Dynamically detects widget key by searching for 9+ digit numbers in data attributes near job listings
-    /// </summary>
-    private static string? DetectDynamicWidgetKey(string html, ILogger logger)
-    {
-        // Pattern to find data-ved attributes or similar data attributes with 9+ digit numbers
-        var dataVedPattern = @"data-ved\s*=\s*[""'](\d{9,})[""']";
-        var matches = System.Text.RegularExpressions.Regex.Matches(html, dataVedPattern);
-
-        if (matches.Count > 0)
-        {
-            // Return the first match as the widget key
-            var widgetKey = matches[0].Groups[1].Value;
-            LogDynamicWidgetKeyFound(logger, widgetKey, null);
-            return widgetKey;
-        }
-
-        // Fallback: look for any 9+ digit number in data attributes
-        var dataAttrPattern = @"data-\w+\s*=\s*[""'](\d{9,})[""']";
-        var attrMatches = System.Text.RegularExpressions.Regex.Matches(html, dataAttrPattern);
-
-        if (attrMatches.Count > 0)
-        {
-            var widgetKey = attrMatches[0].Groups[1].Value;
-            LogDynamicWidgetKeyFound(logger, widgetKey, null);
-            return widgetKey;
-        }
-
-        return null;
-    }
-
-    /// <summary>
     /// Strategy 1: JobSpy-style widget key pattern (matches 520084652":[...])
     /// This is the exact pattern JobSpy uses - finds the widget key followed by job arrays
     /// UPDATED: Now searches for ALL widget keys dynamically and extracts job data
@@ -123,20 +93,20 @@ public static class GoogleJobsParser
             var jobs = new List<JobListing>();
 
             // Try multiple widget key patterns
-            var widgetKeys = new[] { "520084652", "520084653", "htl;jobs" };
+            string[] widgetKeys = new[] { "520084652", "520084653", "htl;jobs" };
 
             // Pattern to find widget keys followed by JSON arrays
             // Matches: "widgetKey":[[...job data...]]
-            foreach (var widgetKey in widgetKeys)
+            foreach (string? widgetKey in widgetKeys)
             {
                 // Find all occurrences of the widget key
-                var keyIndex = 0;
+                int keyIndex = 0;
                 while ((keyIndex = html.IndexOf($"\"{widgetKey}\":", keyIndex, StringComparison.Ordinal)) >= 0)
                 {
                     try
                     {
                         // Move past the key to find the start of the JSON array
-                        var jsonStart = keyIndex + widgetKey.Length + 3; // +3 for ":"
+                        int jsonStart = keyIndex + widgetKey.Length + 3; // +3 for ":"
                         if (jsonStart >= html.Length) break;
 
                         // Skip whitespace
@@ -152,14 +122,14 @@ public static class GoogleJobsParser
                         }
 
                         // Extract the JSON array by matching brackets
-                        var depth = 0;
-                        var jsonEnd = jsonStart;
-                        var inString = false;
-                        var escapeNext = false;
+                        int depth = 0;
+                        int jsonEnd = jsonStart;
+                        bool inString = false;
+                        bool escapeNext = false;
 
                         for (; jsonEnd < html.Length && jsonEnd < jsonStart + 500000; jsonEnd++)
                         {
-                            var ch = html[jsonEnd];
+                            char ch = html[jsonEnd];
 
                             if (escapeNext)
                             {
@@ -199,7 +169,7 @@ public static class GoogleJobsParser
                             continue;
                         }
 
-                        var jsonString = html.Substring(jsonStart, jsonEnd - jsonStart);
+                        string jsonString = html.Substring(jsonStart, jsonEnd - jsonStart);
 
                         try
                         {
@@ -208,11 +178,11 @@ public static class GoogleJobsParser
                             if (doc.RootElement.ValueKind == JsonValueKind.Array)
                             {
                                 // Process each job in the array
-                                foreach (var jobArray in doc.RootElement.EnumerateArray())
+                                foreach (JsonElement jobArray in doc.RootElement.EnumerateArray())
                                 {
                                     if (jobArray.ValueKind == JsonValueKind.Array)
                                     {
-                                        var job = ExtractJobFromJobspyFormat(jobArray);
+                                        JobListing? job = ExtractJobFromJobspyFormat(jobArray);
                                         if (job != null)
                                         {
                                             jobs.Add(job);
@@ -275,10 +245,10 @@ public static class GoogleJobsParser
             // Parse URL from nested array at index 3
             if (jobArray.GetArrayLength() > 3)
             {
-                var urlElement = jobArray[3];
+                JsonElement urlElement = jobArray[3];
                 if (urlElement.ValueKind == System.Text.Json.JsonValueKind.Array && urlElement.GetArrayLength() > 0)
                 {
-                    var urlArray = urlElement[0];
+                    JsonElement urlArray = urlElement[0];
                     if (urlArray.ValueKind == System.Text.Json.JsonValueKind.Array && urlArray.GetArrayLength() > 0)
                     {
                         url = GetStringAt(urlArray, 0);
@@ -287,14 +257,14 @@ public static class GoogleJobsParser
             }
 
             // Parse date posted (e.g., "3 days ago")
-            var postedAt = DateTimeOffset.UtcNow;
+            DateTimeOffset postedAt = DateTimeOffset.UtcNow;
             if (!string.IsNullOrWhiteSpace(datePostedStr))
             {
-                var match = System.Text.RegularExpressions.Regex.Match(datePostedStr, @"(\d+)\s+(day|days|hour|hours|week|weeks|month|months)\s+ago");
+                Match match = System.Text.RegularExpressions.Regex.Match(datePostedStr, @"(\d+)\s+(day|days|hour|hours|week|weeks|month|months)\s+ago");
                 if (match.Success)
                 {
-                    var num = int.TryParse(match.Groups[1].Value, out var n) ? n : 0;
-                    var unit = match.Groups[2].Value.ToLowerInvariant();
+                    int num = int.TryParse(match.Groups[1].Value, out int n) ? n : 0;
+                    string unit = match.Groups[2].Value.ToLowerInvariant();
                     postedAt = unit switch
                     {
                         "hour" or "hours" => DateTimeOffset.UtcNow.AddHours(-num),
@@ -334,12 +304,12 @@ public static class GoogleJobsParser
         try
         {
             // Look for script tags with type="application/json"
-            var scriptPattern = @"<script\s+type\s*=\s*[""']application/json[""'][^>]*>(.*?)</script>";
-            var matches = System.Text.RegularExpressions.Regex.Matches(html, scriptPattern, System.Text.RegularExpressions.RegexOptions.Singleline);
+            string scriptPattern = @"<script\s+type\s*=\s*[""']application/json[""'][^>]*>(.*?)</script>";
+            MatchCollection matches = System.Text.RegularExpressions.Regex.Matches(html, scriptPattern, System.Text.RegularExpressions.RegexOptions.Singleline);
 
             foreach (System.Text.RegularExpressions.Match match in matches)
             {
-                var jsonContent = match.Groups[1].Value.Trim();
+                string jsonContent = match.Groups[1].Value.Trim();
                 LogScriptTagFound(logger, "application/json", null);
 
                 // Check if the JSON contains "jobs" or "job"
@@ -349,7 +319,7 @@ public static class GoogleJobsParser
                     try
                     {
                         using var doc = JsonDocument.Parse(jsonContent);
-                        var jobs = ExtractJobsFromJsonDocument(doc, logger);
+                        List<JobListing> jobs = ExtractJobsFromJsonDocument(doc, logger);
                         if (jobs.Count > 0)
                         {
                             LogStrategySuccess(logger, "ScriptTags", null);
@@ -384,25 +354,25 @@ public static class GoogleJobsParser
         try
         {
             // Look for data-ved attributes which Google commonly uses
-            var dataVedPattern = @"data-ved\s*=\s*[""']([^""']+)[""']";
-            var matches = System.Text.RegularExpressions.Regex.Matches(html, dataVedPattern);
+            string dataVedPattern = @"data-ved\s*=\s*[""']([^""']+)[""']";
+            MatchCollection matches = System.Text.RegularExpressions.Regex.Matches(html, dataVedPattern);
 
             foreach (System.Text.RegularExpressions.Match match in matches)
             {
-                var vedValue = match.Groups[1].Value;
+                string vedValue = match.Groups[1].Value;
                 LogDataVedFound(logger, vedValue, null);
 
                 // Try to find JSON near the data-ved attribute
-                var matchIndex = match.Index;
-                var beforeMatch = html.Substring(Math.Max(0, matchIndex - 5000), Math.Min(5000, matchIndex));
-                var afterMatch = html.Substring(matchIndex, Math.Min(5000, html.Length - matchIndex));
+                int matchIndex = match.Index;
+                string beforeMatch = html.Substring(Math.Max(0, matchIndex - 5000), Math.Min(5000, matchIndex));
+                string afterMatch = html.Substring(matchIndex, Math.Min(5000, html.Length - matchIndex));
 
                 // Look for JSON arrays in the vicinity
-                var jsonStart = beforeMatch.LastIndexOf('[');
+                int jsonStart = beforeMatch.LastIndexOf('[');
                 if (jsonStart >= 0)
                 {
-                    var actualStart = matchIndex - (beforeMatch.Length - jsonStart);
-                    var jobs = ExtractJobsFromJsonArray(html, actualStart, logger);
+                    int actualStart = matchIndex - (beforeMatch.Length - jsonStart);
+                    List<JobListing> jobs = ExtractJobsFromJsonArray(html, actualStart, logger);
                     if (jobs.Count > 0)
                     {
                         LogStrategySuccess(logger, "DataVedAttributes", null);
@@ -432,23 +402,23 @@ public static class GoogleJobsParser
         try
         {
             // Look for AF_initDataCallback patterns
-            var afInitPattern = @"AF_initDataCallback\(([^)]+)\)";
-            var matches = System.Text.RegularExpressions.Regex.Matches(html, afInitPattern);
+            string afInitPattern = @"AF_initDataCallback\(([^)]+)\)";
+            MatchCollection matches = System.Text.RegularExpressions.Regex.Matches(html, afInitPattern);
 
             foreach (System.Text.RegularExpressions.Match match in matches)
             {
-                var callbackContent = match.Groups[1].Value;
+                string callbackContent = match.Groups[1].Value;
                 LogAfInitDataFound(logger, callbackContent.Length.ToString(System.Globalization.CultureInfo.InvariantCulture), null);
 
                 // Try to extract JSON from the callback
-                var jsonStart = callbackContent.IndexOf('[');
+                int jsonStart = callbackContent.IndexOf('[');
                 if (jsonStart >= 0)
                 {
-                    var jsonContent = callbackContent.Substring(jsonStart);
+                    string jsonContent = callbackContent.Substring(jsonStart);
                     try
                     {
                         using var doc = JsonDocument.Parse(jsonContent);
-                        var jobs = ExtractJobsFromJsonDocument(doc, logger);
+                        List<JobListing> jobs = ExtractJobsFromJsonDocument(doc, logger);
                         if (jobs.Count > 0)
                         {
                             LogStrategySuccess(logger, "AfInitDataCallback", null);
@@ -483,14 +453,14 @@ public static class GoogleJobsParser
         try
         {
             // Look for JSON-LD script tags
-            var jsonLdPattern = @"<script\s+type\s*=\s*[""']application/ld\+json[""'][^>]*>(.*?)</script>";
-            var matches = System.Text.RegularExpressions.Regex.Matches(html, jsonLdPattern, System.Text.RegularExpressions.RegexOptions.Singleline);
+            string jsonLdPattern = @"<script\s+type\s*=\s*[""']application/ld\+json[""'][^>]*>(.*?)</script>";
+            MatchCollection matches = System.Text.RegularExpressions.Regex.Matches(html, jsonLdPattern, System.Text.RegularExpressions.RegexOptions.Singleline);
 
             var jobs = new List<JobListing>();
 
             foreach (System.Text.RegularExpressions.Match match in matches)
             {
-                var jsonContent = match.Groups[1].Value.Trim();
+                string jsonContent = match.Groups[1].Value.Trim();
 
                 try
                 {
@@ -499,22 +469,22 @@ public static class GoogleJobsParser
                     // Check if it's a JobPosting or array of JobPosting
                     if (doc.RootElement.ValueKind == JsonValueKind.Object)
                     {
-                        if (doc.RootElement.TryGetProperty("@type", out var type) &&
+                        if (doc.RootElement.TryGetProperty("@type", out JsonElement type) &&
                             type.GetString() == "JobPosting")
                         {
-                            var job = ExtractJobFromJsonLd(doc.RootElement);
+                            JobListing? job = ExtractJobFromJsonLd(doc.RootElement);
                             if (job != null) jobs.Add(job);
                         }
                     }
                     else if (doc.RootElement.ValueKind == JsonValueKind.Array)
                     {
-                        foreach (var item in doc.RootElement.EnumerateArray())
+                        foreach (JsonElement item in doc.RootElement.EnumerateArray())
                         {
                             if (item.ValueKind == JsonValueKind.Object &&
-                                item.TryGetProperty("@type", out var type) &&
+                                item.TryGetProperty("@type", out JsonElement type) &&
                                 type.GetString() == "JobPosting")
                             {
-                                var job = ExtractJobFromJsonLd(item);
+                                JobListing? job = ExtractJobFromJsonLd(item);
                                 if (job != null) jobs.Add(job);
                             }
                         }
@@ -551,33 +521,33 @@ public static class GoogleJobsParser
     {
         try
         {
-            string title = element.TryGetProperty("title", out var titleProp) ? titleProp.GetString() ?? string.Empty : string.Empty;
-            string company = element.TryGetProperty("hiringOrganization", out var orgProp) && orgProp.ValueKind == JsonValueKind.Object
-                ? (orgProp.TryGetProperty("name", out var nameProp) ? nameProp.GetString() ?? string.Empty : string.Empty)
+            string title = element.TryGetProperty("title", out JsonElement titleProp) ? titleProp.GetString() ?? string.Empty : string.Empty;
+            string company = element.TryGetProperty("hiringOrganization", out JsonElement orgProp) && orgProp.ValueKind == JsonValueKind.Object
+                ? (orgProp.TryGetProperty("name", out JsonElement nameProp) ? nameProp.GetString() ?? string.Empty : string.Empty)
                 : string.Empty;
-            string location = element.TryGetProperty("jobLocation", out var locProp) && locProp.ValueKind == JsonValueKind.Object
-                ? (locProp.TryGetProperty("address", out var addrProp) && addrProp.ValueKind == JsonValueKind.Object
-                    ? (addrProp.TryGetProperty("addressLocality", out var localityProp) ? localityProp.GetString() ?? string.Empty : string.Empty)
+            string location = element.TryGetProperty("jobLocation", out JsonElement locProp) && locProp.ValueKind == JsonValueKind.Object
+                ? (locProp.TryGetProperty("address", out JsonElement addrProp) && addrProp.ValueKind == JsonValueKind.Object
+                    ? (addrProp.TryGetProperty("addressLocality", out JsonElement localityProp) ? localityProp.GetString() ?? string.Empty : string.Empty)
                     : string.Empty)
                 : string.Empty;
-            string description = element.TryGetProperty("description", out var descProp) ? descProp.GetString() ?? string.Empty : string.Empty;
-            string id = element.TryGetProperty("identifier", out var idProp) && idProp.ValueKind == JsonValueKind.Object
-                ? (idProp.TryGetProperty("value", out var valProp) ? valProp.GetString() ?? Guid.NewGuid().ToString() : Guid.NewGuid().ToString())
+            string description = element.TryGetProperty("description", out JsonElement descProp) ? descProp.GetString() ?? string.Empty : string.Empty;
+            string id = element.TryGetProperty("identifier", out JsonElement idProp) && idProp.ValueKind == JsonValueKind.Object
+                ? (idProp.TryGetProperty("value", out JsonElement valProp) ? valProp.GetString() ?? Guid.NewGuid().ToString() : Guid.NewGuid().ToString())
                 : Guid.NewGuid().ToString();
 
             if (string.IsNullOrWhiteSpace(title)) return null;
 
             // Extract salary if available
             string? salary = null;
-            if (element.TryGetProperty("baseSalary", out var salaryProp))
+            if (element.TryGetProperty("baseSalary", out JsonElement salaryProp))
             {
                 if (salaryProp.ValueKind == JsonValueKind.Object)
                 {
-                    if (salaryProp.TryGetProperty("value", out var salaryValue) && salaryValue.ValueKind == JsonValueKind.Object)
+                    if (salaryProp.TryGetProperty("value", out JsonElement salaryValue) && salaryValue.ValueKind == JsonValueKind.Object)
                     {
-                        var min = salaryValue.TryGetProperty("minValue", out var minProp) ? minProp.GetDecimal() : 0;
-                        var max = salaryValue.TryGetProperty("maxValue", out var maxProp) ? maxProp.GetDecimal() : 0;
-                        var currency = salaryValue.TryGetProperty("currency", out var currProp) ? currProp.GetString() : "USD";
+                        decimal min = salaryValue.TryGetProperty("minValue", out JsonElement minProp) ? minProp.GetDecimal() : 0;
+                        decimal max = salaryValue.TryGetProperty("maxValue", out JsonElement maxProp) ? maxProp.GetDecimal() : 0;
+                        string? currency = salaryValue.TryGetProperty("currency", out JsonElement currProp) ? currProp.GetString() : "USD";
                         if (min > 0 || max > 0)
                         {
                             salary = $"{currency} {min}-{max}";
@@ -592,9 +562,9 @@ public static class GoogleJobsParser
 
             // Extract job type
             JobType jobType = JobType.Unknown;
-            if (element.TryGetProperty("employmentType", out var empTypeProp))
+            if (element.TryGetProperty("employmentType", out JsonElement empTypeProp))
             {
-                var empType = empTypeProp.GetString()?.ToLowerInvariant();
+                string? empType = empTypeProp.GetString()?.ToLowerInvariant();
                 if (empType != null)
                 {
                     if (empType.Contains("full")) jobType = JobType.FullTime;
@@ -606,9 +576,9 @@ public static class GoogleJobsParser
 
             // Extract posted date
             DateTimeOffset postedAt = DateTimeOffset.UtcNow;
-            if (element.TryGetProperty("datePosted", out var datePostedProp))
+            if (element.TryGetProperty("datePosted", out JsonElement datePostedProp))
             {
-                if (DateTimeOffset.TryParse(datePostedProp.GetString(), out var dt))
+                if (DateTimeOffset.TryParse(datePostedProp.GetString(), out DateTimeOffset dt))
                 {
                     postedAt = dt;
                 }
@@ -642,11 +612,11 @@ public static class GoogleJobsParser
 
         if (doc.RootElement.ValueKind == JsonValueKind.Array)
         {
-            foreach (var item in doc.RootElement.EnumerateArray())
+            foreach (JsonElement item in doc.RootElement.EnumerateArray())
             {
                 if (item.ValueKind == JsonValueKind.Array)
                 {
-                    var job = ExtractJobFromNestedArray(item);
+                    JobListing? job = ExtractJobFromNestedArray(item);
                     if (job != null) jobs.Add(job);
                 }
             }
@@ -654,15 +624,15 @@ public static class GoogleJobsParser
         else if (doc.RootElement.ValueKind == JsonValueKind.Object)
         {
             // Try to find an array property containing jobs
-            foreach (var prop in doc.RootElement.EnumerateObject())
+            foreach (JsonProperty prop in doc.RootElement.EnumerateObject())
             {
                 if (prop.Value.ValueKind == JsonValueKind.Array)
                 {
-                    foreach (var item in prop.Value.EnumerateArray())
+                    foreach (JsonElement item in prop.Value.EnumerateArray())
                     {
                         if (item.ValueKind == JsonValueKind.Array)
                         {
-                            var job = ExtractJobFromNestedArray(item);
+                            JobListing? job = ExtractJobFromNestedArray(item);
                             if (job != null) jobs.Add(job);
                         }
                     }
@@ -678,8 +648,8 @@ public static class GoogleJobsParser
     /// </summary>
     private static List<JobListing> ExtractJobsFromJsonArray(string html, int start, ILogger logger)
     {
-        var maxLen = Math.Min(html.Length - start, 400000);
-        var snippet = html.Substring(start, maxLen);
+        int maxLen = Math.Min(html.Length - start, 400000);
+        string snippet = html.Substring(start, maxLen);
         LogJsonCandidateExtraction(logger, snippet.Length, null);
 
         var jobs = new List<JobListing>();
@@ -701,7 +671,7 @@ public static class GoogleJobsParser
 
             if (depth != 0) break;
 
-            var content = snippet.Substring(i, j - i + 1);
+            string content = snippet.Substring(i, j - i + 1);
             i = j;
 
             try
@@ -713,11 +683,11 @@ public static class GoogleJobsParser
                     continue;
                 }
 
-                foreach (var item in doc.RootElement.EnumerateArray())
+                foreach (JsonElement item in doc.RootElement.EnumerateArray())
                 {
                     if (item.ValueKind != JsonValueKind.Array) continue;
 
-                    var job = ExtractJobFromNestedArray(item);
+                    JobListing? job = ExtractJobFromNestedArray(item);
                     if (job != null) jobs.Add(job);
                 }
             }
@@ -757,13 +727,13 @@ public static class GoogleJobsParser
             if (!string.IsNullOrWhiteSpace(postedAtStr))
             {
                 // Try to parse relative times like "3 days ago" or absolute timestamps
-                if (DateTimeOffset.TryParse(postedAtStr, out var dt)) postedAt = dt;
+                if (DateTimeOffset.TryParse(postedAtStr, out DateTimeOffset dt)) postedAt = dt;
             }
 
             JobType jobType = JobType.Unknown;
             if (!string.IsNullOrWhiteSpace(jobTypeStr))
             {
-                var jt = jobTypeStr.ToLowerInvariant();
+                string jt = jobTypeStr.ToLowerInvariant();
                 if (jt.Contains("full")) jobType = JobType.FullTime;
                 else if (jt.Contains("part")) jobType = JobType.PartTime;
                 else if (jt.Contains("contract")) jobType = JobType.Contract;
@@ -804,7 +774,7 @@ public static class GoogleJobsParser
             LogDetectedConsentPage(logger, null);
 
             // Log a preview of the HTML for debugging
-            var preview = html.Length > 1000 ? html.Substring(0, 1000) : html;
+            string preview = html.Length > 1000 ? html.Substring(0, 1000) : html;
             LogConsentPagePreview(logger, preview, null);
 
             return Array.Empty<JobListing>();
@@ -813,7 +783,7 @@ public static class GoogleJobsParser
         string processedHtml = html;
         if (html.StartsWith(")]}", StringComparison.Ordinal) || html.StartsWith(")]}'", StringComparison.Ordinal) || html.StartsWith("\n)]}", StringComparison.Ordinal) || html.StartsWith("\n)]}'", StringComparison.Ordinal))
         {
-            var firstBracket = html.IndexOf('[', StringComparison.Ordinal);
+            int firstBracket = html.IndexOf('[', StringComparison.Ordinal);
             if (firstBracket >= 0)
             {
                 processedHtml = html.Substring(firstBracket);
@@ -842,17 +812,17 @@ public static class GoogleJobsParser
 
         // All strategies failed - log detailed diagnostic info
         // Check for common Google patterns
-        var hasDataVed = processedHtml.Contains("data-ved");
-        var hasJobsKeyword = processedHtml.Contains("jobs", StringComparison.OrdinalIgnoreCase);
-        var hasHtlJobs = processedHtml.Contains("htl;jobs", StringComparison.OrdinalIgnoreCase);
-        var hasJsonLd = processedHtml.Contains("application/ld+json", StringComparison.OrdinalIgnoreCase);
-        var hasScriptTags = processedHtml.Contains("<script", StringComparison.OrdinalIgnoreCase);
+        bool hasDataVed = processedHtml.Contains("data-ved");
+        bool hasJobsKeyword = processedHtml.Contains("jobs", StringComparison.OrdinalIgnoreCase);
+        bool hasHtlJobs = processedHtml.Contains("htl;jobs", StringComparison.OrdinalIgnoreCase);
+        bool hasJsonLd = processedHtml.Contains("application/ld+json", StringComparison.OrdinalIgnoreCase);
+        bool hasScriptTags = processedHtml.Contains("<script", StringComparison.OrdinalIgnoreCase);
 
         LogPatternDetection(logger, processedHtml.Length, hasDataVed, hasJobsKeyword, hasHtlJobs, hasJsonLd, hasScriptTags, null);
 
         // Log a sample of the HTML
-        var sampleSize = Math.Min(2000, processedHtml.Length);
-        var htmlSample = processedHtml.Substring(0, sampleSize);
+        int sampleSize = Math.Min(2000, processedHtml.Length);
+        string htmlSample = processedHtml.Substring(0, sampleSize);
         LogHtmlSample(logger, sampleSize, htmlSample, null);
 
         return Array.Empty<JobListing>();
@@ -874,7 +844,7 @@ public static class GoogleJobsParser
 
             if (start < 0)
             {
-                var altIdx = html.IndexOf("htl;jobs", StringComparison.OrdinalIgnoreCase);
+                int altIdx = html.IndexOf("htl;jobs", StringComparison.OrdinalIgnoreCase);
                 if (altIdx >= 0)
                 {
                     LogFoundHtlJobs(logger, altIdx, null);
@@ -902,7 +872,7 @@ public static class GoogleJobsParser
                 return null;
             }
 
-            var jobs = ExtractJobsFromJsonArray(html, start, logger);
+            List<JobListing> jobs = ExtractJobsFromJsonArray(html, start, logger);
             if (jobs.Count > 0)
             {
                 LogStrategySuccess(logger, "LegacyFallback", null);
@@ -926,7 +896,7 @@ public static class GoogleJobsParser
         {
             if (arr.ValueKind != JsonValueKind.Array) return null;
             int i = 0;
-            foreach (var el in arr.EnumerateArray())
+            foreach (JsonElement el in arr.EnumerateArray())
             {
                 if (i++ == idx)
                 {

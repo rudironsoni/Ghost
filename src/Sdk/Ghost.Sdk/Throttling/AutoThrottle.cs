@@ -107,8 +107,8 @@ public sealed class AutoThrottle : IAutoThrottle
         // Calculate average latency from all samples
         if (!_latencies.IsEmpty)
         {
-            var avgLatency = _latencies.Average(l => l.TotalMilliseconds);
-            var targetLatencyMs = _options.TargetLatency.TotalMilliseconds;
+            double avgLatency = _latencies.Average(l => l.TotalMilliseconds);
+            double targetLatencyMs = _options.TargetLatency.TotalMilliseconds;
 
             lock (_delayLock)
             {
@@ -160,7 +160,7 @@ public sealed class AutoThrottle : IAutoThrottle
                 return TimeSpan.Zero;
             }
 
-            var avgMs = _latencies.Average(l => l.TotalMilliseconds);
+            double avgMs = _latencies.Average(l => l.TotalMilliseconds);
             return TimeSpan.FromMilliseconds(avgMs);
         }
     }

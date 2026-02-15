@@ -5,9 +5,9 @@ namespace Ghost.Engine.Abstractions.Spider;
 
 public interface ISpider
 {
-    string Name { get; }
+    public string Name { get; }
 
-    IAsyncEnumerable<GhostRequest> StartRequestsAsync(GhostEngineContext context, CancellationToken cancellationToken = default);
+    public IAsyncEnumerable<GhostRequest> StartRequestsAsync(GhostEngineContext context, CancellationToken cancellationToken = default);
 
-    Task<SpiderOutput> ParseAsync(GhostResponse response, GhostEngineContext context, CancellationToken cancellationToken = default);
+    public Task<SpiderOutput> ParseAsync(GhostResponse response, GhostEngineContext context, CancellationToken cancellationToken = default);
 }

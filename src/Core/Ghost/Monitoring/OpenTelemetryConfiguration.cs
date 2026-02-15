@@ -28,11 +28,11 @@ public static class OpenTelemetryConfiguration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var telemetryConfig = configuration.GetSection("Ghost:Monitoring:Telemetry");
-        var exportTraces = telemetryConfig.GetValue("ExportTraces", false);
-        var exportMetrics = telemetryConfig.GetValue("ExportMetrics", false);
-        var otlpEndpoint = telemetryConfig.GetValue<string?>("OtlpEndpoint");
-        var serviceName = configuration.GetValue("Ghost:ServiceName", "Ghost");
+        IConfigurationSection telemetryConfig = configuration.GetSection("Ghost:Monitoring:Telemetry");
+        bool exportTraces = telemetryConfig.GetValue("ExportTraces", false);
+        bool exportMetrics = telemetryConfig.GetValue("ExportMetrics", false);
+        string? otlpEndpoint = telemetryConfig.GetValue<string?>("OtlpEndpoint");
+        string serviceName = configuration.GetValue("Ghost:ServiceName", "Ghost");
 
         if (!exportTraces && !exportMetrics)
         {
@@ -47,8 +47,8 @@ public static class OpenTelemetryConfiguration
                     serviceVersion: typeof(OpenTelemetryConfiguration).Assembly.GetName().Version?.ToString() ?? "1.0.0");
 
                 // Add custom attributes from configuration
-                var customAttributes = telemetryConfig.GetSection("CustomAttributes").GetChildren();
-                foreach (var attribute in customAttributes)
+                IEnumerable<IConfigurationSection> customAttributes = telemetryConfig.GetSection("CustomAttributes").GetChildren();
+                foreach (IConfigurationSection attribute in customAttributes)
                 {
                     if (!string.IsNullOrWhiteSpace(attribute.Value))
                     {
@@ -74,7 +74,7 @@ public static class OpenTelemetryConfiguration
                         options.Filter = httpContext =>
                         {
                             // Don't trace health check endpoints to reduce noise
-                            var path = httpContext.Request.Path.Value ?? string.Empty;
+                            string path = httpContext.Request.Path.Value ?? string.Empty;
                             return !path.Contains("/health", StringComparison.OrdinalIgnoreCase);
                         };
                     })
@@ -84,7 +84,7 @@ public static class OpenTelemetryConfiguration
                         options.FilterHttpRequestMessage = request =>
                         {
                             // Don't trace health check requests
-                            var uri = request.RequestUri?.ToString() ?? string.Empty;
+                            string uri = request.RequestUri?.ToString() ?? string.Empty;
                             return !uri.Contains("/health", StringComparison.OrdinalIgnoreCase);
                         };
                     });

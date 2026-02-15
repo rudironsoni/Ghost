@@ -42,13 +42,13 @@ public class ConsentHandler : IConsentHandler
             _logger.LogDebug("Detecting CMP on page: {Url}", page.Url);
         }
 
-        var configs = CMPDatabase.GetAllConfigs();
+        IReadOnlyList<CMPConfig> configs = CMPDatabase.GetAllConfigs();
 
-        foreach (var config in configs)
+        foreach (CMPConfig config in configs)
         {
             try
             {
-                var detected = await DetectCMPInternalAsync(page, config);
+                bool detected = await DetectCMPInternalAsync(page, config).ConfigureAwait(false);
                 if (detected)
                 {
                     if (_logger.IsEnabled(LogLevel.Information))
@@ -77,7 +77,7 @@ public class ConsentHandler : IConsentHandler
         ArgumentNullException.ThrowIfNull(page);
         ArgumentNullException.ThrowIfNull(cmpType);
 
-        var config = CMPDatabase.GetConfig(cmpType);
+        CMPConfig? config = CMPDatabase.GetConfig(cmpType);
         if (config == null)
         {
             _logger.LogWarning("Unknown CMP type: {CmpType}", cmpType);
@@ -91,7 +91,7 @@ public class ConsentHandler : IConsentHandler
 
         try
         {
-            var accepted = await AcceptConsentInternalAsync(page, config);
+            bool accepted = await AcceptConsentInternalAsync(page, config).ConfigureAwait(false);
             if (accepted)
             {
                 if (_logger.IsEnabled(LogLevel.Information))
@@ -100,10 +100,10 @@ public class ConsentHandler : IConsentHandler
                 }
 
                 // Wait for banner to disappear
-                await Task.Delay(1000);
+                await Task.Delay(1000).ConfigureAwait(false);
 
                 // Verify banner is gone
-                var stillPresent = await DetectCMPInternalAsync(page, config);
+                bool stillPresent = await DetectCMPInternalAsync(page, config).ConfigureAwait(false);
                 if (!stillPresent)
                 {
                     _logger.LogInformation("Consent banner successfully dismissed");
@@ -132,7 +132,7 @@ public class ConsentHandler : IConsentHandler
         }
 
         // Detect privacy regulation for context
-        var regulation = await RegionDetector.DetectRegulationAsync(page);
+        RegionDetector.PrivacyRegulation regulation = await RegionDetector.DetectRegulationAsync(page).ConfigureAwait(false);
         if (regulation != RegionDetector.PrivacyRegulation.Unknown)
         {
             if (_logger.IsEnabled(LogLevel.Information))
@@ -145,14 +145,14 @@ public class ConsentHandler : IConsentHandler
             }
         }
 
-        var cmpType = await DetectCMPAsync(page);
+        string? cmpType = await DetectCMPAsync(page).ConfigureAwait(false);
         if (cmpType == null)
         {
             _logger.LogDebug("No consent banner detected");
             return false;
         }
 
-        return await AcceptConsentAsync(page, cmpType);
+        return await AcceptConsentAsync(page, cmpType).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -161,14 +161,14 @@ public class ConsentHandler : IConsentHandler
     /// </summary>
     private async Task<bool> DetectCMPInternalAsync(IPage page, CMPConfig config)
     {
-        foreach (var selector in config.Detectors)
+        foreach (string selector in config.Detectors)
         {
             try
             {
                 if (config.IsIframe)
                 {
                     // For iframe-based CMPs, check if iframe exists
-                    var frame = await page.QuerySelectorAsync(selector);
+                    IElement? frame = await page.QuerySelectorAsync(selector).ConfigureAwait(false);
                     if (frame != null)
                     {
                         if (_logger.IsEnabled(LogLevel.Debug))
@@ -181,10 +181,10 @@ public class ConsentHandler : IConsentHandler
                 else
                 {
                     // Check regular DOM first
-                    var element = await page.QuerySelectorAsync(selector);
+                    IElement? element = await page.QuerySelectorAsync(selector).ConfigureAwait(false);
                     if (element != null)
                     {
-                        var isVisible = await element.IsVisibleAsync();
+                        bool isVisible = await element.IsVisibleAsync().ConfigureAwait(false);
                         if (isVisible)
                         {
                             if (_logger.IsEnabled(LogLevel.Debug))
@@ -196,7 +196,7 @@ public class ConsentHandler : IConsentHandler
                     }
 
                     // Check shadow DOM if not found in regular DOM
-                    var foundInShadow = await ShadowDOMHelper.FindInShadowDOMAsync(page, selector);
+                    bool foundInShadow = await ShadowDOMHelper.FindInShadowDOMAsync(page, selector).ConfigureAwait(false);
                     if (foundInShadow)
                     {
                         if (_logger.IsEnabled(LogLevel.Debug))
@@ -231,17 +231,17 @@ public class ConsentHandler : IConsentHandler
         // Handle multi-step flows
         if (config.MultiStep && config.Steps != null)
         {
-            return await HandleMultiStepConsentAsync(page, config);
+            return await HandleMultiStepConsentAsync(page, config).ConfigureAwait(false);
         }
 
         // Single-step flow: try each selector
-        foreach (var selector in selectors)
+        foreach (string selector in selectors)
         {
             try
             {
                 if (config.IsIframe)
                 {
-                    var clicked = await page.EvaluateAsync<bool>($@"
+                    bool clicked = await page.EvaluateAsync<bool>($@"
                         () => {{
                             var iframe = document.querySelector('{config.Detectors.First().Replace("'", "\\'")}');
                             if (iframe && iframe.contentDocument) {{
@@ -250,7 +250,7 @@ public class ConsentHandler : IConsentHandler
                             }}
                             return false;
                         }}
-                    ");
+                    ").ConfigureAwait(false);
 
                     if (clicked)
                     {
@@ -264,11 +264,11 @@ public class ConsentHandler : IConsentHandler
                 else
                 {
                     // Try regular DOM first
-                    var button = await page.QuerySelectorAsync(selector);
+                    IElement? button = await page.QuerySelectorAsync(selector).ConfigureAwait(false);
                     if (button != null)
                     {
-                        var isVisible = await button.IsVisibleAsync();
-                        var isEnabled = await button.IsEnabledAsync();
+                        bool isVisible = await button.IsVisibleAsync().ConfigureAwait(false);
+                        bool isEnabled = await button.IsEnabledAsync().ConfigureAwait(false);
 
                         if (isVisible && isEnabled)
                         {
@@ -279,20 +279,20 @@ public class ConsentHandler : IConsentHandler
 
                             try
                             {
-                                await button.ClickAsync();
+                                await button.ClickAsync().ConfigureAwait(false);
                                 return true;
                             }
                             catch
                             {
                                 // Fallback to JavaScript click
-                                await page.EvaluateAsync<object>($"document.querySelector('{selector.Replace("'", "\\'")}')?.click()");
+                                await page.EvaluateAsync<object>($"document.querySelector('{selector.Replace("'", "\\'")}')?.click()").ConfigureAwait(false);
                                 return true;
                             }
                         }
                     }
 
                     // Try shadow DOM if regular DOM failed
-                    var clickedInShadow = await ShadowDOMHelper.ClickInShadowDOMAsync(page, selector);
+                    bool clickedInShadow = await ShadowDOMHelper.ClickInShadowDOMAsync(page, selector).ConfigureAwait(false);
                     if (clickedInShadow)
                     {
                         if (_logger.IsEnabled(LogLevel.Debug))
@@ -321,6 +321,6 @@ public class ConsentHandler : IConsentHandler
     /// </summary>
     private async Task<bool> HandleMultiStepConsentAsync(IPage page, CMPConfig config)
     {
-        return await _flowHandler.ExecuteMultiStepFlowAsync(page, config);
+        return await _flowHandler.ExecuteMultiStepFlowAsync(page, config).ConfigureAwait(false);
     }
 }

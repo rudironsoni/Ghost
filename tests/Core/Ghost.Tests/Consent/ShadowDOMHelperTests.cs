@@ -16,7 +16,7 @@ public class ShadowDOMHelperTests
         // Act & Assert
 #pragma warning disable CS8604 // Possible null reference argument
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await ShadowDOMHelper.FindInShadowDOMAsync(page, ".test"));
+            async () => await ShadowDOMHelper.FindInShadowDOMAsync(page, ".test").ConfigureAwait(false)).ConfigureAwait(false);
 #pragma warning restore CS8604
     }
 
@@ -29,7 +29,7 @@ public class ShadowDOMHelperTests
         // Act & Assert
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await ShadowDOMHelper.FindInShadowDOMAsync(mockPage.Object, null));
+            async () => await ShadowDOMHelper.FindInShadowDOMAsync(mockPage.Object, null).ConfigureAwait(false)).ConfigureAwait(false);
 #pragma warning restore CS8625
     }
 
@@ -42,7 +42,7 @@ public class ShadowDOMHelperTests
         // Act & Assert
 #pragma warning disable CS8604 // Possible null reference argument
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await ShadowDOMHelper.ClickInShadowDOMAsync(page, ".test"));
+            async () => await ShadowDOMHelper.ClickInShadowDOMAsync(page, ".test").ConfigureAwait(false)).ConfigureAwait(false);
 #pragma warning restore CS8604
     }
 
@@ -55,7 +55,7 @@ public class ShadowDOMHelperTests
         // Act & Assert
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await ShadowDOMHelper.ClickInShadowDOMAsync(mockPage.Object, null));
+            async () => await ShadowDOMHelper.ClickInShadowDOMAsync(mockPage.Object, null).ConfigureAwait(false)).ConfigureAwait(false);
 #pragma warning restore CS8625
     }
 
@@ -68,7 +68,7 @@ public class ShadowDOMHelperTests
         // Act & Assert
 #pragma warning disable CS8604 // Possible null reference argument
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await ShadowDOMHelper.GetShadowRootCountAsync(page));
+            async () => await ShadowDOMHelper.GetShadowRootCountAsync(page).ConfigureAwait(false)).ConfigureAwait(false);
 #pragma warning restore CS8604
     }
 
@@ -81,7 +81,7 @@ public class ShadowDOMHelperTests
             .ThrowsAsync(new InvalidOperationException("Test error"));
 
         // Act
-        var count = await ShadowDOMHelper.GetShadowRootCountAsync(mockPage.Object);
+        int count = await ShadowDOMHelper.GetShadowRootCountAsync(mockPage.Object).ConfigureAwait(false);
 
         // Assert
         Assert.Equal(0, count);
@@ -98,7 +98,7 @@ public class ShadowDOMHelperTests
             .ThrowsAsync(new InvalidOperationException("Test error"));
 
         // Act
-        var result = await ShadowDOMHelper.FindInShadowDOMAsync(mockPage.Object, ".test");
+        bool result = await ShadowDOMHelper.FindInShadowDOMAsync(mockPage.Object, ".test").ConfigureAwait(false);
 
         // Assert
         Assert.False(result);
@@ -115,7 +115,7 @@ public class ShadowDOMHelperTests
             .ThrowsAsync(new InvalidOperationException("Test error"));
 
         // Act
-        var result = await ShadowDOMHelper.ClickInShadowDOMAsync(mockPage.Object, ".test");
+        bool result = await ShadowDOMHelper.ClickInShadowDOMAsync(mockPage.Object, ".test").ConfigureAwait(false);
 
         // Assert
         Assert.False(result);

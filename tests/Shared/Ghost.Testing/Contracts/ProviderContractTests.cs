@@ -37,16 +37,16 @@ public abstract class ProviderContractTests<TAdapter>
     [Fact]
     public async Task RequiredFields_ArePresent()
     {
-        var adapter = CreateAdapter();
+        TAdapter adapter = CreateAdapter();
         var contract = new RequiredFieldsContract();
-        var result = await contract.ExecuteAsync(adapter);
+        ContractResult result = await contract.ExecuteAsync(adapter).ConfigureAwait(false);
 
         _output.WriteLine($"Contract: {result.ContractName}");
         _output.WriteLine($"Passed: {result.Passed}");
 
         if (!result.Passed)
         {
-            foreach (var error in result.Errors)
+            foreach (string error in result.Errors)
             {
                 _output.WriteLine($"Error: {error}");
             }
@@ -61,16 +61,16 @@ public abstract class ProviderContractTests<TAdapter>
     [Fact]
     public async Task Dedupe_IsCorrect()
     {
-        var adapter = CreateAdapter();
+        TAdapter adapter = CreateAdapter();
         var contract = new DedupeContract();
-        var result = await contract.ExecuteAsync(adapter);
+        ContractResult result = await contract.ExecuteAsync(adapter).ConfigureAwait(false);
 
         _output.WriteLine($"Contract: {result.ContractName}");
         _output.WriteLine($"Passed: {result.Passed}");
 
         if (!result.Passed)
         {
-            foreach (var error in result.Errors)
+            foreach (string error in result.Errors)
             {
                 _output.WriteLine($"Error: {error}");
             }
@@ -85,16 +85,16 @@ public abstract class ProviderContractTests<TAdapter>
     [Fact]
     public async Task Pagination_IsComplete()
     {
-        var adapter = CreateAdapter();
+        TAdapter adapter = CreateAdapter();
         var contract = new PaginationContract();
-        var result = await contract.ExecuteAsync(adapter);
+        ContractResult result = await contract.ExecuteAsync(adapter).ConfigureAwait(false);
 
         _output.WriteLine($"Contract: {result.ContractName}");
         _output.WriteLine($"Passed: {result.Passed}");
 
         if (!result.Passed)
         {
-            foreach (var error in result.Errors)
+            foreach (string error in result.Errors)
             {
                 _output.WriteLine($"Error: {error}");
             }
@@ -109,16 +109,16 @@ public abstract class ProviderContractTests<TAdapter>
     [Fact]
     public async Task RetryBehavior_IsCorrect()
     {
-        var adapter = CreateAdapter();
+        TAdapter adapter = CreateAdapter();
         var contract = new RetryBehaviorContract();
-        var result = await contract.ExecuteAsync(adapter);
+        ContractResult result = await contract.ExecuteAsync(adapter).ConfigureAwait(false);
 
         _output.WriteLine($"Contract: {result.ContractName}");
         _output.WriteLine($"Passed: {result.Passed}");
 
         if (!result.Passed)
         {
-            foreach (var error in result.Errors)
+            foreach (string error in result.Errors)
             {
                 _output.WriteLine($"Error: {error}");
             }
@@ -133,16 +133,16 @@ public abstract class ProviderContractTests<TAdapter>
     [Fact]
     public async Task ConsentFlow_IsCompliant()
     {
-        var adapter = CreateAdapter();
+        TAdapter adapter = CreateAdapter();
         var contract = new ConsentComplianceContract();
-        var result = await contract.ExecuteAsync(adapter);
+        ContractResult result = await contract.ExecuteAsync(adapter).ConfigureAwait(false);
 
         _output.WriteLine($"Contract: {result.ContractName}");
         _output.WriteLine($"Passed: {result.Passed}");
 
         if (!result.Passed)
         {
-            foreach (var error in result.Errors)
+            foreach (string error in result.Errors)
             {
                 _output.WriteLine($"Error: {error}");
             }
@@ -157,16 +157,16 @@ public abstract class ProviderContractTests<TAdapter>
     [Fact]
     public async Task Extraction_IsIdempotent()
     {
-        var adapter = CreateAdapter();
+        TAdapter adapter = CreateAdapter();
         var contract = new IdempotentExtractionContract();
-        var result = await contract.ExecuteAsync(adapter);
+        ContractResult result = await contract.ExecuteAsync(adapter).ConfigureAwait(false);
 
         _output.WriteLine($"Contract: {result.ContractName}");
         _output.WriteLine($"Passed: {result.Passed}");
 
         if (!result.Passed)
         {
-            foreach (var error in result.Errors)
+            foreach (string error in result.Errors)
             {
                 _output.WriteLine($"Error: {error}");
             }
@@ -181,7 +181,7 @@ public abstract class ProviderContractTests<TAdapter>
     [Fact]
     public async Task AllContracts_Pass()
     {
-        var adapter = CreateAdapter();
+        TAdapter adapter = CreateAdapter();
         var contracts = new List<IProviderContract>
         {
             new RequiredFieldsContract(),
@@ -193,7 +193,7 @@ public abstract class ProviderContractTests<TAdapter>
         };
 
         var runner = new ContractRunner(contracts);
-        var result = await runner.RunAsync(adapter);
+        ContractRunResult result = await runner.RunAsync(adapter).ConfigureAwait(false);
 
         _output.WriteLine($"Platform: {result.PlatformName}");
         _output.WriteLine($"Overall Passed: {result.Passed}");
@@ -201,13 +201,13 @@ public abstract class ProviderContractTests<TAdapter>
         _output.WriteLine($"Passed Contracts: {result.Results.Count(r => r.Passed)}");
         _output.WriteLine($"Failed Contracts: {result.FailedResults.Count}");
 
-        foreach (var contractResult in result.Results)
+        foreach (ContractResult contractResult in result.Results)
         {
             _output.WriteLine($"  {contractResult.ContractName}: {(contractResult.Passed ? "PASS" : "FAIL")}");
 
             if (!contractResult.Passed)
             {
-                foreach (var error in contractResult.Errors)
+                foreach (string error in contractResult.Errors)
                 {
                     _output.WriteLine($"    - {error}");
                 }

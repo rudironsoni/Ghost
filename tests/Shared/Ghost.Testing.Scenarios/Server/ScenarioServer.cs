@@ -31,10 +31,10 @@ public sealed class ScenarioServer : IDisposable
     /// </summary>
     public static async Task<ScenarioServer> CreateAsync(int? port = null, CancellationToken cancellationToken = default)
     {
-        var selectedPort = port ?? GetAvailablePort();
-        var baseUrl = $"http://localhost:{selectedPort}";
+        int selectedPort = port ?? GetAvailablePort();
+        string baseUrl = $"http://localhost:{selectedPort}";
 
-        var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+        WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
             Args = Array.Empty<string>(),
             EnvironmentName = Environments.Development
@@ -56,7 +56,7 @@ public sealed class ScenarioServer : IDisposable
             options.ListenLocalhost(selectedPort);
         });
 
-        var app = builder.Build();
+        WebApplication app = builder.Build();
 
         // Add middleware
         app.UseMiddleware<ConsentMiddleware>();
@@ -64,13 +64,13 @@ public sealed class ScenarioServer : IDisposable
         app.UseMiddleware<PaginationMiddleware>();
 
         // Configure routing
-        var registry = app.Services.GetRequiredService<ScenarioRegistry>();
+        ScenarioRegistry registry = app.Services.GetRequiredService<ScenarioRegistry>();
         registry.RegisterRoutes(app);
 
         // Start the server
-        await app.StartAsync(cancellationToken);
+        await app.StartAsync(cancellationToken).ConfigureAwait(false);
 
-        var logger = app.Services.GetRequiredService<ILogger<ScenarioServer>>();
+        ILogger<ScenarioServer> logger = app.Services.GetRequiredService<ILogger<ScenarioServer>>();
         if (logger.IsEnabled(LogLevel.Information))
         {
             logger.LogInformation("Scenario server started at {BaseUrl}", baseUrl);
@@ -86,7 +86,7 @@ public sealed class ScenarioServer : IDisposable
     {
         using var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
         listener.Start();
-        var port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+        int port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
         listener.Stop();
         return port;
     }
@@ -101,7 +101,7 @@ public sealed class ScenarioServer : IDisposable
             return;
         }
 
-        await _host.StopAsync(cancellationToken);
+        await _host.StopAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public void Dispose()

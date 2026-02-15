@@ -9,8 +9,8 @@ public class StealthScriptsTests
     [Fact]
     public void GetInitScriptContainsProfileValues()
     {
-        var profile = FingerprintGenerator.Generate();
-        var script = StealthScripts.GetInitScript(profile);
+        FingerprintProfile profile = FingerprintGenerator.Generate();
+        string script = StealthScripts.GetInitScript(profile);
 
         script.Should().Contain(profile.Cores.ToString(System.Globalization.CultureInfo.InvariantCulture));
         script.Should().Contain(profile.MemoryGb.ToString(System.Globalization.CultureInfo.InvariantCulture));
@@ -27,7 +27,7 @@ public class StealthScriptsTests
     [Fact]
     public void GetCanvasNoiseScriptContainsExpectedOverrides()
     {
-        var script = StealthScripts.GetCanvasNoiseScript();
+        string script = StealthScripts.GetCanvasNoiseScript();
 
         script.Should().Contain("CanvasRenderingContext2D.prototype.getImageData");
         script.Should().Contain("HTMLCanvasElement.prototype.toDataURL");

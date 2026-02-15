@@ -74,7 +74,7 @@ public static class EnhancedRetryPolicy
                     // Try to extract delay from Retry-After header
                     if (retryAttempt > 0)
                     {
-                        var delay = CalculateDelay(retryAttempt, enableJitter: true);
+                        TimeSpan delay = CalculateDelay(retryAttempt, enableJitter: true);
                         return delay;
                     }
                     return TimeSpan.Zero;
@@ -92,7 +92,7 @@ public static class EnhancedRetryPolicy
     /// <returns>True if the response should be retried, false otherwise</returns>
     private static bool ShouldRetry(HttpResponseMessage response)
     {
-        var statusCode = (int)response.StatusCode;
+        int statusCode = (int)response.StatusCode;
 
         // 429 Too Many Requests - rate limit, should retry with longer backoff
         if (statusCode == 429)
@@ -134,7 +134,7 @@ public static class EnhancedRetryPolicy
         // Add jitter if enabled to prevent thundering herd effect
         if (enableJitter)
         {
-            var jitterMs = _random.Next(250, 1000); // 250ms to 1000ms jitter
+            int jitterMs = _random.Next(250, 1000); // 250ms to 1000ms jitter
             baseDelay = baseDelay.Add(TimeSpan.FromMilliseconds(jitterMs));
         }
 
@@ -159,8 +159,8 @@ public static class EnhancedRetryPolicy
             return;
         }
 
-        var statusCode = outcome.Result?.StatusCode;
-        var exception = outcome.Exception;
+        HttpStatusCode? statusCode = outcome.Result?.StatusCode;
+        Exception exception = outcome.Exception;
 
         if (exception != null)
         {
@@ -168,7 +168,7 @@ public static class EnhancedRetryPolicy
         }
         else if (statusCode.HasValue)
         {
-            var errorType = GetErrorType(statusCode.Value);
+            string errorType = GetErrorType(statusCode.Value);
             LogRetryAttemptWithStatusCode(logger, retryCount, timeSpan.TotalMilliseconds, (int)statusCode.Value, errorType, null);
         }
     }

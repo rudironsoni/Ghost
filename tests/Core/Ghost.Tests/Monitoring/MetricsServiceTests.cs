@@ -14,7 +14,7 @@ public class MetricsServiceTests
         service.RecordRequest();
         service.RecordRequest();
 
-        var snapshot = service.GetSnapshot();
+        MetricsSnapshot snapshot = service.GetSnapshot();
 
         snapshot.TotalRequests.Should().Be(2);
     }
@@ -25,10 +25,10 @@ public class MetricsServiceTests
         var service = new MetricsService();
 
         service.RecordRequest();
-        var first = service.GetSnapshot();
+        MetricsSnapshot first = service.GetSnapshot();
 
         service.RecordRequest();
-        var second = service.GetSnapshot();
+        MetricsSnapshot second = service.GetSnapshot();
 
         first.TotalRequests.Should().Be(1);
         second.TotalRequests.Should().Be(2);
@@ -38,11 +38,11 @@ public class MetricsServiceTests
     public void GetSnapshotSetsTimestampWithinCallWindow()
     {
         var service = new MetricsService();
-        var before = DateTimeOffset.UtcNow;
+        DateTimeOffset before = DateTimeOffset.UtcNow;
 
-        var snapshot = service.GetSnapshot();
+        MetricsSnapshot snapshot = service.GetSnapshot();
 
-        var after = DateTimeOffset.UtcNow;
+        DateTimeOffset after = DateTimeOffset.UtcNow;
         snapshot.Timestamp.Should().BeOnOrAfter(before);
         snapshot.Timestamp.Should().BeOnOrBefore(after);
     }

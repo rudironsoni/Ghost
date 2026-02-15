@@ -24,7 +24,7 @@ public static class EndpointRouteBuilderExtensions
         endpoints.MapGet(pattern, async context =>
         {
             context.Response.ContentType = "application/json";
-            await context.Response.WriteAsync("{\"status\":\"ok\"}");
+            await context.Response.WriteAsync("{\"status\":\"ok\"}").ConfigureAwait(false);
         }).WithName("GhostHealth");
 
         return endpoints;

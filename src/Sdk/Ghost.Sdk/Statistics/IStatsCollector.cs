@@ -19,7 +19,7 @@ public interface IStatsCollector
     /// This should be called before sending each request. The count is used to calculate
     /// throughput metrics like requests per second.
     /// </remarks>
-    void RecordRequest(string spiderId);
+    public void RecordRequest(string spiderId);
 
     /// <summary>
     /// Records a received response with its status code and latency.
@@ -32,7 +32,7 @@ public interface IStatsCollector
     /// This should be called after receiving each response. Records the status code distribution
     /// and updates average response time calculations. Thread-safe for concurrent spiders.
     /// </remarks>
-    void RecordResponse(string spiderId, int statusCode, TimeSpan latency);
+    public void RecordResponse(string spiderId, int statusCode, TimeSpan latency);
 
     /// <summary>
     /// Records an error that occurred during spider execution.
@@ -44,7 +44,7 @@ public interface IStatsCollector
     /// This should be called whenever an exception occurs during crawling, parsing, or
     /// processing. Used to track error rates and identify problem areas.
     /// </remarks>
-    void RecordError(string spiderId, Exception ex);
+    public void RecordError(string spiderId, Exception ex);
 
     /// <summary>
     /// Records that an item was successfully scraped and processed.
@@ -56,7 +56,7 @@ public interface IStatsCollector
     /// This should be called after successfully extracting and validating each item.
     /// Used to track scraping productivity and success rates.
     /// </remarks>
-    void RecordItem(string spiderId, string itemType);
+    public void RecordItem(string spiderId, string itemType);
 
     /// <summary>
     /// Gets the current statistics for a specific spider.
@@ -70,7 +70,7 @@ public interface IStatsCollector
     /// <remarks>
     /// Returns a snapshot of the current statistics. Safe to call while the spider is running.
     /// </remarks>
-    SpiderStats GetStats(string spiderId);
+    public SpiderStats GetStats(string spiderId);
 
     /// <summary>
     /// Gets the current statistics for all tracked spiders.
@@ -83,5 +83,5 @@ public interface IStatsCollector
     /// Returns a snapshot of all spider statistics. Useful for monitoring multiple
     /// concurrent spiders or generating aggregate reports.
     /// </remarks>
-    Dictionary<string, SpiderStats> GetAllStats();
+    public Dictionary<string, SpiderStats> GetAllStats();
 }

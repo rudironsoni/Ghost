@@ -11,12 +11,12 @@ public interface ITelnetConsole
     /// </summary>
     /// <param name="ct">Cancellation token to stop the server.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task StartAsync(CancellationToken ct = default);
+    public Task StartAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Stops the telnet console server and closes all client connections.
     /// </summary>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task StopAsync(CancellationToken ct = default);
+    public Task StopAsync(CancellationToken ct = default);
 }

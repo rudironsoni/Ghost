@@ -72,7 +72,7 @@ public sealed class NopeCHAProvider : ICaptchaProvider
         // - Configuring NopeCHA API key (free tier)
         // - Monitoring DOM for solution token
 
-        await Task.Delay(1000, cancellationToken); // Simulate solving delay
+        await Task.Delay(1000, cancellationToken).ConfigureAwait(false); // Simulate solving delay
 
         throw new NotImplementedException(
             "NopeCHA integration requires browser extension setup. " +
@@ -93,7 +93,7 @@ public sealed class NopeCHAProvider : ICaptchaProvider
             return false;
         }
 
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
         return true;
     }
 }

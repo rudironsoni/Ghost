@@ -2,6 +2,7 @@ using Ghost.Testing.Scenarios.Models;
 using Ghost.Testing.Scenarios.Server;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 
 namespace Ghost.Testing.Scenarios.Scenarios;
 
@@ -14,10 +15,10 @@ public static class ConsentScenarios
     {
         logger.LogInformation("Scenario: consent/modal-blocking");
 
-        var hasConsent = context.Items["HasConsent"] as bool? ?? false;
-        var jobs = TestData.GetJobPostings(0, 10);
+        bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -111,10 +112,10 @@ public static class ConsentScenarios
     {
         logger.LogInformation("Scenario: consent/banner-soft");
 
-        var hasConsent = context.Items["HasConsent"] as bool? ?? false;
-        var jobs = TestData.GetJobPostings(0, 10);
+        bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -185,10 +186,10 @@ public static class ConsentScenarios
     {
         logger.LogInformation("Scenario: consent/iframe-cmp");
 
-        var hasConsent = context.Items["HasConsent"] as bool? ?? false;
-        var jobs = TestData.GetJobPostings(0, 10);
+        bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -258,10 +259,10 @@ public static class ConsentScenarios
     {
         logger.LogInformation("Scenario: consent/banner-dismiss");
 
-        var hasConsent = context.Items["HasConsent"] as bool? ?? false;
-        var jobs = TestData.GetJobPostings(0, 10);
+        bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -339,10 +340,10 @@ public static class ConsentScenarios
     {
         logger.LogInformation("Scenario: consent/iframe-cmp-advanced");
 
-        var hasConsent = context.Items["HasConsent"] as bool? ?? false;
-        var jobs = TestData.GetJobPostings(0, 10);
+        bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -400,10 +401,10 @@ public static class ConsentScenarios
     {
         logger.LogInformation("Scenario: consent/region-gdpr");
 
-        var hasConsent = context.Items["HasConsent"] as bool? ?? false;
-        var jobs = TestData.GetJobPostings(0, 10);
+        bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -515,10 +516,10 @@ public static class ConsentScenarios
     {
         logger.LogInformation("Scenario: consent/region-ccpa");
 
-        var hasConsent = context.Items["HasConsent"] as bool? ?? false;
-        var jobs = TestData.GetJobPostings(0, 10);
+        bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -604,10 +605,10 @@ public static class ConsentScenarios
     {
         logger.LogInformation("Scenario: consent/region-lgpd");
 
-        var hasConsent = context.Items["HasConsent"] as bool? ?? false;
-        var jobs = TestData.GetJobPostings(0, 10);
+        bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -710,11 +711,11 @@ public static class ConsentScenarios
     {
         logger.LogInformation("Scenario: consent/stateful-persistence");
 
-        var hasConsent = context.Items["HasConsent"] as bool? ?? false;
-        var page = context.Request.Query.TryGetValue("page", out var pageValue) ? int.Parse(pageValue!, System.Globalization.CultureInfo.InvariantCulture) : 1;
-        var jobs = TestData.GetJobPostings((page - 1) * 10, 10);
+        bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
+        int page = context.Request.Query.TryGetValue("page", out StringValues pageValue) ? int.Parse(pageValue!, System.Globalization.CultureInfo.InvariantCulture) : 1;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings((page - 1) * 10, 10);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -810,17 +811,17 @@ public static class ConsentScenarios
     {
         logger.LogInformation("Scenario: consent/reconsent-policy-change");
 
-        var hasConsent = context.Items["HasConsent"] as bool? ?? false;
-        var consentCookie = context.Request.Cookies.TryGetValue("ghost_consent", out var consentValue) ? consentValue : null;
-        var policyCookie = context.Request.Cookies.TryGetValue("ghost_policy_version", out var policyValue) ? int.Parse(policyValue!, System.Globalization.CultureInfo.InvariantCulture) : 0;
-        var currentPolicyVersion = 2;
+        bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
+        string? consentCookie = context.Request.Cookies.TryGetValue("ghost_consent", out string? consentValue) ? consentValue : null;
+        int policyCookie = context.Request.Cookies.TryGetValue("ghost_policy_version", out string? policyValue) ? int.Parse(policyValue!, System.Globalization.CultureInfo.InvariantCulture) : 0;
+        int currentPolicyVersion = 2;
 
         // Trigger re-consent if policy version changed
-        var needsReconsent = hasConsent && policyCookie < currentPolicyVersion;
+        bool needsReconsent = hasConsent && policyCookie < currentPolicyVersion;
 
-        var jobs = TestData.GetJobPostings(0, 10);
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>

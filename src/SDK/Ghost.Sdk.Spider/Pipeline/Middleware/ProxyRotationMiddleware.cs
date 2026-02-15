@@ -44,7 +44,7 @@ public sealed class ProxyRotationMiddleware : IPipelineMiddleware
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        if (!configuration.TryGetValue("ProxyList", out var proxyListObj) ||
+        if (!configuration.TryGetValue("ProxyList", out object? proxyListObj) ||
             proxyListObj is not List<string> proxyList ||
             proxyList.Count == 0)
         {
@@ -52,7 +52,7 @@ public sealed class ProxyRotationMiddleware : IPipelineMiddleware
         }
 
         _proxies = proxyList.Select(url => new ProxyEndpoint(url)).ToList();
-        _rotationStrategy = configuration.TryGetValue("RotationStrategy", out var strategy)
+        _rotationStrategy = configuration.TryGetValue("RotationStrategy", out object? strategy)
             ? strategy.ToString() ?? "RoundRobin"
             : "RoundRobin";
         _random = new Random();
@@ -68,14 +68,14 @@ public sealed class ProxyRotationMiddleware : IPipelineMiddleware
     /// <exception cref="InvalidOperationException">Thrown when no healthy proxies are available.</exception>
     public async Task InvokeAsync(PipelineContext context, PipelineDelegate continuation)
     {
-        var request = context.GetRequestAs<Request>();
+        Request? request = context.GetRequestAs<Request>();
         if (request == null)
         {
-            await continuation(context);
+            await continuation(context).ConfigureAwait(false);
             return;
         }
 
-        var proxy = SelectProxy() ?? throw new InvalidOperationException("No healthy proxies available for request.");
+        ProxyEndpoint proxy = SelectProxy() ?? throw new InvalidOperationException("No healthy proxies available for request.");
 
         // Store the selected proxy in the request metadata
         request.Metadata["Proxy"] = proxy.Url;
@@ -83,7 +83,7 @@ public sealed class ProxyRotationMiddleware : IPipelineMiddleware
 
         try
         {
-            await continuation(context);
+            await continuation(context).ConfigureAwait(false);
 
             // Mark proxy as successful
             proxy.RecordSuccess();
@@ -108,7 +108,7 @@ public sealed class ProxyRotationMiddleware : IPipelineMiddleware
             if (healthyProxies.Count == 0)
             {
                 // Try to recover failed proxies that have cooled down
-                foreach (var proxy in _proxies)
+                foreach (ProxyEndpoint proxy in _proxies)
                 {
                     proxy.TryRecover();
                 }

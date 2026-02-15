@@ -46,8 +46,8 @@ public class GoogleJobsScraper
         try
         {
             // Build Google search URL for jobs
-            var searchQuery = Uri.EscapeDataString($"{query} jobs {location}".Trim());
-            var url = $"https://www.google.com/search?q={searchQuery}&ibp=htl;jobs";
+            string searchQuery = Uri.EscapeDataString($"{query} jobs {location}".Trim());
+            string url = $"https://www.google.com/search?q={searchQuery}&ibp=htl;jobs";
 
             s_logScrapingStarted(_logger, url, null);
 
@@ -59,8 +59,8 @@ public class GoogleJobsScraper
             request.Headers.Add("Accept-Encoding", "gzip, deflate, br");
             request.Headers.Add("Referer", "https://www.google.com/");
 
-            var response = await _httpClient.SendAsync(request, ct);
-            var html = await response.Content.ReadAsStringAsync(ct);
+            HttpResponseMessage response = await _httpClient.SendAsync(request, ct).ConfigureAwait(false);
+            string html = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             s_logHtmlReceived(_logger, html.Length, null);
 
@@ -69,17 +69,17 @@ public class GoogleJobsScraper
             doc.LoadHtml(html);
 
             // Try to find job data in JSON-LD scripts (most reliable)
-            var jsonLdScripts = doc.DocumentNode.SelectNodes("//script[@type='application/ld+json']");
+            HtmlNodeCollection jsonLdScripts = doc.DocumentNode.SelectNodes("//script[@type='application/ld+json']");
             if (jsonLdScripts != null)
             {
-                foreach (var script in jsonLdScripts.Take(maxResults))
+                foreach (HtmlNode? script in jsonLdScripts.Take(maxResults))
                 {
                     try
                     {
-                        var json = script.InnerText;
+                        string json = script.InnerText;
                         if (json.Contains("JobPosting"))
                         {
-                            var job = ParseJsonLdJob(json);
+                            GoogleJobsEntity? job = ParseJsonLdJob(json);
                             if (job != null)
                             {
                                 jobs.Add(job);
@@ -115,10 +115,10 @@ public class GoogleJobsScraper
         try
         {
             // Simple JSON parsing for JobPosting schema
-            var title = ExtractJsonValue(json, "\"title\":");
-            var company = ExtractJsonValue(json, "\"name\":");
-            var description = ExtractJsonValue(json, "\"description\":");
-            var location = ExtractJsonValue(json, "\"addressLocality\":");
+            string? title = ExtractJsonValue(json, "\"title\":");
+            string? company = ExtractJsonValue(json, "\"name\":");
+            string? description = ExtractJsonValue(json, "\"description\":");
+            string? location = ExtractJsonValue(json, "\"addressLocality\":");
 
             if (!string.IsNullOrEmpty(title))
             {
@@ -138,16 +138,16 @@ public class GoogleJobsScraper
 
     private static string? ExtractJsonValue(string json, string key)
     {
-        var idx = json.IndexOf(key, StringComparison.OrdinalIgnoreCase);
+        int idx = json.IndexOf(key, StringComparison.OrdinalIgnoreCase);
         if (idx < 0) return null;
 
-        var start = idx + key.Length;
+        int start = idx + key.Length;
         while (start < json.Length && (json[start] == '"' || json[start] == ' ' || json[start] == ':'))
             start++;
 
         if (start >= json.Length) return null;
 
-        var end = json.IndexOf('\"', start);
+        int end = json.IndexOf('\"', start);
         if (end < 0) return null;
 
         return json[start..end].Replace("\\n", " ").Replace("\\", "");
@@ -158,7 +158,7 @@ public class GoogleJobsScraper
         var jobs = new List<GoogleJobsEntity>();
 
         // Multiple selector strategies for Google's changing layout
-        var selectors = new[]
+        string[] selectors = new[]
         {
             "//div[@data-ved]//div[contains(@class, 'job')]",
             "//div[contains(@class, 'g')]//div[contains(@data-ved, 'job')]",
@@ -170,16 +170,16 @@ public class GoogleJobsScraper
             "//div[contains(@class, 'job-title')]//ancestor::div[contains(@class, 'job')]"
         };
 
-        foreach (var selector in selectors)
+        foreach (string? selector in selectors)
         {
-            var nodes = doc.DocumentNode.SelectNodes(selector);
+            HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(selector);
             if (nodes != null)
             {
-                foreach (var node in nodes.Take(maxResults))
+                foreach (HtmlNode? node in nodes.Take(maxResults))
                 {
                     try
                     {
-                        var job = ExtractJobFromNode(node);
+                        GoogleJobsEntity? job = ExtractJobFromNode(node);
                         if (job != null && !string.IsNullOrEmpty(job.Title))
                         {
                             jobs.Add(job);
@@ -200,10 +200,10 @@ public class GoogleJobsScraper
     {
         try
         {
-            var title = node.SelectSingleNode(".//h3|.//a|.//div[contains(@class, 'title')]|.//div[contains(@class, 'job-title')]")?.InnerText?.Trim();
-            var company = node.SelectSingleNode(".//div[contains(@class, 'company')]|.//span[contains(@class, 'company')]|.//div[contains(@class, 'employer')]")?.InnerText?.Trim();
-            var location = node.SelectSingleNode(".//div[contains(@class, 'location')]|.//span[contains(@class, 'location')]|.//div[contains(@class, 'city')]")?.InnerText?.Trim();
-            var description = node.SelectSingleNode(".//div[contains(@class, 'description')]|.//div[contains(@class, 'summary')]|.//span[contains(@class, 'snippet')]")?.InnerText?.Trim();
+            string? title = node.SelectSingleNode(".//h3|.//a|.//div[contains(@class, 'title')]|.//div[contains(@class, 'job-title')]")?.InnerText?.Trim();
+            string? company = node.SelectSingleNode(".//div[contains(@class, 'company')]|.//span[contains(@class, 'company')]|.//div[contains(@class, 'employer')]")?.InnerText?.Trim();
+            string? location = node.SelectSingleNode(".//div[contains(@class, 'location')]|.//span[contains(@class, 'location')]|.//div[contains(@class, 'city')]")?.InnerText?.Trim();
+            string? description = node.SelectSingleNode(".//div[contains(@class, 'description')]|.//div[contains(@class, 'summary')]|.//span[contains(@class, 'snippet')]")?.InnerText?.Trim();
 
             if (!string.IsNullOrEmpty(title))
             {

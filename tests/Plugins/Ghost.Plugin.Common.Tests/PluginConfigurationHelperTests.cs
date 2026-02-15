@@ -9,7 +9,7 @@ public class PluginConfigurationHelperTests
     public void GetSectionName_ReturnsCorrectFormat()
     {
         // Arrange & Act
-        var sectionName = PluginConfigurationHelper.GetSectionName<TestOptions>();
+        string sectionName = PluginConfigurationHelper.GetSectionName<TestOptions>();
 
         // Assert
         Assert.Equal("Test", sectionName);

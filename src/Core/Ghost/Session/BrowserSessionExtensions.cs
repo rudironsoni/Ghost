@@ -22,15 +22,15 @@ public static class BrowserSessionExtensions
         }
 
         var lines = new List<string>();
-        foreach (var (key, value) in session.LocalStorage)
+        foreach ((string? key, string? value) in session.LocalStorage)
         {
             // Key format: "origin::name"
-            var parts = key.Split("::", 2);
+            string[] parts = key.Split("::", 2);
             if (parts.Length != 2) continue;
 
-            var name = parts[1];
-            var escapedName = System.Text.Json.JsonSerializer.Serialize(name);
-            var escapedValue = System.Text.Json.JsonSerializer.Serialize(value);
+            string name = parts[1];
+            string escapedName = System.Text.Json.JsonSerializer.Serialize(name);
+            string escapedValue = System.Text.Json.JsonSerializer.Serialize(value);
 
             lines.Add($"localStorage.setItem({escapedName}, {escapedValue});");
         }
@@ -53,15 +53,15 @@ public static class BrowserSessionExtensions
         }
 
         var lines = new List<string>();
-        foreach (var (key, value) in session.SessionStorage)
+        foreach ((string? key, string? value) in session.SessionStorage)
         {
             // Key format: "origin::name"
-            var parts = key.Split("::", 2);
+            string[] parts = key.Split("::", 2);
             if (parts.Length != 2) continue;
 
-            var name = parts[1];
-            var escapedName = System.Text.Json.JsonSerializer.Serialize(name);
-            var escapedValue = System.Text.Json.JsonSerializer.Serialize(value);
+            string name = parts[1];
+            string escapedName = System.Text.Json.JsonSerializer.Serialize(name);
+            string escapedValue = System.Text.Json.JsonSerializer.Serialize(value);
 
             lines.Add($"sessionStorage.setItem({escapedName}, {escapedValue});");
         }
@@ -82,17 +82,17 @@ public static class BrowserSessionExtensions
         ArgumentNullException.ThrowIfNull(session);
 
         // Add localStorage restore script
-        var localStorageScript = session.GetLocalStorageRestoreScript();
+        string localStorageScript = session.GetLocalStorageRestoreScript();
         if (!string.IsNullOrEmpty(localStorageScript))
         {
-            await context.AddInitScriptAsync(localStorageScript);
+            await context.AddInitScriptAsync(localStorageScript).ConfigureAwait(false);
         }
 
         // Add sessionStorage restore script
-        var sessionStorageScript = session.GetSessionStorageRestoreScript();
+        string sessionStorageScript = session.GetSessionStorageRestoreScript();
         if (!string.IsNullOrEmpty(sessionStorageScript))
         {
-            await context.AddInitScriptAsync(sessionStorageScript);
+            await context.AddInitScriptAsync(sessionStorageScript).ConfigureAwait(false);
         }
 
         // Cookies are already restored via RestoreSessionAsync

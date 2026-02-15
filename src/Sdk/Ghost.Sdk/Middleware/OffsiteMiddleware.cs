@@ -28,10 +28,10 @@ public class OffsiteMiddleware : IOffsiteMiddleware
         ArgumentNullException.ThrowIfNull(url);
         ArgumentNullException.ThrowIfNull(baseDomain);
 
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
             return false;
 
-        var targetDomain = uri.Host;
+        string targetDomain = uri.Host;
 
         // Check deny list first (takes precedence)
         if (_denyDomains.Contains(targetDomain))
@@ -56,10 +56,10 @@ public class OffsiteMiddleware : IOffsiteMiddleware
         ArgumentNullException.ThrowIfNull(url1);
         ArgumentNullException.ThrowIfNull(url2);
 
-        if (!Uri.TryCreate(url1, UriKind.Absolute, out var uri1))
+        if (!Uri.TryCreate(url1, UriKind.Absolute, out Uri? uri1))
             return false;
 
-        if (!Uri.TryCreate(url2, UriKind.Absolute, out var uri2))
+        if (!Uri.TryCreate(url2, UriKind.Absolute, out Uri? uri2))
             return false;
 
         return string.Equals(uri1.Host, uri2.Host, StringComparison.OrdinalIgnoreCase);

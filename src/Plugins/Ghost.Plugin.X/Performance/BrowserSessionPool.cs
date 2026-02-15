@@ -13,22 +13,22 @@ public interface IBrowserSessionPool : IDisposable
     /// <summary>
     /// Gets a session from the pool or creates a new one.
     /// </summary>
-    Task<IBrowserSession> GetSessionAsync(CancellationToken ct = default);
+    public Task<IBrowserSession> GetSessionAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Returns a session to the pool.
     /// </summary>
-    void ReturnSession(IBrowserSession session);
+    public void ReturnSession(IBrowserSession session);
 
     /// <summary>
     /// Gets the number of available sessions in the pool.
     /// </summary>
-    int AvailableCount { get; }
+    public int AvailableCount { get; }
 
     /// <summary>
     /// Gets the total number of sessions (in use + available).
     /// </summary>
-    int TotalCount { get; }
+    public int TotalCount { get; }
 }
 
 /// <summary>
@@ -93,7 +93,7 @@ public partial class BrowserSessionPool : IBrowserSessionPool
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         // Try to acquire semaphore slot
-        if (!await _semaphore.WaitAsync(_options.AcquireTimeout, ct))
+        if (!await _semaphore.WaitAsync(_options.AcquireTimeout, ct).ConfigureAwait(false))
         {
             throw new TimeoutException("Could not acquire browser session from pool within timeout");
         }
@@ -101,7 +101,7 @@ public partial class BrowserSessionPool : IBrowserSessionPool
         try
         {
             // Try to get an existing session
-            if (_availableSessions.TryTake(out var entry))
+            if (_availableSessions.TryTake(out PoolEntry? entry))
             {
                 entry.LastUsedAt = DateTime.UtcNow;
                 _inUseSessions[entry.Session] = entry;
@@ -110,7 +110,7 @@ public partial class BrowserSessionPool : IBrowserSessionPool
             }
 
             // Create new session
-            var session = await _kernel.NewSessionAsync(null, ct);
+            IBrowserSession session = await _kernel.NewSessionAsync(null, ct).ConfigureAwait(false);
             entry = new PoolEntry
             {
                 Session = session,
@@ -135,7 +135,7 @@ public partial class BrowserSessionPool : IBrowserSessionPool
             return;
         }
 
-        if (_inUseSessions.TryRemove(session, out var entry))
+        if (_inUseSessions.TryRemove(session, out PoolEntry? entry))
         {
             entry.LastUsedAt = DateTime.UtcNow;
 
@@ -157,7 +157,7 @@ public partial class BrowserSessionPool : IBrowserSessionPool
 
     private bool IsSessionExpired(PoolEntry entry)
     {
-        var idleTime = DateTime.UtcNow - entry.LastUsedAt;
+        TimeSpan idleTime = DateTime.UtcNow - entry.LastUsedAt;
         return idleTime > _options.IdleTimeout;
     }
 
@@ -167,11 +167,11 @@ public partial class BrowserSessionPool : IBrowserSessionPool
         {
             var expiredSessions = _availableSessions.Where(IsSessionExpired).ToList();
 
-            foreach (var entry in expiredSessions)
+            foreach (PoolEntry? entry in expiredSessions)
             {
-                if (_availableSessions.TryTake(out var removed) && removed == entry)
+                if (_availableSessions.TryTake(out PoolEntry? removed) && removed == entry)
                 {
-                    await DisposeSessionAsync(entry);
+                    await DisposeSessionAsync(entry).ConfigureAwait(false);
                     Log.IdleSessionCleaned(_logger);
                 }
             }
@@ -186,7 +186,7 @@ public partial class BrowserSessionPool : IBrowserSessionPool
     {
         try
         {
-            await entry.Session.DisposeAsync();
+            await entry.Session.DisposeAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -207,7 +207,7 @@ public partial class BrowserSessionPool : IBrowserSessionPool
 
         // Dispose all sessions
         var allSessions = _availableSessions.ToList().Concat(_inUseSessions.Values).ToList();
-        foreach (var entry in allSessions)
+        foreach (PoolEntry? entry in allSessions)
         {
             _ = DisposeSessionAsync(entry);
         }

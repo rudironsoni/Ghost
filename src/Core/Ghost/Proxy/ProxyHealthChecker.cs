@@ -65,8 +65,8 @@ public sealed class ProxyHealthChecker
     /// </summary>
     public async Task<ProxyHealthReport> CheckAllProxiesAsync(CancellationToken cancellationToken = default)
     {
-        var username = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_USERNAME");
-        var password = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_PASSWORD");
+        string? username = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_USERNAME");
+        string? password = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_PASSWORD");
 
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
@@ -87,12 +87,12 @@ public sealed class ProxyHealthChecker
             };
         }
 
-        var statusTasks = s_nordVpnProxies
+        Task<ProxyStatus>[] statusTasks = s_nordVpnProxies
             .Select(proxy => CheckProxyAsync(proxy, username, password, cancellationToken))
             .ToArray();
 
-        var statuses = await Task.WhenAll(statusTasks).ConfigureAwait(false);
-        var healthyCount = statuses.Count(status => status.IsHealthy);
+        ProxyStatus[] statuses = await Task.WhenAll(statusTasks).ConfigureAwait(false);
+        int healthyCount = statuses.Count(status => status.IsHealthy);
 
         return new ProxyHealthReport
         {
@@ -110,13 +110,13 @@ public sealed class ProxyHealthChecker
         if (string.IsNullOrWhiteSpace(proxyUrl))
             throw new ArgumentException("Proxy URL is required.", nameof(proxyUrl));
 
-        var username = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_USERNAME");
-        var password = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_PASSWORD");
+        string? username = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_USERNAME");
+        string? password = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_PASSWORD");
 
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             return -1;
 
-        var result = await CheckProxyAsync(proxyUrl, username, password, cancellationToken).ConfigureAwait(false);
+        ProxyStatus result = await CheckProxyAsync(proxyUrl, username, password, cancellationToken).ConfigureAwait(false);
         return result.LatencyMs;
     }
 
@@ -155,7 +155,7 @@ public sealed class ProxyHealthChecker
                 Hosts = { proxyUrl }
             }, NullLogger<StaticProxySource>.Instance);
 
-            var proxyInfo = (await proxySource.FetchProxiesAsync(cancellationToken).ConfigureAwait(false)).FirstOrDefault();
+            ProxyInfo? proxyInfo = (await proxySource.FetchProxiesAsync(cancellationToken).ConfigureAwait(false)).FirstOrDefault();
             if (proxyInfo == null)
             {
                 status.Error = "Proxy configuration could not be parsed.";
@@ -174,7 +174,7 @@ public sealed class ProxyHealthChecker
             };
 
             var sw = Stopwatch.StartNew();
-            using var response = await client.GetAsync(s_healthCheckUri, cancellationToken).ConfigureAwait(false);
+            using HttpResponseMessage response = await client.GetAsync(s_healthCheckUri, cancellationToken).ConfigureAwait(false);
             sw.Stop();
 
             status.LatencyMs = sw.ElapsedMilliseconds;

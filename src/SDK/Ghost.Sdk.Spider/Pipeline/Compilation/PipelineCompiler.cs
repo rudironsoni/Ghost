@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Reflection;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 
 namespace Ghost.Sdk.Spider.Pipeline.Compilation;
@@ -62,7 +63,7 @@ internal static class PipelineCompiler
             .ToList();
 
         // Build the pipeline delegate chain
-        var pipelineDelegate = BuildPipelineDelegate(middlewareEntries);
+        PipelineDelegate pipelineDelegate = BuildPipelineDelegate(middlewareEntries);
 
         return new CompiledPipeline(pipelineDelegate, middlewareNames);
     }
@@ -78,9 +79,9 @@ internal static class PipelineCompiler
         // Iterate backwards through middleware to build the chain
         for (int i = middlewareEntries.Count - 1; i >= 0; i--)
         {
-            var entry = middlewareEntries[i];
-            var middleware = entry.Middleware;
-            var currentNext = next;
+            MiddlewareEntry entry = middlewareEntries[i];
+            IPipelineMiddleware middleware = entry.Middleware;
+            PipelineDelegate currentNext = next;
 
             // Capture the middleware and next delegate in a closure
             // This creates the delegate chain
@@ -103,7 +104,7 @@ internal static class PipelineCompiler
     internal static PipelineDelegate BuildOptimizedPipelineDelegate(IReadOnlyList<MiddlewareEntry> middlewareEntries)
     {
         // Parameter for the context
-        var contextParameter = Expression.Parameter(typeof(PipelineContext), "context");
+        ParameterExpression contextParameter = Expression.Parameter(typeof(PipelineContext), "context");
 
         // Build terminal expression (completed task)
         Expression currentExpression = Expression.Constant(Task.CompletedTask);
@@ -111,22 +112,22 @@ internal static class PipelineCompiler
         // Build the chain in reverse order using expression trees
         for (int i = middlewareEntries.Count - 1; i >= 0; i--)
         {
-            var entry = middlewareEntries[i];
-            var middleware = entry.Middleware;
+            MiddlewareEntry entry = middlewareEntries[i];
+            IPipelineMiddleware middleware = entry.Middleware;
 
             // Create a constant expression for the middleware instance
-            var middlewareConstant = Expression.Constant(middleware, typeof(IPipelineMiddleware));
+            ConstantExpression middlewareConstant = Expression.Constant(middleware, typeof(IPipelineMiddleware));
 
             // Create a delegate expression for the next middleware
-            var nextDelegate = Expression.Lambda<PipelineDelegate>(
+            PipelineDelegate nextDelegate = Expression.Lambda<PipelineDelegate>(
                 currentExpression,
                 contextParameter
             ).Compile();
 
-            var nextDelegateConstant = Expression.Constant(nextDelegate, typeof(PipelineDelegate));
+            ConstantExpression nextDelegateConstant = Expression.Constant(nextDelegate, typeof(PipelineDelegate));
 
             // Call InvokeAsync on the middleware
-            var invokeMethod = typeof(IPipelineMiddleware).GetMethod(nameof(IPipelineMiddleware.InvokeAsync))!;
+            MethodInfo invokeMethod = typeof(IPipelineMiddleware).GetMethod(nameof(IPipelineMiddleware.InvokeAsync))!;
             currentExpression = Expression.Call(
                 middlewareConstant,
                 invokeMethod,
@@ -151,7 +152,7 @@ internal static class PipelineCompiler
     {
         for (int i = 0; i < middlewareEntries.Count; i++)
         {
-            var entry = middlewareEntries[i];
+            MiddlewareEntry entry = middlewareEntries[i];
 
             if (entry.Middleware == null)
             {

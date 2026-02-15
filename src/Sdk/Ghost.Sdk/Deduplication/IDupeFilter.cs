@@ -25,7 +25,7 @@ public interface IDupeFilter
     /// This method will mark the request as seen if it is not a duplicate.
     /// Subsequent calls with the same request fingerprint will return <c>true</c>.
     /// </remarks>
-    Task<bool> IsDuplicateAsync(Request request, CancellationToken ct = default);
+    public Task<bool> IsDuplicateAsync(Request request, CancellationToken ct = default);
 
     /// <summary>
     /// Checks if a fingerprint is a duplicate.
@@ -40,7 +40,7 @@ public interface IDupeFilter
     /// This method will mark the fingerprint as seen if it is not a duplicate.
     /// Subsequent calls with the same fingerprint will return <c>true</c>.
     /// </remarks>
-    Task<bool> IsDuplicateAsync(string fingerprint, CancellationToken ct = default);
+    public Task<bool> IsDuplicateAsync(string fingerprint, CancellationToken ct = default);
 
     /// <summary>
     /// Clears all stored fingerprints from the filter.
@@ -51,5 +51,5 @@ public interface IDupeFilter
     /// After calling this method, all previously seen requests/fingerprints
     /// will be treated as new.
     /// </remarks>
-    Task ClearAsync(CancellationToken ct = default);
+    public Task ClearAsync(CancellationToken ct = default);
 }

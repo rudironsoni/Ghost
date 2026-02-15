@@ -38,9 +38,9 @@ public class BrowserSessionHermeticTests
         var session = new FakeBrowserSession();
 
         // Act
-        var page1 = await session.NewPageAsync();
-        var page2 = await session.NewPageAsync();
-        var page3 = await session.NewPageAsync();
+        IPage page1 = await session.NewPageAsync().ConfigureAwait(false);
+        IPage page2 = await session.NewPageAsync().ConfigureAwait(false);
+        IPage page3 = await session.NewPageAsync().ConfigureAwait(false);
 
         // Assert
         session.Pages.Should().HaveCount(3);
@@ -54,10 +54,10 @@ public class BrowserSessionHermeticTests
     {
         // Arrange
         var session = new FakeBrowserSession();
-        var page = await session.NewPageAsync();
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
 
         // Act
-        var retrieved = await session.GetPageAsync(page.PageId);
+        IPage? retrieved = await session.GetPageAsync(page.PageId).ConfigureAwait(false);
 
         // Assert
         retrieved.Should().NotBeNull();
@@ -71,7 +71,7 @@ public class BrowserSessionHermeticTests
         var session = new FakeBrowserSession();
 
         // Act
-        var page = await session.GetPageAsync("non-existent-id");
+        IPage? page = await session.GetPageAsync("non-existent-id").ConfigureAwait(false);
 
         // Assert
         page.Should().BeNull();
@@ -82,11 +82,11 @@ public class BrowserSessionHermeticTests
     {
         // Arrange
         var session = new FakeBrowserSession();
-        await session.NewPageAsync();
-        await session.NewPageAsync();
+        await session.NewPageAsync().ConfigureAwait(false);
+        await session.NewPageAsync().ConfigureAwait(false);
 
         // Act
-        await session.CloseAsync();
+        await session.CloseAsync().ConfigureAwait(false);
 
         // Assert
         session.Pages.Should().BeEmpty();
@@ -97,11 +97,11 @@ public class BrowserSessionHermeticTests
     {
         // Arrange
         var session = new FakeBrowserSession();
-        await session.NewPageAsync();
-        await session.NewPageAsync();
+        await session.NewPageAsync().ConfigureAwait(false);
+        await session.NewPageAsync().ConfigureAwait(false);
 
         // Act
-        await session.DisposeAsync();
+        await session.DisposeAsync().ConfigureAwait(false);
 
         // Assert
         session.Pages.Should().BeEmpty();
@@ -114,10 +114,10 @@ public class BrowserSessionHermeticTests
         var session = new FakeBrowserSession();
 
         // Act - Should not throw
-        var act = async () => await session.SaveStorageStateAsync("/tmp/state.json");
+        Func<Task> act = async () => await session.SaveStorageStateAsync("/tmp/state.json").ConfigureAwait(false);
 
         // Assert
-        await act.Should().NotThrowAsync();
+        await act.Should().NotThrowAsync().ConfigureAwait(false);
     }
 
     [Fact]
@@ -128,11 +128,11 @@ public class BrowserSessionHermeticTests
         var session2 = new FakeBrowserSession();
 
         // Act
-        var page1 = await session1.NewPageAsync();
-        var page2 = await session2.NewPageAsync();
+        IPage page1 = await session1.NewPageAsync().ConfigureAwait(false);
+        IPage page2 = await session2.NewPageAsync().ConfigureAwait(false);
 
-        await page1.NavigateAsync("https://example.com");
-        await page2.NavigateAsync("https://test.com");
+        await page1.NavigateAsync("https://example.com").ConfigureAwait(false);
+        await page2.NavigateAsync("https://test.com").ConfigureAwait(false);
 
         // Assert
         session1.Pages.Should().HaveCount(1);
@@ -151,12 +151,12 @@ public class BrowserSessionHermeticTests
         var pages = new List<IPage>();
         for (int i = 0; i < 5; i++)
         {
-            pages.Add(await session.NewPageAsync());
+            pages.Add(await session.NewPageAsync().ConfigureAwait(false));
         }
 
         // Assert
         session.Pages.Should().HaveCount(5);
-        foreach (var page in pages)
+        foreach (IPage page in pages)
         {
             session.Pages.Should().Contain(page);
         }

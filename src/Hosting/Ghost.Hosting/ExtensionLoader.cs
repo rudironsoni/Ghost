@@ -22,22 +22,22 @@ internal sealed class ExtensionLoader
         if (extensions is null) ArgumentNullException.ThrowIfNull(extensions);
 
         // Collect all provided service types (start with kernel-provided if any)
-        var provided = kernelProvidedServices != null
+        HashSet<Type> provided = kernelProvidedServices != null
             ? new HashSet<Type>(kernelProvidedServices)
             : new HashSet<Type>();
 
-        foreach (var ext in extensions)
+        foreach (IExtension ext in extensions)
         {
-            foreach (var t in ext.ProvidedServices)
+            foreach (Type t in ext.ProvidedServices)
             {
                 provided.Add(t);
             }
         }
 
         // Check required services are provided by some extension or the kernel
-        foreach (var ext in extensions)
+        foreach (IExtension ext in extensions)
         {
-            foreach (var req in ext.RequiredServices)
+            foreach (Type req in ext.RequiredServices)
             {
                 if (!provided.Contains(req))
                 {
@@ -66,9 +66,9 @@ internal sealed class ExtensionLoader
         // Validate first
         ValidateExtensions(extensions, kernelProvidedServices);
 
-        var ordered = TopologicalSort(extensions);
+        List<IExtension> ordered = TopologicalSort(extensions);
 
-        foreach (var ext in ordered)
+        foreach (IExtension ext in ordered)
         {
             try
             {
@@ -88,12 +88,12 @@ internal sealed class ExtensionLoader
         var indexByName = extensions.Select((ext, idx) => (ext.Name, idx)).ToDictionary(x => x.Name, x => x.idx);
 
         var dependsOn = new Dictionary<IExtension, List<IExtension>>();
-        foreach (var ext in extensions)
+        foreach (IExtension ext in extensions)
         {
             var list = new List<IExtension>();
-            foreach (var req in ext.RequiredServices)
+            foreach (Type req in ext.RequiredServices)
             {
-                var provider = extensions.FirstOrDefault(e => e.ProvidedServices.Contains(req));
+                IExtension? provider = extensions.FirstOrDefault(e => e.ProvidedServices.Contains(req));
                 if (provider != null && !ReferenceEquals(provider, ext))
                 {
                     list.Add(provider);
@@ -105,7 +105,7 @@ internal sealed class ExtensionLoader
         var result = new List<IExtension>(extensions.Count);
         var visited = new Dictionary<IExtension, bool>();
 
-        foreach (var ext in extensions)
+        foreach (IExtension ext in extensions)
         {
             if (!visited.ContainsKey(ext))
             {
@@ -120,9 +120,9 @@ internal sealed class ExtensionLoader
     {
         visited[node] = true; // visiting
 
-        foreach (var dep in graph[node])
+        foreach (IExtension dep in graph[node])
         {
-            if (!visited.TryGetValue(dep, out var inProcess))
+            if (!visited.TryGetValue(dep, out bool inProcess))
             {
                 Visit(dep, graph, visited, result);
             }

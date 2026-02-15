@@ -52,15 +52,15 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
             _options.HealthCheckInterval,
             _options.HealthCheckInterval);
 
-        _ = Task.Run(async () => await InitializePoolsAsync());
+        _ = Task.Run(async () => await InitializePoolsAsync().ConfigureAwait(false));
     }
 
     private async Task InitializePoolsAsync()
     {
         try
         {
-            await WarmUpAsync(Tier.Hot, _options.Hot.MinimumSize, CancellationToken.None);
-            await WarmUpAsync(Tier.Warm, _options.Warm.MinimumSize, CancellationToken.None);
+            await WarmUpAsync(Tier.Hot, _options.Hot.MinimumSize, CancellationToken.None).ConfigureAwait(false);
+            await WarmUpAsync(Tier.Warm, _options.Warm.MinimumSize, CancellationToken.None).ConfigureAwait(false);
 
             if (_logger.IsEnabled(LogLevel.Information))
             {
@@ -83,11 +83,11 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
         try
         {
-            var session = tier switch
+            IBrowserSession session = tier switch
             {
-                Tier.Hot => await AcquireFromHotPoolAsync(ct),
-                Tier.Warm => await AcquireFromWarmPoolAsync(ct),
-                Tier.Cold => await AcquireFromColdPoolAsync(ct),
+                Tier.Hot => await AcquireFromHotPoolAsync(ct).ConfigureAwait(false),
+                Tier.Warm => await AcquireFromWarmPoolAsync(ct).ConfigureAwait(false),
+                Tier.Cold => await AcquireFromColdPoolAsync(ct).ConfigureAwait(false),
                 _ => throw new ArgumentOutOfRangeException(nameof(tier))
             };
 
@@ -124,53 +124,53 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
     private async Task<IBrowserSession> AcquireFromHotPoolAsync(CancellationToken ct)
     {
-        if (_hotPool.TryTake(out var pooled) && !pooled.IsExpired(_options.Hot.MaxAge))
+        if (_hotPool.TryTake(out PooledBrowserSession? pooled) && !pooled.IsExpired(_options.Hot.MaxAge))
         {
             Interlocked.Increment(ref _hotAcquisitions);
             pooled.LastUsedAt = DateTime.UtcNow;
             pooled.UseCount++;
 
-            _ = Task.Run(async () => await ReplenishHotPoolAsync(), CancellationToken.None);
+            _ = Task.Run(async () => await ReplenishHotPoolAsync().ConfigureAwait(false), CancellationToken.None);
 
             return pooled.Session;
         }
 
         pooled?.Dispose();
 
-        return await AcquireFromWarmPoolAsync(ct);
+        return await AcquireFromWarmPoolAsync(ct).ConfigureAwait(false);
     }
 
     private async Task<IBrowserSession> AcquireFromWarmPoolAsync(CancellationToken ct)
     {
-        if (_warmPool.TryTake(out var pooled))
+        if (_warmPool.TryTake(out PooledBrowserSession? pooled))
         {
             Interlocked.Increment(ref _warmAcquisitions);
 
             if (pooled.IsExpired(_options.Warm.MaxAge))
             {
                 pooled.Dispose();
-                return await CreateNewSessionAsync(ct);
+                return await CreateNewSessionAsync(ct).ConfigureAwait(false);
             }
 
             pooled.LastUsedAt = DateTime.UtcNow;
             pooled.UseCount++;
 
-            _ = Task.Run(async () => await ReplenishWarmPoolAsync(), CancellationToken.None);
+            _ = Task.Run(async () => await ReplenishWarmPoolAsync().ConfigureAwait(false), CancellationToken.None);
 
             return pooled.Session;
         }
 
-        return await AcquireFromColdPoolAsync(ct);
+        return await AcquireFromColdPoolAsync(ct).ConfigureAwait(false);
     }
 
     private async Task<IBrowserSession> AcquireFromColdPoolAsync(CancellationToken ct)
     {
-        await _coldPoolSemaphore.WaitAsync(ct);
+        await _coldPoolSemaphore.WaitAsync(ct).ConfigureAwait(false);
 
         try
         {
             Interlocked.Increment(ref _coldAcquisitions);
-            return await CreateNewSessionAsync(ct);
+            return await CreateNewSessionAsync(ct).ConfigureAwait(false);
         }
         catch
         {
@@ -181,7 +181,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
     private async Task<IBrowserSession> CreateNewSessionAsync(CancellationToken ct)
     {
-        var memoryPressure = GetMemoryPressure();
+        double memoryPressure = GetMemoryPressure();
 
         if (memoryPressure > _options.MemoryPressureThreshold)
         {
@@ -189,19 +189,19 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
                 "High memory pressure: {Pressure:P0}, triggering cleanup",
                 memoryPressure);
 
-            await CleanupExpiredSessionsAsync();
+            await CleanupExpiredSessionsAsync().ConfigureAwait(false);
         }
 
-        return await _kernel.NewSessionAsync(null, ct);
+        return await _kernel.NewSessionAsync(null, ct).ConfigureAwait(false);
     }
 
     public async Task ReturnBrowserAsync(IBrowserSession session, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(session);
 
-        if (!_activeSessions.TryRemove(session.SessionId, out var pooled))
+        if (!_activeSessions.TryRemove(session.SessionId, out PooledBrowserSession? pooled))
         {
-            await session.DisposeAsync();
+            await session.DisposeAsync().ConfigureAwait(false);
             return;
         }
 
@@ -213,14 +213,14 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
                 {
                     _logger.LogDebug("Session expired, disposing (SessionId={SessionId})", session.SessionId);
                 }
-                await session.DisposeAsync();
+                await session.DisposeAsync().ConfigureAwait(false);
                 return;
             }
 
             pooled.IsAvailable = true;
             pooled.LastUsedAt = DateTime.UtcNow;
 
-            var targetPool = pooled.Tier switch
+            ConcurrentBag<PooledBrowserSession>? targetPool = pooled.Tier switch
             {
                 Tier.Hot => _hotPool,
                 Tier.Warm => _warmPool,
@@ -229,8 +229,8 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
             if (targetPool != null)
             {
-                var currentCount = targetPool.Count;
-                var maxSize = pooled.Tier == Tier.Hot ? _options.Hot.MaximumSize : _options.Warm.MaximumSize;
+                int currentCount = targetPool.Count;
+                int maxSize = pooled.Tier == Tier.Hot ? _options.Hot.MaximumSize : _options.Warm.MaximumSize;
 
                 if (currentCount < maxSize)
                 {
@@ -251,24 +251,24 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
                 _coldPoolSemaphore.Release();
             }
 
-            await session.DisposeAsync();
+            await session.DisposeAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error returning session to pool");
-            await session.DisposeAsync();
+            await session.DisposeAsync().ConfigureAwait(false);
         }
     }
 
     public Task<PoolHealth> GetHealthAsync(CancellationToken ct = default)
     {
-        var hotSessions = _hotPool.ToArray();
-        var warmSessions = _warmPool.ToArray();
-        var activeSessions = _activeSessions.Count;
+        PooledBrowserSession[] hotSessions = _hotPool.ToArray();
+        PooledBrowserSession[] warmSessions = _warmPool.ToArray();
+        int activeSessions = _activeSessions.Count;
 
-        var hotAvg = _hotAcquisitions > 0 ? _hotAcquisitionTimeSum / _hotAcquisitions : 0;
-        var warmAvg = _warmAcquisitions > 0 ? _warmAcquisitionTimeSum / _warmAcquisitions : 0;
-        var coldAvg = _coldAcquisitions > 0 ? _coldAcquisitionTimeSum / _coldAcquisitions : 0;
+        double hotAvg = _hotAcquisitions > 0 ? _hotAcquisitionTimeSum / _hotAcquisitions : 0;
+        double warmAvg = _warmAcquisitions > 0 ? _warmAcquisitionTimeSum / _warmAcquisitions : 0;
+        double coldAvg = _coldAcquisitions > 0 ? _coldAcquisitionTimeSum / _coldAcquisitions : 0;
 
         var hotHealth = new TierHealth
         {
@@ -300,7 +300,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
             IsHealthy = _coldPoolSemaphore.CurrentCount > 0
         };
 
-        var memoryPressure = GetMemoryPressure();
+        double memoryPressure = GetMemoryPressure();
 
         return Task.FromResult(new PoolHealth
         {
@@ -324,7 +324,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
             {
                 try
                 {
-                    var session = await CreateNewSessionAsync(ct);
+                    IBrowserSession session = await CreateNewSessionAsync(ct).ConfigureAwait(false);
                     var pooled = new PooledBrowserSession
                     {
                         Session = session,
@@ -335,7 +335,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
                         UseCount = 0
                     };
 
-                    var targetPool = tier switch
+                    ConcurrentBag<PooledBrowserSession>? targetPool = tier switch
                     {
                         Tier.Hot => _hotPool,
                         Tier.Warm => _warmPool,
@@ -348,7 +348,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
                     }
                     else
                     {
-                        await session.DisposeAsync();
+                        await session.DisposeAsync().ConfigureAwait(false);
                     }
                 }
                 catch (Exception ex)
@@ -358,19 +358,19 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
             }, ct));
         }
 
-        await Task.WhenAll(tasks);
+        await Task.WhenAll(tasks).ConfigureAwait(false);
     }
 
     private async Task ReplenishHotPoolAsync()
     {
-        await _hotPoolLock.WaitAsync();
+        await _hotPoolLock.WaitAsync().ConfigureAwait(false);
         try
         {
-            var currentCount = _hotPool.Count;
+            int currentCount = _hotPool.Count;
             if (currentCount < _options.Hot.MinimumSize)
             {
-                var needed = _options.Hot.MinimumSize - currentCount;
-                await WarmUpAsync(Tier.Hot, needed, CancellationToken.None);
+                int needed = _options.Hot.MinimumSize - currentCount;
+                await WarmUpAsync(Tier.Hot, needed, CancellationToken.None).ConfigureAwait(false);
             }
         }
         finally
@@ -381,14 +381,14 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
     private async Task ReplenishWarmPoolAsync()
     {
-        await _warmPoolLock.WaitAsync();
+        await _warmPoolLock.WaitAsync().ConfigureAwait(false);
         try
         {
-            var currentCount = _warmPool.Count;
+            int currentCount = _warmPool.Count;
             if (currentCount < _options.Warm.MinimumSize)
             {
-                var needed = _options.Warm.MinimumSize - currentCount;
-                await WarmUpAsync(Tier.Warm, needed, CancellationToken.None);
+                int needed = _options.Warm.MinimumSize - currentCount;
+                await WarmUpAsync(Tier.Warm, needed, CancellationToken.None).ConfigureAwait(false);
             }
         }
         finally
@@ -403,9 +403,9 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
         {
             try
             {
-                await CleanupExpiredSessionsAsync();
+                await CleanupExpiredSessionsAsync().ConfigureAwait(false);
 
-                var health = await GetHealthAsync();
+                PoolHealth health = await GetHealthAsync().ConfigureAwait(false);
 
                 if (!health.IsHealthy)
                 {
@@ -419,12 +419,12 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
                 if (health.Hot.Total < _options.Hot.MinimumSize)
                 {
-                    await ReplenishHotPoolAsync();
+                    await ReplenishHotPoolAsync().ConfigureAwait(false);
                 }
 
                 if (health.Warm.Total < _options.Warm.MinimumSize)
                 {
-                    await ReplenishWarmPoolAsync();
+                    await ReplenishWarmPoolAsync().ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
@@ -439,7 +439,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
         var hotExpired = new List<PooledBrowserSession>();
         var warmExpired = new List<PooledBrowserSession>();
 
-        foreach (var session in _hotPool)
+        foreach (PooledBrowserSession session in _hotPool)
         {
             if (session.IsExpired(_options.Hot.MaxAge))
             {
@@ -447,7 +447,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
             }
         }
 
-        foreach (var session in _warmPool)
+        foreach (PooledBrowserSession session in _warmPool)
         {
             if (session.IsExpired(_options.Warm.MaxAge))
             {
@@ -455,7 +455,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
             }
         }
 
-        foreach (var session in hotExpired)
+        foreach (PooledBrowserSession session in hotExpired)
         {
             if (_hotPool.TryTake(out _))
             {
@@ -463,7 +463,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
             }
         }
 
-        foreach (var session in warmExpired)
+        foreach (PooledBrowserSession session in warmExpired)
         {
             if (_warmPool.TryTake(out _))
             {
@@ -487,7 +487,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
     private static double GetMemoryPressure()
     {
-        var gcInfo = GC.GetGCMemoryInfo();
+        GCMemoryInfo gcInfo = GC.GetGCMemoryInfo();
         return (double)gcInfo.HeapSizeBytes / gcInfo.TotalAvailableMemoryBytes;
     }
 
@@ -514,15 +514,15 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
         _disposed = true;
 
-        await _healthCheckTimer.DisposeAsync();
+        await _healthCheckTimer.DisposeAsync().ConfigureAwait(false);
 
         var allSessions = _hotPool.Concat(_warmPool).Concat(_activeSessions.Values).ToList();
 
-        foreach (var session in allSessions)
+        foreach (PooledBrowserSession? session in allSessions)
         {
             try
             {
-                await session.Session.DisposeAsync();
+                await session.Session.DisposeAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {

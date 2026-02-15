@@ -16,8 +16,8 @@ public class ExtractionLogicHermeticTests
     {
         // Arrange - Create hermetic kernel and page
         var kernel = new StubGhostKernel();
-        var session = await kernel.NewSessionAsync();
-        var page = await session.NewPageAsync();
+        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
 
         // Setup test data in hermetic page
         var titleElement = new FakeElement();
@@ -25,13 +25,13 @@ public class ExtractionLogicHermeticTests
         ((FakePage)page).RegisterElement("h1.job-title", titleElement);
 
         // Act
-        var element = await page.QuerySelectorAsync("h1.job-title");
-        var title = await element!.GetTextContentAsync();
+        IElement? element = await page.QuerySelectorAsync("h1.job-title").ConfigureAwait(false);
+        string? title = await element!.GetTextContentAsync().ConfigureAwait(false);
 
         // Assert
         title.Should().Be("Senior Software Engineer");
 
-        await kernel.DisposeAsync();
+        await kernel.DisposeAsync().ConfigureAwait(false);
     }
 
     [Fact]
@@ -39,21 +39,21 @@ public class ExtractionLogicHermeticTests
     {
         // Arrange
         var kernel = new StubGhostKernel();
-        var session = await kernel.NewSessionAsync();
-        var page = await session.NewPageAsync();
+        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
 
         var companyElement = new FakeElement();
         companyElement.SetTextContent("Acme Corp");
         ((FakePage)page).RegisterElement(".company-name", companyElement);
 
         // Act
-        var element = await page.QuerySelectorAsync(".company-name");
-        var company = await element!.GetTextContentAsync();
+        IElement? element = await page.QuerySelectorAsync(".company-name").ConfigureAwait(false);
+        string? company = await element!.GetTextContentAsync().ConfigureAwait(false);
 
         // Assert
         company.Should().Be("Acme Corp");
 
-        await kernel.DisposeAsync();
+        await kernel.DisposeAsync().ConfigureAwait(false);
     }
 
     [Fact]
@@ -61,21 +61,21 @@ public class ExtractionLogicHermeticTests
     {
         // Arrange
         var kernel = new StubGhostKernel();
-        var session = await kernel.NewSessionAsync();
-        var page = await session.NewPageAsync();
+        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
 
         var linkElement = new FakeElement();
         linkElement.SetAttribute("href", "https://example.com/jobs/12345");
         ((FakePage)page).RegisterElement("a.apply-link", linkElement);
 
         // Act
-        var element = await page.QuerySelectorAsync("a.apply-link");
-        var url = await element!.GetAttributeAsync("href");
+        IElement? element = await page.QuerySelectorAsync("a.apply-link").ConfigureAwait(false);
+        string? url = await element!.GetAttributeAsync("href").ConfigureAwait(false);
 
         // Assert
         url.Should().Be("https://example.com/jobs/12345");
 
-        await kernel.DisposeAsync();
+        await kernel.DisposeAsync().ConfigureAwait(false);
     }
 
     [Fact]
@@ -83,8 +83,8 @@ public class ExtractionLogicHermeticTests
     {
         // Arrange
         var kernel = new StubGhostKernel();
-        var session = await kernel.NewSessionAsync();
-        var page = await session.NewPageAsync();
+        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
 
         // Setup multiple job cards
         var job1 = new FakeElement();
@@ -101,17 +101,17 @@ public class ExtractionLogicHermeticTests
         ((FakePage)page).RegisterElement(".job-card[data-job-id='2']", job2);
 
         // Act
-        var element1 = await page.QuerySelectorAsync(".job-card[data-job-id='1']");
-        var element2 = await page.QuerySelectorAsync(".job-card[data-job-id='2']");
+        IElement? element1 = await page.QuerySelectorAsync(".job-card[data-job-id='1']").ConfigureAwait(false);
+        IElement? element2 = await page.QuerySelectorAsync(".job-card[data-job-id='2']").ConfigureAwait(false);
 
-        var title1 = await element1!.GetTextContentAsync();
-        var title2 = await element2!.GetTextContentAsync();
+        string? title1 = await element1!.GetTextContentAsync().ConfigureAwait(false);
+        string? title2 = await element2!.GetTextContentAsync().ConfigureAwait(false);
 
         // Assert
         title1.Should().Be("Job 1");
         title2.Should().Be("Job 2");
 
-        await kernel.DisposeAsync();
+        await kernel.DisposeAsync().ConfigureAwait(false);
     }
 
     [Fact]
@@ -119,20 +119,20 @@ public class ExtractionLogicHermeticTests
     {
         // Arrange
         var kernel = new StubGhostKernel();
-        var session = await kernel.NewSessionAsync();
-        var page = await session.NewPageAsync();
+        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
 
         // Don't register any elements - simulate missing element
 
         // Act
-        var element = await page.QuerySelectorAsync(".non-existent");
+        IElement? element = await page.QuerySelectorAsync(".non-existent").ConfigureAwait(false);
 
         // Assert - Should return default element, not null
         element.Should().NotBeNull();
-        var text = await element!.GetTextContentAsync();
+        string? text = await element!.GetTextContentAsync().ConfigureAwait(false);
         text.Should().BeEmpty();
 
-        await kernel.DisposeAsync();
+        await kernel.DisposeAsync().ConfigureAwait(false);
     }
 
     [Fact]
@@ -140,8 +140,8 @@ public class ExtractionLogicHermeticTests
     {
         // Arrange
         var kernel = new StubGhostKernel();
-        var session = await kernel.NewSessionAsync();
-        var page = await session.NewPageAsync();
+        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
 
         var salaryElement = new FakeElement();
         salaryElement.SetTextContent("$120k - $180k");
@@ -150,17 +150,17 @@ public class ExtractionLogicHermeticTests
         ((FakePage)page).RegisterElement(".salary-range", salaryElement);
 
         // Act
-        var element = await page.QuerySelectorAsync(".salary-range");
-        var text = await element!.GetTextContentAsync();
-        var min = await element.GetAttributeAsync("data-min");
-        var max = await element.GetAttributeAsync("data-max");
+        IElement? element = await page.QuerySelectorAsync(".salary-range").ConfigureAwait(false);
+        string? text = await element!.GetTextContentAsync().ConfigureAwait(false);
+        string? min = await element.GetAttributeAsync("data-min").ConfigureAwait(false);
+        string? max = await element.GetAttributeAsync("data-max").ConfigureAwait(false);
 
         // Assert
         text.Should().Be("$120k - $180k");
         min.Should().Be("120000");
         max.Should().Be("180000");
 
-        await kernel.DisposeAsync();
+        await kernel.DisposeAsync().ConfigureAwait(false);
     }
 
     [Fact]
@@ -168,8 +168,8 @@ public class ExtractionLogicHermeticTests
     {
         // Arrange
         var kernel = new StubGhostKernel();
-        var session = await kernel.NewSessionAsync();
-        var page = await session.NewPageAsync();
+        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
 
         var locationElement = new FakeElement();
         locationElement.SetTextContent("San Francisco, CA");
@@ -177,14 +177,14 @@ public class ExtractionLogicHermeticTests
         ((FakePage)page).RegisterElement(".location", locationElement);
 
         // Act
-        var element = await page.QuerySelectorAsync(".location");
-        var location = await element!.GetTextContentAsync();
-        var isRemote = await element.GetAttributeAsync("data-remote");
+        IElement? element = await page.QuerySelectorAsync(".location").ConfigureAwait(false);
+        string? location = await element!.GetTextContentAsync().ConfigureAwait(false);
+        string? isRemote = await element.GetAttributeAsync("data-remote").ConfigureAwait(false);
 
         // Assert
         location.Should().Be("San Francisco, CA");
         isRemote.Should().Be("true");
 
-        await kernel.DisposeAsync();
+        await kernel.DisposeAsync().ConfigureAwait(false);
     }
 }

@@ -30,13 +30,13 @@ internal sealed class GhostKernelManager : IGhostKernel, IHostedService, IAsyncD
             return;
         }
 
-        var kernel = await _kernelTask.ConfigureAwait(false);
+        GhostKernel kernel = await _kernelTask.ConfigureAwait(false);
         await kernel.DisposeAsync().ConfigureAwait(false);
     }
 
     public async Task<IBrowserSession> NewSessionAsync(SessionOptions? options = null, CancellationToken ct = default)
     {
-        var kernel = await GetKernelAsync(ct).ConfigureAwait(false);
+        GhostKernel kernel = await GetKernelAsync(ct).ConfigureAwait(false);
         return await kernel.NewSessionAsync(options, ct).ConfigureAwait(false);
     }
 
@@ -44,7 +44,7 @@ internal sealed class GhostKernelManager : IGhostKernel, IHostedService, IAsyncD
     {
         if (_kernelTask is not null)
         {
-            var kernel = await _kernelTask.ConfigureAwait(false);
+            GhostKernel kernel = await _kernelTask.ConfigureAwait(false);
             await kernel.DisposeAsync().ConfigureAwait(false);
         }
 

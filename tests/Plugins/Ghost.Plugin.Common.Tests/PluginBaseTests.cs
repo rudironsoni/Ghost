@@ -23,10 +23,10 @@ public class PluginBaseTests
         // Arrange
         var plugin = new TestPlugin();
         var services = new ServiceCollection();
-        var configuration = new ConfigurationBuilder().Build();
+        IConfigurationRoot configuration = new ConfigurationBuilder().Build();
 
         // Act & Assert
-        var exception = Record.Exception(() =>
+        Exception exception = Record.Exception(() =>
             plugin.ConfigureServices(services, configuration));
 
         Assert.Null(exception);

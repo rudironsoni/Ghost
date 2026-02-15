@@ -81,7 +81,7 @@ public static partial class ItemLoaderProcessors
                 return string.Empty;
             }
 
-            var match = Regex.Match(s, pattern);
+            Match match = Regex.Match(s, pattern);
             return match.Success ? match.Value : string.Empty;
         };
     }

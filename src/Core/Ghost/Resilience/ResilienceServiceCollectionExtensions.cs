@@ -25,7 +25,7 @@ public static class ResilienceServiceCollectionExtensions
             "/var/ghost/cache",
             sp.GetRequiredService<ILogger<MemoryFileHybridCache>>()));
 
-        var circuitBreakerOptions = configuration.GetSection("Resilience:CircuitBreaker").Get<CircuitBreakerOptions>()
+        CircuitBreakerOptions circuitBreakerOptions = configuration.GetSection("Resilience:CircuitBreaker").Get<CircuitBreakerOptions>()
                                     ?? new CircuitBreakerOptions();
         services.AddSingleton<ICircuitBreaker>(new CircuitBreaker("LinkedIn", circuitBreakerOptions));
         services.AddSingleton<ICircuitBreaker>(new CircuitBreaker("Indeed", circuitBreakerOptions));

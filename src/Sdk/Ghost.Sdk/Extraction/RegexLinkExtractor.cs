@@ -23,12 +23,12 @@ public sealed partial class RegexLinkExtractor : ILinkExtractor
         ArgumentNullException.ThrowIfNull(html);
         ArgumentNullException.ThrowIfNull(baseUrl);
 
-        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var baseUri))
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri? baseUri))
         {
             throw new ArgumentException("Base URL must be a valid absolute URI.", nameof(baseUrl));
         }
 
-        var matches = HrefPattern().Matches(html);
+        MatchCollection matches = HrefPattern().Matches(html);
         var links = new HashSet<string>();
 
         foreach (Match match in matches)
@@ -38,13 +38,13 @@ public sealed partial class RegexLinkExtractor : ILinkExtractor
                 continue;
             }
 
-            var href = match.Groups[1].Value.Trim();
+            string href = match.Groups[1].Value.Trim();
             if (string.IsNullOrWhiteSpace(href) || href.StartsWith('#') || href.StartsWith("javascript:", StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
 
-            if (!TryResolveUrl(baseUri, href, out var absoluteUrl))
+            if (!TryResolveUrl(baseUri, href, out string? absoluteUrl))
             {
                 continue;
             }
@@ -66,7 +66,7 @@ public sealed partial class RegexLinkExtractor : ILinkExtractor
 
         if (_options.UniqueOnly)
         {
-            foreach (var link in links)
+            foreach (string link in links)
             {
                 yield return link;
             }
@@ -79,7 +79,7 @@ public sealed partial class RegexLinkExtractor : ILinkExtractor
 
         try
         {
-            if (Uri.TryCreate(href, UriKind.Absolute, out var uri))
+            if (Uri.TryCreate(href, UriKind.Absolute, out Uri? uri))
             {
                 absoluteUrl = uri.GetLeftPart(UriPartial.Path) + uri.Query;
                 return true;
@@ -101,7 +101,7 @@ public sealed partial class RegexLinkExtractor : ILinkExtractor
 
     private bool PassesFilters(string url)
     {
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
         {
             return false;
         }
@@ -109,7 +109,7 @@ public sealed partial class RegexLinkExtractor : ILinkExtractor
         // Check denied extensions
         if (_options.DenyExtensions is not null && _options.DenyExtensions.Count > 0)
         {
-            var extension = Path.GetExtension(uri.AbsolutePath).ToLowerInvariant();
+            string extension = Path.GetExtension(uri.AbsolutePath).ToLowerInvariant();
             if (_options.DenyExtensions.Any(ext => ext.Equals(extension, StringComparison.OrdinalIgnoreCase)))
             {
                 return false;
@@ -119,7 +119,7 @@ public sealed partial class RegexLinkExtractor : ILinkExtractor
         // Check allowed extensions
         if (_options.AllowedExtensions is not null && _options.AllowedExtensions.Count > 0)
         {
-            var extension = Path.GetExtension(uri.AbsolutePath).ToLowerInvariant();
+            string extension = Path.GetExtension(uri.AbsolutePath).ToLowerInvariant();
             if (!_options.AllowedExtensions.Any(ext => ext.Equals(extension, StringComparison.OrdinalIgnoreCase)))
             {
                 return false;
@@ -129,7 +129,7 @@ public sealed partial class RegexLinkExtractor : ILinkExtractor
         // Check allowed domains
         if (_options.AllowedDomains is not null && _options.AllowedDomains.Count > 0)
         {
-            var host = uri.Host.ToLowerInvariant();
+            string host = uri.Host.ToLowerInvariant();
             if (!_options.AllowedDomains.Any(domain => host.Equals(domain, StringComparison.OrdinalIgnoreCase) || host.EndsWith($".{domain}", StringComparison.OrdinalIgnoreCase)))
             {
                 return false;

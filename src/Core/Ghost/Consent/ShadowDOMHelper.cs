@@ -22,10 +22,10 @@ public static class ShadowDOMHelper
         try
         {
             // Use Playwright's piercing selector to search through shadow DOMs
-            var element = await page.QuerySelectorAsync($"pierce/{selector}");
+            IElement? element = await page.QuerySelectorAsync($"pierce/{selector}").ConfigureAwait(false);
             if (element != null)
             {
-                return await element.IsVisibleAsync();
+                return await element.IsVisibleAsync().ConfigureAwait(false);
             }
         }
         catch
@@ -33,7 +33,7 @@ public static class ShadowDOMHelper
             // Fallback to JavaScript evaluation
             try
             {
-                var found = await page.EvaluateAsync<bool>($@"
+                bool found = await page.EvaluateAsync<bool>($@"
                     () => {{
                         const findInShadow = (root, selector) => {{
                             // Try direct query first
@@ -62,7 +62,7 @@ public static class ShadowDOMHelper
                                element.offsetWidth > 0 &&
                                element.offsetHeight > 0;
                     }}
-                ");
+                ").ConfigureAwait(false);
                 return found;
             }
             catch
@@ -88,10 +88,10 @@ public static class ShadowDOMHelper
         try
         {
             // Try Playwright's piercing selector first
-            var element = await page.QuerySelectorAsync($"pierce/{selector}");
+            IElement? element = await page.QuerySelectorAsync($"pierce/{selector}").ConfigureAwait(false);
             if (element != null)
             {
-                await element.ClickAsync();
+                await element.ClickAsync().ConfigureAwait(false);
                 return true;
             }
         }
@@ -100,7 +100,7 @@ public static class ShadowDOMHelper
             // Fallback to JavaScript click
             try
             {
-                var clicked = await page.EvaluateAsync<bool>($@"
+                bool clicked = await page.EvaluateAsync<bool>($@"
                     () => {{
                         const findInShadow = (root, selector) => {{
                             const element = root.querySelector(selector);
@@ -123,7 +123,7 @@ public static class ShadowDOMHelper
                         }}
                         return false;
                     }}
-                ");
+                ").ConfigureAwait(false);
                 return clicked;
             }
             catch
@@ -147,7 +147,7 @@ public static class ShadowDOMHelper
 
         try
         {
-            var count = await page.EvaluateAsync<int>(@"
+            int count = await page.EvaluateAsync<int>(@"
                 () => {
                     const countShadowRoots = (root) => {
                         let count = 0;
@@ -162,7 +162,7 @@ public static class ShadowDOMHelper
                     };
                     return countShadowRoots(document);
                 }
-            ");
+            ").ConfigureAwait(false);
             return count;
         }
         catch

@@ -121,7 +121,7 @@ public sealed partial class TelnetConsole : ITelnetConsole, IAsyncDisposable
         LogConsoleStarted(_config.BindAddress, _config.Port);
 
         _acceptTask = AcceptClientsAsync(_cts.Token);
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -169,7 +169,7 @@ public sealed partial class TelnetConsole : ITelnetConsole, IAsyncDisposable
         {
             try
             {
-                var client = await _listener.AcceptTcpClientAsync(ct).ConfigureAwait(false);
+                TcpClient client = await _listener.AcceptTcpClientAsync(ct).ConfigureAwait(false);
 
                 // Check connection limit
                 if (_sessions.Count >= _config.MaxConnections)
@@ -181,7 +181,7 @@ public sealed partial class TelnetConsole : ITelnetConsole, IAsyncDisposable
 
                 // Check IP whitelist
                 var endpoint = client.Client.RemoteEndPoint as IPEndPoint;
-                var clientIp = endpoint?.Address.ToString() ?? "unknown";
+                string clientIp = endpoint?.Address.ToString() ?? "unknown";
 
                 if (!IsIpAllowed(clientIp))
                 {
@@ -219,7 +219,7 @@ public sealed partial class TelnetConsole : ITelnetConsole, IAsyncDisposable
 
         try
         {
-            using var stream = client.GetStream();
+            using NetworkStream stream = client.GetStream();
             using var reader = new StreamReader(stream, Encoding.UTF8);
             using var writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
 
@@ -254,7 +254,7 @@ public sealed partial class TelnetConsole : ITelnetConsole, IAsyncDisposable
                 }
 
                 await writer.WriteAsync("> ").ConfigureAwait(false);
-                var line = await reader.ReadLineAsync(ct).ConfigureAwait(false);
+                string? line = await reader.ReadLineAsync(ct).ConfigureAwait(false);
 
                 if (line == null)
                 {
@@ -263,7 +263,7 @@ public sealed partial class TelnetConsole : ITelnetConsole, IAsyncDisposable
 
                 session.LastActivity = DateTimeOffset.UtcNow;
 
-                var trimmedLine = line.Trim();
+                string trimmedLine = line.Trim();
                 if (string.IsNullOrWhiteSpace(trimmedLine))
                 {
                     continue;
@@ -288,7 +288,7 @@ public sealed partial class TelnetConsole : ITelnetConsole, IAsyncDisposable
                 // Process command
                 try
                 {
-                    var response = await ProcessCommandAsync(trimmedLine, session, ct).ConfigureAwait(false);
+                    string response = await ProcessCommandAsync(trimmedLine, session, ct).ConfigureAwait(false);
                     await writer.WriteLineAsync(response).ConfigureAwait(false);
 
                     // Check for exit command
@@ -328,10 +328,10 @@ public sealed partial class TelnetConsole : ITelnetConsole, IAsyncDisposable
         for (int attempt = 1; attempt <= MaxAttempts; attempt++)
         {
             await writer.WriteAsync("Username: ").ConfigureAwait(false);
-            var username = await reader.ReadLineAsync(ct).ConfigureAwait(false);
+            string? username = await reader.ReadLineAsync(ct).ConfigureAwait(false);
 
             await writer.WriteAsync("Password: ").ConfigureAwait(false);
-            var password = await reader.ReadLineAsync(ct).ConfigureAwait(false);
+            string? password = await reader.ReadLineAsync(ct).ConfigureAwait(false);
 
             if (IsAuthenticationValid(username, password))
             {
@@ -364,12 +364,12 @@ public sealed partial class TelnetConsole : ITelnetConsole, IAsyncDisposable
             return false;
         }
 
-        var usernameMatch = string.IsNullOrEmpty(_config.Username) ||
+        bool usernameMatch = string.IsNullOrEmpty(_config.Username) ||
                             CryptographicOperations.FixedTimeEquals(
                                 Encoding.UTF8.GetBytes(username),
                                 Encoding.UTF8.GetBytes(_config.Username));
 
-        var passwordMatch = string.IsNullOrEmpty(_config.Password) ||
+        bool passwordMatch = string.IsNullOrEmpty(_config.Password) ||
                             CryptographicOperations.FixedTimeEquals(
                                 Encoding.UTF8.GetBytes(password),
                                 Encoding.UTF8.GetBytes(_config.Password));
@@ -386,7 +386,7 @@ public sealed partial class TelnetConsole : ITelnetConsole, IAsyncDisposable
         }
 
         // Check if client IP is in the whitelist
-        foreach (var allowedIp in _config.AllowedIps)
+        foreach (string allowedIp in _config.AllowedIps)
         {
             if (allowedIp.Equals(clientIp, StringComparison.OrdinalIgnoreCase))
             {
@@ -404,16 +404,16 @@ public sealed partial class TelnetConsole : ITelnetConsole, IAsyncDisposable
         TelnetSession session,
         CancellationToken ct)
     {
-        var parts = ParseCommandLine(commandLine);
+        string[] parts = ParseCommandLine(commandLine);
         if (parts.Length == 0)
         {
             return string.Empty;
         }
 
-        var commandName = parts[0];
-        var args = parts.Skip(1).ToArray();
+        string commandName = parts[0];
+        string[] args = parts.Skip(1).ToArray();
 
-        if (_commands.TryGetValue(commandName, out var command))
+        if (_commands.TryGetValue(commandName, out IConsoleCommand? command))
         {
             var context = new ConsoleContext
             {
@@ -433,9 +433,9 @@ public sealed partial class TelnetConsole : ITelnetConsole, IAsyncDisposable
     {
         var parts = new List<string>();
         var current = new StringBuilder();
-        var inQuotes = false;
+        bool inQuotes = false;
 
-        foreach (var c in commandLine)
+        foreach (char c in commandLine)
         {
             if (c == '"')
             {

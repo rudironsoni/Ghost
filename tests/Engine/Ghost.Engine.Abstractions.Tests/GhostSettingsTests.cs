@@ -13,7 +13,7 @@ public sealed class GhostSettingsTests
             new Dictionary<string, object?> { ["TimeoutMs"] = 1000 },
             new Dictionary<string, object?> { ["TimeoutMs"] = 5000 });
 
-        var timeout = settings.GetOrDefault("TimeoutMs", 2000);
+        int timeout = settings.GetOrDefault("TimeoutMs", 2000);
 
         timeout.Should().Be(5000);
     }
@@ -25,7 +25,7 @@ public sealed class GhostSettingsTests
             new Dictionary<string, object?>(),
             new Dictionary<string, object?>());
 
-        var exists = settings.TryGet<int>("MissingKey", out var value);
+        bool exists = settings.TryGet<int>("MissingKey", out int value);
 
         exists.Should().BeFalse();
         value.Should().Be(default);
@@ -46,13 +46,13 @@ public sealed class GhostSettingsTests
 
         public bool TryGet<T>(string key, out T? value)
         {
-            if (_override.TryGetValue(key, out var overrideValue) && overrideValue is T castOverride)
+            if (_override.TryGetValue(key, out object? overrideValue) && overrideValue is T castOverride)
             {
                 value = castOverride;
                 return true;
             }
 
-            if (_base.TryGetValue(key, out var baseValue) && baseValue is T castBase)
+            if (_base.TryGetValue(key, out object? baseValue) && baseValue is T castBase)
             {
                 value = castBase;
                 return true;
@@ -64,7 +64,7 @@ public sealed class GhostSettingsTests
 
         public T GetOrDefault<T>(string key, T defaultValue)
         {
-            return TryGet<T>(key, out var value) && value is not null
+            return TryGet<T>(key, out T? value) && value is not null
                 ? value
                 : defaultValue;
         }

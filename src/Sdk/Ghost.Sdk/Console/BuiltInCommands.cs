@@ -25,8 +25,8 @@ internal sealed class HelpCommand : IConsoleCommand
         if (args.Length > 0)
         {
             // Show help for specific command
-            var commandName = args[0];
-            if (_commands.TryGetValue(commandName, out var command))
+            string commandName = args[0];
+            if (_commands.TryGetValue(commandName, out IConsoleCommand? command))
             {
                 var sb = new StringBuilder();
                 sb.AppendLine(CultureInfo.InvariantCulture, $"Command: {command.Name}");
@@ -43,7 +43,7 @@ internal sealed class HelpCommand : IConsoleCommand
         output.AppendLine("Available commands:");
         output.AppendLine();
 
-        foreach (var command in _commands.Values.OrderBy(c => c.Name))
+        foreach (IConsoleCommand? command in _commands.Values.OrderBy(c => c.Name))
         {
             output.AppendLine(CultureInfo.InvariantCulture, $"  {command.Name,-15} - {command.Description}");
         }
@@ -119,10 +119,10 @@ internal sealed class SessionsCommand : IConsoleCommand
         sb.AppendLine(CultureInfo.InvariantCulture, $"Active Sessions ({_sessions.Count}):");
         sb.AppendLine();
 
-        foreach (var session in _sessions.Values.OrderBy(s => s.ConnectedAt))
+        foreach (TelnetSession? session in _sessions.Values.OrderBy(s => s.ConnectedAt))
         {
-            var duration = DateTimeOffset.UtcNow - session.ConnectedAt;
-            var idle = DateTimeOffset.UtcNow - session.LastActivity;
+            TimeSpan duration = DateTimeOffset.UtcNow - session.ConnectedAt;
+            TimeSpan idle = DateTimeOffset.UtcNow - session.LastActivity;
 
             sb.AppendLine(CultureInfo.InvariantCulture, $"Session ID: {session.SessionId}");
             sb.AppendLine(CultureInfo.InvariantCulture, $"  Client: {session.ClientAddress}");

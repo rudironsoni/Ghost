@@ -12,7 +12,7 @@ public interface ISpiderContract
     /// <summary>
     /// Gets the name of this contract.
     /// </summary>
-    string Name { get; }
+    public string Name { get; }
 
     /// <summary>
     /// Validates the spider context against this contract's rules.
@@ -20,5 +20,5 @@ public interface ISpiderContract
     /// <param name="context">The spider context to validate.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>True if the contract is satisfied; otherwise, false.</returns>
-    Task<bool> ValidateAsync(SpiderContext context, CancellationToken ct = default);
+    public Task<bool> ValidateAsync(SpiderContext context, CancellationToken ct = default);
 }

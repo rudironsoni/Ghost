@@ -16,37 +16,37 @@ public interface IBrowserSession : IAsyncDisposable
     /// Gets the unique identifier for this browser session.
     /// </summary>
     /// <value>A unique session identifier for tracking and logging.</value>
-    string SessionId { get; }
+    public string SessionId { get; }
 
     /// <summary>
     /// Gets the Playwright page instance for browser interaction.
     /// </summary>
     /// <value>The page object that provides browser automation capabilities.</value>
-    IPage Page { get; }
+    public IPage Page { get; }
 
     /// <summary>
     /// Gets the Playwright browser context instance.
     /// </summary>
     /// <value>The browser context providing an isolated browsing session.</value>
-    IBrowserContext Context { get; }
+    public IBrowserContext Context { get; }
 
     /// <summary>
     /// Gets a value indicating whether this session is currently in use.
     /// </summary>
     /// <value><c>true</c> if the session is active; otherwise, <c>false</c>.</value>
-    bool IsActive { get; }
+    public bool IsActive { get; }
 
     /// <summary>
     /// Gets the timestamp when this session was created.
     /// </summary>
     /// <value>The UTC timestamp of session creation.</value>
-    DateTimeOffset CreatedAt { get; }
+    public DateTimeOffset CreatedAt { get; }
 
     /// <summary>
     /// Gets the timestamp of the last activity on this session.
     /// </summary>
     /// <value>The UTC timestamp of the most recent session activity.</value>
-    DateTimeOffset LastActivityAt { get; }
+    public DateTimeOffset LastActivityAt { get; }
 
     /// <summary>
     /// Navigates to the specified URL and waits for the page to load.
@@ -62,7 +62,7 @@ public interface IBrowserSession : IAsyncDisposable
     /// <exception cref="OperationCanceledException">
     /// Thrown when the operation is canceled via <paramref name="cancellationToken"/>.
     /// </exception>
-    Task<IResponse?> NavigateAsync(string url, PageGotoOptions? options = null, CancellationToken cancellationToken = default);
+    public Task<IResponse?> NavigateAsync(string url, PageGotoOptions? options = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Executes JavaScript code in the page context.
@@ -75,7 +75,7 @@ public interface IBrowserSession : IAsyncDisposable
     /// the script execution result.
     /// </returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="script"/> is null.</exception>
-    Task<T> EvaluateAsync<T>(string script, CancellationToken cancellationToken = default);
+    public Task<T> EvaluateAsync<T>(string script, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the HTML content of the current page.
@@ -85,7 +85,7 @@ public interface IBrowserSession : IAsyncDisposable
     /// A task that represents the asynchronous operation. The task result contains
     /// the page HTML content.
     /// </returns>
-    Task<string> GetContentAsync(CancellationToken cancellationToken = default);
+    public Task<string> GetContentAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Waits for a selector to appear in the DOM.
@@ -97,7 +97,7 @@ public interface IBrowserSession : IAsyncDisposable
     /// A task that represents the asynchronous operation. The task result contains
     /// the element handle if found, or null if the timeout is reached.
     /// </returns>
-    Task<IElementHandle?> WaitForSelectorAsync(string selector, PageWaitForSelectorOptions? options = null, CancellationToken cancellationToken = default);
+    public Task<IElementHandle?> WaitForSelectorAsync(string selector, PageWaitForSelectorOptions? options = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Waits for the network to become idle.
@@ -105,7 +105,7 @@ public interface IBrowserSession : IAsyncDisposable
     /// <param name="timeout">The maximum time to wait.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    Task WaitForNetworkIdleAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default);
+    public Task WaitForNetworkIdleAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Takes a screenshot of the current page.
@@ -116,7 +116,7 @@ public interface IBrowserSession : IAsyncDisposable
     /// A task that represents the asynchronous operation. The task result contains
     /// the screenshot as a byte array.
     /// </returns>
-    Task<byte[]> ScreenshotAsync(PageScreenshotOptions? options = null, CancellationToken cancellationToken = default);
+    public Task<byte[]> ScreenshotAsync(PageScreenshotOptions? options = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Resets the session to a clean state for reuse.
@@ -127,5 +127,5 @@ public interface IBrowserSession : IAsyncDisposable
     /// This method clears cookies, cache, and navigation history to prepare
     /// the session for reuse by another request.
     /// </remarks>
-    Task ResetAsync(CancellationToken cancellationToken = default);
+    public Task ResetAsync(CancellationToken cancellationToken = default);
 }

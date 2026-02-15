@@ -9,7 +9,7 @@ public class FakeElement : IElement
     public string SelectorPath { get; } = "fake-selector";
 
     public Task<string?> GetAttributeAsync(string name, CancellationToken ct = default) =>
-        Task.FromResult(_attributes.TryGetValue(name, out var value) ? value : null);
+        Task.FromResult(_attributes.TryGetValue(name, out string? value) ? value : null);
 
     public Task<string?> GetTextContentAsync(CancellationToken ct = default) =>
         Task.FromResult<string?>(_textContent);

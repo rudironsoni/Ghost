@@ -80,8 +80,8 @@ public sealed class RedisQueueMetricsService : BackgroundService
         {
             try
             {
-                await UpdateMetricsAsync(stoppingToken);
-                await Task.Delay(_pollInterval, stoppingToken);
+                await UpdateMetricsAsync(stoppingToken).ConfigureAwait(false);
+                await Task.Delay(_pollInterval, stoppingToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -91,7 +91,7 @@ public sealed class RedisQueueMetricsService : BackgroundService
             catch (Exception ex)
             {
                 s_metricsPollError(_logger, ex);
-                await Task.Delay(_pollInterval, stoppingToken);
+                await Task.Delay(_pollInterval, stoppingToken).ConfigureAwait(false);
             }
         }
 
@@ -100,10 +100,10 @@ public sealed class RedisQueueMetricsService : BackgroundService
 
     private async Task UpdateMetricsAsync(CancellationToken cancellationToken)
     {
-        PendingCount = await _dispatcher.GetPendingCountAsync(cancellationToken);
-        ActiveCount = await _dispatcher.GetActiveCountAsync(cancellationToken);
-        CompletedCount = await _dispatcher.GetCompletedCountAsync(cancellationToken);
-        DeadCount = await _dispatcher.GetDeadCountAsync(cancellationToken);
+        PendingCount = await _dispatcher.GetPendingCountAsync(cancellationToken).ConfigureAwait(false);
+        ActiveCount = await _dispatcher.GetActiveCountAsync(cancellationToken).ConfigureAwait(false);
+        CompletedCount = await _dispatcher.GetCompletedCountAsync(cancellationToken).ConfigureAwait(false);
+        DeadCount = await _dispatcher.GetDeadCountAsync(cancellationToken).ConfigureAwait(false);
         LastUpdate = DateTime.UtcNow;
 
         s_metricsUpdated(_logger, PendingCount, ActiveCount, CompletedCount, DeadCount, null);

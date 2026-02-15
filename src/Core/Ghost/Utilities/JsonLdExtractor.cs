@@ -10,7 +10,7 @@ public class JsonLdExtractor : IJsonLdExtractor
 
     public IEnumerable<T> Extract<T>(string html)
     {
-        foreach (var el in ExtractRaw(html))
+        foreach (JsonElement el in ExtractRaw(html))
         {
             T? parsed;
             try
@@ -31,10 +31,10 @@ public class JsonLdExtractor : IJsonLdExtractor
         if (string.IsNullOrWhiteSpace(html))
             yield break;
 
-        var matches = JsonLdRegex.Matches(html);
+        MatchCollection matches = JsonLdRegex.Matches(html);
         foreach (Match m in matches)
         {
-            var inner = m.Groups[1].Value.Trim();
+            string inner = m.Groups[1].Value.Trim();
             if (string.IsNullOrWhiteSpace(inner))
                 continue;
 
@@ -51,7 +51,7 @@ public class JsonLdExtractor : IJsonLdExtractor
 
             if (root.ValueKind == JsonValueKind.Array)
             {
-                foreach (var item in root.EnumerateArray())
+                foreach (JsonElement item in root.EnumerateArray())
                     yield return item;
             }
             else

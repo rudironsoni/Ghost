@@ -16,7 +16,7 @@ public interface ISessionManager
     /// <param name="ttl">Time-to-live for this session. If null, uses default TTL.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The session ID of the saved session.</returns>
-    Task<string> SaveSessionAsync(
+    public Task<string> SaveSessionAsync(
         IBrowserContext context,
         string platform,
         string? sessionId = null,
@@ -31,7 +31,7 @@ public interface ISessionManager
     /// <param name="sessionId">Optional specific session ID. If null, uses the latest session for the platform.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>True if session was restored, false if no session found or expired.</returns>
-    Task<bool> RestoreSessionAsync(
+    public Task<bool> RestoreSessionAsync(
         IBrowserContext context,
         string platform,
         string? sessionId = null,
@@ -44,7 +44,7 @@ public interface ISessionManager
     /// <param name="sessionId">Optional specific session ID. If null, loads the latest session.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The browser session, or null if not found or expired.</returns>
-    Task<BrowserSession?> LoadSessionAsync(
+    public Task<BrowserSession?> LoadSessionAsync(
         string platform,
         string? sessionId = null,
         CancellationToken ct = default);
@@ -55,7 +55,7 @@ public interface ISessionManager
     /// <param name="platform">Platform identifier.</param>
     /// <param name="sessionId">Optional specific session ID. If null, deletes all sessions for the platform.</param>
     /// <param name="ct">Cancellation token.</param>
-    Task DeleteSessionAsync(
+    public Task DeleteSessionAsync(
         string platform,
         string? sessionId = null,
         CancellationToken ct = default);
@@ -67,7 +67,7 @@ public interface ISessionManager
     /// <param name="includeExpired">Whether to include expired sessions.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>List of session IDs.</returns>
-    Task<List<string>> ListSessionsAsync(
+    public Task<List<string>> ListSessionsAsync(
         string platform,
         bool includeExpired = false,
         CancellationToken ct = default);
@@ -77,5 +77,5 @@ public interface ISessionManager
     /// </summary>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Number of sessions deleted.</returns>
-    Task<int> CleanupExpiredSessionsAsync(CancellationToken ct = default);
+    public Task<int> CleanupExpiredSessionsAsync(CancellationToken ct = default);
 }

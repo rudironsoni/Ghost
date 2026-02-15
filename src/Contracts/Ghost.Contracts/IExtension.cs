@@ -14,27 +14,27 @@ public interface IExtension
     /// <summary>
     /// The human-readable name of the extension.
     /// </summary>
-    string Name { get; }
+    public string Name { get; }
 
     /// <summary>
     /// The extension version.
     /// </summary>
-    Version Version { get; }
+    public Version Version { get; }
 
     /// <summary>
     /// Services this extension provides.
     /// </summary>
-    IReadOnlyList<Type> ProvidedServices { get; }
+    public IReadOnlyList<Type> ProvidedServices { get; }
 
     /// <summary>
     /// Services this extension requires to operate.
     /// </summary>
-    IReadOnlyList<Type> RequiredServices { get; }
+    public IReadOnlyList<Type> RequiredServices { get; }
 
     /// <summary>
     /// Configure services for this extension using the provided service collection and configuration.
     /// </summary>
     /// <param name="services">Service collection to register services into.</param>
     /// <param name="configuration">Configuration to read options from.</param>
-    void ConfigureServices(IServiceCollection services, IConfiguration configuration);
+    public void ConfigureServices(IServiceCollection services, IConfiguration configuration);
 }

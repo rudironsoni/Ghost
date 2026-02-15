@@ -44,10 +44,10 @@ public sealed class RetryPolicy : IRetryPolicy
         ArgumentNullException.ThrowIfNull(action);
         ArgumentNullException.ThrowIfNull(isRetryable);
 
-        var options = SnapshotOptions(Options);
+        RetryPolicyOptions options = SnapshotOptions(Options);
         ValidateOptions(options);
 
-        var previousAttempt = _currentAttempt.Value;
+        int previousAttempt = _currentAttempt.Value;
         _currentAttempt.Value = 0;
 
         try
@@ -60,7 +60,7 @@ public sealed class RetryPolicy : IRetryPolicy
                 }
                 catch (Exception ex) when (isRetryable(ex) && _currentAttempt.Value < options.MaxRetries)
                 {
-                    var delay = CalculateDelay(_currentAttempt.Value, options);
+                    TimeSpan delay = CalculateDelay(_currentAttempt.Value, options);
                     _currentAttempt.Value++;
                     await Task.Delay(delay).ConfigureAwait(false);
                 }
@@ -98,10 +98,10 @@ public sealed class RetryPolicy : IRetryPolicy
     {
         ArgumentNullException.ThrowIfNull(action);
 
-        var options = SnapshotOptions(Options);
+        RetryPolicyOptions options = SnapshotOptions(Options);
         ValidateOptions(options);
 
-        var previousAttempt = _currentAttempt.Value;
+        int previousAttempt = _currentAttempt.Value;
         _currentAttempt.Value = 0;
 
         try
@@ -116,7 +116,7 @@ public sealed class RetryPolicy : IRetryPolicy
                 }
                 catch (Exception ex) when (RetryableErrorClassifier.IsRetryable(ex) && _currentAttempt.Value < options.MaxRetries)
                 {
-                    var delay = CalculateDelay(_currentAttempt.Value, options);
+                    TimeSpan delay = CalculateDelay(_currentAttempt.Value, options);
                     _currentAttempt.Value++;
                     await Task.Delay(delay).ConfigureAwait(false);
                     continue;
@@ -127,7 +127,7 @@ public sealed class RetryPolicy : IRetryPolicy
                     _currentAttempt.Value < options.MaxRetries)
                 {
                     response.Dispose();
-                    var delay = CalculateDelay(_currentAttempt.Value, options);
+                    TimeSpan delay = CalculateDelay(_currentAttempt.Value, options);
                     _currentAttempt.Value++;
                     await Task.Delay(delay).ConfigureAwait(false);
                     continue;
@@ -149,14 +149,14 @@ public sealed class RetryPolicy : IRetryPolicy
 
     private static TimeSpan CalculateDelay(int attempt, RetryPolicyOptions options)
     {
-        var baseDelay = options.BaseDelay;
-        var maxDelay = options.MaxDelay;
-        var useJitter = options.UseJitter;
+        TimeSpan baseDelay = options.BaseDelay;
+        TimeSpan maxDelay = options.MaxDelay;
+        bool useJitter = options.UseJitter;
 
         var exponential = TimeSpan.FromMilliseconds(baseDelay.TotalMilliseconds * Math.Pow(2, attempt));
-        var jitter = useJitter ? Random.Shared.NextDouble() * 0.5 : 0;
+        double jitter = useJitter ? Random.Shared.NextDouble() * 0.5 : 0;
         var delay = TimeSpan.FromMilliseconds(exponential.TotalMilliseconds * (1 + jitter));
-        var clamped = Math.Min(delay.TotalMilliseconds, maxDelay.TotalMilliseconds);
+        double clamped = Math.Min(delay.TotalMilliseconds, maxDelay.TotalMilliseconds);
         return TimeSpan.FromMilliseconds(clamped);
     }
 

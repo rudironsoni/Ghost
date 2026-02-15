@@ -25,25 +25,25 @@ internal sealed class DeferredBrowserSession : Ghost.IBrowserSession
 
     public async Task<IPage> NewPageAsync(PageOptions? options = null, CancellationToken ct = default)
     {
-        var session = await GetSessionAsync(ct).ConfigureAwait(false);
+        IBrowserSession session = await GetSessionAsync(ct).ConfigureAwait(false);
         return await session.NewPageAsync(options, ct).ConfigureAwait(false);
     }
 
     public async Task<IPage?> GetPageAsync(string pageId, CancellationToken ct = default)
     {
-        var session = await GetSessionAsync(ct).ConfigureAwait(false);
+        IBrowserSession session = await GetSessionAsync(ct).ConfigureAwait(false);
         return await session.GetPageAsync(pageId, ct).ConfigureAwait(false);
     }
 
     public async Task CloseAsync(CancellationToken ct = default)
     {
-        var session = await GetSessionAsync(ct).ConfigureAwait(false);
+        IBrowserSession session = await GetSessionAsync(ct).ConfigureAwait(false);
         await session.CloseAsync(ct).ConfigureAwait(false);
     }
 
     public async Task SaveStorageStateAsync(string path)
     {
-        var session = await GetSessionAsync(CancellationToken.None).ConfigureAwait(false);
+        IBrowserSession session = await GetSessionAsync(CancellationToken.None).ConfigureAwait(false);
         await session.SaveStorageStateAsync(path).ConfigureAwait(false);
     }
 

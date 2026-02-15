@@ -51,9 +51,9 @@ internal static class IndeedConstants
         {
             throw new ArgumentException("Indeed API key is required. Please provide a valid API key in configuration.", nameof(apiKey));
         }
-        var keyToUse = apiKey;
+        string keyToUse = apiKey;
 
-        var locale = country switch
+        string locale = country switch
         {
             CountryCode.US => "en-US",
             CountryCode.UK => "en-GB",
@@ -63,7 +63,7 @@ internal static class IndeedConstants
             _ => "en-US"
         };
 
-        var domain = country switch
+        string domain = country switch
         {
             CountryCode.US => "indeed.com",
             CountryCode.UK => "indeed.co.uk",
@@ -75,11 +75,11 @@ internal static class IndeedConstants
         };
 
         // indeed-co expects an ISO country code (e.g. "US", "ES", "GB")
-        var indeedCo = country == CountryCode.UK ? "GB" : country.ToString().ToUpperInvariant();
+        string indeedCo = country == CountryCode.UK ? "GB" : country.ToString().ToUpperInvariant();
 
         // Build an Accept-Language header from the locale (eg "es-ES" -> "es-ES,es;q=0.9")
-        var language = locale.Split('-')[0];
-        var acceptLanguage = $"{locale},{language};q=0.9";
+        string language = locale.Split('-')[0];
+        string acceptLanguage = $"{locale},{language};q=0.9";
 
         return new Dictionary<string, string>
         {

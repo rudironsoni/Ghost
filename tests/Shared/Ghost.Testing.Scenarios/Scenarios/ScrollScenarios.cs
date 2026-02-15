@@ -15,11 +15,11 @@ public static class ScrollScenarios
     {
         logger.LogInformation("Scenario: scroll/auto-threshold");
 
-        var offset = context.Items["ScrollOffset"] as int? ?? 0;
-        var limit = context.Items["ScrollLimit"] as int? ?? 20;
-        var jobs = TestData.GetJobPostings(offset, limit);
+        int offset = context.Items["ScrollOffset"] as int? ?? 0;
+        int limit = context.Items["ScrollLimit"] as int? ?? 20;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(offset, limit);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,9 +99,9 @@ public static class ScrollScenarios
     {
         logger.LogInformation("Scenario: scroll/button-driven");
 
-        var jobs = TestData.GetJobPostings(0, 15);
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 15);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -181,7 +181,7 @@ public static class ScrollScenarios
     {
         logger.LogInformation("Scenario: scroll/virtualized");
 
-        var html = """
+        string html = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -247,18 +247,18 @@ public static class ScrollScenarios
 
     public static async Task<IResult> LoadMoreApiHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        await Task.Delay(100); // Simulate network delay
+        await Task.Delay(100).ConfigureAwait(false); // Simulate network delay
 
-        var offset = int.TryParse(context.Request.Query["offset"], out var o) ? o : 0;
-        var limit = int.TryParse(context.Request.Query["limit"], out var l) ? l : 20;
+        int offset = int.TryParse(context.Request.Query["offset"], out int o) ? o : 0;
+        int limit = int.TryParse(context.Request.Query["limit"], out int l) ? l : 20;
 
         if (logger.IsEnabled(LogLevel.Information))
         {
             logger.LogInformation("API: scroll/load-more offset={Offset} limit={Limit}", offset, limit);
         }
 
-        var jobs = TestData.GetJobPostings(offset, limit);
-        var hasMore = offset + limit < TestData.TotalJobCount;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(offset, limit);
+        bool hasMore = offset + limit < TestData.TotalJobCount;
 
         var response = new
         {
@@ -283,9 +283,9 @@ public static class ScrollScenarios
     {
         logger.LogInformation("Scenario: scroll/duplicate-chunk");
 
-        var jobs = TestData.GetJobPostings(0, 15);
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 15);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -401,10 +401,10 @@ public static class ScrollScenarios
 
     public static async Task<IResult> LoadMoreDuplicatesApiHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        await Task.Delay(100); // Simulate network delay
+        await Task.Delay(100).ConfigureAwait(false); // Simulate network delay
 
-        var offset = int.TryParse(context.Request.Query["offset"], out var o) ? o : 0;
-        var limit = int.TryParse(context.Request.Query["limit"], out var l) ? l : 15;
+        int offset = int.TryParse(context.Request.Query["offset"], out int o) ? o : 0;
+        int limit = int.TryParse(context.Request.Query["limit"], out int l) ? l : 15;
 
         if (logger.IsEnabled(LogLevel.Information))
         {
@@ -427,7 +427,7 @@ public static class ScrollScenarios
             jobs = TestData.GetJobPostings(offset, limit);
         }
 
-        var hasMore = offset + limit < TestData.TotalJobCount;
+        bool hasMore = offset + limit < TestData.TotalJobCount;
 
         var response = new
         {

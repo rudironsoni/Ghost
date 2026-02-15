@@ -26,7 +26,7 @@ public sealed partial class OpenAIClient : Ghost.Contracts.Inference.IInferenceC
     public async Task<InferenceResponse> CompleteAsync(InferenceRequest request, CancellationToken ct = default)
     {
         var sb = new System.Text.StringBuilder();
-        await foreach (var chunk in StreamAsync(request, ct)) sb.Append(chunk.Delta);
+        await foreach (InferenceChunk chunk in StreamAsync(request, ct).ConfigureAwait(false)) sb.Append(chunk.Delta);
         return new Ghost.Contracts.Inference.InferenceResponse
         {
             Model = request.Model ?? _options.DefaultModel,
@@ -37,24 +37,24 @@ public sealed partial class OpenAIClient : Ghost.Contracts.Inference.IInferenceC
     public async IAsyncEnumerable<InferenceChunk> StreamAsync(InferenceRequest request, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        var page = await _session.NewPageAsync(ct: ct);
+        IPage page = await _session.NewPageAsync(ct: ct).ConfigureAwait(false);
         try
         {
-            await page.NavigateAsync(_options.BaseUrl, ct: ct);
-            try { await page.WaitForSelectorAsync("textarea", ct: ct); } catch { }
+            await page.NavigateAsync(_options.BaseUrl, ct: ct).ConfigureAwait(false);
+            try { await page.WaitForSelectorAsync("textarea", ct: ct).ConfigureAwait(false); } catch { }
 
-            var prompt = string.Join("\n", request.Messages.Select(m => m.Content));
-            await page.TypeAsync("textarea", prompt, ct: ct);
-            await page.PressAsync("textarea", "Enter", ct);
+            string prompt = string.Join("\n", request.Messages.Select(m => m.Content));
+            await page.TypeAsync("textarea", prompt, ct: ct).ConfigureAwait(false);
+            await page.PressAsync("textarea", "Enter", ct).ConfigureAwait(false);
 
-            var last = string.Empty;
+            string last = string.Empty;
             var sw = System.Diagnostics.Stopwatch.StartNew();
             while (!ct.IsCancellationRequested && sw.Elapsed < _options.ResponseTimeout)
             {
                 string content = string.Empty;
                 try
                 {
-                    content = await page.EvaluateAsync<string>("() => { const el = document.querySelector('[data-testid=assistant-response]') || document.querySelector('.assistant'); return el ? el.innerText : ''; }", ct: ct);
+                    content = await page.EvaluateAsync<string>("() => { const el = document.querySelector('[data-testid=assistant-response]') || document.querySelector('.assistant'); return el ? el.innerText : ''; }", ct: ct).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -63,17 +63,17 @@ public sealed partial class OpenAIClient : Ghost.Contracts.Inference.IInferenceC
 
                 if (!string.IsNullOrEmpty(content) && content.Length > last.Length)
                 {
-                    var delta = content.Substring(last.Length);
+                    string delta = content.Substring(last.Length);
                     last = content;
                     yield return new InferenceChunk { Delta = delta };
                 }
 
-                await Task.Delay(200, ct);
+                await Task.Delay(200, ct).ConfigureAwait(false);
             }
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 }

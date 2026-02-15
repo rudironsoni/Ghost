@@ -25,5 +25,5 @@ public interface ICloseSpiderExtension
     /// Conditions are evaluated in registration order, and the first matching condition
     /// triggers a shutdown signal.
     /// </remarks>
-    Task<bool> ShouldCloseAsync(SpiderContext context, CancellationToken ct = default);
+    public Task<bool> ShouldCloseAsync(SpiderContext context, CancellationToken ct = default);
 }

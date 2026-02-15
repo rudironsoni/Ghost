@@ -24,7 +24,7 @@ public class PlatformIntegrationTestFixture : IAsyncLifetime
     public Task InitializeAsync()
     {
         // Build configuration
-        var builder = new ConfigurationBuilder()
+        IConfigurationBuilder builder = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables();
@@ -50,35 +50,35 @@ public class PlatformIntegrationTestFixture : IAsyncLifetime
     private static void RegisterEnabledPlugins(IServiceCollection services, IConfiguration configuration)
     {
         // LinkedIn - check if enabled (default: true for integration tests)
-        var linkedInEnabled = configuration.GetValue<bool?>("Ghost:Extensions:LinkedIn:Enabled") ?? true;
+        bool linkedInEnabled = configuration.GetValue<bool?>("Ghost:Extensions:LinkedIn:Enabled") ?? true;
         if (linkedInEnabled)
         {
             new LinkedInPlugin().ConfigureServices(services, configuration);
         }
 
         // Indeed - check if enabled
-        var indeedEnabled = configuration.GetValue<bool?>("Ghost:Extensions:Indeed:Enabled") ?? true;
+        bool indeedEnabled = configuration.GetValue<bool?>("Ghost:Extensions:Indeed:Enabled") ?? true;
         if (indeedEnabled)
         {
             new IndeedPlugin().ConfigureServices(services, configuration);
         }
 
         // Google - check if enabled
-        var googleEnabled = configuration.GetValue<bool?>("Ghost:Extensions:Google:Enabled") ?? true;
+        bool googleEnabled = configuration.GetValue<bool?>("Ghost:Extensions:Google:Enabled") ?? true;
         if (googleEnabled)
         {
             new GooglePlugin().ConfigureServices(services, configuration);
         }
 
         // Glassdoor - check if enabled (default: false to avoid browser requirements)
-        var glassdoorEnabled = configuration.GetValue<bool?>("Ghost:Extensions:Glassdoor:Enabled") ?? false;
+        bool glassdoorEnabled = configuration.GetValue<bool?>("Ghost:Extensions:Glassdoor:Enabled") ?? false;
         if (glassdoorEnabled)
         {
             new GlassdoorPlugin().ConfigureServices(services, configuration);
         }
 
         // InfoJobs - check if enabled (default: false to avoid credential requirements)
-        var infoJobsEnabled = configuration.GetValue<bool?>("Ghost:Extensions:InfoJobs:Enabled") ?? false;
+        bool infoJobsEnabled = configuration.GetValue<bool?>("Ghost:Extensions:InfoJobs:Enabled") ?? false;
         if (infoJobsEnabled)
         {
             new InfoJobsPlugin().ConfigureServices(services, configuration);
@@ -99,7 +99,7 @@ public class PlatformIntegrationTestFixture : IAsyncLifetime
     /// </summary>
     public IJobClient GetJobClient(string platformKey)
     {
-        var keyService = ServiceProvider.GetKeyedService<IJobClient>(platformKey);
+        IJobClient? keyService = ServiceProvider.GetKeyedService<IJobClient>(platformKey);
         if (keyService != null)
         {
             return keyService;

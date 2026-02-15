@@ -22,8 +22,8 @@ public sealed class InfiniteScrollMiddleware
         // Add scroll state to context
         if (context.Request.Path.StartsWithSegments("/scenario/scroll"))
         {
-            var offset = int.TryParse(context.Request.Query["offset"], out var o) ? o : 0;
-            var limit = int.TryParse(context.Request.Query["limit"], out var l) ? l : 20;
+            int offset = int.TryParse(context.Request.Query["offset"], out int o) ? o : 0;
+            int limit = int.TryParse(context.Request.Query["limit"], out int l) ? l : 20;
 
             context.Items["ScrollOffset"] = offset;
             context.Items["ScrollLimit"] = limit;
@@ -34,6 +34,6 @@ public sealed class InfiniteScrollMiddleware
             }
         }
 
-        await _next(context);
+        await _next(context).ConfigureAwait(false);
     }
 }

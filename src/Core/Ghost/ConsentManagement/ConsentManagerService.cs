@@ -144,12 +144,12 @@ public class ConsentManagerService
     {
         _logger.LogDebug("Checking for consent banners...");
 
-        foreach (var manager in ConsentManagers)
+        foreach (ConsentManagerDefinition manager in ConsentManagers)
         {
             try
             {
                 // Check if this consent manager is present
-                var detected = await DetectConsentManagerAsync(page, manager, timeoutMs);
+                bool detected = await DetectConsentManagerAsync(page, manager, timeoutMs).ConfigureAwait(false);
                 if (!detected)
                     continue;
 
@@ -159,7 +159,7 @@ public class ConsentManagerService
                 }
 
                 // Try to accept/click the consent
-                var handled = await AcceptConsentAsync(page, manager, timeoutMs);
+                bool handled = await AcceptConsentAsync(page, manager, timeoutMs).ConfigureAwait(false);
                 if (handled)
                 {
                     if (_logger.IsEnabled(LogLevel.Information))
@@ -168,10 +168,10 @@ public class ConsentManagerService
                     }
 
                     // Wait a moment for the banner to disappear and page to settle
-                    await Task.Delay(1000);
+                    await Task.Delay(1000).ConfigureAwait(false);
 
                     // Check if banner is actually gone
-                    var stillPresent = await DetectConsentManagerAsync(page, manager, 1000);
+                    bool stillPresent = await DetectConsentManagerAsync(page, manager, 1000).ConfigureAwait(false);
                     if (!stillPresent)
                     {
                         if (_logger.IsEnabled(LogLevel.Information))
@@ -207,14 +207,14 @@ public class ConsentManagerService
     /// </summary>
     private async Task<bool> DetectConsentManagerAsync(IPage page, ConsentManagerDefinition manager, int timeoutMs)
     {
-        foreach (var selector in manager.DetectionSelectors)
+        foreach (string selector in manager.DetectionSelectors)
         {
             try
             {
                 if (manager.IsIframe)
                 {
                     // For iframe-based consent managers, check if iframe exists
-                    var frame = await page.QuerySelectorAsync(selector);
+                    IElement? frame = await page.QuerySelectorAsync(selector).ConfigureAwait(false);
                     if (frame != null)
                     {
                         if (_logger.IsEnabled(LogLevel.Debug))
@@ -227,11 +227,11 @@ public class ConsentManagerService
                 else
                 {
                     // For regular selectors, check visibility
-                    var element = await page.QuerySelectorAsync(selector);
+                    IElement? element = await page.QuerySelectorAsync(selector).ConfigureAwait(false);
                     if (element != null)
                     {
                         // Check if element is visible
-                        var isVisible = await element.IsVisibleAsync();
+                        bool isVisible = await element.IsVisibleAsync().ConfigureAwait(false);
                         if (isVisible)
                         {
                             if (_logger.IsEnabled(LogLevel.Debug))
@@ -257,13 +257,13 @@ public class ConsentManagerService
     /// </summary>
     private async Task<bool> AcceptConsentAsync(IPage page, ConsentManagerDefinition manager, int timeoutMs)
     {
-        foreach (var selector in manager.AcceptanceSelectors)
+        foreach (string selector in manager.AcceptanceSelectors)
         {
             try
             {
                 if (manager.IsIframe)
                 {
-                    var clicked = await page.EvaluateAsync<bool>($@"
+                    bool clicked = await page.EvaluateAsync<bool>($@"
                         () => {{
                             var iframe = document.querySelector('{manager.DetectionSelectors.First().Replace("'", "\\'")}');
                             if (iframe && iframe.contentDocument) {{
@@ -272,7 +272,7 @@ public class ConsentManagerService
                             }}
                             return false;
                         }}
-                    ");
+                    ").ConfigureAwait(false);
 
                     if (clicked)
                     {
@@ -285,11 +285,11 @@ public class ConsentManagerService
                 }
                 else
                 {
-                    var button = await page.QuerySelectorAsync(selector);
+                    IElement? button = await page.QuerySelectorAsync(selector).ConfigureAwait(false);
                     if (button != null)
                     {
-                        var isVisible = await button.IsVisibleAsync();
-                        var isEnabled = await button.IsEnabledAsync();
+                        bool isVisible = await button.IsVisibleAsync().ConfigureAwait(false);
+                        bool isEnabled = await button.IsEnabledAsync().ConfigureAwait(false);
 
                         if (isVisible && isEnabled)
                         {
@@ -300,12 +300,12 @@ public class ConsentManagerService
 
                             try
                             {
-                                await button.ClickAsync();
+                                await button.ClickAsync().ConfigureAwait(false);
                                 return true;
                             }
                             catch
                             {
-                                await page.EvaluateAsync<object>($"document.querySelector('{selector.Replace("'", "\\'")}')?.click()");
+                                await page.EvaluateAsync<object>($"document.querySelector('{selector.Replace("'", "\\'")}')?.click()").ConfigureAwait(false);
                                 return true;
                             }
                         }
@@ -329,15 +329,15 @@ public class ConsentManagerService
     /// </summary>
     public async Task<bool> WaitAndHandleConsentAsync(IPage page, int maxWaitMs = 10000, int checkIntervalMs = 500)
     {
-        var startTime = DateTime.UtcNow;
+        DateTime startTime = DateTime.UtcNow;
 
         while ((DateTime.UtcNow - startTime).TotalMilliseconds < maxWaitMs)
         {
-            var handled = await HandleConsentAsync(page, checkIntervalMs);
+            bool handled = await HandleConsentAsync(page, checkIntervalMs).ConfigureAwait(false);
             if (handled)
                 return true;
 
-            await Task.Delay(checkIntervalMs);
+            await Task.Delay(checkIntervalMs).ConfigureAwait(false);
         }
 
         _logger.LogWarning("Consent banner not detected within {MaxWaitMs}ms", maxWaitMs);

@@ -6,11 +6,11 @@ public static class StealthScripts
 {
     public static string GetInitScript(FingerprintProfile p)
     {
-        var lat = p.Latitude.ToString("F5", CultureInfo.InvariantCulture);
-        var lng = p.Longitude.ToString("F5", CultureInfo.InvariantCulture);
-        var rtt = Math.Round(p.Rtt).ToString(CultureInfo.InvariantCulture);
-        var downlink = p.Downlink.ToString("F2", CultureInfo.InvariantCulture);
-        var battery = p.BatteryLevel.ToString("F2", CultureInfo.InvariantCulture);
+        string lat = p.Latitude.ToString("F5", CultureInfo.InvariantCulture);
+        string lng = p.Longitude.ToString("F5", CultureInfo.InvariantCulture);
+        string rtt = Math.Round(p.Rtt).ToString(CultureInfo.InvariantCulture);
+        string downlink = p.Downlink.ToString("F2", CultureInfo.InvariantCulture);
+        string battery = p.BatteryLevel.ToString("F2", CultureInfo.InvariantCulture);
 
         return $$$"""
             (()=>{

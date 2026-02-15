@@ -12,7 +12,7 @@ public sealed class TimingMimicry
     /// </summary>
     public async Task NavigationDelayAsync(CancellationToken cancellationToken = default)
     {
-        await Task.Delay(_random.Next(2000, 5001), cancellationToken);
+        await Task.Delay(_random.Next(2000, 5001), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -20,7 +20,7 @@ public sealed class TimingMimicry
     /// </summary>
     public async Task PreClickDelayAsync(CancellationToken cancellationToken = default)
     {
-        await Task.Delay(_random.Next(500, 1501), cancellationToken);
+        await Task.Delay(_random.Next(500, 1501), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -28,7 +28,7 @@ public sealed class TimingMimicry
     /// </summary>
     public async Task PostClickDelayAsync(CancellationToken cancellationToken = default)
     {
-        await Task.Delay(_random.Next(1000, 3001), cancellationToken);
+        await Task.Delay(_random.Next(1000, 3001), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -36,7 +36,7 @@ public sealed class TimingMimicry
     /// </summary>
     public async Task FormFieldDelayAsync(CancellationToken cancellationToken = default)
     {
-        await Task.Delay(_random.Next(200, 801), cancellationToken);
+        await Task.Delay(_random.Next(200, 801), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -44,7 +44,7 @@ public sealed class TimingMimicry
     /// </summary>
     public async Task ReadingDelayAsync(CancellationToken cancellationToken = default)
     {
-        await Task.Delay(_random.Next(500, 2001), cancellationToken);
+        await Task.Delay(_random.Next(500, 2001), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -70,6 +70,6 @@ public sealed class TimingMimicry
                 "Must be greater than minMilliseconds.");
         }
 
-        await Task.Delay(_random.Next(minMilliseconds, maxMilliseconds + 1), cancellationToken);
+        await Task.Delay(_random.Next(minMilliseconds, maxMilliseconds + 1), cancellationToken).ConfigureAwait(false);
     }
 }

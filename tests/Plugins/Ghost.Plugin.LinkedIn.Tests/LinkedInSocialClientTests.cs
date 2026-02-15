@@ -25,7 +25,7 @@ public class LinkedInSocialClientTests
 
         var logger = new Mock<ILogger<LinkedInSocialClient>>();
         var client = new LinkedInSocialClient(mockSession.Object, Options.Create(new LinkedInOptions()), logger.Object);
-        var profile = await client.GetProfileAsync("urn:li:person:123", CancellationToken.None);
+        SocialProfile profile = await client.GetProfileAsync("urn:li:person:123", CancellationToken.None).ConfigureAwait(false);
         profile.Should().NotBeNull();
     }
 
@@ -41,7 +41,7 @@ public class LinkedInSocialClientTests
 
         var logger = new Mock<ILogger<LinkedInSocialClient>>();
         var client = new LinkedInSocialClient(mockSession.Object, Options.Create(new LinkedInOptions()), logger.Object);
-        var results = await client.SearchProfilesAsync(new ProfileSearchCriteria { Query = "engineer" }, CancellationToken.None);
+        IReadOnlyList<SocialProfile> results = await client.SearchProfilesAsync(new ProfileSearchCriteria { Query = "engineer" }, CancellationToken.None).ConfigureAwait(false);
         results.Should().BeAssignableTo<IEnumerable<SocialProfile>>();
     }
 }

@@ -40,7 +40,7 @@ public class ApiProxySource : IProxySource
 
     public async Task<IEnumerable<ProxyInfo>> FetchProxiesAsync(CancellationToken ct)
     {
-        var cfg = _config;
+        ProxySourceConfig cfg = _config;
         if (cfg == null || !cfg.Enabled || string.IsNullOrWhiteSpace(cfg.Url))
             return Enumerable.Empty<ProxyInfo>();
 
@@ -48,25 +48,25 @@ public class ApiProxySource : IProxySource
         {
             s_logFetching(_logger, cfg.Url!, null);
 
-            using var resp = await _http.GetAsync(cfg.Url!, ct).ConfigureAwait(false);
+            using HttpResponseMessage resp = await _http.GetAsync(cfg.Url!, ct).ConfigureAwait(false);
             if (!resp.IsSuccessStatusCode)
             {
                 s_logFetchFailedStatus(_logger, (int)resp.StatusCode, null);
                 return Enumerable.Empty<ProxyInfo>();
             }
 
-            var body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            string body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(body))
                 return Enumerable.Empty<ProxyInfo>();
 
-            var lines = body.Split(s_lineSeparators, StringSplitOptions.RemoveEmptyEntries)
+            IEnumerable<string> lines = body.Split(s_lineSeparators, StringSplitOptions.RemoveEmptyEntries)
                 .Select(l => l.Trim())
                 .Where(l => !string.IsNullOrEmpty(l));
 
             var res = new List<ProxyInfo>();
-            foreach (var line in lines)
+            foreach (string? line in lines)
             {
-                var p = ParseLine(line);
+                ProxyInfo? p = ParseLine(line);
                 if (p is not null)
                     res.Add(p);
             }
@@ -89,36 +89,36 @@ public class ApiProxySource : IProxySource
     private static ProxyInfo? ParseLine(string line)
     {
         // reuse logic similar to StaticProxySource
-        if (Uri.TryCreate(line, UriKind.Absolute, out var uri))
+        if (Uri.TryCreate(line, UriKind.Absolute, out Uri? uri))
         {
-            var userInfo = uri.UserInfo;
+            string userInfo = uri.UserInfo;
             string? user = null;
             string? pass = null;
             if (!string.IsNullOrEmpty(userInfo))
             {
-                var parts = userInfo.Split(':', 2);
+                string[] parts = userInfo.Split(':', 2);
                 user = parts.Length > 0 ? parts[0] : null;
                 pass = parts.Length > 1 ? parts[1] : null;
             }
 
             // Preserve scheme when present. Use HostAndPort to keep IPv6 bracket notation when needed.
-            var hostAndPort = uri.GetComponents(UriComponents.HostAndPort, UriFormat.Unescaped);
-            var server = uri.IsAbsoluteUri ? $"{uri.Scheme}://{hostAndPort}" : hostAndPort;
+            string hostAndPort = uri.GetComponents(UriComponents.HostAndPort, UriFormat.Unescaped);
+            string server = uri.IsAbsoluteUri ? $"{uri.Scheme}://{hostAndPort}" : hostAndPort;
             return new ProxyInfo(server, user, pass);
         }
 
-        var m = Regex.Match(line, "^(?:([^:@]+):([^@]+)@)?([^:]+):(\\d+)$");
+        Match m = Regex.Match(line, "^(?:([^:@]+):([^@]+)@)?([^:]+):(\\d+)$");
         if (m.Success)
         {
-            var user = string.IsNullOrEmpty(m.Groups[1].Value) ? null : m.Groups[1].Value;
-            var pass = string.IsNullOrEmpty(m.Groups[2].Value) ? null : m.Groups[2].Value;
-            var host = m.Groups[3].Value;
-            var port = m.Groups[4].Value;
+            string? user = string.IsNullOrEmpty(m.Groups[1].Value) ? null : m.Groups[1].Value;
+            string? pass = string.IsNullOrEmpty(m.Groups[2].Value) ? null : m.Groups[2].Value;
+            string host = m.Groups[3].Value;
+            string port = m.Groups[4].Value;
             // No scheme present in this branch; default to http://
             return new ProxyInfo($"http://{host}:{port}", user, pass);
         }
 
-        var simple = line.Split(':');
+        string[] simple = line.Split(':');
         if (simple.Length == 2 && int.TryParse(simple[1], out _))
             // No scheme provided -> default to http://
             return new ProxyInfo($"http://{line}", null, null);

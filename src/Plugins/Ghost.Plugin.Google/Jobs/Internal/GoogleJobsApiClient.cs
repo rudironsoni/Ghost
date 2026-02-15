@@ -176,7 +176,7 @@ public sealed class GoogleJobsApiClient : IDisposable
 
     private async Task<IReadOnlyList<JobListing>> SearchWithOrchestratorAsync(string query, string location, CancellationToken ct)
     {
-        var affinityKey = $"google_jobs_{query}_{location}_{Guid.NewGuid():N}";
+        string affinityKey = $"google_jobs_{query}_{location}_{Guid.NewGuid():N}";
 
         try
         {
@@ -201,7 +201,7 @@ public sealed class GoogleJobsApiClient : IDisposable
             _currentSessionId = await _sessionOrchestrator!.AllocateSessionWithAffinityAsync(context, affinityOptions, ct).ConfigureAwait(false);
             LogSessionAllocated(_logger, _currentSessionId, null);
 
-            var httpSession = await _sessionOrchestrator.GetHttpSessionAsync(_currentSessionId, ct).ConfigureAwait(false);
+            RotatingProxySession? httpSession = await _sessionOrchestrator.GetHttpSessionAsync(_currentSessionId, ct).ConfigureAwait(false);
             if (httpSession == null)
             {
                 LogSessionGetFailed(_logger, _currentSessionId, null);
@@ -234,29 +234,29 @@ public sealed class GoogleJobsApiClient : IDisposable
         try
         {
             // Look for data-p attribute which contains JSON with the continue URL
-            var dataPattern = @"data-p\s*=\s*[""']([^""']+)[""']";
-            var match = System.Text.RegularExpressions.Regex.Match(html, dataPattern);
+            string dataPattern = @"data-p\s*=\s*[""']([^""']+)[""']";
+            Match match = System.Text.RegularExpressions.Regex.Match(html, dataPattern);
 
             if (match.Success)
             {
-                var dataValue = match.Groups[1].Value;
+                string dataValue = match.Groups[1].Value;
 
                 // The data-p attribute contains URL-encoded JSON
                 // Look for the continue URL pattern: https://consent.google.com/d?continue=...
-                var continuePattern = @"(https://consent\.google\.com/d\?continue=[^""'\s]+)";
-                var continueMatch = System.Text.RegularExpressions.Regex.Match(dataValue, continuePattern);
+                string continuePattern = @"(https://consent\.google\.com/d\?continue=[^""'\s]+)";
+                Match continueMatch = System.Text.RegularExpressions.Regex.Match(dataValue, continuePattern);
 
                 if (continueMatch.Success)
                 {
-                    var continueUrl = continueMatch.Groups[1].Value;
+                    string continueUrl = continueMatch.Groups[1].Value;
                     // URL decode the continue URL
                     return WebUtility.UrlDecode(continueUrl);
                 }
             }
 
             // Fallback: look for continue URL in href attributes
-            var hrefPattern = @"href\s*=\s*[""'](https://consent\.google\.com/d\?continue=[^""']+)[""']";
-            var hrefMatch = System.Text.RegularExpressions.Regex.Match(html, hrefPattern);
+            string hrefPattern = @"href\s*=\s*[""'](https://consent\.google\.com/d\?continue=[^""']+)[""']";
+            Match hrefMatch = System.Text.RegularExpressions.Regex.Match(html, hrefPattern);
 
             if (hrefMatch.Success)
             {
@@ -276,31 +276,31 @@ public sealed class GoogleJobsApiClient : IDisposable
         LogExecuteSearchStarting(_logger, query, location, null);
 
         // Build the search query: "{query} jobs in {location}" or just "{query} {location}" depending on configuration
-        var searchTerm = string.IsNullOrWhiteSpace(location)
+        string searchTerm = string.IsNullOrWhiteSpace(location)
             ? query
             : $"{query} jobs {location}";
 
-        var q = System.Uri.EscapeDataString(searchTerm);
+        string q = System.Uri.EscapeDataString(searchTerm);
 
         // Direct Google Jobs URL - NO API NEEDED
         // Using ibp=htl;jobs parameter to get the Google Jobs widget
-        var url = $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en";
+        string url = $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en";
 
         LogFetchingJobs(_logger, url, null);
         LogDirectGoogleJobsUrl(_logger, url, null);
 
         LogCookieInjection(_logger, null);
-        var userAgent = GoogleJobsConstants.GetRandomUserAgent();
+        string userAgent = GoogleJobsConstants.GetRandomUserAgent();
         LogUserAgentRotation(_logger, userAgent, null);
 
         // Prepare cookie value for reuse
-        var cookieValue = $"{GoogleJobsConstants.ConsentCookie}; {GoogleJobsConstants.SocsCookie}";
+        string cookieValue = $"{GoogleJobsConstants.ConsentCookie}; {GoogleJobsConstants.SocsCookie}";
 
         // Helper function to create a new request for each retry attempt
         HttpRequestMessage CreateRequest()
         {
             var req = new HttpRequestMessage(HttpMethod.Get, url);
-            foreach (var header in GoogleJobsConstants.SearchHeaders)
+            foreach (KeyValuePair<string, string> header in GoogleJobsConstants.SearchHeaders)
             {
                 req.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
@@ -330,7 +330,7 @@ public sealed class GoogleJobsApiClient : IDisposable
 
         using (res)
         {
-            var html = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            string html = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
             LogReceivedHtmlContent(_logger, html.Length, null);
 
             // DEBUG: Write raw HTML to file
@@ -361,7 +361,7 @@ public sealed class GoogleJobsApiClient : IDisposable
                 LogFetchingJobs(_logger, "Detected consent page, attempting to extract continue URL...", null);
 
                 // Try to extract the continue URL from the consent page
-                var continueUrl = ExtractConsentContinueUrl(html);
+                string? continueUrl = ExtractConsentContinueUrl(html);
                 if (!string.IsNullOrEmpty(continueUrl))
                 {
                     LogConsentContinueUrlExtracted(_logger, continueUrl, null);
@@ -370,12 +370,12 @@ public sealed class GoogleJobsApiClient : IDisposable
                     await Task.Delay(1000, ct).ConfigureAwait(false);
 
                     var continueReq = new HttpRequestMessage(HttpMethod.Get, continueUrl);
-                    foreach (var header in GoogleJobsConstants.SearchHeaders)
+                    foreach (KeyValuePair<string, string> header in GoogleJobsConstants.SearchHeaders)
                     {
                         continueReq.Headers.TryAddWithoutValidation(header.Key, header.Value);
                     }
 
-                    var continueUserAgent = GoogleJobsConstants.GetRandomUserAgent();
+                    string continueUserAgent = GoogleJobsConstants.GetRandomUserAgent();
                     continueReq.Headers.TryAddWithoutValidation("User-Agent", continueUserAgent);
                     continueReq.Headers.TryAddWithoutValidation("Cookie", cookieValue);
 
@@ -419,7 +419,7 @@ public sealed class GoogleJobsApiClient : IDisposable
                             if (!isConsentPage)
                             {
                                 LogFetchingJobs(_logger, "Successfully bypassed consent page using continue URL", null);
-                                var preview = html.Length > 500 ? html.Substring(0, 500) : html;
+                                string preview = html.Length > 500 ? html.Substring(0, 500) : html;
                                 LogHtmlPreview(_logger, preview, null);
                             }
                             else
@@ -443,7 +443,7 @@ public sealed class GoogleJobsApiClient : IDisposable
                 {
                     LogFetchingJobs(_logger, "Detected consent page, trying alternative approaches...", null);
 
-                    var alternativeUrls = new[]
+                    string[] alternativeUrls = new[]
                     {
                     $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en&tbs=qdr:d",
                     $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en&tbs=qdr:w",
@@ -452,16 +452,16 @@ public sealed class GoogleJobsApiClient : IDisposable
                     $"https://www.google.ca/search?q={q}&ibp=htl;jobs&udm=8&gl=ca&hl=en",
                 };
 
-                    foreach (var altUrl in alternativeUrls)
+                    foreach (string? altUrl in alternativeUrls)
                     {
                         LogFetchingJobs(_logger, $"Trying alternative URL: {altUrl}", null);
                         await Task.Delay(2000, ct).ConfigureAwait(false); // Wait longer between retries
 
-                        var retryUserAgent = GoogleJobsConstants.GetRandomUserAgent();
+                        string retryUserAgent = GoogleJobsConstants.GetRandomUserAgent();
                         LogUserAgentRotation(_logger, retryUserAgent, null);
 
                         var retryReq = new HttpRequestMessage(HttpMethod.Get, altUrl);
-                        foreach (var header in GoogleJobsConstants.SearchHeaders)
+                        foreach (KeyValuePair<string, string> header in GoogleJobsConstants.SearchHeaders)
                         {
                             retryReq.Headers.TryAddWithoutValidation(header.Key, header.Value);
                         }
@@ -488,7 +488,7 @@ public sealed class GoogleJobsApiClient : IDisposable
                                 try
                                 {
                                     System.IO.Directory.CreateDirectory("logs");
-                                    var ticks = DateTime.Now.Ticks;
+                                    long ticks = DateTime.Now.Ticks;
                                     System.IO.File.WriteAllText($"logs/google_jobs_search_retry_{ticks}.html", html);
                                     LogWroteRetryHtmlDebugFile(_logger, ticks, null);
                                 }
@@ -511,7 +511,7 @@ public sealed class GoogleJobsApiClient : IDisposable
                                 {
                                     LogFetchingJobs(_logger, $"Successfully bypassed consent page with alternative URL", null);
                                     // log a preview of the html for debugging
-                                    var preview = html.Length > 500 ? html.Substring(0, 500) : html;
+                                    string preview = html.Length > 500 ? html.Substring(0, 500) : html;
                                     LogHtmlPreview(_logger, preview, null);
                                     break; // Success! Use this HTML
                                 }
@@ -540,8 +540,8 @@ public sealed class GoogleJobsApiClient : IDisposable
 
             LogReceivedHtml(_logger, html.Length, null);
 
-            var cursorMatch = Regex.Match(html, GoogleJobsConstants.DataAsyncFcRegex);
-            var cursor = cursorMatch.Success ? cursorMatch.Groups["cursor"].Value : null;
+            Match cursorMatch = Regex.Match(html, GoogleJobsConstants.DataAsyncFcRegex);
+            string? cursor = cursorMatch.Success ? cursorMatch.Groups["cursor"].Value : null;
             if (!string.IsNullOrEmpty(cursor))
             {
                 LogCursorExtracted(_logger, cursor, null);
@@ -552,11 +552,11 @@ public sealed class GoogleJobsApiClient : IDisposable
             }
 
             var results = new List<JobListing>();
-            var initialParsed = GoogleJobsParser.ParseFromHtml(html, _logger);
+            IReadOnlyList<JobListing> initialParsed = GoogleJobsParser.ParseFromHtml(html, _logger);
             LogParserResults(_logger, 1, initialParsed.Count, null);
             if (initialParsed.Count == 0)
             {
-                var preview = html.Length > 500 ? html.Substring(0, 500) : html;
+                string preview = html.Length > 500 ? html.Substring(0, 500) : html;
                 LogHtmlPreview(_logger, preview, null);
             }
             results.AddRange(initialParsed);
@@ -564,14 +564,14 @@ public sealed class GoogleJobsApiClient : IDisposable
             int rounds = 0;
             while (!string.IsNullOrEmpty(cursor) && rounds++ < 5)
             {
-                var asyncUrl = $"https://www.google.com/async/callback:550?fc={Uri.EscapeDataString(cursor)}&fcv=3&async={Uri.EscapeDataString(_options.AsyncBootstrapString)}";
+                string asyncUrl = $"https://www.google.com/async/callback:550?fc={Uri.EscapeDataString(cursor)}&fcv=3&async={Uri.EscapeDataString(_options.AsyncBootstrapString)}";
                 LogSendingAsyncRequest(_logger, asyncUrl, null);
 
-                var asyncUserAgent = GoogleJobsConstants.GetRandomUserAgent();
+                string asyncUserAgent = GoogleJobsConstants.GetRandomUserAgent();
                 LogUserAgentRotation(_logger, asyncUserAgent, null);
 
                 var asyncReq = new HttpRequestMessage(HttpMethod.Get, asyncUrl);
-                foreach (var header in GoogleJobsConstants.AsyncHeaders)
+                foreach (KeyValuePair<string, string> header in GoogleJobsConstants.AsyncHeaders)
                 {
                     asyncReq.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
@@ -591,7 +591,7 @@ public sealed class GoogleJobsApiClient : IDisposable
 
                 using (asyncRes)
                 {
-                    var body = await asyncRes.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                    string body = await asyncRes.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
                     if (string.IsNullOrEmpty(body))
                     {
@@ -602,16 +602,16 @@ public sealed class GoogleJobsApiClient : IDisposable
                         LogReceivedAsyncBody(_logger, body.Length, null);
                     }
 
-                    var parsed = GoogleJobsParser.ParseFromHtml(body, _logger);
+                    IReadOnlyList<JobListing> parsed = GoogleJobsParser.ParseFromHtml(body, _logger);
                     LogParserResults(_logger, rounds + 1, parsed.Count, null);
                     if (parsed.Count == 0)
                     {
-                        var preview = body.Length > 500 ? body.Substring(0, 500) : body;
+                        string preview = body.Length > 500 ? body.Substring(0, 500) : body;
                         LogHtmlPreview(_logger, preview, null);
                     }
                     results.AddRange(parsed);
 
-                    var nextCursorMatch = Regex.Match(body, GoogleJobsConstants.DataAsyncFcRegex);
+                    Match nextCursorMatch = Regex.Match(body, GoogleJobsConstants.DataAsyncFcRegex);
                     cursor = nextCursorMatch.Success ? nextCursorMatch.Groups["cursor"].Value : null;
 
                     await Task.Delay(300, ct).ConfigureAwait(false);
@@ -627,29 +627,6 @@ public sealed class GoogleJobsApiClient : IDisposable
             }
 
             return results;
-        }
-    }
-
-    private async Task CheckAndRecycleSessionAsync()
-    {
-        if (_sessionOrchestrator == null || _currentSessionId == null)
-        {
-            return;
-        }
-
-        try
-        {
-            var health = await _sessionOrchestrator.GetSessionHealthAsync(_currentSessionId, default);
-            if (health.Health == SessionHealth.Unhealthy)
-            {
-                LogSessionRecycled(_logger, _currentSessionId, null);
-                await _sessionOrchestrator.RecycleSessionAsync(_currentSessionId, default);
-                _currentSessionId = null;
-            }
-        }
-        catch (Exception ex)
-        {
-            LogSessionHealthCheckFailed(_logger, _currentSessionId ?? "unknown", ex);
         }
     }
 

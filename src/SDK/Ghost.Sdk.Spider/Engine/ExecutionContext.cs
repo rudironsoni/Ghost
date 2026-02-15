@@ -139,8 +139,8 @@ public class ExecutionContext
     /// <returns>Dictionary of statistics.</returns>
     public Dictionary<string, object> GetStatistics()
     {
-        var elapsed = DateTimeOffset.UtcNow - StartedAt;
-        var requestsPerSecond = elapsed.TotalSeconds > 0 ? _requestsProcessed / elapsed.TotalSeconds : 0;
+        TimeSpan elapsed = DateTimeOffset.UtcNow - StartedAt;
+        double requestsPerSecond = elapsed.TotalSeconds > 0 ? _requestsProcessed / elapsed.TotalSeconds : 0;
 
         return new Dictionary<string, object>
         {

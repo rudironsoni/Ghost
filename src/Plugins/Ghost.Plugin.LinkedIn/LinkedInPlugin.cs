@@ -1,8 +1,12 @@
+using Ghost.Abstractions;
+using Ghost.Core;
 using Ghost.Hosting;
+using Ghost.Plugin.LinkedIn.Internal;
 using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Ghost.Plugin.LinkedIn;
@@ -33,11 +37,11 @@ public sealed class LinkedInPlugin : IExtension
         // Use factory method to prevent resolution during DI container validation
         services.AddSingleton<Internal.LinkedInSessionPool>(sp =>
         {
-            var kernel = sp.GetRequiredService<Ghost.Core.IGhostKernel>();
-            var poolOptions = sp.GetRequiredService<IOptions<LinkedInSessionPoolOptions>>().Value;
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Internal.LinkedInSessionPool>>();
-            var proxyProvider = sp.GetService<Ghost.Abstractions.IProxyProvider>();
-            var linkedInOptions = sp.GetRequiredService<IOptions<LinkedInOptions>>().Value;
+            IGhostKernel kernel = sp.GetRequiredService<Ghost.Core.IGhostKernel>();
+            LinkedInSessionPoolOptions poolOptions = sp.GetRequiredService<IOptions<LinkedInSessionPoolOptions>>().Value;
+            ILogger<LinkedInSessionPool> logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Internal.LinkedInSessionPool>>();
+            IProxyProvider? proxyProvider = sp.GetService<Ghost.Abstractions.IProxyProvider>();
+            LinkedInOptions linkedInOptions = sp.GetRequiredService<IOptions<LinkedInOptions>>().Value;
             return Internal.LinkedInSessionPool.Create(kernel, poolOptions, logger, proxyProvider, linkedInOptions);
         });
 

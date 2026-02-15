@@ -28,8 +28,8 @@ public static class SessionServiceCollectionExtensions
         services.AddScoped<SessionFactory>();
         services.AddScoped<RotatingProxySession>(provider =>
         {
-            var proxyProvider = provider.GetRequiredService<IProxyProvider>();
-            var sessionOptions = provider.GetService<RotatingProxySessionOptions>() ?? new RotatingProxySessionOptions();
+            IProxyProvider proxyProvider = provider.GetRequiredService<IProxyProvider>();
+            RotatingProxySessionOptions sessionOptions = provider.GetService<RotatingProxySessionOptions>() ?? new RotatingProxySessionOptions();
             return new RotatingProxySession(proxyProvider, sessionOptions);
         });
 

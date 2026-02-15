@@ -42,8 +42,8 @@ public static class CaptchaServiceCollectionExtensions
             services.AddHttpClient();
             services.AddSingleton<ICaptchaProvider>(sp =>
             {
-                var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-                var httpClient = httpClientFactory.CreateClient();
+                IHttpClientFactory httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+                HttpClient httpClient = httpClientFactory.CreateClient();
                 return new TensorFlowCaptchaProvider(
                     sp.GetRequiredService<ILogger<TensorFlowCaptchaProvider>>(),
                     httpClient,

@@ -24,7 +24,7 @@ public static class TestData
         var jobs = new List<SyntheticJobPosting>();
         var random = new Random(42); // Deterministic seed
 
-        var titles = new[]
+        string[] titles = new[]
         {
             "Senior Software Engineer",
             "Frontend Developer",
@@ -43,7 +43,7 @@ public static class TestData
             "Engineering Manager"
         };
 
-        var companies = new[]
+        string[] companies = new[]
         {
             "TechCorp", "InnovateLabs", "DataSystems", "CloudNine",
             "DevTools Inc", "SecureNet", "MobileTech", "AIventures",
@@ -51,7 +51,7 @@ public static class TestData
             "DataFlow", "CloudFirst", "TechVision"
         };
 
-        var locations = new[]
+        string[] locations = new[]
         {
             "San Francisco, CA", "New York, NY", "Seattle, WA",
             "Austin, TX", "Boston, MA", "Denver, CO",
@@ -59,11 +59,11 @@ public static class TestData
             "London, UK", "Berlin, Germany", "Amsterdam, NL"
         };
 
-        for (var i = 0; i < TotalJobCount; i++)
+        for (int i = 0; i < TotalJobCount; i++)
         {
-            var title = titles[i % titles.Length];
-            var company = companies[random.Next(companies.Length)];
-            var location = locations[random.Next(locations.Length)];
+            string title = titles[i % titles.Length];
+            string company = companies[random.Next(companies.Length)];
+            string location = locations[random.Next(locations.Length)];
 
             jobs.Add(new SyntheticJobPosting
             {

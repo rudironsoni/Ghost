@@ -82,15 +82,15 @@ public sealed class TensorFlowCaptchaProvider : ICaptchaProvider
                 Encoding.UTF8,
                 "application/json");
 
-            var response = await _httpClient.PostAsync(
+            HttpResponseMessage response = await _httpClient.PostAsync(
                 $"{_apiEndpoint}/solve",
                 content,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             response.EnsureSuccessStatusCode();
 
-            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-            var result = JsonSerializer.Deserialize<TensorFlowResponse>(responseBody);
+            string responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            TensorFlowResponse? result = JsonSerializer.Deserialize<TensorFlowResponse>(responseBody);
 
             if (result?.Solution == null)
             {
@@ -117,7 +117,7 @@ public sealed class TensorFlowCaptchaProvider : ICaptchaProvider
     {
         try
         {
-            var response = await _httpClient.GetAsync($"{_apiEndpoint}/health", cancellationToken);
+            HttpResponseMessage response = await _httpClient.GetAsync($"{_apiEndpoint}/health", cancellationToken).ConfigureAwait(false);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)

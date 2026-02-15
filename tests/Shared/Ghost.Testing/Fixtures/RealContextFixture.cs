@@ -23,14 +23,14 @@ public sealed class RealContextFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         // Create a fresh session for this test class
-        _session = await _browserFixture.CreateSessionAsync();
+        _session = await _browserFixture.CreateSessionAsync().ConfigureAwait(false);
     }
 
     public async Task DisposeAsync()
     {
         if (_session != null)
         {
-            await _session.DisposeAsync();
+            await _session.DisposeAsync().ConfigureAwait(false);
         }
     }
 }

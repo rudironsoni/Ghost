@@ -55,7 +55,7 @@ public sealed class ProxySourceAdapter : IProxySource
 
         _adaptedSource = new Lazy<IProxySource>(() =>
         {
-            var sourceType = _config.Type ?? "Static";
+            string sourceType = _config.Type ?? "Static";
             s_logAdapterInitialized(_logger, sourceType, null);
 
             return sourceType.ToLowerInvariant() switch
@@ -115,10 +115,10 @@ public sealed class ProxySourceAdapter : IProxySource
 
         try
         {
-            var sourceType = _config.Type ?? "Static";
+            string sourceType = _config.Type ?? "Static";
             s_logAdapterFetching(_logger, sourceType, null);
 
-            var proxies = await _adaptedSource.Value.FetchProxiesAsync(ct).ConfigureAwait(false);
+            IEnumerable<ProxyInfo> proxies = await _adaptedSource.Value.FetchProxiesAsync(ct).ConfigureAwait(false);
             var proxyList = proxies.ToList();
 
             s_logAdapterFetchSuccess(_logger, sourceType, proxyList.Count, null);
@@ -191,7 +191,7 @@ public sealed class ProxySourceHealthMonitor
         if (string.IsNullOrEmpty(sourceName))
             return;
 
-        var metrics = _sourceMetrics.GetOrAdd(sourceName, _ => new ProxySourceHealthMetrics
+        ProxySourceHealthMetrics metrics = _sourceMetrics.GetOrAdd(sourceName, _ => new ProxySourceHealthMetrics
         {
             SourceName = sourceName,
             FirstSeen = DateTimeOffset.UtcNow
@@ -215,7 +215,7 @@ public sealed class ProxySourceHealthMonitor
         }
 
         // Log appropriate level based on health status
-        var successRate = metrics.SuccessRate;
+        double successRate = metrics.SuccessRate;
         if (metrics.ConsecutiveFailures >= 3)
         {
             s_logSourceDegraded(_logger, sourceName, metrics.ConsecutiveFailures, null);
@@ -237,7 +237,7 @@ public sealed class ProxySourceHealthMonitor
     /// </summary>
     public bool IsSourceHealthy(string sourceName)
     {
-        if (!_sourceMetrics.TryGetValue(sourceName, out var metrics))
+        if (!_sourceMetrics.TryGetValue(sourceName, out ProxySourceHealthMetrics? metrics))
             return true; // Unknown source is assumed healthy
 
         // Unhealthy if too many consecutive failures
@@ -256,7 +256,7 @@ public sealed class ProxySourceHealthMonitor
     /// </summary>
     public ProxySourceHealthMetrics? GetSourceMetrics(string sourceName)
     {
-        return _sourceMetrics.TryGetValue(sourceName, out var metrics) ? metrics : null;
+        return _sourceMetrics.TryGetValue(sourceName, out ProxySourceHealthMetrics? metrics) ? metrics : null;
     }
 
     /// <summary>
@@ -327,13 +327,13 @@ public sealed class ProxySourceFallbackManager
         if (_sourcesChain.Count == 0)
             return null;
 
-        var startIndex = _currentSourceIndex;
-        var currentIndex = _currentSourceIndex;
+        int startIndex = _currentSourceIndex;
+        int currentIndex = _currentSourceIndex;
 
         do
         {
-            var config = _sourcesChain[currentIndex];
-            var sourceName = config.Type ?? $"Source_{currentIndex}";
+            Core.ProxySourceConfig config = _sourcesChain[currentIndex];
+            string sourceName = config.Type ?? $"Source_{currentIndex}";
 
             if (config.Enabled && _healthMonitor.IsSourceHealthy(sourceName))
             {
@@ -354,26 +354,26 @@ public sealed class ProxySourceFallbackManager
     /// </summary>
     public async Task<IEnumerable<ProxyInfo>> FetchProxiesWithFallbackAsync(CancellationToken ct)
     {
-        var startIndex = _currentSourceIndex;
-        var currentIndex = _currentSourceIndex;
+        int startIndex = _currentSourceIndex;
+        int currentIndex = _currentSourceIndex;
 
         do
         {
-            var config = _sourcesChain[currentIndex];
+            Core.ProxySourceConfig config = _sourcesChain[currentIndex];
             if (!config.Enabled)
             {
                 currentIndex = (currentIndex + 1) % _sourcesChain.Count;
                 continue;
             }
 
-            var sourceName = config.Type ?? $"Source_{currentIndex}";
+            string sourceName = config.Type ?? $"Source_{currentIndex}";
 
             try
             {
-                var source = GetOrCreateSource(config);
+                IProxySource source = GetOrCreateSource(config);
                 var sw = Stopwatch.StartNew();
 
-                var proxies = await source.FetchProxiesAsync(ct).ConfigureAwait(false);
+                IEnumerable<ProxyInfo> proxies = await source.FetchProxiesAsync(ct).ConfigureAwait(false);
                 sw.Stop();
 
                 var proxyList = proxies.ToList();
@@ -397,8 +397,8 @@ public sealed class ProxySourceFallbackManager
             {
                 _healthMonitor.ReportSourceResult(sourceName, false, TimeSpan.Zero);
 
-                var nextIndex = (currentIndex + 1) % _sourcesChain.Count;
-                var nextSource = _sourcesChain[nextIndex].Type ?? $"Source_{nextIndex}";
+                int nextIndex = (currentIndex + 1) % _sourcesChain.Count;
+                string nextSource = _sourcesChain[nextIndex].Type ?? $"Source_{nextIndex}";
 
                 s_logFallbackAttempt(_logger, sourceName, nextSource, ex);
                 currentIndex = nextIndex;
@@ -417,8 +417,8 @@ public sealed class ProxySourceFallbackManager
         if (sourceIndex < 0 || sourceIndex >= _sourcesChain.Count)
             return;
 
-        var config = _sourcesChain[sourceIndex];
-        var sourceName = config.Type ?? $"Source_{sourceIndex}";
+        Core.ProxySourceConfig config = _sourcesChain[sourceIndex];
+        string sourceName = config.Type ?? $"Source_{sourceIndex}";
         _healthMonitor.ReportSourceResult(sourceName, success, latency);
     }
 
@@ -430,8 +430,8 @@ public sealed class ProxySourceFallbackManager
         if (sourceIndex < 0 || sourceIndex >= _sourcesChain.Count)
             return;
 
-        var config = _sourcesChain[sourceIndex];
-        var sourceName = config.Type ?? $"Source_{sourceIndex}";
+        Core.ProxySourceConfig config = _sourcesChain[sourceIndex];
+        string sourceName = config.Type ?? $"Source_{sourceIndex}";
         _healthMonitor.ReportSourceResult(sourceName, false, TimeSpan.Zero);
     }
 
@@ -445,12 +445,12 @@ public sealed class ProxySourceFallbackManager
 
     private IProxySource GetOrCreateSource(Ghost.Core.ProxySourceConfig config)
     {
-        var sourceName = config.Type ?? "Unknown";
+        string sourceName = config.Type ?? "Unknown";
 
-        if (_sourceCache.TryGetValue(sourceName, out var cached))
+        if (_sourceCache.TryGetValue(sourceName, out IProxySource? cached))
             return cached;
 
-        var source = sourceName.ToLowerInvariant() switch
+        IProxySource? source = sourceName.ToLowerInvariant() switch
         {
             "static" => new Ghost.Services.StaticProxySource(config,
                 new SimpleLoggerAdapter<Ghost.Services.StaticProxySource>()) as IProxySource,
@@ -585,7 +585,7 @@ public sealed class ProxySourceHealthMetrics
                 return 0.0;
 
             var sorted = LatencyHistory.OrderBy(x => x).ToList();
-            var mid = sorted.Count / 2;
+            int mid = sorted.Count / 2;
             return sorted.Count % 2 == 0
                 ? (sorted[mid - 1] + sorted[mid]) / 2.0
                 : sorted[mid];
@@ -603,7 +603,7 @@ public sealed class ProxySourceHealthMetrics
                 return 0.0;
 
             var sorted = LatencyHistory.OrderBy(x => x).ToList();
-            var index = (int)Math.Ceiling(sorted.Count * 0.95) - 1;
+            int index = (int)Math.Ceiling(sorted.Count * 0.95) - 1;
             return sorted[Math.Max(0, index)];
         }
     }

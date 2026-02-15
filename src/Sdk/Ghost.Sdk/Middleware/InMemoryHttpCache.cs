@@ -32,8 +32,8 @@ public sealed class InMemoryHttpCache : IHttpCache, IDisposable
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var key = GetCacheKey(request);
-        if (_cache.TryGetValue(key, out var entry) && !entry.IsExpired)
+        string key = GetCacheKey(request);
+        if (_cache.TryGetValue(key, out CacheEntry? entry) && !entry.IsExpired)
         {
             response = entry.Response;
             return Task.FromResult(true);
@@ -51,9 +51,9 @@ public sealed class InMemoryHttpCache : IHttpCache, IDisposable
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(response);
 
-        var key = GetCacheKey(request);
-        var effectiveTtl = ttl ?? _options.DefaultTtl;
-        var expiresAt = DateTimeOffset.UtcNow + effectiveTtl;
+        string key = GetCacheKey(request);
+        TimeSpan effectiveTtl = ttl ?? _options.DefaultTtl;
+        DateTimeOffset expiresAt = DateTimeOffset.UtcNow + effectiveTtl;
 
         _cache[key] = new CacheEntry(response, expiresAt);
 
@@ -73,7 +73,7 @@ public sealed class InMemoryHttpCache : IHttpCache, IDisposable
         var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
         var keysToRemove = _cache.Keys.Where(key => regex.IsMatch(key)).ToList();
 
-        foreach (var key in keysToRemove)
+        foreach (string? key in keysToRemove)
         {
             _cache.TryRemove(key, out _);
         }
@@ -99,7 +99,7 @@ public sealed class InMemoryHttpCache : IHttpCache, IDisposable
             .Select(kvp => kvp.Key)
             .ToList();
 
-        foreach (var key in expiredKeys)
+        foreach (string? key in expiredKeys)
         {
             _cache.TryRemove(key, out _);
         }
@@ -112,8 +112,8 @@ public sealed class InMemoryHttpCache : IHttpCache, IDisposable
     {
         // Approximate cache size (this is a simplified approach)
         // In a production system, you'd want to track actual memory usage
-        var cacheCount = _cache.Count;
-        var maxEntries = (int)(_options.MaxCacheSize / 10240); // Assume ~10KB per entry
+        int cacheCount = _cache.Count;
+        int maxEntries = (int)(_options.MaxCacheSize / 10240); // Assume ~10KB per entry
 
         if (cacheCount > maxEntries)
         {
@@ -124,7 +124,7 @@ public sealed class InMemoryHttpCache : IHttpCache, IDisposable
                 .Select(kvp => kvp.Key)
                 .ToList();
 
-            foreach (var key in entriesToRemove)
+            foreach (string? key in entriesToRemove)
             {
                 _cache.TryRemove(key, out _);
             }

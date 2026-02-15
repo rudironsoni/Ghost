@@ -4,6 +4,8 @@ using Ghost.Contracts;
 using Ghost.Core;
 using Ghost.Hosting;
 using Ghost.Http;
+using Ghost.Plugin.Glassdoor.Internal;
+using Ghost.Plugin.Glassdoor.Jobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -25,15 +27,15 @@ public sealed class GlassdoorExtension : Ghost.Hosting.IExtension
         // Register GlassdoorApiClient with a factory that creates an HttpClient with proper configuration
         services.AddScoped<Internal.GlassdoorApiClient>(sp =>
         {
-            var opts = sp.GetRequiredService<IOptions<GlassdoorOptions>>().Value;
-            var logger = sp.GetRequiredService<ILogger<Internal.GlassdoorApiClient>>();
-            var proxyProvider = sp.GetService<IProxyProvider>();
+            GlassdoorOptions opts = sp.GetRequiredService<IOptions<GlassdoorOptions>>().Value;
+            ILogger<GlassdoorApiClient> logger = sp.GetRequiredService<ILogger<Internal.GlassdoorApiClient>>();
+            IProxyProvider? proxyProvider = sp.GetService<IProxyProvider>();
 
-            var handler = opts.ProxyEnabled && proxyProvider != null
+            HttpClientHandler handler = opts.ProxyEnabled && proxyProvider != null
                 ? new HttpClientHandler { Proxy = new RotatingWebProxy(proxyProvider), UseProxy = true }
                 : new HttpClientHandler { UseProxy = false };
 
-            var configuredHandler = HttpClientSecurityExtensions.ConfigureSecureHttpClientHandler(handler);
+            HttpClientHandler configuredHandler = HttpClientSecurityExtensions.ConfigureSecureHttpClientHandler(handler);
             var httpClient = new HttpClient(configuredHandler)
             {
                 Timeout = TimeSpan.FromMilliseconds(opts.RequestTimeoutMs)
@@ -45,9 +47,9 @@ public sealed class GlassdoorExtension : Ghost.Hosting.IExtension
         // Register browser fallback client WITHOUT proxy support to avoid SOCKS5 auth issues
         services.AddScoped<Internal.GlassdoorBrowserClient>(sp =>
         {
-            var kernel = sp.GetRequiredService<IGhostKernel>();
-            var options = sp.GetRequiredService<IOptions<GlassdoorOptions>>();
-            var logger = sp.GetRequiredService<ILogger<Internal.GlassdoorBrowserClient>>();
+            IGhostKernel kernel = sp.GetRequiredService<IGhostKernel>();
+            IOptions<GlassdoorOptions> options = sp.GetRequiredService<IOptions<GlassdoorOptions>>();
+            ILogger<GlassdoorBrowserClient> logger = sp.GetRequiredService<ILogger<Internal.GlassdoorBrowserClient>>();
             // Explicitly pass null for proxy provider to disable proxy for Glassdoor browser client
             return new Internal.GlassdoorBrowserClient(kernel, options, logger, proxyProvider: null);
         });
@@ -55,10 +57,10 @@ public sealed class GlassdoorExtension : Ghost.Hosting.IExtension
         // Register heavy stealth browser scraper with optional proxy support
         services.AddScoped<Jobs.GlassdoorSearchScraper>(sp =>
         {
-            var kernel = sp.GetRequiredService<IGhostKernel>();
-            var options = sp.GetRequiredService<IOptions<GlassdoorOptions>>();
-            var logger = sp.GetRequiredService<ILogger<Jobs.GlassdoorSearchScraper>>();
-            var proxyProvider = sp.GetService<IProxyProvider>();
+            IGhostKernel kernel = sp.GetRequiredService<IGhostKernel>();
+            IOptions<GlassdoorOptions> options = sp.GetRequiredService<IOptions<GlassdoorOptions>>();
+            ILogger<GlassdoorSearchScraper> logger = sp.GetRequiredService<ILogger<Jobs.GlassdoorSearchScraper>>();
+            IProxyProvider? proxyProvider = sp.GetService<IProxyProvider>();
             // Proxy provider is optional - scraper will use it only if ProxyEnabled is true
             return new Jobs.GlassdoorSearchScraper(kernel, options, logger, proxyProvider);
         });

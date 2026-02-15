@@ -31,15 +31,15 @@ public static class RequestFingerprinter
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var normalizedUrl = NormalizeUrl(request.Url);
-        var method = request.Method.ToUpperInvariant();
-        var body = request.Body ?? string.Empty;
+        string normalizedUrl = NormalizeUrl(request.Url);
+        string method = request.Method.ToUpperInvariant();
+        string body = request.Body ?? string.Empty;
 
         // Combine components for fingerprinting
-        var fingerprintData = $"{method}:{normalizedUrl}:{body}";
+        string fingerprintData = $"{method}:{normalizedUrl}:{body}";
 
         // Create SHA256 hash
-        var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(fingerprintData));
+        byte[] hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(fingerprintData));
 
         // Convert to hex string
         return Convert.ToHexString(hashBytes).ToLowerInvariant();
@@ -66,23 +66,23 @@ public static class RequestFingerprinter
             return string.Empty;
         }
 
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
         {
             // If not a valid absolute URI, return as-is
             return url;
         }
 
         // Build normalized URL components
-        var scheme = uri.Scheme.ToLowerInvariant();
-        var host = uri.Host.ToLowerInvariant();
-        var port = GetNormalizedPort(uri);
-        var path = uri.AbsolutePath;
+        string scheme = uri.Scheme.ToLowerInvariant();
+        string host = uri.Host.ToLowerInvariant();
+        string port = GetNormalizedPort(uri);
+        string path = uri.AbsolutePath;
 
         // Sort query parameters
-        var query = SortQueryParameters(uri.Query);
+        string query = SortQueryParameters(uri.Query);
 
         // Build normalized URL (without fragment)
-        var normalizedUrl = $"{scheme}://{host}{port}{path}{query}";
+        string normalizedUrl = $"{scheme}://{host}{port}{path}{query}";
 
         return normalizedUrl;
     }
@@ -95,7 +95,7 @@ public static class RequestFingerprinter
     /// </remarks>
     private static string GetNormalizedPort(Uri uri)
     {
-        var isDefaultPort = (uri.Scheme == "http" && uri.Port == 80) ||
+        bool isDefaultPort = (uri.Scheme == "http" && uri.Port == 80) ||
                            (uri.Scheme == "https" && uri.Port == 443);
 
         return isDefaultPort ? string.Empty : $":{uri.Port}";
@@ -114,10 +114,10 @@ public static class RequestFingerprinter
         }
 
         // Remove leading '?'
-        var queryWithoutPrefix = query.TrimStart('?');
+        string queryWithoutPrefix = query.TrimStart('?');
 
         // Parse and sort parameters
-        var parameters = queryWithoutPrefix
+        string[] parameters = queryWithoutPrefix
             .Split('&', StringSplitOptions.RemoveEmptyEntries)
             .OrderBy(p => p, StringComparer.Ordinal)
             .ToArray();

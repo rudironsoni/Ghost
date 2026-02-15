@@ -13,5 +13,5 @@ public interface IGooglePluginReadinessCheck
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if the readiness check passes, false otherwise.</returns>
-    Task<bool> RunReadinessCheckAsync(CancellationToken cancellationToken = default);
+    public Task<bool> RunReadinessCheckAsync(CancellationToken cancellationToken = default);
 }

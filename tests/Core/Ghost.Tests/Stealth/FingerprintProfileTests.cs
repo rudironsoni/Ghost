@@ -8,7 +8,7 @@ public class FingerprintProfileTests
     [Fact]
     public void DesktopDefaultHasExpectedFields()
     {
-        var p = FingerprintProfile.DesktopDefault;
+        FingerprintProfile p = FingerprintProfile.DesktopDefault;
         p.Name.Should().Be("desktop-default");
         p.UserAgent.Should().StartWith("Mozilla/");
         p.ViewportWidth.Should().Be(1920);

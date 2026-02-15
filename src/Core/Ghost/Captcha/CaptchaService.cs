@@ -62,7 +62,7 @@ public sealed class CaptchaService
 
         var errors = new List<Exception>();
 
-        foreach (var provider in _providers)
+        foreach (ICaptchaProvider provider in _providers)
         {
             if (!provider.CanSolve(challenge.Type))
             {
@@ -70,7 +70,7 @@ public sealed class CaptchaService
                 continue;
             }
 
-            if (!await provider.IsAvailableAsync(cancellationToken))
+            if (!await provider.IsAvailableAsync(cancellationToken).ConfigureAwait(false))
             {
                 _logProviderNotAvailable(_logger, provider.Name, null);
                 continue;
@@ -80,7 +80,7 @@ public sealed class CaptchaService
             {
                 _logTryingProvider(_logger, provider.Name, challenge.Type, null);
 
-                var solution = await provider.SolveAsync(challenge, cancellationToken);
+                string solution = await provider.SolveAsync(challenge, cancellationToken).ConfigureAwait(false);
 
                 Metrics.RecordSuccess(provider.Name, challenge.Type);
 
@@ -127,7 +127,7 @@ public sealed class CaptchaMetrics
     {
         lock (_lock)
         {
-            if (!_providerMetrics.TryGetValue(providerName, out var metrics))
+            if (!_providerMetrics.TryGetValue(providerName, out ProviderMetrics? metrics))
             {
                 metrics = new ProviderMetrics();
                 _providerMetrics[providerName] = metrics;
@@ -140,7 +140,7 @@ public sealed class CaptchaMetrics
     {
         lock (_lock)
         {
-            if (!_providerMetrics.TryGetValue(providerName, out var metrics))
+            if (!_providerMetrics.TryGetValue(providerName, out ProviderMetrics? metrics))
             {
                 metrics = new ProviderMetrics();
                 _providerMetrics[providerName] = metrics;
@@ -153,12 +153,12 @@ public sealed class CaptchaMetrics
     {
         lock (_lock)
         {
-            if (!_providerMetrics.TryGetValue(providerName, out var metrics))
+            if (!_providerMetrics.TryGetValue(providerName, out ProviderMetrics? metrics))
             {
                 return 0.0;
             }
 
-            var total = metrics.Successes + metrics.Failures;
+            int total = metrics.Successes + metrics.Failures;
             return total == 0 ? 0.0 : (double)metrics.Successes / total;
         }
     }

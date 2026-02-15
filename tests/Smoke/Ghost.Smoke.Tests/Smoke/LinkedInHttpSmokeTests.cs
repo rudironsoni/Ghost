@@ -40,10 +40,10 @@ public class LinkedInHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
 
         // Act
         _output.WriteLine($"Searching LinkedIn via API for: {searchRequest.query}");
-        var results = await _fixture.PostAsync<object, List<JobListing>>(
+        List<JobListing>? results = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output);
+            _output).ConfigureAwait(false);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -56,14 +56,14 @@ public class LinkedInHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         results.AssertNoDuplicateJobs();
 
         // Validate freshness for all jobs
-        foreach (var job in results)
+        foreach (JobListing job in results)
         {
             job.AssertFreshData(TimeSpan.FromDays(90));
         }
 
         // Output sample data for human verification
         _output.WriteLine("\n=== Sample Job Data ===");
-        var sampleJob = results[0]!;
+        JobListing sampleJob = results[0]!;
         _output.WriteLine($"ID: {sampleJob.Id}");
         _output.WriteLine($"Title: {sampleJob.Title}");
         _output.WriteLine($"Company: {sampleJob.Company}");
@@ -87,10 +87,10 @@ public class LinkedInHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
 
         // Act
         _output.WriteLine($"Searching LinkedIn via API for: {searchRequest.query} in {searchRequest.location}");
-        var results = await _fixture.PostAsync<object, List<JobListing>>(
+        List<JobListing>? results = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output);
+            _output).ConfigureAwait(false);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -108,7 +108,7 @@ public class LinkedInHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
 
         // Output sample locations for human verification
         _output.WriteLine("\n=== Sample Locations ===");
-        foreach (var job in results.Take(3))
+        foreach (JobListing? job in results.Take(3))
         {
             _output.WriteLine($"{job.Title} at {job.Company}: {job.Location ?? "No location"}");
         }
@@ -126,18 +126,18 @@ public class LinkedInHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         };
 
         // First, search for a job to get a valid ID
-        var searchResults = await _fixture.PostAsync<object, List<JobListing>>(
+        List<JobListing>? searchResults = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output);
+            _output).ConfigureAwait(false);
 
         searchResults.Should().NotBeEmpty("need at least one job to test details endpoint");
 
-        var jobId = searchResults![0].Id;
+        string jobId = searchResults![0].Id;
         _output.WriteLine($"Testing GetJobDetails for job ID: {jobId}");
 
         // Act
-        var jobDetails = await _fixture.GetAsync<JobListing>($"/api/jobs/{jobId}", _output);
+        JobListing? jobDetails = await _fixture.GetAsync<JobListing>($"/api/jobs/{jobId}", _output).ConfigureAwait(false);
 
         // Assert
         jobDetails.Should().NotBeNull("job details should not be null");

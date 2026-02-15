@@ -1,3 +1,4 @@
+
 namespace Ghost.Plugin.X.Services;
 
 /// <summary>
@@ -5,9 +6,9 @@ namespace Ghost.Plugin.X.Services;
 /// </summary>
 public interface IXWebhookService
 {
-    void RegisterCallback(string eventName, Func<XEventArgs, Task> callback);
-    void UnregisterCallback(string eventName, Func<XEventArgs, Task> callback);
-    Task NotifyAsync(string eventName, XEventArgs args);
+    public void RegisterCallback(string eventName, Func<XEventArgs, Task> callback);
+    public void UnregisterCallback(string eventName, Func<XEventArgs, Task> callback);
+    public Task NotifyAsync(string eventName, XEventArgs args);
 }
 
 /// <summary>
@@ -63,7 +64,7 @@ public class XWebhookService : IXWebhookService
     {
         lock (_lock)
         {
-            if (!_callbacks.TryGetValue(eventName, out var callbacks))
+            if (!_callbacks.TryGetValue(eventName, out List<Func<XEventArgs, Task>>? callbacks))
             {
                 callbacks = new List<Func<XEventArgs, Task>>();
                 _callbacks[eventName] = callbacks;
@@ -76,7 +77,7 @@ public class XWebhookService : IXWebhookService
     {
         lock (_lock)
         {
-            if (_callbacks.TryGetValue(eventName, out var callbacks))
+            if (_callbacks.TryGetValue(eventName, out List<Func<XEventArgs, Task>>? callbacks))
             {
                 callbacks.Remove(callback);
             }
@@ -89,22 +90,22 @@ public class XWebhookService : IXWebhookService
 
         lock (_lock)
         {
-            if (!_callbacks.TryGetValue(eventName, out var eventCallbacks))
+            if (!_callbacks.TryGetValue(eventName, out List<Func<XEventArgs, Task>>? eventCallbacks))
             {
                 return;
             }
             callbacks = eventCallbacks.ToList();
         }
 
-        var tasks = callbacks.Select(callback => ExecuteCallbackAsync(callback, args));
-        await Task.WhenAll(tasks);
+        IEnumerable<Task> tasks = callbacks.Select(callback => ExecuteCallbackAsync(callback, args));
+        await Task.WhenAll(tasks).ConfigureAwait(false);
     }
 
     private async Task ExecuteCallbackAsync(Func<XEventArgs, Task> callback, XEventArgs args)
     {
         try
         {
-            await callback(args);
+            await callback(args).ConfigureAwait(false);
         }
         catch
         {

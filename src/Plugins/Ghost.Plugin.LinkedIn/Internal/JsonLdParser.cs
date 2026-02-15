@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Specialized;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Ghost.Abstractions;
 using Ghost.Contracts.Jobs;
 
@@ -19,14 +21,14 @@ internal sealed class JsonLdParser
     {
         try
         {
-            var ldEnum = _extractor.Extract<LinkedInJobPostingLd>(html);
-            var ld = System.Linq.Enumerable.FirstOrDefault(ldEnum);
+            IEnumerable<LinkedInJobPostingLd> ldEnum = _extractor.Extract<LinkedInJobPostingLd>(html);
+            LinkedInJobPostingLd? ld = System.Linq.Enumerable.FirstOrDefault(ldEnum);
             if (ld == null) return null;
 
-            var location = ld.JobLocation?.Address?.AddressLocality ?? ld.JobLocation?.Address?.AddressRegion;
+            string? location = ld.JobLocation?.Address?.AddressLocality ?? ld.JobLocation?.Address?.AddressRegion;
 
             DateTimeOffset posted = DateTimeOffset.UtcNow;
-            if (!string.IsNullOrEmpty(ld.DatePosted) && DateTimeOffset.TryParse(ld.DatePosted, out var parsed))
+            if (!string.IsNullOrEmpty(ld.DatePosted) && DateTimeOffset.TryParse(ld.DatePosted, out DateTimeOffset parsed))
             {
                 posted = parsed;
             }
@@ -55,17 +57,17 @@ internal sealed class JsonLdParser
     {
         if (string.IsNullOrEmpty(type)) return JobType.Unknown;
         // Normalize into an uppercase token string and be resilient to arrays or JSON shaped strings
-        var s = type.ToUpperInvariant();
+        string s = type.ToUpperInvariant();
 
         // If it's an array or contains JSON quoting, extract the first token of letters/underscores
         if (s.Contains('[') || s.Contains('"') || s.Contains(','))
         {
-            var m = System.Text.RegularExpressions.Regex.Match(s, "[A-Z_]+\\b");
+            Match m = System.Text.RegularExpressions.Regex.Match(s, "[A-Z_]+\\b");
             if (m.Success) s = m.Value;
         }
 
         // Allow values like FULL_TIME, FULL-TIME, Full time, etc.
-        var cleaned = System.Text.RegularExpressions.Regex.Replace(s, "[^A-Z]", "");
+        string cleaned = System.Text.RegularExpressions.Regex.Replace(s, "[^A-Z]", "");
 
         if (cleaned.Contains("FULL") && cleaned.Contains("TIME")) return JobType.FullTime;
         if (cleaned.Contains("PART") && cleaned.Contains("TIME")) return JobType.PartTime;
@@ -83,8 +85,8 @@ internal sealed class JsonLdParser
         {
             // fallback: jobId query param
             var q = new UriBuilder(url);
-            var query = System.Web.HttpUtility.ParseQueryString(q.Query);
-            var id = query["jobId"] ?? query["id"];
+            NameValueCollection query = System.Web.HttpUtility.ParseQueryString(q.Query);
+            string? id = query["jobId"] ?? query["id"];
             return id;
         }
         catch
@@ -104,12 +106,12 @@ internal sealed class JsonLdParser
         // number or a complex QuantitativeValue object. Inspect and extract min/max/value.
         if (salary.Value.HasValue)
         {
-            var el = salary.Value.Value;
+            JsonElement el = salary.Value.Value;
             try
             {
                 if (el.ValueKind == System.Text.Json.JsonValueKind.Number)
                 {
-                    if (el.TryGetDouble(out var single))
+                    if (el.TryGetDouble(out double single))
                     {
                         return FormatAmount(single, currency);
                     }
@@ -122,7 +124,7 @@ internal sealed class JsonLdParser
                     double? exact = TryGetDouble(el, "value") ?? TryGetDoubleFromNested(el, "value");
 
                     // currency might live inside the object as well
-                    if (string.IsNullOrEmpty(currency) && el.TryGetProperty("currency", out var curEl) && curEl.ValueKind == System.Text.Json.JsonValueKind.String)
+                    if (string.IsNullOrEmpty(currency) && el.TryGetProperty("currency", out JsonElement curEl) && curEl.ValueKind == System.Text.Json.JsonValueKind.String)
                     {
                         currency = curEl.GetString();
                     }
@@ -134,7 +136,7 @@ internal sealed class JsonLdParser
                 }
                 else if (el.ValueKind == System.Text.Json.JsonValueKind.String)
                 {
-                    var s = el.GetString();
+                    string? s = el.GetString();
                     if (!string.IsNullOrWhiteSpace(s)) return s;
                 }
             }
@@ -151,10 +153,10 @@ internal sealed class JsonLdParser
 
         static double? TryGetDouble(System.Text.Json.JsonElement obj, string prop)
         {
-            if (obj.TryGetProperty(prop, out var p))
+            if (obj.TryGetProperty(prop, out JsonElement p))
             {
-                if (p.ValueKind == System.Text.Json.JsonValueKind.Number && p.TryGetDouble(out var d)) return d;
-                if (p.ValueKind == System.Text.Json.JsonValueKind.String && double.TryParse(p.GetString(), out var d2)) return d2;
+                if (p.ValueKind == System.Text.Json.JsonValueKind.Number && p.TryGetDouble(out double d)) return d;
+                if (p.ValueKind == System.Text.Json.JsonValueKind.String && double.TryParse(p.GetString(), out double d2)) return d2;
             }
             return null;
         }
@@ -162,7 +164,7 @@ internal sealed class JsonLdParser
         // Some LinkedIn payloads nest the quantitative value under an inner "value" object
         static double? TryGetDoubleFromNested(System.Text.Json.JsonElement obj, string prop)
         {
-            if (obj.TryGetProperty("value", out var inner) && inner.ValueKind == System.Text.Json.JsonValueKind.Object)
+            if (obj.TryGetProperty("value", out JsonElement inner) && inner.ValueKind == System.Text.Json.JsonValueKind.Object)
                 return TryGetDouble(inner, prop);
             return null;
         }

@@ -101,10 +101,10 @@ public sealed class LinkedInSessionPool : IDisposable
 
         try
         {
-            while (_available.TryDequeue(out var session))
+            while (_available.TryDequeue(out IBrowserSession? session))
             {
                 Interlocked.Decrement(ref _availableCount);
-                if (!TryGetMetadata(session, out var metadata) || metadata is null || !IsReusable(session, metadata))
+                if (!TryGetMetadata(session, out SessionMetadata? metadata) || metadata is null || !IsReusable(session, metadata))
                 {
                     await DisposeSessionAsync(session).ConfigureAwait(false);
                     continue;
@@ -116,7 +116,7 @@ public sealed class LinkedInSessionPool : IDisposable
                 return session;
             }
 
-            var created = await CreateSessionAsync(ct).ConfigureAwait(false);
+            IBrowserSession created = await CreateSessionAsync(ct).ConfigureAwait(false);
             _inUse[created.SessionId] = created;
             RecordAcquisition(sw);
             return created;
@@ -147,7 +147,7 @@ public sealed class LinkedInSessionPool : IDisposable
             return;
         }
 
-        if (!TryGetMetadata(session, out var metadata) || metadata is null || metadata.RecycleOnRelease)
+        if (!TryGetMetadata(session, out SessionMetadata? metadata) || metadata is null || metadata.RecycleOnRelease)
         {
             _ = DisposeSessionAsync(session);
             _maxSessions.Release();
@@ -178,22 +178,22 @@ public sealed class LinkedInSessionPool : IDisposable
             return;
         }
 
-        var remaining = _options.MaxSize - (Volatile.Read(ref _availableCount) + _inUse.Count);
+        int remaining = _options.MaxSize - (Volatile.Read(ref _availableCount) + _inUse.Count);
         if (remaining <= 0)
         {
             return;
         }
 
-        var target = Math.Min(count, remaining);
+        int target = Math.Min(count, remaining);
         var tasks = new Task[target];
-        for (var i = 0; i < target; i++)
+        for (int i = 0; i < target; i++)
         {
             tasks[i] = Task.Run(async () =>
             {
                 await _maxSessions.WaitAsync(ct).ConfigureAwait(false);
                 try
                 {
-                    var session = await CreateSessionAsync(ct).ConfigureAwait(false);
+                    IBrowserSession session = await CreateSessionAsync(ct).ConfigureAwait(false);
                     if (PoolAtCapacity())
                     {
                         await DisposeSessionAsync(session).ConfigureAwait(false);
@@ -226,10 +226,10 @@ public sealed class LinkedInSessionPool : IDisposable
         Interlocked.Exchange(ref _lastHealthCheckTicks, DateTime.UtcNow.Ticks);
 
         var keepQueue = new ConcurrentQueue<IBrowserSession>();
-        while (_available.TryDequeue(out var session))
+        while (_available.TryDequeue(out IBrowserSession? session))
         {
             Interlocked.Decrement(ref _availableCount);
-            if (!TryGetMetadata(session, out var metadata) || !IsReusable(session, metadata))
+            if (!TryGetMetadata(session, out SessionMetadata? metadata) || !IsReusable(session, metadata))
             {
                 await DisposeSessionAsync(session).ConfigureAwait(false);
             }
@@ -240,17 +240,17 @@ public sealed class LinkedInSessionPool : IDisposable
             }
         }
 
-        while (keepQueue.TryDequeue(out var session))
+        while (keepQueue.TryDequeue(out IBrowserSession? session))
         {
             _available.Enqueue(session);
         }
 
-        foreach (var kvp in _inUse)
+        foreach (KeyValuePair<string, IBrowserSession> kvp in _inUse)
         {
             ct.ThrowIfCancellationRequested();
-            if (TryGetMetadata(kvp.Value, out var metadata))
+            if (TryGetMetadata(kvp.Value, out SessionMetadata? metadata))
             {
-                var session = kvp.Value;
+                IBrowserSession session = kvp.Value;
                 if (IsExpired(metadata) || !session.IsConnected)
                 {
                     metadata.RecycleOnRelease = true;
@@ -264,8 +264,8 @@ public sealed class LinkedInSessionPool : IDisposable
     /// </summary>
     public SessionPoolMetrics GetMetrics()
     {
-        var totalAcquisitions = Interlocked.Read(ref _totalAcquisitions);
-        var avgTicks = totalAcquisitions > 0
+        long totalAcquisitions = Interlocked.Read(ref _totalAcquisitions);
+        TimeSpan avgTicks = totalAcquisitions > 0
             ? TimeSpan.FromTicks(Interlocked.Read(ref _totalAcquisitionTimeTicks) / totalAcquisitions)
             : TimeSpan.Zero;
 
@@ -293,12 +293,12 @@ public sealed class LinkedInSessionPool : IDisposable
         _healthCheckTimer.Dispose();
         _maxSessions.Dispose();
 
-        while (_available.TryDequeue(out var session))
+        while (_available.TryDequeue(out IBrowserSession? session))
         {
             _ = DisposeSessionAsync(session);
         }
 
-        foreach (var session in _inUse.Values)
+        foreach (IBrowserSession session in _inUse.Values)
         {
             _ = DisposeSessionAsync(session);
         }
@@ -322,9 +322,9 @@ public sealed class LinkedInSessionPool : IDisposable
 
     private bool IsExpired(SessionMetadata metadata)
     {
-        var now = DateTime.UtcNow;
-        var idleExpired = now - metadata.LastUsedAt > _options.MaxIdleTime;
-        var lifetimeExpired = now - metadata.CreatedAt > _options.MaxLifetime;
+        DateTime now = DateTime.UtcNow;
+        bool idleExpired = now - metadata.LastUsedAt > _options.MaxIdleTime;
+        bool lifetimeExpired = now - metadata.CreatedAt > _options.MaxLifetime;
         return idleExpired || lifetimeExpired;
     }
 
@@ -332,8 +332,8 @@ public sealed class LinkedInSessionPool : IDisposable
     {
         try
         {
-            var sessionOptions = await CreateSessionOptionsAsync(ct).ConfigureAwait(false);
-            var session = await _kernel.NewSessionAsync(sessionOptions, ct).ConfigureAwait(false);
+            SessionOptions sessionOptions = await CreateSessionOptionsAsync(ct).ConfigureAwait(false);
+            IBrowserSession session = await _kernel.NewSessionAsync(sessionOptions, ct).ConfigureAwait(false);
             _metadata[session.SessionId] = new SessionMetadata(DateTime.UtcNow);
             Interlocked.Increment(ref _totalCreated);
             return session;
@@ -362,7 +362,7 @@ public sealed class LinkedInSessionPool : IDisposable
         {
             try
             {
-                var proxy = await _proxyProvider.GetProxyAsync("US", ct).ConfigureAwait(false);
+                ProxyInfo? proxy = await _proxyProvider.GetProxyAsync("US", ct).ConfigureAwait(false);
                 if (proxy is not null)
                 {
                     options.Proxy = new SessionOptions.ProxySettings(proxy.Server, proxy.Username, proxy.Password);
@@ -396,13 +396,13 @@ public sealed class LinkedInSessionPool : IDisposable
 
     private bool PoolAtCapacity()
     {
-        var available = Volatile.Read(ref _availableCount);
+        int available = Volatile.Read(ref _availableCount);
         return available + _inUse.Count >= _options.MaxSize;
     }
 
     private bool TryGetMetadata(IBrowserSession session, out SessionMetadata metadata)
     {
-        if (_metadata.TryGetValue(session.SessionId, out var existing) && existing is not null)
+        if (_metadata.TryGetValue(session.SessionId, out SessionMetadata? existing) && existing is not null)
         {
             metadata = existing;
             return true;

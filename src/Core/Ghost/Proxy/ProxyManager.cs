@@ -41,13 +41,13 @@ public sealed class ProxyManager : IProxyManager, IDisposable
             return Task.FromResult<ProxyInfo?>(null);
         }
 
-        var providers = GetEligibleProviders(countryCode);
+        List<ProviderEntry> providers = GetEligibleProviders(countryCode);
         if (providers.Count == 0)
         {
             return Task.FromResult<ProxyInfo?>(null);
         }
 
-        var provider = SelectProvider(providers);
+        IProxyProvider? provider = SelectProvider(providers);
         if (provider == null)
         {
             return Task.FromResult<ProxyInfo?>(null);
@@ -63,12 +63,12 @@ public sealed class ProxyManager : IProxyManager, IDisposable
 
     public async Task<bool> HealthCheckAsync(string providerName, CancellationToken ct = default)
     {
-        if (!_providers.TryGetValue(providerName, out var entry))
+        if (!_providers.TryGetValue(providerName, out ProviderEntry? entry))
         {
             return false;
         }
 
-        return await PerformHealthCheckAsync(entry);
+        return await PerformHealthCheckAsync(entry).ConfigureAwait(false);
     }
 
     public Task RegisterProviderAsync(IProxyProvider provider, ProxyProviderConfig config, CancellationToken ct = default)
@@ -96,7 +96,7 @@ public sealed class ProxyManager : IProxyManager, IDisposable
         _providers.TryRemove(providerName, out _);
 
         var keysToRemove = _healthStatus.Keys.Where(k => k.StartsWith(providerName + "_", StringComparison.Ordinal)).ToList();
-        foreach (var key in keysToRemove)
+        foreach (string? key in keysToRemove)
         {
             _healthStatus.TryRemove(key, out _);
         }
@@ -137,8 +137,8 @@ public sealed class ProxyManager : IProxyManager, IDisposable
     {
         var healthyProviders = providers.Where(p =>
         {
-            var key = $"{p.Config.Name}_default";
-            if (_healthStatus.TryGetValue(key, out var status))
+            string key = $"{p.Config.Name}_default";
+            if (_healthStatus.TryGetValue(key, out ProxyHealthStatus? status))
             {
                 return status.IsHealthy;
             }
@@ -162,8 +162,8 @@ public sealed class ProxyManager : IProxyManager, IDisposable
 
     private IProxyProvider? SelectRoundRobin(List<ProviderEntry> providers)
     {
-        var index = Interlocked.Increment(ref _roundRobinIndex) % providers.Count;
-        var provider = providers[index];
+        int index = Interlocked.Increment(ref _roundRobinIndex) % providers.Count;
+        ProviderEntry provider = providers[index];
         provider.LastUsed = DateTime.UtcNow;
         Interlocked.Increment(ref provider.UseCount);
         return provider.Provider;
@@ -171,7 +171,7 @@ public sealed class ProxyManager : IProxyManager, IDisposable
 
     private IProxyProvider? SelectLeastUsed(List<ProviderEntry> providers)
     {
-        var provider = providers.OrderBy(p => p.UseCount).ThenBy(p => p.LastUsed).First();
+        ProviderEntry provider = providers.OrderBy(p => p.UseCount).ThenBy(p => p.LastUsed).First();
         provider.LastUsed = DateTime.UtcNow;
         Interlocked.Increment(ref provider.UseCount);
         return provider.Provider;
@@ -179,8 +179,8 @@ public sealed class ProxyManager : IProxyManager, IDisposable
 
     private IProxyProvider? SelectRandom(List<ProviderEntry> providers)
     {
-        var index = _random.Next(providers.Count);
-        var provider = providers[index];
+        int index = _random.Next(providers.Count);
+        ProviderEntry provider = providers[index];
         provider.LastUsed = DateTime.UtcNow;
         Interlocked.Increment(ref provider.UseCount);
         return provider.Provider;
@@ -188,11 +188,11 @@ public sealed class ProxyManager : IProxyManager, IDisposable
 
     private IProxyProvider? SelectWeighted(List<ProviderEntry> providers)
     {
-        var totalWeight = providers.Sum(p => p.Config.Weight);
-        var random = _random.Next(totalWeight);
-        var current = 0;
+        int totalWeight = providers.Sum(p => p.Config.Weight);
+        int random = _random.Next(totalWeight);
+        int current = 0;
 
-        foreach (var provider in providers)
+        foreach (ProviderEntry provider in providers)
         {
             current += provider.Config.Weight;
             if (random < current)
@@ -203,7 +203,7 @@ public sealed class ProxyManager : IProxyManager, IDisposable
             }
         }
 
-        var lastProvider = providers.Last();
+        ProviderEntry lastProvider = providers.Last();
         lastProvider.LastUsed = DateTime.UtcNow;
         Interlocked.Increment(ref lastProvider.UseCount);
         return lastProvider.Provider;
@@ -211,12 +211,12 @@ public sealed class ProxyManager : IProxyManager, IDisposable
 
     private async Task<bool> PerformHealthCheckAsync(ProviderEntry entry)
     {
-        var key = $"{entry.Config.Name}_default";
+        string key = $"{entry.Config.Name}_default";
 
         try
         {
             using var cts = new CancellationTokenSource(_config.HealthCheckTimeout);
-            var proxy = await entry.Provider.GetProxyAsync("US", cts.Token);
+            ProxyInfo? proxy = await entry.Provider.GetProxyAsync("US", cts.Token).ConfigureAwait(false);
 
             var status = new ProxyHealthStatus
             {
@@ -227,7 +227,7 @@ public sealed class ProxyManager : IProxyManager, IDisposable
                 SuccessCount = proxy != null ? 1 : 0
             };
 
-            if (_healthStatus.TryGetValue(key, out var existing))
+            if (_healthStatus.TryGetValue(key, out ProxyHealthStatus? existing))
             {
                 status.SuccessCount += existing.SuccessCount;
                 status.FailureCount = existing.FailureCount;
@@ -248,7 +248,7 @@ public sealed class ProxyManager : IProxyManager, IDisposable
                 LastErrorMessage = ex.Message
             };
 
-            if (_healthStatus.TryGetValue(key, out var existing))
+            if (_healthStatus.TryGetValue(key, out ProxyHealthStatus? existing))
             {
                 status.SuccessCount = existing.SuccessCount;
                 status.FailureCount = existing.FailureCount + 1;
@@ -263,11 +263,11 @@ public sealed class ProxyManager : IProxyManager, IDisposable
     {
         _ = Task.Run(async () =>
         {
-            foreach (var entry in _providers.Values)
+            foreach (ProviderEntry entry in _providers.Values)
             {
                 try
                 {
-                    await PerformHealthCheckAsync(entry);
+                    await PerformHealthCheckAsync(entry).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {

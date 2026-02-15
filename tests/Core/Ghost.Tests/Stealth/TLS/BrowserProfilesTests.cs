@@ -10,7 +10,7 @@ public class BrowserProfilesTests
     public void Chrome120_HasValidProfile()
     {
         // Act
-        var profile = BrowserProfiles.Chrome120;
+        JA3Profile profile = BrowserProfiles.Chrome120;
 
         // Assert
         profile.Should().NotBeNull();
@@ -25,7 +25,7 @@ public class BrowserProfilesTests
     public void Firefox121_HasValidProfile()
     {
         // Act
-        var profile = BrowserProfiles.Firefox121;
+        JA3Profile profile = BrowserProfiles.Firefox121;
 
         // Assert
         profile.Should().NotBeNull();
@@ -39,7 +39,7 @@ public class BrowserProfilesTests
     public void Safari17_HasValidProfile()
     {
         // Act
-        var profile = BrowserProfiles.Safari17;
+        JA3Profile profile = BrowserProfiles.Safari17;
 
         // Assert
         profile.Should().NotBeNull();
@@ -53,7 +53,7 @@ public class BrowserProfilesTests
     public void Edge_HasValidProfile()
     {
         // Act
-        var profile = BrowserProfiles.Edge;
+        JA3Profile profile = BrowserProfiles.Edge;
 
         // Assert
         profile.Should().NotBeNull();
@@ -67,7 +67,7 @@ public class BrowserProfilesTests
     public void AllProfiles_ContainsFourBrowsers()
     {
         // Act
-        var profiles = BrowserProfiles.AllProfiles;
+        IReadOnlyList<JA3Profile> profiles = BrowserProfiles.AllProfiles;
 
         // Assert
         profiles.Should().HaveCount(4);
@@ -77,7 +77,7 @@ public class BrowserProfilesTests
     public void GetRandomProfile_ReturnsValidProfile()
     {
         // Act
-        var profile = BrowserProfiles.GetRandomProfile();
+        JA3Profile profile = BrowserProfiles.GetRandomProfile();
 
         // Assert
         profile.Should().NotBeNull();
@@ -89,13 +89,13 @@ public class BrowserProfilesTests
     public void GetRandomProfile_WithSeed_ReturnsDeterministicResult()
     {
         // Arrange
-        var seed = 42;
+        int seed = 42;
         var random1 = new Random(seed);
         var random2 = new Random(seed);
 
         // Act
-        var profile1 = BrowserProfiles.GetRandomProfile(random1);
-        var profile2 = BrowserProfiles.GetRandomProfile(random2);
+        JA3Profile profile1 = BrowserProfiles.GetRandomProfile(random1);
+        JA3Profile profile2 = BrowserProfiles.GetRandomProfile(random2);
 
         // Assert
         profile1.ToJA3Hash().Should().Be(profile2.ToJA3Hash());
@@ -105,7 +105,7 @@ public class BrowserProfilesTests
     public void BrowserProfiles_HaveTLS13Ciphers()
     {
         // Arrange
-        var tls13CipherRange = Enumerable.Range(4865, 3); // 4865, 4866, 4867
+        IEnumerable<int> tls13CipherRange = Enumerable.Range(4865, 3); // 4865, 4866, 4867
 
         // Act & Assert
         BrowserProfiles.Chrome120.CipherSuites
@@ -135,15 +135,15 @@ public class BrowserProfilesTests
     public void BrowserProfiles_GenerateDifferentHashes()
     {
         // Act
-        var chromeHash = BrowserProfiles.Chrome120.ToJA3Hash();
-        var firefoxHash = BrowserProfiles.Firefox121.ToJA3Hash();
-        var safariHash = BrowserProfiles.Safari17.ToJA3Hash();
-        var edgeHash = BrowserProfiles.Edge.ToJA3Hash();
+        string chromeHash = BrowserProfiles.Chrome120.ToJA3Hash();
+        string firefoxHash = BrowserProfiles.Firefox121.ToJA3Hash();
+        string safariHash = BrowserProfiles.Safari17.ToJA3Hash();
+        string edgeHash = BrowserProfiles.Edge.ToJA3Hash();
 
         // Assert - Edge and Chrome may share fingerprints (both Chromium-based)
         // but Firefox and Safari should be distinct from each other and from Chromium browsers
-        var hashes = new[] { chromeHash, firefoxHash, safariHash, edgeHash };
-        var uniqueCount = hashes.Distinct().Count();
+        string[] hashes = new[] { chromeHash, firefoxHash, safariHash, edgeHash };
+        int uniqueCount = hashes.Distinct().Count();
 
         // Expect at least 3 unique hashes (acknowledging Chrome/Edge similarity)
         uniqueCount.Should().BeGreaterOrEqualTo(3,

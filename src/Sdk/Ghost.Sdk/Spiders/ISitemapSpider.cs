@@ -23,7 +23,7 @@ public interface ISitemapSpider
     /// <item>/sitemap-index.xml</item>
     /// </list>
     /// </remarks>
-    string SitemapUrl { get; set; }
+    public string SitemapUrl { get; set; }
 
     /// <summary>
     /// Parses a sitemap XML document and extracts URLs.
@@ -36,5 +36,5 @@ public interface ISitemapSpider
     /// and URL sets (containing actual page URLs). The method should extract URLs from
     /// &lt;loc&gt; elements in both &lt;sitemap&gt; and &lt;url&gt; entries.
     /// </remarks>
-    Task<IEnumerable<string>> ParseSitemapAsync(string xmlContent, CancellationToken ct);
+    public Task<IEnumerable<string>> ParseSitemapAsync(string xmlContent, CancellationToken ct);
 }

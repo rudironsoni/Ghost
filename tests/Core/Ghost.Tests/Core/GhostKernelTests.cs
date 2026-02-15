@@ -14,7 +14,7 @@ public class GhostKernelTests
     private static GhostKernel CreateKernel(IPlaywright playwright, IBrowser browser, bool useStealth = false)
     {
         // Get the private constructor (there's only one)
-        var ctor = typeof(GhostKernel).GetConstructors(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)[0];
+        ConstructorInfo ctor = typeof(GhostKernel).GetConstructors(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)[0];
         return (GhostKernel)ctor.Invoke(new object?[] { playwright, browser, 1, useStealth, "Chromium", null });
     }
     [Fact]
@@ -28,12 +28,12 @@ public class GhostKernelTests
             .ReturnsAsync(mockContext.Object);
 
         // create private instance via non-public ctor
-        var kernel = CreateKernel(mockPlaywright.Object, mockBrowser.Object); // Disable stealth for this test
+        GhostKernel kernel = CreateKernel(mockPlaywright.Object, mockBrowser.Object); // Disable stealth for this test
 
-        var session = await kernel.NewSessionAsync(new SessionOptions { ViewportWidth = 500, ViewportHeight = 600, UserAgent = "ua" });
+        IBrowserSession session = await kernel.NewSessionAsync(new SessionOptions { ViewportWidth = 500, ViewportHeight = 600, UserAgent = "ua" }).ConfigureAwait(false);
         session.Should().NotBeNull();
 
-        await kernel.DisposeAsync();
+        await kernel.DisposeAsync().ConfigureAwait(false);
 
         mockBrowser.Verify(b => b.NewContextAsync(It.Is<BrowserNewContextOptions>(o => o.ViewportSize!.Width == 500 && o.ViewportSize.Height == 600 && o.UserAgent == "ua")), Times.Once);
         mockBrowser.Verify(b => b.DisposeAsync(), Times.Once);
@@ -44,7 +44,7 @@ public class GhostKernelTests
     public void ConstructorNullBrowserThrowsArgumentNullException()
     {
         var mockPlaywright = new Mock<IPlaywright>();
-        var ctor = typeof(GhostKernel).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)[0];
+        ConstructorInfo ctor = typeof(GhostKernel).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)[0];
         Action act = () => ctor.Invoke(new object?[] { mockPlaywright.Object, null, 10, true, "Chromium", null });
         act.Should().Throw<TargetInvocationException>().WithInnerException<ArgumentNullException>();
     }
@@ -59,26 +59,26 @@ public class GhostKernelTests
             .ReturnsAsync(mockContext.Object);
 
         // Create kernel with max 1 concurrent session
-        var kernel = CreateKernel(mockPlaywright.Object, mockBrowser.Object);
+        GhostKernel kernel = CreateKernel(mockPlaywright.Object, mockBrowser.Object);
 
         // 1. Start first session (should succeed)
-        var session1 = await kernel.NewSessionAsync();
+        IBrowserSession session1 = await kernel.NewSessionAsync().ConfigureAwait(false);
         session1.Should().NotBeNull();
 
         // 2. Try start second session (should block/timeout because limit is 1)
         // We use a short timeout to verify it blocks
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
         await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-            await kernel.NewSessionAsync(ct: cts.Token));
+            await kernel.NewSessionAsync(ct: cts.Token).ConfigureAwait(false)).ConfigureAwait(false);
 
         // 3. Dispose first session
-        await session1.DisposeAsync();
+        await session1.DisposeAsync().ConfigureAwait(false);
 
         // 4. Start second session (should now succeed)
-        var session2 = await kernel.NewSessionAsync();
+        IBrowserSession session2 = await kernel.NewSessionAsync().ConfigureAwait(false);
         session2.Should().NotBeNull();
 
-        await kernel.DisposeAsync();
+        await kernel.DisposeAsync().ConfigureAwait(false);
     }
 
     [Fact]
@@ -91,9 +91,9 @@ public class GhostKernelTests
             .ReturnsAsync(mockContext.Object);
 
         // Create kernel with stealth enabled
-        var kernel = CreateKernel(mockPlaywright.Object, mockBrowser.Object, useStealth: true);
+        GhostKernel kernel = CreateKernel(mockPlaywright.Object, mockBrowser.Object, useStealth: true);
 
-        var session = await kernel.NewSessionAsync();
+        IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
         session.Should().NotBeNull();
 
         // Verify script injection

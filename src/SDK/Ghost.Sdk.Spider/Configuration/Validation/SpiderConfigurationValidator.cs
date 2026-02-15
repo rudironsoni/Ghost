@@ -101,7 +101,7 @@ public sealed class TargetConfigurationValidator : AbstractValidator<TargetConfi
 
     private static bool BeValidUrl(string url)
     {
-        return Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+        return Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) &&
                (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
     }
 }
@@ -174,7 +174,7 @@ public sealed class OAuth2ConfigurationValidator : AbstractValidator<OAuth2Confi
 
     private static bool BeValidUrl(string url)
     {
-        return Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+        return Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) &&
                (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
     }
 }

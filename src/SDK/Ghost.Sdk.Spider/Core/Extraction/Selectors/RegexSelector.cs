@@ -39,14 +39,14 @@ public class RegexSelector : ISelector
         if (string.IsNullOrWhiteSpace(content))
             return new List<string>();
 
-        var matches = _regex.Matches(content);
+        MatchCollection matches = _regex.Matches(content);
         var results = new List<string>();
 
         foreach (Match match in matches)
         {
             if (match.Success && Group < match.Groups.Count)
             {
-                var value = match.Groups[Group].Value;
+                string value = match.Groups[Group].Value;
                 if (!string.IsNullOrEmpty(value))
                     results.Add(value);
             }
@@ -61,11 +61,11 @@ public class RegexSelector : ISelector
         if (string.IsNullOrWhiteSpace(content))
             return null;
 
-        var match = _regex.Match(content);
+        Match match = _regex.Match(content);
         if (!match.Success || Group >= match.Groups.Count)
             return null;
 
-        var value = match.Groups[Group].Value;
+        string value = match.Groups[Group].Value;
         return !string.IsNullOrEmpty(value) ? value : null;
     }
 

@@ -38,18 +38,18 @@ public sealed class LinkedInSocialClient : ISocialClient
     {
         try
         {
-            var pageOpts = _options.GetPageOptions();
-            var page = await _session.NewPageAsync(pageOpts, ct: ct);
+            PageOptions? pageOpts = _options.GetPageOptions();
+            IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
             try
             {
-                var url = $"{_options.BaseUrl}/in/{profileId}";
-                await page.NavigateAsync(url, ct: ct);
-                await page.WaitForLoadStateAsync(ct: ct);
+                string url = $"{_options.BaseUrl}/in/{profileId}";
+                await page.NavigateAsync(url, ct: ct).ConfigureAwait(false);
+                await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
                 // Ensure we're authenticated / logged in for richer scraping
                 try
                 {
-                    var logged = await _authenticator.IsLoggedInAsync(page, ct).ConfigureAwait(false);
+                    bool logged = await _authenticator.IsLoggedInAsync(page, ct).ConfigureAwait(false);
                     if (!logged)
                     {
                         _logger.LogNotLoggedIn();
@@ -61,18 +61,18 @@ public sealed class LinkedInSocialClient : ISocialClient
                 }
 
                 // Expand "About" section if "see more" exists
-                await ExpandSeeMoreAsync(page, null, ct);
+                await ExpandSeeMoreAsync(page, null, ct).ConfigureAwait(false);
 
-                var name = await page.EvaluateAsync<string>("() => document.querySelector('.text-heading-xlarge')?.innerText || ''", ct: ct);
-                var bio = await page.EvaluateAsync<string>("() => document.querySelector('.text-body-medium')?.innerText || ''", ct: ct);
-                var about = await page.EvaluateAsync<string>("() => document.querySelector('.pv-about__summary-text')?.innerText || ''", ct: ct);
+                string name = await page.EvaluateAsync<string>("() => document.querySelector('.text-heading-xlarge')?.innerText || ''", ct: ct).ConfigureAwait(false);
+                string bio = await page.EvaluateAsync<string>("() => document.querySelector('.text-body-medium')?.innerText || ''", ct: ct).ConfigureAwait(false);
+                string about = await page.EvaluateAsync<string>("() => document.querySelector('.pv-about__summary-text')?.innerText || ''", ct: ct).ConfigureAwait(false);
 
                 var profile = new SocialProfile { Id = profileId, Name = name ?? string.Empty, Bio = string.IsNullOrWhiteSpace(about) ? bio : about };
 
                 // Parse more advanced sections
                 try
                 {
-                    var experiences = await ParseExperienceAsync(page, ct).ConfigureAwait(false);
+                    List<SocialExperience> experiences = await ParseExperienceAsync(page, ct).ConfigureAwait(false);
                     if (experiences?.Count > 0)
                     {
                         profile.Experience.AddRange(experiences);
@@ -85,7 +85,7 @@ public sealed class LinkedInSocialClient : ISocialClient
 
                 try
                 {
-                    var education = await ParseEducationAsync(page, ct).ConfigureAwait(false);
+                    List<SocialEducation> education = await ParseEducationAsync(page, ct).ConfigureAwait(false);
                     if (education?.Count > 0)
                     {
                         profile.Education.AddRange(education);
@@ -100,7 +100,7 @@ public sealed class LinkedInSocialClient : ISocialClient
             }
             finally
             {
-                try { await page.DisposeAsync(); } catch { }
+                try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
             }
         }
         catch (OperationCanceledException)
@@ -126,20 +126,20 @@ public sealed class LinkedInSocialClient : ISocialClient
         {
             // Selectors for "see more" buttons.
             // container scope if provided, otherwise page scope.
-            var selector = ".inline-show-more-text__button, button[aria-label*='see more']";
+            string selector = ".inline-show-more-text__button, button[aria-label*='see more']";
             IReadOnlyList<IElement> buttons;
 
             if (container != null)
-                buttons = await container.QuerySelectorAllAsync(selector, ct);
+                buttons = await container.QuerySelectorAllAsync(selector, ct).ConfigureAwait(false);
             else
-                buttons = await page.QuerySelectorAllAsync(selector, ct);
+                buttons = await page.QuerySelectorAllAsync(selector, ct).ConfigureAwait(false);
 
-            foreach (var btn in buttons)
+            foreach (IElement btn in buttons)
             {
                 try
                 {
                     // Check if visible (HumanClick handles some checks, but we should be sure it's interacting)
-                    await btn.HumanClickAsync(ct);
+                    await btn.HumanClickAsync(ct).ConfigureAwait(false);
                 }
                 catch { /* ignore click failures, it might be hidden or covered */ }
             }
@@ -152,15 +152,15 @@ public sealed class LinkedInSocialClient : ISocialClient
         var list = new List<SocialExperience>();
         if (page == null) return list;
 
-        var sections = await page.QuerySelectorAllAsync("section", ct: ct).ConfigureAwait(false);
+        IReadOnlyList<IElement> sections = await page.QuerySelectorAllAsync("section", ct: ct).ConfigureAwait(false);
         Ghost.IElement? expSection = null;
-        foreach (var sec in sections)
+        foreach (IElement sec in sections)
         {
             try
             {
-                var h2 = await sec.QuerySelectorAsync("h2", ct).ConfigureAwait(false);
+                IElement? h2 = await sec.QuerySelectorAsync("h2", ct).ConfigureAwait(false);
                 if (h2 == null) continue;
-                var txt = await h2.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty;
+                string txt = await h2.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty;
                 if (txt.Contains("Experience", StringComparison.OrdinalIgnoreCase))
                 {
                     expSection = sec;
@@ -172,15 +172,15 @@ public sealed class LinkedInSocialClient : ISocialClient
 
         if (expSection == null) return list;
 
-        var items = await expSection.QuerySelectorAllAsync("ul > li", ct).ConfigureAwait(false);
-        foreach (var item in items)
+        IReadOnlyList<IElement> items = await expSection.QuerySelectorAllAsync("ul > li", ct).ConfigureAwait(false);
+        foreach (IElement item in items)
         {
             try
             {
                 // Expand "see more" within this item
-                await ExpandSeeMoreAsync(page, item, ct);
+                await ExpandSeeMoreAsync(page, item, ct).ConfigureAwait(false);
 
-                var texts = new List<string> { await item.GetTextContentAsync(ct) ?? string.Empty };
+                var texts = new List<string> { await item.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty };
                 if (texts == null || texts.Count == 0) continue;
 
                 var exp = new SocialExperience();
@@ -192,16 +192,16 @@ public sealed class LinkedInSocialClient : ISocialClient
                 else
                 {
                     // attempt to find a text that looks like a date range
-                    var maybe = texts.FirstOrDefault(t => t.AsSpan().IndexOfAny(_digitChars) >= 0);
+                    string? maybe = texts.FirstOrDefault(t => t.AsSpan().IndexOfAny(_digitChars) >= 0);
                     if (!string.IsNullOrWhiteSpace(maybe)) dateString = maybe;
                 }
 
                 if (!string.IsNullOrWhiteSpace(dateString))
                 {
                     // dateString may contain duration after a middle dot
-                    var parts = dateString.Split('·');
-                    var range = parts.Length > 0 ? parts[0].Trim() : dateString.Trim();
-                    var (s, e) = new Ghost.Utilities.DateParser().ParseDateRange(range);
+                    string[] parts = dateString.Split('·');
+                    string range = parts.Length > 0 ? parts[0].Trim() : dateString.Trim();
+                    (DateOnly? s, DateOnly? e) = new Ghost.Utilities.DateParser().ParseDateRange(range);
                     exp = exp with { StartDate = s is null ? null : new DateTime?(s.Value.ToDateTime(TimeOnly.MinValue)), EndDate = e is null ? null : new DateTime?(e.Value.ToDateTime(TimeOnly.MinValue)), IsCurrent = e == null };
                     if (parts.Length > 1)
                     {
@@ -231,15 +231,15 @@ public sealed class LinkedInSocialClient : ISocialClient
         var list = new List<SocialEducation>();
         if (page == null) return list;
 
-        var sections = await page.QuerySelectorAllAsync("section", ct: ct).ConfigureAwait(false);
+        IReadOnlyList<IElement> sections = await page.QuerySelectorAllAsync("section", ct: ct).ConfigureAwait(false);
         Ghost.IElement? edSection = null;
-        foreach (var sec in sections)
+        foreach (IElement sec in sections)
         {
             try
             {
-                var h2 = await sec.QuerySelectorAsync("h2", ct).ConfigureAwait(false);
+                IElement? h2 = await sec.QuerySelectorAsync("h2", ct).ConfigureAwait(false);
                 if (h2 == null) continue;
-                var txt = await h2.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty;
+                string txt = await h2.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty;
                 if (txt.Contains("Education", StringComparison.OrdinalIgnoreCase))
                 {
                     edSection = sec;
@@ -251,15 +251,15 @@ public sealed class LinkedInSocialClient : ISocialClient
 
         if (edSection == null) return list;
 
-        var items = await edSection.QuerySelectorAllAsync("ul > li", ct).ConfigureAwait(false);
-        foreach (var item in items)
+        IReadOnlyList<IElement> items = await edSection.QuerySelectorAllAsync("ul > li", ct).ConfigureAwait(false);
+        foreach (IElement item in items)
         {
             try
             {
                 // Expand "see more" within this item
-                await ExpandSeeMoreAsync(page, item, ct);
+                await ExpandSeeMoreAsync(page, item, ct).ConfigureAwait(false);
 
-                var texts = new List<string> { await item.GetTextContentAsync(ct) ?? string.Empty };
+                var texts = new List<string> { await item.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty };
                 if (texts == null || texts.Count == 0) continue;
 
                 var edu = new SocialEducation();
@@ -271,13 +271,13 @@ public sealed class LinkedInSocialClient : ISocialClient
                 if (texts.Count >= 3) dateString = texts.Last();
                 else
                 {
-                    var maybe = texts.FirstOrDefault(t => t.AsSpan().IndexOfAny(_digitChars) >= 0);
+                    string? maybe = texts.FirstOrDefault(t => t.AsSpan().IndexOfAny(_digitChars) >= 0);
                     if (!string.IsNullOrWhiteSpace(maybe)) dateString = maybe;
                 }
 
                 if (!string.IsNullOrWhiteSpace(dateString))
                 {
-                    var (s, e) = new Ghost.Utilities.DateParser().ParseDateRange(dateString);
+                    (DateOnly? s, DateOnly? e) = new Ghost.Utilities.DateParser().ParseDateRange(dateString);
                     edu = edu with { StartDate = s is null ? null : new DateTime?(s.Value.ToDateTime(TimeOnly.MinValue)), EndDate = e is null ? null : new DateTime?(e.Value.ToDateTime(TimeOnly.MinValue)) };
                 }
 
@@ -294,26 +294,26 @@ public sealed class LinkedInSocialClient : ISocialClient
 
     public async Task<IReadOnlyList<SocialProfile>> SearchProfilesAsync(Ghost.Contracts.Social.ProfileSearchCriteria criteria, CancellationToken ct = default)
     {
-        var pageOpts = _options.GetPageOptions();
-        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        PageOptions? pageOpts = _options.GetPageOptions();
+        IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
         try
         {
-            var q = System.Uri.EscapeDataString(criteria.Query ?? string.Empty);
-            var url = $"{_options.BaseUrl}/search/results/people/?keywords={q}";
-            await page.NavigateAsync(url, ct: ct);
-            await page.WaitForLoadStateAsync(ct: ct);
+            string q = System.Uri.EscapeDataString(criteria.Query ?? string.Empty);
+            string url = $"{_options.BaseUrl}/search/results/people/?keywords={q}";
+            await page.NavigateAsync(url, ct: ct).ConfigureAwait(false);
+            await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
             // Very simple parsing: find profile links
-            var nodes = await page.QuerySelectorAllAsync(".reusable-search__result-container a.app-aware-link", ct: ct);
+            IReadOnlyList<IElement> nodes = await page.QuerySelectorAllAsync(".reusable-search__result-container a.app-aware-link", ct: ct).ConfigureAwait(false);
             var list = new List<SocialProfile>();
-            foreach (var n in nodes.Take(criteria.MaxResults))
+            foreach (IElement? n in nodes.Take(criteria.MaxResults))
             {
                 try
                 {
-                    var href = await n.GetAttributeAsync("href", ct);
+                    string? href = await n.GetAttributeAsync("href", ct).ConfigureAwait(false);
                     if (href is null) continue;
-                    var id = href.Split('/').LastOrDefault() ?? href;
-                    var name = await n.GetTextContentAsync(ct) ?? string.Empty;
+                    string id = href.Split('/').LastOrDefault() ?? href;
+                    string name = await n.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty;
                     list.Add(new SocialProfile { Id = id, Name = name });
                 }
                 catch (Exception ex)
@@ -326,51 +326,51 @@ public sealed class LinkedInSocialClient : ISocialClient
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 
     public async Task<SocialPost> CreatePostAsync(Ghost.Contracts.Social.CreatePostRequest request, CancellationToken ct = default)
     {
-        var pageOpts = _options.GetPageOptions();
-        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        PageOptions? pageOpts = _options.GetPageOptions();
+        IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
         try
         {
-            await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct);
-            var btn = await page.WaitForSelectorAsync("button[data-control-name='sharebox-trigger']", ct: ct);
-            if (btn != null) await btn.HumanClickAsync(ct: ct);
+            await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct).ConfigureAwait(false);
+            IElement btn = await page.WaitForSelectorAsync("button[data-control-name='sharebox-trigger']", ct: ct).ConfigureAwait(false);
+            if (btn != null) await btn.HumanClickAsync(ct: ct).ConfigureAwait(false);
 
-            await page.TypeAsync("div.ql-editor", request.Content, ct: ct);
+            await page.TypeAsync("div.ql-editor", request.Content, ct: ct).ConfigureAwait(false);
 
-            var submitBtn = await page.QuerySelectorAsync("button[data-control-name='submit_post']", ct: ct);
-            if (submitBtn != null) await submitBtn.HumanClickAsync(ct: ct);
+            IElement? submitBtn = await page.QuerySelectorAsync("button[data-control-name='submit_post']", ct: ct).ConfigureAwait(false);
+            if (submitBtn != null) await submitBtn.HumanClickAsync(ct: ct).ConfigureAwait(false);
 
-            await page.WaitForNavigationAsync(ct: ct);
+            await page.WaitForNavigationAsync(ct: ct).ConfigureAwait(false);
 
             return new SocialPost { Id = Guid.NewGuid().ToString(), Content = request.Content };
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 
     public async Task<IReadOnlyList<SocialPost>> GetFeedAsync(Ghost.Contracts.Social.FeedOptions? options = null, CancellationToken ct = default)
     {
-        var pageOpts = _options.GetPageOptions();
-        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        PageOptions? pageOpts = _options.GetPageOptions();
+        IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
         try
         {
-            await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct);
-            await page.WaitForLoadStateAsync(ct: ct);
+            await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct).ConfigureAwait(false);
+            await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
-            var nodes = await page.QuerySelectorAllAsync(".feed-shared-update-v2", ct: ct);
+            IReadOnlyList<IElement> nodes = await page.QuerySelectorAllAsync(".feed-shared-update-v2", ct: ct).ConfigureAwait(false);
             var list = new List<SocialPost>();
-            foreach (var n in nodes.Take(options?.PageSize ?? 20))
+            foreach (IElement? n in nodes.Take(options?.PageSize ?? 20))
             {
                 try
                 {
-                    var content = await n.GetTextContentAsync(ct) ?? string.Empty;
+                    string content = await n.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty;
                     list.Add(new SocialPost { Id = Guid.NewGuid().ToString(), Content = content });
                 }
                 catch { }
@@ -380,46 +380,46 @@ public sealed class LinkedInSocialClient : ISocialClient
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 
     public async Task SendMessageAsync(string recipientId, string message, CancellationToken ct = default)
     {
-        var pageOpts = _options.GetPageOptions();
-        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        PageOptions? pageOpts = _options.GetPageOptions();
+        IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
         try
         {
-            await page.NavigateAsync($"{_options.BaseUrl}/messaging/thread/{recipientId}", ct: ct);
-            await page.WaitForSelectorAsync("div.msg-form__contenteditable", ct: ct);
-            await page.TypeAsync("div.msg-form__contenteditable", message, ct: ct);
-            await page.PressAsync("div.msg-form__contenteditable", "Enter", ct);
+            await page.NavigateAsync($"{_options.BaseUrl}/messaging/thread/{recipientId}", ct: ct).ConfigureAwait(false);
+            await page.WaitForSelectorAsync("div.msg-form__contenteditable", ct: ct).ConfigureAwait(false);
+            await page.TypeAsync("div.msg-form__contenteditable", message, ct: ct).ConfigureAwait(false);
+            await page.PressAsync("div.msg-form__contenteditable", "Enter", ct).ConfigureAwait(false);
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 
     public async Task<IReadOnlyList<Ghost.Contracts.Social.SocialConnection>> GetConnectionsAsync(Ghost.Contracts.Social.ConnectionsOptions? options = null, CancellationToken ct = default)
     {
-        var pageOpts = _options.GetPageOptions();
-        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        PageOptions? pageOpts = _options.GetPageOptions();
+        IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
         try
         {
-            await page.NavigateAsync($"{_options.BaseUrl}/mynetwork/invite-connect/connections/", ct: ct);
-            await page.WaitForLoadStateAsync(ct: ct);
+            await page.NavigateAsync($"{_options.BaseUrl}/mynetwork/invite-connect/connections/", ct: ct).ConfigureAwait(false);
+            await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
-            var nodes = await page.QuerySelectorAllAsync(".mn-connection-card__details", ct: ct);
+            IReadOnlyList<IElement> nodes = await page.QuerySelectorAllAsync(".mn-connection-card__details", ct: ct).ConfigureAwait(false);
             var list = new List<Ghost.Contracts.Social.SocialConnection>();
-            foreach (var n in nodes.Take(options?.MaxResults ?? 20))
+            foreach (IElement? n in nodes.Take(options?.MaxResults ?? 20))
             {
                 try
                 {
-                    var aEl = await n.QuerySelectorAsync("a", ct);
-                    var id = aEl is not null ? await aEl.GetAttributeAsync("href", ct) ?? string.Empty : string.Empty;
-                    var nameEl = await n.QuerySelectorAsync(".mn-connection-card__name", ct);
-                    var name = nameEl is not null ? await nameEl.GetTextContentAsync(ct) ?? string.Empty : string.Empty;
+                    IElement? aEl = await n.QuerySelectorAsync("a", ct).ConfigureAwait(false);
+                    string id = aEl is not null ? await aEl.GetAttributeAsync("href", ct).ConfigureAwait(false) ?? string.Empty : string.Empty;
+                    IElement? nameEl = await n.QuerySelectorAsync(".mn-connection-card__name", ct).ConfigureAwait(false);
+                    string name = nameEl is not null ? await nameEl.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty : string.Empty;
                     list.Add(new Ghost.Contracts.Social.SocialConnection { Id = id, FromProfileId = string.Empty, ToProfileId = string.Empty });
                 }
                 catch { }
@@ -429,30 +429,30 @@ public sealed class LinkedInSocialClient : ISocialClient
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 
     public async Task SendConnectionRequestAsync(string profileId, string? message = null, CancellationToken ct = default)
     {
-        var pageOpts = _options.GetPageOptions();
-        var page = await _session.NewPageAsync(pageOpts, ct: ct);
+        PageOptions? pageOpts = _options.GetPageOptions();
+        IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
         try
         {
-            await page.NavigateAsync($"{_options.BaseUrl}/in/{profileId}", ct: ct);
-            var connectBtn = await page.WaitForSelectorAsync("button[data-control-name='connect']", ct: ct);
-            if (connectBtn != null) await connectBtn.HumanClickAsync(ct: ct);
+            await page.NavigateAsync($"{_options.BaseUrl}/in/{profileId}", ct: ct).ConfigureAwait(false);
+            IElement connectBtn = await page.WaitForSelectorAsync("button[data-control-name='connect']", ct: ct).ConfigureAwait(false);
+            if (connectBtn != null) await connectBtn.HumanClickAsync(ct: ct).ConfigureAwait(false);
 
             if (!string.IsNullOrEmpty(message))
             {
-                await page.TypeAsync("textarea[name='message']", message, ct: ct);
+                await page.TypeAsync("textarea[name='message']", message, ct: ct).ConfigureAwait(false);
             }
-            var sendBtn = await page.QuerySelectorAsync("button[data-control-name='send_invite']", ct: ct);
-            if (sendBtn != null) await sendBtn.HumanClickAsync(ct: ct);
+            IElement? sendBtn = await page.QuerySelectorAsync("button[data-control-name='send_invite']", ct: ct).ConfigureAwait(false);
+            if (sendBtn != null) await sendBtn.HumanClickAsync(ct: ct).ConfigureAwait(false);
         }
         finally
         {
-            try { await page.DisposeAsync(); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
     }
 }

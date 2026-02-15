@@ -102,13 +102,13 @@ public sealed class ItemLoader<T> : IItemLoader<T> where T : class, new()
 
         var item = new T();
 
-        foreach (var (field, extractors) in _extractors)
+        foreach ((string? field, List<FieldExtractor>? extractors) in _extractors)
         {
             var values = new List<string>();
 
-            foreach (var extractor in extractors)
+            foreach (FieldExtractor extractor in extractors)
             {
-                var value = extractor.Type switch
+                string? value = extractor.Type switch
                 {
                     ExtractorType.XPath => ExtractXPath(doc, extractor.Selector),
                     ExtractorType.Css => ExtractCss(doc, extractor.Selector),
@@ -122,9 +122,9 @@ public sealed class ItemLoader<T> : IItemLoader<T> where T : class, new()
                 }
             }
 
-            var finalValue = string.Join(", ", values);
+            string finalValue = string.Join(", ", values);
 
-            if (_processors.TryGetValue(field, out var processors))
+            if (_processors.TryGetValue(field, out List<Func<string, string>>? processors))
             {
                 finalValue = processors.Aggregate(finalValue, (current, processor) => processor(current));
             }
@@ -151,7 +151,7 @@ public sealed class ItemLoader<T> : IItemLoader<T> where T : class, new()
 
     private static string? ExtractXPath(HtmlDocument doc, string xpath)
     {
-        var node = doc.DocumentNode.SelectSingleNode(xpath);
+        HtmlNode node = doc.DocumentNode.SelectSingleNode(xpath);
         return node?.InnerText;
     }
 
@@ -160,7 +160,7 @@ public sealed class ItemLoader<T> : IItemLoader<T> where T : class, new()
         // HtmlAgilityPack doesn't have native CSS selector support
         // We'll use QuerySelector extension method if available, or convert to XPath
         // For now, we'll use a simple implementation that handles basic CSS selectors
-        var node = doc.DocumentNode.SelectSingleNode(ConvertCssToXPath(selector));
+        HtmlNode node = doc.DocumentNode.SelectSingleNode(ConvertCssToXPath(selector));
         return node?.InnerText;
     }
 
@@ -171,14 +171,14 @@ public sealed class ItemLoader<T> : IItemLoader<T> where T : class, new()
         if (cssSelector.StartsWith('.'))
         {
             // Class selector: .class -> //*[contains(@class, 'class')]
-            var className = cssSelector[1..];
+            string className = cssSelector[1..];
             return $"//*[contains(@class, '{className}')]";
         }
 
         if (cssSelector.StartsWith('#'))
         {
             // ID selector: #id -> //*[@id='id']
-            var id = cssSelector[1..];
+            string id = cssSelector[1..];
             return $"//*[@id='{id}']";
         }
 
@@ -188,7 +188,7 @@ public sealed class ItemLoader<T> : IItemLoader<T> where T : class, new()
 
     private static void SetPropertyValue(T item, string propertyName, string value)
     {
-        var prop = typeof(T).GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+        PropertyInfo? prop = typeof(T).GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
 
         if (prop is null || !prop.CanWrite)
         {
@@ -200,7 +200,7 @@ public sealed class ItemLoader<T> : IItemLoader<T> where T : class, new()
 
     private List<FieldExtractor> GetOrAddExtractors(string field)
     {
-        if (!_extractors.TryGetValue(field, out var extractors))
+        if (!_extractors.TryGetValue(field, out List<FieldExtractor>? extractors))
         {
             extractors = [];
             _extractors[field] = extractors;
@@ -211,7 +211,7 @@ public sealed class ItemLoader<T> : IItemLoader<T> where T : class, new()
 
     private List<Func<string, string>> GetOrAddProcessors(string field)
     {
-        if (!_processors.TryGetValue(field, out var processors))
+        if (!_processors.TryGetValue(field, out List<Func<string, string>>? processors))
         {
             processors = [];
             _processors[field] = processors;

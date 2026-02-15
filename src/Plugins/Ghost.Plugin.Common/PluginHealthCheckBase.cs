@@ -22,7 +22,7 @@ public abstract class PluginHealthCheckBase : IPluginReadinessCheck
         {
             _logger.LogDebug("Starting health check for {CheckName}", GetType().Name);
 
-            var result = await PerformCheckAsync(cancellationToken);
+            ReadinessCheckResult result = await PerformCheckAsync(cancellationToken).ConfigureAwait(false);
 
             if (result.IsReady)
             {

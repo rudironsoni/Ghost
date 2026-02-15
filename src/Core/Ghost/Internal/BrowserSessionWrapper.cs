@@ -31,19 +31,19 @@ internal sealed class BrowserSessionWrapper : IBrowserSession, IDisposable
 
     public async Task<IPage> NewPageAsync(PageOptions? options = null, CancellationToken ct = default)
     {
-        var page = await _context.NewPageAsync();
+        Microsoft.Playwright.IPage page = await _context.NewPageAsync().ConfigureAwait(false);
 
         // Apply PageOptions overrides via InitScripts if provided
         if (options is not null)
         {
             if (!string.IsNullOrEmpty(options.TimezoneId))
             {
-                await page.AddInitScriptAsync(Ghost.Stealth.StealthScripts.GetTimezoneOverrideScript(options.TimezoneId));
+                await page.AddInitScriptAsync(Stealth.StealthScripts.GetTimezoneOverrideScript(options.TimezoneId)).ConfigureAwait(false);
             }
 
             if (!string.IsNullOrEmpty(options.Locale))
             {
-                await page.AddInitScriptAsync(Ghost.Stealth.StealthScripts.GetLocaleOverrideScript(options.Locale));
+                await page.AddInitScriptAsync(Stealth.StealthScripts.GetLocaleOverrideScript(options.Locale)).ConfigureAwait(false);
             }
         }
 
@@ -54,36 +54,36 @@ internal sealed class BrowserSessionWrapper : IBrowserSession, IDisposable
 
     public Task<IPage?> GetPageAsync(string pageId, CancellationToken ct = default)
     {
-        var page = _pages.OfType<PageWrapper>().FirstOrDefault(p => p.PageId == pageId);
+        PageWrapper? page = _pages.OfType<PageWrapper>().FirstOrDefault(p => p.PageId == pageId);
         return Task.FromResult<IPage?>(page);
     }
 
     public async Task CloseAsync(CancellationToken ct = default)
     {
         if (_disposed) return;
-        await _context.CloseAsync();
+        await _context.CloseAsync().ConfigureAwait(false);
         _disposed = true;
     }
 
     private async ValueTask DisposeAsyncCore()
     {
         // perform async cleanup
-        foreach (var p in _pages.Cast<PageWrapper>())
+        foreach (PageWrapper p in _pages.Cast<PageWrapper>())
         {
-            await p.DisposeAsync();
+            await p.DisposeAsync().ConfigureAwait(false);
         }
         if (_bridge is not null)
         {
-            await _bridge.DisposeAsync();
+            await _bridge.DisposeAsync().ConfigureAwait(false);
         }
-        await _context.DisposeAsync();
+        await _context.DisposeAsync().ConfigureAwait(false);
         _onDispose?.Invoke();
     }
 
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
-        await DisposeAsyncCore();
+        await DisposeAsyncCore().ConfigureAwait(false);
         _disposed = true;
         GC.SuppressFinalize(this);
     }
@@ -100,6 +100,6 @@ internal sealed class BrowserSessionWrapper : IBrowserSession, IDisposable
 
     public async Task SaveStorageStateAsync(string path)
     {
-        await _context.StorageStateAsync(new BrowserContextStorageStateOptions { Path = path });
+        await _context.StorageStateAsync(new BrowserContextStorageStateOptions { Path = path }).ConfigureAwait(false);
     }
 }

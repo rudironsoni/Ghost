@@ -39,14 +39,14 @@ public sealed class StatsCollector : IStatsCollector
     {
         ArgumentNullException.ThrowIfNull(spiderId);
 
-        var stats = _stats.GetOrAdd(spiderId, _ => new SpiderStats
+        SpiderStats stats = _stats.GetOrAdd(spiderId, _ => new SpiderStats
         {
             SpiderId = spiderId,
             StartTime = DateTimeOffset.UtcNow
         });
 
-        var counters = _counters.GetOrAdd(spiderId, _ => new StatsCounters());
-        var newCount = Interlocked.Increment(ref counters.RequestCount);
+        StatsCounters counters = _counters.GetOrAdd(spiderId, _ => new StatsCounters());
+        long newCount = Interlocked.Increment(ref counters.RequestCount);
         stats.RequestCount = newCount;
     }
 
@@ -66,25 +66,25 @@ public sealed class StatsCollector : IStatsCollector
     {
         ArgumentNullException.ThrowIfNull(spiderId);
 
-        if (!_stats.TryGetValue(spiderId, out var stats))
+        if (!_stats.TryGetValue(spiderId, out SpiderStats? stats))
         {
             throw new InvalidOperationException($"Spider '{spiderId}' has not been initialized. Call RecordRequest first.");
         }
 
-        if (!_counters.TryGetValue(spiderId, out var counters))
+        if (!_counters.TryGetValue(spiderId, out StatsCounters? counters))
         {
             throw new InvalidOperationException($"Spider '{spiderId}' has not been initialized. Call RecordRequest first.");
         }
 
-        var newCount = Interlocked.Increment(ref counters.ResponseCount);
+        long newCount = Interlocked.Increment(ref counters.ResponseCount);
         stats.ResponseCount = newCount;
 
         // Update status code distribution atomically
         stats.StatusCodeDistribution.AddOrUpdate(statusCode, 1, (_, count) => count + 1);
 
         // Update latency tracking with locking for list operations
-        var latencies = _latencies.GetOrAdd(spiderId, _ => new List<TimeSpan>());
-        var lockObj = _latencyLocks.GetOrAdd(spiderId, _ => new object());
+        List<TimeSpan> latencies = _latencies.GetOrAdd(spiderId, _ => new List<TimeSpan>());
+        object lockObj = _latencyLocks.GetOrAdd(spiderId, _ => new object());
 
         lock (lockObj)
         {
@@ -112,17 +112,17 @@ public sealed class StatsCollector : IStatsCollector
         ArgumentNullException.ThrowIfNull(spiderId);
         ArgumentNullException.ThrowIfNull(ex);
 
-        if (!_stats.TryGetValue(spiderId, out var stats))
+        if (!_stats.TryGetValue(spiderId, out SpiderStats? stats))
         {
             throw new InvalidOperationException($"Spider '{spiderId}' has not been initialized. Call RecordRequest first.");
         }
 
-        if (!_counters.TryGetValue(spiderId, out var counters))
+        if (!_counters.TryGetValue(spiderId, out StatsCounters? counters))
         {
             throw new InvalidOperationException($"Spider '{spiderId}' has not been initialized. Call RecordRequest first.");
         }
 
-        var newCount = Interlocked.Increment(ref counters.ErrorCount);
+        long newCount = Interlocked.Increment(ref counters.ErrorCount);
         stats.ErrorCount = newCount;
     }
 
@@ -142,17 +142,17 @@ public sealed class StatsCollector : IStatsCollector
         ArgumentNullException.ThrowIfNull(spiderId);
         ArgumentNullException.ThrowIfNull(itemType);
 
-        if (!_stats.TryGetValue(spiderId, out var stats))
+        if (!_stats.TryGetValue(spiderId, out SpiderStats? stats))
         {
             throw new InvalidOperationException($"Spider '{spiderId}' has not been initialized. Call RecordRequest first.");
         }
 
-        if (!_counters.TryGetValue(spiderId, out var counters))
+        if (!_counters.TryGetValue(spiderId, out StatsCounters? counters))
         {
             throw new InvalidOperationException($"Spider '{spiderId}' has not been initialized. Call RecordRequest first.");
         }
 
-        var newCount = Interlocked.Increment(ref counters.ItemCount);
+        long newCount = Interlocked.Increment(ref counters.ItemCount);
         stats.ItemCount = newCount;
     }
 
@@ -173,7 +173,7 @@ public sealed class StatsCollector : IStatsCollector
     {
         ArgumentNullException.ThrowIfNull(spiderId);
 
-        return _stats.TryGetValue(spiderId, out var stats)
+        return _stats.TryGetValue(spiderId, out SpiderStats? stats)
             ? stats
             : new SpiderStats { SpiderId = spiderId };
     }

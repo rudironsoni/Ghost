@@ -12,7 +12,7 @@ public interface IJobDispatcher
     /// <param name="priority">Job priority (defaults to Normal)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Job ID</returns>
-    Task<string> EnqueueAsync(Job job, int priority = 2, CancellationToken cancellationToken = default);
+    public Task<string> EnqueueAsync(Job job, int priority = 2, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Dequeue the next available job for a worker
@@ -20,7 +20,7 @@ public interface IJobDispatcher
     /// <param name="workerId">Worker identifier</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Next job or null if queue is empty</returns>
-    Task<Job?> DequeueAsync(string workerId, CancellationToken cancellationToken = default);
+    public Task<Job?> DequeueAsync(string workerId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Mark a job as completed successfully
@@ -28,7 +28,7 @@ public interface IJobDispatcher
     /// <param name="jobId">Job identifier</param>
     /// <param name="result">Job result</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    Task CompleteAsync(string jobId, JobResult result, CancellationToken cancellationToken = default);
+    public Task CompleteAsync(string jobId, JobResult result, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Mark a job as failed and handle retry logic
@@ -36,33 +36,33 @@ public interface IJobDispatcher
     /// <param name="jobId">Job identifier</param>
     /// <param name="exception">Exception that caused the failure</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    Task FailAsync(string jobId, Exception exception, CancellationToken cancellationToken = default);
+    public Task FailAsync(string jobId, Exception exception, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get count of pending jobs
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Number of pending jobs</returns>
-    Task<int> GetPendingCountAsync(CancellationToken cancellationToken = default);
+    public Task<int> GetPendingCountAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get count of active jobs
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Number of active jobs</returns>
-    Task<int> GetActiveCountAsync(CancellationToken cancellationToken = default);
+    public Task<int> GetActiveCountAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get count of completed jobs
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Number of completed jobs</returns>
-    Task<int> GetCompletedCountAsync(CancellationToken cancellationToken = default);
+    public Task<int> GetCompletedCountAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get count of dead jobs (exhausted retries)
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Number of dead jobs</returns>
-    Task<int> GetDeadCountAsync(CancellationToken cancellationToken = default);
+    public Task<int> GetDeadCountAsync(CancellationToken cancellationToken = default);
 }

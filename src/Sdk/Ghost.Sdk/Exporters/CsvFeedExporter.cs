@@ -42,7 +42,7 @@ public sealed class CsvFeedExporter : IFeedExporter
         ArgumentNullException.ThrowIfNull(items);
         ArgumentNullException.ThrowIfNull(output);
 
-        await using var writer = new StreamWriter(output, _encoding, leaveOpen: true);
+        await using var writer = new StreamWriter(output, _encoding, leaveOpen: true).ConfigureAwait(false);
 
         var itemsList = items.ToList();
         if (itemsList.Count == 0)
@@ -51,29 +51,29 @@ public sealed class CsvFeedExporter : IFeedExporter
         }
 
         // Get properties from the first item
-        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanRead)
             .ToArray();
 
         // Write headers if requested
         if (_includeHeaders)
         {
-            var headers = string.Join(_delimiter, properties.Select(p => EscapeField(p.Name)));
+            string headers = string.Join(_delimiter, properties.Select(p => EscapeField(p.Name)));
             await writer.WriteLineAsync(headers).ConfigureAwait(false);
         }
 
         // Write data rows
-        foreach (var item in itemsList)
+        foreach (T? item in itemsList)
         {
             ct.ThrowIfCancellationRequested();
 
-            var values = properties.Select(p =>
+            IEnumerable<string> values = properties.Select(p =>
             {
-                var value = p.GetValue(item);
+                object? value = p.GetValue(item);
                 return EscapeField(FormatValue(value));
             });
 
-            var row = string.Join(_delimiter, values);
+            string row = string.Join(_delimiter, values);
             await writer.WriteLineAsync(row).ConfigureAwait(false);
         }
 
@@ -93,7 +93,7 @@ public sealed class CsvFeedExporter : IFeedExporter
         }
 
         // Check if the field needs quoting
-        var needsQuoting = value.Contains(_delimiter) ||
+        bool needsQuoting = value.Contains(_delimiter) ||
                           value.Contains('"') ||
                           value.Contains('\n') ||
                           value.Contains('\r');
@@ -104,7 +104,7 @@ public sealed class CsvFeedExporter : IFeedExporter
         }
 
         // Escape internal quotes by doubling them
-        var escaped = value.Replace("\"", "\"\"");
+        string escaped = value.Replace("\"", "\"\"");
         return $"\"{escaped}\"";
     }
 

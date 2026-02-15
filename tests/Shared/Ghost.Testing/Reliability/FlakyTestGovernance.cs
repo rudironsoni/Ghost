@@ -59,12 +59,12 @@ public sealed class QuarantineAttribute : Attribute
             throw new ArgumentException("Owner is required for quarantined tests.", nameof(owner));
         }
 
-        if (!DateTime.TryParse(expiryDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedExpiry))
+        if (!DateTime.TryParse(expiryDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedExpiry))
         {
             throw new ArgumentException($"Invalid expiry date format: {expiryDate}", nameof(expiryDate));
         }
 
-        var maxExpiry = DateTime.UtcNow.AddDays(30);
+        DateTime maxExpiry = DateTime.UtcNow.AddDays(30);
         if (parsedExpiry > maxExpiry)
         {
             throw new ArgumentException(
@@ -144,7 +144,7 @@ public sealed class FlakyTestTracker
     /// <param name="executionTimeMs">The test execution time in milliseconds.</param>
     public static void RecordExecution(string testName, bool passed, long executionTimeMs)
     {
-        var metrics = _metrics.GetOrAdd(testName, _ => new TestStabilityMetrics { TestName = testName });
+        TestStabilityMetrics metrics = _metrics.GetOrAdd(testName, _ => new TestStabilityMetrics { TestName = testName });
 
         lock (metrics)
         {
@@ -170,7 +170,7 @@ public sealed class FlakyTestTracker
             // Track recent executions for flake detection
             metrics.RecentExecutions.Enqueue((Timestamp: DateTime.UtcNow, Passed: passed));
             while (metrics.RecentExecutions.Count > 50 &&
-                   metrics.RecentExecutions.TryPeek(out var oldest) &&
+                   metrics.RecentExecutions.TryPeek(out (DateTime Timestamp, bool Passed) oldest) &&
                    (DateTime.UtcNow - oldest.Timestamp).TotalDays > 7)
             {
                 metrics.RecentExecutions.TryDequeue(out _);
@@ -187,7 +187,7 @@ public sealed class FlakyTestTracker
     /// <returns>The stability metrics, or null if not found.</returns>
     public static TestStabilityMetrics? GetMetrics(string testName)
     {
-        return _metrics.TryGetValue(testName, out var metrics) ? metrics : null;
+        return _metrics.TryGetValue(testName, out TestStabilityMetrics? metrics) ? metrics : null;
     }
 
     /// <summary>
@@ -209,9 +209,9 @@ public sealed class FlakyTestTracker
     {
         var candidates = new List<FlakyTestCandidate>();
 
-        foreach (var kvp in _metrics)
+        foreach (KeyValuePair<string, TestStabilityMetrics> kvp in _metrics)
         {
-            var metrics = kvp.Value;
+            TestStabilityMetrics metrics = kvp.Value;
 
             lock (metrics)
             {
@@ -220,13 +220,13 @@ public sealed class FlakyTestTracker
                     continue;
                 }
 
-                var failureRate = (double)metrics.FailedExecutions / metrics.TotalExecutions;
+                double failureRate = (double)metrics.FailedExecutions / metrics.TotalExecutions;
                 if (failureRate >= flakeThreshold)
                 {
                     // Check for flake pattern (intermittent failures)
-                    var recentFailures = metrics.RecentExecutions.Count(e => !e.Passed);
-                    var recentTotal = metrics.RecentExecutions.Count;
-                    var recentFailureRate = recentTotal > 0 ? (double)recentFailures / recentTotal : 0;
+                    int recentFailures = metrics.RecentExecutions.Count(e => !e.Passed);
+                    int recentTotal = metrics.RecentExecutions.Count;
+                    double recentFailureRate = recentTotal > 0 ? (double)recentFailures / recentTotal : 0;
 
                     candidates.Add(new FlakyTestCandidate
                     {
@@ -255,13 +255,13 @@ public sealed class FlakyTestTracker
     /// <returns>The flake rate as a percentage.</returns>
     public static double CalculateFlakeRate(int windowDays = FlakeBudgetWindowDays)
     {
-        var cutoffDate = DateTime.UtcNow.AddDays(-windowDays);
-        var totalExecutions = 0;
-        var failedExecutions = 0;
+        DateTime cutoffDate = DateTime.UtcNow.AddDays(-windowDays);
+        int totalExecutions = 0;
+        int failedExecutions = 0;
 
-        foreach (var kvp in _metrics)
+        foreach (KeyValuePair<string, TestStabilityMetrics> kvp in _metrics)
         {
-            var metrics = kvp.Value;
+            TestStabilityMetrics metrics = kvp.Value;
 
             lock (metrics)
             {
@@ -283,7 +283,7 @@ public sealed class FlakyTestTracker
     /// <returns>True if the flake budget is exceeded, false otherwise.</returns>
     public static bool IsFlakeBudgetExceeded()
     {
-        var flakeRate = CalculateFlakeRate();
+        double flakeRate = CalculateFlakeRate();
         return flakeRate > FlakeBudgetTarget;
     }
 
@@ -293,9 +293,9 @@ public sealed class FlakyTestTracker
     /// <returns>The flake report.</returns>
     public static FlakeReport GenerateReport()
     {
-        var flakyTests = DetectFlakyTests();
-        var flakeRate = CalculateFlakeRate();
-        var budgetExceeded = IsFlakeBudgetExceeded();
+        List<FlakyTestCandidate> flakyTests = DetectFlakyTests();
+        double flakeRate = CalculateFlakeRate();
+        bool budgetExceeded = IsFlakeBudgetExceeded();
 
         return new FlakeReport
         {
@@ -318,12 +318,12 @@ public sealed class FlakyTestTracker
         {
             if (File.Exists(_metricsFilePath))
             {
-                var json = File.ReadAllText(_metricsFilePath);
-                var loadedMetrics = JsonSerializer.Deserialize<Dictionary<string, TestStabilityMetrics>>(json, _jsonOptions);
+                string json = File.ReadAllText(_metricsFilePath);
+                Dictionary<string, TestStabilityMetrics>? loadedMetrics = JsonSerializer.Deserialize<Dictionary<string, TestStabilityMetrics>>(json, _jsonOptions);
 
                 if (loadedMetrics != null)
                 {
-                    foreach (var kvp in loadedMetrics)
+                    foreach (KeyValuePair<string, TestStabilityMetrics> kvp in loadedMetrics)
                     {
                         _metrics.TryAdd(kvp.Key, kvp.Value);
                     }
@@ -343,13 +343,13 @@ public sealed class FlakyTestTracker
     {
         try
         {
-            var directory = Path.GetDirectoryName(_metricsFilePath);
+            string? directory = Path.GetDirectoryName(_metricsFilePath);
             if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
             }
 
-            var json = JsonSerializer.Serialize(_metrics.ToDictionary(kvp => kvp.Key, kvp => kvp.Value), _jsonOptions);
+            string json = JsonSerializer.Serialize(_metrics.ToDictionary(kvp => kvp.Key, kvp => kvp.Value), _jsonOptions);
             File.WriteAllText(_metricsFilePath, json);
         }
         catch

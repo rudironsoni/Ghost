@@ -48,11 +48,11 @@ public sealed class FreeProxyScraperTests
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "13.14.15.16:8080\n17.18.19.20:3128");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[{\"Ip\":\"21.22.23.24\",\"Port\":\"8080\"}]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
         // Act
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         proxies.Should().NotBeNull();
@@ -72,15 +72,15 @@ public sealed class FreeProxyScraperTests
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "5.6.7.8:3128");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
         // Act
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken.None).ConfigureAwait(false);
         var proxyList = proxies.ToList();
 
         // Assert
-        var uniqueServers = proxyList.Select(p => p.Server).Distinct().Count();
+        int uniqueServers = proxyList.Select(p => p.Server).Distinct().Count();
         uniqueServers.Should().Be(proxyList.Count, "all proxies should have unique server addresses");
         proxyList.Should().HaveCount(3, "should have deduplicated the 5 mock proxies down to 3 unique ones");
     }
@@ -97,13 +97,13 @@ public sealed class FreeProxyScraperTests
                 ItExpr.IsAny<CancellationToken>())
             .ThrowsAsync(new OperationCanceledException());
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
         var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act & Assert
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            async () => await scraper.FetchProxiesAsync(cts.Token));
+            async () => await scraper.FetchProxiesAsync(cts.Token).ConfigureAwait(false)).ConfigureAwait(false);
     }
 }

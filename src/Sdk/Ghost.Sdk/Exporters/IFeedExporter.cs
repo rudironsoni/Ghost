@@ -13,7 +13,7 @@ public interface IFeedExporter
     /// <summary>
     /// Gets the format identifier for this exporter.
     /// </summary>
-    string Format { get; }
+    public string Format { get; }
 
     /// <summary>
     /// Exports items to the specified output stream asynchronously.
@@ -23,5 +23,5 @@ public interface IFeedExporter
     /// <param name="output">The output stream to write to.</param>
     /// <param name="ct">Cancellation token for the operation.</param>
     /// <returns>A task representing the asynchronous export operation.</returns>
-    Task ExportAsync<T>(IEnumerable<T> items, Stream output, CancellationToken ct = default);
+    public Task ExportAsync<T>(IEnumerable<T> items, Stream output, CancellationToken ct = default);
 }

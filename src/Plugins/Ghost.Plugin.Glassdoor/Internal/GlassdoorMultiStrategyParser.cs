@@ -72,9 +72,9 @@ public sealed class GlassdoorMultiStrategyParser
         if (string.IsNullOrWhiteSpace(html))
             return ContentType.Unknown;
 
-        var trimmed = html.Trim();
-        var hasJsonMarkers = trimmed.StartsWith('{') || trimmed.StartsWith('[');
-        var hasHtmlMarkers = html.Contains("<html", StringComparison.OrdinalIgnoreCase) ||
+        string trimmed = html.Trim();
+        bool hasJsonMarkers = trimmed.StartsWith('{') || trimmed.StartsWith('[');
+        bool hasHtmlMarkers = html.Contains("<html", StringComparison.OrdinalIgnoreCase) ||
                             html.Contains("<body", StringComparison.OrdinalIgnoreCase) ||
                             html.Contains("<!DOCTYPE", StringComparison.OrdinalIgnoreCase) ||
                             html.Contains("<div", StringComparison.OrdinalIgnoreCase) ||
@@ -105,7 +105,7 @@ public sealed class GlassdoorMultiStrategyParser
                 Timestamp = DateTime.UtcNow
             };
 
-            var entities = EntityParser.Parse<GlassdoorJobEntity>(context);
+            List<GlassdoorJobEntity> entities = EntityParser.Parse<GlassdoorJobEntity>(context);
 
             if (entities.Count > 0)
             {
@@ -142,13 +142,13 @@ public sealed class GlassdoorMultiStrategyParser
         try
         {
             // Parse job type
-            var jobType = ParseJobType(entity.JobType);
+            JobType jobType = ParseJobType(entity.JobType);
 
             // Parse posted date
-            var postedAt = ParsePostedDate(entity.PostedAt);
+            DateTimeOffset postedAt = ParsePostedDate(entity.PostedAt);
 
             // Determine if remote
-            var isRemote = !string.IsNullOrWhiteSpace(entity.RemoteLabel) ||
+            bool isRemote = !string.IsNullOrWhiteSpace(entity.RemoteLabel) ||
                           (entity.Location?.Contains("Remote", StringComparison.OrdinalIgnoreCase) ?? false);
 
             return new JobListing
@@ -184,7 +184,7 @@ public sealed class GlassdoorMultiStrategyParser
         try
         {
             // Check if content looks like JSON
-            var trimmed = html.Trim();
+            string trimmed = html.Trim();
             if (!trimmed.StartsWith('{') && !trimmed.StartsWith('['))
             {
                 LogStrategyFailed(_logger, "OriginalJsonParser", null);
@@ -226,10 +226,10 @@ public sealed class GlassdoorMultiStrategyParser
 
         LogStartingParse(_logger, html.Length, null);
 
-        var contentType = ClassifyContent(html);
+        ContentType contentType = ClassifyContent(html);
 
         // Strategy 1: Try Ghost.Sdk.Spider entity parser
-        var jobs = TryStrategy1_EntityParser(html);
+        List<JobListing>? jobs = TryStrategy1_EntityParser(html);
         if (jobs != null && jobs.Count > 0)
             return Task.FromResult(jobs);
 
@@ -251,7 +251,7 @@ public sealed class GlassdoorMultiStrategyParser
         if (string.IsNullOrWhiteSpace(jobTypeStr))
             return JobType.Unknown;
 
-        var normalized = jobTypeStr.ToLowerInvariant();
+        string normalized = jobTypeStr.ToLowerInvariant();
 
         if (normalized.Contains("full", StringComparison.OrdinalIgnoreCase))
             return JobType.FullTime;
@@ -280,10 +280,10 @@ public sealed class GlassdoorMultiStrategyParser
         dateStr = dateStr.Trim().ToLowerInvariant();
 
         // Try to parse relative dates
-        var relativeMatch = Regex.Match(dateStr, @"(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago", RegexOptions.IgnoreCase);
-        if (relativeMatch.Success && int.TryParse(relativeMatch.Groups[1].Value, out var count))
+        Match relativeMatch = Regex.Match(dateStr, @"(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago", RegexOptions.IgnoreCase);
+        if (relativeMatch.Success && int.TryParse(relativeMatch.Groups[1].Value, out int count))
         {
-            var unit = relativeMatch.Groups[2].Value.ToLowerInvariant();
+            string unit = relativeMatch.Groups[2].Value.ToLowerInvariant();
             return unit switch
             {
                 "second" => DateTimeOffset.UtcNow.AddSeconds(-count),
@@ -305,7 +305,7 @@ public sealed class GlassdoorMultiStrategyParser
             return DateTimeOffset.UtcNow.AddDays(-1);
 
         // Try to parse as absolute date
-        var formats = new[]
+        string[] formats = new[]
         {
             "yyyy-MM-dd",
             "yyyy-MM-dd HH:mm:ss",
@@ -318,9 +318,9 @@ public sealed class GlassdoorMultiStrategyParser
             "MMMM dd, yyyy"
         };
 
-        foreach (var format in formats)
+        foreach (string? format in formats)
         {
-            if (DateTimeOffset.TryParseExact(dateStr, format, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var result))
+            if (DateTimeOffset.TryParseExact(dateStr, format, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTimeOffset result))
                 return result;
         }
 

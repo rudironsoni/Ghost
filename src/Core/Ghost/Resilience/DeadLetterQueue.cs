@@ -7,11 +7,11 @@ namespace Ghost.Core;
 #pragma warning disable CA1711
 public interface IGenericDeadLetterQueue
 {
-    Task EnqueueAsync<T>(T item, string reason, Exception? exception = null, CancellationToken cancellationToken = default);
-    Task<List<DeadLetterItem>> PeekAsync(int count = 10, CancellationToken cancellationToken = default);
-    Task<List<DeadLetterItem>> DequeueAsync(int count = 10, CancellationToken cancellationToken = default);
-    Task<int> GetCountAsync(CancellationToken cancellationToken = default);
-    Task ClearAsync(CancellationToken cancellationToken = default);
+    public Task EnqueueAsync<T>(T item, string reason, Exception? exception = null, CancellationToken cancellationToken = default);
+    public Task<List<DeadLetterItem>> PeekAsync(int count = 10, CancellationToken cancellationToken = default);
+    public Task<List<DeadLetterItem>> DequeueAsync(int count = 10, CancellationToken cancellationToken = default);
+    public Task<int> GetCountAsync(CancellationToken cancellationToken = default);
+    public Task ClearAsync(CancellationToken cancellationToken = default);
 }
 
 public class DeadLetterItem
@@ -55,7 +55,7 @@ public class InMemoryDeadLetterQueue : IGenericDeadLetterQueue
 
     public Task EnqueueAsync<T>(T item, string reason, Exception? exception = null, CancellationToken cancellationToken = default)
     {
-        var safeReason = reason ?? "No reason provided";
+        string safeReason = reason ?? "No reason provided";
 
         var deadLetterItem = new DeadLetterItem
         {
@@ -93,7 +93,7 @@ public class InMemoryDeadLetterQueue : IGenericDeadLetterQueue
 
         lock (_lock)
         {
-            for (int i = 0; i < count && _queue.TryDequeue(out var item); i++)
+            for (int i = 0; i < count && _queue.TryDequeue(out DeadLetterItem? item); i++)
             {
                 items.Add(item);
             }
@@ -113,7 +113,7 @@ public class InMemoryDeadLetterQueue : IGenericDeadLetterQueue
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var initialCount = _queue.Count;
+        int initialCount = _queue.Count;
 
         while (_queue.TryDequeue(out _))
         {

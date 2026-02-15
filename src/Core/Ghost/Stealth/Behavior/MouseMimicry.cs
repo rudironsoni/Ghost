@@ -25,7 +25,7 @@ public sealed class MouseMimicry
         ArgumentNullException.ThrowIfNull(mouse);
 
         // Start from (0, 0) as we cannot get current position from Playwright
-        var (startX, startY) = (0f, 0f);
+        (float startX, float startY) = (0f, 0f);
 
         // Don't move if we're already at the target
         if (Math.Abs(startX - targetX) < 1 && Math.Abs(startY - targetY) < 1)
@@ -34,25 +34,25 @@ public sealed class MouseMimicry
         }
 
         // Generate random control point for Bezier curve
-        var (controlX, controlY) = GetRandomControlPoint(startX, startY, targetX, targetY);
+        (float controlX, float controlY) = GetRandomControlPoint(startX, startY, targetX, targetY);
 
         // Random number of steps (20-50 for smooth movement)
-        var steps = _random.Next(20, 51);
-        var stepIncrement = 1.0 / steps;
+        int steps = _random.Next(20, 51);
+        double stepIncrement = 1.0 / steps;
 
-        for (var i = 0; i <= steps; i++)
+        for (int i = 0; i <= steps; i++)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var t = i * stepIncrement;
-            var (x, y) = CalculateBezierPoint(t, (startX, startY), (controlX, controlY), (targetX, targetY));
+            double t = i * stepIncrement;
+            (float x, float y) = CalculateBezierPoint(t, (startX, startY), (controlX, controlY), (targetX, targetY));
 
-            await mouse.MoveAsync(x, y);
+            await mouse.MoveAsync(x, y).ConfigureAwait(false);
 
             // Variable delay between steps (5-20ms) for human-like speed variance
             if (i < steps)
             {
-                await Task.Delay(_random.Next(5, 21), cancellationToken);
+                await Task.Delay(_random.Next(5, 21), cancellationToken).ConfigureAwait(false);
             }
         }
     }
@@ -67,12 +67,12 @@ public sealed class MouseMimicry
         (float x, float y) control,
         (float x, float y) end)
     {
-        var oneMinusT = 1 - t;
-        var oneMinusTSquared = oneMinusT * oneMinusT;
-        var tSquared = t * t;
+        double oneMinusT = 1 - t;
+        double oneMinusTSquared = oneMinusT * oneMinusT;
+        double tSquared = t * t;
 
-        var x = (float)(oneMinusTSquared * start.x + (2 * oneMinusT * t * control.x) + (tSquared * end.x));
-        var y = (float)(oneMinusTSquared * start.y + (2 * oneMinusT * t * control.y) + (tSquared * end.y));
+        float x = (float)(oneMinusTSquared * start.x + (2 * oneMinusT * t * control.x) + (tSquared * end.x));
+        float y = (float)(oneMinusTSquared * start.y + (2 * oneMinusT * t * control.y) + (tSquared * end.y));
 
         return (x, y);
     }
@@ -88,19 +88,19 @@ public sealed class MouseMimicry
         float endY)
     {
         // Calculate midpoint
-        var midX = (startX + endX) / 2;
-        var midY = (startY + endY) / 2;
+        float midX = (startX + endX) / 2;
+        float midY = (startY + endY) / 2;
 
         // Calculate distance for offset (10-30% of total distance)
-        var distance = Math.Sqrt(Math.Pow(endX - startX, 2) + Math.Pow(endY - startY, 2));
-        var offsetMagnitude = distance * (_random.NextDouble() * 0.2 + 0.1); // 10-30%
+        double distance = Math.Sqrt(Math.Pow(endX - startX, 2) + Math.Pow(endY - startY, 2));
+        double offsetMagnitude = distance * (_random.NextDouble() * 0.2 + 0.1); // 10-30%
 
         // Random angle offset
-        var angle = _random.NextDouble() * Math.PI * 2;
+        double angle = _random.NextDouble() * Math.PI * 2;
 
         // Apply offset to midpoint
-        var controlX = (float)(midX + (offsetMagnitude * Math.Cos(angle)));
-        var controlY = (float)(midY + (offsetMagnitude * Math.Sin(angle)));
+        float controlX = (float)(midX + (offsetMagnitude * Math.Cos(angle)));
+        float controlY = (float)(midY + (offsetMagnitude * Math.Sin(angle)));
 
         return (controlX, controlY);
     }

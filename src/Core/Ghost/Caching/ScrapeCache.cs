@@ -17,22 +17,22 @@ public interface IScrapeCache
     /// <summary>
     /// Gets cached job listings for a search criteria.
     /// </summary>
-    Task<IReadOnlyList<JobListing>?> GetJobsAsync(string cacheKey, CancellationToken ct = default);
+    public Task<IReadOnlyList<JobListing>?> GetJobsAsync(string cacheKey, CancellationToken ct = default);
 
     /// <summary>
     /// Caches job listings for a search criteria.
     /// </summary>
-    Task SetJobsAsync(string cacheKey, IReadOnlyList<JobListing> jobs, TimeSpan? expiration = null, CancellationToken ct = default);
+    public Task SetJobsAsync(string cacheKey, IReadOnlyList<JobListing> jobs, TimeSpan? expiration = null, CancellationToken ct = default);
 
     /// <summary>
     /// Invalidates cached entries matching a pattern.
     /// </summary>
-    Task InvalidateAsync(string pattern, CancellationToken ct = default);
+    public Task InvalidateAsync(string pattern, CancellationToken ct = default);
 
     /// <summary>
     /// Gets cache statistics for monitoring.
     /// </summary>
-    CacheStatistics GetStatistics();
+    public CacheStatistics GetStatistics();
 }
 
 /// <summary>
@@ -109,17 +109,17 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
         }
 
         // Try disk fallback
-        var diskPath = GetDiskPath(cacheKey);
+        string diskPath = GetDiskPath(cacheKey);
         if (File.Exists(diskPath))
         {
             try
             {
-                var lockObj = _locks.GetOrAdd(cacheKey, _ => new SemaphoreSlim(1, 1));
-                await lockObj.WaitAsync(ct);
+                SemaphoreSlim lockObj = _locks.GetOrAdd(cacheKey, _ => new SemaphoreSlim(1, 1));
+                await lockObj.WaitAsync(ct).ConfigureAwait(false);
 
                 try
                 {
-                    var json = await File.ReadAllTextAsync(diskPath, ct);
+                    string json = await File.ReadAllTextAsync(diskPath, ct).ConfigureAwait(false);
                     jobs = System.Text.Json.JsonSerializer.Deserialize<List<JobListing>>(json);
 
                     if (jobs != null)
@@ -153,22 +153,22 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
         ArgumentException.ThrowIfNullOrEmpty(cacheKey);
         ArgumentNullException.ThrowIfNull(jobs);
 
-        var exp = expiration ?? TimeSpan.FromMinutes(30);
+        TimeSpan exp = expiration ?? TimeSpan.FromMinutes(30);
 
         // Set in memory
         _memoryCache.Set(cacheKey, jobs, exp);
 
         // Async write to disk
-        var diskPath = GetDiskPath(cacheKey);
-        var lockObj = _locks.GetOrAdd(cacheKey, _ => new SemaphoreSlim(1, 1));
+        string diskPath = GetDiskPath(cacheKey);
+        SemaphoreSlim lockObj = _locks.GetOrAdd(cacheKey, _ => new SemaphoreSlim(1, 1));
 
         _ = Task.Run(async () =>
         {
-            await lockObj.WaitAsync();
+            await lockObj.WaitAsync().ConfigureAwait(false);
             try
             {
-                var json = System.Text.Json.JsonSerializer.Serialize(jobs);
-                await File.WriteAllTextAsync(diskPath, json);
+                string json = System.Text.Json.JsonSerializer.Serialize(jobs);
+                await File.WriteAllTextAsync(diskPath, json).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -190,8 +190,8 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
         // For production, use a proper cache like Redis or MemoryCache with eviction callbacks
 
         // Disk invalidation
-        var files = Directory.GetFiles(_diskCachePath, "*.json");
-        foreach (var file in files)
+        string[] files = Directory.GetFiles(_diskCachePath, "*.json");
+        foreach (string file in files)
         {
             if (Path.GetFileNameWithoutExtension(file).Contains(pattern))
             {
@@ -224,7 +224,7 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
 
     private string GetDiskPath(string cacheKey)
     {
-        var safeKey = string.Join("_", cacheKey.Split(Path.GetInvalidFileNameChars()));
+        string safeKey = string.Join("_", cacheKey.Split(Path.GetInvalidFileNameChars()));
         return Path.Combine(_diskCachePath, $"{safeKey}.json");
     }
 
@@ -232,7 +232,7 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
     {
         try
         {
-            var files = Directory.GetFiles(_diskCachePath, "*.json");
+            string[] files = Directory.GetFiles(_diskCachePath, "*.json");
             return files.Sum(f => new FileInfo(f).Length);
         }
         catch
@@ -243,7 +243,7 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
 
     public void Dispose()
     {
-        foreach (var kvp in _locks)
+        foreach (KeyValuePair<string, SemaphoreSlim> kvp in _locks)
         {
             kvp.Value.Dispose();
         }

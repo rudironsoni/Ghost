@@ -26,7 +26,7 @@ public partial class XConfigurationValidator : IValidateOptions<XOptions>
         {
             failures.Add("BaseUrl is required");
         }
-        else if (!Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri))
+        else if (!Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out Uri? uri))
         {
             failures.Add($"BaseUrl '{options.BaseUrl}' is not a valid URL");
         }
@@ -38,7 +38,7 @@ public partial class XConfigurationValidator : IValidateOptions<XOptions>
         // Validate StorageStatePath
         if (!string.IsNullOrWhiteSpace(options.StorageStatePath))
         {
-            var validation = ValidateStorageStatePath(options.StorageStatePath);
+            (bool IsValid, string? ErrorMessage) validation = ValidateStorageStatePath(options.StorageStatePath);
             if (!validation.IsValid)
             {
                 failures.Add(validation.ErrorMessage ?? "Invalid storage state path");
@@ -103,7 +103,7 @@ public partial class XConfigurationValidator : IValidateOptions<XOptions>
             }
 
             // Validate JSON format
-            var content = File.ReadAllText(path);
+            string content = File.ReadAllText(path);
             if (string.IsNullOrWhiteSpace(content))
             {
                 return (false, $"Storage state file '{path}' is empty");
@@ -162,7 +162,7 @@ public partial class XPlatformHealthCheck
             Log.StartingHealthCheck(_logger);
 
             // Check browser connectivity
-            result.BrowserAvailable = await CheckBrowserConnectivityAsync(ct);
+            result.BrowserAvailable = await CheckBrowserConnectivityAsync(ct).ConfigureAwait(false);
             if (!result.BrowserAvailable)
             {
                 result.Status = HealthStatus.Degraded;
@@ -172,7 +172,7 @@ public partial class XPlatformHealthCheck
             // Check authentication
             if (!string.IsNullOrWhiteSpace(_options.StorageStatePath) && File.Exists(_options.StorageStatePath))
             {
-                result.AuthStateValid = await CheckAuthStateAsync(ct);
+                result.AuthStateValid = await CheckAuthStateAsync(ct).ConfigureAwait(false);
                 if (!result.AuthStateValid)
                 {
                     result.Status = HealthStatus.Degraded;
@@ -186,7 +186,7 @@ public partial class XPlatformHealthCheck
             }
 
             // Check X connectivity
-            result.XPlatformReachable = await CheckXConnectivityAsync(ct);
+            result.XPlatformReachable = await CheckXConnectivityAsync(ct).ConfigureAwait(false);
             if (!result.XPlatformReachable)
             {
                 result.Status = HealthStatus.Unhealthy;
@@ -217,8 +217,8 @@ public partial class XPlatformHealthCheck
     {
         try
         {
-            await using var page = await _session.NewPageAsync(ct: ct);
-            await page.NavigateAsync("about:blank", ct: ct);
+            await using IPage page = (await _session.NewPageAsync(ct: ct).ConfigureAwait(false)).ConfigureAwait(false);
+            await page.NavigateAsync("about:blank", ct: ct).ConfigureAwait(false);
             return true;
         }
         catch (Exception ex)
@@ -233,7 +233,7 @@ public partial class XPlatformHealthCheck
         try
         {
             // Try to load storage state
-            await _session.SaveStorageStateAsync(_options.StorageStatePath!);
+            await _session.SaveStorageStateAsync(_options.StorageStatePath!).ConfigureAwait(false);
             Log.AuthStateFileReadable(_logger);
             return true;
         }
@@ -248,9 +248,9 @@ public partial class XPlatformHealthCheck
     {
         try
         {
-            await using var page = await _session.NewPageAsync(ct: ct);
-            await page.NavigateAsync(_options.BaseUrl, ct: ct);
-            await page.WaitForLoadStateAsync(ct: ct);
+            await using IPage page = (await _session.NewPageAsync(ct: ct).ConfigureAwait(false)).ConfigureAwait(false);
+            await page.NavigateAsync(_options.BaseUrl, ct: ct).ConfigureAwait(false);
+            await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
             return page.Url.Contains("x.com") || page.Url.Contains("twitter.com");
         }
         catch (Exception ex)

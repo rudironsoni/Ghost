@@ -83,7 +83,7 @@ public class GraphQLError
     /// <returns>The error code string, or null if not present.</returns>
     public string? GetErrorCode()
     {
-        if (Extensions?.TryGetValue("code", out var code) == true)
+        if (Extensions?.TryGetValue("code", out object? code) == true)
         {
             return code?.ToString();
         }
@@ -111,7 +111,7 @@ public class GraphQLError
     /// <returns>A formatted error string including message and path if available.</returns>
     public override string ToString()
     {
-        var pathString = GetPathString();
+        string? pathString = GetPathString();
         return pathString != null ? $"{Message} (at {pathString})" : Message;
     }
 }

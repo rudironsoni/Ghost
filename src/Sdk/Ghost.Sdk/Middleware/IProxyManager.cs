@@ -20,7 +20,7 @@ public interface IProxyManager
     /// This method uses the configured rotation strategy (e.g., round-robin) and
     /// automatically skips proxies that have exceeded the failure threshold.
     /// </remarks>
-    Task<WebProxy?> GetNextProxyAsync(CancellationToken ct = default);
+    public Task<WebProxy?> GetNextProxyAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Reports a successful request through the specified proxy.
@@ -31,7 +31,7 @@ public interface IProxyManager
     /// <remarks>
     /// Success reports may reset failure counters or improve the proxy's health score.
     /// </remarks>
-    Task ReportSuccessAsync(WebProxy proxy, CancellationToken ct = default);
+    public Task ReportSuccessAsync(WebProxy proxy, CancellationToken ct = default);
 
     /// <summary>
     /// Reports a failed request through the specified proxy.
@@ -43,7 +43,7 @@ public interface IProxyManager
     /// Failure reports increment the proxy's failure counter. Once the failure count
     /// exceeds the configured threshold, the proxy will be temporarily excluded from rotation.
     /// </remarks>
-    Task ReportFailureAsync(WebProxy proxy, CancellationToken ct = default);
+    public Task ReportFailureAsync(WebProxy proxy, CancellationToken ct = default);
 
     /// <summary>
     /// Adds a proxy to the pool.
@@ -56,5 +56,5 @@ public interface IProxyManager
     /// If username is provided, the proxy will be configured with NetworkCredential
     /// for basic authentication. Password is required when username is specified.
     /// </remarks>
-    void AddProxy(string host, int port, string? username = null, string? password = null);
+    public void AddProxy(string host, int port, string? username = null, string? password = null);
 }

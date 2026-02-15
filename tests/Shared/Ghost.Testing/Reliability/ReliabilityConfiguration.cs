@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using Xunit.Abstractions;
 using Xunit.Sdk;
@@ -66,7 +67,7 @@ internal sealed class ReliabilityExecutor : XunitTestFrameworkExecutor
         ITestFrameworkExecutionOptions executionOptions)
     {
         // Take a snapshot of browser processes before running tests
-        var initialSnapshot = BrowserLeakDetector.GetBrowserProcessSnapshot();
+        HashSet<int> initialSnapshot = BrowserLeakDetector.GetBrowserProcessSnapshot();
 
         try
         {
@@ -76,17 +77,17 @@ internal sealed class ReliabilityExecutor : XunitTestFrameworkExecutor
         finally
         {
             // Check for leaked browser processes after tests complete
-            await Task.Delay(1000); // Give processes a moment to clean up
-            var leakedProcesses = BrowserLeakDetector.DetectNewProcesses(initialSnapshot);
+            await Task.Delay(1000).ConfigureAwait(false); // Give processes a moment to clean up
+            List<Process> leakedProcesses = BrowserLeakDetector.DetectNewProcesses(initialSnapshot);
 
             if (leakedProcesses.Count > 0)
             {
-                var processDetails = string.Join(", ", leakedProcesses.Select(p => $"{p.ProcessName}(PID:{p.Id})"));
+                string processDetails = string.Join(", ", leakedProcesses.Select(p => $"{p.ProcessName}(PID:{p.Id})"));
                 DiagnosticMessageSink.OnMessage(new DiagnosticMessage(
                     $"WARNING: Browser process leak detected after test run: {processDetails}"));
 
                 // Clean up leaked processes
-                foreach (var process in leakedProcesses)
+                foreach (Process process in leakedProcesses)
                 {
                     try
                     {

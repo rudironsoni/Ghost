@@ -30,23 +30,23 @@ public class FailureDiagnosticsExampleTests : ReliabilityTestBase
         try
         {
             // Create a browser session
-            var session = await _fixture.CreateSessionAsync();
+            IBrowserSession session = await _fixture.CreateSessionAsync().ConfigureAwait(false);
             AddTimelineEvent("SessionCreated", $"Session ID: {session.SessionId}");
 
             // Create a page
-            var page = await session.NewPageAsync();
+            IPage page = await session.NewPageAsync().ConfigureAwait(false);
             AddTimelineEvent("PageCreated", $"Page ID: {page.PageId}");
 
             // Start tracing for this test
-            await page.StartTracingAsync(Diagnostics);
+            await page.StartTracingAsync(Diagnostics).ConfigureAwait(false);
             AddTimelineEvent("TracingStarted", "Playwright tracing enabled");
 
             // Navigate to a page
-            await page.NavigateAsync("https://example.com");
+            await page.NavigateAsync("https://example.com").ConfigureAwait(false);
             AddTimelineEvent("NavigationComplete", $"Navigated to {page.Url}");
 
             // Perform some actions
-            var title = await page.EvaluateAsync<string>("() => document.title");
+            string title = await page.EvaluateAsync<string>("() => document.title").ConfigureAwait(false);
             AddTimelineEvent("TitleRetrieved", $"Page title: {title}");
 
             // Assert something
@@ -59,10 +59,10 @@ public class FailureDiagnosticsExampleTests : ReliabilityTestBase
         {
             // Capture failure diagnostics automatically
             // This will capture: screenshot, DOM snapshot, console logs, page metadata, timeline, trace
-            var session = await _fixture.CreateSessionAsync();
-            var page = await session.NewPageAsync();
+            IBrowserSession session = await _fixture.CreateSessionAsync().ConfigureAwait(false);
+            IPage page = await session.NewPageAsync().ConfigureAwait(false);
 
-            await CaptureFailureAsync(page, ex);
+            await CaptureFailureAsync(page, ex).ConfigureAwait(false);
 
             // Re-throw the exception to fail the test
             throw;
@@ -74,33 +74,33 @@ public class FailureDiagnosticsExampleTests : ReliabilityTestBase
     {
         AddTimelineEvent("ManualCaptureTest", "Starting manual diagnostics capture test");
 
-        var session = await _fixture.CreateSessionAsync();
-        var page = await session.NewPageAsync();
+        IBrowserSession session = await _fixture.CreateSessionAsync().ConfigureAwait(false);
+        IPage page = await session.NewPageAsync().ConfigureAwait(false);
 
         // Start tracing
-        await page.StartTracingAsync(Diagnostics);
+        await page.StartTracingAsync(Diagnostics).ConfigureAwait(false);
 
         try
         {
-            await page.NavigateAsync("https://example.com");
+            await page.NavigateAsync("https://example.com").ConfigureAwait(false);
 
             // Simulate a failure condition
-            var elementExists = await page.QuerySelectorAsync(".non-existent-element") ?? throw new InvalidOperationException("Expected element not found");
+            IElement elementExists = await page.QuerySelectorAsync(".non-existent-element").ConfigureAwait(false) ?? throw new InvalidOperationException("Expected element not found");
         }
         catch (Exception ex)
         {
             // Manually capture specific artifacts
-            await Diagnostics.CaptureScreenshotAsync(page);
-            await Diagnostics.CaptureDomSnapshotAsync(page);
-            await Diagnostics.CaptureConsoleLogsAsync(page);
-            await Diagnostics.CapturePageMetadataAsync(page);
+            await Diagnostics.CaptureScreenshotAsync(page).ConfigureAwait(false);
+            await Diagnostics.CaptureDomSnapshotAsync(page).ConfigureAwait(false);
+            await Diagnostics.CaptureConsoleLogsAsync(page).ConfigureAwait(false);
+            await Diagnostics.CapturePageMetadataAsync(page).ConfigureAwait(false);
 
             // Capture Playwright-specific artifacts
-            await page.StopTracingAsync(Diagnostics);
-            await page.CaptureHarAsync(Diagnostics);
+            await page.StopTracingAsync(Diagnostics).ConfigureAwait(false);
+            await page.CaptureHarAsync(Diagnostics).ConfigureAwait(false);
 
             // Capture the failure with all artifacts
-            await CaptureFailureAsync(page, ex);
+            await CaptureFailureAsync(page, ex).ConfigureAwait(false);
 
             throw;
         }
@@ -114,7 +114,7 @@ public class FailureDiagnosticsExampleTests : ReliabilityTestBase
         try
         {
             // Some logic that might fail
-            var result = ComputeSomething();
+            int result = ComputeSomething();
             Assert.Equal(42, result);
 
             AddTimelineEvent("NonBrowserTestPassed", "Computation successful");
@@ -123,7 +123,7 @@ public class FailureDiagnosticsExampleTests : ReliabilityTestBase
         {
             // Capture failure even without a browser page
             // This will capture: exception details, timeline, application logs
-            await CaptureFailureAsync(null, ex);
+            await CaptureFailureAsync(null, ex).ConfigureAwait(false);
 
             throw;
         }

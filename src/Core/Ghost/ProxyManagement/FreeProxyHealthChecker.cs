@@ -76,7 +76,7 @@ public sealed class FreeProxyHealthChecker
                 Timeout = _timeout
             };
 
-            var response = await client.GetAsync("https://httpbin.org/ip", ct).ConfigureAwait(false);
+            HttpResponseMessage response = await client.GetAsync("https://httpbin.org/ip", ct).ConfigureAwait(false);
             stopwatch.Stop();
 
             result.ResponseTime = stopwatch.Elapsed;
@@ -112,7 +112,7 @@ public sealed class FreeProxyHealthChecker
         if (totalRequests == 0)
             return false;
 
-        var successRate = (double)successfulRequests / totalRequests;
+        double successRate = (double)successfulRequests / totalRequests;
         return successRate < _minimumSuccessRate;
     }
 

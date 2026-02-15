@@ -20,7 +20,7 @@ public class GhostBuilderTests
     {
         var services = new ServiceCollection();
         services.AddGhost(builder => builder.UseExtension<MockInferenceExtension>());
-        var provider = services.BuildServiceProvider();
+        ServiceProvider provider = services.BuildServiceProvider();
         provider.GetService<IMockInferenceClient>().Should().NotBeNull();
     }
 
@@ -33,7 +33,7 @@ public class GhostBuilderTests
             builder.UseExtension<ExtensionB>();
             builder.UseExtension<ExtensionA>();
         });
-        var provider = services.BuildServiceProvider();
+        ServiceProvider provider = services.BuildServiceProvider();
         provider.GetService<AService>().Should().NotBeNull();
         provider.GetService<BService>().Should().NotBeNull();
     }

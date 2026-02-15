@@ -29,10 +29,10 @@ public static class SessionEncryption
             throw new ArgumentException($"Key must be {KeySize} bytes for AES-256", nameof(key));
         }
 
-        var plainBytes = Encoding.UTF8.GetBytes(plainText);
-        var nonce = new byte[NonceSize];
-        var tag = new byte[TagSize];
-        var ciphertext = new byte[plainBytes.Length];
+        byte[] plainBytes = Encoding.UTF8.GetBytes(plainText);
+        byte[] nonce = new byte[NonceSize];
+        byte[] tag = new byte[TagSize];
+        byte[] ciphertext = new byte[plainBytes.Length];
 
         RandomNumberGenerator.Fill(nonce);
 
@@ -40,7 +40,7 @@ public static class SessionEncryption
         aesGcm.Encrypt(nonce, plainBytes, ciphertext, tag);
 
         // Format: nonce|tag|ciphertext
-        var result = new byte[NonceSize + TagSize + ciphertext.Length];
+        byte[] result = new byte[NonceSize + TagSize + ciphertext.Length];
         Buffer.BlockCopy(nonce, 0, result, 0, NonceSize);
         Buffer.BlockCopy(tag, 0, result, NonceSize, TagSize);
         Buffer.BlockCopy(ciphertext, 0, result, NonceSize + TagSize, ciphertext.Length);
@@ -64,22 +64,22 @@ public static class SessionEncryption
             throw new ArgumentException($"Key must be {KeySize} bytes for AES-256", nameof(key));
         }
 
-        var encryptedBytes = Convert.FromBase64String(encryptedData);
+        byte[] encryptedBytes = Convert.FromBase64String(encryptedData);
 
         if (encryptedBytes.Length < NonceSize + TagSize)
         {
             throw new ArgumentException("Invalid encrypted data format", nameof(encryptedData));
         }
 
-        var nonce = new byte[NonceSize];
-        var tag = new byte[TagSize];
-        var ciphertext = new byte[encryptedBytes.Length - NonceSize - TagSize];
+        byte[] nonce = new byte[NonceSize];
+        byte[] tag = new byte[TagSize];
+        byte[] ciphertext = new byte[encryptedBytes.Length - NonceSize - TagSize];
 
         Buffer.BlockCopy(encryptedBytes, 0, nonce, 0, NonceSize);
         Buffer.BlockCopy(encryptedBytes, NonceSize, tag, 0, TagSize);
         Buffer.BlockCopy(encryptedBytes, NonceSize + TagSize, ciphertext, 0, ciphertext.Length);
 
-        var plainBytes = new byte[ciphertext.Length];
+        byte[] plainBytes = new byte[ciphertext.Length];
 
         using var aesGcm = new AesGcm(key, TagSize);
         aesGcm.Decrypt(nonce, ciphertext, tag, plainBytes);
@@ -93,7 +93,7 @@ public static class SessionEncryption
     /// <returns>32-byte key suitable for AES-256.</returns>
     public static byte[] GenerateKey()
     {
-        var key = new byte[KeySize];
+        byte[] key = new byte[KeySize];
         RandomNumberGenerator.Fill(key);
         return key;
     }
@@ -120,7 +120,7 @@ public static class SessionEncryption
     /// <returns>Random salt bytes.</returns>
     public static byte[] GenerateSalt(int size = 16)
     {
-        var salt = new byte[size];
+        byte[] salt = new byte[size];
         RandomNumberGenerator.Fill(salt);
         return salt;
     }

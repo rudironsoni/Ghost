@@ -21,7 +21,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 // Use TraversePath() so .env can be discovered in parent directories (works better in Docker/VS/CLI)
 DotNetEnv.Env.TraversePath().Load();
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 try
@@ -63,8 +63,8 @@ builder.Services.AddSingleton<Ghost.Abstractions.IProxyProvider, Ghost.Services.
 
 // Register available proxy sources using configuration sections
 // Dynamic Proxy Source Registration
-var proxySection = builder.Configuration.GetSection("Ghost:Proxy");
-foreach (var child in proxySection.GetChildren())
+IConfigurationSection proxySection = builder.Configuration.GetSection("Ghost:Proxy");
+foreach (IConfigurationSection child in proxySection.GetChildren())
 {
     if (child.Key.Equals("Strategy", StringComparison.OrdinalIgnoreCase)) continue;
 
@@ -73,8 +73,8 @@ foreach (var child in proxySection.GetChildren())
 
     if (child.Key.Equals("NordVPN", StringComparison.OrdinalIgnoreCase))
     {
-        var nordUser = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_USERNAME");
-        var nordPass = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_PASSWORD");
+        string? nordUser = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_USERNAME");
+        string? nordPass = Environment.GetEnvironmentVariable("DOTNET_GHOST_NORDVPN_PASSWORD");
 
         if (!string.IsNullOrWhiteSpace(nordUser))
         {
@@ -160,7 +160,7 @@ builder.Services.AddGhost(builder.Configuration, gw =>
 // Register as Scoped to match the lifetime of IJobScraper implementations
 builder.Services.AddScoped<Ghost.Contracts.Jobs.IJobClient, Ghost.Core.Services.AggregatedJobClient>();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // Add correlation ID middleware (must be early in pipeline)
 app.UseCorrelationId();

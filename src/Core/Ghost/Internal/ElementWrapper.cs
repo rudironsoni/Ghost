@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
@@ -23,36 +24,36 @@ internal sealed class ElementWrapper : IElement, Ghost.IElementHandle
 
     public Task ClickAsync(ClickOptions? options = null, CancellationToken ct = default)
     {
-        var o = options ?? new ClickOptions();
+        ClickOptions o = options ?? new ClickOptions();
         return _handle.ClickAsync(new Microsoft.Playwright.ElementHandleClickOptions { Button = ParseButton(o.Button), ClickCount = o.ClickCount, Delay = o.Delay, Modifiers = o.Modifiers.Select(ParseModifier).ToArray() });
     }
 
     public Task TypeAsync(string text, TypeOptions? options = null, CancellationToken ct = default)
     {
-        var o = options ?? new TypeOptions();
+        TypeOptions o = options ?? new TypeOptions();
         // Prefer calling PressSequentiallyAsync if available on the runtime Playwright implementation.
         // Use reflection so this compiles against multiple Playwright versions without directly
         // referencing possibly-missing types. If not available, fall back to FillAsync (ignores delay).
-        var handleType = _handle.GetType();
-        var method = handleType.GetMethod("PressSequentiallyAsync");
+        Type handleType = _handle.GetType();
+        MethodInfo? method = handleType.GetMethod("PressSequentiallyAsync");
         if (method != null)
         {
-            var parameters = method.GetParameters();
+            ParameterInfo[] parameters = method.GetParameters();
             try
             {
                 if (parameters.Length == 2)
                 {
-                    var optionsType = parameters[1].ParameterType;
-                    var optionsInstance = Activator.CreateInstance(optionsType);
-                    var delayProp = optionsType.GetProperty("Delay");
+                    Type optionsType = parameters[1].ParameterType;
+                    object? optionsInstance = Activator.CreateInstance(optionsType);
+                    PropertyInfo? delayProp = optionsType.GetProperty("Delay");
                     delayProp?.SetValue(optionsInstance, o.Delay);
-                    var result = method.Invoke(_handle, new object?[] { text, optionsInstance });
+                    object? result = method.Invoke(_handle, new object?[] { text, optionsInstance });
                     return (Task)result!;
                 }
 
                 if (parameters.Length == 1)
                 {
-                    var result = method.Invoke(_handle, new object?[] { text });
+                    object? result = method.Invoke(_handle, new object?[] { text });
                     return (Task)result!;
                 }
             }
@@ -71,13 +72,13 @@ internal sealed class ElementWrapper : IElement, Ghost.IElementHandle
     public Task<string?> GetAttributeAsync(string name, CancellationToken ct = default) => _handle.GetAttributeAsync(name);
     public async Task<string?> GetTextContentAsync(CancellationToken ct = default)
     {
-        var res = await _handle.TextContentAsync();
+        string? res = await _handle.TextContentAsync().ConfigureAwait(false);
         return res;
     }
 
     public async Task<string?> GetInnerHtmlAsync(CancellationToken ct = default)
     {
-        var res = await _handle.InnerHTMLAsync();
+        string res = await _handle.InnerHTMLAsync().ConfigureAwait(false);
         return res;
     }
 
@@ -91,7 +92,7 @@ internal sealed class ElementWrapper : IElement, Ghost.IElementHandle
 
     public Task<byte[]> ScreenshotAsync(ScreenshotOptions? options = null, CancellationToken ct = default)
     {
-        var o = options ?? new ScreenshotOptions();
+        ScreenshotOptions o = options ?? new ScreenshotOptions();
         return _handle.ScreenshotAsync(new Microsoft.Playwright.ElementHandleScreenshotOptions { Type = ParseScreenshotType(o.Type), Quality = o.Quality });
     }
 
@@ -121,26 +122,26 @@ internal sealed class ElementWrapper : IElement, Ghost.IElementHandle
 
     public async Task<IElement?> QuerySelectorAsync(string selector, CancellationToken ct = default)
     {
-        var child = await _handle.QuerySelectorAsync(selector);
+        Microsoft.Playwright.IElementHandle? child = await _handle.QuerySelectorAsync(selector).ConfigureAwait(false);
         return child is null ? null : new ElementWrapper(child);
     }
 
     public async Task<IReadOnlyList<IElement>> QuerySelectorAllAsync(string selector, CancellationToken ct = default)
     {
-        var handles = await _handle.QuerySelectorAllAsync(selector);
+        IReadOnlyList<Microsoft.Playwright.IElementHandle> handles = await _handle.QuerySelectorAllAsync(selector).ConfigureAwait(false);
         return handles.Select(h => (IElement)new ElementWrapper(h)).ToList();
     }
 
     // Explicit IElementHandle implementation to avoid conflicting signatures with IElement methods
     async Task<Ghost.IElementHandle?> Ghost.IElementHandle.QuerySelectorAsync(string selector, CancellationToken ct)
     {
-        var child = await _handle.QuerySelectorAsync(selector);
+        Microsoft.Playwright.IElementHandle? child = await _handle.QuerySelectorAsync(selector).ConfigureAwait(false);
         return child is null ? null : new ElementWrapper(child);
     }
 
     async Task<IReadOnlyList<Ghost.IElementHandle>> Ghost.IElementHandle.QuerySelectorAllAsync(string selector, CancellationToken ct)
     {
-        var handles = await _handle.QuerySelectorAllAsync(selector);
+        IReadOnlyList<Microsoft.Playwright.IElementHandle> handles = await _handle.QuerySelectorAllAsync(selector).ConfigureAwait(false);
         return handles.Select(h => (Ghost.IElementHandle)new ElementWrapper(h)).ToList();
     }
 
@@ -152,7 +153,7 @@ internal sealed class ElementWrapper : IElement, Ghost.IElementHandle
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
-        await _handle.DisposeAsync();
+        await _handle.DisposeAsync().ConfigureAwait(false);
         _disposed = true;
     }
 }

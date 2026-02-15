@@ -20,11 +20,11 @@ public static class BrowserLeakDetector
     /// </exception>
     public static void AssertNoLeaks()
     {
-        var leakedProcesses = DetectLeakedProcesses();
+        List<Process> leakedProcesses = DetectLeakedProcesses();
 
         if (leakedProcesses.Count > 0)
         {
-            var processDetails = string.Join(", ", leakedProcesses.Select(p => $"{p.ProcessName}(PID:{p.Id})"));
+            string processDetails = string.Join(", ", leakedProcesses.Select(p => $"{p.ProcessName}(PID:{p.Id})"));
             throw new InvalidOperationException(
                 $"Browser process leak detected: {processDetails}. " +
                 "Tests may not be cleaning up browser sessions properly.");
@@ -41,9 +41,9 @@ public static class BrowserLeakDetector
 
         try
         {
-            foreach (var processName in BrowserProcessNames)
+            foreach (string processName in BrowserProcessNames)
             {
-                var processes = Process.GetProcessesByName(processName);
+                Process[] processes = Process.GetProcessesByName(processName);
                 leakedProcesses.AddRange(processes);
             }
         }
@@ -63,9 +63,9 @@ public static class BrowserLeakDetector
     /// <param name="force">If true, forcefully kills processes without waiting for graceful shutdown.</param>
     public static void KillAllBrowserProcesses(bool force = false)
     {
-        var processes = DetectLeakedProcesses();
+        List<Process> processes = DetectLeakedProcesses();
 
-        foreach (var process in processes)
+        foreach (Process process in processes)
         {
             try
             {
@@ -99,9 +99,9 @@ public static class BrowserLeakDetector
     public static HashSet<int> GetBrowserProcessSnapshot()
     {
         var snapshot = new HashSet<int>();
-        var processes = DetectLeakedProcesses();
+        List<Process> processes = DetectLeakedProcesses();
 
-        foreach (var process in processes)
+        foreach (Process process in processes)
         {
             snapshot.Add(process.Id);
             process.Dispose();
@@ -117,7 +117,7 @@ public static class BrowserLeakDetector
     /// <returns>A list of newly created browser processes.</returns>
     public static List<Process> DetectNewProcesses(HashSet<int> snapshot)
     {
-        var currentProcesses = DetectLeakedProcesses();
+        List<Process> currentProcesses = DetectLeakedProcesses();
         return currentProcesses.Where(p => !snapshot.Contains(p.Id)).ToList();
     }
 }

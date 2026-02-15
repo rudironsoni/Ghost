@@ -21,7 +21,7 @@ public class TLSFingerprintServiceTests
     public void GenerateProfile_ReturnsValidProfile()
     {
         // Act
-        var profile = _service.GenerateProfile();
+        JA3Profile profile = _service.GenerateProfile();
 
         // Assert
         profile.Should().NotBeNull();
@@ -34,7 +34,7 @@ public class TLSFingerprintServiceTests
     public void GenerateProfile_WithChromeType_ReturnsChromeLikeProfile()
     {
         // Act
-        var profile = _service.GenerateProfile("chrome");
+        JA3Profile profile = _service.GenerateProfile("chrome");
 
         // Assert
         profile.Should().NotBeNull();
@@ -45,7 +45,7 @@ public class TLSFingerprintServiceTests
     public void GenerateProfile_WithFirefoxType_ReturnsFirefoxLikeProfile()
     {
         // Act
-        var profile = _service.GenerateProfile("firefox");
+        JA3Profile profile = _service.GenerateProfile("firefox");
 
         // Assert
         profile.Should().NotBeNull();
@@ -56,7 +56,7 @@ public class TLSFingerprintServiceTests
     public void GenerateProfile_WithSafariType_ReturnsSafariLikeProfile()
     {
         // Act
-        var profile = _service.GenerateProfile("safari");
+        JA3Profile profile = _service.GenerateProfile("safari");
 
         // Assert
         profile.Should().NotBeNull();
@@ -67,7 +67,7 @@ public class TLSFingerprintServiceTests
     public void GenerateProfile_WithEdgeType_ReturnsEdgeLikeProfile()
     {
         // Act
-        var profile = _service.GenerateProfile("edge");
+        JA3Profile profile = _service.GenerateProfile("edge");
 
         // Assert
         profile.Should().NotBeNull();
@@ -78,12 +78,12 @@ public class TLSFingerprintServiceTests
     public void GenerateProfile_MultipleCalls_ReturnsDifferentProfiles()
     {
         // Act
-        var profile1 = _service.GenerateProfile();
-        var profile2 = _service.GenerateProfile();
-        var profile3 = _service.GenerateProfile();
+        JA3Profile profile1 = _service.GenerateProfile();
+        JA3Profile profile2 = _service.GenerateProfile();
+        JA3Profile profile3 = _service.GenerateProfile();
 
         // Assert
-        var hashes = new[]
+        string[] hashes = new[]
         {
             profile1.ToJA3Hash(),
             profile2.ToJA3Hash(),
@@ -97,7 +97,7 @@ public class TLSFingerprintServiceTests
     public void GetTLSLaunchArgs_WithChrome_ReturnsChromiumArgs()
     {
         // Act
-        var args = TLSFingerprintService.GetTLSLaunchArgs("chrome");
+        IReadOnlyList<string> args = TLSFingerprintService.GetTLSLaunchArgs("chrome");
 
         // Assert
         args.Should().NotBeEmpty();
@@ -108,7 +108,7 @@ public class TLSFingerprintServiceTests
     public void GetTLSLaunchArgs_WithEdge_ReturnsChromiumArgs()
     {
         // Act
-        var args = TLSFingerprintService.GetTLSLaunchArgs("edge");
+        IReadOnlyList<string> args = TLSFingerprintService.GetTLSLaunchArgs("edge");
 
         // Assert
         args.Should().NotBeEmpty();
@@ -119,7 +119,7 @@ public class TLSFingerprintServiceTests
     public void GetTLSLaunchArgs_WithFirefox_ReturnsFirefoxArgs()
     {
         // Act
-        var args = TLSFingerprintService.GetTLSLaunchArgs("firefox");
+        IReadOnlyList<string> args = TLSFingerprintService.GetTLSLaunchArgs("firefox");
 
         // Assert
         args.Should().NotBeEmpty();
@@ -129,7 +129,7 @@ public class TLSFingerprintServiceTests
     public void GetTLSLaunchArgs_WithUnknownBrowser_ReturnsEmptyList()
     {
         // Act
-        var args = TLSFingerprintService.GetTLSLaunchArgs("unknown");
+        IReadOnlyList<string> args = TLSFingerprintService.GetTLSLaunchArgs("unknown");
 
         // Assert
         args.Should().BeEmpty();

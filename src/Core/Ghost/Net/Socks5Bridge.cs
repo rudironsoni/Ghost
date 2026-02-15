@@ -46,7 +46,7 @@ public class Socks5Bridge : IDisposable
             Port = ep.Port;
         }
 
-        var token = _cts.Token;
+        CancellationToken token = _cts.Token;
         _acceptLoopTask = AcceptLoopAsync(token);
     }
 
@@ -66,7 +66,7 @@ public class Socks5Bridge : IDisposable
 
         lock (_lock)
         {
-            foreach (var c in _activeClients.ToArray())
+            foreach (TcpClient c in _activeClients.ToArray())
             {
                 try { c.Close(); } catch { }
             }
@@ -94,7 +94,7 @@ public class Socks5Bridge : IDisposable
 
         lock (_lock)
         {
-            foreach (var c in _activeClients.ToArray())
+            foreach (TcpClient c in _activeClients.ToArray())
             {
                 try { c.Close(); } catch { }
             }
@@ -105,7 +105,7 @@ public class Socks5Bridge : IDisposable
         {
             try
             {
-                await _acceptLoopTask;
+                await _acceptLoopTask.ConfigureAwait(false);
             }
             catch { }
         }
@@ -159,8 +159,8 @@ public class Socks5Bridge : IDisposable
 
     private static async Task<byte[]> ReadExactlyAsync(Stream stream, int count, CancellationToken ct)
     {
-        var buffer = new byte[count];
-        var offset = 0;
+        byte[] buffer = new byte[count];
+        int offset = 0;
         while (offset < count)
         {
             var mem = new Memory<byte>(buffer, offset, count - offset);
@@ -175,7 +175,7 @@ public class Socks5Bridge : IDisposable
     {
         using (client)
         {
-            var clientStream = client.GetStream();
+            NetworkStream clientStream = client.GetStream();
 
             // Client Handshake
             byte[] header;
@@ -193,10 +193,10 @@ public class Socks5Bridge : IDisposable
                 return;
             }
 
-            var nmethods = header[1];
+            byte nmethods = header[1];
             try
             {
-                var methods = await ReadExactlyAsync(clientStream, nmethods, ct).ConfigureAwait(false);
+                byte[] methods = await ReadExactlyAsync(clientStream, nmethods, ct).ConfigureAwait(false);
             }
             catch
             {
@@ -206,7 +206,7 @@ public class Socks5Bridge : IDisposable
             // Reply: no auth required
             try
             {
-                var resp = new byte[] { 0x05, 0x00 };
+                byte[] resp = new byte[] { 0x05, 0x00 };
                 await clientStream.WriteAsync(resp.AsMemory(0, 2), ct).ConfigureAwait(false);
             }
             catch
@@ -230,7 +230,7 @@ public class Socks5Bridge : IDisposable
                 return;
             }
 
-            var atyp = reqHeader[3];
+            byte atyp = reqHeader[3];
             byte[] addr;
             try
             {
@@ -240,9 +240,9 @@ public class Socks5Bridge : IDisposable
                         addr = await ReadExactlyAsync(clientStream, 4, ct).ConfigureAwait(false);
                         break;
                     case 0x03: // Domain
-                        var lenBuf = await ReadExactlyAsync(clientStream, 1, ct).ConfigureAwait(false);
-                        var len = lenBuf[0];
-                        var name = await ReadExactlyAsync(clientStream, len, ct).ConfigureAwait(false);
+                        byte[] lenBuf = await ReadExactlyAsync(clientStream, 1, ct).ConfigureAwait(false);
+                        byte len = lenBuf[0];
+                        byte[] name = await ReadExactlyAsync(clientStream, len, ct).ConfigureAwait(false);
                         addr = new byte[1 + len];
                         addr[0] = len;
                         Buffer.BlockCopy(name, 0, addr, 1, len);
@@ -254,7 +254,7 @@ public class Socks5Bridge : IDisposable
                         return;
                 }
 
-                var portBytes = await ReadExactlyAsync(clientStream, 2, ct).ConfigureAwait(false);
+                byte[] portBytes = await ReadExactlyAsync(clientStream, 2, ct).ConfigureAwait(false);
 
                 // reconstruct request bytes
                 using (var ms = new MemoryStream())
@@ -262,7 +262,7 @@ public class Socks5Bridge : IDisposable
                     ms.Write(reqHeader, 0, reqHeader.Length);
                     ms.Write(addr, 0, addr.Length);
                     ms.Write(portBytes, 0, 2);
-                    var requestBytes = ms.ToArray();
+                    byte[] requestBytes = ms.ToArray();
 
                     // Connect to upstream
                     using (var upstream = new TcpClient())
@@ -276,7 +276,7 @@ public class Socks5Bridge : IDisposable
                             // can't connect upstream, reply to client with general failure
                             try
                             {
-                                var fail = new byte[] { 0x05, 0x01, 0x00, 0x01, 0, 0, 0, 0, 0, 0 };
+                                byte[] fail = new byte[] { 0x05, 0x01, 0x00, 0x01, 0, 0, 0, 0, 0, 0 };
                                 await clientStream.WriteAsync(fail.AsMemory(0, fail.Length), ct).ConfigureAwait(false);
                             }
                             catch { }
@@ -286,7 +286,7 @@ public class Socks5Bridge : IDisposable
                         lock (_lock) { _activeClients.Add(upstream); }
                         try
                         {
-                            var upStream = upstream.GetStream();
+                            NetworkStream upStream = upstream.GetStream();
 
                             // Upstream handshake: offer both no-auth (0x00) and user/pass (0x02)
                             // Let the server choose the method it prefers
@@ -303,13 +303,13 @@ public class Socks5Bridge : IDisposable
                             }
 
                             await upStream.WriteAsync(handshake.AsMemory(0, handshake.Length), ct).ConfigureAwait(false);
-                            var methodResp = await ReadExactlyAsync(upStream, 2, ct).ConfigureAwait(false);
+                            byte[] methodResp = await ReadExactlyAsync(upStream, 2, ct).ConfigureAwait(false);
                             if (methodResp.Length < 2 || methodResp[0] != 0x05)
                             {
                                 return;
                             }
 
-                            var selectedMethod = methodResp[1];
+                            byte selectedMethod = methodResp[1];
 
                             // If server selected 0xFF, no acceptable methods
                             if (selectedMethod == 0xFF)
@@ -326,16 +326,16 @@ public class Socks5Bridge : IDisposable
                                     return;
                                 }
 
-                                var userBytes = Encoding.ASCII.GetBytes(_username);
-                                var passBytes = Encoding.ASCII.GetBytes(_password);
+                                byte[] userBytes = Encoding.ASCII.GetBytes(_username);
+                                byte[] passBytes = Encoding.ASCII.GetBytes(_password);
                                 var auth = new List<byte> { 0x01, (byte)userBytes.Length };
                                 auth.AddRange(userBytes);
                                 auth.Add((byte)passBytes.Length);
                                 auth.AddRange(passBytes);
-                                var authBuf = auth.ToArray();
+                                byte[] authBuf = auth.ToArray();
                                 await upStream.WriteAsync(authBuf.AsMemory(0, authBuf.Length), ct).ConfigureAwait(false);
 
-                                var authResp = await ReadExactlyAsync(upStream, 2, ct).ConfigureAwait(false);
+                                byte[] authResp = await ReadExactlyAsync(upStream, 2, ct).ConfigureAwait(false);
                                 if (authResp.Length < 2 || authResp[0] != 0x01 || authResp[1] != 0x00)
                                 {
                                     // Authentication failed
@@ -348,8 +348,8 @@ public class Socks5Bridge : IDisposable
                             await upStream.WriteAsync(requestBytes.AsMemory(0, requestBytes.Length), ct).ConfigureAwait(false);
 
                             // Read upstream response and forward back to client
-                            var respHeader = await ReadExactlyAsync(upStream, 4, ct).ConfigureAwait(false);
-                            var respAtyp = respHeader[3];
+                            byte[] respHeader = await ReadExactlyAsync(upStream, 4, ct).ConfigureAwait(false);
+                            byte respAtyp = respHeader[3];
                             byte[] respAddr;
                             switch (respAtyp)
                             {
@@ -357,9 +357,9 @@ public class Socks5Bridge : IDisposable
                                     respAddr = await ReadExactlyAsync(upStream, 4, ct).ConfigureAwait(false);
                                     break;
                                 case 0x03:
-                                    var l = await ReadExactlyAsync(upStream, 1, ct).ConfigureAwait(false);
-                                    var ln = l[0];
-                                    var nm = await ReadExactlyAsync(upStream, ln, ct).ConfigureAwait(false);
+                                    byte[] l = await ReadExactlyAsync(upStream, 1, ct).ConfigureAwait(false);
+                                    byte ln = l[0];
+                                    byte[] nm = await ReadExactlyAsync(upStream, ln, ct).ConfigureAwait(false);
                                     respAddr = new byte[1 + ln];
                                     respAddr[0] = ln;
                                     Buffer.BlockCopy(nm, 0, respAddr, 1, ln);
@@ -370,22 +370,22 @@ public class Socks5Bridge : IDisposable
                                 default:
                                     return;
                             }
-                            var respPort = await ReadExactlyAsync(upStream, 2, ct).ConfigureAwait(false);
+                            byte[] respPort = await ReadExactlyAsync(upStream, 2, ct).ConfigureAwait(false);
 
                             using (var ms2 = new MemoryStream())
                             {
                                 ms2.Write(respHeader, 0, respHeader.Length);
                                 ms2.Write(respAddr, 0, respAddr.Length);
                                 ms2.Write(respPort, 0, 2);
-                                var respBytes = ms2.ToArray();
+                                byte[] respBytes = ms2.ToArray();
                                 await clientStream.WriteAsync(respBytes.AsMemory(0, respBytes.Length), ct).ConfigureAwait(false);
                             }
 
                             // If upstream accepted (REP == 0), start tunnelling
                             if (respHeader[1] == 0x00)
                             {
-                                var upstreamToClient = upStream.CopyToAsync(clientStream, ct);
-                                var clientToUpstream = clientStream.CopyToAsync(upStream, ct);
+                                Task upstreamToClient = upStream.CopyToAsync(clientStream, ct);
+                                Task clientToUpstream = clientStream.CopyToAsync(upStream, ct);
                                 await Task.WhenAny(upstreamToClient, clientToUpstream).ConfigureAwait(false);
                             }
                         }

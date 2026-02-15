@@ -1,4 +1,5 @@
 using System.Reflection;
+using Ghost.Sdk.Spider.Core.Entities.Attributes;
 
 namespace Ghost.Sdk.Spider.Core.Entities;
 
@@ -31,8 +32,8 @@ public abstract class EntityBase<T> where T : EntityBase<T>, new()
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1000:Do not declare static members on generic types", Justification = "GetMetadata needs to be static to support reflection-based entity extraction without requiring an instance")]
     public static EntityMetadata GetMetadata()
     {
-        var type = typeof(T);
-        var entitySelectorAttr = type.GetCustomAttribute<Attributes.EntitySelectorAttribute>();
+        Type type = typeof(T);
+        EntitySelectorAttribute? entitySelectorAttr = type.GetCustomAttribute<Attributes.EntitySelectorAttribute>();
 
         var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanWrite && p.GetCustomAttribute<Attributes.ValueSelectorAttribute>() != null)
@@ -77,15 +78,15 @@ public abstract class EntityBase<T> where T : EntityBase<T>, new()
         };
 
         // Copy all property values
-        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        IEnumerable<PropertyInfo> properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanRead && p.CanWrite);
 
-        foreach (var prop in properties)
+        foreach (PropertyInfo? prop in properties)
         {
             if (prop.Name is nameof(Id) or nameof(SourceUrl) or nameof(ExtractedAt))
                 continue;
 
-            var value = prop.GetValue(this);
+            object? value = prop.GetValue(this);
             prop.SetValue(clone, value);
         }
 

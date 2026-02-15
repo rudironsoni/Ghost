@@ -11,7 +11,7 @@ public interface IStrategyRouter
     /// <param name="context">The strategy context containing state and configuration.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>The extraction result from the first successful strategy.</returns>
-    Task<ExtractionResult> ExecuteAsync(StrategyContext context, CancellationToken cancellationToken = default);
+    public Task<ExtractionResult> ExecuteAsync(StrategyContext context, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Executes a specific strategy by name.
@@ -20,7 +20,7 @@ public interface IStrategyRouter
     /// <param name="context">The strategy context containing state and configuration.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>The extraction result from the specified strategy.</returns>
-    Task<ExtractionResult> ExecuteStrategyAsync(string strategyName, StrategyContext context, CancellationToken cancellationToken = default);
+    public Task<ExtractionResult> ExecuteStrategyAsync(string strategyName, StrategyContext context, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Executes a chain of strategies with coordinated results.
@@ -29,16 +29,16 @@ public interface IStrategyRouter
     /// <param name="context">The strategy context containing state and configuration.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>The aggregated extraction result from the chain.</returns>
-    Task<ExtractionResult> ExecuteChainAsync(StrategyChain chain, StrategyContext context, CancellationToken cancellationToken = default);
+    public Task<ExtractionResult> ExecuteChainAsync(StrategyChain chain, StrategyContext context, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the metrics for all strategies.
     /// </summary>
     /// <returns>A dictionary of strategy names and their metrics.</returns>
-    IReadOnlyDictionary<string, StrategyMetrics> GetMetrics();
+    public IReadOnlyDictionary<string, StrategyMetrics> GetMetrics();
 
     /// <summary>
     /// Resets metrics for all strategies.
     /// </summary>
-    void ResetMetrics();
+    public void ResetMetrics();
 }

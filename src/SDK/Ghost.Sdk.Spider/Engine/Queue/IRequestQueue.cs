@@ -16,13 +16,13 @@ public interface IRequestQueue
     /// Gets the number of pending requests in the queue.
     /// </summary>
     /// <value>The count of pending requests.</value>
-    int Count { get; }
+    public int Count { get; }
 
     /// <summary>
     /// Gets a value indicating whether the queue is empty.
     /// </summary>
     /// <value><c>true</c> if empty; otherwise, <c>false</c>.</value>
-    bool IsEmpty { get; }
+    public bool IsEmpty { get; }
 
     /// <summary>
     /// Enqueues a request.
@@ -31,28 +31,28 @@ public interface IRequestQueue
     /// <param name="priority">Optional priority (higher values = higher priority).</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task EnqueueAsync(Request request, int priority = 0, CancellationToken cancellationToken = default);
+    public Task EnqueueAsync(Request request, int priority = 0, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Dequeues the next request.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>The next request, or null if the queue is empty.</returns>
-    Task<Request?> DequeueAsync(CancellationToken cancellationToken = default);
+    public Task<Request?> DequeueAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Peeks at the next request without removing it.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>The next request, or null if the queue is empty.</returns>
-    Task<Request?> PeekAsync(CancellationToken cancellationToken = default);
+    public Task<Request?> PeekAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Clears all requests from the queue.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task ClearAsync(CancellationToken cancellationToken = default);
+    public Task ClearAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks if a URL has already been queued or processed.
@@ -60,5 +60,5 @@ public interface IRequestQueue
     /// <param name="url">The URL to check.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns><c>true</c> if the URL is a duplicate; otherwise, <c>false</c>.</returns>
-    Task<bool> ContainsAsync(string url, CancellationToken cancellationToken = default);
+    public Task<bool> ContainsAsync(string url, CancellationToken cancellationToken = default);
 }

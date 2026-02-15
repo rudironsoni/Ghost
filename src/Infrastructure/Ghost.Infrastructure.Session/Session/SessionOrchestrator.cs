@@ -68,7 +68,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var sessionType = DetermineSessionType(context);
+        SessionType sessionType = DetermineSessionType(context);
 
         if (_logger.IsEnabled(LogLevel.Debug))
         {
@@ -80,7 +80,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
                 context.ComplexityScore ?? 0);
         }
 
-        var sessionId = GenerateSessionId();
+        string sessionId = GenerateSessionId();
         var metadata = new SessionMetadata
         {
             SessionId = sessionId,
@@ -101,11 +101,11 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
         {
             if (sessionType == SessionType.Http)
             {
-                await AllocateHttpSessionAsync(metadata, ct);
+                await AllocateHttpSessionAsync(metadata, ct).ConfigureAwait(false);
             }
             else
             {
-                await AllocateBrowserSessionAsync(metadata, context.ComplexityScore, ct);
+                await AllocateBrowserSessionAsync(metadata, context.ComplexityScore, ct).ConfigureAwait(false);
             }
 
             if (!_sessions.TryAdd(sessionId, metadata))
@@ -144,10 +144,10 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
         if (!_options.EnableSessionAffinity)
         {
             _logger.LogWarning("Session affinity is disabled, falling back to regular allocation");
-            return await AllocateSessionAsync(context, ct);
+            return await AllocateSessionAsync(context, ct).ConfigureAwait(false);
         }
 
-        if (_affinityMappings.TryGetValue(affinityOptions.AffinityKey, out var existingMapping))
+        if (_affinityMappings.TryGetValue(affinityOptions.AffinityKey, out AffinityMapping? existingMapping))
         {
             if (existingMapping.ExpiresAt > DateTime.UtcNow && _sessions.ContainsKey(existingMapping.SessionId))
             {
@@ -159,7 +159,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
                         affinityOptions.AffinityKey);
                 }
 
-                if (_sessions.TryGetValue(existingMapping.SessionId, out var metadata))
+                if (_sessions.TryGetValue(existingMapping.SessionId, out SessionMetadata? metadata))
                 {
                     metadata.LastUsedAt = DateTime.UtcNow;
                 }
@@ -170,9 +170,9 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
             _affinityMappings.TryRemove(affinityOptions.AffinityKey, out _);
         }
 
-        var sessionId = await AllocateSessionAsync(context, ct);
+        string sessionId = await AllocateSessionAsync(context, ct).ConfigureAwait(false);
 
-        var affinityDuration = affinityOptions.AffinityDuration ?? _options.DefaultAffinityDuration;
+        TimeSpan affinityDuration = affinityOptions.AffinityDuration ?? _options.DefaultAffinityDuration;
 
         if (affinityDuration > _options.MaxAffinityDuration)
         {
@@ -209,7 +209,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
     /// <inheritdoc/>
     public Task<RotatingProxySession?> GetHttpSessionAsync(string sessionId, CancellationToken ct = default)
     {
-        if (!_sessions.TryGetValue(sessionId, out var metadata))
+        if (!_sessions.TryGetValue(sessionId, out SessionMetadata? metadata))
         {
             _logger.LogWarning("Session {SessionId} not found", sessionId);
             return Task.FromResult<RotatingProxySession?>(null);
@@ -228,7 +228,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
     /// <inheritdoc/>
     public Task<IBrowserSession?> GetBrowserSessionAsync(string sessionId, CancellationToken ct = default)
     {
-        if (!_sessions.TryGetValue(sessionId, out var metadata))
+        if (!_sessions.TryGetValue(sessionId, out SessionMetadata? metadata))
         {
             _logger.LogWarning("Session {SessionId} not found", sessionId);
             return Task.FromResult<IBrowserSession?>(null);
@@ -247,13 +247,13 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
     /// <inheritdoc/>
     public Task<SessionHealthMetrics> GetSessionHealthAsync(string sessionId, CancellationToken ct = default)
     {
-        if (!_sessions.TryGetValue(sessionId, out var metadata))
+        if (!_sessions.TryGetValue(sessionId, out SessionMetadata? metadata))
         {
             throw new InvalidOperationException($"Session {sessionId} not found");
         }
 
-        var health = CalculateSessionHealth(metadata);
-        var uptime = DateTime.UtcNow - metadata.CreatedAt;
+        SessionHealth health = CalculateSessionHealth(metadata);
+        TimeSpan uptime = DateTime.UtcNow - metadata.CreatedAt;
 
         var metrics = new SessionHealthMetrics(
             SessionId: sessionId,
@@ -275,8 +275,8 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
         var metrics = _sessions.Values
             .Select(metadata =>
             {
-                var health = CalculateSessionHealth(metadata);
-                var uptime = DateTime.UtcNow - metadata.CreatedAt;
+                SessionHealth health = CalculateSessionHealth(metadata);
+                TimeSpan uptime = DateTime.UtcNow - metadata.CreatedAt;
 
                 return new SessionHealthMetrics(
                     SessionId: metadata.SessionId,
@@ -302,7 +302,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
             _logger.LogInformation("Recycling session {SessionId}", sessionId);
         }
 
-        if (!_sessions.TryRemove(sessionId, out var metadata))
+        if (!_sessions.TryRemove(sessionId, out SessionMetadata? metadata))
         {
             _logger.LogWarning("Session {SessionId} not found for recycling", sessionId);
             return;
@@ -313,12 +313,12 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
             .Select(kvp => kvp.Key)
             .ToList();
 
-        foreach (var key in affinityKeys)
+        foreach (string? key in affinityKeys)
         {
             _affinityMappings.TryRemove(key, out _);
         }
 
-        await DisposeSessionAsync(metadata);
+        await DisposeSessionAsync(metadata).ConfigureAwait(false);
 
         if (_logger.IsEnabled(LogLevel.Information))
         {
@@ -329,7 +329,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
     /// <inheritdoc/>
     public Task ExtendSessionTtlAsync(string sessionId, TimeSpan additionalTime, CancellationToken ct = default)
     {
-        if (!_sessions.TryGetValue(sessionId, out var metadata))
+        if (!_sessions.TryGetValue(sessionId, out SessionMetadata? metadata))
         {
             throw new InvalidOperationException($"Session {sessionId} not found");
         }
@@ -356,7 +356,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
             throw new InvalidOperationException("Session state persistence is disabled");
         }
 
-        if (!_sessions.TryGetValue(sessionId, out var metadata))
+        if (!_sessions.TryGetValue(sessionId, out SessionMetadata? metadata))
         {
             throw new InvalidOperationException($"Session {sessionId} not found");
         }
@@ -366,13 +366,13 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
             throw new InvalidOperationException("Only browser sessions support state persistence");
         }
 
-        var directory = Path.GetDirectoryName(storagePath);
+        string? directory = Path.GetDirectoryName(storagePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
         {
             Directory.CreateDirectory(directory);
         }
 
-        await metadata.BrowserSession.SaveStorageStateAsync(storagePath);
+        await metadata.BrowserSession.SaveStorageStateAsync(storagePath).ConfigureAwait(false);
 
         if (_logger.IsEnabled(LogLevel.Information))
         {
@@ -430,7 +430,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
             _logger.LogInformation("Closing session {SessionId}", sessionId);
         }
 
-        if (!_sessions.TryRemove(sessionId, out var metadata))
+        if (!_sessions.TryRemove(sessionId, out SessionMetadata? metadata))
         {
             _logger.LogWarning("Session {SessionId} not found for closing", sessionId);
             return;
@@ -441,12 +441,12 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
             .Select(kvp => kvp.Key)
             .ToList();
 
-        foreach (var key in affinityKeys)
+        foreach (string? key in affinityKeys)
         {
             _affinityMappings.TryRemove(key, out _);
         }
 
-        await DisposeSessionAsync(metadata);
+        await DisposeSessionAsync(metadata).ConfigureAwait(false);
 
         if (_logger.IsEnabled(LogLevel.Information))
         {
@@ -462,8 +462,8 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
             _logger.LogDebug("Performing health check sweep on {Count} sessions", _sessions.Count);
         }
 
-        var recycledCount = 0;
-        var now = DateTime.UtcNow;
+        int recycledCount = 0;
+        DateTime now = DateTime.UtcNow;
 
         var sessionsToRecycle = _sessions.Values
             .Where(metadata =>
@@ -473,17 +473,17 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
                     return true;
                 }
 
-                var health = CalculateSessionHealth(metadata);
+                SessionHealth health = CalculateSessionHealth(metadata);
                 return health == SessionHealth.Unhealthy;
             })
             .Select(m => m.SessionId)
             .ToList();
 
-        foreach (var sessionId in sessionsToRecycle)
+        foreach (string? sessionId in sessionsToRecycle)
         {
             try
             {
-                await RecycleSessionAsync(sessionId, ct);
+                await RecycleSessionAsync(sessionId, ct).ConfigureAwait(false);
                 recycledCount++;
             }
             catch (Exception ex)
@@ -497,7 +497,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
             .Select(kvp => kvp.Key)
             .ToList();
 
-        foreach (var key in expiredAffinityKeys)
+        foreach (string? key in expiredAffinityKeys)
         {
             _affinityMappings.TryRemove(key, out _);
         }
@@ -545,7 +545,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
     /// </summary>
     private Task AllocateHttpSessionAsync(SessionMetadata metadata, CancellationToken ct)
     {
-        var currentHttpSessions = _sessions.Values.Count(m => m.SessionType == SessionType.Http);
+        int currentHttpSessions = _sessions.Values.Count(m => m.SessionType == SessionType.Http);
         if (currentHttpSessions >= _options.MaxConcurrentHttpSessions)
         {
             throw new InvalidOperationException(
@@ -572,19 +572,19 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
         int? complexityScore,
         CancellationToken ct)
     {
-        var currentBrowserSessions = _sessions.Values.Count(m => m.SessionType == SessionType.Browser);
+        int currentBrowserSessions = _sessions.Values.Count(m => m.SessionType == SessionType.Browser);
         if (currentBrowserSessions >= _options.MaxConcurrentBrowserSessions)
         {
             throw new InvalidOperationException(
                 $"Maximum concurrent browser sessions ({_options.MaxConcurrentBrowserSessions}) reached");
         }
 
-        var tier = DetermineBrowserTier(complexityScore);
+        Tier tier = DetermineBrowserTier(complexityScore);
 
         using var timeoutCts = new CancellationTokenSource(_options.SessionAcquisitionTimeout);
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
 
-        metadata.BrowserSession = await _browserPool.AcquireBrowserAsync(tier, linkedCts.Token);
+        metadata.BrowserSession = await _browserPool.AcquireBrowserAsync(tier, linkedCts.Token).ConfigureAwait(false);
         metadata.BrowserTier = tier;
     }
 
@@ -612,9 +612,9 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
     /// </summary>
     private SessionHealth CalculateSessionHealth(SessionMetadata metadata)
     {
-        var cutoffTime = DateTime.UtcNow.Subtract(_options.FailureTrackingWindow);
+        DateTime cutoffTime = DateTime.UtcNow.Subtract(_options.FailureTrackingWindow);
 
-        while (metadata.RecentFailures.TryPeek(out var failureTime))
+        while (metadata.RecentFailures.TryPeek(out DateTime failureTime))
         {
             if (failureTime < cutoffTime)
             {
@@ -626,8 +626,8 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
             }
         }
 
-        var recentFailureCount = metadata.RecentFailures.Count;
-        var threshold = metadata.SessionType == SessionType.Http
+        int recentFailureCount = metadata.RecentFailures.Count;
+        int threshold = metadata.SessionType == SessionType.Http
             ? _options.HttpSessionFailureThreshold
             : _options.BrowserSessionFailureThreshold;
 
@@ -675,7 +675,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
     /// </summary>
     private void EvictOldestAffinityMapping()
     {
-        var oldestKey = _affinityMappings
+        string? oldestKey = _affinityMappings
             .OrderBy(kvp => kvp.Value.CreatedAt)
             .Select(kvp => kvp.Key)
             .FirstOrDefault();
@@ -703,7 +703,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
             }
             else if (metadata.SessionType == SessionType.Browser && metadata.BrowserSession != null)
             {
-                await _browserPool.ReturnBrowserAsync(metadata.BrowserSession, CancellationToken.None);
+                await _browserPool.ReturnBrowserAsync(metadata.BrowserSession, CancellationToken.None).ConfigureAwait(false);
             }
         }
         catch (Exception ex)
@@ -721,7 +721,7 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
         {
             try
             {
-                await PerformHealthCheckSweepAsync(CancellationToken.None);
+                await PerformHealthCheckSweepAsync(CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -743,11 +743,11 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
         _healthCheckTimer?.Dispose();
 
         var sessionIds = _sessions.Keys.ToList();
-        foreach (var sessionId in sessionIds)
+        foreach (string? sessionId in sessionIds)
         {
             try
             {
-                await CloseSessionAsync(sessionId, CancellationToken.None);
+                await CloseSessionAsync(sessionId, CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

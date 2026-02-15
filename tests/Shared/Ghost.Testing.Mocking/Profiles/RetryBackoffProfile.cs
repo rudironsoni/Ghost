@@ -110,9 +110,9 @@ public static class RetryBackoffProfile
 
         for (int i = 0; i < attempts; i++)
         {
-            var baseDelay = Math.Pow(2, i);
-            var jitter = random.NextDouble() * 0.5; // 0-50% jitter
-            var totalDelay = baseDelay * (1 + jitter);
+            double baseDelay = Math.Pow(2, i);
+            double jitter = random.NextDouble() * 0.5; // 0-50% jitter
+            double totalDelay = baseDelay * (1 + jitter);
 
             server
                 .Given(Request.Create()

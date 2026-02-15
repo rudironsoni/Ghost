@@ -93,13 +93,13 @@ public abstract class Spider
         if (string.IsNullOrWhiteSpace(url))
             return false;
 
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
             return false;
 
         // Check allowed domains
         if (Options.AllowedDomains.Count > 0)
         {
-            var host = uri.Host.ToLowerInvariant();
+            string host = uri.Host.ToLowerInvariant();
             if (!Options.AllowedDomains.Any(d => host.Contains(d.ToLowerInvariant(), StringComparison.Ordinal)))
                 return false;
         }
@@ -107,7 +107,7 @@ public abstract class Spider
         // Check exclude patterns
         if (Options.ExcludePatterns.Count > 0)
         {
-            foreach (var pattern in Options.ExcludePatterns)
+            foreach (string pattern in Options.ExcludePatterns)
             {
                 if (System.Text.RegularExpressions.Regex.IsMatch(url, pattern))
                     return false;

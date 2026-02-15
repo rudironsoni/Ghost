@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Ghost.Abstractions;
 using Ghost.ProxyManagement;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -18,7 +19,7 @@ public sealed class ProxyGeographicFilterTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            async () => await filter.GetGeolocationAsync(null!, CancellationToken.None));
+            async () => await filter.GetGeolocationAsync(null!, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     [Fact]
@@ -29,7 +30,7 @@ public sealed class ProxyGeographicFilterTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            async () => await filter.GetGeolocationAsync(string.Empty, CancellationToken.None));
+            async () => await filter.GetGeolocationAsync(string.Empty, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     [Fact]
@@ -40,7 +41,7 @@ public sealed class ProxyGeographicFilterTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await filter.EnrichProxiesAsync(null!, CancellationToken.None));
+            async () => await filter.EnrichProxiesAsync(null!, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     [Fact]
@@ -48,10 +49,10 @@ public sealed class ProxyGeographicFilterTests
     {
         // Arrange
         var filter = new ProxyGeographicFilter(NullLogger<ProxyGeographicFilter>.Instance);
-        var proxies = Array.Empty<Ghost.Abstractions.ProxyInfo>();
+        ProxyInfo[] proxies = Array.Empty<Ghost.Abstractions.ProxyInfo>();
 
         // Act
-        var result = await filter.EnrichProxiesAsync(proxies, CancellationToken.None);
+        Dictionary<string, ProxyGeolocation> result = await filter.EnrichProxiesAsync(proxies, CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         result.Should().BeEmpty();

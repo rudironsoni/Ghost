@@ -56,7 +56,7 @@ public sealed class InfoJobsOptionsValidator : IValidateOptions<InfoJobsOptions>
         if (string.IsNullOrWhiteSpace(uri))
             return false;
 
-        return Uri.TryCreate(uri, UriKind.Absolute, out var result)
+        return Uri.TryCreate(uri, UriKind.Absolute, out Uri? result)
                && (result.Scheme == Uri.UriSchemeHttp || result.Scheme == Uri.UriSchemeHttps);
     }
 }

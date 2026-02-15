@@ -87,7 +87,7 @@ public class WebhookStorage : IStorage
         StorageContext context,
         CancellationToken cancellationToken = default)
     {
-        var startTime = DateTimeOffset.UtcNow;
+        DateTimeOffset startTime = DateTimeOffset.UtcNow;
 
         try
         {
@@ -101,11 +101,11 @@ public class WebhookStorage : IStorage
                 tags = context.Tags
             };
 
-            var json = JsonConvert.SerializeObject(payload, _jsonSettings);
+            string json = JsonConvert.SerializeObject(payload, _jsonSettings);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync(_webhookUrl, content, cancellationToken).ConfigureAwait(false);
-            var duration = DateTimeOffset.UtcNow - startTime;
+            HttpResponseMessage response = await _httpClient.PostAsync(_webhookUrl, content, cancellationToken).ConfigureAwait(false);
+            TimeSpan duration = DateTimeOffset.UtcNow - startTime;
 
             if (response.IsSuccessStatusCode)
             {
@@ -114,14 +114,14 @@ public class WebhookStorage : IStorage
             }
             else
             {
-                var error = $"Webhook returned {response.StatusCode}: {response.ReasonPhrase}";
+                string error = $"Webhook returned {response.StatusCode}: {response.ReasonPhrase}";
                 _logger?.LogWebhookPostFailed(error);
                 return StorageResult.CreateFailure(error, null, duration);
             }
         }
         catch (Exception ex)
         {
-            var duration = DateTimeOffset.UtcNow - startTime;
+            TimeSpan duration = DateTimeOffset.UtcNow - startTime;
             _logger?.LogFailedToPostItem(ex);
             return StorageResult.CreateFailure($"Webhook error: {ex.Message}", ex, duration);
         }
@@ -133,7 +133,7 @@ public class WebhookStorage : IStorage
         StorageContext context,
         CancellationToken cancellationToken = default)
     {
-        var startTime = DateTimeOffset.UtcNow;
+        DateTimeOffset startTime = DateTimeOffset.UtcNow;
         var itemList = items.ToList();
 
         try
@@ -150,11 +150,11 @@ public class WebhookStorage : IStorage
                 tags = context.Tags
             };
 
-            var json = JsonConvert.SerializeObject(payload, _jsonSettings);
+            string json = JsonConvert.SerializeObject(payload, _jsonSettings);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync(_webhookUrl, content, cancellationToken).ConfigureAwait(false);
-            var duration = DateTimeOffset.UtcNow - startTime;
+            HttpResponseMessage response = await _httpClient.PostAsync(_webhookUrl, content, cancellationToken).ConfigureAwait(false);
+            TimeSpan duration = DateTimeOffset.UtcNow - startTime;
 
             if (response.IsSuccessStatusCode)
             {
@@ -163,14 +163,14 @@ public class WebhookStorage : IStorage
             }
             else
             {
-                var error = $"Webhook returned {response.StatusCode}: {response.ReasonPhrase}";
+                string error = $"Webhook returned {response.StatusCode}: {response.ReasonPhrase}";
                 _logger?.LogWebhookBatchPostFailed(error);
                 return StorageResult.CreateFailure(error, null, duration);
             }
         }
         catch (Exception ex)
         {
-            var duration = DateTimeOffset.UtcNow - startTime;
+            TimeSpan duration = DateTimeOffset.UtcNow - startTime;
             _logger?.LogFailedToPostBatch(ex);
             return StorageResult.CreateFailure($"Webhook error: {ex.Message}", ex, duration);
         }

@@ -28,28 +28,28 @@ public sealed class ScrollMimicry
         }
 
         // Random number of steps (10-30 for smooth scrolling)
-        var steps = _random.Next(10, 31);
+        int steps = _random.Next(10, 31);
 
-        for (var i = 0; i < steps; i++)
+        for (int i = 0; i < steps; i++)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             // Calculate speed factor using sine wave for acceleration/deceleration
             // This creates a smooth ease-in-ease-out effect
-            var progress = (double)i / steps;
-            var speedFactor = Math.Sin(progress * Math.PI);
+            double progress = (double)i / steps;
+            double speedFactor = Math.Sin(progress * Math.PI);
 
             // Base step size with speed variation
-            var baseStepSize = (double)deltaY / steps;
-            var stepSize = baseStepSize * (0.5 + speedFactor); // Range: 50-150% of base
+            double baseStepSize = (double)deltaY / steps;
+            double stepSize = baseStepSize * (0.5 + speedFactor); // Range: 50-150% of base
 
             // Perform scroll step
-            await mouse.WheelAsync(0, (float)stepSize);
+            await mouse.WheelAsync(0, (float)stepSize).ConfigureAwait(false);
 
             // Variable delay between steps (20-100ms) for natural rhythm
             if (i < steps - 1)
             {
-                await Task.Delay(_random.Next(20, 101), cancellationToken);
+                await Task.Delay(_random.Next(20, 101), cancellationToken).ConfigureAwait(false);
             }
         }
     }
@@ -69,37 +69,37 @@ public sealed class ScrollMimicry
         ArgumentNullException.ThrowIfNull(mouse);
 
         // Get element position
-        var box = await element.BoundingBoxAsync();
+        LocatorBoundingBoxResult? box = await element.BoundingBoxAsync().ConfigureAwait(false);
         if (box is null)
         {
             // Element not visible, use default scroll into view
-            await element.ScrollIntoViewIfNeededAsync();
+            await element.ScrollIntoViewIfNeededAsync().ConfigureAwait(false);
             return;
         }
 
         // Calculate scroll distance needed
-        var page = element.Page;
-        var viewportSize = page.ViewportSize;
+        Microsoft.Playwright.IPage page = element.Page;
+        PageViewportSizeResult? viewportSize = page.ViewportSize;
 
         if (viewportSize is null)
         {
             // No viewport info, use default
-            await element.ScrollIntoViewIfNeededAsync();
+            await element.ScrollIntoViewIfNeededAsync().ConfigureAwait(false);
             return;
         }
 
         // Check if element is already in viewport
-        var isInViewport = box.Y >= 0 && box.Y + box.Height <= viewportSize.Height;
+        bool isInViewport = box.Y >= 0 && box.Y + box.Height <= viewportSize.Height;
         if (isInViewport)
         {
             return;
         }
 
         // Calculate scroll distance to center element in viewport
-        var scrollY = (int)(box.Y - (viewportSize.Height / 2) + (box.Height / 2));
+        int scrollY = (int)(box.Y - (viewportSize.Height / 2) + (box.Height / 2));
 
         // Perform human-like scroll
-        await ScrollHumanLikeAsync(mouse, scrollY, cancellationToken);
+        await ScrollHumanLikeAsync(mouse, scrollY, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -114,7 +114,7 @@ public sealed class ScrollMimicry
         ArgumentNullException.ThrowIfNull(mouse);
 
         // Small random scroll (50-150 pixels)
-        var deltaY = _random.Next(50, 151);
+        int deltaY = _random.Next(50, 151);
 
         // Random direction (60% down, 40% up - humans tend to scroll down more)
         if (_random.NextDouble() < 0.4)
@@ -122,6 +122,6 @@ public sealed class ScrollMimicry
             deltaY = -deltaY;
         }
 
-        await ScrollHumanLikeAsync(mouse, deltaY, cancellationToken);
+        await ScrollHumanLikeAsync(mouse, deltaY, cancellationToken).ConfigureAwait(false);
     }
 }

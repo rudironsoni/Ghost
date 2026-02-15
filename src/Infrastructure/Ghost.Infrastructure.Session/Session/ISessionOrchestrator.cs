@@ -77,7 +77,7 @@ public interface ISessionOrchestrator
     /// <param name="context">Allocation context containing routing information</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Session identifier</returns>
-    Task<string> AllocateSessionAsync(SessionAllocationContext context, CancellationToken ct = default);
+    public Task<string> AllocateSessionAsync(SessionAllocationContext context, CancellationToken ct = default);
 
     /// <summary>
     /// Allocates a session with affinity for consistent routing.
@@ -87,7 +87,7 @@ public interface ISessionOrchestrator
     /// <param name="affinityOptions">Affinity configuration</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Session identifier</returns>
-    Task<string> AllocateSessionWithAffinityAsync(
+    public Task<string> AllocateSessionWithAffinityAsync(
         SessionAllocationContext context,
         SessionAffinityOptions affinityOptions,
         CancellationToken ct = default);
@@ -98,7 +98,7 @@ public interface ISessionOrchestrator
     /// <param name="sessionId">Session identifier</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>HTTP session instance or null if not found</returns>
-    Task<RotatingProxySession?> GetHttpSessionAsync(string sessionId, CancellationToken ct = default);
+    public Task<RotatingProxySession?> GetHttpSessionAsync(string sessionId, CancellationToken ct = default);
 
     /// <summary>
     /// Gets a browser session for browser automation.
@@ -106,7 +106,7 @@ public interface ISessionOrchestrator
     /// <param name="sessionId">Session identifier</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Browser session instance or null if not found</returns>
-    Task<IBrowserSession?> GetBrowserSessionAsync(string sessionId, CancellationToken ct = default);
+    public Task<IBrowserSession?> GetBrowserSessionAsync(string sessionId, CancellationToken ct = default);
 
     /// <summary>
     /// Monitors and reports session health status.
@@ -114,21 +114,21 @@ public interface ISessionOrchestrator
     /// <param name="sessionId">Session identifier</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Health metrics for the session</returns>
-    Task<SessionHealthMetrics> GetSessionHealthAsync(string sessionId, CancellationToken ct = default);
+    public Task<SessionHealthMetrics> GetSessionHealthAsync(string sessionId, CancellationToken ct = default);
 
     /// <summary>
     /// Monitors health of all active sessions.
     /// </summary>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Collection of health metrics for all sessions</returns>
-    Task<IReadOnlyList<SessionHealthMetrics>> GetAllSessionHealthAsync(CancellationToken ct = default);
+    public Task<IReadOnlyList<SessionHealthMetrics>> GetAllSessionHealthAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Recycles an unhealthy session by closing and removing it from the pool.
     /// </summary>
     /// <param name="sessionId">Session identifier</param>
     /// <param name="ct">Cancellation token</param>
-    Task RecycleSessionAsync(string sessionId, CancellationToken ct = default);
+    public Task RecycleSessionAsync(string sessionId, CancellationToken ct = default);
 
     /// <summary>
     /// Extends the time-to-live (TTL) for a session to keep it alive longer.
@@ -136,7 +136,7 @@ public interface ISessionOrchestrator
     /// <param name="sessionId">Session identifier</param>
     /// <param name="additionalTime">Additional time to add to TTL</param>
     /// <param name="ct">Cancellation token</param>
-    Task ExtendSessionTtlAsync(string sessionId, TimeSpan additionalTime, CancellationToken ct = default);
+    public Task ExtendSessionTtlAsync(string sessionId, TimeSpan additionalTime, CancellationToken ct = default);
 
     /// <summary>
     /// Persists session state to storage for recovery.
@@ -145,7 +145,7 @@ public interface ISessionOrchestrator
     /// <param name="sessionId">Session identifier</param>
     /// <param name="storagePath">Path to persist session state</param>
     /// <param name="ct">Cancellation token</param>
-    Task PersistSessionStateAsync(string sessionId, string storagePath, CancellationToken ct = default);
+    public Task PersistSessionStateAsync(string sessionId, string storagePath, CancellationToken ct = default);
 
     /// <summary>
     /// Restores a session from persisted state.
@@ -153,14 +153,14 @@ public interface ISessionOrchestrator
     /// <param name="storagePath">Path to persisted session state</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Restored session identifier</returns>
-    Task<string> RestoreSessionFromStateAsync(string storagePath, CancellationToken ct = default);
+    public Task<string> RestoreSessionFromStateAsync(string storagePath, CancellationToken ct = default);
 
     /// <summary>
     /// Gets all active session identifiers.
     /// </summary>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Collection of active session identifiers</returns>
-    Task<IReadOnlyList<string>> GetActiveSessionsAsync(CancellationToken ct = default);
+    public Task<IReadOnlyList<string>> GetActiveSessionsAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Gets all active session identifiers of a specific type.
@@ -168,14 +168,14 @@ public interface ISessionOrchestrator
     /// <param name="sessionType">Type of sessions to retrieve</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Collection of active session identifiers</returns>
-    Task<IReadOnlyList<string>> GetActiveSessionsByTypeAsync(SessionType sessionType, CancellationToken ct = default);
+    public Task<IReadOnlyList<string>> GetActiveSessionsByTypeAsync(SessionType sessionType, CancellationToken ct = default);
 
     /// <summary>
     /// Closes a session and releases its resources.
     /// </summary>
     /// <param name="sessionId">Session identifier</param>
     /// <param name="ct">Cancellation token</param>
-    Task CloseSessionAsync(string sessionId, CancellationToken ct = default);
+    public Task CloseSessionAsync(string sessionId, CancellationToken ct = default);
 
     /// <summary>
     /// Performs health check sweep on all sessions and recycles unhealthy ones.
@@ -183,5 +183,5 @@ public interface ISessionOrchestrator
     /// </summary>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Number of sessions recycled</returns>
-    Task<int> PerformHealthCheckSweepAsync(CancellationToken ct = default);
+    public Task<int> PerformHealthCheckSweepAsync(CancellationToken ct = default);
 }

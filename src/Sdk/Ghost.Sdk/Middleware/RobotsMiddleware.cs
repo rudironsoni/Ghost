@@ -40,15 +40,15 @@ public class RobotsMiddleware : IRobotsMiddleware
         ArgumentNullException.ThrowIfNull(url);
         ArgumentNullException.ThrowIfNull(userAgent);
 
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
             return false;
 
-        var baseUrl = $"{uri.Scheme}://{uri.Host}";
+        string baseUrl = $"{uri.Scheme}://{uri.Host}";
 
         // Try to get cached robots.txt
-        if (!_robotsCache.TryGetValue(baseUrl, out var robotsTxt))
+        if (!_robotsCache.TryGetValue(baseUrl, out RobotsTxt? robotsTxt))
         {
-            await LoadRobotsTxtAsync(baseUrl, userAgent, ct);
+            await LoadRobotsTxtAsync(baseUrl, userAgent, ct).ConfigureAwait(false);
             _robotsCache.TryGetValue(baseUrl, out robotsTxt);
         }
 
@@ -56,7 +56,7 @@ public class RobotsMiddleware : IRobotsMiddleware
         if (robotsTxt == null)
             return _options.AllowOnError;
 
-        var path = uri.PathAndQuery;
+        string path = uri.PathAndQuery;
         return robotsTxt.CanFetch(path, userAgent);
     }
 
@@ -66,7 +66,7 @@ public class RobotsMiddleware : IRobotsMiddleware
         ArgumentNullException.ThrowIfNull(baseUrl);
         ArgumentNullException.ThrowIfNull(userAgent);
 
-        var robotsUrl = $"{baseUrl.TrimEnd('/')}/robots.txt";
+        string robotsUrl = $"{baseUrl.TrimEnd('/')}/robots.txt";
 
         try
         {
@@ -80,12 +80,12 @@ public class RobotsMiddleware : IRobotsMiddleware
                 ct = linkedCts.Token;
             }
 
-            var response = await _httpClient.SendAsync(request, ct);
+            HttpResponseMessage response = await _httpClient.SendAsync(request, ct).ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var robotsTxt = RobotsTxtParser.Parse(content);
+                string content = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                RobotsTxt robotsTxt = RobotsTxtParser.Parse(content);
                 _robotsCache[baseUrl] = robotsTxt;
             }
             else

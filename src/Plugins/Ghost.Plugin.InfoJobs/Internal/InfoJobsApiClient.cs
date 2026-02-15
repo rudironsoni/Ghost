@@ -53,7 +53,7 @@ public sealed class InfoJobsApiClient
     public async Task<IReadOnlyList<JobListing>> SearchAsync(string query, string location, CancellationToken ct = default)
     {
         // Build search URL with parameters
-        var url = BuildSearchUrl(query, location);
+        string url = BuildSearchUrl(query, location);
         LogFetchingJobs(_logger, url, null);
 
         var req = new HttpRequestMessage(HttpMethod.Get, url);
@@ -61,24 +61,24 @@ public sealed class InfoJobsApiClient
         // Set authentication headers (Basic Auth with Client ID/Secret)
         if (!string.IsNullOrEmpty(_options.ClientId) && !string.IsNullOrEmpty(_options.ClientSecret))
         {
-            var auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));
+            string auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));
             req.Headers.Authorization = new AuthenticationHeaderValue("Basic", auth);
         }
 
         // Add InfoJobs API headers
-        foreach (var header in InfoJobsConstants.ApiHeaders)
+        foreach (KeyValuePair<string, string> header in InfoJobsConstants.ApiHeaders)
         {
             req.Headers.TryAddWithoutValidation(header.Key, header.Value);
         }
 
         try
         {
-            var res = await _http.SendAsync(req, ct).ConfigureAwait(false);
-            var json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            HttpResponseMessage res = await _http.SendAsync(req, ct).ConfigureAwait(false);
+            string json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             // Log HTTP status and response for debugging
-            var statusCode = (int)res.StatusCode;
-            var bodyPreview = json.Length > 500 ? json[..500] + "..." : json;
+            int statusCode = (int)res.StatusCode;
+            string bodyPreview = json.Length > 500 ? json[..500] + "..." : json;
             LogHttpResponse(_logger, statusCode, bodyPreview, null);
 
             if (string.IsNullOrEmpty(json))
@@ -90,7 +90,7 @@ public sealed class InfoJobsApiClient
             LogReceivedResponse(_logger, json.Length, null);
 
             // Parse JSON response
-            var jobs = ParseInfoJobsResponse(json);
+            IReadOnlyList<JobListing> jobs = ParseInfoJobsResponse(json);
             LogParsedJobs(_logger, jobs.Count, null);
 
             return jobs;
@@ -118,7 +118,7 @@ public sealed class InfoJobsApiClient
         // Limit results for efficiency
         parameters.Add("maxResults=50");
 
-        var queryString = string.Join("&", parameters);
+        string queryString = string.Join("&", parameters);
         return $"{_options.ApiEndpoint}1/offer?{queryString}";
     }
 
@@ -127,9 +127,9 @@ public sealed class InfoJobsApiClient
         try
         {
             using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
+            JsonElement root = doc.RootElement;
 
-            if (!root.TryGetProperty("offers", out var offersArray) ||
+            if (!root.TryGetProperty("offers", out JsonElement offersArray) ||
                 offersArray.ValueKind != JsonValueKind.Array)
             {
                 return Array.Empty<JobListing>();
@@ -137,9 +137,9 @@ public sealed class InfoJobsApiClient
 
             var jobs = new List<JobListing>();
 
-            foreach (var offer in offersArray.EnumerateArray())
+            foreach (JsonElement offer in offersArray.EnumerateArray())
             {
-                var job = ParseJobOffer(offer);
+                JobListing? job = ParseJobOffer(offer);
                 if (job != null)
                     jobs.Add(job);
             }
@@ -157,25 +157,25 @@ public sealed class InfoJobsApiClient
     {
         try
         {
-            var title = offer.GetProperty("title").GetString() ?? string.Empty;
+            string title = offer.GetProperty("title").GetString() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(title))
                 return null;
 
             // Parse company from author field (correct per InfoJobs API)
-            var company = offer.GetProperty("author").GetProperty("name").GetString() ?? string.Empty;
+            string company = offer.GetProperty("author").GetProperty("name").GetString() ?? string.Empty;
 
             // Parse location (optional city + mandatory province)
-            var location = string.Empty;
-            if (offer.TryGetProperty("city", out var city))
+            string location = string.Empty;
+            if (offer.TryGetProperty("city", out JsonElement city))
             {
-                var cityValue = city.GetString() ?? string.Empty;
+                string cityValue = city.GetString() ?? string.Empty;
                 if (!string.IsNullOrEmpty(cityValue))
                     location = cityValue;
             }
 
-            if (offer.TryGetProperty("province", out var province))
+            if (offer.TryGetProperty("province", out JsonElement province))
             {
-                var provinceValue = province.GetProperty("value").GetString() ?? string.Empty;
+                string provinceValue = province.GetProperty("value").GetString() ?? string.Empty;
                 if (!string.IsNullOrEmpty(provinceValue))
                 {
                     if (!string.IsNullOrEmpty(location))
@@ -185,28 +185,28 @@ public sealed class InfoJobsApiClient
                 }
             }
 
-            var id = offer.GetProperty("id").GetString() ?? Guid.NewGuid().ToString();
+            string id = offer.GetProperty("id").GetString() ?? Guid.NewGuid().ToString();
 
             // Parse URL (link field)
             string? url = null;
-            if (offer.TryGetProperty("link", out var link))
+            if (offer.TryGetProperty("link", out JsonElement link))
             {
                 url = link.GetString();
             }
 
             // Parse salary information (salaryMin/salaryMax per InfoJobs API)
             string? salary = null;
-            var hasSalaryMin = offer.TryGetProperty("salaryMin", out var salaryMin) && salaryMin.ValueKind != JsonValueKind.Null;
-            var hasSalaryMax = offer.TryGetProperty("salaryMax", out var salaryMax) && salaryMax.ValueKind != JsonValueKind.Null;
+            bool hasSalaryMin = offer.TryGetProperty("salaryMin", out JsonElement salaryMin) && salaryMin.ValueKind != JsonValueKind.Null;
+            bool hasSalaryMax = offer.TryGetProperty("salaryMax", out JsonElement salaryMax) && salaryMax.ValueKind != JsonValueKind.Null;
 
             if (hasSalaryMin)
             {
-                var minAmount = salaryMin.GetProperty("value").GetString() ?? string.Empty;
+                string minAmount = salaryMin.GetProperty("value").GetString() ?? string.Empty;
                 if (!string.IsNullOrEmpty(minAmount))
                 {
                     if (hasSalaryMax)
                     {
-                        var maxAmount = salaryMax.GetProperty("value").GetString() ?? string.Empty;
+                        string maxAmount = salaryMax.GetProperty("value").GetString() ?? string.Empty;
                         salary = $"{minAmount} - {maxAmount}";
                     }
                     else
@@ -222,11 +222,11 @@ public sealed class InfoJobsApiClient
 
             // Parse job type from contract type
             JobType jobType = JobType.Unknown;
-            if (offer.TryGetProperty("contractType", out var contractType))
+            if (offer.TryGetProperty("contractType", out JsonElement contractType))
             {
-                var contractValue = contractType.GetProperty("value").GetString()?.ToLowerInvariant() ?? string.Empty;
+                string contractValue = contractType.GetProperty("value").GetString()?.ToLowerInvariant() ?? string.Empty;
 
-                foreach (var mapping in InfoJobsConstants.JobTypeMapping)
+                foreach (KeyValuePair<string, JobType> mapping in InfoJobsConstants.JobTypeMapping)
                 {
                     if (contractValue.Contains(mapping.Key))
                     {
@@ -237,18 +237,18 @@ public sealed class InfoJobsApiClient
             }
 
             // Parse description from requirementMin field (per InfoJobs API)
-            var description = string.Empty;
-            if (offer.TryGetProperty("requirementMin", out var requirementMin))
+            string description = string.Empty;
+            if (offer.TryGetProperty("requirementMin", out JsonElement requirementMin))
             {
                 description = requirementMin.GetString() ?? string.Empty;
             }
 
             // Parse publication date (updated field per InfoJobs API)
             DateTimeOffset postedAt = DateTimeOffset.UtcNow;
-            if (offer.TryGetProperty("updated", out var updated))
+            if (offer.TryGetProperty("updated", out JsonElement updated))
             {
-                var dateStr = updated.GetString();
-                if (!string.IsNullOrEmpty(dateStr) && DateTimeOffset.TryParse(dateStr, out var dt))
+                string? dateStr = updated.GetString();
+                if (!string.IsNullOrEmpty(dateStr) && DateTimeOffset.TryParse(dateStr, out DateTimeOffset dt))
                     postedAt = dt;
             }
 
@@ -277,7 +277,7 @@ public sealed class InfoJobsApiClient
     {
         ArgumentNullException.ThrowIfNull(jobId);
 
-        var url = $"{_options.ApiEndpoint}1/offer/{Uri.EscapeDataString(jobId)}";
+        string url = $"{_options.ApiEndpoint}1/offer/{Uri.EscapeDataString(jobId)}";
         LogFetchingJobDetails(_logger, jobId, null);
 
         var req = new HttpRequestMessage(HttpMethod.Get, url);
@@ -285,24 +285,24 @@ public sealed class InfoJobsApiClient
         // Set authentication headers (Basic Auth with Client ID/Secret)
         if (!string.IsNullOrEmpty(_options.ClientId) && !string.IsNullOrEmpty(_options.ClientSecret))
         {
-            var auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));
+            string auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));
             req.Headers.Authorization = new AuthenticationHeaderValue("Basic", auth);
         }
 
         // Add InfoJobs API headers
-        foreach (var header in InfoJobsConstants.ApiHeaders)
+        foreach (KeyValuePair<string, string> header in InfoJobsConstants.ApiHeaders)
         {
             req.Headers.TryAddWithoutValidation(header.Key, header.Value);
         }
 
         try
         {
-            var res = await _http.SendAsync(req, ct).ConfigureAwait(false);
-            var json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            HttpResponseMessage res = await _http.SendAsync(req, ct).ConfigureAwait(false);
+            string json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             // Log HTTP status and response for debugging
-            var statusCode = (int)res.StatusCode;
-            var bodyPreview = json.Length > 500 ? json[..500] + "..." : json;
+            int statusCode = (int)res.StatusCode;
+            string bodyPreview = json.Length > 500 ? json[..500] + "..." : json;
             LogHttpResponse(_logger, statusCode, bodyPreview, null);
 
             if (!res.IsSuccessStatusCode)
@@ -321,8 +321,8 @@ public sealed class InfoJobsApiClient
 
             // Parse JSON response
             using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-            var job = ParseJobOfferDetails(root) ?? throw new InvalidOperationException($"Failed to parse job details for ID: {jobId}");
+            JsonElement root = doc.RootElement;
+            JobListing job = ParseJobOfferDetails(root) ?? throw new InvalidOperationException($"Failed to parse job details for ID: {jobId}");
 
             return job;
         }
@@ -337,25 +337,25 @@ public sealed class InfoJobsApiClient
     {
         try
         {
-            var title = offer.GetProperty("title").GetString() ?? string.Empty;
+            string title = offer.GetProperty("title").GetString() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(title))
                 return null;
 
             // Parse company from author field
-            var company = offer.GetProperty("author").GetProperty("name").GetString() ?? string.Empty;
+            string company = offer.GetProperty("author").GetProperty("name").GetString() ?? string.Empty;
 
             // Parse location (optional city + mandatory province)
-            var location = string.Empty;
-            if (offer.TryGetProperty("city", out var city))
+            string location = string.Empty;
+            if (offer.TryGetProperty("city", out JsonElement city))
             {
-                var cityValue = city.GetString() ?? string.Empty;
+                string cityValue = city.GetString() ?? string.Empty;
                 if (!string.IsNullOrEmpty(cityValue))
                     location = cityValue;
             }
 
-            if (offer.TryGetProperty("province", out var province))
+            if (offer.TryGetProperty("province", out JsonElement province))
             {
-                var provinceValue = province.GetProperty("value").GetString() ?? string.Empty;
+                string provinceValue = province.GetProperty("value").GetString() ?? string.Empty;
                 if (!string.IsNullOrEmpty(provinceValue))
                 {
                     if (!string.IsNullOrEmpty(location))
@@ -365,28 +365,28 @@ public sealed class InfoJobsApiClient
                 }
             }
 
-            var id = offer.GetProperty("id").GetString() ?? Guid.NewGuid().ToString();
+            string id = offer.GetProperty("id").GetString() ?? Guid.NewGuid().ToString();
 
             // Parse URL (link field)
             string? url = null;
-            if (offer.TryGetProperty("link", out var link))
+            if (offer.TryGetProperty("link", out JsonElement link))
             {
                 url = link.GetString();
             }
 
             // Parse salary information (salaryMin/salaryMax per InfoJobs API)
             string? salary = null;
-            var hasSalaryMin = offer.TryGetProperty("salaryMin", out var salaryMin) && salaryMin.ValueKind != JsonValueKind.Null;
-            var hasSalaryMax = offer.TryGetProperty("salaryMax", out var salaryMax) && salaryMax.ValueKind != JsonValueKind.Null;
+            bool hasSalaryMin = offer.TryGetProperty("salaryMin", out JsonElement salaryMin) && salaryMin.ValueKind != JsonValueKind.Null;
+            bool hasSalaryMax = offer.TryGetProperty("salaryMax", out JsonElement salaryMax) && salaryMax.ValueKind != JsonValueKind.Null;
 
             if (hasSalaryMin)
             {
-                var minAmount = salaryMin.GetProperty("value").GetString() ?? string.Empty;
+                string minAmount = salaryMin.GetProperty("value").GetString() ?? string.Empty;
                 if (!string.IsNullOrEmpty(minAmount))
                 {
                     if (hasSalaryMax)
                     {
-                        var maxAmount = salaryMax.GetProperty("value").GetString() ?? string.Empty;
+                        string maxAmount = salaryMax.GetProperty("value").GetString() ?? string.Empty;
                         salary = $"{minAmount} - {maxAmount}";
                     }
                     else
@@ -402,11 +402,11 @@ public sealed class InfoJobsApiClient
 
             // Parse job type from contract type
             JobType jobType = JobType.Unknown;
-            if (offer.TryGetProperty("contractType", out var contractType))
+            if (offer.TryGetProperty("contractType", out JsonElement contractType))
             {
-                var contractValue = contractType.GetProperty("value").GetString()?.ToLowerInvariant() ?? string.Empty;
+                string contractValue = contractType.GetProperty("value").GetString()?.ToLowerInvariant() ?? string.Empty;
 
-                foreach (var mapping in InfoJobsConstants.JobTypeMapping)
+                foreach (KeyValuePair<string, JobType> mapping in InfoJobsConstants.JobTypeMapping)
                 {
                     if (contractValue.Contains(mapping.Key))
                     {
@@ -417,32 +417,32 @@ public sealed class InfoJobsApiClient
             }
 
             // Parse FULL description from 'description' field (more complete than requirementMin)
-            var description = string.Empty;
-            if (offer.TryGetProperty("description", out var descriptionElement))
+            string description = string.Empty;
+            if (offer.TryGetProperty("description", out JsonElement descriptionElement))
             {
                 description = descriptionElement.GetString() ?? string.Empty;
             }
 
             // Fallback to requirementMin if description is empty
-            if (string.IsNullOrWhiteSpace(description) && offer.TryGetProperty("requirementMin", out var requirementMin))
+            if (string.IsNullOrWhiteSpace(description) && offer.TryGetProperty("requirementMin", out JsonElement requirementMin))
             {
                 description = requirementMin.GetString() ?? string.Empty;
             }
 
             // Parse publication date (updated field per InfoJobs API)
             DateTimeOffset postedAt = DateTimeOffset.UtcNow;
-            if (offer.TryGetProperty("updated", out var updated))
+            if (offer.TryGetProperty("updated", out JsonElement updated))
             {
-                var dateStr = updated.GetString();
-                if (!string.IsNullOrEmpty(dateStr) && DateTimeOffset.TryParse(dateStr, out var dt))
+                string? dateStr = updated.GetString();
+                if (!string.IsNullOrEmpty(dateStr) && DateTimeOffset.TryParse(dateStr, out DateTimeOffset dt))
                     postedAt = dt;
             }
 
             // Parse additional details available in full offer endpoint
             string? experienceRequired = null;
-            if (offer.TryGetProperty("experienceMin", out var experienceMin))
+            if (offer.TryGetProperty("experienceMin", out JsonElement experienceMin))
             {
-                var expValue = experienceMin.GetProperty("value").GetString();
+                string? expValue = experienceMin.GetProperty("value").GetString();
                 if (!string.IsNullOrEmpty(expValue))
                 {
                     experienceRequired = expValue;

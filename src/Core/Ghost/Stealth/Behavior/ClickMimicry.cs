@@ -37,31 +37,31 @@ public sealed class ClickMimicry
         ArgumentNullException.ThrowIfNull(element);
 
         // Get element bounding box
-        var box = await element.BoundingBoxAsync() ?? throw new InvalidOperationException("Element is not visible or does not have a bounding box.");
+        LocatorBoundingBoxResult box = await element.BoundingBoxAsync().ConfigureAwait(false) ?? throw new InvalidOperationException("Element is not visible or does not have a bounding box.");
 
         // Calculate random click position within element bounds
         // Avoid clicking too close to edges (5px margin)
-        var margin = 5f;
-        var usableWidth = Math.Max(box.Width - (2 * margin), 1);
-        var usableHeight = Math.Max(box.Height - (2 * margin), 1);
+        float margin = 5f;
+        float usableWidth = Math.Max(box.Width - (2 * margin), 1);
+        float usableHeight = Math.Max(box.Height - (2 * margin), 1);
 
-        var offsetX = margin + (float)(_random.NextDouble() * usableWidth);
-        var offsetY = margin + (float)(_random.NextDouble() * usableHeight);
+        float offsetX = margin + (float)(_random.NextDouble() * usableWidth);
+        float offsetY = margin + (float)(_random.NextDouble() * usableHeight);
 
-        var clickX = box.X + offsetX;
-        var clickY = box.Y + offsetY;
+        float clickX = box.X + offsetX;
+        float clickY = box.Y + offsetY;
 
         // Move mouse to click position using Bezier curve
-        await _mouseMimicry.MoveHumanLikeAsync(mouse, clickX, clickY, cancellationToken);
+        await _mouseMimicry.MoveHumanLikeAsync(mouse, clickX, clickY, cancellationToken).ConfigureAwait(false);
 
         // Short pause before clicking (simulates human aim/focus)
-        await _timingMimicry.PreClickDelayAsync(cancellationToken);
+        await _timingMimicry.PreClickDelayAsync(cancellationToken).ConfigureAwait(false);
 
         // Perform the click
-        await mouse.ClickAsync(clickX, clickY);
+        await mouse.ClickAsync(clickX, clickY).ConfigureAwait(false);
 
         // Pause after clicking (simulates waiting for response)
-        await _timingMimicry.PostClickDelayAsync(cancellationToken);
+        await _timingMimicry.PostClickDelayAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -79,30 +79,30 @@ public sealed class ClickMimicry
         ArgumentNullException.ThrowIfNull(element);
 
         // Get element bounding box
-        var box = await element.BoundingBoxAsync() ?? throw new InvalidOperationException("Element is not visible or does not have a bounding box.");
+        LocatorBoundingBoxResult box = await element.BoundingBoxAsync().ConfigureAwait(false) ?? throw new InvalidOperationException("Element is not visible or does not have a bounding box.");
 
         // Calculate click position (same for both clicks)
-        var margin = 5f;
-        var usableWidth = Math.Max(box.Width - (2 * margin), 1);
-        var usableHeight = Math.Max(box.Height - (2 * margin), 1);
+        float margin = 5f;
+        float usableWidth = Math.Max(box.Width - (2 * margin), 1);
+        float usableHeight = Math.Max(box.Height - (2 * margin), 1);
 
-        var offsetX = margin + (float)(_random.NextDouble() * usableWidth);
-        var offsetY = margin + (float)(_random.NextDouble() * usableHeight);
+        float offsetX = margin + (float)(_random.NextDouble() * usableWidth);
+        float offsetY = margin + (float)(_random.NextDouble() * usableHeight);
 
-        var clickX = box.X + offsetX;
-        var clickY = box.Y + offsetY;
+        float clickX = box.X + offsetX;
+        float clickY = box.Y + offsetY;
 
         // Move mouse to click position
-        await _mouseMimicry.MoveHumanLikeAsync(mouse, clickX, clickY, cancellationToken);
+        await _mouseMimicry.MoveHumanLikeAsync(mouse, clickX, clickY, cancellationToken).ConfigureAwait(false);
 
         // Short pause before clicking
-        await _timingMimicry.PreClickDelayAsync(cancellationToken);
+        await _timingMimicry.PreClickDelayAsync(cancellationToken).ConfigureAwait(false);
 
         // Perform double-click
-        await mouse.DblClickAsync(clickX, clickY);
+        await mouse.DblClickAsync(clickX, clickY).ConfigureAwait(false);
 
         // Pause after clicking
-        await _timingMimicry.PostClickDelayAsync(cancellationToken);
+        await _timingMimicry.PostClickDelayAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -120,29 +120,29 @@ public sealed class ClickMimicry
         ArgumentNullException.ThrowIfNull(element);
 
         // Get element bounding box
-        var box = await element.BoundingBoxAsync() ?? throw new InvalidOperationException("Element is not visible or does not have a bounding box.");
+        LocatorBoundingBoxResult box = await element.BoundingBoxAsync().ConfigureAwait(false) ?? throw new InvalidOperationException("Element is not visible or does not have a bounding box.");
 
         // Calculate click position
-        var margin = 5f;
-        var usableWidth = Math.Max(box.Width - (2 * margin), 1);
-        var usableHeight = Math.Max(box.Height - (2 * margin), 1);
+        float margin = 5f;
+        float usableWidth = Math.Max(box.Width - (2 * margin), 1);
+        float usableHeight = Math.Max(box.Height - (2 * margin), 1);
 
-        var offsetX = margin + (float)(_random.NextDouble() * usableWidth);
-        var offsetY = margin + (float)(_random.NextDouble() * usableHeight);
+        float offsetX = margin + (float)(_random.NextDouble() * usableWidth);
+        float offsetY = margin + (float)(_random.NextDouble() * usableHeight);
 
-        var clickX = box.X + offsetX;
-        var clickY = box.Y + offsetY;
+        float clickX = box.X + offsetX;
+        float clickY = box.Y + offsetY;
 
         // Move mouse to click position
-        await _mouseMimicry.MoveHumanLikeAsync(mouse, clickX, clickY, cancellationToken);
+        await _mouseMimicry.MoveHumanLikeAsync(mouse, clickX, clickY, cancellationToken).ConfigureAwait(false);
 
         // Short pause before clicking
-        await _timingMimicry.PreClickDelayAsync(cancellationToken);
+        await _timingMimicry.PreClickDelayAsync(cancellationToken).ConfigureAwait(false);
 
         // Perform right-click
-        await mouse.ClickAsync(clickX, clickY, new() { Button = MouseButton.Right });
+        await mouse.ClickAsync(clickX, clickY, new() { Button = MouseButton.Right }).ConfigureAwait(false);
 
         // Pause after clicking
-        await _timingMimicry.PostClickDelayAsync(cancellationToken);
+        await _timingMimicry.PostClickDelayAsync(cancellationToken).ConfigureAwait(false);
     }
 }

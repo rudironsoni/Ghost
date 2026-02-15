@@ -169,7 +169,7 @@ public static class CompressionProfile
         string path = "/large",
         int sizeKb = 100)
     {
-        var content = new string('A', sizeKb * 1024);
+        string content = new string('A', sizeKb * 1024);
 
         server
             .Given(Request.Create()

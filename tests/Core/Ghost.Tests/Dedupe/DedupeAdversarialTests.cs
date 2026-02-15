@@ -21,8 +21,8 @@ public class DedupeAdversarialTests
         var fullUrlRequest = new Request("https://example.com/careers/senior-engineer-123");
 
         // Act
-        var shortFingerprint = RequestFingerprinter.CreateFingerprint(shortUrlRequest);
-        var fullFingerprint = RequestFingerprinter.CreateFingerprint(fullUrlRequest);
+        string shortFingerprint = RequestFingerprinter.CreateFingerprint(shortUrlRequest);
+        string fullFingerprint = RequestFingerprinter.CreateFingerprint(fullUrlRequest);
 
         // Assert - Different fingerprints (different domains)
         // This is expected behavior - redirect resolution happens at HTTP layer
@@ -38,9 +38,9 @@ public class DedupeAdversarialTests
         var canonicalUrl = new Request("https://example.com/jobs/456");
 
         // Act
-        var fp1 = RequestFingerprinter.CreateFingerprint(trackingUrl1);
-        var fp2 = RequestFingerprinter.CreateFingerprint(trackingUrl2);
-        var fpCanonical = RequestFingerprinter.CreateFingerprint(canonicalUrl);
+        string fp1 = RequestFingerprinter.CreateFingerprint(trackingUrl1);
+        string fp2 = RequestFingerprinter.CreateFingerprint(trackingUrl2);
+        string fpCanonical = RequestFingerprinter.CreateFingerprint(canonicalUrl);
 
         // Assert - Tracking URLs have different fingerprints due to different IDs
         fp1.Should().NotBe(fp2);
@@ -57,9 +57,9 @@ public class DedupeAdversarialTests
         var hop3 = new Request("https://example.com/careers/job?id=12345");
 
         // Act
-        var fp1 = RequestFingerprinter.CreateFingerprint(hop1);
-        var fp2 = RequestFingerprinter.CreateFingerprint(hop2);
-        var fp3 = RequestFingerprinter.CreateFingerprint(hop3);
+        string fp1 = RequestFingerprinter.CreateFingerprint(hop1);
+        string fp2 = RequestFingerprinter.CreateFingerprint(hop2);
+        string fp3 = RequestFingerprinter.CreateFingerprint(hop3);
 
         // Assert - Each hop has different fingerprint
         fp1.Should().NotBe(fp2);
@@ -75,8 +75,8 @@ public class DedupeAdversarialTests
         var url2 = new Request("https://example.com/jobs?source=linkedin&id=123");
 
         // Act
-        var fp1 = RequestFingerprinter.CreateFingerprint(url1);
-        var fp2 = RequestFingerprinter.CreateFingerprint(url2);
+        string fp1 = RequestFingerprinter.CreateFingerprint(url1);
+        string fp2 = RequestFingerprinter.CreateFingerprint(url2);
 
         // Assert - Should have same fingerprint (query params sorted)
         fp1.Should().Be(fp2);
@@ -102,8 +102,8 @@ public class DedupeAdversarialTests
         };
 
         // Act
-        var id1 = _dedupeService.GenerateId(job1.Title, job1.Company);
-        var id2 = _dedupeService.GenerateId(job2.Title, job2.Company);
+        string id1 = _dedupeService.GenerateId(job1.Title, job1.Company);
+        string id2 = _dedupeService.GenerateId(job2.Title, job2.Company);
 
         // Assert - Same dedupe ID for same job
         id1.Should().Be(id2);
@@ -130,9 +130,9 @@ public class DedupeAdversarialTests
         };
 
         // Act
-        var idEnUs = _dedupeService.GenerateId(jobEnUs.Title, jobEnUs.Company);
-        var idDeDe = _dedupeService.GenerateId(jobDeDe.Title, jobDeDe.Company);
-        var idEnGb = _dedupeService.GenerateId(jobEnGb.Title, jobEnGb.Company);
+        string idEnUs = _dedupeService.GenerateId(jobEnUs.Title, jobEnUs.Company);
+        string idDeDe = _dedupeService.GenerateId(jobDeDe.Title, jobDeDe.Company);
+        string idEnGb = _dedupeService.GenerateId(jobEnGb.Title, jobEnGb.Company);
 
         // Assert - All variants have same dedupe ID
         idEnUs.Should().Be(idDeDe);
@@ -149,9 +149,9 @@ public class DedupeAdversarialTests
         var tabletUrl = new Request("https://tablet.example.com/jobs/123");
 
         // Act
-        var fpMobile = RequestFingerprinter.CreateFingerprint(mobileUrl);
-        var fpDesktop = RequestFingerprinter.CreateFingerprint(desktopUrl);
-        var fpTablet = RequestFingerprinter.CreateFingerprint(tabletUrl);
+        string fpMobile = RequestFingerprinter.CreateFingerprint(mobileUrl);
+        string fpDesktop = RequestFingerprinter.CreateFingerprint(desktopUrl);
+        string fpTablet = RequestFingerprinter.CreateFingerprint(tabletUrl);
 
         // Assert - Different subdomains = different fingerprints
         fpMobile.Should().NotBe(fpDesktop);
@@ -175,8 +175,8 @@ public class DedupeAdversarialTests
         };
 
         // Act
-        var id1 = _dedupeService.GenerateId(job1.Title, job1.Company);
-        var id2 = _dedupeService.GenerateId(job2.Title, job2.Company);
+        string id1 = _dedupeService.GenerateId(job1.Title, job1.Company);
+        string id2 = _dedupeService.GenerateId(job2.Title, job2.Company);
 
         // Assert - Same dedupe ID
         id1.Should().Be(id2);
@@ -203,9 +203,9 @@ public class DedupeAdversarialTests
         };
 
         // Act
-        var id1 = _dedupeService.GenerateId(job1.Title, job1.Company);
-        var id2 = _dedupeService.GenerateId(job2.Title, job2.Company);
-        var id3 = _dedupeService.GenerateId(job3.Title, job3.Company);
+        string id1 = _dedupeService.GenerateId(job1.Title, job1.Company);
+        string id2 = _dedupeService.GenerateId(job2.Title, job2.Company);
+        string id3 = _dedupeService.GenerateId(job3.Title, job3.Company);
 
         // Assert - All should have same dedupe ID (normalized to lowercase)
         id1.Should().Be(id2);
@@ -233,8 +233,8 @@ public class DedupeAdversarialTests
         };
 
         // Act
-        var originalId = _dedupeService.GenerateId(originalJob.Title, originalJob.Company);
-        var updatedId = _dedupeService.GenerateId(updatedJob.Title, updatedJob.Company);
+        string originalId = _dedupeService.GenerateId(originalJob.Title, originalJob.Company);
+        string updatedId = _dedupeService.GenerateId(updatedJob.Title, updatedJob.Company);
 
         // Assert - Different titles = different dedupe IDs
         originalId.Should().NotBe(updatedId);
@@ -256,8 +256,8 @@ public class DedupeAdversarialTests
         };
 
         // Act
-        var originalId = _dedupeService.GenerateId(originalJob.Title, originalJob.Company);
-        var repostedId = _dedupeService.GenerateId(repostedJob.Title, repostedJob.Company);
+        string originalId = _dedupeService.GenerateId(originalJob.Title, originalJob.Company);
+        string repostedId = _dedupeService.GenerateId(repostedJob.Title, repostedJob.Company);
 
         // Assert - Same job = same dedupe ID
         originalId.Should().Be(repostedId);
@@ -274,9 +274,9 @@ public class DedupeAdversarialTests
         };
 
         // Act - Generate ID multiple times
-        var id1 = _dedupeService.GenerateId(job.Title, job.Company);
-        var id2 = _dedupeService.GenerateId(job.Title, job.Company);
-        var id3 = _dedupeService.GenerateId(job.Title, job.Company);
+        string id1 = _dedupeService.GenerateId(job.Title, job.Company);
+        string id2 = _dedupeService.GenerateId(job.Title, job.Company);
+        string id3 = _dedupeService.GenerateId(job.Title, job.Company);
 
         // Assert - All IDs should be identical
         id1.Should().Be(id2);
@@ -300,8 +300,8 @@ public class DedupeAdversarialTests
         };
 
         // Act
-        var originalId = _dedupeService.GenerateId(originalJob.Title, originalJob.Company);
-        var rebrandedId = _dedupeService.GenerateId(rebrandedJob.Title, rebrandedJob.Company);
+        string originalId = _dedupeService.GenerateId(originalJob.Title, originalJob.Company);
+        string rebrandedId = _dedupeService.GenerateId(rebrandedJob.Title, rebrandedJob.Company);
 
         // Assert - Different company = different dedupe ID
         originalId.Should().NotBe(rebrandedId);
@@ -329,9 +329,9 @@ public class DedupeAdversarialTests
         };
 
         // Act
-        var id1 = _dedupeService.GenerateId(job1.Title, job1.Company);
-        var id2 = _dedupeService.GenerateId(job2.Title, job2.Company);
-        var id3 = _dedupeService.GenerateId(job3.Title, job3.Company);
+        string id1 = _dedupeService.GenerateId(job1.Title, job1.Company);
+        string id2 = _dedupeService.GenerateId(job2.Title, job2.Company);
+        string id3 = _dedupeService.GenerateId(job3.Title, job3.Company);
 
         // Assert - All should be different because whitespace is preserved in the hash
         id1.Should().NotBe(id2);
@@ -352,9 +352,9 @@ public class DedupeAdversarialTests
         var url3 = new Request("https://example.com/jobs?id=123&utm_source=google&utm_medium=cpc&utm_campaign=test");
 
         // Act
-        var fp1 = RequestFingerprinter.CreateFingerprint(url1);
-        var fp2 = RequestFingerprinter.CreateFingerprint(url2);
-        var fp3 = RequestFingerprinter.CreateFingerprint(url3);
+        string fp1 = RequestFingerprinter.CreateFingerprint(url1);
+        string fp2 = RequestFingerprinter.CreateFingerprint(url2);
+        string fp3 = RequestFingerprinter.CreateFingerprint(url3);
 
         // Assert - url1 and url2 same (sorted params), url3 different (extra param)
         fp1.Should().Be(fp2);
@@ -378,8 +378,8 @@ public class DedupeAdversarialTests
         };
 
         // Act
-        var originalId = _dedupeService.GenerateId(originalJob.Title, originalJob.Company);
-        var promotedId = _dedupeService.GenerateId(promotedJob.Title, promotedJob.Company);
+        string originalId = _dedupeService.GenerateId(originalJob.Title, originalJob.Company);
+        string promotedId = _dedupeService.GenerateId(promotedJob.Title, promotedJob.Company);
 
         // Assert - Different dedupe IDs
         originalId.Should().NotBe(promotedId);
@@ -394,9 +394,9 @@ public class DedupeAdversarialTests
         var url3 = new Request("https://example.com/jobs?id=123");
 
         // Act
-        var fp1 = RequestFingerprinter.CreateFingerprint(url1);
-        var fp2 = RequestFingerprinter.CreateFingerprint(url2);
-        var fp3 = RequestFingerprinter.CreateFingerprint(url3);
+        string fp1 = RequestFingerprinter.CreateFingerprint(url1);
+        string fp2 = RequestFingerprinter.CreateFingerprint(url2);
+        string fp3 = RequestFingerprinter.CreateFingerprint(url3);
 
         // Assert - All should have same fingerprint (fragments ignored)
         fp1.Should().Be(fp2);
@@ -414,10 +414,10 @@ public class DedupeAdversarialTests
         var url4 = new Request("http://example.com:80/jobs/123");
 
         // Act
-        var fp1 = RequestFingerprinter.CreateFingerprint(url1);
-        var fp2 = RequestFingerprinter.CreateFingerprint(url2);
-        var fp3 = RequestFingerprinter.CreateFingerprint(url3);
-        var fp4 = RequestFingerprinter.CreateFingerprint(url4);
+        string fp1 = RequestFingerprinter.CreateFingerprint(url1);
+        string fp2 = RequestFingerprinter.CreateFingerprint(url2);
+        string fp3 = RequestFingerprinter.CreateFingerprint(url3);
+        string fp4 = RequestFingerprinter.CreateFingerprint(url4);
 
         // Assert - HTTPS URLs same, HTTP URLs same, but HTTPS != HTTP
         fp1.Should().Be(fp2);

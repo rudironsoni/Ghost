@@ -109,7 +109,7 @@ public sealed class SpiderStateBox
     /// </returns>
     public bool TryGetValue<T>(string key, [MaybeNullWhen(false)] out T value)
     {
-        if (Properties.TryGetValue(key, out var obj) && obj is T typedValue)
+        if (Properties.TryGetValue(key, out object? obj) && obj is T typedValue)
         {
             value = typedValue;
             return true;
@@ -128,7 +128,7 @@ public sealed class SpiderStateBox
     /// <returns>The value if found and of the correct type; otherwise, the default value.</returns>
     public T GetValueOrDefault<T>(string key, T defaultValue = default!) where T : notnull
     {
-        return TryGetValue<T>(key, out var value) ? value : defaultValue;
+        return TryGetValue<T>(key, out T? value) ? value : defaultValue;
     }
 
     /// <summary>
