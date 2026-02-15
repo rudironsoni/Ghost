@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -45,7 +45,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Worker", "src\Apps\Gh
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Contracts.Jobs", "src\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj", "{478EB99E-04D1-47DF-A205-1754B7CD6CE6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Sdk.Spider", "src\SDK\Ghost.Sdk.Spider\Ghost.Sdk.Spider.csproj", "{D5AB0AC6-0D09-4D61-837C-AC1C043E3B97}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Sdk.Spider", "src\Sdk\Ghost.Sdk.Spider\Ghost.Sdk.Spider.csproj", "{D5AB0AC6-0D09-4D61-837C-AC1C043E3B97}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{D0D6B8B0-AC35-B3FA-0B96-A9B0E4A3253E}"
 EndProject
