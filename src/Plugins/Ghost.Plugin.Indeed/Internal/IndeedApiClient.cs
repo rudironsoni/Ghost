@@ -12,8 +12,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Abstractions;
 using Ghost.Http;
-using Ghost.Models;
 using Ghost.Infrastructure.Session;
+using Ghost.Models;
 using Microsoft.Extensions.Logging;
 using LoggerMessage = Microsoft.Extensions.Logging.LoggerMessage;
 

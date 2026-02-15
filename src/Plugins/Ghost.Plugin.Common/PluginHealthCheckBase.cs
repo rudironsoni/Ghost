@@ -21,9 +21,9 @@ public abstract class PluginHealthCheckBase : IPluginReadinessCheck
         try
         {
             _logger.LogDebug("Starting health check for {CheckName}", GetType().Name);
-            
+
             var result = await PerformCheckAsync(cancellationToken);
-            
+
             if (result.IsReady)
             {
                 _logger.LogInformation("Health check passed for {CheckName}", GetType().Name);
@@ -32,7 +32,7 @@ public abstract class PluginHealthCheckBase : IPluginReadinessCheck
             {
                 _logger.LogWarning("Health check failed for {CheckName}: {Message}", GetType().Name, result.Message);
             }
-            
+
             return result;
         }
         catch (Exception ex)
