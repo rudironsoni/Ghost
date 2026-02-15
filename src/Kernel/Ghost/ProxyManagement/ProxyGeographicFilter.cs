@@ -5,7 +5,6 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Ghost.Abstractions;
 using Microsoft.Extensions.Logging;
 
 namespace Ghost.ProxyManagement;

@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Ghost.Kernel;
 using Xunit;
 
-namespace Ghost.Core.Tests.Integration;
+namespace Ghost.Kernel.Tests.Integration;
 
 public class GhostKernelIntegrationTests
 {

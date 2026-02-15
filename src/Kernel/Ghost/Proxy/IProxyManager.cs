@@ -1,4 +1,3 @@
-using Ghost.Abstractions;
 
 namespace Ghost.Proxy;
 

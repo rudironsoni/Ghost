@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Apps\Ghost.Worker\Ghost.Worker.csproj" />
+    <ProjectReference Include="../../../../../src/Apps\Ghost.Worker\Ghost.Worker.csproj" />
   </ItemGroup>
 
   <ItemGroup>

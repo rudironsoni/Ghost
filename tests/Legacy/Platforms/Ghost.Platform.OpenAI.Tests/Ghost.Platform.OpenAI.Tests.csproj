@@ -8,7 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Legacy\Platforms\Ghost.Platform.OpenAI\Ghost.Platform.OpenAI.csproj" />
-    <ProjectReference Include="..\..\..\src\Kernel\Ghost\Ghost.csproj" />
+    <ProjectReference Include="../../../../../src/Kernel\Ghost\Ghost.csproj" />
   </ItemGroup>
 
   <ItemGroup>

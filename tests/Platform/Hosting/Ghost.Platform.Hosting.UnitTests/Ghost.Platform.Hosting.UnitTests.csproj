@@ -5,10 +5,10 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Platform\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
-    <ProjectReference Include="..\..\..\src\Kernel\Ghost\Ghost.csproj" />
-    <ProjectReference Include="..\..\..\src\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\src\Apps\Ghost.Worker\Ghost.Worker.csproj" />
+    <ProjectReference Include="..\../../../../../src/Platform\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
+    <ProjectReference Include="..\../../../../../src/Kernel\Ghost\Ghost.csproj" />
+    <ProjectReference Include="..\../../../../../src/Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
+    <ProjectReference Include="..\../../../../../src/Apps\Ghost.Worker\Ghost.Worker.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -16,8 +16,15 @@
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="Moq" />
+    <PackageReference Include="NSubstitute" />
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Playwright" />
+    <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>
 </Project>

@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Engine\Ghost.Engine.Abstractions\Ghost.Engine.Abstractions.csproj" />
-    <ProjectReference Include="..\..\..\src\Platform\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
+    <ProjectReference Include="../../../../../src/Engine\Ghost.Engine.Abstractions\Ghost.Engine.Abstractions.csproj" />
+    <ProjectReference Include="../../../../../src/Platform\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
   </ItemGroup>
 </Project>

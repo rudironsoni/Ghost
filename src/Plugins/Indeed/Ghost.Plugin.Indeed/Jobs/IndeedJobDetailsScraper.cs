@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Ghost.Abstractions;
 using Ghost.Contracts.Jobs;
 using Microsoft.Extensions.Logging;
 

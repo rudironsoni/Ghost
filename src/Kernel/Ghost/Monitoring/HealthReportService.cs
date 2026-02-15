@@ -1,4 +1,3 @@
-using Ghost.Abstractions;
 using Microsoft.Extensions.Logging;
 
 namespace Ghost.Monitoring;

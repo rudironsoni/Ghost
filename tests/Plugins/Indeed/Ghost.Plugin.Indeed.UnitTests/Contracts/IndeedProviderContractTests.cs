@@ -5,7 +5,6 @@ using Ghost.Platform.Indeed;
 using Ghost.Contracts.Jobs;
 using Ghost.Platform.Indeed.Tests.Contracts;
 using NSubstitute;
-using Ghost.Abstractions;
 using Microsoft.Extensions.Logging;
 using Ghost.Platform.Common.Session;
 using Ghost.Platform.Indeed.Internal;

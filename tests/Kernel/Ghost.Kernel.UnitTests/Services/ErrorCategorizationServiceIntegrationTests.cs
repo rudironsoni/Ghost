@@ -5,7 +5,7 @@ using Ghost.Contracts.Jobs;
 using Ghost.Kernel.Services;
 using Xunit;
 
-namespace Ghost.Core.Tests.Services;
+namespace Ghost.Kernel.Tests.Services;
 
 /// <summary>
 /// Integration tests for ErrorCategorizationService covering error categorization.

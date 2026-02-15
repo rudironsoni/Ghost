@@ -1,5 +1,5 @@
 using System.Text.Json;
-namespace Ghost.Abstractions;
+namespace Ghost;
 
 public interface IJsonLdExtractor
 {

@@ -3,7 +3,6 @@ using System.Collections.Specialized;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using Ghost.Abstractions;
 using Ghost.Contracts.Jobs;
 
 namespace Ghost.Plugin.LinkedIn.Internal;

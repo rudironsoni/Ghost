@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace Ghost.Abstractions;
+namespace Ghost;
 
 public interface ITextExtractor
 {

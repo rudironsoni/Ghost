@@ -1,5 +1,5 @@
 using Ghost.Contracts.Jobs;
-using Ghost.Core;
+using Ghost.Kernel;
 using Ghost.Plugin.Glassdoor.Jobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

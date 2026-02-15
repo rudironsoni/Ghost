@@ -1,4 +1,3 @@
-using Ghost.Abstractions;
 using Ghost.Kernel;
 using Ghost.Hosting;
 using Ghost.Plugin.LinkedIn.Internal;
@@ -37,19 +36,19 @@ public sealed class LinkedInPlugin : IExtension
         // Use factory method to prevent resolution during DI container validation
         services.AddSingleton<Internal.LinkedInSessionPool>(sp =>
         {
-            IGhostKernel kernel = sp.GetRequiredService<Ghost.Core.IGhostKernel>();
+            IGhostKernel kernel = sp.GetRequiredService<Ghost.Kernel.IGhostKernel>();
             LinkedInSessionPoolOptions poolOptions = sp.GetRequiredService<IOptions<LinkedInSessionPoolOptions>>().Value;
             ILogger<LinkedInSessionPool> logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Internal.LinkedInSessionPool>>();
-            IProxyProvider? proxyProvider = sp.GetService<Ghost.Abstractions.IProxyProvider>();
+            IProxyProvider? proxyProvider = sp.GetService<Ghost.IProxyProvider>();
             LinkedInOptions linkedInOptions = sp.GetRequiredService<IOptions<LinkedInOptions>>().Value;
             return Internal.LinkedInSessionPool.Create(kernel, poolOptions, logger, proxyProvider, linkedInOptions);
         });
 
         // Register platform-specific implementations for core abstractions
-        services.AddSingleton<Ghost.Abstractions.ITextExtractor, Internal.LinkedInTextExtractor>();
-        services.AddSingleton<Ghost.Abstractions.ICountryDomainProvider, Internal.LinkedInCountryProvider>();
+        services.AddSingleton<Ghost.ITextExtractor, Internal.LinkedInTextExtractor>();
+        services.AddSingleton<Ghost.ICountryDomainProvider, Internal.LinkedInCountryProvider>();
         // Ensure JsonLdExtractor from Core utilities is available to this platform
-        services.AddSingleton<Ghost.Abstractions.IJsonLdExtractor, Ghost.Utilities.JsonLdExtractor>();
+        services.AddSingleton<Ghost.IJsonLdExtractor, Ghost.Utilities.JsonLdExtractor>();
         // GuestJobSearch implements guest API scraping logic - Singleton since it only uses the session pool
         services.AddSingleton<Internal.IGuestJobSearch, Internal.GuestJobSearch>();
 
@@ -67,7 +66,7 @@ public sealed class LinkedInPlugin : IExtension
 
         // Register interface mappings (for when aggregators need them)
         services.AddScoped<Ghost.Contracts.Social.ISocialClient>(sp => sp.GetRequiredService<LinkedInSocialClient>());
-        services.AddScoped<Ghost.Abstractions.IJobScraper>(sp => sp.GetRequiredService<LinkedInJobClient>());
+        services.AddScoped<Ghost.IJobScraper>(sp => sp.GetRequiredService<LinkedInJobClient>());
         services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => sp.GetRequiredService<LinkedInJobClient>());
         services.AddScoped<Ghost.Contracts.News.INewsClient>(sp => sp.GetRequiredService<LinkedInNewsClient>());
 

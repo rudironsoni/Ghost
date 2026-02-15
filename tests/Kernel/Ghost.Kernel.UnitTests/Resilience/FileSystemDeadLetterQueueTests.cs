@@ -7,7 +7,7 @@ using Ghost.Resilience;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Ghost.Core.Tests.Resilience;
+namespace Ghost.Kernel.Tests.Resilience;
 
 public class FileSystemDeadLetterQueueTests
 {

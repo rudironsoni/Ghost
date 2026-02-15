@@ -4,7 +4,7 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Utilities;
 using Xunit;
 
-namespace Ghost.Core.Tests.Dedupe;
+namespace Ghost.Kernel.Tests.Dedupe;
 
 [Trait("Category", "Unit")]
 public class DedupeAdversarialTests

@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Xunit;
 
-namespace Ghost.Core.Tests;
+namespace Ghost.Kernel.Tests;
 
 public class SessionOptionsTests
 {

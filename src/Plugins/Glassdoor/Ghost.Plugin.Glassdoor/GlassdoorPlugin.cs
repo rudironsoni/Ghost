@@ -1,5 +1,4 @@
 using System.Net.Http;
-using Ghost.Abstractions;
 using Ghost.Contracts;
 using Ghost.Kernel;
 using Ghost.Hosting;
@@ -71,7 +70,7 @@ public sealed class GlassdoorPlugin : Ghost.Hosting.IExtension
         // Register GlassdoorJobClient and expose it as both IJobScraper and IJobClient
         // IJobScraper is used by AggregatedJobClient, IJobClient for backward compatibility
         services.AddScoped<GlassdoorJobClient>();
-        services.AddScoped<Ghost.Abstractions.IJobScraper>(sp => sp.GetRequiredService<GlassdoorJobClient>());
+        services.AddScoped<Ghost.IJobScraper>(sp => sp.GetRequiredService<GlassdoorJobClient>());
         services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => sp.GetRequiredService<GlassdoorJobClient>());
 
         // Register plugin-specific services

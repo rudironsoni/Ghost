@@ -1,5 +1,4 @@
 using System;
-using Ghost.Abstractions;
 
 namespace Ghost.Infrastructure.Session;
 

@@ -1,4 +1,3 @@
-using Ghost.Abstractions;
 using Ghost.Kernel;
 using Ghost.Hosting;
 using Ghost.Hosting.WebApi;
@@ -58,8 +57,8 @@ builder.Services.AddRedisQueueMetrics();
 builder.Services.AddHttpClient();
 builder.Services.Configure<AdminApiKeyOptions>(builder.Configuration.GetSection(AdminApiKeyOptions.SectionName));
 builder.Services.AddScoped<AdminApiKeyEndpointFilter>();
-builder.Services.Configure<Ghost.Core.ProxyOptions>(builder.Configuration.GetSection("Ghost:Proxy"));
-builder.Services.AddSingleton<Ghost.Abstractions.IProxyProvider, Ghost.Services.RotatingProxyProvider>();
+builder.Services.Configure<Ghost.Kernel.ProxyOptions>(builder.Configuration.GetSection("Ghost:Proxy"));
+builder.Services.AddSingleton<Ghost.IProxyProvider, Ghost.Services.RotatingProxyProvider>();
 
 // Register available proxy sources using configuration sections
 // Dynamic Proxy Source Registration
@@ -68,7 +67,7 @@ foreach (IConfigurationSection child in proxySection.GetChildren())
 {
     if (child.Key.Equals("Strategy", StringComparison.OrdinalIgnoreCase)) continue;
 
-    var config = new Ghost.Core.ProxySourceConfig();
+    var config = new Ghost.Kernel.ProxySourceConfig();
     child.Bind(config);
 
     if (child.Key.Equals("NordVPN", StringComparison.OrdinalIgnoreCase))
@@ -92,7 +91,7 @@ foreach (IConfigurationSection child in proxySection.GetChildren())
     if (!string.IsNullOrEmpty(config.Url))
     {
         // Register API Source
-        builder.Services.AddSingleton<Ghost.Abstractions.IProxySource>(sp =>
+        builder.Services.AddSingleton<Ghost.IProxySource>(sp =>
             new Ghost.Services.ApiProxySource(
                 sp.GetRequiredService<IHttpClientFactory>().CreateClient(),
                 config,
@@ -102,7 +101,7 @@ foreach (IConfigurationSection child in proxySection.GetChildren())
     else if (config.Hosts != null && config.Hosts.Count > 0)
     {
         // Register Static Source
-        builder.Services.AddSingleton<Ghost.Abstractions.IProxySource>(sp =>
+        builder.Services.AddSingleton<Ghost.IProxySource>(sp =>
             new Ghost.Services.StaticProxySource(
                 config,
                 sp.GetRequiredService<ILogger<Ghost.Services.StaticProxySource>>()
@@ -158,7 +157,7 @@ builder.Services.AddGhost(builder.Configuration, gw =>
 // Ensure IDeduplicationService is registered (should already be registered by AddGhost)
 // Register aggregator after extensions have been loaded so it can compose available scrapers
 // Register as Scoped to match the lifetime of IJobScraper implementations
-builder.Services.AddScoped<Ghost.Contracts.Jobs.IJobClient, Ghost.Core.Services.AggregatedJobClient>();
+builder.Services.AddScoped<Ghost.Contracts.Jobs.IJobClient, Ghost.Services.AggregatedJobClient>();
 
 WebApplication app = builder.Build();
 

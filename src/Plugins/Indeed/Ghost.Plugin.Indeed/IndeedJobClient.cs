@@ -12,7 +12,7 @@ using LoggerMessage = Microsoft.Extensions.Logging.LoggerMessage;
 
 namespace Ghost.Plugin.Indeed;
 
-public class IndeedJobClient : Ghost.Abstractions.IJobScraper
+public class IndeedJobClient : Ghost.IJobScraper
 {
     private readonly IndeedApiClient _api;
     private readonly IndeedSearchScraper? _searchScraper;

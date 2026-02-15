@@ -6,7 +6,7 @@
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Contracts\Ghost.Contracts.Inference\Ghost.Contracts.Inference.csproj" />
+    <ProjectReference Include="../../../../../src/Contracts\Ghost.Contracts.Inference\Ghost.Contracts.Inference.csproj" />
   </ItemGroup>
 
   <ItemGroup>

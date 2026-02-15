@@ -1,4 +1,4 @@
-using Ghost.Core;
+using Ghost.Kernel;
 using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;

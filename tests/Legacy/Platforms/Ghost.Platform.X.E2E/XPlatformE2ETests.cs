@@ -1,5 +1,5 @@
 using Ghost.Contracts.Social;
-using Ghost.Core;
+using Ghost.Kernel;
 using Ghost.Platform.X.E2E.Fixtures;
 using Ghost.Platform.X.Internal;
 using Ghost.Testing.Reliability;

@@ -7,7 +7,6 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Ghost.Abstractions;
 using Ghost.ProxyConfiguration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

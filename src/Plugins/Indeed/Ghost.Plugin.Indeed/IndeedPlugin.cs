@@ -1,5 +1,4 @@
 using System.Net.Http;
-using Ghost.Abstractions;
 using Ghost.Contracts;
 using Ghost.Contracts.Jobs;
 using Ghost.Hosting;
@@ -86,7 +85,7 @@ public sealed class IndeedPlugin : Ghost.Hosting.IExtension
                 ?? throw new InvalidOperationException("IndeedJobDetailsScraper requires IBrowserSession to be registered.");
 
             ILogger<IndeedJobDetailsScraper> logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.IndeedJobDetailsScraper>>();
-            IJsonLdExtractor? jsonLdExtractor = sp.GetService<Ghost.Abstractions.IJsonLdExtractor>();
+            IJsonLdExtractor? jsonLdExtractor = sp.GetService<Ghost.IJsonLdExtractor>();
             IndeedOptions options = sp.GetRequiredService<IndeedOptions>();
             return new Jobs.IndeedJobDetailsScraper(browserSession, logger, jsonLdExtractor, options);
         });
@@ -101,7 +100,7 @@ public sealed class IndeedPlugin : Ghost.Hosting.IExtension
         });
 
         // register as both IJobScraper and IJobClient for backward compatibility
-        services.AddScoped<Ghost.Abstractions.IJobScraper>(sp => sp.GetRequiredService<IndeedJobClient>());
+        services.AddScoped<Ghost.IJobScraper>(sp => sp.GetRequiredService<IndeedJobClient>());
         services.AddScoped<Ghost.Contracts.Jobs.IJobClient>(sp => sp.GetRequiredService<IndeedJobClient>());
 
         // Register plugin-specific services

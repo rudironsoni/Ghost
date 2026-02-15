@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Ghost.Abstractions;
 using Ghost.Contracts.Jobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -254,7 +253,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
                     }
 
                     // Use the JsonLdExtractor implementation from Ghost.Utilities via DI/Activator
-                    var extractor = (Ghost.Abstractions.IJsonLdExtractor?)Activator.CreateInstance(Type.GetType("Ghost.Utilities.JsonLdExtractor, Ghost.Core") ?? typeof(Ghost.Utilities.JsonLdExtractor));
+                    var extractor = (Ghost.IJsonLdExtractor?)Activator.CreateInstance(Type.GetType("Ghost.Utilities.JsonLdExtractor, Ghost.Core") ?? typeof(Ghost.Utilities.JsonLdExtractor));
                     var parser = new JsonLdParser(extractor!);
                     JobListing? parsed = parser.Parse(html, jobId, url);
 

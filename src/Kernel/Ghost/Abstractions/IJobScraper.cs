@@ -1,6 +1,6 @@
 using Ghost.Contracts.Jobs;
 
-namespace Ghost.Abstractions;
+namespace Ghost;
 
 /// <summary>
 /// Marker interface for job scrapers used by the aggregator.

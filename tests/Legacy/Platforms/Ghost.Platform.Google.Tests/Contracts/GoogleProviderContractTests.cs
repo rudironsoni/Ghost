@@ -1,8 +1,7 @@
 using System.Net.Http;
 using Ghost;
-using Ghost.Abstractions;
 using Ghost.Contracts.Jobs;
-using Ghost.Core;
+using Ghost.Kernel;
 using Ghost.Platform.Google.Jobs;
 using Ghost.Platform.Google.Tests.Contracts;
 using Ghost.Testing.Contracts;

@@ -1,7 +1,7 @@
 using Ghost.Resilience;
 using Xunit;
 
-namespace Ghost.Core.Tests;
+namespace Ghost.Kernel.Tests;
 
 public class CircuitBreakerTests
 {

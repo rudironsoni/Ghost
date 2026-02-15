@@ -2,7 +2,7 @@ using Ghost.Utilities;
 using System.Text.Json;
 using Xunit;
 
-namespace Ghost.Core.Tests;
+namespace Ghost.Kernel.Tests;
 
 public class JsonLdExtractorTests
 {

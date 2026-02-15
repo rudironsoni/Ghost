@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Ghost.Testing.Reliability;
 using Xunit;
 
-namespace Ghost.Core.Unit.Tests.Infrastructure;
+namespace Ghost.Kernel.Unit.Tests.Infrastructure;
 
 /// <summary>
 /// Tests verifying that test timeout infrastructure is properly configured.

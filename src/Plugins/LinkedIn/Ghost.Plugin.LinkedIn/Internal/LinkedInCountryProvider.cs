@@ -1,5 +1,4 @@
 using System;
-using Ghost.Abstractions;
 using Ghost.Models;
 
 namespace Ghost.Plugin.LinkedIn.Internal;

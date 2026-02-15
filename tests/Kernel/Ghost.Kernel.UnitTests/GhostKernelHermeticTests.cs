@@ -3,7 +3,7 @@ using Ghost.Kernel;
 using Ghost.Testing.Fakes;
 using Xunit;
 
-namespace Ghost.Core.Unit.Tests;
+namespace Ghost.Kernel.Unit.Tests;
 
 /// <summary>
 /// Hermetic unit tests for GhostKernel functionality using StubGhostKernel.

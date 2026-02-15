@@ -1,6 +1,5 @@
-using Ghost.Abstractions;
 using Ghost.Contracts.Jobs;
-using Ghost.Core;
+using Ghost.Kernel;
 using Ghost.Plugin.Glassdoor;
 using Ghost.Plugin.Glassdoor.Internal;
 using Ghost.Plugin.Glassdoor.Tests.Contracts;

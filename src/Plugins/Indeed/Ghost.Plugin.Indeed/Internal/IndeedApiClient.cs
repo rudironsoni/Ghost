@@ -10,7 +10,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Ghost.Abstractions;
 using Ghost.Http;
 using Ghost.Infrastructure.Session;
 using Ghost.Models;
@@ -91,7 +90,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
     /// <summary>
     /// Legacy constructor for backward compatibility. Uses direct proxy provider.
     /// </summary>
-    public IndeedApiClient(Ghost.Abstractions.IProxyProvider proxyProvider, IndeedOptions options, ILogger<IndeedApiClient> logger)
+    public IndeedApiClient(Ghost.IProxyProvider proxyProvider, IndeedOptions options, ILogger<IndeedApiClient> logger)
         : this(proxyProvider, null, options, logger, null, TimeProvider.System)
     {
     }

@@ -10,16 +10,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Plugins\Ghost.Plugin.LinkedIn\Ghost.Plugin.LinkedIn.csproj" />
-    <ProjectReference Include="..\..\..\src\Plugins\Ghost.Plugin.Indeed\Ghost.Plugin.Indeed.csproj" />
-    <ProjectReference Include="..\..\..\src\Plugins\Glassdoor\Ghost.Plugin.Glassdoor.csproj" />
-    <ProjectReference Include="..\..\..\src\Plugins\Ghost.Plugin.Google\Ghost.Plugin.Google.csproj" />
-    <ProjectReference Include="..\..\..\src\Plugins\Ghost.Plugin.InfoJobs\Ghost.Plugin.InfoJobs.csproj" />
-    <ProjectReference Include="..\..\..\src\Plugins\Ghost.Plugin.Anthropic\Ghost.Plugin.Anthropic.csproj" />
-    <ProjectReference Include="..\..\..\src\Plugins\Ghost.Plugin.OpenAI\Ghost.Plugin.OpenAI.csproj" />
-    <ProjectReference Include="..\..\..\src\Plugins\Ghost.Plugin.X\Ghost.Plugin.X.csproj" />
-    <ProjectReference Include="..\..\..\src\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
-    <ProjectReference Include="..\..\..\src\Platform\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
+    <ProjectReference Include="../../../../../src/Plugins\Ghost.Plugin.LinkedIn\Ghost.Plugin.LinkedIn.csproj" />
+    <ProjectReference Include="../../../../../src/Plugins\Ghost.Plugin.Indeed\Ghost.Plugin.Indeed.csproj" />
+    <ProjectReference Include="../../../../../src/Plugins\Glassdoor\Ghost.Plugin.Glassdoor.csproj" />
+    <ProjectReference Include="../../../../../src/Plugins\Ghost.Plugin.Google\Ghost.Plugin.Google.csproj" />
+    <ProjectReference Include="../../../../../src/Plugins\Ghost.Plugin.InfoJobs\Ghost.Plugin.InfoJobs.csproj" />
+    <ProjectReference Include="../../../../../src/Plugins\Ghost.Plugin.Anthropic\Ghost.Plugin.Anthropic.csproj" />
+    <ProjectReference Include="../../../../../src/Plugins\Ghost.Plugin.OpenAI\Ghost.Plugin.OpenAI.csproj" />
+    <ProjectReference Include="../../../../../src/Plugins\Ghost.Plugin.X\Ghost.Plugin.X.csproj" />
+    <ProjectReference Include="../../../../../src/Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
+    <ProjectReference Include="../../../../../src/Platform\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
   </ItemGroup>
 
   <ItemGroup>

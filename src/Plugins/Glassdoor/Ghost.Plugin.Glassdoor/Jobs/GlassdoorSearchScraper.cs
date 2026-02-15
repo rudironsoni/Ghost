@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Ghost.Abstractions;
 using Ghost.ConsentManagement;
 using Ghost.Contracts.Jobs;
 using Ghost.Kernel;

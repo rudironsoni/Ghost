@@ -1,4 +1,4 @@
-using Ghost.Core;
+using Ghost.Kernel;
 using Ghost.Kernel.Configuration;
 using Xunit;
 

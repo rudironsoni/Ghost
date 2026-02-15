@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Ghost.Abstractions;
 using Ghost.Kernel;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

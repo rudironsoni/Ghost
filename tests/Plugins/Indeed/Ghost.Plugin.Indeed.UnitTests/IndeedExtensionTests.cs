@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using Ghost.Hosting;
-using Ghost.Abstractions;
 using Ghost.Platform.Indeed.Internal;
 using Moq;
 

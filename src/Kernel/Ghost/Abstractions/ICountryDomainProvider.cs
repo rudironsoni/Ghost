@@ -1,6 +1,6 @@
 using Ghost.Models;
 
-namespace Ghost.Abstractions;
+namespace Ghost;
 
 public interface ICountryDomainProvider
 {

@@ -22,7 +22,7 @@ namespace Ghost.Plugin.LinkedIn;
 /// <summary>
 /// Job search client for LinkedIn using Ghost.Sdk.Spider.
 /// </summary>
-public sealed class LinkedInJobClient : Ghost.Abstractions.IJobScraper
+public sealed class LinkedInJobClient : Ghost.IJobScraper
 {
     private static readonly Action<ILogger, JobScrapingStrategy, string, Exception?> s_logJobSearchStarting =
         LoggerMessage.Define<JobScrapingStrategy, string>(LogLevel.Information, new EventId(1, nameof(SearchJobsWithStrategyAsync)), "Executing Job Search. Strategy: {Strategy}, Query: {Query}");

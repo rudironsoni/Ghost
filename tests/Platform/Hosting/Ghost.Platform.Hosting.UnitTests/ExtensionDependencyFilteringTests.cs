@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
-using Ghost.Abstractions;
 using Ghost.Contracts.Jobs;
 using Ghost.Hosting;
 using Microsoft.Extensions.Configuration;

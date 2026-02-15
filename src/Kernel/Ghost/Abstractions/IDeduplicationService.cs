@@ -1,4 +1,4 @@
-namespace Ghost.Abstractions;
+namespace Ghost;
 
 public interface IDeduplicationService
 {

@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ghost.Abstractions;
+namespace Ghost;
 
 public record ProxyInfo(string Server, string? Username, string? Password);
 

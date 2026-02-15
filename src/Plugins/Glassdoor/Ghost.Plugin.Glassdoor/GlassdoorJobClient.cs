@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace Ghost.Plugin.Glassdoor;
 
-public sealed class GlassdoorJobClient : Ghost.Abstractions.IJobScraper
+public sealed class GlassdoorJobClient : Ghost.IJobScraper
 {
     // CookieContainer to store session cookies and CSRF token for Glassdoor
     private readonly System.Net.CookieContainer _cookieContainer = new System.Net.CookieContainer();

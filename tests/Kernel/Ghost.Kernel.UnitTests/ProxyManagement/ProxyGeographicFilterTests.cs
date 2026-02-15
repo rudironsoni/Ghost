@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Ghost.Abstractions;
 using Ghost.ProxyManagement;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

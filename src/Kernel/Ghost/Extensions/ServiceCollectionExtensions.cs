@@ -1,4 +1,3 @@
-using Ghost.Abstractions;
 using Ghost.Kernel;
 using Ghost.Utilities;
 using Microsoft.Extensions.DependencyInjection;

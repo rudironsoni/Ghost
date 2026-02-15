@@ -4,14 +4,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Ghost.Abstractions;
 using Ghost.Contracts.Jobs;
 using Ghost.Kernel.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace Ghost.Core.Tests.Services;
+namespace Ghost.Kernel.Tests.Services;
 
 /// <summary>
 /// Integration tests for AggregatedJobClient covering multi-platform job search, error handling, and deduplication.

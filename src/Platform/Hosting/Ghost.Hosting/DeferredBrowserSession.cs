@@ -7,12 +7,12 @@ namespace Ghost.Hosting;
 /// </summary>
 internal sealed class DeferredBrowserSession : Ghost.IBrowserSession
 {
-    private readonly Ghost.Core.IGhostKernel _kernel;
+    private readonly Ghost.Kernel.IGhostKernel _kernel;
     private readonly SemaphoreSlim _initializationGate = new(1, 1);
     private Task<Ghost.IBrowserSession>? _sessionTask;
     private Ghost.IBrowserSession? _session;
 
-    public DeferredBrowserSession(Ghost.Core.IGhostKernel kernel)
+    public DeferredBrowserSession(Ghost.Kernel.IGhostKernel kernel)
     {
         _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
     }

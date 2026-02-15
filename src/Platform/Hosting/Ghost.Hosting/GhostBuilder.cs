@@ -64,7 +64,7 @@ public sealed class GhostBuilder
         _services.Configure<KernelOptions>(opts => { });
 
         // Register core services needed by extensions
-        _services.AddSingleton<Ghost.Abstractions.IDeduplicationService, Ghost.Utilities.DeduplicationService>();
+        _services.AddSingleton<Ghost.IDeduplicationService, Ghost.Utilities.DeduplicationService>();
 
         // Register kernel manager and expose it as IGhostKernel.
         _services.AddSingleton<GhostKernelManager>();

@@ -29,8 +29,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Legacy\Platforms\Ghost.Platform.Glassdoor\Ghost.Platform.Glassdoor.csproj" />
-    <ProjectReference Include="..\..\..\src\Kernel\Ghost\Ghost.csproj" />
-    <ProjectReference Include="..\..\..\src\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
+    <ProjectReference Include="../../../../../src/Kernel\Ghost\Ghost.csproj" />
+    <ProjectReference Include="../../../../../src/Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
     <ProjectReference Include="..\..\Shared\Ghost.Testing\Ghost.Testing.csproj" />
   </ItemGroup>
 

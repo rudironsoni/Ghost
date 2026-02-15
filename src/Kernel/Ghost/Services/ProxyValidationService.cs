@@ -1,5 +1,4 @@
 using System.Net;
-using Ghost.Abstractions;
 using Microsoft.Extensions.Logging;
 
 namespace Ghost.Services;

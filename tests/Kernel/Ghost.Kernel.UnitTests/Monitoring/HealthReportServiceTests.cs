@@ -1,11 +1,10 @@
 using FluentAssertions;
-using Ghost.Abstractions;
 using Ghost.Monitoring;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Xunit;
 
-namespace Ghost.Core.Unit.Tests.Monitoring;
+namespace Ghost.Kernel.Unit.Tests.Monitoring;
 
 public sealed class HealthReportServiceTests
 {

@@ -1,4 +1,3 @@
-using Ghost.Abstractions;
 using Ghost.Contracts.Jobs;
 using Ghost.Platform.InfoJobs.Jobs;
 using Ghost.Platform.InfoJobs.Jobs.Internal;

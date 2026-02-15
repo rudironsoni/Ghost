@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Ghost.Abstractions;
 
 namespace Ghost.Utilities;
 
