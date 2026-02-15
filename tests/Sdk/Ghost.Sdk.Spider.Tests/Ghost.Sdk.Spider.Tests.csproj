@@ -30,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\SDK\Ghost.Sdk.Spider\Ghost.Sdk.Spider.csproj" />
+    <ProjectReference Include="..\..\..\src\Sdk\Ghost.Sdk.Spider\Ghost.Sdk.Spider.csproj" />
   </ItemGroup>
 
   <ItemGroup>

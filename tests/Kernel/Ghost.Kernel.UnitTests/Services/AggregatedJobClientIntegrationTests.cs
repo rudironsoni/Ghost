@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Abstractions;
 using Ghost.Contracts.Jobs;
-using Ghost.Core.Services;
+using Ghost.Kernel.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;

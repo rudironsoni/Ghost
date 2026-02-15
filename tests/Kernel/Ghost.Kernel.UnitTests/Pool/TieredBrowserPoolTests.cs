@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Ghost.Core;
+using Ghost.Kernel;
 using Ghost.Pool;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

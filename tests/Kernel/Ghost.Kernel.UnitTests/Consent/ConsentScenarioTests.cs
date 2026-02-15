@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using Ghost.Core;
+using Ghost.Kernel;
 using Ghost.Testing.Fixtures;
 using Ghost.Testing.Scenarios.Server;
 using Xunit;

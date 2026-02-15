@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using Ghost.Abstractions;
 using Ghost.ConsentManagement;
 using Ghost.Contracts.Jobs;
-using Ghost.Core;
+using Ghost.Kernel;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

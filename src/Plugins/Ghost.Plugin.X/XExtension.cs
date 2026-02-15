@@ -1,6 +1,6 @@
 using Ghost.Contracts.Simulation;
 using Ghost.Contracts.Social;
-using Ghost.Core;
+using Ghost.Kernel;
 using Ghost.Plugin.X.Configuration;
 using Ghost.Plugin.X.Exceptions;
 using Ghost.Plugin.X.Internal;

@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Ghost.Core;
+using Ghost.Kernel;
 using Xunit;
 
 namespace Ghost.Core.Tests.Integration;

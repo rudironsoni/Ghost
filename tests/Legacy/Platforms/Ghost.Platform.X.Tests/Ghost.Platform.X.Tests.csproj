@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Platforms\Ghost.Platform.X\Ghost.Platform.X.csproj" />
+    <ProjectReference Include="..\..\..\..\Legacy\Platforms\Ghost.Platform.X\Ghost.Platform.X.csproj" />
     <ProjectReference Include="..\..\..\src\Contracts\Ghost.Contracts.Simulation\Ghost.Contracts.Simulation.csproj" />
     <ProjectReference Include="..\..\..\src\Contracts\Ghost.Contracts.Social\Ghost.Contracts.Social.csproj" />
   </ItemGroup>

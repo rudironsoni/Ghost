@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
-using Ghost.Core;
+using Ghost.Kernel;
 using Ghost.Engine.Abstractions.Engine;
 using Ghost.Engine.Abstractions.Scheduler;
 using Ghost.Engine.Engine;

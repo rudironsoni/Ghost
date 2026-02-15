@@ -1,5 +1,5 @@
 using Ghost.Abstractions;
-using Ghost.Core;
+using Ghost.Kernel;
 using Ghost.Hosting;
 using Ghost.Plugin.LinkedIn.Internal;
 using Ghost.Sdk.Spider.Adapters;

@@ -1,7 +1,7 @@
 using System.Net.Http;
 using Ghost.Abstractions;
 using Ghost.Contracts;
-using Ghost.Core;
+using Ghost.Kernel;
 using Ghost.Hosting;
 using Ghost.Http;
 using Ghost.Plugin.Glassdoor.Internal;

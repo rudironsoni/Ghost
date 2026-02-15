@@ -9,7 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Plugins\Ghost.Plugin.OpenAI\Ghost.Plugin.OpenAI.csproj" />
-    <ProjectReference Include="..\..\..\src\Core\Ghost\Ghost.csproj" />
+    <ProjectReference Include="..\..\..\src\Kernel\Ghost\Ghost.csproj" />
   </ItemGroup>
 
   <ItemGroup>

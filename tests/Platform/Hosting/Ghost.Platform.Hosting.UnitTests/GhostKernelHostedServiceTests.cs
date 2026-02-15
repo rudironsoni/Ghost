@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Ghost.Core;
+using Ghost.Kernel;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Playwright;
 using Moq;

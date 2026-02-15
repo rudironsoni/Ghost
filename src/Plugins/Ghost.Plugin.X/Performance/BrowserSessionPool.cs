@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using Ghost.Core;
+using Ghost.Kernel;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

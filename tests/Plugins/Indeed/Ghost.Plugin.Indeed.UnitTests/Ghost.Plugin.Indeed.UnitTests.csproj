@@ -6,9 +6,9 @@
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Platforms\Ghost.Platform.Indeed\Ghost.Platform.Indeed.csproj" />
-    <ProjectReference Include="..\..\src\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
-    <ProjectReference Include="..\..\src\Core\Ghost\Ghost.csproj" />
+    <ProjectReference Include="..\..\..\src\Plugins\Indeed\Ghost.Plugin.Indeed\Ghost.Plugin.Indeed.csproj" />
+    <ProjectReference Include="..\..\..\src\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
+    <ProjectReference Include="..\..\..\src\Kernel\Ghost\Ghost.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit" />

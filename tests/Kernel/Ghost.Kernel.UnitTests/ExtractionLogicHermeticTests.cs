@@ -1,5 +1,5 @@
 using FluentAssertions;
-using Ghost.Core;
+using Ghost.Kernel;
 using Ghost.Testing.Fakes;
 using Xunit;
 

@@ -5,7 +5,7 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Core\Ghost\Ghost.csproj" />
+    <ProjectReference Include="..\..\..\src\Kernel\Ghost\Ghost.csproj" />
   </ItemGroup>
 
   <ItemGroup>

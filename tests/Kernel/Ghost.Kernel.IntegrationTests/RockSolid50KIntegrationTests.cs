@@ -1,4 +1,4 @@
-using Ghost.Core.Caching;
+using Ghost.Kernel.Caching;
 using Ghost.Resilience;
 using Ghost.Platform.LinkedIn;
 using Microsoft.Extensions.Logging.Abstractions;

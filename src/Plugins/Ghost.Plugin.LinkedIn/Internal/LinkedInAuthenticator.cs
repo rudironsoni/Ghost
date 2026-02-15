@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost;
-using Ghost.Core;
+using Ghost.Kernel;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

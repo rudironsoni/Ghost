@@ -7,8 +7,8 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);OpenAIClientTests.cs</DefaultItemExcludes>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Platforms\Ghost.Platform.OpenAI\Ghost.Platform.OpenAI.csproj" />
-    <ProjectReference Include="..\..\..\src\Core\Ghost\Ghost.csproj" />
+    <ProjectReference Include="..\..\..\..\Legacy\Platforms\Ghost.Platform.OpenAI\Ghost.Platform.OpenAI.csproj" />
+    <ProjectReference Include="..\..\..\src\Kernel\Ghost\Ghost.csproj" />
   </ItemGroup>
 
   <ItemGroup>
