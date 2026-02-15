@@ -214,12 +214,12 @@ public static class PaginationScenarios
     {
         logger.LogInformation("Scenario: pagination/jump-to-page");
 
-        var page = context.Items["Page"] as int? ?? 1;
-        var pageSize = 10;
-        var offset = (page - 1) * pageSize;
-        var jobs = TestData.GetJobPostings(offset, pageSize);
+        int page = context.Items["Page"] as int? ?? 1;
+        int pageSize = 10;
+        int offset = (page - 1) * pageSize;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(offset, pageSize);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -268,14 +268,14 @@ public static class PaginationScenarios
     {
         logger.LogInformation("Scenario: pagination/last-page-detection");
 
-        var page = context.Items["Page"] as int? ?? 1;
-        var pageSize = 10;
-        var offset = (page - 1) * pageSize;
-        var jobs = TestData.GetJobPostings(offset, pageSize);
-        var totalPages = (int)Math.Ceiling((double)TestData.TotalJobCount / pageSize);
-        var isLastPage = page >= totalPages;
+        int page = context.Items["Page"] as int? ?? 1;
+        int pageSize = 10;
+        int offset = (page - 1) * pageSize;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(offset, pageSize);
+        int totalPages = (int)Math.Ceiling((double)TestData.TotalJobCount / pageSize);
+        bool isLastPage = page >= totalPages;
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -328,7 +328,7 @@ public static class PaginationScenarios
     </div>
 
     <script>
-        console.log('[SCENARIO] Last page detection, page={{page}}, isLast={{isLastPage.ToString().ToLower()}}');
+        console.log('[SCENARIO] Last page detection, page={{page}}, isLast={{isLastPage.ToString().ToLowerInvariant()}}');
     </script>
 </body>
 </html>
@@ -341,15 +341,15 @@ public static class PaginationScenarios
     {
         logger.LogInformation("Scenario: pagination/token-expiration");
 
-        var page = context.Items["Page"] as int? ?? 1;
-        var pageSize = 10;
-        var offset = (page - 1) * pageSize;
+        int page = context.Items["Page"] as int? ?? 1;
+        int pageSize = 10;
+        int offset = (page - 1) * pageSize;
 
         // Simulate token expiration after page 3
-        var tokenExpired = page > 3;
-        var jobs = tokenExpired ? new List<SyntheticJobPosting>() : TestData.GetJobPostings(offset, pageSize);
+        bool tokenExpired = page > 3;
+        List<SyntheticJobPosting> jobs = tokenExpired ? new List<SyntheticJobPosting>() : TestData.GetJobPostings(offset, pageSize);
 
-        var html = tokenExpired ? $$"""
+        string html = tokenExpired ? $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -438,13 +438,13 @@ public static class PaginationScenarios
     {
         logger.LogInformation("Scenario: pagination/empty-page");
 
-        var page = context.Items["Page"] as int? ?? 1;
-        var pageSize = 10;
-        var offset = (page - 1) * pageSize;
-        var jobs = TestData.GetJobPostings(offset, pageSize);
-        var isEmpty = jobs.Count == 0;
+        int page = context.Items["Page"] as int? ?? 1;
+        int pageSize = 10;
+        int offset = (page - 1) * pageSize;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(offset, pageSize);
+        bool isEmpty = jobs.Count == 0;
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -485,7 +485,7 @@ public static class PaginationScenarios
     </div>
 
     <script>
-        console.log('[SCENARIO] Empty page, page={{page}}, isEmpty={{isEmpty.ToString().ToLower()}}');
+        console.log('[SCENARIO] Empty page, page={{page}}, isEmpty={{isEmpty.ToString().ToLowerInvariant()}}');
     </script>
 </body>
 </html>
@@ -498,12 +498,12 @@ public static class PaginationScenarios
     {
         logger.LogInformation("Scenario: pagination/dynamic-url");
 
-        var page = context.Items["Page"] as int? ?? 1;
-        var pageSize = 10;
-        var offset = (page - 1) * pageSize;
-        var jobs = TestData.GetJobPostings(offset, pageSize);
+        int page = context.Items["Page"] as int? ?? 1;
+        int pageSize = 10;
+        int offset = (page - 1) * pageSize;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(offset, pageSize);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -567,15 +567,15 @@ public static class PaginationScenarios
     {
         logger.LogInformation("Scenario: pagination/circular");
 
-        var page = context.Items["Page"] as int? ?? 1;
-        var pageSize = 10;
+        int page = context.Items["Page"] as int? ?? 1;
+        int pageSize = 10;
 
         // Simulate circular pagination: after page 5, go back to page 1
-        var actualPage = page > 5 ? 1 : page;
-        var offset = (actualPage - 1) * pageSize;
-        var jobs = TestData.GetJobPostings(offset, pageSize);
+        int actualPage = page > 5 ? 1 : page;
+        int offset = (actualPage - 1) * pageSize;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(offset, pageSize);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -633,15 +633,15 @@ public static class PaginationScenarios
     {
         logger.LogInformation("Scenario: pagination/missing-next-link");
 
-        var page = context.Items["Page"] as int? ?? 1;
-        var pageSize = 10;
-        var offset = (page - 1) * pageSize;
-        var jobs = TestData.GetJobPostings(offset, pageSize);
+        int page = context.Items["Page"] as int? ?? 1;
+        int pageSize = 10;
+        int offset = (page - 1) * pageSize;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(offset, pageSize);
 
         // Simulate missing next link after page 3
-        var hasNext = page < 3;
+        bool hasNext = page < 3;
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -686,7 +686,7 @@ public static class PaginationScenarios
     </div>
 
     <script>
-        console.log('[SCENARIO] Missing next link, page={{page}}, hasNext={{hasNext.ToString().ToLower()}}');
+        console.log('[SCENARIO] Missing next link, page={{page}}, hasNext={{hasNext.ToString().ToLowerInvariant()}}');
     </script>
 </body>
 </html>
@@ -699,12 +699,12 @@ public static class PaginationScenarios
     {
         logger.LogInformation("Scenario: pagination/infinite-redirect");
 
-        var page = context.Items["Page"] as int? ?? 1;
-        var pageSize = 10;
+        int page = context.Items["Page"] as int? ?? 1;
+        int pageSize = 10;
 
         // Simulate infinite redirect loop: redirect to next page up to 10 times
-        var redirectCount = int.TryParse(context.Request.Query["redirect"], out var rc) ? rc : 0;
-        var shouldRedirect = redirectCount < 10;
+        int redirectCount = int.TryParse(context.Request.Query["redirect"], out int rc) ? rc : 0;
+        bool shouldRedirect = redirectCount < 10;
 
         if (shouldRedirect)
         {
@@ -713,10 +713,10 @@ public static class PaginationScenarios
             return Results.Empty;
         }
 
-        var offset = (page - 1) * pageSize;
-        var jobs = TestData.GetJobPostings(offset, pageSize);
+        int offset = (page - 1) * pageSize;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(offset, pageSize);
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -764,14 +764,14 @@ public static class PaginationScenarios
     {
         logger.LogInformation("Scenario: pagination/safe-termination");
 
-        var page = context.Items["Page"] as int? ?? 1;
-        var pageSize = 10;
-        var offset = (page - 1) * pageSize;
-        var jobs = TestData.GetJobPostings(offset, pageSize);
-        var totalPages = (int)Math.Ceiling((double)TestData.TotalJobCount / pageSize);
-        var isLastPage = page >= totalPages;
+        int page = context.Items["Page"] as int? ?? 1;
+        int pageSize = 10;
+        int offset = (page - 1) * pageSize;
+        List<SyntheticJobPosting> jobs = TestData.GetJobPostings(offset, pageSize);
+        int totalPages = (int)Math.Ceiling((double)TestData.TotalJobCount / pageSize);
+        bool isLastPage = page >= totalPages;
 
-        var html = $$"""
+        string html = $$"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -820,7 +820,7 @@ public static class PaginationScenarios
     </div>
 
     <script>
-        console.log('[SCENARIO] Safe termination, page={{page}}, isLast={{isLastPage.ToString().ToLower()}}');
+        console.log('[SCENARIO] Safe termination, page={{page}}, isLast={{isLastPage.ToString().ToLowerInvariant()}}');
     </script>
 </body>
 </html>

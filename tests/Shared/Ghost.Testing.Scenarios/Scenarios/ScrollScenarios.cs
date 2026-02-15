@@ -245,9 +245,9 @@ public static class ScrollScenarios
         return Results.Content(html, "text/html");
     }
 
-    public static async Task<IResult> LoadMoreApiHandlerAsync(HttpContext context, ILogger<ScenarioRegistry> logger)
+    public static async Task<IResult> LoadMoreApiHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        await Task.Delay(100).ConfigureAwait(false); // Simulate network delay
+        await Task.Delay(100); // Simulate network delay
 
         int offset = int.TryParse(context.Request.Query["offset"], out int o) ? o : 0;
         int limit = int.TryParse(context.Request.Query["limit"], out int l) ? l : 20;
@@ -399,9 +399,9 @@ public static class ScrollScenarios
         return Results.Content(html, "text/html");
     }
 
-    public static async Task<IResult> LoadMoreDuplicatesApiHandlerAsync(HttpContext context, ILogger<ScenarioRegistry> logger)
+    public static async Task<IResult> LoadMoreDuplicatesApiHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        await Task.Delay(100).ConfigureAwait(false); // Simulate network delay
+        await Task.Delay(100); // Simulate network delay
 
         int offset = int.TryParse(context.Request.Query["offset"], out int o) ? o : 0;
         int limit = int.TryParse(context.Request.Query["limit"], out int l) ? l : 15;

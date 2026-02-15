@@ -79,8 +79,8 @@ public sealed class ScenarioRegistry
         app.MapGet("/scenario/scroll/button-driven", ScrollScenarios.ButtonDrivenHandler);
         app.MapGet("/scenario/scroll/virtualized", ScrollScenarios.VirtualizedHandler);
         app.MapGet("/scenario/scroll/duplicate-chunk", ScrollScenarios.DuplicateChunkReplayHandler);
-        app.MapGet("/api/scroll/load-more", ScrollScenarios.LoadMoreApiHandlerAsync);
-        app.MapGet("/api/scroll/load-more-duplicates", ScrollScenarios.LoadMoreDuplicatesApiHandlerAsync);
+        app.MapGet("/api/scroll/load-more", ScrollScenarios.LoadMoreApiHandler);
+        app.MapGet("/api/scroll/load-more-duplicates", ScrollScenarios.LoadMoreDuplicatesApiHandler);
 
         // Pagination scenarios
         app.MapGet("/scenario/pagination/numbered", PaginationScenarios.NumberedHandler);
