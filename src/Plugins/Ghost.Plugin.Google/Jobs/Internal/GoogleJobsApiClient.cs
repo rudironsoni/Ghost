@@ -118,6 +118,15 @@ public sealed class GoogleJobsApiClient : IDisposable
     private static readonly Action<ILogger, Exception?> LogFailedToWriteRetryHtmlDebugFile =
         LoggerMessage.Define(LogLevel.Warning, new EventId(31, "FailedToWriteRetryHtmlDebugFile"), "Failed to write retry HTML debug file");
 
+    private static readonly Action<ILogger, string, Exception?> LogConsentContinueUrlExtracted =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(32, "ConsentContinueUrlExtracted"), "Extracted consent continue URL: {Url}");
+
+    private static readonly Action<ILogger, Exception?> LogConsentContinueUrlNotFound =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(33, "ConsentContinueUrlNotFound"), "Could not extract continue URL from consent page");
+
+    private static readonly Action<ILogger, string, Exception?> LogFollowingConsentContinueUrl =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(34, "FollowingConsentContinueUrl"), "Following consent continue URL: {Url}");
+
     // Track request count if needed for session rotation logic. Suppress unused/analysis warnings for now.
 #pragma warning disable CS0169, CS0414, CA1805
     private int _requestCount;
@@ -216,6 +225,52 @@ public sealed class GoogleJobsApiClient : IDisposable
         return await ExecuteSearchAsync(query, location, null, ct).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Extract the continue URL from Google's consent page
+    /// The consent page contains a data-p attribute with JSON that includes the continue URL
+    /// </summary>
+    private static string? ExtractConsentContinueUrl(string html)
+    {
+        try
+        {
+            // Look for data-p attribute which contains JSON with the continue URL
+            var dataPattern = @"data-p\s*=\s*[""']([^""']+)[""']";
+            var match = System.Text.RegularExpressions.Regex.Match(html, dataPattern);
+
+            if (match.Success)
+            {
+                var dataValue = match.Groups[1].Value;
+
+                // The data-p attribute contains URL-encoded JSON
+                // Look for the continue URL pattern: https://consent.google.com/d?continue=...
+                var continuePattern = @"(https://consent\.google\.com/d\?continue=[^""'\s]+)";
+                var continueMatch = System.Text.RegularExpressions.Regex.Match(dataValue, continuePattern);
+
+                if (continueMatch.Success)
+                {
+                    var continueUrl = continueMatch.Groups[1].Value;
+                    // URL decode the continue URL
+                    return WebUtility.UrlDecode(continueUrl);
+                }
+            }
+
+            // Fallback: look for continue URL in href attributes
+            var hrefPattern = @"href\s*=\s*[""'](https://consent\.google\.com/d\?continue=[^""']+)[""']";
+            var hrefMatch = System.Text.RegularExpressions.Regex.Match(html, hrefPattern);
+
+            if (hrefMatch.Success)
+            {
+                return WebUtility.UrlDecode(hrefMatch.Groups[1].Value);
+            }
+
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private async Task<IReadOnlyList<JobListing>> ExecuteSearchAsync(string query, string location, RotatingProxySession? httpSession, CancellationToken ct)
     {
         LogExecuteSearchStarting(_logger, query, location, null);
@@ -303,63 +358,55 @@ public sealed class GoogleJobsApiClient : IDisposable
             if (isConsentPage)
             {
                 LogConsentPageDetected(_logger, searchTerm, null);
-                LogFetchingJobs(_logger, "Detected consent page, trying alternative approaches...", null);
+                LogFetchingJobs(_logger, "Detected consent page, attempting to extract continue URL...", null);
 
-                var alternativeUrls = new[]
+                // Try to extract the continue URL from the consent page
+                var continueUrl = ExtractConsentContinueUrl(html);
+                if (!string.IsNullOrEmpty(continueUrl))
                 {
-                $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en&tbs=qdr:d",
-                $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en&tbs=qdr:w",
-                $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en",
-                $"https://www.google.co.uk/search?q={q}&ibp=htl;jobs&udm=8&gl=uk&hl=en",
-                $"https://www.google.ca/search?q={q}&ibp=htl;jobs&udm=8&gl=ca&hl=en",
-            };
+                    LogConsentContinueUrlExtracted(_logger, continueUrl, null);
+                    LogFollowingConsentContinueUrl(_logger, continueUrl, null);
 
-                foreach (var altUrl in alternativeUrls)
-                {
-                    LogFetchingJobs(_logger, $"Trying alternative URL: {altUrl}", null);
-                    await Task.Delay(2000, ct).ConfigureAwait(false); // Wait longer between retries
+                    await Task.Delay(1000, ct).ConfigureAwait(false);
 
-                    var retryUserAgent = GoogleJobsConstants.GetRandomUserAgent();
-                    LogUserAgentRotation(_logger, retryUserAgent, null);
-
-                    var retryReq = new HttpRequestMessage(HttpMethod.Get, altUrl);
+                    var continueReq = new HttpRequestMessage(HttpMethod.Get, continueUrl);
                     foreach (var header in GoogleJobsConstants.SearchHeaders)
                     {
-                        retryReq.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                        continueReq.Headers.TryAddWithoutValidation(header.Key, header.Value);
                     }
 
-                    retryReq.Headers.TryAddWithoutValidation("User-Agent", retryUserAgent);
-                    retryReq.Headers.TryAddWithoutValidation("Cookie", cookieValue);
+                    var continueUserAgent = GoogleJobsConstants.GetRandomUserAgent();
+                    continueReq.Headers.TryAddWithoutValidation("User-Agent", continueUserAgent);
+                    continueReq.Headers.TryAddWithoutValidation("Cookie", cookieValue);
 
                     try
                     {
-                        HttpResponseMessage retryRes;
+                        HttpResponseMessage continueRes;
                         if (httpSession != null)
                         {
-                            retryRes = await _retryPolicy.ExecuteAsync(async () => await httpSession.ExecuteAsync(() => retryReq, ct).ConfigureAwait(false)).ConfigureAwait(false);
+                            continueRes = await _retryPolicy.ExecuteAsync(async () => await httpSession.ExecuteAsync(() => continueReq, ct).ConfigureAwait(false)).ConfigureAwait(false);
                         }
                         else
                         {
-                            retryRes = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(retryReq, ct).ConfigureAwait(false)).ConfigureAwait(false);
+                            continueRes = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(continueReq, ct).ConfigureAwait(false)).ConfigureAwait(false);
                         }
 
-                        using (retryRes)
+                        using (continueRes)
                         {
-                            html = await retryRes.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                            html = await continueRes.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
                             try
                             {
                                 System.IO.Directory.CreateDirectory("logs");
-                                var ticks = DateTime.Now.Ticks;
-                                System.IO.File.WriteAllText($"logs/google_jobs_search_retry_{ticks}.html", html);
-                                LogWroteRetryHtmlDebugFile(_logger, ticks, null);
+                                System.IO.File.WriteAllText("logs/google_jobs_search_after_consent.html", html);
+                                LogWroteHtmlDebugFile(_logger, null);
                             }
                             catch (Exception ex)
                             {
-                                LogFailedToWriteRetryHtmlDebugFile(_logger, ex);
+                                LogFailedToWriteHtmlDebugFile(_logger, ex);
                             }
 
-                            // Check if this attempt succeeded
+                            // Check if we successfully bypassed consent
                             isConsentPage = html.Contains("consent.google.com") ||
                                            html.Contains("Before you continue to Google Search") ||
                                            html.Contains("We need to verify you're human") ||
@@ -371,17 +418,109 @@ public sealed class GoogleJobsApiClient : IDisposable
 
                             if (!isConsentPage)
                             {
-                                LogFetchingJobs(_logger, $"Successfully bypassed consent page with alternative URL", null);
-                                // log a preview of the html for debugging
+                                LogFetchingJobs(_logger, "Successfully bypassed consent page using continue URL", null);
                                 var preview = html.Length > 500 ? html.Substring(0, 500) : html;
                                 LogHtmlPreview(_logger, preview, null);
-                                break; // Success! Use this HTML
+                            }
+                            else
+                            {
+                                LogFetchingJobs(_logger, "Continue URL still returned consent page, trying alternative approaches...", null);
                             }
                         }
                     }
                     catch (Exception ex)
                     {
-                        LogFetchingJobs(_logger, $"Error trying alternative URL {altUrl}: {ex.Message}", ex);
+                        LogFetchingJobs(_logger, $"Error following continue URL: {ex.Message}", ex);
+                    }
+                }
+                else
+                {
+                    LogConsentContinueUrlNotFound(_logger, null);
+                }
+
+                // If still consent page, try alternative URLs
+                if (isConsentPage)
+                {
+                    LogFetchingJobs(_logger, "Detected consent page, trying alternative approaches...", null);
+
+                    var alternativeUrls = new[]
+                    {
+                    $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en&tbs=qdr:d",
+                    $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en&tbs=qdr:w",
+                    $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en",
+                    $"https://www.google.co.uk/search?q={q}&ibp=htl;jobs&udm=8&gl=uk&hl=en",
+                    $"https://www.google.ca/search?q={q}&ibp=htl;jobs&udm=8&gl=ca&hl=en",
+                };
+
+                    foreach (var altUrl in alternativeUrls)
+                    {
+                        LogFetchingJobs(_logger, $"Trying alternative URL: {altUrl}", null);
+                        await Task.Delay(2000, ct).ConfigureAwait(false); // Wait longer between retries
+
+                        var retryUserAgent = GoogleJobsConstants.GetRandomUserAgent();
+                        LogUserAgentRotation(_logger, retryUserAgent, null);
+
+                        var retryReq = new HttpRequestMessage(HttpMethod.Get, altUrl);
+                        foreach (var header in GoogleJobsConstants.SearchHeaders)
+                        {
+                            retryReq.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                        }
+
+                        retryReq.Headers.TryAddWithoutValidation("User-Agent", retryUserAgent);
+                        retryReq.Headers.TryAddWithoutValidation("Cookie", cookieValue);
+
+                        try
+                        {
+                            HttpResponseMessage retryRes;
+                            if (httpSession != null)
+                            {
+                                retryRes = await _retryPolicy.ExecuteAsync(async () => await httpSession.ExecuteAsync(() => retryReq, ct).ConfigureAwait(false)).ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                retryRes = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(retryReq, ct).ConfigureAwait(false)).ConfigureAwait(false);
+                            }
+
+                            using (retryRes)
+                            {
+                                html = await retryRes.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+
+                                try
+                                {
+                                    System.IO.Directory.CreateDirectory("logs");
+                                    var ticks = DateTime.Now.Ticks;
+                                    System.IO.File.WriteAllText($"logs/google_jobs_search_retry_{ticks}.html", html);
+                                    LogWroteRetryHtmlDebugFile(_logger, ticks, null);
+                                }
+                                catch (Exception ex)
+                                {
+                                    LogFailedToWriteRetryHtmlDebugFile(_logger, ex);
+                                }
+
+                                // Check if this attempt succeeded
+                                isConsentPage = html.Contains("consent.google.com") ||
+                                               html.Contains("Before you continue to Google Search") ||
+                                               html.Contains("We need to verify you're human") ||
+                                               html.Contains("Checking if the site connection is secure") ||
+                                               html.Contains("www.google.com/sorry/index") ||
+                                               html.Contains("distil_r_captcha") ||
+                                               html.Contains("g-recaptcha") ||
+                                               html.Contains("cf_chl_");
+
+                                if (!isConsentPage)
+                                {
+                                    LogFetchingJobs(_logger, $"Successfully bypassed consent page with alternative URL", null);
+                                    // log a preview of the html for debugging
+                                    var preview = html.Length > 500 ? html.Substring(0, 500) : html;
+                                    LogHtmlPreview(_logger, preview, null);
+                                    break; // Success! Use this HTML
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            LogFetchingJobs(_logger, $"Error trying alternative URL {altUrl}: {ex.Message}", ex);
+                        }
                     }
                 }
 
