@@ -13,7 +13,7 @@ namespace Ghost.Platform.LinkedIn.Integration;
 [TestTimeout(60000)] // 60 seconds for integration tests
 public class LinkedInIntegrationTests
 {
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task SearchJobs_WithKeywords_ReturnsResults()
     {
         // Arrange
@@ -44,7 +44,7 @@ public class LinkedInIntegrationTests
         }
     }
 
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task SearchJobs_WithLocation_ReturnsRelevantResults()
     {
         // Arrange
@@ -69,7 +69,7 @@ public class LinkedInIntegrationTests
             "All jobs should have location information");
     }
 
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task GetJobDetails_WithValidJobId_ReturnsDetails()
     {
         // Arrange
@@ -101,7 +101,7 @@ public class LinkedInIntegrationTests
         jobDetails.Source.Should().Be("LinkedIn");
     }
 
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task SearchJobs_WithBrowserStrategy_ReturnsResults()
     {
         // Arrange
@@ -130,7 +130,7 @@ public class LinkedInIntegrationTests
         }
     }
 
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task SearchJobsAsync_StreamingResults_Works()
     {
         // Arrange
@@ -153,7 +153,7 @@ public class LinkedInIntegrationTests
         collectedJobs.Should().OnlyContain(j => j.Source == "LinkedIn");
     }
 
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task PlatformName_ReturnsLinkedIn()
     {
         // Arrange
@@ -166,7 +166,7 @@ public class LinkedInIntegrationTests
         platformName.Should().Be("LinkedIn");
     }
 
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task SearchJobs_WithHighLimit_ReturnsMultipleResults()
     {
         // Arrange

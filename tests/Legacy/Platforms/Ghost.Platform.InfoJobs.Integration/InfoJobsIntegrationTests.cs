@@ -27,7 +27,7 @@ public class InfoJobsIntegrationTests : IClassFixture<InfoJobsWireMockFixture>
         _jobClient = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
     }
 
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task SearchJobs_WithKeywords_ReturnsResults()
     {
         // Arrange - Using Spanish location for InfoJobs
@@ -56,7 +56,7 @@ public class InfoJobsIntegrationTests : IClassFixture<InfoJobsWireMockFixture>
         }
     }
 
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task SearchJobs_WithPortugueseLocation_ReturnsResults()
     {
         // Arrange - InfoJobs also operates in Portugal
@@ -79,7 +79,7 @@ public class InfoJobsIntegrationTests : IClassFixture<InfoJobsWireMockFixture>
             "All jobs should have location information");
     }
 
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task GetJobDetails_WithValidJobId_ReturnsDetails()
     {
         // Arrange - First search for a job to get a valid ID
@@ -105,7 +105,7 @@ public class InfoJobsIntegrationTests : IClassFixture<InfoJobsWireMockFixture>
         jobDetails.Source.Should().Be("InfoJobs");
     }
 
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task SearchJobs_WithBrowserStrategy_ReturnsResults()
     {
         // Arrange
@@ -132,7 +132,7 @@ public class InfoJobsIntegrationTests : IClassFixture<InfoJobsWireMockFixture>
         }
     }
 
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task PlatformName_ReturnsInfoJobs()
     {
         // Act
@@ -142,7 +142,7 @@ public class InfoJobsIntegrationTests : IClassFixture<InfoJobsWireMockFixture>
         platformName.Should().Be("InfoJobs");
     }
 
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task SearchJobs_WithTeletrabajo_ReturnsRemoteJobs()
     {
         // Arrange - "Teletrabajo" means remote work in Spanish
@@ -162,7 +162,7 @@ public class InfoJobsIntegrationTests : IClassFixture<InfoJobsWireMockFixture>
         results.Should().OnlyContain(j => !string.IsNullOrEmpty(j.Location));
     }
 
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task SearchJobs_WithSpanishCities_ReturnsResults()
     {
         // Arrange
@@ -184,7 +184,7 @@ public class InfoJobsIntegrationTests : IClassFixture<InfoJobsWireMockFixture>
         results.Should().OnlyContain(j => !string.IsNullOrEmpty(j.Company));
     }
 
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task SearchJobs_MultipleTimes_ReturnsConsistentResults()
     {
         // Arrange
@@ -209,7 +209,7 @@ public class InfoJobsIntegrationTests : IClassFixture<InfoJobsWireMockFixture>
         results2.Should().OnlyContain(j => !string.IsNullOrEmpty(j.Title));
     }
 
-    [Fact]
+    [Fact(Timeout = 60000)]
     public async Task SearchJobs_WithEnglishKeywords_StillWorks()
     {
         // Arrange - Test that English keywords also work
