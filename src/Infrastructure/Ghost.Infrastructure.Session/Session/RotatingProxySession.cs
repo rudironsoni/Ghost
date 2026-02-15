@@ -98,7 +98,7 @@ public class RotatingProxySession : IDisposable
             }
 
             // Apply jitter delay
-            await ApplyJitterDelay(cancellationToken).ConfigureAwait(false);
+            await ApplyJitterDelayAsync(cancellationToken).ConfigureAwait(false);
 
             return await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         }).ConfigureAwait(false);
@@ -165,7 +165,7 @@ public class RotatingProxySession : IDisposable
     /// <summary>
     /// Apply jitter delay between requests
     /// </summary>
-    private async Task ApplyJitterDelay(CancellationToken cancellationToken)
+    private async Task ApplyJitterDelayAsync(CancellationToken cancellationToken)
     {
         if (_options.JitterMinMs > 0 && _options.JitterMaxMs > 0)
         {
