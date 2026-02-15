@@ -28,7 +28,7 @@ public class PluginBaseTests
         // Act & Assert
         var exception = Record.Exception(() =>
             plugin.ConfigureServices(services, configuration));
-        
+
         Assert.Null(exception);
     }
 
