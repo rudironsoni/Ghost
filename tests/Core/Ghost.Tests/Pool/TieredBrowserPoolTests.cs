@@ -278,7 +278,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
             Cold = new ColdPoolOptions { MaximumConcurrent = maxConcurrent }
         };
 
-        await using ConfiguredAsyncDisposable pool = new TieredBrowserPool(_kernel!, options).ConfigureAwait(false);
+        await using TieredBrowserPool pool = new TieredBrowserPool(_kernel!, options);
         Task[] tasks = Enumerable.Range(0, maxConcurrent + 5)
             .Select(async _ =>
             {
@@ -297,7 +297,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
 
         await Task.WhenAll(tasks);
 
-        PoolHealth health = await pool.GetHealthAsync().ConfigureAwait(false);
+        PoolHealth health = await pool.GetHealthAsync();
         Assert.True(health.Cold.InUse <= maxConcurrent);
     }
 }
