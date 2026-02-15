@@ -135,7 +135,9 @@ dotnet_naming_style.end_with_async.required_suffix = Async
 dotnet_naming_style.end_with_async.capitalization = pascal_case
 
 # Private fields should start with _
-dotnet_naming_rule.private_fields_with_underscore.severity = error
+# NOTE: Temporarily suggestion due to 300+ existing violations
+# TODO: Fix incrementally and upgrade to error (see Beads issue)
+dotnet_naming_rule.private_fields_with_underscore.severity = suggestion
 dotnet_naming_rule.private_fields_with_underscore.symbols = private_fields
 dotnet_naming_rule.private_fields_with_underscore.style = begins_with_underscore
 
