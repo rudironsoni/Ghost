@@ -11,11 +11,11 @@ internal interface IMockInferenceClient { }
 
 internal sealed class MockInferenceExtension : IExtension
 {
-    public static string Name => "MockInference";
-    public static Version Version => new(1, 0, 0);
-    public static IReadOnlyList<Type> ProvidedServices => [typeof(IMockInferenceClient)];
-    public static IReadOnlyList<Type> RequiredServices => [];
-    public static void ConfigureServices(IServiceCollection services, IConfiguration config)
+    public string Name => "MockInference";
+    public Version Version => new(1, 0, 0);
+    public IReadOnlyList<Type> ProvidedServices => [typeof(IMockInferenceClient)];
+    public IReadOnlyList<Type> RequiredServices => [];
+    public void ConfigureServices(IServiceCollection services, IConfiguration config)
     {
         services.AddSingleton<IMockInferenceClient, MockInferenceClient>();
     }
@@ -25,11 +25,11 @@ internal sealed class MockInferenceClient : IMockInferenceClient { }
 
 internal sealed class MockDependentExtension : IExtension
 {
-    public static string Name => "MockDependent";
-    public static Version Version => new(1, 0, 0);
-    public static IReadOnlyList<Type> ProvidedServices => [typeof(string)];
-    public static IReadOnlyList<Type> RequiredServices => [typeof(IMockInferenceClient)];
-    public static void ConfigureServices(IServiceCollection services, IConfiguration config)
+    public string Name => "MockDependent";
+    public Version Version => new(1, 0, 0);
+    public IReadOnlyList<Type> ProvidedServices => [typeof(string)];
+    public IReadOnlyList<Type> RequiredServices => [typeof(IMockInferenceClient)];
+    public void ConfigureServices(IServiceCollection services, IConfiguration config)
     {
         services.AddSingleton("provided-by-dependent");
     }
@@ -37,11 +37,11 @@ internal sealed class MockDependentExtension : IExtension
 
 internal sealed class MockMissingDepExtension : IExtension
 {
-    public static string Name => "MockMissingDep";
-    public static Version Version => new(1, 0, 0);
-    public static IReadOnlyList<Type> ProvidedServices => [typeof(Guid)];
-    public static IReadOnlyList<Type> RequiredServices => [typeof(int)]; // nobody provides int
-    public static void ConfigureServices(IServiceCollection services, IConfiguration config)
+    public string Name => "MockMissingDep";
+    public Version Version => new(1, 0, 0);
+    public IReadOnlyList<Type> ProvidedServices => [typeof(Guid)];
+    public IReadOnlyList<Type> RequiredServices => [typeof(int)]; // nobody provides int
+    public void ConfigureServices(IServiceCollection services, IConfiguration config)
     {
         services.AddSingleton(typeof(Guid), Guid.Empty);
     }
@@ -49,38 +49,38 @@ internal sealed class MockMissingDepExtension : IExtension
 
 internal sealed class ExtensionA : IExtension
 {
-    public static string Name => "A";
-    public static Version Version => new(1, 0, 0);
-    public static IReadOnlyList<Type> ProvidedServices => [typeof(AService)];
-    public static IReadOnlyList<Type> RequiredServices => [typeof(BService)];
-    public static void ConfigureServices(IServiceCollection services, IConfiguration config) => services.AddSingleton<AService>();
+    public string Name => "A";
+    public Version Version => new(1, 0, 0);
+    public IReadOnlyList<Type> ProvidedServices => [typeof(AService)];
+    public IReadOnlyList<Type> RequiredServices => [typeof(BService)];
+    public void ConfigureServices(IServiceCollection services, IConfiguration config) => services.AddSingleton<AService>();
 }
 
 internal sealed class ExtensionB : IExtension
 {
-    public static string Name => "B";
-    public static Version Version => new(1, 0, 0);
-    public static IReadOnlyList<Type> ProvidedServices => [typeof(BService)];
-    public static IReadOnlyList<Type> RequiredServices => [];
-    public static void ConfigureServices(IServiceCollection services, IConfiguration config) => services.AddSingleton<BService>();
+    public string Name => "B";
+    public Version Version => new(1, 0, 0);
+    public IReadOnlyList<Type> ProvidedServices => [typeof(BService)];
+    public IReadOnlyList<Type> RequiredServices => [];
+    public void ConfigureServices(IServiceCollection services, IConfiguration config) => services.AddSingleton<BService>();
 }
 
 internal sealed class Circular1 : IExtension
 {
-    public static string Name => "C1";
-    public static Version Version => new(1, 0, 0);
-    public static IReadOnlyList<Type> ProvidedServices => [typeof(C1Service)];
-    public static IReadOnlyList<Type> RequiredServices => [typeof(C2Service)];
-    public static void ConfigureServices(IServiceCollection services, IConfiguration config) => services.AddSingleton<C1Service>();
+    public string Name => "C1";
+    public Version Version => new(1, 0, 0);
+    public IReadOnlyList<Type> ProvidedServices => [typeof(C1Service)];
+    public IReadOnlyList<Type> RequiredServices => [typeof(C2Service)];
+    public void ConfigureServices(IServiceCollection services, IConfiguration config) => services.AddSingleton<C1Service>();
 }
 
 internal sealed class Circular2 : IExtension
 {
-    public static string Name => "C2";
-    public static Version Version => new(1, 0, 0);
-    public static IReadOnlyList<Type> ProvidedServices => [typeof(C2Service)];
-    public static IReadOnlyList<Type> RequiredServices => [typeof(C1Service)];
-    public static void ConfigureServices(IServiceCollection services, IConfiguration config) => services.AddSingleton<C2Service>();
+    public string Name => "C2";
+    public Version Version => new(1, 0, 0);
+    public IReadOnlyList<Type> ProvidedServices => [typeof(C2Service)];
+    public IReadOnlyList<Type> RequiredServices => [typeof(C1Service)];
+    public void ConfigureServices(IServiceCollection services, IConfiguration config) => services.AddSingleton<C2Service>();
 }
 
 internal sealed class AService { }

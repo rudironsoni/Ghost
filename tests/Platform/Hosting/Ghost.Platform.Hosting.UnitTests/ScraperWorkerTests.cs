@@ -101,7 +101,7 @@ public class ScraperWorkerTests
             _completionSignal = completionSignal;
         }
 
-        public static string PlatformName => "linkedin";
+        public string PlatformName => "linkedin";
 
         public Task<IReadOnlyList<JobListing>> SearchJobsAsync(JobSearchCriteria criteria, CancellationToken cancellationToken = default)
         {
@@ -121,17 +121,17 @@ public class ScraperWorkerTests
             throw new NotImplementedException();
         }
 
-        public static Task<IReadOnlyList<JobApplication>> GetApplicationsAsync(ApplicationsFilter? filter = null, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyList<JobApplication>> GetApplicationsAsync(ApplicationsFilter? filter = null, CancellationToken cancellationToken = default)
         {
             return Task.FromResult<IReadOnlyList<JobApplication>>(Array.Empty<JobApplication>());
         }
 
-        public static Task SaveJobAsync(string jobId, CancellationToken cancellationToken = default)
+        public Task SaveJobAsync(string jobId, CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;
         }
 
-        public static Task<IReadOnlyList<JobListing>> GetSavedJobsAsync(CancellationToken cancellationToken = default)
+        public Task<IReadOnlyList<JobListing>> GetSavedJobsAsync(CancellationToken cancellationToken = default)
         {
             return Task.FromResult<IReadOnlyList<JobListing>>(Array.Empty<JobListing>());
         }

@@ -156,9 +156,9 @@ public class GhostEngineTests
             _processedItems = processedItems;
         }
 
-        public static string Name => "TestSpider";
+        public string Name => "TestSpider";
 
-        public static async IAsyncEnumerable<GhostRequest> StartRequestsAsync(GhostEngineContext context, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<GhostRequest> StartRequestsAsync(GhostEngineContext context, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             yield return new GhostRequest("http://example.com/1", "GET", new Dictionary<string, string>(), null, null);
             yield return new GhostRequest("http://example.com/2", "GET", new Dictionary<string, string>(), null, null);
@@ -175,9 +175,9 @@ public class GhostEngineTests
 
     private sealed class SlowSpider : ISpider
     {
-        public static string Name => "SlowSpider";
+        public string Name => "SlowSpider";
 
-        public static async IAsyncEnumerable<GhostRequest> StartRequestsAsync(GhostEngineContext context, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<GhostRequest> StartRequestsAsync(GhostEngineContext context, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             for (int i = 0; i < 5; i++)
             {
@@ -186,7 +186,7 @@ public class GhostEngineTests
             }
         }
 
-        public static async Task<SpiderOutput> ParseAsync(GhostResponse response, GhostEngineContext context, CancellationToken cancellationToken = default)
+        public async Task<SpiderOutput> ParseAsync(GhostResponse response, GhostEngineContext context, CancellationToken cancellationToken = default)
         {
             await Task.Delay(50, cancellationToken).ConfigureAwait(false); // Simulate slow processing
             return new SpiderOutput(EmptyRequests, EmptyItems);
@@ -197,7 +197,7 @@ public class GhostEngineTests
     {
         private int _counter;
 
-        public static string Name => "InfiniteSpider";
+        public string Name => "InfiniteSpider";
 
         public async IAsyncEnumerable<GhostRequest> StartRequestsAsync(GhostEngineContext context, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
         {

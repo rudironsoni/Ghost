@@ -68,7 +68,7 @@ public sealed class AbstractionsContractSmokeTests
 
     private sealed class FakeEngine : IGhostEngine
     {
-        public static Task RunAsync(ISpider spider, GhostEngineContext context, CancellationToken cancellationToken = default)
+        public Task RunAsync(ISpider spider, GhostEngineContext context, CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;
         }
@@ -76,9 +76,9 @@ public sealed class AbstractionsContractSmokeTests
 
     private sealed class FakeSpider : ISpider
     {
-        public static string Name => "fake";
+        public string Name => "fake";
 
-        public static async IAsyncEnumerable<GhostRequest> StartRequestsAsync(
+        public async IAsyncEnumerable<GhostRequest> StartRequestsAsync(
             GhostEngineContext context,
             [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
@@ -124,7 +124,7 @@ public sealed class AbstractionsContractSmokeTests
 
     private sealed class FakeDownloaderMiddleware : IDownloaderMiddleware
     {
-        public static Task<GhostResponse> InvokeAsync(
+        public Task<GhostResponse> InvokeAsync(
             GhostRequest request,
             GhostEngineContext context,
             Func<GhostRequest, GhostEngineContext, CancellationToken, Task<GhostResponse>> next,
@@ -136,7 +136,7 @@ public sealed class AbstractionsContractSmokeTests
 
     private sealed class FakeSpiderMiddleware : ISpiderMiddleware
     {
-        public static Task<SpiderOutput> InvokeAsync(
+        public Task<SpiderOutput> InvokeAsync(
             GhostResponse response,
             GhostEngineContext context,
             Func<GhostResponse, GhostEngineContext, CancellationToken, Task<SpiderOutput>> next,
@@ -156,7 +156,7 @@ public sealed class AbstractionsContractSmokeTests
 
     private sealed class FakeSignalBus : ISignalBus
     {
-        public static Task PublishAsync<TSignal>(TSignal signal, CancellationToken cancellationToken = default)
+        public Task PublishAsync<TSignal>(TSignal signal, CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;
         }
@@ -169,17 +169,17 @@ public sealed class AbstractionsContractSmokeTests
 
     private sealed class NullSubscription : ISignalSubscription
     {
-        public static ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     private sealed class FakeSettings : IGhostSettings
     {
-        public static bool TryGet<T>(string key, out T? value)
+        public bool TryGet<T>(string key, out T? value)
         {
             value = default;
             return false;
         }
 
-        public static T GetOrDefault<T>(string key, T defaultValue) => defaultValue;
+        public T GetOrDefault<T>(string key, T defaultValue) => defaultValue;
     }
 }
