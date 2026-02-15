@@ -10,6 +10,14 @@ namespace Ghost.CLI.Commands;
 /// </summary>
 public static class RunCommand
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    private static readonly string[] ModeAliases = { "--mode", "-m" };
+    private static readonly string[] RunFolderAliases = { "--run-folder", "-r" };
+
     public static Command Create()
     {
         var jobFileArgument = new Argument<FileInfo>(
@@ -19,15 +27,16 @@ public static class RunCommand
             Arity = ArgumentArity.ExactlyOne
         };
 
-        var modeOption = new Option<string?>(
-            aliases: new[] { "--mode", "-m" },
-            description: "Execution mode: 'execute' (default) or 'replay'")
+        var modeOption = new Option<string>(
+            aliases: ModeAliases,
+            description: "Execution mode: 'execute' (default) or 'replay'",
+            getDefaultValue: () => "execute")
         {
             Arity = ArgumentArity.ZeroOrOne
         };
 
         var runFolderOption = new Option<DirectoryInfo?>(
-            aliases: new[] { "--run-folder", "-r" },
+            aliases: RunFolderAliases,
             description: "Run folder for replay mode (required when --mode replay)")
         {
             Arity = ArgumentArity.ZeroOrOne
@@ -59,54 +68,51 @@ public static class RunCommand
             // Validate inputs
             if (!jobFile.Exists)
             {
-                console.Error.WriteLine($"Error: Job file not found: {jobFile.FullName}");
+                Console.Error.WriteLine($"Error: Job file not found: {jobFile.FullName}");
                 Environment.Exit(1);
                 return;
             }
 
             if (mode == "replay" && runFolder == null)
             {
-                console.Error.WriteLine("Error: --run-folder is required when --mode replay");
+                Console.Error.WriteLine("Error: --run-folder is required when --mode replay");
                 Environment.Exit(1);
                 return;
             }
 
             if (mode == "replay" && !runFolder!.Exists)
             {
-                console.Error.WriteLine($"Error: Run folder not found: {runFolder!.FullName}");
+                Console.Error.WriteLine($"Error: Run folder not found: {runFolder!.FullName}");
                 Environment.Exit(1);
                 return;
             }
 
             // Read job definition
             var jobJson = await File.ReadAllTextAsync(jobFile.FullName);
-            var job = JsonSerializer.Deserialize<JobDefinition>(jobJson, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var job = JsonSerializer.Deserialize<JobDefinition>(jobJson, JsonOptions);
 
             if (job == null)
             {
-                console.Error.WriteLine("Error: Failed to parse job definition");
+                Console.Error.WriteLine("Error: Failed to parse job definition");
                 Environment.Exit(1);
                 return;
             }
 
-            console.Out.WriteLine($"Job ID: {job.JobId}");
-            console.Out.WriteLine($"Plugin: {job.PluginId}");
-            console.Out.WriteLine($"Spider: {job.SpiderId}");
-            console.Out.WriteLine($"Mode: {mode}");
+            Console.WriteLine($"Job ID: {job.JobId}");
+            Console.WriteLine($"Plugin: {job.PluginId}");
+            Console.WriteLine($"Spider: {job.SpiderId}");
+            Console.WriteLine($"Mode: {mode}");
 
             // TODO: Load spider spec from plugin
             // TODO: Create engine instance
             // TODO: Execute job
 
-            console.Out.WriteLine("Job execution completed successfully");
+            Console.WriteLine("Job execution completed successfully");
         }
         catch (Exception ex)
         {
-            console.Error.WriteLine($"Error: {ex.Message}");
-            console.Error.WriteLine(ex.StackTrace);
+            Console.Error.WriteLine($"Error: {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
             Environment.Exit(1);
         }
     }

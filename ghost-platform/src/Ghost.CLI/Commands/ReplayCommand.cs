@@ -7,6 +7,8 @@ namespace Ghost.CLI.Commands;
 /// </summary>
 public static class ReplayCommand
 {
+    private static readonly string[] OutputAliases = { "--output", "-o" };
+
     public static Command Create()
     {
         var bundleArgument = new Argument<FileInfo>(
@@ -16,9 +18,10 @@ public static class ReplayCommand
             Arity = ArgumentArity.ExactlyOne
         };
 
-        var outputOption = new Option<DirectoryInfo?>(
-            aliases: new[] { "--output", "-o" },
-            description: "Output directory for replay results (default: current directory)")
+        var outputOption = new Option<DirectoryInfo>(
+            aliases: OutputAliases,
+            description: "Output directory for replay results (default: current directory)",
+            getDefaultValue: () => new DirectoryInfo("."))
         {
             Arity = ArgumentArity.ZeroOrOne
         };
@@ -47,7 +50,7 @@ public static class ReplayCommand
             // Validate inputs
             if (!bundle.Exists)
             {
-                console.Error.WriteLine($"Error: Bundle file not found: {bundle.FullName}");
+                Console.Error.WriteLine($"Error: Bundle file not found: {bundle.FullName}");
                 Environment.Exit(1);
                 return;
             }
@@ -57,19 +60,19 @@ public static class ReplayCommand
                 output.Create();
             }
 
-            console.Out.WriteLine($"Bundle: {bundle.FullName}");
-            console.Out.WriteLine($"Output: {output.FullName}");
+            Console.WriteLine($"Bundle: {bundle.FullName}");
+            Console.WriteLine($"Output: {output.FullName}");
 
             // TODO: Extract bundle
             // TODO: Load events from storage
             // TODO: Replay execution
 
-            console.Out.WriteLine("Replay completed successfully");
+            Console.WriteLine("Replay completed successfully");
         }
         catch (Exception ex)
         {
-            console.Error.WriteLine($"Error: {ex.Message}");
-            console.Error.WriteLine(ex.StackTrace);
+            Console.Error.WriteLine($"Error: {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
             Environment.Exit(1);
         }
     }

@@ -2,6 +2,7 @@
 #pragma warning disable CA1873 // Avoid expensive logging evaluation
 
 using System.Diagnostics;
+using System.Text.Json;
 using Ghost.Platform.Events;
 using Ghost.Sdk.Contracts;
 using Microsoft.Extensions.Logging;
@@ -68,7 +69,7 @@ public sealed class DeclarativeEngine : IDeclarativeEngine
         }
     }
 
-    private async Task ExecuteStepAsync(ExecutionContext context, StepSpec step)
+    private async Task ExecuteStepAsync(ExecutionContext context, Ghost.Sdk.Contracts.StepSpec step)
     {
         var stepEvent = CreateEvent(context, "StepStarted", causationId: null, data: new Dictionary<string, object?>
         {
@@ -116,14 +117,14 @@ public sealed class DeclarativeEngine : IDeclarativeEngine
         }
     }
 
-    private Task ExecuteBuildRequestStepAsync(ExecutionContext context, StepSpec step)
+    private Task ExecuteBuildRequestStepAsync(ExecutionContext context, Ghost.Sdk.Contracts.StepSpec step)
     {
         // TODO: Implement request building logic
         _logger.LogDebug("Executing build_request step: {StepId}", step.StepId);
         return Task.CompletedTask;
     }
 
-    private Task ExecuteHttpFetchStepAsync(ExecutionContext context, StepSpec step)
+    private Task ExecuteHttpFetchStepAsync(ExecutionContext context, Ghost.Sdk.Contracts.StepSpec step)
     {
         // Check budget
         if (!context.TryIncrementRequest())
@@ -136,14 +137,14 @@ public sealed class DeclarativeEngine : IDeclarativeEngine
         return Task.CompletedTask;
     }
 
-    private Task ExecuteParseStepAsync(ExecutionContext context, StepSpec step)
+    private Task ExecuteParseStepAsync(ExecutionContext context, Ghost.Sdk.Contracts.StepSpec step)
     {
         // TODO: Implement parsing logic
         _logger.LogDebug("Executing parse step: {StepId}", step.StepId);
         return Task.CompletedTask;
     }
 
-    private async Task ExecuteEmitItemStepAsync(ExecutionContext context, StepSpec step)
+    private async Task ExecuteEmitItemStepAsync(ExecutionContext context, Ghost.Sdk.Contracts.StepSpec step)
     {
         // Check budget
         if (!context.TryIncrementItem())
@@ -165,7 +166,7 @@ public sealed class DeclarativeEngine : IDeclarativeEngine
         await context.Observer.OnEventAsync(e, context.CancellationToken);
     }
 
-    private EngineEvent CreateEvent(
+    private static EngineEvent CreateEvent(
         ExecutionContext context,
         string kind,
         string? errorMessage = null,

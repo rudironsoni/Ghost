@@ -10,6 +10,15 @@ namespace Ghost.CLI.Commands;
 /// </summary>
 public static class CertifyCommand
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    private static readonly string[] ModeAliases = { "--mode", "-m" };
+    private static readonly string[] FixturesAliases = { "--fixtures", "-f" };
+    private static readonly string[] TimeoutAliases = { "--timeout", "-t" };
+
     public static Command Create()
     {
         var pluginPathArgument = new Argument<DirectoryInfo>(
@@ -20,26 +29,26 @@ public static class CertifyCommand
         };
 
         var modeOption = new Option<string>(
-            aliases: new[] { "--mode", "-m" },
-            description: "Certification mode: offline (default), semi-offline, or live-smoke")
+            aliases: ModeAliases,
+            description: "Certification mode: offline (default), semi-offline, or live-smoke",
+            getDefaultValue: () => "offline")
         {
-            Arity = ArgumentArity.ZeroOrOne,
-            DefaultValueFactory = () => "offline"
+            Arity = ArgumentArity.ZeroOrOne
         };
 
         var fixturesOption = new Option<DirectoryInfo?>(
-            aliases: new[] { "--fixtures", "-f" },
+            aliases: FixturesAliases,
             description: "Path to fixtures directory (default: pluginPath/fixtures)")
         {
             Arity = ArgumentArity.ZeroOrOne
         };
 
         var timeoutOption = new Option<int>(
-            aliases: new[] { "--timeout", "-t" },
-            description: "Timeout in seconds (default: 300)")
+            aliases: TimeoutAliases,
+            description: "Timeout in seconds (default: 300)",
+            getDefaultValue: () => 300)
         {
-            Arity = ArgumentArity.ZeroOrOne,
-            DefaultValueFactory = () => 300
+            Arity = ArgumentArity.ZeroOrOne
         };
 
         var command = new Command("certify", "Run certification for a plugin")
@@ -53,7 +62,7 @@ public static class CertifyCommand
         command.SetHandler(async (context) =>
         {
             var pluginPath = context.ParseResult.GetValueForArgument(pluginPathArgument);
-            var mode = context.ParseResult.GetValueForOption(modeOption);
+            var mode = context.ParseResult.GetValueForOption(modeOption) ?? "offline";
             var fixtures = context.ParseResult.GetValueForOption(fixturesOption);
             var timeout = context.ParseResult.GetValueForOption(timeoutOption);
 
@@ -70,7 +79,7 @@ public static class CertifyCommand
             // Validate inputs
             if (!pluginPath.Exists)
             {
-                console.Error.WriteLine($"Error: Plugin path not found: {pluginPath.FullName}");
+                Console.Error.WriteLine($"Error: Plugin path not found: {pluginPath.FullName}");
                 Environment.Exit(1);
                 return;
             }
@@ -78,7 +87,7 @@ public static class CertifyCommand
             var manifestPath = Path.Combine(pluginPath.FullName, "manifest.json");
             if (!File.Exists(manifestPath))
             {
-                console.Error.WriteLine($"Error: manifest.json not found in {pluginPath.FullName}");
+                Console.Error.WriteLine($"Error: manifest.json not found in {pluginPath.FullName}");
                 Environment.Exit(1);
                 return;
             }
@@ -86,7 +95,7 @@ public static class CertifyCommand
             var fixturesPath = fixtures?.FullName ?? Path.Combine(pluginPath.FullName, "fixtures");
             if (!Directory.Exists(fixturesPath))
             {
-                console.Error.WriteLine($"Error: Fixtures directory not found: {fixturesPath}");
+                Console.Error.WriteLine($"Error: Fixtures directory not found: {fixturesPath}");
                 Environment.Exit(1);
                 return;
             }
@@ -102,23 +111,20 @@ public static class CertifyCommand
 
             // Read manifest
             var manifestJson = await File.ReadAllTextAsync(manifestPath);
-            var manifest = JsonSerializer.Deserialize<PluginManifest>(manifestJson, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var manifest = JsonSerializer.Deserialize<PluginManifest>(manifestJson, JsonOptions);
 
             if (manifest == null)
             {
-                console.Error.WriteLine("Error: Failed to parse plugin manifest");
+                Console.Error.WriteLine("Error: Failed to parse plugin manifest");
                 Environment.Exit(1);
                 return;
             }
 
-            console.Out.WriteLine($"Plugin: {manifest.PluginId}");
-            console.Out.WriteLine($"Version: {manifest.Version}");
-            console.Out.WriteLine($"Mode: {mode}");
-            console.Out.WriteLine($"Fixtures: {fixturesPath}");
-            console.Out.WriteLine($"Timeout: {timeout}s");
+            Console.WriteLine($"Plugin: {manifest.PluginId}");
+            Console.WriteLine($"Version: {manifest.Version}");
+            Console.WriteLine($"Mode: {mode}");
+            Console.WriteLine($"Fixtures: {fixturesPath}");
+            Console.WriteLine($"Timeout: {timeout}s");
 
             // Create certification options
             var options = new CertificationOptions(
@@ -131,12 +137,12 @@ public static class CertifyCommand
             // TODO: Run certification
             // TODO: Display results
 
-            console.Out.WriteLine("Certification completed successfully");
+            Console.WriteLine("Certification completed successfully");
         }
         catch (Exception ex)
         {
-            console.Error.WriteLine($"Error: {ex.Message}");
-            console.Error.WriteLine(ex.StackTrace);
+            Console.Error.WriteLine($"Error: {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
             Environment.Exit(1);
         }
     }
