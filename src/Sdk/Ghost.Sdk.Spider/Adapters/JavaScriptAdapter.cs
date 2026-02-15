@@ -48,8 +48,15 @@ public class JavaScriptAdapter : IContentAdapter
     /// <summary>
     /// Initializes a new instance of the <see cref="JavaScriptAdapter"/> class.
     /// </summary>
+    public JavaScriptAdapter() : this(null)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JavaScriptAdapter"/> class.
+    /// </summary>
     /// <param name="logger">Optional logger for diagnostic information.</param>
-    public JavaScriptAdapter(ILogger<JavaScriptAdapter>? logger = null)
+    public JavaScriptAdapter(ILogger<JavaScriptAdapter>? logger)
     {
         _logger = logger;
         _browserLazy = new Lazy<Task<IBrowser>>(InitializeBrowserAsync);

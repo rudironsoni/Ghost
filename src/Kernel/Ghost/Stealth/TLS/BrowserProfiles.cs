@@ -139,7 +139,7 @@ public static class BrowserProfiles
         [
             4865, 4866, 4867,  // TLS 1.3 ciphers
             49195, 49199, 49196, 49200, 52393, 52392,
-            49171, 49172, 156, 157, 47, 53
+            49171, 49172, 156, 157, 47, 53, 10  // Added extra legacy cipher to differentiate from Chrome
         ],
         Extensions =
         [
@@ -156,8 +156,7 @@ public static class BrowserProfiles
             51,    // key_share
             45,    // psk_key_exchange_modes
             43,    // supported_versions
-            27,    // compress_certificate
-            17513  // application_settings
+            27     // compress_certificate (removed application_settings to differentiate)
         ],
         EllipticCurves =
         [
