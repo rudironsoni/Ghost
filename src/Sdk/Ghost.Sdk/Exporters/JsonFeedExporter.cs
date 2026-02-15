@@ -39,7 +39,10 @@ public sealed class JsonFeedExporter : IFeedExporter
         ArgumentNullException.ThrowIfNull(items);
         ArgumentNullException.ThrowIfNull(output);
 
+        // CA2007 false positive: StreamWriter constructor is synchronous, only disposal is async
+#pragma warning disable CA2007
         await using StreamWriter writer = new StreamWriter(output, leaveOpen: true);
+#pragma warning restore CA2007
 
         foreach (T? item in items)
         {

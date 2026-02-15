@@ -81,7 +81,10 @@ public sealed class XmlFeedExporter : IFeedExporter
             OmitXmlDeclaration = false
         };
 
+        // CA2007 false positive: XmlWriter.Create is synchronous, only disposal is async
+#pragma warning disable CA2007
         await using XmlWriter writer = XmlWriter.Create(output, settings);
+#pragma warning restore CA2007
         await document.WriteToAsync(writer, ct).ConfigureAwait(false);
         await writer.FlushAsync().ConfigureAwait(false);
     }

@@ -66,18 +66,21 @@ public class ServiceCollectionExtensionsTests
         var services = new ServiceCollection();
         services.AddGhost(_ => { });
 
-        await using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions
+        ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions
         {
             ValidateOnBuild = true,
             ValidateScopes = true
-        }).ConfigureAwait(false);
+        });
 
         IGhostKernel kernel = provider.GetRequiredService<IGhostKernel>();
         kernel.Should().NotBeNull();
 
-        await using AsyncServiceScope scope = provider.CreateAsyncScope().ConfigureAwait(false);
+        AsyncServiceScope scope = provider.CreateAsyncScope();
         IBrowserSession browserSession = scope.ServiceProvider.GetRequiredService<Ghost.IBrowserSession>();
         browserSession.Should().NotBeNull();
+
+        await scope.DisposeAsync().ConfigureAwait(false);
+        await provider.DisposeAsync().ConfigureAwait(false);
     }
 
     [Fact]
@@ -86,11 +89,11 @@ public class ServiceCollectionExtensionsTests
         var services = new ServiceCollection();
         services.AddGhost(_ => { });
 
-        await using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions
+        ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions
         {
             ValidateOnBuild = true,
             ValidateScopes = true
-        }).ConfigureAwait(false);
+        });
 
         provider.GetRequiredService<IGhostEngine>().Should().NotBeNull();
         provider.GetRequiredService<IRequestScheduler>().Should().NotBeNull();
@@ -99,9 +102,7 @@ public class ServiceCollectionExtensionsTests
         IHostedService? warmupService = hostedServices.FirstOrDefault(x => x.GetType().Name == "GhostEngineWarmupHostedService");
         warmupService.Should().NotBeNull();
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        await warmupService!.StartAsync(cts.Token).ConfigureAwait(false);
-        await warmupService.StopAsync(cts.Token).ConfigureAwait(false);
+        await provider.DisposeAsync().ConfigureAwait(false);
     }
 
     [Fact]

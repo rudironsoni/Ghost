@@ -28,7 +28,7 @@ public class ScraperWorkerTests
         services.AddKeyedScoped<IJobClient>("linkedin", (sp, _) =>
             new FakeJobClient(sp.GetRequiredService<ScopedDependency>(), cts));
 
-        await using ServiceProvider serviceProvider = services.BuildServiceProvider(validateScopes: true).ConfigureAwait(false);
+        ServiceProvider serviceProvider = services.BuildServiceProvider(validateScopes: true);
 
         var db = new Mock<IDatabase>();
         db.SetupSequence(x => x.ListRightPopAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
@@ -67,10 +67,12 @@ public class ScraperWorkerTests
         executeAsync.Should().NotBeNull();
         var runTask = (Task?)executeAsync!.Invoke(worker, new object[] { cts.Token });
         runTask.Should().NotBeNull();
-        await runTask.ConfigureAwait(false)!;
+        await runTask!.ConfigureAwait(false);
 
         holder.Latest.Should().NotBeNull();
         holder.Latest!.Disposed.Should().BeTrue();
+
+        await serviceProvider.DisposeAsync().ConfigureAwait(false);
     }
 
     private sealed class ScopedDependency : IDisposable
