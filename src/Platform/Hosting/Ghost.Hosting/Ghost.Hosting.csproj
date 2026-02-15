@@ -19,5 +19,6 @@
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Ghost.Hosting.Tests" />
+    <InternalsVisibleTo Include="Ghost.Platform.Hosting.UnitTests" />
   </ItemGroup>
 </Project>
