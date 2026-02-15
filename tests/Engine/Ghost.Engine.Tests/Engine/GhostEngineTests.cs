@@ -21,7 +21,7 @@ public class GhostEngineTests
     private static readonly string[] TestUrls = { "http://example.com/1", "http://example.com/2", "http://example.com/3" };
 
     [Fact]
-    public async Task RunAsync_WithFakeDownloader_ProcessesRequestsDeterministically()
+    public async Task RunAsync_WithFakeDownloader_ProcessesRequestsDeterministicallyAsync()
     {
         // Arrange
         var options = new GhostEngineOptions
@@ -59,7 +59,7 @@ public class GhostEngineTests
     }
 
     [Fact]
-    public async Task RunAsync_WithBackpressure_RespectsMaxInFlight()
+    public async Task RunAsync_WithBackpressure_RespectsMaxInFlightAsync()
     {
         // Arrange
         var options = new GhostEngineOptions
@@ -88,7 +88,7 @@ public class GhostEngineTests
     }
 
     [Fact]
-    public async Task RunAsync_WithMiddleware_ExecutesInCorrectOrder()
+    public async Task RunAsync_WithMiddleware_ExecutesInCorrectOrderAsync()
     {
         // Arrange
         var executionOrder = new List<string>();
@@ -116,7 +116,7 @@ public class GhostEngineTests
     }
 
     [Fact]
-    public async Task RunAsync_WithCancellation_StopsGracefully()
+    public async Task RunAsync_WithCancellation_StopsGracefullyAsync()
     {
         // Arrange
         var options = new GhostEngineOptions

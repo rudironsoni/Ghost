@@ -6,7 +6,7 @@
     <NoWarn>$(NoWarn);CA1707;CA2201;CA1822;CA2012;CA2252;xUnit1031;CA1001;CA1861</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Sdk\Ghost.Sdk\Ghost.Sdk.csproj" />
+    <ProjectReference Include="../../../../../src/Sdk\Ghost.Sdk\Ghost.Sdk.csproj" />
     <ProjectReference Include="..\..\Shared\Ghost.Testing\Ghost.Testing.csproj" />
   </ItemGroup>
 

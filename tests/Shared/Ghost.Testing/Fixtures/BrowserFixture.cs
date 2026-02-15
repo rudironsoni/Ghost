@@ -1,4 +1,4 @@
-using Ghost.Core;
+using Ghost.Kernel;
 using Ghost.Testing.Fakes;
 
 namespace Ghost.Testing.Fixtures;

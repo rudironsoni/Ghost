@@ -22,7 +22,7 @@ public class FailureDiagnosticsExampleTests : ReliabilityTestBase
     }
 
     [Fact]
-    public async Task ExampleTest_WithDiagnostics()
+    public async Task ExampleTest_WithDiagnosticsAsync()
     {
         // Record timeline events for better debugging
         AddTimelineEvent("TestStarted", "Beginning example test");
@@ -70,7 +70,7 @@ public class FailureDiagnosticsExampleTests : ReliabilityTestBase
     }
 
     [Fact]
-    public async Task ExampleTest_ManualDiagnosticsCapture()
+    public async Task ExampleTest_ManualDiagnosticsCaptureAsync()
     {
         AddTimelineEvent("ManualCaptureTest", "Starting manual diagnostics capture test");
 
@@ -85,7 +85,7 @@ public class FailureDiagnosticsExampleTests : ReliabilityTestBase
             await page.NavigateAsync("https://example.com");
 
             // Simulate a failure condition
-            IElement elementExists = await page.QuerySelectorAsync(".non-existent-element")?? throw new InvalidOperationException("Expected element not found");
+            IElement elementExists = await page.QuerySelectorAsync(".non-existent-element") ?? throw new InvalidOperationException("Expected element not found");
         }
         catch (Exception ex)
         {
@@ -107,7 +107,7 @@ public class FailureDiagnosticsExampleTests : ReliabilityTestBase
     }
 
     [Fact]
-    public async Task ExampleTest_WithoutBrowser()
+    public async Task ExampleTest_WithoutBrowserAsync()
     {
         AddTimelineEvent("NonBrowserTest", "Starting non-browser test");
 

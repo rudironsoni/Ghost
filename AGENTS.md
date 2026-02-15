@@ -256,14 +256,36 @@
 
 ## 25. Project Structure
 
-- Layer 0: `src/Core/Ghost/` - Core engine, stealth, sessions, proxies
-- Layer 1: `src/Contracts/` - Interfaces, DTOs, shared contracts
+- Layer 0: `src/Kernel/Ghost/` - Core engine, stealth, sessions, proxies (renamed from Core for clarity)
+- Layer 1: `src/Contracts/` - Public interfaces, DTOs, shared contracts
 - Layer 2: `src/Plugins/` - Platform-specific plugins (LinkedIn, Indeed, Google, etc.)
-- Layer 3: `src/Hosting/` - WebAPI, workers, CLI
-- Layer 4: `src/Sdk/` - Spider framework for building scrapers
-- Tests: `tests/Plugins/` mirrors plugin layout
+  - Plugins are in flat structure: `src/Plugins/Ghost.Plugin.<Name>/`
+  - Planned: Plugin subfolders `src/Plugins/<Name>/Ghost.Plugin.<Name>/` for better organization
+- Layer 3: `src/Platform/` - Shared infrastructure
+  - `src/Platform/Abstractions/` - Interfaces and pure abstractions
+  - `src/Platform/Contracts/` - Contracts and DTOs
+  - `src/Platform/Extensions/` - Extension methods and utilities
+  - `src/Platform/Hosting/` - Hosting infrastructure
+  - `src/Platform/Observability/` - Telemetry, logging, metrics
+  - `src/Platform/Storage/` - Persistence layer (renamed from Infrastructure)
+- Layer 4: `src/Engine/` - Scraper engines
+- Layer 5: `src/Apps/` - Deployable entrypoints
+  - `src/Apps/Ghost.WebApi/` - Web API application
+  - `src/Apps/Ghost.Worker/` - Background worker application
+- Layer 6: `src/Sdk/` - Framework for building scrapers
+- Tests: `tests/` with proper hierarchy and suffix taxonomy
+  - `tests/Kernel/` - Kernel tests (UnitTests, IntegrationTests, SmokeTests)
+  - `tests/Platform/` - Platform tests (Hosting.UnitTests)
+  - `tests/Plugins/` - Plugin tests (UnitTests, IntegrationTests, End2EndTests)
+  - `tests/Apps/` - Application tests (WebApi.UnitTests, Worker.UnitTests)
+  - `tests/Engine/` - Engine tests
+  - `tests/Contracts/` - Contracts tests
+  - `tests/Sdk/` - SDK tests
+  - `tests/Shared/` - Shared testing infrastructure
+  - `tests/Legacy/Platforms/` - Legacy platform tests (preserved for reference)
+  - `tests/Architecture/` - Architecture tests
 
-**Note:** Architecture migrated from Platforms to Plugins. All platform implementations live in `src/Plugins/`.
+**Note:** Architecture migrated from Platforms to Plugins. All platform implementations live in `src/Plugins/`. Core renamed to Kernel for clarity. Hosting and Infrastructure moved to Platform boundary with proper sub-organization.
 
 ## 26. Reference Documents
 
@@ -272,18 +294,89 @@
 - `docs/dotnet10-ops.md`
 
 <!-- BEGIN BEADS INTEGRATION -->
-## 27. Issue Tracking with bd
+## Issue Tracking with bd (beads)
 
-- MUST use bd for non-trivial task tracking.
-- MUST run required workflow:
-  - `bd ready --json`
-  - `bd show <id> --json`
-  - `bd update <id> --status in_progress --json`
-- MUST link discovered work with dependency metadata when applicable.
-- MUST close completed work with `bd close <id> --reason "Completed" --json`.
-- MUST run `bd sync` during completion.
-- MUST use `--json` for agent-driven workflows.
-- MUST NOT use markdown TODO files as tracking system.
+**IMPORTANT**: This project uses **bd (beads)** for ALL issue tracking. Do NOT use markdown TODOs, task lists, or other tracking methods.
+
+### Why bd?
+
+- Dependency-aware: Track blockers and relationships between issues
+- Git-friendly: Auto-syncs to JSONL for version control
+- Agent-optimized: JSON output, ready work detection, discovered-from links
+- Prevents duplicate tracking systems and confusion
+
+### Quick Start
+
+**Check for ready work:**
+
+```bash
+bd ready --json
+```
+
+**Create new issues:**
+
+```bash
+bd create "Issue title" --description="Detailed context" -t bug|feature|task -p 0-4 --json
+bd create "Issue title" --description="What this issue is about" -p 1 --deps discovered-from:bd-123 --json
+```
+
+**Claim and update:**
+
+```bash
+bd update bd-42 --status in_progress --json
+bd update bd-42 --priority 1 --json
+```
+
+**Complete work:**
+
+```bash
+bd close bd-42 --reason "Completed" --json
+```
+
+### Issue Types
+
+- `bug` - Something broken
+- `feature` - New functionality
+- `task` - Work item (tests, docs, refactoring)
+- `epic` - Large feature with subtasks
+- `chore` - Maintenance (dependencies, tooling)
+
+### Priorities
+
+- `0` - Critical (security, data loss, broken builds)
+- `1` - High (major features, important bugs)
+- `2` - Medium (default, nice-to-have)
+- `3` - Low (polish, optimization)
+- `4` - Backlog (future ideas)
+
+### Workflow for AI Agents
+
+1. **Check ready work**: `bd ready` shows unblocked issues
+2. **Claim your task**: `bd update <id> --status in_progress`
+3. **Work on it**: Implement, test, document
+4. **Discover new work?** Create linked issue:
+   - `bd create "Found bug" --description="Details about what was found" -p 1 --deps discovered-from:<parent-id>`
+5. **Complete**: `bd close <id> --reason "Done"`
+
+### Auto-Sync
+
+bd automatically syncs with git:
+
+- Exports to `.beads/issues.jsonl` after changes (5s debounce)
+- Imports from JSONL when newer (e.g., after `git pull`)
+- No manual export/import needed!
+
+### Important Rules
+
+- ✅ Use bd for ALL task tracking
+- ✅ Always use `--json` flag for programmatic use
+- ✅ Link discovered work with `discovered-from` dependencies
+- ✅ Check `bd ready` before asking "what should I work on?"
+- ❌ Do NOT create markdown TODO lists
+- ❌ Do NOT use external issue trackers
+- ❌ Do NOT duplicate tracking systems
+
+For more details, see README.md and docs/QUICKSTART.md.
 
 <!-- END BEADS INTEGRATION -->
 
@@ -302,13 +395,15 @@
 ## 29. Plugin Architecture & Isolation
 
 - Plugins must be independent and self-contained
-- Layer 2 dependencies: Core, Contracts, Plugin.Common only
-- No Hosting layer dependencies in plugins
+- Layer 2 dependencies: Kernel, Contracts, Plugin.Common only
+- No Platform layer dependencies in plugins
 - IExtension implementation required for all plugins
 - Plugin boundaries must be enforced via architecture tests
 - No direct plugin-to-plugin dependencies
 - All plugin communication through contracts
 - Plugin lifecycle managed by hosting layer
+- Plugin structure: `src/Plugins/Ghost.Plugin.<Name>/` (current flat structure)
+- Planned: Plugin subfolders `src/Plugins/<Name>/Ghost.Plugin.<Name>/` for better organization
 
 ## 30. Architecture Compliance
 
@@ -371,6 +466,9 @@
 - Tests must be deterministic and repeatable
 - Test names must describe behavior, not implementation
 - Arrange-Act-Assert pattern for test structure
+- Test projects follow suffix taxonomy: UnitTests, ComponentTests, IntegrationTests, End2EndTests, SmokeTests
+- Test structure mirrors source structure under tests/ directory
+- Legacy tests preserved in tests/Legacy/Platforms/ for reference
 
 ## 36. Performance & Observability
 

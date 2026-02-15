@@ -1,5 +1,5 @@
-using Ghost.Core;
-using Ghost.Core.Configuration;
+using Ghost.Kernel;
+using Ghost.Kernel.Configuration;
 using Xunit;
 
 namespace Ghost.Testing.Fixtures;
