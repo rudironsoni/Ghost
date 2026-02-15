@@ -1,6 +1,6 @@
 # Ghost
 
-A .NET 10 job scraping platform with plugin architecture for extracting job listings from multiple job boards and career sites.
+A .NET 10 scraping platform with plugin architecture.
 
 ## Architecture
 
