@@ -241,6 +241,7 @@ public class JavaScriptAdapter : IContentAdapter
     /// <summary>
     /// Releases unmanaged resources and performs async cleanup.
     /// </summary>
+#pragma warning disable IDE1006 // Naming rule violation: DisposeAsyncCore follows IAsyncDisposable pattern
     protected virtual async ValueTask DisposeAsyncCore()
     {
         if (_disposed)
@@ -255,4 +256,6 @@ public class JavaScriptAdapter : IContentAdapter
 
         _disposed = true;
     }
+
+#pragma warning restore IDE1006
 }

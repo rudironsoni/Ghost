@@ -11,7 +11,7 @@ namespace Ghost.Engine.Tests.Scheduler;
 public class InMemoryRequestSchedulerTests
 {
     [Fact]
-    public async Task EnqueueAsync_WithPriority_DequeuesInPriorityOrder()
+    public async Task EnqueueAsync_WithPriority_DequeuesInPriorityOrderAsync()
     {
         // Arrange
         var scheduler = new InMemoryRequestScheduler();
@@ -35,7 +35,7 @@ public class InMemoryRequestSchedulerTests
     }
 
     [Fact]
-    public async Task EnqueueAsync_WithDedupe_SkipsDuplicateRequests()
+    public async Task EnqueueAsync_WithDedupe_SkipsDuplicateRequestsAsync()
     {
         // Arrange
         var seenUrls = new HashSet<string>();
@@ -67,7 +67,7 @@ public class InMemoryRequestSchedulerTests
     }
 
     [Fact]
-    public async Task DequeueAsync_WithCancellation_ThrowsOperationCanceledException()
+    public async Task DequeueAsync_WithCancellation_ThrowsOperationCanceledExceptionAsync()
     {
         // Arrange
         var scheduler = new InMemoryRequestScheduler();
@@ -80,7 +80,7 @@ public class InMemoryRequestSchedulerTests
     }
 
     [Fact]
-    public async Task CountAsync_ReturnsCorrectCount()
+    public async Task CountAsync_ReturnsCorrectCountAsync()
     {
         // Arrange
         var scheduler = new InMemoryRequestScheduler();
@@ -104,7 +104,7 @@ public class InMemoryRequestSchedulerTests
     }
 
     [Fact]
-    public async Task DequeueAsync_WhenEmpty_ReturnsNull()
+    public async Task DequeueAsync_WhenEmpty_ReturnsNullAsync()
     {
         // Arrange
         var scheduler = new InMemoryRequestScheduler();

@@ -21,20 +21,20 @@ public static class DlqEndpoints
         RouteGroupBuilder group = app.MapGroup("/api/admin/dlq")
             .WithTags("Admin");
 
-        group.MapGet(string.Empty, GetJobs)
+        group.MapGet(string.Empty, GetJobsAsync)
             .WithName("GetDlqJobs")
             .AddEndpointFilter<AdminApiKeyEndpointFilter>();
 
-        group.MapGet("/stats", GetStats)
+        group.MapGet("/stats", GetStatsAsync)
             .WithName("GetDlqStats")
             .AddEndpointFilter<AdminApiKeyEndpointFilter>();
 
-        group.MapPost("/clear", ClearQueue)
+        group.MapPost("/clear", ClearQueueAsync)
             .WithName("ClearDlq")
             .AddEndpointFilter<AdminApiKeyEndpointFilter>();
     }
 
-    private static async Task<IResult> GetJobs(
+    private static async Task<IResult> GetJobsAsync(
         [FromQuery] int count,
         [FromServices] IGenericDeadLetterQueue dlq)
     {
@@ -43,13 +43,13 @@ public static class DlqEndpoints
         return Results.Ok(items);
     }
 
-    private static async Task<IResult> GetStats([FromServices] IGenericDeadLetterQueue dlq)
+    private static async Task<IResult> GetStatsAsync([FromServices] IGenericDeadLetterQueue dlq)
     {
         int depth = await dlq.GetCountAsync().ConfigureAwait(false);
         return Results.Ok(new { ActiveCount = depth, Timestamp = DateTime.UtcNow });
     }
 
-    private static async Task<IResult> ClearQueue([FromServices] IGenericDeadLetterQueue dlq)
+    private static async Task<IResult> ClearQueueAsync([FromServices] IGenericDeadLetterQueue dlq)
     {
         await dlq.ClearAsync().ConfigureAwait(false);
         return Results.Ok(new { Message = "DLQ cleared successfully" });

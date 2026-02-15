@@ -24,7 +24,7 @@ public class GhostKernelHostedServiceTests
     }
 
     [Fact(Skip = "Test validates old sync-over-async behavior - GhostKernel now uses proper IAsyncDisposable")]
-    public async Task StopAsyncCallsDisposeAsyncOnKernel()
+    public async Task StopAsyncCallsDisposeAsyncOnKernelAsync()
     {
         var playwrightMock = new Mock<IPlaywright>();
         var browserMock = new Mock<IBrowser>();

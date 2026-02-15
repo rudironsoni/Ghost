@@ -12,7 +12,7 @@ namespace Ghost.Hosting.Tests;
 public class ScraperWorkerTests
 {
     [Fact]
-    public async Task ExecuteAsync_ResolvesScopedJobClientWithinScopeLifetime()
+    public async Task ExecuteAsync_ResolvesScopedJobClientWithinScopeLifetimeAsync()
     {
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var holder = new ScopedDependencyHolder();

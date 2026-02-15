@@ -61,7 +61,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public async Task AddGhostCanBuildProviderWithoutSynchronousKernelInitialization()
+    public async Task AddGhostCanBuildProviderWithoutSynchronousKernelInitializationAsync()
     {
         var services = new ServiceCollection();
         services.AddGhost(_ => { });
@@ -84,7 +84,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public async Task AddGhostRegistersEngineRuntimeServices()
+    public async Task AddGhostRegistersEngineRuntimeServicesAsync()
     {
         var services = new ServiceCollection();
         services.AddGhost(_ => { });

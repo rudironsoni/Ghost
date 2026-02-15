@@ -18,15 +18,15 @@ public static class DetailedHealthEndpoints
 
         RouteGroupBuilder group = app.MapGroup("/api/health");
 
-        group.MapGet("/detailed", GetDetailedReport);
-        group.MapGet("/platforms", GetPlatformHealth);
-        group.MapGet("/proxies", GetProxyHealth);
+        group.MapGet("/detailed", GetDetailedReportAsync);
+        group.MapGet("/platforms", GetPlatformHealthAsync);
+        group.MapGet("/proxies", GetProxyHealthAsync);
         group.MapGet("/metrics", GetMetrics);
 
         return app;
     }
 
-    private static async Task<IResult> GetDetailedReport(
+    private static async Task<IResult> GetDetailedReportAsync(
         [FromServices] IHealthReportService reportService,
         CancellationToken ct)
     {
@@ -34,7 +34,7 @@ public static class DetailedHealthEndpoints
         return Results.Ok(report);
     }
 
-    private static async Task<IResult> GetPlatformHealth(
+    private static async Task<IResult> GetPlatformHealthAsync(
         [FromServices] IHealthReportService reportService,
         CancellationToken ct)
     {
@@ -42,7 +42,7 @@ public static class DetailedHealthEndpoints
         return Results.Ok(report.Platforms);
     }
 
-    private static async Task<IResult> GetProxyHealth(
+    private static async Task<IResult> GetProxyHealthAsync(
         [FromServices] IHealthReportService reportService,
         CancellationToken ct)
     {

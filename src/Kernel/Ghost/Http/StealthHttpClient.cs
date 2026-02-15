@@ -22,7 +22,7 @@ public class StealthHttpClient
 
     public async Task<HttpResponseMessage> GetAsync(string uri, CancellationToken ct = default)
     {
-        await ApplyJitter(ct).ConfigureAwait(false);
+        await ApplyJitterAsync(ct).ConfigureAwait(false);
 
         using var req = new HttpRequestMessage(HttpMethod.Get, uri);
         AddDefaultHeaders(req);
@@ -33,7 +33,7 @@ public class StealthHttpClient
 
     public async Task<HttpResponseMessage> PostAsync(string uri, HttpContent content, CancellationToken ct = default)
     {
-        await ApplyJitter(ct).ConfigureAwait(false);
+        await ApplyJitterAsync(ct).ConfigureAwait(false);
 
         using var req = new HttpRequestMessage(HttpMethod.Post, uri) { Content = content };
         AddDefaultHeaders(req);
@@ -50,7 +50,7 @@ public class StealthHttpClient
         req.Headers.Accept.ParseAdd("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
     }
 
-    private async Task ApplyJitter(CancellationToken ct)
+    private async Task ApplyJitterAsync(CancellationToken ct)
     {
         int delay = _rng.Next(_options.DelayMinMs, _options.DelayMaxMs + 1);
         try

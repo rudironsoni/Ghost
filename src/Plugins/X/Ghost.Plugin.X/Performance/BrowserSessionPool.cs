@@ -80,7 +80,7 @@ public partial class BrowserSessionPool : IBrowserSessionPool
         _options = options ?? new BrowserSessionPoolOptions();
         _logger = logger;
         _semaphore = new SemaphoreSlim(_options.MaxPoolSize);
-        _cleanupTimer = new Timer(CleanupIdleSessions, null, _options.IdleTimeout, _options.IdleTimeout);
+        _cleanupTimer = new Timer(CleanupIdleSessionsAsync, null, _options.IdleTimeout, _options.IdleTimeout);
 
         Log.PoolInitialized(_logger, _options.MaxPoolSize);
     }
@@ -161,7 +161,7 @@ public partial class BrowserSessionPool : IBrowserSessionPool
         return idleTime > _options.IdleTimeout;
     }
 
-    private async void CleanupIdleSessions(object? state)
+    private async void CleanupIdleSessionsAsync(object? state)
     {
         try
         {

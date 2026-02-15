@@ -35,7 +35,7 @@ public abstract class ProviderContractTests<TAdapter>
     /// Tests that all required fields are present in job listings.
     /// </summary>
     [Fact]
-    public async Task RequiredFields_ArePresent()
+    public async Task RequiredFields_ArePresentAsync()
     {
         TAdapter adapter = CreateAdapter();
         var contract = new RequiredFieldsContract();
@@ -59,7 +59,7 @@ public abstract class ProviderContractTests<TAdapter>
     /// Tests that deduplication is correct.
     /// </summary>
     [Fact]
-    public async Task Dedupe_IsCorrect()
+    public async Task Dedupe_IsCorrectAsync()
     {
         TAdapter adapter = CreateAdapter();
         var contract = new DedupeContract();
@@ -83,7 +83,7 @@ public abstract class ProviderContractTests<TAdapter>
     /// Tests that pagination is complete and correct.
     /// </summary>
     [Fact]
-    public async Task Pagination_IsComplete()
+    public async Task Pagination_IsCompleteAsync()
     {
         TAdapter adapter = CreateAdapter();
         var contract = new PaginationContract();
@@ -107,7 +107,7 @@ public abstract class ProviderContractTests<TAdapter>
     /// Tests that retry and backoff behavior is correct.
     /// </summary>
     [Fact]
-    public async Task RetryBehavior_IsCorrect()
+    public async Task RetryBehavior_IsCorrectAsync()
     {
         TAdapter adapter = CreateAdapter();
         var contract = new RetryBehaviorContract();
@@ -131,7 +131,7 @@ public abstract class ProviderContractTests<TAdapter>
     /// Tests that consent flow is handled correctly.
     /// </summary>
     [Fact]
-    public async Task ConsentFlow_IsCompliant()
+    public async Task ConsentFlow_IsCompliantAsync()
     {
         TAdapter adapter = CreateAdapter();
         var contract = new ConsentComplianceContract();
@@ -155,7 +155,7 @@ public abstract class ProviderContractTests<TAdapter>
     /// Tests that extraction is idempotent.
     /// </summary>
     [Fact]
-    public async Task Extraction_IsIdempotent()
+    public async Task Extraction_IsIdempotentAsync()
     {
         TAdapter adapter = CreateAdapter();
         var contract = new IdempotentExtractionContract();
@@ -179,7 +179,7 @@ public abstract class ProviderContractTests<TAdapter>
     /// Runs all contracts and reports results.
     /// </summary>
     [Fact]
-    public async Task AllContracts_Pass()
+    public async Task AllContracts_PassAsync()
     {
         TAdapter adapter = CreateAdapter();
         var contracts = new List<IProviderContract>

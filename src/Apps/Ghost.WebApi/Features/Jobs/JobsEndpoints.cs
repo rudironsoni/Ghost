@@ -14,11 +14,11 @@ public static class JobsEndpoints
     public static void MapJobsEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/jobs");
-        group.MapPost("/search", SearchJobs);
-        group.MapPost("/search-with-errors", SearchJobsWithErrors);
+        group.MapPost("/search", SearchJobsAsync);
+        group.MapPost("/search-with-errors", SearchJobsWithErrorsAsync);
     }
 
-    private static async Task<IResult> SearchJobs(JobSearchCriteria criteria, [FromServices] IJobClient client, [FromServices] ILoggerFactory loggerFactory, CancellationToken ct)
+    private static async Task<IResult> SearchJobsAsync(JobSearchCriteria criteria, [FromServices] IJobClient client, [FromServices] ILoggerFactory loggerFactory, CancellationToken ct)
     {
         var sw = Stopwatch.StartNew();
         string status = "SUCCESS";
@@ -59,11 +59,11 @@ public static class JobsEndpoints
                 // Use LoggerMessage-style delegate to satisfy CA1848/CA2254 and avoid dynamic templates
                 Action<ILogger, string, string, long, string, Exception?> jobsLog = LoggerMessage.Define<string, string, long, string>(
                     LogLevel.Information,
-                    new EventId(1, nameof(SearchJobs)),
+                    new EventId(1, nameof(SearchJobsAsync)),
                     "Platform={Platform} Status={Status} TimeMs={TimeMs} Query={Query}");
 
                 // Define an exception logger delegate to avoid CA1848 when logging exceptions
-                Action<ILogger, string, Exception?> exceptionLog = LoggerMessage.Define<string>(LogLevel.Information, new EventId(2, nameof(SearchJobs)), "Exception: {Message}");
+                Action<ILogger, string, Exception?> exceptionLog = LoggerMessage.Define<string>(LogLevel.Information, new EventId(2, nameof(SearchJobsAsync)), "Exception: {Message}");
 
                 if (caughtEx != null)
                 {
@@ -79,7 +79,7 @@ public static class JobsEndpoints
         }
     }
 
-    private static async Task<IResult> SearchJobsWithErrors(JobSearchCriteria criteria, [FromServices] IJobClient client, CancellationToken ct)
+    private static async Task<IResult> SearchJobsWithErrorsAsync(JobSearchCriteria criteria, [FromServices] IJobClient client, CancellationToken ct)
     {
         // Check if the client supports structured error reporting
         if (client is AggregatedJobClient aggregatedClient)

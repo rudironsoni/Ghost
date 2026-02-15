@@ -15,26 +15,26 @@ public static class LinkedInEndpoints
             .WithTags("LinkedIn");
 
         // Jobs
-        group.MapGet("/jobs/{id}", GetJob)
+        group.MapGet("/jobs/{id}", GetJobAsync)
             .WithName("GetLinkedInJob")
             .AllowAnonymous();
 
-        group.MapPost("/jobs/search", SearchJobs)
+        group.MapPost("/jobs/search", SearchJobsAsync)
             .WithName("SearchLinkedInJobs")
             .AllowAnonymous();
 
         // Social
-        group.MapGet("/social/profile/{id}", GetProfile)
+        group.MapGet("/social/profile/{id}", GetProfileAsync)
             .WithName("GetSocialProfile")
             .AllowAnonymous();
 
         // News
-        group.MapPost("/news/search", SearchNews)
+        group.MapPost("/news/search", SearchNewsAsync)
             .WithName("SearchNews")
             .AllowAnonymous();
     }
 
-    private static async Task<IResult> GetJob(
+    private static async Task<IResult> GetJobAsync(
         string id,
         [FromServices] LinkedInJobClient jobClient,
         CancellationToken ct)
@@ -61,7 +61,7 @@ public static class LinkedInEndpoints
         }
     }
 
-    private static async Task<IResult> SearchJobs(
+    private static async Task<IResult> SearchJobsAsync(
         JobSearchCriteria criteria,
         [FromQuery] string? strategy,
         [FromServices] LinkedInJobClient jobClient,
@@ -94,7 +94,7 @@ public static class LinkedInEndpoints
         }
     }
 
-    private static async Task<IResult> GetProfile(
+    private static async Task<IResult> GetProfileAsync(
         string id,
         [FromServices] LinkedInSocialClient socialClient,
         CancellationToken ct)
@@ -117,7 +117,7 @@ public static class LinkedInEndpoints
         }
     }
 
-    private static async Task<IResult> SearchNews(
+    private static async Task<IResult> SearchNewsAsync(
         NewsSearchRequest request,
         [FromServices] LinkedInNewsClient newsClient,
         CancellationToken ct)

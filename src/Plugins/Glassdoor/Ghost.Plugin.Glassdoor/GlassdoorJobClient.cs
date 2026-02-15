@@ -15,10 +15,10 @@ public sealed class GlassdoorJobClient : Ghost.IJobScraper
     private string? _csrfToken;
 
     /// <summary>
-    /// RefreshSession clears existing cookies and fetches a new session from Glassdoor,
+    /// RefreshSessionAsync clears existing cookies and fetches a new session from Glassdoor,
     /// extracting the CSRF token and storing session cookies in the internal CookieContainer.
     /// </summary>
-    public async Task RefreshSession(CancellationToken ct = default)
+    public async Task RefreshSessionAsync(CancellationToken ct = default)
     {
         // Clear existing cookies
         try
@@ -151,7 +151,7 @@ public sealed class GlassdoorJobClient : Ghost.IJobScraper
     /// Looks for common patterns such as a meta[name="csrf-token"], input[name="csrf"|"csrf-token"],
     /// or simple JavaScript assignments (csrfToken = "..."). Returns null when no token found.
     /// </summary>
-    public async Task<string?> ExtractCsrfToken(CancellationToken ct = default)
+    public async Task<string?> ExtractCsrfTokenAsync(CancellationToken ct = default)
     {
         try
         {
@@ -233,7 +233,7 @@ public sealed class GlassdoorJobClient : Ghost.IJobScraper
             s_logRetryAttempt(_logger, attempts, maxRetries, null);
             try
             {
-                await RefreshSession(ct).ConfigureAwait(false);
+                await RefreshSessionAsync(ct).ConfigureAwait(false);
                 currentToken = _csrfToken;
                 s_logSessionRefreshed(_logger, currentToken != null, null);
             }

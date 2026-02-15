@@ -29,7 +29,7 @@ public sealed class AbstractionsContractSmokeTests
     }
 
     [Fact]
-    public async Task Contracts_Compile_WithCancellationFlow()
+    public async Task Contracts_Compile_WithCancellationFlowAsync()
     {
         CancellationToken cancellationToken = CancellationToken.None;
         var context = new GhostEngineContext("job-2", "spider-b", new Dictionary<string, object?>());

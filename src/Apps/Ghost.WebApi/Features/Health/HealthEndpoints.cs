@@ -34,10 +34,10 @@ public static class HealthEndpoints
     public static void MapHealthEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/jobs");
-        group.MapGet("/health", CheckJobsHealth);
+        group.MapGet("/health", CheckJobsHealthAsync);
     }
 
-    private static async Task<IResult> CheckJobsHealth(
+    private static async Task<IResult> CheckJobsHealthAsync(
         [FromServices] IJobClient jobClient,
         [FromServices] ILoggerFactory loggerFactory,
         CancellationToken ct)

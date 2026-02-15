@@ -83,7 +83,7 @@ public sealed class TLSFingerprintService
             }
 
             // We can set some related fingerprints via CDP
-            await ConfigureNetworkEmulation(client, profile).ConfigureAwait(false);
+            await ConfigureNetworkEmulationAsync(client, profile).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -95,7 +95,7 @@ public sealed class TLSFingerprintService
     /// <summary>
     /// Configures network emulation settings that complement TLS fingerprinting.
     /// </summary>
-    private async Task ConfigureNetworkEmulation(ICDPSession client, JA3Profile profile)
+    private async Task ConfigureNetworkEmulationAsync(ICDPSession client, JA3Profile profile)
     {
         // Set HTTP/2 settings to match TLS profile
         // Modern browsers with TLS 1.3 support HTTP/2
