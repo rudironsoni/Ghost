@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Ghost.Plugin.Indeed.Internal;
 using Xunit;
 
-namespace Ghost.Platform.Indeed.Tests;
+namespace Ghost.Plugin.Indeed.Tests;
 
 public class IndeedHtmlParsingTests
 {
@@ -19,7 +19,7 @@ public class IndeedHtmlParsingTests
     [InlineData(null, "")]
     public void StripHtmlTagsRemovesTagsAndNormalizes(string? input, string expected)
     {
-        var result = HtmlSanitizer.StripHtmlTags(input);
+        string result = HtmlSanitizer.StripHtmlTags(input);
         Assert.Equal(expected, result);
     }
 
@@ -35,7 +35,7 @@ public class IndeedHtmlParsingTests
     [InlineData("<p>Trailing<br></p>", "Trailing")]
     public void StripHtmlTagsHandlesCommonPatterns(string input, string expected)
     {
-        var result = HtmlSanitizer.StripHtmlTags(input);
+        string result = HtmlSanitizer.StripHtmlTags(input);
         Assert.Equal(expected, result);
     }
 
@@ -45,7 +45,7 @@ public class IndeedHtmlParsingTests
     [InlineData("&#39;", "'")]
     public void DecodeHtmlEntitiesUsesHtmlDecode(string input, string expected)
     {
-        var result = HtmlSanitizer.DecodeHtmlEntities(input);
+        string result = HtmlSanitizer.DecodeHtmlEntities(input);
         Assert.Equal(expected, result);
     }
 

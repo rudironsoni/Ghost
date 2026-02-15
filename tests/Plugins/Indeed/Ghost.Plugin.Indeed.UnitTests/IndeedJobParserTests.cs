@@ -2,7 +2,7 @@ using System.Text.Json;
 using Ghost.Plugin.Indeed.Internal;
 using Xunit;
 
-namespace Ghost.Platform.Indeed.Tests;
+namespace Ghost.Plugin.Indeed.Tests;
 
 public class IndeedJobParserTests
 {
@@ -27,9 +27,9 @@ public class IndeedJobParserTests
   }
 }";
 
-        using var doc = JsonDocument.Parse(json);
-        var list = IndeedJobParser.ParseJobs(doc.RootElement);
-        TSource[] arr = System.Linq.Enumerable.ToArray(list);
+        using JsonDocument doc = JsonDocument.Parse(json);
+        System.Collections.Generic.IEnumerable<Ghost.Contracts.Jobs.JobListing> list = IndeedJobParser.ParseJobs(doc.RootElement);
+        Ghost.Contracts.Jobs.JobListing[] arr = System.Linq.Enumerable.ToArray(list);
         Assert.Single(arr);
         Assert.Equal("Software Engineer", arr[0].Title);
         Assert.Equal("ACME", arr[0].Company);

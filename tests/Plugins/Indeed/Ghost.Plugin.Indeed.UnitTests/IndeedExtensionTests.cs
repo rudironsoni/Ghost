@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace Ghost.Platform.Indeed.Tests;
+namespace Ghost.Plugin.Indeed.Tests;
 
 public class IndeedExtensionTests
 {
@@ -30,14 +30,14 @@ public class IndeedExtensionTests
 
         services.AddGhost(cfg, gw =>
         {
-            gw.UseExtension(new Ghost.Platform.Indeed.IndeedExtension());
+            gw.UseExtension(new Ghost.Plugin.Indeed.IndeedExtension());
         });
 
         ServiceProvider sp = services.BuildServiceProvider();
-        IJobClient? jobClient = sp.GetService<Ghost.Contracts.Jobs.IJobClient>();
+        Ghost.Contracts.Jobs.IJobClient? jobClient = sp.GetService<Ghost.Contracts.Jobs.IJobClient>();
         Assert.NotNull(jobClient);
 
-        var apiClient = sp.GetService<IndeedApiClient>();
+        Ghost.Plugin.Indeed.Internal.IndeedApiClient? apiClient = sp.GetService<Ghost.Plugin.Indeed.Internal.IndeedApiClient>();
         Assert.NotNull(apiClient);
     }
 }

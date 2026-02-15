@@ -3,10 +3,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
-using Ghost.Platform.Indeed;
+using Ghost.Plugin.Indeed;
 using Ghost.Testing.Contracts;
 
-namespace Ghost.Platform.Indeed.Tests.Contracts;
+namespace Ghost.Plugin.Indeed.Tests.Contracts;
 
 /// <summary>
 /// Adapter for Indeed provider contract testing.
