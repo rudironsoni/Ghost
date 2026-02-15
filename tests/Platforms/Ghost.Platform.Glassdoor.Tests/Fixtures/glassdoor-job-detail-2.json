@@ -1,0 +1,32 @@
+{
+  "data": {
+    "job": {
+      "jobId": "9248102",
+      "jobTitleText": "Software Engineer II",
+      "employerNameFromSearch": "Amazon",
+      "employerName": "Amazon.com, Inc.",
+      "location": "Seattle, WA",
+      "locationFullAddress": "Seattle, Washington, United States",
+      "header": {
+        "payPeriodAdjustedPay": {
+          "p10": 130000,
+          "p90": 185000,
+          "payCurrency": "USD"
+        }
+      },
+      "jobDescription": "<p>Amazon Web Services (AWS) is seeking talented Software Engineers to build next-generation cloud infrastructure. Work on systems that are used by millions of customers globally.</p><p><strong>What You'll Do:</strong></p><ul><li>Build and maintain AWS cloud services</li><li>Solve complex technical challenges at scale</li><li>Own features from design through deployment</li><li>Collaborate with teams across Amazon</li><li>Drive operational excellence</li></ul><p><strong>Basic Qualifications:</strong></p><ul><li>3+ years of software development experience</li><li>Experience with object-oriented programming</li><li>Strong CS fundamentals</li><li>Bachelor's degree in Computer Science or equivalent</li></ul><p><strong>Preferred Qualifications:</strong></p><ul><li>Experience with AWS services</li><li>Distributed systems experience</li><li>Master's degree in Computer Science</li></ul>",
+      "postedDate": "2026-02-02T14:30:00Z",
+      "employmentType": "FULL_TIME",
+      "remoteWorkTypes": ["ONSITE"],
+      "applyUrl": "https://www.glassdoor.com/job-listing/software-engineer-ii-amazon-JV_IC1150505_KO0,20_KE21,27.htm?jl=9248102",
+      "employer": {
+        "id": "6036",
+        "name": "Amazon",
+        "website": "https://www.amazon.com",
+        "overview": "Amazon is a global e-commerce and cloud computing leader.",
+        "size": "10000+ employees",
+        "industry": "Internet & E-commerce"
+      }
+    }
+  }
+}

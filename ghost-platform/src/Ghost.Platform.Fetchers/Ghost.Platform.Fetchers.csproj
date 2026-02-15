@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ghost-sdk\src\Ghost.Sdk.Contracts\Ghost.Sdk.Contracts.csproj" />
+    <ProjectReference Include="..\Ghost.Platform.Storage\Ghost.Platform.Storage.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,32 @@
+{
+  "data": {
+    "job": {
+      "jobId": "9248345",
+      "jobTitleText": "Software Development Engineer",
+      "employerNameFromSearch": "Google",
+      "employerName": "Google LLC",
+      "location": "Mountain View, CA",
+      "locationFullAddress": "Mountain View, California, United States",
+      "header": {
+        "payPeriodAdjustedPay": {
+          "p10": 155000,
+          "p90": 225000,
+          "payCurrency": "USD"
+        }
+      },
+      "jobDescription": "<p>Google is looking for Software Development Engineers to work on cutting-edge technologies that impact billions of users worldwide. Join us in building the future of search, ads, cloud, and more.</p><p><strong>About the Role:</strong></p><ul><li>Design and implement large-scale systems</li><li>Work on products used by billions globally</li><li>Collaborate with world-class engineers</li><li>Push the boundaries of technology</li><li>Continuous learning and growth opportunities</li></ul><p><strong>Minimum Qualifications:</strong></p><ul><li>Bachelor's degree in Computer Science or equivalent</li><li>4+ years of software development experience</li><li>Proficiency in one or more programming languages</li><li>Data structures and algorithms expertise</li></ul><p><strong>Preferred Qualifications:</strong></p><ul><li>Master's or PhD in Computer Science</li><li>Experience with distributed systems</li><li>Open source contributions</li><li>Published research papers</li></ul>",
+      "postedDate": "2026-02-03T09:15:00Z",
+      "employmentType": "FULL_TIME",
+      "remoteWorkTypes": ["HYBRID"],
+      "applyUrl": "https://www.glassdoor.com/job-listing/software-development-engineer-google-JV_IC1147401_KO0,30_KE31,37.htm?jl=9248345",
+      "employer": {
+        "id": "9079",
+        "name": "Google",
+        "website": "https://www.google.com",
+        "overview": "Google is a multinational technology company specializing in Internet-related services and products.",
+        "size": "10000+ employees",
+        "industry": "Internet & Technology"
+      }
+    }
+  }
+}

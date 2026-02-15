@@ -1,0 +1,258 @@
+name: CI - Main Integration
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.sln'
+      - '**/*.csproj'
+      - '.github/workflows/ci.yml'
+  schedule:
+    - cron: '0 4 * * 1'  # Weekly on Mondays at 4 AM UTC for security scans
+  workflow_dispatch:  # Allow manual trigger
+
+concurrency:
+  group: ci-main-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  CONFIGURATION: Release
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+  actions: read
+  id-token: write
+
+jobs:
+  # This workflow now serves as an orchestrator and security scanner
+  # The actual test lanes are run in separate workflows:
+  # - Lane A (PR Blocking): lane-a-pr-blocking.yml
+  # - Lane B (Merge Gate): lane-b-merge-gate.yml
+  # - Lane C (Nightly/Live): lane-c-nightly.yml
+
+  codeql-analysis:
+    name: CodeQL Security Scan
+    runs-on: ubuntu-latest
+    # Only run CodeQL on schedule or manual trigger, not on every push
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: csharp
+          queries: security-and-quality
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:csharp"
+
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    # Only run on schedule or manual trigger, not on every push
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Run Dependency Check
+        run: |
+          dotnet list Ghost.sln package --vulnerable --include-transitive 2>&1 | tee vulnerability-report.txt
+          if grep -q "has the following vulnerable packages" vulnerability-report.txt; then
+            echo "⚠️ Vulnerable dependencies found"
+            cat vulnerability-report.txt
+            exit 1
+          fi
+
+      - name: Upload Vulnerability Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulnerability-report
+          path: vulnerability-report.txt
+          retention-days: 30
+
+  secret-scan:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    # Only run on schedule or manual trigger, not on every push
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  package-artifacts:
+    name: Package NuGet Artifacts
+    runs-on: ubuntu-latest
+    # Only package on main push, not on schedule
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Calculate Version
+        id: version
+        run: |
+          VERSION="1.0.0.${{ github.run_id }}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Package version: ${VERSION}"
+
+      - name: Pack NuGet Packages
+        run: |
+          dotnet pack Ghost.sln \
+            --configuration ${{ env.CONFIGURATION }} \
+            --no-restore \
+            -p:PackageVersion=${{ steps.version.outputs.version }} \
+            -p:IncludeSymbols=true \
+            -p:SymbolPackageFormat=snupkg \
+            --output ./artifacts/packages
+
+      - name: Upload NuGet Packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./artifacts/packages/*.nupkg
+          retention-days: 30
+
+  generate-sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    # Only run on schedule or manual trigger, not on every push
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Install CycloneDX
+        run: dotnet tool install --global CycloneDX
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Generate SBOM
+        run: |
+          dotnet CycloneDX Ghost.sln -o ./artifacts/sbom -f spdx-json -sv 2.3
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: ./artifacts/sbom/*.json
+          retention-days: 30
+
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [codeql-analysis, dependency-scan, secret-scan, package-artifacts, generate-sbom]
+    if: always()
+    steps:
+      - name: Check Results
+        run: |
+          echo "## 📋 CI Main Integration Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This workflow orchestrates security scans and artifact packaging." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Lanes (Run in Separate Workflows)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lane A (PR Blocking):** Unit tests + Mocked Integration tests" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lane B (Merge Gate):** System tests with synthetic browser + mock server" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lane C (Nightly/Live):** E2E tests + Live provider smoke tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Security & Artifact Jobs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.codeql-analysis.result }}" == "success" || "${{ needs.codeql-analysis.result }}" == "skipped" ]]; then
+            echo "✅ **CodeQL Security Scan:** Passed or Skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **CodeQL Security Scan:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ needs.dependency-scan.result }}" == "success" || "${{ needs.dependency-scan.result }}" == "skipped" ]]; then
+            echo "✅ **Dependency Vulnerability Scan:** Passed or Skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Dependency Vulnerability Scan:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ needs.secret-scan.result }}" == "success" || "${{ needs.secret-scan.result }}" == "skipped" ]]; then
+            echo "✅ **Secret Detection:** Passed or Skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Secret Detection:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ needs.package-artifacts.result }}" == "success" || "${{ needs.package-artifacts.result }}" == "skipped" ]]; then
+            echo "✅ **Package NuGet Artifacts:** Passed or Skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Package NuGet Artifacts:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ needs.generate-sbom.result }}" == "success" || "${{ needs.generate-sbom.result }}" == "skipped" ]]; then
+            echo "✅ **Generate SBOM:** Passed or Skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Generate SBOM:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi

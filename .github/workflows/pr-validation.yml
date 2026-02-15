@@ -1,0 +1,242 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.sln'
+      - '**/*.csproj'
+      - '.github/workflows/pr-validation.yml'
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  CONFIGURATION: Release
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  # This workflow now serves as a lightweight PR validation
+  # The actual PR blocking tests are run in Lane A workflow
+  # See: .github/workflows/lane-a-pr-blocking.yml
+
+  validate-title:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check PR Title Format
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Support act local testing with fallback to environment variable or test default
+            const title = context.payload.pull_request?.title
+              || process.env.PR_TITLE
+              || 'test: default title for local testing';
+
+            const conventionalCommitRegex = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9-]+\))?: .+$/i;
+
+            if (!conventionalCommitRegex.test(title)) {
+              core.setFailed(
+                `PR title does not follow conventional commits format.\n\n` +
+                `Expected format: type(scope): description\n` +
+                `Example: "feat(linkedin): add new parser"\n\n` +
+                `Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert\n` +
+                `Scope is optional but recommended.\n\n` +
+                `Current title: "${title}"`
+              );
+            } else {
+              core.info(`✓ PR title follows conventional commits format: "${title}"`);
+            }
+
+  lint-format:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    # Skip draft PRs
+    if: github.event.pull_request.draft == false
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Normalize Line Endings
+        run: |
+          # Configure git to normalize line endings to LF
+          git config core.autocrlf input
+          git config core.eol lf
+
+          # Re-checkout files with normalized line endings
+          git rm --cached -r .
+          git reset --hard
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Tools
+        run: dotnet tool restore
+
+      - name: Check Formatting
+        run: dotnet format Ghost.sln --verify-no-changes --verbosity diagnostic
+
+  build:
+    name: Build Solution
+    runs-on: ubuntu-latest
+    needs: validate-title
+    # Skip draft PRs
+    if: github.event.pull_request.draft == false
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Cache Build Output
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/bin/Release/
+            **/obj/Release/
+          key: ${{ runner.os }}-build-pr-${{ github.event.pull_request.head.sha }}
+          restore-keys: |
+            ${{ runner.os }}-build-pr-
+            ${{ runner.os }}-build-
+
+      - name: Restore Dependencies
+        run: dotnet restore Ghost.sln
+
+      - name: Build Solution
+        run: dotnet build Ghost.sln --configuration ${{ env.CONFIGURATION }} --no-restore --warnaserror -p:NoWarn=CA1016
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-build-output
+          path: |
+            **/bin/Release/
+            !**/bin/Release/**/*.pdb
+          retention-days: 1
+
+  check-migrations:
+    name: Check DotnetSpider References
+    runs-on: ubuntu-latest
+    needs: validate-title
+    # Skip draft PRs
+    if: github.event.pull_request.draft == false
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Changed Files
+        id: changed-files
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          git diff --name-only $BASE_SHA...$HEAD_SHA | grep -E '^(src/|tests/)' > changed_files.txt || true
+
+          if [ -s changed_files.txt ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for DotnetSpider References
+        if: steps.changed-files.outputs.has_changes == 'true'
+        run: |
+          FOUND_REFERENCES=false
+
+          while IFS= read -r file; do
+            if [ -f "$file" ] && grep -i "DotnetSpider" "$file"; then
+              echo "❌ Found DotnetSpider reference in: $file"
+              FOUND_REFERENCES=true
+            fi
+          done < changed_files.txt
+
+          if [ "$FOUND_REFERENCES" = true ]; then
+            echo "❌ VALIDATION FAILED: DotnetSpider references detected"
+            echo "Please update your changes to use Ghost.Sdk.Spider instead."
+            exit 1
+          else
+            echo "✓ No DotnetSpider references found in changed files"
+          fi
+
+  pr-summary:
+    name: PR Validation Summary
+    runs-on: ubuntu-latest
+    needs: [validate-title, lint-format, build, check-migrations]
+    if: always()
+    steps:
+      - name: Check Validation Results
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const jobs = [
+              { name: 'Validate PR Title', result: '${{ needs.validate-title.result }}' },
+              { name: 'Lint & Format Check', result: '${{ needs.lint-format.result }}' },
+              { name: 'Build Solution', result: '${{ needs.build.result }}' },
+              { name: 'Check DotnetSpider References', result: '${{ needs.check-migrations.result }}' }
+            ];
+
+            let allPassed = true;
+            let summary = '## 🔍 PR Validation Results\n\n';
+            summary += '### Quick Validation Checks\n\n';
+            summary += 'Note: Full PR blocking tests (Unit + Mocked Integration) run in Lane A workflow.\n';
+            summary += 'See: [Lane A (PR Blocking)](../../actions/workflows/lane-a-pr-blocking.yml)\n\n';
+
+            for (const job of jobs) {
+              const icon = job.result === 'success' ? '✅' : '❌';
+              summary += `${icon} **${job.name}**: ${job.result}\n`;
+              if (job.result !== 'success') {
+                allPassed = false;
+              }
+            }
+
+            summary += '\n';
+
+            if (allPassed) {
+              summary += '### ✅ Quick validation checks passed!\n\n';
+              summary += 'This PR has passed the quick validation checks.\n';
+              summary += 'The full PR blocking tests (Lane A) will run separately.\n';
+            } else {
+              summary += '### ❌ Some validation checks failed\n\n';
+              summary += 'Please review the failed checks above and make necessary corrections.\n';
+              core.setFailed('PR validation failed');
+            }
+
+            core.summary.addRaw(summary);
+            await core.summary.write();
