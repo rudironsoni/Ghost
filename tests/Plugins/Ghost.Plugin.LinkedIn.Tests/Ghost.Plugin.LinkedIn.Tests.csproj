@@ -11,7 +11,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Plugins\Ghost.Plugin.LinkedIn\Ghost.Plugin.LinkedIn.csproj" />
-    <ProjectReference Include="..\..\..\src\Platforms\Ghost.Platform.Common\Ghost.Platform.Common.csproj" />
     <ProjectReference Include="..\..\..\src\SDK\Ghost.Sdk.Spider\Ghost.Sdk.Spider.csproj" />
     <ProjectReference Include="..\..\Shared\Ghost.Testing\Ghost.Testing.csproj" />
   </ItemGroup>
@@ -23,12 +22,8 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\Platforms\Ghost.Platform.LinkedIn.Tests\**\*.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="..\..\Platforms\Ghost.Platform.LinkedIn.Tests\Fixtures\**\*">
+    <Content Include="Fixtures\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>Fixtures\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
     </Content>
   </ItemGroup>
 </Project>

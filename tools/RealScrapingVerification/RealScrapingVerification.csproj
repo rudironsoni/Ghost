@@ -7,22 +7,28 @@
     <Nullable>enable</Nullable>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Platforms\Ghost.Platform.LinkedIn\Ghost.Platform.LinkedIn.csproj" />
-    <ProjectReference Include="..\..\src\Platforms\Ghost.Platform.Google\Ghost.Platform.Google.csproj" />
-    <ProjectReference Include="..\..\src\Platforms\Ghost.Platform.Glassdoor\Ghost.Platform.Glassdoor.csproj" />
+    <ProjectReference Include="..\..\src\Plugins\Ghost.Plugin.Google\Ghost.Plugin.Google.csproj" />
+    <ProjectReference Include="..\..\src\Plugins\Ghost.Plugin.Glassdoor\Ghost.Plugin.Glassdoor.csproj" />
+    <ProjectReference Include="..\..\src\Plugins\Ghost.Plugin.Indeed\Ghost.Plugin.Indeed.csproj" />
+    <ProjectReference Include="..\..\src\Plugins\Ghost.Plugin.LinkedIn\Ghost.Plugin.LinkedIn.csproj" />
     <ProjectReference Include="..\..\src\Core\Ghost\Ghost.csproj" />
     <ProjectReference Include="..\..\src\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
+    <ProjectReference Include="..\..\src\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Infrastructure\Ghost.Infrastructure.Session\Ghost.Infrastructure.Session.csproj" />
+    <ProjectReference Include="..\..\src\SDK\Ghost.Sdk.Spider\Ghost.Sdk.Spider.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="HtmlAgilityPack" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
   </ItemGroup>
 
 </Project>
