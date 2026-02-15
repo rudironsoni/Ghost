@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>preview</LangVersion>
+    <RootNamespace>Ghost.Worker</RootNamespace>
+    <UserSecretsId>ghost-worker-1b2a3c4d5e6f</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Newtonsoft.Json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Kernel\Ghost\Ghost.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
+  </ItemGroup>
+
+</Project>

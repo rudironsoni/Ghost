@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+    <NoWarn>CA1866;CA1310;CA1822;CA1707;CA1826;CA2201</NoWarn>
+    <WarningsNotAsErrors>CA1866;CA1310;CA1822;CA1707;CA1826;CA2201</WarningsNotAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="DotNetEnv" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
+    <ProjectReference Include="..\..\Kernel\Ghost\Ghost.csproj" />
+    <ProjectReference Include="..\..\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
+    <ProjectReference Include="..\..\Hosting\Ghost.Hosting.WebApi\Ghost.Hosting.WebApi.csproj" />
+    <ProjectReference Include="..\..\Plugins\Ghost.Plugin.LinkedIn\Ghost.Plugin.LinkedIn.csproj" />
+    <ProjectReference Include="..\..\Plugins\Ghost.Plugin.Anthropic\Ghost.Plugin.Anthropic.csproj" />
+    <ProjectReference Include="..\..\Plugins\Ghost.Plugin.Google\Ghost.Plugin.Google.csproj" />
+    <ProjectReference Include="..\..\Plugins\Ghost.Plugin.OpenAI\Ghost.Plugin.OpenAI.csproj" />
+    <ProjectReference Include="..\..\Plugins\Ghost.Plugin.Indeed\Ghost.Plugin.Indeed.csproj" />
+    <ProjectReference Include="..\..\Plugins\Ghost.Plugin.Glassdoor\Ghost.Plugin.Glassdoor.csproj" />
+    <ProjectReference Include="..\..\Plugins\Ghost.Plugin.InfoJobs\Ghost.Plugin.InfoJobs.csproj" />
+  </ItemGroup>
+
+</Project>

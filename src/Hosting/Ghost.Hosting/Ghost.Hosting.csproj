@@ -5,7 +5,7 @@
     <Description>Ghost hosting and DI integration</Description>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Core\Ghost\Ghost.csproj" />
+    <ProjectReference Include="..\..\Kernel\Ghost\Ghost.csproj" />
     <ProjectReference Include="..\..\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
     <ProjectReference Include="..\..\Engine\Ghost.Engine.Hosting\Ghost.Engine.Hosting.csproj" />
   </ItemGroup>

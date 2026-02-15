@@ -1,4 +1,4 @@
-using Ghost.Core;
+using Ghost.Kernel;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 

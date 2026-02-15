@@ -1,4 +1,4 @@
-using Ghost.Core; // for KernelOptions
+using Ghost.Kernel; // for KernelOptions
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
