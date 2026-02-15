@@ -287,6 +287,150 @@
 
 <!-- END BEADS INTEGRATION -->
 
+## 28. Enterprise Code Quality Standards
+
+- Max cyclomatic complexity: 10
+- Max cognitive complexity: 15
+- Max method length: 30 lines
+- LINQ First Principle: You MUST use and rely heavily on LINQ for all collection operations
+- Async suffix required (error level)
+- Naming: No abbreviations except industry standards (e.g., URL, ID, API)
+- Prefer explicit over implicit
+- Single Responsibility Principle enforced
+- Code must be self-documenting through clear naming
+
+## 29. Plugin Architecture & Isolation
+
+- Plugins must be independent and self-contained
+- Layer 2 dependencies: Core, Contracts, Plugin.Common only
+- No Hosting layer dependencies in plugins
+- IExtension implementation required for all plugins
+- Plugin boundaries must be enforced via architecture tests
+- No direct plugin-to-plugin dependencies
+- All plugin communication through contracts
+- Plugin lifecycle managed by hosting layer
+
+## 30. Architecture Compliance
+
+- Reference existing tests/Architecture/ using NetArchTest
+- Layer boundaries enforced via architecture tests
+- Circular dependencies prohibited
+- Dependency direction: Layer 0 → Layer 1 → Layer 2 → Layer 3 → Layer 4
+- No backward dependencies allowed
+- Architecture tests must pass before code changes
+- Violations must be documented with ADRs
+
+## 31. Error-First Enforcement
+
+- All rules at Error level by default
+- Warnings only for experimental/platform-specific features (2000% rule)
+- TreatWarningsAsErrors=true in all projects
+- No warning suppressions without explicit approval
+- Analyzer rules configured at error severity
+- Experimental features require explicit opt-in
+- Platform-specific code must be isolated and documented
+
+## 32. Async Pattern Enforcement
+
+- Async methods MUST end with Async suffix (error level)
+- ConfigureAwait(false) required for library code (CA2007)
+- CancellationToken passing required (CA2016)
+- CancellationToken must be last parameter (CA1068)
+- Avoid async void (except for event handlers)
+- Prefer ValueTask for hot paths
+- All async methods must handle cancellation gracefully
+
+## 33. Enterprise Reliability Patterns
+
+- Guard clauses required at method entry
+- Null checks: `if (value is null)` pattern preferred
+- IAsyncDisposable for all async resources
+- Exception handling patterns: specific catches, generic last
+- Null safety with nullable reference types enabled
+- Resource cleanup in finally blocks or using statements
+- Retry patterns for transient failures
+- Circuit breaker patterns for external dependencies
+
+## 34. Documentation Requirements
+
+- XML docs for all public APIs
+- Comment WHY not WHAT (code should be self-explanatory)
+- Architecture Decision Records in docs/adr/
+- Public API changes require documentation updates
+- Complex algorithms require inline comments
+- External dependencies documented in README
+- Breaking changes documented in CHANGELOG
+
+## 35. Testing Standards
+
+- All public methods must have tests
+- Coverage targets: 80% line, 70% branch, 100% public API
+- Architecture tests required for layer boundaries
+- Unit tests for business logic
+- Integration tests for cross-component interactions
+- Tests must be deterministic and repeatable
+- Test names must describe behavior, not implementation
+- Arrange-Act-Assert pattern for test structure
+
+## 36. Performance & Observability
+
+- Hot paths benchmarked with BenchmarkDotNet
+- No allocations in tight loops
+- Span<T> and Memory<T> for buffer operations
+- Structured logging with correlation IDs
+- Performance metrics for critical paths
+- Memory profiling for allocation hotspots
+- Async operations must be non-blocking
+- Avoid synchronous I/O in async contexts
+
+## 37. Agent Legibility - Enterprise Grade
+
+- Explicit over implicit
+- Single Responsibility Principle
+- LINQ Readability subsection:
+  - Name intermediate variables descriptively
+  - Chain operations when flow is clear
+  - Extract into private methods when query exceeds 5 operations
+  - Use comments for complex grouping logic
+- Enterprise patterns: Repository, Unit of Work, Strategy, Factory, Builder
+- Dependency Injection for testability
+- SOLID principles enforced
+- Code reviews focus on readability and maintainability
+
+## 38. Scaffolding & Templates
+
+- Use `dotnet new ghost-plugin -n Name` for new plugins
+- Templates in /templates/
+- Never create from scratch when templates exist
+- Template updates must be backward compatible
+- Custom templates documented in templates/README.md
+- Template validation required before use
+- Scaffolded code must pass all quality gates
+
+## 39. Policy Compliance Verification
+
+- Pre-commit verification required for all changes
+- Self-verification commands:
+  - `dotnet format Ghost.sln --verify-no-changes`
+  - `dotnet restore Ghost.sln`
+  - `dotnet build Ghost.sln --no-restore --warnaserror`
+  - `dotnet test Ghost.sln --no-build`
+- Failure handling: STOP, fix, re-verify
+- No bypassing verification without explicit approval
+- Verification results must be documented
+- Failed verification blocks commit
+
+## 40. Future Roadmap
+
+- Plugin isolation out-of-process architecture (planned)
+- Beads integration for plugin management
+- Enhanced observability and monitoring
+- Performance optimization initiatives
+- Security hardening measures
+- Documentation expansion
+- Test coverage improvements
+- Developer experience enhancements
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
