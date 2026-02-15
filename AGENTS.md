@@ -256,12 +256,14 @@
 
 ## 25. Project Structure
 
-- Layer 0: `src/Core/Ghost/`
-- Layer 1: `src/Contracts/`
-- Layer 2: `src/Platforms/`
-- Layer 3: `src/Hosting/`
-- Layer 4: `src/Sdk/`
-- Tests: `tests/` mirrors source layout.
+- Layer 0: `src/Core/Ghost/` - Core engine, stealth, sessions, proxies
+- Layer 1: `src/Contracts/` - Interfaces, DTOs, shared contracts
+- Layer 2: `src/Plugins/` - Platform-specific plugins (LinkedIn, Indeed, Google, etc.)
+- Layer 3: `src/Hosting/` - WebAPI, workers, CLI
+- Layer 4: `src/Sdk/` - Spider framework for building scrapers
+- Tests: `tests/Plugins/` mirrors plugin layout
+
+**Note:** Architecture migrated from Platforms to Plugins. All platform implementations live in `src/Plugins/`.
 
 ## 26. Reference Documents
 
