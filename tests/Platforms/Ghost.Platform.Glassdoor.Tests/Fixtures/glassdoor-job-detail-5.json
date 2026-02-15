@@ -1,0 +1,32 @@
+{
+  "data": {
+    "job": {
+      "jobId": "9248789",
+      "jobTitleText": "Backend Software Engineer",
+      "employerNameFromSearch": "Netflix",
+      "employerName": "Netflix, Inc.",
+      "location": "Los Gatos, CA",
+      "locationFullAddress": "Los Gatos, California, United States",
+      "header": {
+        "payPeriodAdjustedPay": {
+          "p10": 140000,
+          "p90": 200000,
+          "payCurrency": "USD"
+        }
+      },
+      "jobDescription": "<p>Netflix is seeking Backend Software Engineers to build and scale our streaming platform serving millions of members globally. Work on the systems that deliver entertainment to over 250 million members.</p><p><strong>What We're Looking For:</strong></p><ul><li>Build high-performance backend services</li><li>Scale systems to serve millions of users</li><li>Optimize streaming infrastructure</li><li>Work with cutting-edge cloud technologies</li><li>Innovate in content delivery</li></ul><p><strong>Your Background:</strong></p><ul><li>5+ years of backend development experience</li><li>Strong experience with Java, Python, or similar</li><li>Deep understanding of distributed systems</li><li>Experience with microservices architecture</li><li>CS degree or equivalent experience</li></ul><p><strong>Bonus Points:</strong></p><ul><li>Experience with video streaming technologies</li><li>AWS or cloud platform expertise</li><li>Performance optimization experience</li><li>Database scaling experience</li></ul>",
+      "postedDate": "2026-02-05T16:20:00Z",
+      "employmentType": "FULL_TIME",
+      "remoteWorkTypes": ["HYBRID"],
+      "applyUrl": "https://www.glassdoor.com/job-listing/backend-software-engineer-netflix-JV_IC1147436_KO0,26_KE27,34.htm?jl=9248789",
+      "employer": {
+        "id": "11891",
+        "name": "Netflix",
+        "website": "https://www.netflix.com",
+        "overview": "Netflix is the world's leading streaming entertainment service with over 250 million members.",
+        "size": "10000+ employees",
+        "industry": "Entertainment & Technology"
+      }
+    }
+  }
+}

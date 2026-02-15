@@ -1,0 +1,26 @@
+name: Documentation update
+description: Request or suggest documentation changes
+title: "Docs: [short description]"
+labels: [documentation]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to request improvements or corrections to the
+        documentation.
+  - type: input
+    id: page
+    attributes:
+      label: Documentation page
+      description: Which page or section should be updated?
+  - type: textarea
+    id: change
+    attributes:
+      label: Proposed change
+      description: Provide the exact changes or additions you propose
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Why
+      description: Why is this change needed? Who will benefit?

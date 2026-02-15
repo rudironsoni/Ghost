@@ -1,0 +1,31 @@
+name: Feature request
+description: Suggest a new feature or enhancement for Ghost
+title: "Feature: [short description]"
+labels: [enhancement]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for proposing a new feature. Please provide as much detail as
+        possible to help us evaluate and implement the request.
+  - type: input
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this feature useful? What problem does it solve?
+  - type: textarea
+    id: description
+    attributes:
+      label: Proposed solution
+      description: Describe the feature and possible implementation details
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any alternative approaches that were considered
+  - type: input
+    id: scope
+    attributes:
+      label: Scope
+      description: Proposed scope and migration/backwards-compatibility notes

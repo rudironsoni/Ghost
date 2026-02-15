@@ -1,0 +1,109 @@
+{
+  "data": {
+    "jobSearchResults": {
+      "jobs": [
+        {
+          "jobId": "9247891",
+          "jobTitleText": "Senior Software Engineer",
+          "employerNameFromSearch": "Microsoft",
+          "location": "Redmond, WA",
+          "header": {
+            "payPeriodAdjustedPay": {
+              "p10": 145000,
+              "p90": 210000,
+              "payCurrency": "USD"
+            }
+          },
+          "jobDescription": "Join Microsoft as a Senior Software Engineer working on Azure cloud services. You'll design and implement scalable distributed systems...",
+          "postedDate": "2026-02-01T10:00:00Z",
+          "applyUrl": "https://www.glassdoor.com/job-listing/senior-software-engineer-microsoft-JV_IC1150505_KO0,25_KE26,35.htm?jl=9247891"
+        },
+        {
+          "jobId": "9248102",
+          "jobTitleText": "Software Engineer II",
+          "employerNameFromSearch": "Amazon",
+          "location": "Seattle, WA",
+          "header": {
+            "payPeriodAdjustedPay": {
+              "p10": 130000,
+              "p90": 185000,
+              "payCurrency": "USD"
+            }
+          },
+          "jobDescription": "Amazon Web Services (AWS) is seeking talented Software Engineers to build next-generation cloud infrastructure...",
+          "postedDate": "2026-02-02T14:30:00Z",
+          "applyUrl": "https://www.glassdoor.com/job-listing/software-engineer-ii-amazon-JV_IC1150505_KO0,20_KE21,27.htm?jl=9248102"
+        },
+        {
+          "jobId": "9248345",
+          "jobTitleText": "Software Development Engineer",
+          "employerNameFromSearch": "Google",
+          "location": "Mountain View, CA",
+          "header": {
+            "payPeriodAdjustedPay": {
+              "p10": 155000,
+              "p90": 225000,
+              "payCurrency": "USD"
+            }
+          },
+          "jobDescription": "Google is looking for Software Development Engineers to work on cutting-edge technologies that impact billions of users worldwide...",
+          "postedDate": "2026-02-03T09:15:00Z",
+          "applyUrl": "https://www.glassdoor.com/job-listing/software-development-engineer-google-JV_IC1147401_KO0,30_KE31,37.htm?jl=9248345"
+        },
+        {
+          "jobId": "9248567",
+          "jobTitleText": "Full Stack Software Engineer",
+          "employerNameFromSearch": "Meta",
+          "location": "Menlo Park, CA",
+          "header": {
+            "payPeriodAdjustedPay": {
+              "p10": 150000,
+              "p90": 215000,
+              "payCurrency": "USD"
+            }
+          },
+          "jobDescription": "Meta is hiring Full Stack Software Engineers to build innovative social technologies and metaverse experiences...",
+          "postedDate": "2026-02-04T11:45:00Z",
+          "applyUrl": "https://www.glassdoor.com/job-listing/full-stack-software-engineer-meta-JV_IC1147436_KO0,29_KE30,34.htm?jl=9248567"
+        },
+        {
+          "jobId": "9248789",
+          "jobTitleText": "Backend Software Engineer",
+          "employerNameFromSearch": "Netflix",
+          "location": "Los Gatos, CA",
+          "header": {
+            "payPeriodAdjustedPay": {
+              "p10": 140000,
+              "p90": 200000,
+              "payCurrency": "USD"
+            }
+          },
+          "jobDescription": "Netflix is seeking Backend Software Engineers to build and scale our streaming platform serving millions of members globally...",
+          "postedDate": "2026-02-05T16:20:00Z",
+          "applyUrl": "https://www.glassdoor.com/job-listing/backend-software-engineer-netflix-JV_IC1147436_KO0,26_KE27,34.htm?jl=9248789"
+        },
+        {
+          "jobId": "9249012",
+          "jobTitleText": "Software Engineer - Machine Learning",
+          "employerNameFromSearch": "Apple",
+          "location": "Cupertino, CA",
+          "header": {
+            "payPeriodAdjustedPay": {
+              "p10": 160000,
+              "p90": 230000,
+              "payCurrency": "USD"
+            }
+          },
+          "jobDescription": "Apple is looking for Software Engineers with ML expertise to work on cutting-edge artificial intelligence features for our products...",
+          "postedDate": "2026-02-06T08:00:00Z",
+          "applyUrl": "https://www.glassdoor.com/job-listing/software-engineer-machine-learning-apple-JV_IC1147436_KO0,35_KE36,41.htm?jl=9249012"
+        }
+      ],
+      "totalResults": 1247,
+      "pageInfo": {
+        "hasNextPage": true,
+        "endCursor": "eyJwYWdlIjoxfQ=="
+      }
+    }
+  }
+}
