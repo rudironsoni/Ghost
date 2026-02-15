@@ -20,14 +20,14 @@ public class InMemoryRequestSchedulerTests
         var request3 = new GhostRequest("http://example.com/3", "GET", new Dictionary<string, string>(), null, null);
 
         // Act
-        await scheduler.EnqueueAsync(request2, priority: 2).ConfigureAwait(false);
-        await scheduler.EnqueueAsync(request1, priority: 1).ConfigureAwait(false);
-        await scheduler.EnqueueAsync(request3, priority: 3).ConfigureAwait(false);
+        await scheduler.EnqueueAsync(request2, priority: 2);
+        await scheduler.EnqueueAsync(request1, priority: 1);
+        await scheduler.EnqueueAsync(request3, priority: 3);
 
         // Assert
-        GhostRequest? dequeued1 = await scheduler.DequeueAsync().ConfigureAwait(false);
-        GhostRequest? dequeued2 = await scheduler.DequeueAsync().ConfigureAwait(false);
-        GhostRequest? dequeued3 = await scheduler.DequeueAsync().ConfigureAwait(false);
+        GhostRequest? dequeued1 = await scheduler.DequeueAsync();
+        GhostRequest? dequeued2 = await scheduler.DequeueAsync();
+        GhostRequest? dequeued3 = await scheduler.DequeueAsync();
 
         dequeued1.Should().Be(request1, "priority 1 should be dequeued first");
         dequeued2.Should().Be(request2, "priority 2 should be dequeued second");
@@ -49,17 +49,17 @@ public class InMemoryRequestSchedulerTests
         var request3 = new GhostRequest("http://example.com/2", "GET", new Dictionary<string, string>(), null, null);
 
         // Act
-        await scheduler.EnqueueAsync(request1).ConfigureAwait(false);
-        await scheduler.EnqueueAsync(request2).ConfigureAwait(false);
-        await scheduler.EnqueueAsync(request3).ConfigureAwait(false);
+        await scheduler.EnqueueAsync(request1);
+        await scheduler.EnqueueAsync(request2);
+        await scheduler.EnqueueAsync(request3);
 
         // Assert
-        int count = await scheduler.CountAsync().ConfigureAwait(false);
+        int count = await scheduler.CountAsync();
         count.Should().Be(2, "duplicate should be skipped");
 
-        GhostRequest? dequeued1 = await scheduler.DequeueAsync().ConfigureAwait(false);
-        GhostRequest? dequeued2 = await scheduler.DequeueAsync().ConfigureAwait(false);
-        GhostRequest? dequeued3 = await scheduler.DequeueAsync().ConfigureAwait(false);
+        GhostRequest? dequeued1 = await scheduler.DequeueAsync();
+        GhostRequest? dequeued2 = await scheduler.DequeueAsync();
+        GhostRequest? dequeued3 = await scheduler.DequeueAsync();
 
         dequeued1.Should().Be(request1);
         dequeued2.Should().Be(request3);
@@ -76,7 +76,7 @@ public class InMemoryRequestSchedulerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            scheduler.DequeueAsync(cts.Token).AsTask()).ConfigureAwait(false);
+            scheduler.DequeueAsync(cts.Token).AsTask());
     }
 
     [Fact]
@@ -88,14 +88,14 @@ public class InMemoryRequestSchedulerTests
         var request2 = new GhostRequest("http://example.com/2", "GET", new Dictionary<string, string>(), null, null);
 
         // Act
-        await scheduler.EnqueueAsync(request1).ConfigureAwait(false);
-        int count1 = await scheduler.CountAsync().ConfigureAwait(false);
+        await scheduler.EnqueueAsync(request1);
+        int count1 = await scheduler.CountAsync();
 
-        await scheduler.EnqueueAsync(request2).ConfigureAwait(false);
-        int count2 = await scheduler.CountAsync().ConfigureAwait(false);
+        await scheduler.EnqueueAsync(request2);
+        int count2 = await scheduler.CountAsync();
 
-        await scheduler.DequeueAsync().ConfigureAwait(false);
-        int count3 = await scheduler.CountAsync().ConfigureAwait(false);
+        await scheduler.DequeueAsync();
+        int count3 = await scheduler.CountAsync();
 
         // Assert
         count1.Should().Be(1);
@@ -110,7 +110,7 @@ public class InMemoryRequestSchedulerTests
         var scheduler = new InMemoryRequestScheduler();
 
         // Act
-        GhostRequest? result = await scheduler.DequeueAsync().ConfigureAwait(false);
+        GhostRequest? result = await scheduler.DequeueAsync();
 
         // Assert
         result.Should().BeNull();

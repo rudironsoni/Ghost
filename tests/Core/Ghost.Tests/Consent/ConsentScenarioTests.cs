@@ -163,22 +163,22 @@ public class ConsentScenarioTests : IAsyncLifetime
     public async Task ModalBlocking_AcceptPath_DismissesModal()
     {
         // Arrange
-        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
         string url = $"{_scenarioServer!.BaseUrl}/scenario/consent/modal-blocking";
 
         // Act
-        await NavigateWithCleanConsentAsync(page, url).ConfigureAwait(false);
+        await NavigateWithCleanConsentAsync(page, url);
 
         // Verify modal is visible
-        await AssertSelectorVisibleAsync(page, "#consent-modal").ConfigureAwait(false);
-        await AssertSelectorVisibleAsync(page, ".accept-btn").ConfigureAwait(false);
+        await AssertSelectorVisibleAsync(page, "#consent-modal");
+        await AssertSelectorVisibleAsync(page, ".accept-btn");
 
         // Click accept button
-        await ClickViaScriptAsync(page, ".accept-btn").ConfigureAwait(false);
+        await ClickViaScriptAsync(page, ".accept-btn");
 
         // Wait for modal to be dismissed
-        await WaitUntilHiddenAsync(page, "#consent-modal").ConfigureAwait(false);
+        await WaitUntilHiddenAsync(page, "#consent-modal");
 
         _output.WriteLine("Modal blocking accept path test passed");
     }
@@ -187,15 +187,15 @@ public class ConsentScenarioTests : IAsyncLifetime
     public async Task ModalBlocking_RejectPath_DismissesModal()
     {
         // Arrange
-        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
         string url = $"{_scenarioServer!.BaseUrl}/scenario/consent/modal-blocking";
 
         // Act
-        await NavigateWithCleanConsentAsync(page, url).ConfigureAwait(false);
-        await WaitUntilVisibleAsync(page, "#consent-modal").ConfigureAwait(false);
-        await ClickViaScriptAsync(page, ".reject-btn").ConfigureAwait(false);
-        await WaitUntilHiddenAsync(page, "#consent-modal").ConfigureAwait(false);
+        await NavigateWithCleanConsentAsync(page, url);
+        await WaitUntilVisibleAsync(page, "#consent-modal");
+        await ClickViaScriptAsync(page, ".reject-btn");
+        await WaitUntilHiddenAsync(page, "#consent-modal");
 
         _output.WriteLine("Modal blocking reject path test passed");
     }
@@ -204,19 +204,19 @@ public class ConsentScenarioTests : IAsyncLifetime
     public async Task BannerSoft_AcceptPath_DismissesBanner()
     {
         // Arrange
-        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
         string url = $"{_scenarioServer!.BaseUrl}/scenario/consent/banner-soft";
 
         // Act
-        await NavigateWithCleanConsentAsync(page, url).ConfigureAwait(false);
+        await NavigateWithCleanConsentAsync(page, url);
 
         // Verify banner is visible
-        await WaitUntilVisibleAsync(page, "#consent-banner").ConfigureAwait(false);
+        await WaitUntilVisibleAsync(page, "#consent-banner");
 
         // Click accept button
-        await ClickViaScriptAsync(page, "#consent-banner button").ConfigureAwait(false);
-        await WaitUntilHiddenAsync(page, "#consent-banner").ConfigureAwait(false);
+        await ClickViaScriptAsync(page, "#consent-banner button");
+        await WaitUntilHiddenAsync(page, "#consent-banner");
 
         _output.WriteLine("Soft banner accept path test passed");
     }
@@ -225,15 +225,15 @@ public class ConsentScenarioTests : IAsyncLifetime
     public async Task BannerDismiss_DismissWithoutDecision_SetsDismissedState()
     {
         // Arrange
-        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
         string url = $"{_scenarioServer!.BaseUrl}/scenario/consent/banner-dismiss";
 
         // Act
-        await NavigateWithCleanConsentAsync(page, url).ConfigureAwait(false);
-        await WaitUntilVisibleAsync(page, "#consent-banner").ConfigureAwait(false);
-        await ClickViaScriptAsync(page, ".dismiss").ConfigureAwait(false);
-        await WaitUntilHiddenAsync(page, "#consent-banner").ConfigureAwait(false);
+        await NavigateWithCleanConsentAsync(page, url);
+        await WaitUntilVisibleAsync(page, "#consent-banner");
+        await ClickViaScriptAsync(page, ".dismiss");
+        await WaitUntilHiddenAsync(page, "#consent-banner");
 
         _output.WriteLine("Banner dismiss without decision test passed");
     }
@@ -242,15 +242,15 @@ public class ConsentScenarioTests : IAsyncLifetime
     public async Task IframeCmp_AcceptViaPostMessage_DismissesIframe()
     {
         // Arrange
-        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
         string url = $"{_scenarioServer!.BaseUrl}/scenario/consent/iframe-cmp";
 
         // Act
-        await NavigateWithCleanConsentAsync(page, url).ConfigureAwait(false);
+        await NavigateWithCleanConsentAsync(page, url);
 
         // Verify iframe is visible
-        await WaitUntilVisibleAsync(page, "#cmp-iframe").ConfigureAwait(false);
+        await WaitUntilVisibleAsync(page, "#cmp-iframe");
 
         // Click accept button inside iframe
         await page.EvaluateAsync<object?>("""
@@ -258,8 +258,8 @@ public class ConsentScenarioTests : IAsyncLifetime
                 window.postMessage({ type: 'consent', action: 'accept' }, '*');
                 return null;
             })()
-            """).ConfigureAwait(false);
-        await WaitUntilHiddenAsync(page, "#cmp-iframe").ConfigureAwait(false);
+            """);
+        await WaitUntilHiddenAsync(page, "#cmp-iframe");
 
         _output.WriteLine("Iframe CMP accept via postMessage test passed");
     }
@@ -268,23 +268,23 @@ public class ConsentScenarioTests : IAsyncLifetime
     public async Task RegionGdpr_ExplicitConsentRequired_ShowsBlockingModal()
     {
         // Arrange
-        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
         string url = $"{_scenarioServer!.BaseUrl}/scenario/consent/region-gdpr";
 
         // Act
-        await NavigateWithCleanConsentAsync(page, url).ConfigureAwait(false);
+        await NavigateWithCleanConsentAsync(page, url);
 
         // Verify GDPR modal is visible
-        await WaitUntilVisibleAsync(page, "#gdpr-modal").ConfigureAwait(false);
+        await WaitUntilVisibleAsync(page, "#gdpr-modal");
 
         // Verify region indicator
-        string content = await page.GetContentAsync().ConfigureAwait(false);
+        string content = await page.GetContentAsync();
         Assert.Contains("EU", content);
 
         // Click accept all
-        await ClickViaScriptAsync(page, ".accept-all").ConfigureAwait(false);
-        await WaitUntilHiddenAsync(page, "#gdpr-modal").ConfigureAwait(false);
+        await ClickViaScriptAsync(page, ".accept-all");
+        await WaitUntilHiddenAsync(page, "#gdpr-modal");
 
         _output.WriteLine("GDPR region-specific consent test passed");
     }
@@ -293,23 +293,23 @@ public class ConsentScenarioTests : IAsyncLifetime
     public async Task RegionCcpa_OptOutModel_AllowsDefaultWithOptOutOption()
     {
         // Arrange
-        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
         string url = $"{_scenarioServer!.BaseUrl}/scenario/consent/region-ccpa";
 
         // Act
-        await NavigateWithCleanConsentAsync(page, url).ConfigureAwait(false);
+        await NavigateWithCleanConsentAsync(page, url);
 
         // Verify CCPA banner is visible
-        await WaitUntilVisibleAsync(page, "#ccpa-banner").ConfigureAwait(false);
+        await WaitUntilVisibleAsync(page, "#ccpa-banner");
 
         // Verify region indicator
-        string content = await page.GetContentAsync().ConfigureAwait(false);
+        string content = await page.GetContentAsync();
         Assert.Contains("California", content);
 
         // Click opt-out button
-        await ClickViaScriptAsync(page, ".opt-out").ConfigureAwait(false);
-        await WaitUntilHiddenAsync(page, "#ccpa-banner").ConfigureAwait(false);
+        await ClickViaScriptAsync(page, ".opt-out");
+        await WaitUntilHiddenAsync(page, "#ccpa-banner");
 
         _output.WriteLine("CCPA opt-out model test passed");
     }
@@ -318,23 +318,23 @@ public class ConsentScenarioTests : IAsyncLifetime
     public async Task RegionLgpd_SimilarToGdpr_RequiresExplicitConsent()
     {
         // Arrange
-        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
         string url = $"{_scenarioServer!.BaseUrl}/scenario/consent/region-lgpd";
 
         // Act
-        await NavigateWithCleanConsentAsync(page, url).ConfigureAwait(false);
+        await NavigateWithCleanConsentAsync(page, url);
 
         // Verify LGPD modal is visible
-        await WaitUntilVisibleAsync(page, "#lgpd-modal").ConfigureAwait(false);
+        await WaitUntilVisibleAsync(page, "#lgpd-modal");
 
         // Verify region indicator
-        string content = await page.GetContentAsync().ConfigureAwait(false);
+        string content = await page.GetContentAsync();
         Assert.Contains("Brasil", content);
 
         // Click accept
-        await ClickViaScriptAsync(page, ".accept").ConfigureAwait(false);
-        await WaitUntilHiddenAsync(page, "#lgpd-modal").ConfigureAwait(false);
+        await ClickViaScriptAsync(page, ".accept");
+        await WaitUntilHiddenAsync(page, "#lgpd-modal");
 
         _output.WriteLine("LGPD region-specific consent test passed");
     }
@@ -343,25 +343,25 @@ public class ConsentScenarioTests : IAsyncLifetime
     public async Task StatefulPersistence_ConsentPersistsAcrossSession()
     {
         // Arrange
-        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
         string url = $"{_scenarioServer!.BaseUrl}/scenario/consent/stateful-persistence";
 
         // Act - First visit: accept consent
-        await NavigateWithCleanConsentAsync(page, url).ConfigureAwait(false);
-        await WaitUntilVisibleAsync(page, "#consent-banner").ConfigureAwait(false);
-        await ClickViaScriptAsync(page, "#consent-banner button").ConfigureAwait(false);
-        await WaitUntilHiddenAsync(page, "#consent-banner").ConfigureAwait(false);
+        await NavigateWithCleanConsentAsync(page, url);
+        await WaitUntilVisibleAsync(page, "#consent-banner");
+        await ClickViaScriptAsync(page, "#consent-banner button");
+        await WaitUntilHiddenAsync(page, "#consent-banner");
 
         // Get session ID
-        string sessionId = await page.EvaluateAsync<string>("document.getElementById('session-id').textContent").ConfigureAwait(false);
+        string sessionId = await page.EvaluateAsync<string>("document.getElementById('session-id').textContent");
 
         // Navigate to page 2 (same session)
-        await ClickViaScriptAsync(page, "a[href*='page=2']").ConfigureAwait(false);
-        await page.WaitForLoadStateAsync().ConfigureAwait(false);
+        await ClickViaScriptAsync(page, "a[href*='page=2']");
+        await page.WaitForLoadStateAsync();
 
         // Assert - Banner should not appear on second visit
-        await WaitUntilHiddenAsync(page, "#consent-banner").ConfigureAwait(false);
+        await WaitUntilHiddenAsync(page, "#consent-banner");
 
         _output.WriteLine("Stateful consent persistence test passed");
     }
@@ -370,12 +370,12 @@ public class ConsentScenarioTests : IAsyncLifetime
     public async Task ReconsentPolicyChange_PolicyUpdateTriggersReconsent()
     {
         // Arrange
-        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
         string url = $"{_scenarioServer!.BaseUrl}/scenario/consent/reconsent-policy-change";
 
         // Act - Navigate to page (policy version mismatch triggers re-consent)
-        await NavigateWithCleanConsentAsync(page, url).ConfigureAwait(false);
+        await NavigateWithCleanConsentAsync(page, url);
 
         await page.EvaluateAsync<object?>("""
             (() => {
@@ -383,15 +383,15 @@ public class ConsentScenarioTests : IAsyncLifetime
                 document.cookie = 'ghost_policy_version=1; path=/';
                 return null;
             })()
-            """).ConfigureAwait(false);
-        await page.ReloadAsync().ConfigureAwait(false);
+            """);
+        await page.ReloadAsync();
 
         // Verify re-consent modal is visible (policy version mismatch)
-        await WaitUntilVisibleAsync(page, "#reconsent-modal").ConfigureAwait(false);
+        await WaitUntilVisibleAsync(page, "#reconsent-modal");
 
         // Accept new policy
-        await ClickViaScriptAsync(page, ".accept-new").ConfigureAwait(false);
-        await WaitUntilHiddenAsync(page, "#reconsent-modal").ConfigureAwait(false);
+        await ClickViaScriptAsync(page, ".accept-new");
+        await WaitUntilHiddenAsync(page, "#reconsent-modal");
 
         _output.WriteLine("Re-consent on policy change test passed");
     }
@@ -415,14 +415,14 @@ public class ConsentScenarioTests : IAsyncLifetime
         };
 
         // Act
-        await using IBrowserSession session = (await _browserFixture.CreateSessionAsync().ConfigureAwait(false)).ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
 
         foreach (string? scenario in expectedScenarios)
         {
             string url = $"{_scenarioServer!.BaseUrl}{scenario}";
-            await page.NavigateAsync(url).ConfigureAwait(false);
-            string? title = await page.GetTitleAsync().ConfigureAwait(false);
+            await page.NavigateAsync(url);
+            string? title = await page.GetTitleAsync();
             Assert.NotNull(title);
             _output.WriteLine($"✓ {scenario} is accessible");
         }

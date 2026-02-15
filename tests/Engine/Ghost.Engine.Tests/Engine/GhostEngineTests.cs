@@ -48,7 +48,7 @@ public class GhostEngineTests
         var context = new GhostEngineContext("test-job", "test-spider", new Dictionary<string, object?>());
 
         // Act
-        await engine.RunAsync(spider, context).ConfigureAwait(false);
+        await engine.RunAsync(spider, context);
 
         // Assert
         processedRequests.Should().HaveCount(3, "should process 3 start requests");
@@ -81,7 +81,7 @@ public class GhostEngineTests
         var context = new GhostEngineContext("test-job", "test-spider", new Dictionary<string, object?>());
 
         // Act
-        await engine.RunAsync(spider, context).ConfigureAwait(false);
+        await engine.RunAsync(spider, context);
 
         // Assert
         counter.MaxInFlightObserved.Should().Be(1, "should never exceed MaxInFlight");
@@ -108,7 +108,7 @@ public class GhostEngineTests
         var context = new GhostEngineContext("test-job", "test-spider", new Dictionary<string, object?>());
 
         // Act
-        await engine.RunAsync(spider, context).ConfigureAwait(false);
+        await engine.RunAsync(spider, context);
 
         // Assert
         // Middlewares should execute in reverse order of addition (last added = first to execute)
@@ -140,7 +140,7 @@ public class GhostEngineTests
         // Act & Assert
         // Should throw TaskCanceledException when cancelled
         await Assert.ThrowsAsync<TaskCanceledException>(() =>
-            engine.RunAsync(spider, context, cts.Token)).ConfigureAwait(false);
+            engine.RunAsync(spider, context, cts.Token));
     }
 
     // Test helpers

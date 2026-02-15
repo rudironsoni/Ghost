@@ -26,7 +26,7 @@ public class StaticProxySourceTests
         };
 
         var sut = new StaticProxySource(cfg, NullLogger<StaticProxySource>.Instance);
-        var res = (await sut.FetchProxiesAsync(CancellationToken.None).ConfigureAwait(false)).ToList();
+        var res = (await sut.FetchProxiesAsync(CancellationToken.None)).ToList();
 
         // bare.host (no scheme or port) is ignored without a global port
         res.Should().BeEmpty();
@@ -44,7 +44,7 @@ public class StaticProxySourceTests
         };
 
         var sut = new StaticProxySource(cfg, NullLogger<StaticProxySource>.Instance);
-        var res = (await sut.FetchProxiesAsync(CancellationToken.None).ConfigureAwait(false)).ToList();
+        var res = (await sut.FetchProxiesAsync(CancellationToken.None)).ToList();
 
         res.Should().HaveCount(1);
         res[0].Server.Should().Be("socks5://host:9999");
@@ -64,7 +64,7 @@ public class StaticProxySourceTests
         };
 
         var sut = new StaticProxySource(cfg, NullLogger<StaticProxySource>.Instance);
-        var res = (await sut.FetchProxiesAsync(CancellationToken.None).ConfigureAwait(false)).ToList();
+        var res = (await sut.FetchProxiesAsync(CancellationToken.None)).ToList();
 
         res.Should().HaveCount(1);
         res[0].Server.Should().Be("http://host:1234");
@@ -82,7 +82,7 @@ public class StaticProxySourceTests
         };
 
         var sut = new StaticProxySource(cfg, NullLogger<StaticProxySource>.Instance);
-        var res = (await sut.FetchProxiesAsync(CancellationToken.None).ConfigureAwait(false)).ToList();
+        var res = (await sut.FetchProxiesAsync(CancellationToken.None)).ToList();
 
         res.Should().BeEmpty();
     }

@@ -18,7 +18,7 @@ public class HumanInteractionExtensionsTests
         CancellationToken ct = CancellationToken.None;
 
         // Act
-        await mockElement.Object.HumanClickAsync(ct).ConfigureAwait(false);
+        await mockElement.Object.HumanClickAsync(ct);
 
         // Assert
         mockElement.Verify(e => e.ScrollIntoViewAsync(ct), Times.Once);
@@ -30,6 +30,6 @@ public class HumanInteractionExtensionsTests
     public async Task HumanClickAsyncThrowsIfElementNull()
     {
         IElement? element = null;
-        await Assert.ThrowsAsync<ArgumentNullException>(() => element!.HumanClickAsync()).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => element!.HumanClickAsync());
     }
 }

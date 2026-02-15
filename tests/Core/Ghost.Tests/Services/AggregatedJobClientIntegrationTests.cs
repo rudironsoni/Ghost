@@ -53,7 +53,7 @@ public class AggregatedJobClientIntegrationTests
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
-        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria).ConfigureAwait(false);
+        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria);
 
         // Assert
         result.Should().NotBeNull();
@@ -86,7 +86,7 @@ public class AggregatedJobClientIntegrationTests
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
-        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria).ConfigureAwait(false);
+        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria);
 
         // Assert
         result.Should().NotBeNull();
@@ -112,7 +112,7 @@ public class AggregatedJobClientIntegrationTests
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
-        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria).ConfigureAwait(false);
+        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria);
 
         // Assert
         result.Should().NotBeNull();
@@ -140,7 +140,7 @@ public class AggregatedJobClientIntegrationTests
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
-        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria).ConfigureAwait(false);
+        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria);
 
         // Assert
         result.Should().NotBeNull();
@@ -176,7 +176,7 @@ public class AggregatedJobClientIntegrationTests
         };
 
         // Act
-        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria).ConfigureAwait(false);
+        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria);
 
         // Assert
         result.Should().NotBeNull();
@@ -210,7 +210,7 @@ public class AggregatedJobClientIntegrationTests
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
-        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria).ConfigureAwait(false);
+        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria);
 
         // Assert
         result.Count.Should().Be(2);
@@ -226,7 +226,7 @@ public class AggregatedJobClientIntegrationTests
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
-        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria).ConfigureAwait(false);
+        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria);
 
         // Assert
         result.Should().NotBeNull();
@@ -245,7 +245,7 @@ public class AggregatedJobClientIntegrationTests
         var client = new AggregatedJobClient(new[] { mockScraper1.Object }, _mockDedupe.Object, _mockLogger.Object);
 
         // Act
-        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(null!).ConfigureAwait(false);
+        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(null!);
 
         // Assert
         result.Should().NotBeNull();
@@ -270,7 +270,7 @@ public class AggregatedJobClientIntegrationTests
         Func<Task> act = async () => await client.SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
 
         // Assert
-        await act.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
+        await act.Should().ThrowAsync<OperationCanceledException>();
     }
 
     [Fact]
@@ -287,7 +287,7 @@ public class AggregatedJobClientIntegrationTests
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
-        await client.SearchJobsAsync(criteria).ConfigureAwait(false);
+        await client.SearchJobsAsync(criteria);
 
         // Assert
         testLogger.LogEntries.Should().Contain(e => e.LogLevel == LogLevel.Warning);
@@ -354,7 +354,7 @@ public class AggregatedJobClientIntegrationTests
 
         // Act
         DateTime startTime = DateTime.UtcNow;
-        await client.SearchJobsAsync(criteria).ConfigureAwait(false);
+        await client.SearchJobsAsync(criteria);
         DateTime endTime = DateTime.UtcNow;
 
         // Assert
@@ -382,7 +382,7 @@ public class AggregatedJobClientIntegrationTests
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
-        JobSearchResult result = await client.SearchJobsWithErrorsAsync(criteria).ConfigureAwait(false);
+        JobSearchResult result = await client.SearchJobsWithErrorsAsync(criteria);
 
         // Assert
         result.Should().NotBeNull();
@@ -415,7 +415,7 @@ public class AggregatedJobClientIntegrationTests
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
-        JobSearchResult result = await client.SearchJobsWithErrorsAsync(criteria).ConfigureAwait(false);
+        JobSearchResult result = await client.SearchJobsWithErrorsAsync(criteria);
 
         // Assert
         result.Should().NotBeNull();
@@ -441,7 +441,7 @@ public class AggregatedJobClientIntegrationTests
         var criteria = new JobSearchCriteria { Query = "software engineer" };
 
         // Act
-        JobSearchResult result = await client.SearchJobsWithErrorsAsync(criteria).ConfigureAwait(false);
+        JobSearchResult result = await client.SearchJobsWithErrorsAsync(criteria);
 
         // Assert
         result.Metadata.Should().NotBeNull();
@@ -467,7 +467,7 @@ public class AggregatedJobClientIntegrationTests
         };
 
         // Act
-        JobSearchResult result = await client.SearchJobsWithErrorsAsync(criteria).ConfigureAwait(false);
+        JobSearchResult result = await client.SearchJobsWithErrorsAsync(criteria);
 
         // Assert
         result.Metadata.Should().NotBeNull();
@@ -495,7 +495,7 @@ public class AggregatedJobClientIntegrationTests
         var client = new AggregatedJobClient(new[] { mockScraper1.Object }, _mockDedupe.Object, _mockLogger.Object);
 
         // Act
-        JobListing result = await client.GetJobDetailsAsync("1").ConfigureAwait(false);
+        JobListing result = await client.GetJobDetailsAsync("1");
 
         // Assert
         result.Should().NotBeNull();
@@ -525,7 +525,7 @@ public class AggregatedJobClientIntegrationTests
         var client = new AggregatedJobClient(new[] { mockScraper1.Object, mockScraper2.Object }, _mockDedupe.Object, _mockLogger.Object);
 
         // Act
-        JobListing result = await client.GetJobDetailsAsync("1").ConfigureAwait(false);
+        JobListing result = await client.GetJobDetailsAsync("1");
 
         // Assert
         result.Should().NotBeNull();
@@ -546,7 +546,7 @@ public class AggregatedJobClientIntegrationTests
         var client = new AggregatedJobClient(new[] { mockScraper1.Object }, _mockDedupe.Object, _mockLogger.Object);
 
         // Act
-        JobListing result = await client.GetJobDetailsAsync("1").ConfigureAwait(false);
+        JobListing result = await client.GetJobDetailsAsync("1");
 
         // Assert
         result.Should().NotBeNull();
@@ -595,7 +595,7 @@ public class AggregatedJobClientIntegrationTests
         };
 
         // Act
-        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria).ConfigureAwait(false);
+        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria);
 
         // Assert
         result.Count.Should().Be(1);
@@ -640,7 +640,7 @@ public class AggregatedJobClientIntegrationTests
         };
 
         // Act
-        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria).ConfigureAwait(false);
+        IReadOnlyList<JobListing> result = await client.SearchJobsAsync(criteria);
 
         // Assert
         result.Count.Should().Be(2);

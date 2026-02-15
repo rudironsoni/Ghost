@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Ghost.Core;
 using Ghost.Pool;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -70,7 +71,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
     public async Task HotPoolProvidesBrowserUnder500ms()
     {
         var stopwatch = Stopwatch.StartNew();
-        await using IBrowserSession session = (await _pool!.AcquireBrowserAsync(Tier.Hot).ConfigureAwait(false)).ConfigureAwait(false);
+        await using IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Hot);
         stopwatch.Stop();
 
         Assert.NotNull(session);
@@ -83,7 +84,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
     public async Task WarmPoolProvidesBrowserUnder1500ms()
     {
         var stopwatch = Stopwatch.StartNew();
-        await using IBrowserSession session = (await _pool!.AcquireBrowserAsync(Tier.Warm).ConfigureAwait(false)).ConfigureAwait(false);
+        await using IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Warm);
         stopwatch.Stop();
 
         Assert.NotNull(session);
@@ -95,7 +96,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
     [Fact]
     public async Task ColdPoolCreatesBrowserOnDemand()
     {
-        await using IBrowserSession session = (await _pool!.AcquireBrowserAsync(Tier.Cold).ConfigureAwait(false)).ConfigureAwait(false);
+        await using IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Cold);
 
         Assert.NotNull(session);
         Assert.True(session.IsConnected);
@@ -108,7 +109,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
             .Select(_ => _pool!.AcquireBrowserAsync(Tier.Hot))
             .ToArray();
 
-        IBrowserSession[] sessions = await Task.WhenAll(tasks).ConfigureAwait(false);
+        IBrowserSession[] sessions = await Task.WhenAll(tasks);
 
         Assert.All(sessions, session =>
         {
@@ -118,40 +119,40 @@ public class TieredBrowserPoolTests : IAsyncLifetime
 
         foreach (IBrowserSession? session in sessions)
         {
-            await _pool!.ReturnBrowserAsync(session).ConfigureAwait(false);
+            await _pool!.ReturnBrowserAsync(session);
         }
     }
 
     [Fact]
     public async Task PoolReturnsSessionSuccessfullyToPool()
     {
-        IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Hot).ConfigureAwait(false);
+        IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Hot);
         Assert.NotNull(session);
 
-        await _pool.ReturnBrowserAsync(session).ConfigureAwait(false);
+        await _pool.ReturnBrowserAsync(session);
 
-        PoolHealth health = await _pool.GetHealthAsync().ConfigureAwait(false);
+        PoolHealth health = await _pool.GetHealthAsync();
         Assert.True(health.Hot.Available > 0);
     }
 
     [Fact]
     public async Task PoolProvidesSeparateSessions()
     {
-        IBrowserSession session1 = await _pool!.AcquireBrowserAsync(Tier.Hot).ConfigureAwait(false);
-        IBrowserSession session2 = await _pool.AcquireBrowserAsync(Tier.Hot).ConfigureAwait(false);
+        IBrowserSession session1 = await _pool!.AcquireBrowserAsync(Tier.Hot);
+        IBrowserSession session2 = await _pool.AcquireBrowserAsync(Tier.Hot);
 
         Assert.NotNull(session1);
         Assert.NotNull(session2);
         Assert.NotEqual(session1.SessionId, session2.SessionId);
 
-        await _pool.ReturnBrowserAsync(session1).ConfigureAwait(false);
-        await _pool.ReturnBrowserAsync(session2).ConfigureAwait(false);
+        await _pool.ReturnBrowserAsync(session1);
+        await _pool.ReturnBrowserAsync(session2);
     }
 
     [Fact]
     public async Task GetHealthAsyncReturnsValidHealthStatus()
     {
-        PoolHealth health = await _pool!.GetHealthAsync().ConfigureAwait(false);
+        PoolHealth health = await _pool!.GetHealthAsync();
 
         Assert.NotNull(health);
         Assert.NotNull(health.Hot);
@@ -168,9 +169,9 @@ public class TieredBrowserPoolTests : IAsyncLifetime
     [Fact]
     public async Task WarmUpAsyncCreatesExpectedNumberOfSessions()
     {
-        await _pool!.WarmUpAsync(Tier.Hot, 3).ConfigureAwait(false);
+        await _pool!.WarmUpAsync(Tier.Hot, 3);
 
-        PoolHealth health = await _pool.GetHealthAsync().ConfigureAwait(false);
+        PoolHealth health = await _pool.GetHealthAsync();
 
         Assert.True(health.Hot.Total >= 3);
     }
@@ -181,17 +182,17 @@ public class TieredBrowserPoolTests : IAsyncLifetime
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
         {
             await _pool!.ReturnBrowserAsync(null!).ConfigureAwait(false);
-        }).ConfigureAwait(false);
+        });
     }
 
     [Fact]
     public async Task PoolAcquisitionMetricsTrackCorrectly()
     {
-        await _pool!.AcquireBrowserAsync(Tier.Hot).ConfigureAwait(false);
-        await _pool.AcquireBrowserAsync(Tier.Warm).ConfigureAwait(false);
-        await _pool.AcquireBrowserAsync(Tier.Cold).ConfigureAwait(false);
+        await _pool!.AcquireBrowserAsync(Tier.Hot);
+        await _pool.AcquireBrowserAsync(Tier.Warm);
+        await _pool.AcquireBrowserAsync(Tier.Cold);
 
-        PoolHealth health = await _pool.GetHealthAsync().ConfigureAwait(false);
+        PoolHealth health = await _pool.GetHealthAsync();
 
         Assert.True(health.TotalAcquisitions >= 3);
         Assert.True(health.Hot.AcquisitionCount >= 1);
@@ -206,18 +207,18 @@ public class TieredBrowserPoolTests : IAsyncLifetime
 
         for (int i = 0; i < 10; i++)
         {
-            IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Hot).ConfigureAwait(false);
+            IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Hot);
             hotSessions.Add(session);
         }
 
-        PoolHealth health = await _pool!.GetHealthAsync().ConfigureAwait(false);
+        PoolHealth health = await _pool!.GetHealthAsync();
 
         Assert.True(health.Warm.AcquisitionCount > 0 || health.Cold.AcquisitionCount > 0,
             "Pool should fallback to Warm or Cold when Hot is exhausted");
 
         foreach (IBrowserSession session in hotSessions)
         {
-            await _pool.ReturnBrowserAsync(session).ConfigureAwait(false);
+            await _pool.ReturnBrowserAsync(session);
         }
     }
 
@@ -228,25 +229,25 @@ public class TieredBrowserPoolTests : IAsyncLifetime
 
         for (int i = 0; i < 20; i++)
         {
-            IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Warm).ConfigureAwait(false);
+            IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Warm);
             sessions.Add(session);
         }
 
-        PoolHealth health = await _pool!.GetHealthAsync().ConfigureAwait(false);
+        PoolHealth health = await _pool!.GetHealthAsync();
 
         Assert.True(health.Cold.AcquisitionCount > 0,
             "Pool should fallback to Cold when Warm is exhausted");
 
         foreach (IBrowserSession session in sessions)
         {
-            await _pool.ReturnBrowserAsync(session).ConfigureAwait(false);
+            await _pool.ReturnBrowserAsync(session);
         }
     }
 
     [Fact]
     public async Task PoolHealthCheckDetectsIssues()
     {
-        PoolHealth health = await _pool!.GetHealthAsync().ConfigureAwait(false);
+        PoolHealth health = await _pool!.GetHealthAsync();
 
         Assert.True(health.Hot.IsHealthy || health.Warm.IsHealthy || health.Cold.IsHealthy,
             "At least one tier should be healthy");
@@ -255,17 +256,17 @@ public class TieredBrowserPoolTests : IAsyncLifetime
     [Fact]
     public async Task PoolCreatesWorkingPage()
     {
-        await using IBrowserSession session = (await _pool!.AcquireBrowserAsync(Tier.Hot).ConfigureAwait(false)).ConfigureAwait(false);
-        IPage page = await session.NewPageAsync().ConfigureAwait(false);
+        await using IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Hot);
+        IPage page = await session.NewPageAsync();
 
         Assert.NotNull(page);
 
-        await page.NavigateAsync("https://example.com").ConfigureAwait(false);
-        string title = await page.EvaluateAsync<string>("document.title").ConfigureAwait(false);
+        await page.NavigateAsync("https://example.com");
+        string title = await page.EvaluateAsync<string>("document.title");
 
         Assert.False(string.IsNullOrEmpty(title));
 
-        await _pool.ReturnBrowserAsync(session).ConfigureAwait(false);
+        await _pool.ReturnBrowserAsync(session);
     }
 
     [Fact]
@@ -277,7 +278,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
             Cold = new ColdPoolOptions { MaximumConcurrent = maxConcurrent }
         };
 
-        await using var pool = new TieredBrowserPool(_kernel!, options).ConfigureAwait(false);
+        await using ConfiguredAsyncDisposable pool = new TieredBrowserPool(_kernel!, options).ConfigureAwait(false);
         Task[] tasks = Enumerable.Range(0, maxConcurrent + 5)
             .Select(async _ =>
             {
@@ -294,7 +295,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
             })
             .ToArray();
 
-        await Task.WhenAll(tasks).ConfigureAwait(false);
+        await Task.WhenAll(tasks);
 
         PoolHealth health = await pool.GetHealthAsync().ConfigureAwait(false);
         Assert.True(health.Cold.InUse <= maxConcurrent);

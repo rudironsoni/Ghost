@@ -13,7 +13,7 @@ public class TimingMimicryTests
         DateTime startTime = DateTime.UtcNow;
 
         // Act
-        await timing.NavigationDelayAsync().ConfigureAwait(false);
+        await timing.NavigationDelayAsync();
 
         // Assert
         TimeSpan elapsed = DateTime.UtcNow - startTime;
@@ -28,7 +28,7 @@ public class TimingMimicryTests
         DateTime startTime = DateTime.UtcNow;
 
         // Act
-        await timing.PreClickDelayAsync().ConfigureAwait(false);
+        await timing.PreClickDelayAsync();
 
         // Assert
         TimeSpan elapsed = DateTime.UtcNow - startTime;
@@ -43,7 +43,7 @@ public class TimingMimicryTests
         DateTime startTime = DateTime.UtcNow;
 
         // Act
-        await timing.PostClickDelayAsync().ConfigureAwait(false);
+        await timing.PostClickDelayAsync();
 
         // Assert
         TimeSpan elapsed = DateTime.UtcNow - startTime;
@@ -58,7 +58,7 @@ public class TimingMimicryTests
         DateTime startTime = DateTime.UtcNow;
 
         // Act
-        await timing.CustomDelayAsync(100, 200).ConfigureAwait(false);
+        await timing.CustomDelayAsync(100, 200);
 
         // Assert
         TimeSpan elapsed = DateTime.UtcNow - startTime;
@@ -73,7 +73,7 @@ public class TimingMimicryTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            async () => await timing.CustomDelayAsync(100, 50).ConfigureAwait(false)).ConfigureAwait(false);
+            async () => await timing.CustomDelayAsync(100, 50).ConfigureAwait(false));
     }
 
     [Fact]
@@ -84,6 +84,6 @@ public class TimingMimicryTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            async () => await timing.CustomDelayAsync(-1, 100).ConfigureAwait(false)).ConfigureAwait(false);
+            async () => await timing.CustomDelayAsync(-1, 100).ConfigureAwait(false));
     }
 }

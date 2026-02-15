@@ -27,7 +27,7 @@ public class LinkedInJobClientTests
         var logger = new Mock<ILogger<LinkedInJobClient>>();
         var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
         var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), logger.Object, new JavaScriptAdapter(), new EntityParser());
-        IReadOnlyList<JobListing> jobs = await client.SearchJobsAsync(new JobSearchCriteria { Query = "developer" }, CancellationToken.None).ConfigureAwait(false);
+        IReadOnlyList<JobListing> jobs = await client.SearchJobsAsync(new JobSearchCriteria { Query = "developer" }, CancellationToken.None);
         jobs.Should().BeAssignableTo<System.Collections.Generic.IEnumerable<JobListing>>();
     }
 
@@ -52,7 +52,7 @@ public class LinkedInJobClientTests
         var logger = new Mock<ILogger<LinkedInJobClient>>();
         var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
         var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), logger.Object, new JavaScriptAdapter(), new EntityParser());
-        JobApplication result = await client.ApplyAsync("job:1", new ApplicationDetails { ApplicantName = "Test", ApplicantEmail = "a@b.com" }, CancellationToken.None).ConfigureAwait(false);
+        JobApplication result = await client.ApplyAsync("job:1", new ApplicationDetails { ApplicantName = "Test", ApplicantEmail = "a@b.com" }, CancellationToken.None);
         result.Should().BeNull();
     }
 
@@ -76,7 +76,7 @@ public class LinkedInJobClientTests
         var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), null!, new JavaScriptAdapter(), new EntityParser());
 
         // Act
-        await client.GetJobDetailsAsync("123").ConfigureAwait(false);
+        await client.GetJobDetailsAsync("123");
 
         // Assert
         mockSession.Verify(s => s.NewPageAsync(It.Is<PageOptions>(p =>
@@ -123,7 +123,7 @@ public class LinkedInJobClientTests
         var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), null!, new JavaScriptAdapter(), new EntityParser());
 
         // Act
-        JobListing result = await client.GetJobDetailsAsync("123").ConfigureAwait(false);
+        JobListing result = await client.GetJobDetailsAsync("123");
 
         // Assert
         result.Should().NotBeNull();

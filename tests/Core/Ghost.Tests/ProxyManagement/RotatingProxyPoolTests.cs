@@ -25,7 +25,7 @@ public sealed class RotatingProxyPoolTests
 
         // Act
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        ProxyInfo? proxy = await pool.GetNextProxyAsync(cts.Token).ConfigureAwait(false);
+        ProxyInfo? proxy = await pool.GetNextProxyAsync(cts.Token);
 
         // Assert
         proxy.Should().BeNull();
@@ -56,7 +56,7 @@ public sealed class RotatingProxyPoolTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await pool.ReportProxyResultAsync(null!, true, TimeSpan.Zero).ConfigureAwait(false)).ConfigureAwait(false);
+            async () => await pool.ReportProxyResultAsync(null!, true, TimeSpan.Zero).ConfigureAwait(false));
     }
 
     [Fact]

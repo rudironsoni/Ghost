@@ -39,7 +39,7 @@ public abstract class ProviderContractTests<TAdapter>
     {
         TAdapter adapter = CreateAdapter();
         var contract = new RequiredFieldsContract();
-        ContractResult result = await contract.ExecuteAsync(adapter).ConfigureAwait(false);
+        ContractResult result = await contract.ExecuteAsync(adapter);
 
         _output.WriteLine($"Contract: {result.ContractName}");
         _output.WriteLine($"Passed: {result.Passed}");
@@ -63,7 +63,7 @@ public abstract class ProviderContractTests<TAdapter>
     {
         TAdapter adapter = CreateAdapter();
         var contract = new DedupeContract();
-        ContractResult result = await contract.ExecuteAsync(adapter).ConfigureAwait(false);
+        ContractResult result = await contract.ExecuteAsync(adapter);
 
         _output.WriteLine($"Contract: {result.ContractName}");
         _output.WriteLine($"Passed: {result.Passed}");
@@ -87,7 +87,7 @@ public abstract class ProviderContractTests<TAdapter>
     {
         TAdapter adapter = CreateAdapter();
         var contract = new PaginationContract();
-        ContractResult result = await contract.ExecuteAsync(adapter).ConfigureAwait(false);
+        ContractResult result = await contract.ExecuteAsync(adapter);
 
         _output.WriteLine($"Contract: {result.ContractName}");
         _output.WriteLine($"Passed: {result.Passed}");
@@ -111,7 +111,7 @@ public abstract class ProviderContractTests<TAdapter>
     {
         TAdapter adapter = CreateAdapter();
         var contract = new RetryBehaviorContract();
-        ContractResult result = await contract.ExecuteAsync(adapter).ConfigureAwait(false);
+        ContractResult result = await contract.ExecuteAsync(adapter);
 
         _output.WriteLine($"Contract: {result.ContractName}");
         _output.WriteLine($"Passed: {result.Passed}");
@@ -135,7 +135,7 @@ public abstract class ProviderContractTests<TAdapter>
     {
         TAdapter adapter = CreateAdapter();
         var contract = new ConsentComplianceContract();
-        ContractResult result = await contract.ExecuteAsync(adapter).ConfigureAwait(false);
+        ContractResult result = await contract.ExecuteAsync(adapter);
 
         _output.WriteLine($"Contract: {result.ContractName}");
         _output.WriteLine($"Passed: {result.Passed}");
@@ -159,7 +159,7 @@ public abstract class ProviderContractTests<TAdapter>
     {
         TAdapter adapter = CreateAdapter();
         var contract = new IdempotentExtractionContract();
-        ContractResult result = await contract.ExecuteAsync(adapter).ConfigureAwait(false);
+        ContractResult result = await contract.ExecuteAsync(adapter);
 
         _output.WriteLine($"Contract: {result.ContractName}");
         _output.WriteLine($"Passed: {result.Passed}");
@@ -193,7 +193,7 @@ public abstract class ProviderContractTests<TAdapter>
         };
 
         var runner = new ContractRunner(contracts);
-        ContractRunResult result = await runner.RunAsync(adapter).ConfigureAwait(false);
+        ContractRunResult result = await runner.RunAsync(adapter);
 
         _output.WriteLine($"Platform: {result.PlatformName}");
         _output.WriteLine($"Overall Passed: {result.Passed}");

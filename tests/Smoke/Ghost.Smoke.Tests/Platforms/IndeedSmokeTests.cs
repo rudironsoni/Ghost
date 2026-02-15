@@ -40,7 +40,7 @@ public class IndeedIntegrationTests : IClassFixture<PlatformIntegrationTestFixtu
 
         // Act
         _output.WriteLine($"Searching Indeed for: {criteria.Query}");
-        IReadOnlyList<JobListing> results = await _client.SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
+        IReadOnlyList<JobListing> results = await _client.SearchJobsAsync(criteria, cts.Token);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -84,7 +84,7 @@ public class IndeedIntegrationTests : IClassFixture<PlatformIntegrationTestFixtu
 
         // Act
         _output.WriteLine($"Searching Indeed for: {criteria.Query} in {criteria.Location}");
-        IReadOnlyList<JobListing> results = await _client.SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
+        IReadOnlyList<JobListing> results = await _client.SearchJobsAsync(criteria, cts.Token);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
@@ -120,7 +120,7 @@ public class IndeedIntegrationTests : IClassFixture<PlatformIntegrationTestFixtu
         var searchCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 
         // First, search for a job to get a valid ID
-        IReadOnlyList<JobListing> searchResults = await _client.SearchJobsAsync(searchCriteria, searchCts.Token).ConfigureAwait(false);
+        IReadOnlyList<JobListing> searchResults = await _client.SearchJobsAsync(searchCriteria, searchCts.Token);
         searchResults.Should().NotBeEmpty("need at least one job to test details endpoint");
 
         string jobId = searchResults[0].Id;
@@ -129,7 +129,7 @@ public class IndeedIntegrationTests : IClassFixture<PlatformIntegrationTestFixtu
         var detailsCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 
         // Act
-        JobListing jobDetails = await _client.GetJobDetailsAsync(jobId, detailsCts.Token).ConfigureAwait(false);
+        JobListing jobDetails = await _client.GetJobDetailsAsync(jobId, detailsCts.Token);
 
         // Assert
         jobDetails.Should().NotBeNull("job details should not be null");

@@ -23,7 +23,7 @@ public class LinkedInNewsClientTests
 
         var logger = new Mock<ILogger<LinkedInNewsClient>>();
         var client = new LinkedInNewsClient(mockSession.Object, Options.Create(new LinkedInOptions()), logger.Object);
-        IReadOnlyList<NewsArticle> list = await client.GetArticlesAsync(null, CancellationToken.None).ConfigureAwait(false);
+        IReadOnlyList<NewsArticle> list = await client.GetArticlesAsync(null, CancellationToken.None);
         list.Should().BeAssignableTo<System.Collections.Generic.IEnumerable<NewsArticle>>();
     }
 
@@ -39,7 +39,7 @@ public class LinkedInNewsClientTests
 
         var logger = new Mock<ILogger<LinkedInNewsClient>>();
         var client = new LinkedInNewsClient(mockSession.Object, Options.Create(new LinkedInOptions()), logger.Object);
-        IReadOnlyList<NewsArticle> results = await client.SearchAsync("AI", new NewsSearchOptions { MaxResults = 10 }, CancellationToken.None).ConfigureAwait(false);
+        IReadOnlyList<NewsArticle> results = await client.SearchAsync("AI", new NewsSearchOptions { MaxResults = 10 }, CancellationToken.None);
         results.Should().BeAssignableTo<System.Collections.Generic.IEnumerable<NewsArticle>>();
     }
 }

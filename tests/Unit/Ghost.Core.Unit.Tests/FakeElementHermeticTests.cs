@@ -17,7 +17,7 @@ public class FakeElementHermeticTests
         var element = new FakeElement();
 
         // Act
-        string? text = await element.GetTextContentAsync().ConfigureAwait(false);
+        string? text = await element.GetTextContentAsync();
 
         // Assert
         text.Should().BeEmpty();
@@ -31,7 +31,7 @@ public class FakeElementHermeticTests
         element.SetTextContent("Software Engineer");
 
         // Act
-        string? text = await element.GetTextContentAsync().ConfigureAwait(false);
+        string? text = await element.GetTextContentAsync();
 
         // Assert
         text.Should().Be("Software Engineer");
@@ -45,7 +45,7 @@ public class FakeElementHermeticTests
         element.SetAttribute("href", "https://example.com/job/123");
 
         // Act
-        string? href = await element.GetAttributeAsync("href").ConfigureAwait(false);
+        string? href = await element.GetAttributeAsync("href");
 
         // Assert
         href.Should().Be("https://example.com/job/123");
@@ -58,7 +58,7 @@ public class FakeElementHermeticTests
         var element = new FakeElement();
 
         // Act
-        string? attr = await element.GetAttributeAsync("missing").ConfigureAwait(false);
+        string? attr = await element.GetAttributeAsync("missing");
 
         // Assert
         attr.Should().BeNull();
@@ -72,7 +72,7 @@ public class FakeElementHermeticTests
         element.SetInnerHtml("<span>Test</span>");
 
         // Act
-        string? html = await element.GetInnerHtmlAsync().ConfigureAwait(false);
+        string? html = await element.GetInnerHtmlAsync();
 
         // Assert
         html.Should().Be("<span>Test</span>");
@@ -85,7 +85,7 @@ public class FakeElementHermeticTests
         var element = new FakeElement();
 
         // Act
-        bool isVisible = await element.IsVisibleAsync().ConfigureAwait(false);
+        bool isVisible = await element.IsVisibleAsync();
 
         // Assert
         isVisible.Should().BeTrue();
@@ -98,7 +98,7 @@ public class FakeElementHermeticTests
         var element = new FakeElement();
 
         // Act
-        bool isEnabled = await element.IsEnabledAsync().ConfigureAwait(false);
+        bool isEnabled = await element.IsEnabledAsync();
 
         // Assert
         isEnabled.Should().BeTrue();
@@ -111,7 +111,7 @@ public class FakeElementHermeticTests
         var element = new FakeElement();
 
         // Act
-        bool isChecked = await element.IsCheckedAsync().ConfigureAwait(false);
+        bool isChecked = await element.IsCheckedAsync();
 
         // Assert
         isChecked.Should().BeFalse();
@@ -127,7 +127,7 @@ public class FakeElementHermeticTests
         Func<Task> act = async () => await element.ClickAsync().ConfigureAwait(false);
 
         // Assert
-        await act.Should().NotThrowAsync().ConfigureAwait(false);
+        await act.Should().NotThrowAsync();
     }
 
     [Fact]
@@ -140,7 +140,7 @@ public class FakeElementHermeticTests
         Func<Task> act = async () => await element.TypeAsync("test input").ConfigureAwait(false);
 
         // Assert
-        await act.Should().NotThrowAsync().ConfigureAwait(false);
+        await act.Should().NotThrowAsync();
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public class FakeElementHermeticTests
         Func<Task> act = async () => await element.FillAsync("test value").ConfigureAwait(false);
 
         // Assert
-        await act.Should().NotThrowAsync().ConfigureAwait(false);
+        await act.Should().NotThrowAsync();
     }
 
     [Fact]
@@ -166,9 +166,9 @@ public class FakeElementHermeticTests
         element.SetAttribute("data-location", "Remote");
 
         // Act
-        string? id = await element.GetAttributeAsync("id").ConfigureAwait(false);
-        string? cssClass = await element.GetAttributeAsync("class").ConfigureAwait(false);
-        string? location = await element.GetAttributeAsync("data-location").ConfigureAwait(false);
+        string? id = await element.GetAttributeAsync("id");
+        string? cssClass = await element.GetAttributeAsync("class");
+        string? location = await element.GetAttributeAsync("data-location");
 
         // Assert
         id.Should().Be("job-123");
@@ -183,7 +183,7 @@ public class FakeElementHermeticTests
         var element = new FakeElement();
 
         // Act
-        IElement? nested = await element.QuerySelectorAsync(".nested").ConfigureAwait(false);
+        IElement? nested = await element.QuerySelectorAsync(".nested");
 
         // Assert
         nested.Should().NotBeNull();
@@ -199,6 +199,6 @@ public class FakeElementHermeticTests
         Func<Task> act = async () => await element.DisposeAsync().ConfigureAwait(false);
 
         // Assert
-        await act.Should().NotThrowAsync().ConfigureAwait(false);
+        await act.Should().NotThrowAsync();
     }
 }

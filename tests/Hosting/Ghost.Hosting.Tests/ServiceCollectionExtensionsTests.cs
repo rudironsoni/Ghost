@@ -79,8 +79,8 @@ public class ServiceCollectionExtensionsTests
         IBrowserSession browserSession = scope.ServiceProvider.GetRequiredService<Ghost.IBrowserSession>();
         browserSession.Should().NotBeNull();
 
-        await scope.DisposeAsync().ConfigureAwait(false);
-        await provider.DisposeAsync().ConfigureAwait(false);
+        await scope.DisposeAsync();
+        await provider.DisposeAsync();
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public class ServiceCollectionExtensionsTests
         IHostedService? warmupService = hostedServices.FirstOrDefault(x => x.GetType().Name == "GhostEngineWarmupHostedService");
         warmupService.Should().NotBeNull();
 
-        await provider.DisposeAsync().ConfigureAwait(false);
+        await provider.DisposeAsync();
     }
 
     [Fact]

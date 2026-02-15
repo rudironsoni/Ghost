@@ -19,29 +19,29 @@ public class GhostKernelIntegrationTests
             Headless = true
         };
 
-        GhostKernel kernel = await GhostKernel.CreateAsync(options).ConfigureAwait(false);
+        GhostKernel kernel = await GhostKernel.CreateAsync(options);
 
         try
         {
-            IBrowserSession session = await kernel.NewSessionAsync().ConfigureAwait(false);
+            IBrowserSession session = await kernel.NewSessionAsync();
             await using (session)
             {
-                IPage page = await session.NewPageAsync().ConfigureAwait(false);
+                IPage page = await session.NewPageAsync();
                 await using (page)
                 {
                     // 1) navigator.webdriver should be undefined or false (both indicate stealth is working)
-                    object? webdriver = await page.EvaluateAsync<object>("() => navigator.webdriver").ConfigureAwait(false);
+                    object? webdriver = await page.EvaluateAsync<object>("() => navigator.webdriver");
                     // Accept both null (undefined in JS) and false as valid stealth indicators
                     Assert.True(webdriver is null or false, $"navigator.webdriver should be null or false, but was {webdriver}");
 
                     // 2) navigator.languages should be present and have values
-                    string[] languages = await page.EvaluateAsync<string[]>("() => navigator.languages || []").ConfigureAwait(false);
+                    string[] languages = await page.EvaluateAsync<string[]>("() => navigator.languages || []");
                     Assert.NotNull(languages);
                     Assert.True(languages.Length > 0, "navigator.languages should contain at least one language");
 
                     // 3) navigator.plugins is array-like: ensure it has a numeric length and an item function
                     PluginsInfo pluginsInfo = await page.EvaluateAsync<PluginsInfo>(
-                        "() => ({ length: navigator.plugins ? navigator.plugins.length : 0, hasItem: !!(navigator.plugins && typeof navigator.plugins.item === 'function'), isArray: Array.isArray(navigator.plugins) })").ConfigureAwait(false);
+                        "() => ({ length: navigator.plugins ? navigator.plugins.length : 0, hasItem: !!(navigator.plugins && typeof navigator.plugins.item === 'function'), isArray: Array.isArray(navigator.plugins) })");
 
                     Assert.NotNull(pluginsInfo);
                     Assert.True(pluginsInfo.Length >= 0, "navigator.plugins.length should be a number >= 0");
@@ -51,7 +51,7 @@ public class GhostKernelIntegrationTests
         }
         finally
         {
-            await kernel.DisposeAsync().ConfigureAwait(false);
+            await kernel.DisposeAsync();
         }
     }
 

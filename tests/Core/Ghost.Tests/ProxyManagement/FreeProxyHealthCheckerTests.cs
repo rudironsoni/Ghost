@@ -20,7 +20,7 @@ public sealed class FreeProxyHealthCheckerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await checker.CheckHealthAsync(null!, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
+            async () => await checker.CheckHealthAsync(null!, CancellationToken.None).ConfigureAwait(false));
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public sealed class FreeProxyHealthCheckerTests
         var proxy = new ProxyInfo("http://invalid-proxy-host:9999", null, null);
 
         // Act
-        ProxyHealthCheckResult result = await checker.CheckHealthAsync(proxy, CancellationToken.None).ConfigureAwait(false);
+        ProxyHealthCheckResult result = await checker.CheckHealthAsync(proxy, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();

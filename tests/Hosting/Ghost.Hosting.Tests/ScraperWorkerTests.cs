@@ -67,12 +67,12 @@ public class ScraperWorkerTests
         executeAsync.Should().NotBeNull();
         var runTask = (Task?)executeAsync!.Invoke(worker, new object[] { cts.Token });
         runTask.Should().NotBeNull();
-        await runTask!.ConfigureAwait(false);
+        await runTask!;
 
         holder.Latest.Should().NotBeNull();
         holder.Latest!.Disposed.Should().BeTrue();
 
-        await serviceProvider.DisposeAsync().ConfigureAwait(false);
+        await serviceProvider.DisposeAsync();
     }
 
     private sealed class ScopedDependency : IDisposable
