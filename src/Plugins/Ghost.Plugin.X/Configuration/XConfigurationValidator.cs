@@ -215,9 +215,10 @@ public partial class XPlatformHealthCheck
 
     private async Task<bool> CheckBrowserConnectivityAsync(CancellationToken ct)
     {
+        IPage? page = null;
         try
         {
-            await using IPage page = await _session.NewPageAsync(ct: ct).ConfigureAwait(false);
+            page = await _session.NewPageAsync(ct: ct).ConfigureAwait(false);
             await page.NavigateAsync("about:blank", ct: ct).ConfigureAwait(false);
             return true;
         }
@@ -225,6 +226,13 @@ public partial class XPlatformHealthCheck
         {
             Log.BrowserConnectivityFailed(_logger, ex);
             return false;
+        }
+        finally
+        {
+            if (page is not null)
+            {
+                await page.DisposeAsync().ConfigureAwait(false);
+            }
         }
     }
 
@@ -246,9 +254,10 @@ public partial class XPlatformHealthCheck
 
     private async Task<bool> CheckXConnectivityAsync(CancellationToken ct)
     {
+        IPage? page = null;
         try
         {
-            await using IPage page = await _session.NewPageAsync(ct: ct).ConfigureAwait(false);
+            page = await _session.NewPageAsync(ct: ct).ConfigureAwait(false);
             await page.NavigateAsync(_options.BaseUrl, ct: ct).ConfigureAwait(false);
             await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
             return page.Url.Contains("x.com") || page.Url.Contains("twitter.com");
@@ -257,6 +266,13 @@ public partial class XPlatformHealthCheck
         {
             Log.XConnectivityCheckFailed(_logger, ex);
             return false;
+        }
+        finally
+        {
+            if (page is not null)
+            {
+                await page.DisposeAsync().ConfigureAwait(false);
+            }
         }
     }
 }
