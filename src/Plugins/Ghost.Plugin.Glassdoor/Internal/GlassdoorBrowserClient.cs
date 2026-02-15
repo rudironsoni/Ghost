@@ -82,6 +82,12 @@ public sealed class GlassdoorBrowserClient : IDisposable
     private static readonly Action<ILogger, Exception?> s_logMaxAttemptsReached =
         LoggerMessage.Define(LogLevel.Warning, new EventId(21, "MaxAttemptsReached"), "Max attempts reached, giving up");
 
+    private static readonly Action<ILogger, string, Exception?> s_logExtractionDebug =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(22, "ExtractionDebug"), "Glassdoor extraction debug: {DebugInfo}");
+
+    private static readonly Action<ILogger, Exception?> s_logRegexFallback =
+        LoggerMessage.Define(LogLevel.Debug, new EventId(23, "RegexFallback"), "JavaScript extraction returned 0 jobs, falling back to regex");
+
     private readonly ConsentManagerService _consentService;
 
     public GlassdoorBrowserClient(
@@ -621,10 +627,19 @@ public sealed class GlassdoorBrowserClient : IDisposable
                         }
                     }
                 }
+
+                // Log debug info if available
+                if (result.TryGetValue("debugInfo", out var debugObj))
+                {
+                    var debugJson = System.Text.Json.JsonSerializer.Serialize(debugObj);
+                    s_logExtractionDebug(_logger, debugJson, null);
+                }
             }
 
+            // Fallback to regex if JavaScript extraction fails
             if (jobs.Count == 0)
             {
+                s_logRegexFallback(_logger, null);
                 jobs = ExtractJobsWithRegex(html);
             }
         }
@@ -644,34 +659,252 @@ public sealed class GlassdoorBrowserClient : IDisposable
         if (string.IsNullOrEmpty(html))
             return jobs;
 
-        var titlePattern = @"<a[^>]*href=[""']/job/[^""']+[""'][^>]*>([^<]+)</a>";
-        var companyPattern = @"data-test=[""']employer-name[""'][^>]*>([^<]+)</";
-        var locationPattern = @"data-test=[""']job-location[""'][^>]*>([^<]+)</";
-
-        var titleMatches = Regex.Matches(html, titlePattern, RegexOptions.IgnoreCase);
-        var companyMatches = Regex.Matches(html, companyPattern, RegexOptions.IgnoreCase);
-        var locationMatches = Regex.Matches(html, locationPattern, RegexOptions.IgnoreCase);
-
-        for (int i = 0; i < titleMatches.Count; i++)
+        try
         {
-            var title = titleMatches[i].Groups[1].Value.Trim();
-            var company = i < companyMatches.Count ? companyMatches[i].Groups[1].Value.Trim() : string.Empty;
-            var location = i < locationMatches.Count ? locationMatches[i].Groups[1].Value.Trim() : null;
-
-            if (!string.IsNullOrEmpty(title))
+            // Try to extract job data from embedded JSON in script tags first
+            var jsonPatterns = new[]
             {
-                jobs.Add(new JobListing
+                @"window\.__INITIAL_STATE__\s*=\s*({.*?});",
+                @"window\.__NEXT_DATA__\s*=\s*({.*?});",
+                @"<script[^>]*id\s*=\s*[""']__NEXT_DATA__[""'][^>]*type\s*=\s*[""']application/json[""'][^>]*>(.*?)</script>"
+            };
+
+            foreach (var pattern in jsonPatterns)
+            {
+                var match = Regex.Match(html, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                if (match.Success && match.Groups.Count > 1)
                 {
-                    Id = Guid.NewGuid().ToString(),
-                    Title = title,
-                    Company = company,
-                    Location = location,
-                    Source = "Glassdoor"
-                });
+                    try
+                    {
+                        var jsonContent = match.Groups[1].Value;
+                        using var doc = System.Text.Json.JsonDocument.Parse(jsonContent);
+                        var extractedJobs = ExtractJobsFromJsonElement(doc.RootElement);
+                        if (extractedJobs.Count > 0)
+                        {
+                            return extractedJobs;
+                        }
+                    }
+                    catch { }
+                }
             }
+
+            // Fallback: Parse HTML structure for job cards with multiple patterns
+            var jobCardPatterns = new[]
+            {
+                // Pattern 1: data-test attributes (most common)
+                @"<(?:li|div|article)[^>]*(?:data-test=[""']jobListing[""']|data-job-id=[""'][^""']+[""'])[^>]*>.*?data-test=[""']job-title[""'][^>]*>([^<]+)<.*?data-test=[""']employer-name[""'][^>]*>([^<]+)<.*?(?:data-test=[""']job-location[""'][^>]*>([^<]+)<|class=[""'][^""']*location[^""']*[""'][^>]*>([^<]+)<)",
+                // Pattern 2: href-based extraction
+                @"<a[^>]*href=[""']/job-listing/([^""'\?]+)[""'][^>]*>([^<]+)</a>.*?(?:data-test=[""']employer-name[""'][^>]*>([^<]+)<|class=[""'][^""']*employer[^""']*[""'][^>]*>([^<]+)<)",
+                // Pattern 3: CSS module classes
+                @"<li[^>]*class=[""'][^""']*JobCard[^""']*[""'][^>]*>.*?<a[^>]*class=[""'][^""']*jobTitle[^""']*[""'][^>]*>([^<]+)</a>.*?(?:class=[""'][^""']*employer[^""']*[""'][^>]*>([^<]+)<|class=[""'][^""']*company[^""']*[""'][^>]*>([^<]+)<)",
+                // Pattern 4: Generic job card structure
+                @"<(?:li|div|article)[^>]*class=[""'][^""']*(?:job|Job)[^""']*[""'][^>]*>.*?<a[^>]*href=[""'][^""']*job[^""']*[""'][^>]*>([^<]+)</a>.*?<(?:span|div)[^>]*class=[""'][^""']*(?:employer|company)[^""']*[""'][^>]*>([^<]+)<"
+            };
+
+            foreach (var pattern in jobCardPatterns)
+            {
+                var matches = Regex.Matches(html, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                if (matches.Count > 0)
+                {
+                    foreach (Match match in matches)
+                    {
+                        try
+                        {
+                            var title = string.Empty;
+                            var company = string.Empty;
+                            var location = string.Empty;
+                            var url = string.Empty;
+                            var jobId = string.Empty;
+
+                            // Extract based on pattern groups
+                            if (match.Groups.Count >= 3)
+                            {
+                                title = match.Groups[1].Value.Trim();
+                                company = match.Groups[2].Value.Trim();
+
+                                if (match.Groups.Count >= 4)
+                                {
+                                    location = match.Groups[3].Value.Trim();
+                                    if (string.IsNullOrEmpty(location) && match.Groups.Count >= 5)
+                                    {
+                                        location = match.Groups[4].Value.Trim();
+                                    }
+                                }
+                            }
+
+                            // Try to extract URL and job ID from the match
+                            var urlMatch = Regex.Match(match.Value, @"href=[""']([^""']+)[""']");
+                            if (urlMatch.Success)
+                            {
+                                url = urlMatch.Groups[1].Value;
+                                var idMatch = Regex.Match(url, @"/job-listing/([^\/\?]+)");
+                                if (idMatch.Success)
+                                {
+                                    jobId = idMatch.Groups[1].Value;
+                                }
+                            }
+
+                            if (!string.IsNullOrEmpty(title) && !string.IsNullOrEmpty(company))
+                            {
+                                jobs.Add(new JobListing
+                                {
+                                    Id = !string.IsNullOrEmpty(jobId) ? jobId : Guid.NewGuid().ToString(),
+                                    Title = System.Net.WebUtility.HtmlDecode(title),
+                                    Company = System.Net.WebUtility.HtmlDecode(company),
+                                    Location = !string.IsNullOrEmpty(location) ? System.Net.WebUtility.HtmlDecode(location) : null,
+                                    Url = !string.IsNullOrEmpty(url) ? url : null,
+                                    Source = "Glassdoor"
+                                });
+                            }
+                        }
+                        catch { }
+                    }
+
+                    if (jobs.Count > 0)
+                    {
+                        break; // Found jobs with this pattern, don't try others
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't throw
+            System.Diagnostics.Debug.WriteLine($"Regex extraction error: {ex.Message}");
         }
 
         return jobs;
+    }
+
+    private static List<JobListing> ExtractJobsFromJsonElement(System.Text.Json.JsonElement element)
+    {
+        var jobs = new List<JobListing>();
+
+        try
+        {
+            // Recursively search for job data in the JSON structure
+            if (element.ValueKind == System.Text.Json.JsonValueKind.Object)
+            {
+                foreach (var prop in element.EnumerateObject())
+                {
+                    // Look for properties that likely contain job listings
+                    if (prop.Name.Contains("job", StringComparison.OrdinalIgnoreCase) ||
+                        prop.Name.Contains("listing", StringComparison.OrdinalIgnoreCase) ||
+                        prop.Name.Contains("result", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        {
+                            foreach (var item in prop.Value.EnumerateArray())
+                            {
+                                var job = ExtractJobFromJsonElement(item);
+                                if (job != null)
+                                    jobs.Add(job);
+                            }
+                        }
+                        else
+                        {
+                            jobs.AddRange(ExtractJobsFromJsonElement(prop.Value));
+                        }
+                    }
+                    else
+                    {
+                        jobs.AddRange(ExtractJobsFromJsonElement(prop.Value));
+                    }
+                }
+            }
+            else if (element.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                {
+                    var job = ExtractJobFromJsonElement(item);
+                    if (job != null)
+                        jobs.Add(job);
+                    else
+                        jobs.AddRange(ExtractJobsFromJsonElement(item));
+                }
+            }
+        }
+        catch { }
+
+        return jobs;
+    }
+
+    private static JobListing? ExtractJobFromJsonElement(System.Text.Json.JsonElement element)
+    {
+        try
+        {
+            string? title = null;
+            string? company = null;
+            string? location = null;
+            string? id = null;
+            string? url = null;
+
+            if (element.ValueKind == System.Text.Json.JsonValueKind.Object)
+            {
+                // Try different field name variations
+                title = GetJsonString(element, "jobTitleText", "jobTitle", "title", "job_title");
+                company = GetJsonString(element, "employerName", "employer", "company", "companyName");
+                location = GetJsonString(element, "locationName", "location", "jobLocationCity", "city");
+                id = GetJsonString(element, "listingId", "jobId", "id");
+                url = GetJsonString(element, "jobLink", "link", "url");
+
+                // Check for nested structures
+                if (element.TryGetProperty("jobview", out var jobview))
+                {
+                    if (jobview.TryGetProperty("header", out var header))
+                    {
+                        title ??= GetJsonString(header, "jobTitleText", "jobTitle");
+                        location ??= GetJsonString(header, "locationName", "location");
+                        url ??= GetJsonString(header, "jobLink");
+
+                        if (header.TryGetProperty("employer", out var employer))
+                        {
+                            company ??= GetJsonString(employer, "name");
+                        }
+                    }
+
+                    if (jobview.TryGetProperty("job", out var job))
+                    {
+                        id ??= GetJsonString(job, "listingId");
+                    }
+                }
+            }
+
+            // Must have at least title to be a valid job
+            if (!string.IsNullOrEmpty(title))
+            {
+                return new JobListing
+                {
+                    Id = id ?? Guid.NewGuid().ToString(),
+                    Title = title,
+                    Company = company ?? "Unknown Company",
+                    Location = location,
+                    Url = url,
+                    Source = "Glassdoor"
+                };
+            }
+        }
+        catch { }
+
+        return null;
+    }
+
+    private static string? GetJsonString(System.Text.Json.JsonElement element, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            try
+            {
+                if (element.TryGetProperty(key, out var value) && value.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    var str = value.GetString();
+                    if (!string.IsNullOrWhiteSpace(str))
+                        return str;
+                }
+            }
+            catch { }
+        }
+        return null;
     }
 
     private async Task<List<JobListing>> TryLoadMoreResultsAsync(IPage page, int remaining, CancellationToken ct)

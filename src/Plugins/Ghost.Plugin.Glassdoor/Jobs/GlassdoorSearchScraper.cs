@@ -59,6 +59,12 @@ public sealed class GlassdoorSearchScraper : IDisposable
     private static readonly Action<ILogger, Exception?> s_logDomExtractionFailed =
         LoggerMessage.Define(LogLevel.Debug, new EventId(11, "DomExtractionFailed"), "DOM extraction failed, falling back to regex");
 
+    private static readonly Action<ILogger, string, Exception?> s_logExtractionDebug =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(12, "ExtractionDebug"), "Glassdoor extraction debug: {DebugInfo}");
+
+    private static readonly Action<ILogger, Exception?> s_logRegexFallback =
+        LoggerMessage.Define(LogLevel.Debug, new EventId(13, "RegexFallback"), "JavaScript extraction returned 0 jobs, falling back to regex");
+
     public GlassdoorSearchScraper(
         IGhostKernel kernel,
         IOptions<GlassdoorOptions> options,
@@ -356,37 +362,75 @@ public sealed class GlassdoorSearchScraper : IDisposable
 
         try
         {
-            // Use the existing comprehensive JavaScript extraction from GlassdoorBrowserClient
+            // Enhanced JavaScript extraction with comprehensive selectors for current Glassdoor structure
             var script = """
                 () => {
                     const jobs = [];
+                    const debugInfo = { selectorsTried: [], foundElements: 0, errors: [] };
+
+                    console.log('=== Starting Glassdoor job extraction ===');
+
+                    // Comprehensive selector list for current Glassdoor HTML structure
                     const selectors = [
+                        // Primary selectors (most common)
                         'li.react-job-listing',
                         '[data-test="jobListing"]',
-                        '.jobListing',
+                        'li[data-test="jobListing"]',
+                        // Alternative selectors
                         '[data-testid="job-listing"]',
+                        '.jobListing',
                         '.job-listing',
                         'article[data-job-id]',
-                        'li[data-test="jobListing"]',
                         'li.JobsList_jobListItem__wjTHv',
                         'li[data-brandviews="true"]',
                         'div[data-test="job-listing"]',
                         '.jobContainer',
                         'article.job',
+                        // CSS module selectors (Glassdoor uses these)
                         '[class*="JobCard"]',
-                        '[class*="jobCard"]'
+                        '[class*="jobCard"]',
+                        '[class*="JobsList"]',
+                        '[class*="JobListing"]',
+                        // Generic job card patterns
+                        'ul > li[class*="job"]',
+                        'li[class*="JobsList"]',
+                        'div[class*="JobCard"]',
+                        // Newer Glassdoor patterns
+                        '[data-automation="jobListing"]',
+                        '[data-automation-id="jobListing"]',
+                        '.JobCard_container__Zw9kq',
+                        '.JobsList_listItem__3pRBS'
                     ];
 
                     let jobElements = [];
+                    let usedSelector = null;
+
                     for (const selector of selectors) {
-                        jobElements = document.querySelectorAll(selector);
-                        if (jobElements.length > 0) break;
+                        debugInfo.selectorsTried.push(selector);
+                        try {
+                            jobElements = document.querySelectorAll(selector);
+                            if (jobElements.length > 0) {
+                                usedSelector = selector;
+                                debugInfo.foundElements = jobElements.length;
+                                console.log(`Found ${jobElements.length} job elements using selector: ${selector}`);
+                                break;
+                            }
+                        } catch (e) {
+                            debugInfo.errors.push(`Selector ${selector} error: ${e.message}`);
+                        }
                     }
 
-                    if (jobElements.length === 0) return jobs;
+                    if (jobElements.length === 0) {
+                        console.log('No job elements found with any selector');
+                        console.log('Debug info:', JSON.stringify(debugInfo));
+                        return { jobs, debugInfo };
+                    }
 
-                    jobElements.forEach(el => {
+                    console.log(`Processing ${jobElements.length} job elements...`);
+
+                    jobElements.forEach((el, index) => {
                         try {
+                            // Comprehensive title selectors
                             const titleSelectors = [
                                 '[data-test="job-title"]',
                                 '.jobTitle',
@@ -394,7 +438,18 @@ public sealed class GlassdoorSearchScraper : IDisposable
                                 'h3 a',
                                 '.job-title',
                                 'a[data-test="job-link"]',
-                                'a[data-test="job-title-link"]'
+                                'a[data-test="job-title-link"]',
+                                '.JobCard_jobTitle__GLz9d',
+                                'a.JobCard_jobTitle__GLz9d',
+                                '.jobTitle span',
+                                'a[class*="jobTitle"]',
+                                'h2[class*="jobTitle"]',
+                                'h3[class*="jobTitle"]',
+                                '[class*="JobTitle"]',
+                                'a[class*="job-title"]',
+                                'div[class*="jobTitle"] a',
+                                '[data-automation="jobTitle"]',
+                                '.JobCard_title__mSR7g'
                             ];
 
                             let titleEl = null;
@@ -403,12 +458,22 @@ public sealed class GlassdoorSearchScraper : IDisposable
                                 if (titleEl && titleEl.textContent.trim()) break;
                             }
 
+                            // Comprehensive company selectors
                             const companySelectors = [
                                 '[data-test="employer-name"]',
                                 '.employerName',
                                 '.company-name',
                                 '.employer',
-                                '[data-test="employer"]'
+                                '[data-test="employer"]',
+                                '.EmployerProfile_employerName__X8lAb',
+                                'span[data-test="employer-name"]',
+                                '.jobEmpolyerName',
+                                '[class*="employer"]',
+                                '[class*="company"]',
+                                'span[class*="EmployerProfile"]',
+                                'div[class*="employer"] span',
+                                '[data-automation="employerName"]',
+                                '.JobCard_employerName__CE9P1'
                             ];
 
                             let companyEl = null;
@@ -417,11 +482,18 @@ public sealed class GlassdoorSearchScraper : IDisposable
                                 if (companyEl && companyEl.textContent.trim()) break;
                             }
 
+                            // Comprehensive location selectors
                             const locationSelectors = [
                                 '[data-test="job-location"]',
                                 '.jobLocation',
                                 '.location',
-                                '[data-test="location"]'
+                                '[data-test="location"]',
+                                '.JobCard_location__2FJ4C',
+                                '[class*="location"]',
+                                'span[class*="location"]',
+                                'div[class*="location"]',
+                                '[data-automation="jobLocation"]',
+                                '.JobCard_location__nVl3Q'
                             ];
 
                             let locationEl = null;
@@ -430,11 +502,34 @@ public sealed class GlassdoorSearchScraper : IDisposable
                                 if (locationEl && locationEl.textContent.trim()) break;
                             }
 
+                            // Salary selectors
+                            const salarySelectors = [
+                                '[data-test="job-salary"]',
+                                '.salary',
+                                '.salary-estimate',
+                                '[data-test="detailSalary"]',
+                                '.JobCard_salaryEstimate__2pN6s',
+                                '[class*="salary"]',
+                                '[data-automation="salary"]',
+                                '.JobCard_salary__D_R5o'
+                            ];
+
+                            let salaryEl = null;
+                            for (const sel of salarySelectors) {
+                                salaryEl = el.querySelector(sel);
+                                if (salaryEl && salaryEl.textContent.trim()) break;
+                            }
+
+                            // Link selectors
                             const linkSelectors = [
                                 'a[href*="/job-listing/"]',
+                                'a[href*="/partner/jobListing.htm"]',
                                 'a[href*="/job/"]',
                                 'a[data-test="job-title-link"]',
-                                'a[data-test="job-link"]'
+                                'a[data-test="job-link"]',
+                                'a.JobCard_jobTitle__GLz9d',
+                                'a[class*="jobTitle"]',
+                                'a[class*="JobCard"]'
                             ];
 
                             let linkEl = null;
@@ -446,47 +541,81 @@ public sealed class GlassdoorSearchScraper : IDisposable
                             const title = titleEl?.textContent?.trim() || '';
                             const company = companyEl?.textContent?.trim() || '';
                             const location = locationEl?.textContent?.trim() || '';
+                            const salary = salaryEl?.textContent?.trim() || '';
                             const url = linkEl?.href || '';
                             const jobId = linkEl?.href?.match(/\/job-listing\/([^\/\?]+)/)?.[1] ||
-                                         linkEl?.href?.match(/\/job\/([^\/\?]+)/)?.[1] || '';
+                                         linkEl?.href?.match(/\/partner\/jobListing\.htm\?positionId=(\d+)/)?.[1] ||
+                                         linkEl?.href?.match(/\/job\/([^\/\?]+)/)?.[1] ||
+                                         el?.getAttribute('data-job-id') || '';
+
+                            console.log(`Job ${index}: title="${title}", company="${company}", location="${location}", url="${url ? 'yes' : 'no'}"`);
 
                             if (title && company) {
-                                jobs.push({ title, company, location, url, jobId });
+                                jobs.push({
+                                    title,
+                                    company,
+                                    location,
+                                    salary,
+                                    url,
+                                    jobId
+                                });
+                            } else {
+                                console.log(`Job ${index} skipped - missing title or company (title: ${!!title}, company: ${!!company})`);
                             }
                         } catch (e) {
-                            // Silently continue
+                            console.error(`Error extracting job ${index}:`, e);
+                            debugInfo.errors.push(`Job ${index} error: ${e.message}`);
                         }
                     });
 
-                    return jobs;
+                    console.log(`Total jobs extracted: ${jobs.length}`);
+                    console.log(`Debug info:`, JSON.stringify(debugInfo));
+
+                    return { jobs, debugInfo };
                 }
             """;
 
-            var result = await page.EvaluateAsync<List<Dictionary<string, string>>>(script, null, ct);
+            var result = await page.EvaluateAsync<Dictionary<string, object>>(script, null, ct);
 
             if (result != null)
             {
-                foreach (var jobData in result)
+                // Extract jobs list
+                if (result.TryGetValue("jobs", out var jobsObj) && jobsObj is List<object> extractedJobsList)
                 {
-                    var job = new JobListing
+                    foreach (var jobObj in extractedJobsList)
                     {
-                        Id = jobData.TryGetValue("jobId", out var id) && !string.IsNullOrEmpty(id)
-                            ? id
-                            : Guid.NewGuid().ToString(),
-                        Title = jobData.TryGetValue("title", out var title) ? title : string.Empty,
-                        Company = jobData.TryGetValue("company", out var company) ? company : string.Empty,
-                        Location = jobData.TryGetValue("location", out var loc) ? loc : null,
-                        Url = jobData.TryGetValue("url", out var url) ? url : null,
-                        Source = "Glassdoor"
-                    };
+                        if (jobObj is Dictionary<string, object> jobData)
+                        {
+                            var job = new JobListing
+                            {
+                                Id = jobData.TryGetValue("jobId", out var id) && !string.IsNullOrEmpty(id?.ToString())
+                                    ? id.ToString()!
+                                    : Guid.NewGuid().ToString(),
+                                Title = jobData.TryGetValue("title", out var title) ? title?.ToString() ?? string.Empty : string.Empty,
+                                Company = jobData.TryGetValue("company", out var company) ? company?.ToString() ?? string.Empty : string.Empty,
+                                Location = jobData.TryGetValue("location", out var loc) ? loc?.ToString() : null,
+                                Salary = jobData.TryGetValue("salary", out var salary) ? salary?.ToString() : null,
+                                Url = jobData.TryGetValue("url", out var url) ? url?.ToString() : null,
+                                Source = "Glassdoor"
+                            };
 
-                    jobs.Add(job);
+                            jobs.Add(job);
+                        }
+                    }
+                }
+
+                // Log debug info if available
+                if (result.TryGetValue("debugInfo", out var debugObj))
+                {
+                    var debugJson = System.Text.Json.JsonSerializer.Serialize(debugObj);
+                    s_logExtractionDebug(_logger, debugJson, null);
                 }
             }
 
             // Fallback to regex if JavaScript extraction fails
             if (jobs.Count == 0)
             {
+                s_logRegexFallback(_logger, null);
                 jobs = ExtractJobsWithRegex(html);
             }
         }
@@ -506,34 +635,252 @@ public sealed class GlassdoorSearchScraper : IDisposable
         if (string.IsNullOrEmpty(html))
             return jobs;
 
-        var titlePattern = @"<a[^>]*href=[""']/job/[^""']+[""'][^>]*>([^<]+)</a>";
-        var companyPattern = @"data-test=[""']employer-name[""'][^>]*>([^<]+)</";
-        var locationPattern = @"data-test=[""']job-location[""'][^>]*>([^<]+)</";
-
-        var titleMatches = Regex.Matches(html, titlePattern, RegexOptions.IgnoreCase);
-        var companyMatches = Regex.Matches(html, companyPattern, RegexOptions.IgnoreCase);
-        var locationMatches = Regex.Matches(html, locationPattern, RegexOptions.IgnoreCase);
-
-        for (int i = 0; i < titleMatches.Count; i++)
+        try
         {
-            var title = titleMatches[i].Groups[1].Value.Trim();
-            var company = i < companyMatches.Count ? companyMatches[i].Groups[1].Value.Trim() : string.Empty;
-            var location = i < locationMatches.Count ? locationMatches[i].Groups[1].Value.Trim() : null;
-
-            if (!string.IsNullOrEmpty(title))
+            // Try to extract job data from embedded JSON in script tags first
+            var jsonPatterns = new[]
             {
-                jobs.Add(new JobListing
+                @"window\.__INITIAL_STATE__\s*=\s*({.*?});",
+                @"window\.__NEXT_DATA__\s*=\s*({.*?});",
+                @"<script[^>]*id\s*=\s*[""']__NEXT_DATA__[""'][^>]*type\s*=\s*[""']application/json[""'][^>]*>(.*?)</script>"
+            };
+
+            foreach (var pattern in jsonPatterns)
+            {
+                var match = Regex.Match(html, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                if (match.Success && match.Groups.Count > 1)
                 {
-                    Id = Guid.NewGuid().ToString(),
-                    Title = title,
-                    Company = company,
-                    Location = location,
-                    Source = "Glassdoor"
-                });
+                    try
+                    {
+                        var jsonContent = match.Groups[1].Value;
+                        using var doc = System.Text.Json.JsonDocument.Parse(jsonContent);
+                        var extractedJobs = ExtractJobsFromJsonElement(doc.RootElement);
+                        if (extractedJobs.Count > 0)
+                        {
+                            return extractedJobs;
+                        }
+                    }
+                    catch { }
+                }
             }
+
+            // Fallback: Parse HTML structure for job cards with multiple patterns
+            var jobCardPatterns = new[]
+            {
+                // Pattern 1: data-test attributes (most common)
+                @"<(?:li|div|article)[^>]*(?:data-test=[""']jobListing[""']|data-job-id=[""'][^""']+[""'])[^>]*>.*?data-test=[""']job-title[""'][^>]*>([^<]+)<.*?data-test=[""']employer-name[""'][^>]*>([^<]+)<.*?(?:data-test=[""']job-location[""'][^>]*>([^<]+)<|class=[""'][^""']*location[^""']*[""'][^>]*>([^<]+)<)",
+                // Pattern 2: href-based extraction
+                @"<a[^>]*href=[""']/job-listing/([^""'\?]+)[""'][^>]*>([^<]+)</a>.*?(?:data-test=[""']employer-name[""'][^>]*>([^<]+)<|class=[""'][^""']*employer[^""']*[""'][^>]*>([^<]+)<)",
+                // Pattern 3: CSS module classes
+                @"<li[^>]*class=[""'][^""']*JobCard[^""']*[""'][^>]*>.*?<a[^>]*class=[""'][^""']*jobTitle[^""']*[""'][^>]*>([^<]+)</a>.*?(?:class=[""'][^""']*employer[^""']*[""'][^>]*>([^<]+)<|class=[""'][^""']*company[^""']*[""'][^>]*>([^<]+)<)",
+                // Pattern 4: Generic job card structure
+                @"<(?:li|div|article)[^>]*class=[""'][^""']*(?:job|Job)[^""']*[""'][^>]*>.*?<a[^>]*href=[""'][^""']*job[^""']*[""'][^>]*>([^<]+)</a>.*?<(?:span|div)[^>]*class=[""'][^""']*(?:employer|company)[^""']*[""'][^>]*>([^<]+)<"
+            };
+
+            foreach (var pattern in jobCardPatterns)
+            {
+                var matches = Regex.Matches(html, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                if (matches.Count > 0)
+                {
+                    foreach (Match match in matches)
+                    {
+                        try
+                        {
+                            var title = string.Empty;
+                            var company = string.Empty;
+                            var location = string.Empty;
+                            var url = string.Empty;
+                            var jobId = string.Empty;
+
+                            // Extract based on pattern groups
+                            if (match.Groups.Count >= 3)
+                            {
+                                title = match.Groups[1].Value.Trim();
+                                company = match.Groups[2].Value.Trim();
+
+                                if (match.Groups.Count >= 4)
+                                {
+                                    location = match.Groups[3].Value.Trim();
+                                    if (string.IsNullOrEmpty(location) && match.Groups.Count >= 5)
+                                    {
+                                        location = match.Groups[4].Value.Trim();
+                                    }
+                                }
+                            }
+
+                            // Try to extract URL and job ID from the match
+                            var urlMatch = Regex.Match(match.Value, @"href=[""']([^""']+)[""']");
+                            if (urlMatch.Success)
+                            {
+                                url = urlMatch.Groups[1].Value;
+                                var idMatch = Regex.Match(url, @"/job-listing/([^\/\?]+)");
+                                if (idMatch.Success)
+                                {
+                                    jobId = idMatch.Groups[1].Value;
+                                }
+                            }
+
+                            if (!string.IsNullOrEmpty(title) && !string.IsNullOrEmpty(company))
+                            {
+                                jobs.Add(new JobListing
+                                {
+                                    Id = !string.IsNullOrEmpty(jobId) ? jobId : Guid.NewGuid().ToString(),
+                                    Title = System.Net.WebUtility.HtmlDecode(title),
+                                    Company = System.Net.WebUtility.HtmlDecode(company),
+                                    Location = !string.IsNullOrEmpty(location) ? System.Net.WebUtility.HtmlDecode(location) : null,
+                                    Url = !string.IsNullOrEmpty(url) ? url : null,
+                                    Source = "Glassdoor"
+                                });
+                            }
+                        }
+                        catch { }
+                    }
+
+                    if (jobs.Count > 0)
+                    {
+                        break; // Found jobs with this pattern, don't try others
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't throw
+            System.Diagnostics.Debug.WriteLine($"Regex extraction error: {ex.Message}");
         }
 
         return jobs;
+    }
+
+    private static List<JobListing> ExtractJobsFromJsonElement(System.Text.Json.JsonElement element)
+    {
+        var jobs = new List<JobListing>();
+
+        try
+        {
+            // Recursively search for job data in the JSON structure
+            if (element.ValueKind == System.Text.Json.JsonValueKind.Object)
+            {
+                foreach (var prop in element.EnumerateObject())
+                {
+                    // Look for properties that likely contain job listings
+                    if (prop.Name.Contains("job", StringComparison.OrdinalIgnoreCase) ||
+                        prop.Name.Contains("listing", StringComparison.OrdinalIgnoreCase) ||
+                        prop.Name.Contains("result", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        {
+                            foreach (var item in prop.Value.EnumerateArray())
+                            {
+                                var job = ExtractJobFromJsonElement(item);
+                                if (job != null)
+                                    jobs.Add(job);
+                            }
+                        }
+                        else
+                        {
+                            jobs.AddRange(ExtractJobsFromJsonElement(prop.Value));
+                        }
+                    }
+                    else
+                    {
+                        jobs.AddRange(ExtractJobsFromJsonElement(prop.Value));
+                    }
+                }
+            }
+            else if (element.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                {
+                    var job = ExtractJobFromJsonElement(item);
+                    if (job != null)
+                        jobs.Add(job);
+                    else
+                        jobs.AddRange(ExtractJobsFromJsonElement(item));
+                }
+            }
+        }
+        catch { }
+
+        return jobs;
+    }
+
+    private static JobListing? ExtractJobFromJsonElement(System.Text.Json.JsonElement element)
+    {
+        try
+        {
+            string? title = null;
+            string? company = null;
+            string? location = null;
+            string? id = null;
+            string? url = null;
+
+            if (element.ValueKind == System.Text.Json.JsonValueKind.Object)
+            {
+                // Try different field name variations
+                title = GetJsonString(element, "jobTitleText", "jobTitle", "title", "job_title");
+                company = GetJsonString(element, "employerName", "employer", "company", "companyName");
+                location = GetJsonString(element, "locationName", "location", "jobLocationCity", "city");
+                id = GetJsonString(element, "listingId", "jobId", "id");
+                url = GetJsonString(element, "jobLink", "link", "url");
+
+                // Check for nested structures
+                if (element.TryGetProperty("jobview", out var jobview))
+                {
+                    if (jobview.TryGetProperty("header", out var header))
+                    {
+                        title ??= GetJsonString(header, "jobTitleText", "jobTitle");
+                        location ??= GetJsonString(header, "locationName", "location");
+                        url ??= GetJsonString(header, "jobLink");
+
+                        if (header.TryGetProperty("employer", out var employer))
+                        {
+                            company ??= GetJsonString(employer, "name");
+                        }
+                    }
+
+                    if (jobview.TryGetProperty("job", out var job))
+                    {
+                        id ??= GetJsonString(job, "listingId");
+                    }
+                }
+            }
+
+            // Must have at least title to be a valid job
+            if (!string.IsNullOrEmpty(title))
+            {
+                return new JobListing
+                {
+                    Id = id ?? Guid.NewGuid().ToString(),
+                    Title = title,
+                    Company = company ?? "Unknown Company",
+                    Location = location,
+                    Url = url,
+                    Source = "Glassdoor"
+                };
+            }
+        }
+        catch { }
+
+        return null;
+    }
+
+    private static string? GetJsonString(System.Text.Json.JsonElement element, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            try
+            {
+                if (element.TryGetProperty(key, out var value) && value.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    var str = value.GetString();
+                    if (!string.IsNullOrWhiteSpace(str))
+                        return str;
+                }
+            }
+            catch { }
+        }
+        return null;
     }
 
     private static string GetRandomUserAgent()
