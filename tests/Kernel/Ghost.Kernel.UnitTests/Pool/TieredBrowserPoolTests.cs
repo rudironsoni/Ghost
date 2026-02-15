@@ -3,11 +3,13 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Ghost.Kernel;
 using Ghost.Pool;
+using Ghost.Testing;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace Ghost.Tests.Pool;
 
+[Trait("Category", TestCategories.Unit)]
 [SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "Async disposal handled by IAsyncLifetime")]
 public class TieredBrowserPoolTests : IAsyncLifetime
 {
