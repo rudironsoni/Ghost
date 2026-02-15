@@ -70,11 +70,3 @@ public sealed class ExecutionContext
         return _budgetEnforcer.CheckTimeBudget(startTime);
     }
 }
-
-/// <summary>
-/// Step specification for execution.
-/// </summary>
-public sealed record StepSpec(
-    string StepId,
-    string Kind,
-    JsonElement Config);

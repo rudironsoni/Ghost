@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Runtime.InteropServices;
 
 namespace Ghost.CLI.Commands;
 
@@ -7,10 +8,13 @@ namespace Ghost.CLI.Commands;
 /// </summary>
 public static class DoctorCommand
 {
+    private static readonly string[] EnvVars = { "PATH", "HOME", "USERPROFILE" };
+    private static readonly string[] VerboseAliases = { "--verbose", "-v" };
+
     public static Command Create()
     {
         var verboseOption = new Option<bool>(
-            aliases: new[] { "--verbose", "-v" },
+            aliases: VerboseAliases,
             description: "Show detailed diagnostic information")
         {
             Arity = ArgumentArity.ZeroOrOne
@@ -32,124 +36,123 @@ public static class DoctorCommand
 
     private static void Execute(bool verbose, IConsole console)
     {
-        console.Out.WriteLine("Ghost Environment Doctor");
-        console.Out.WriteLine(new string('=', 40));
+        Console.WriteLine("Ghost Environment Doctor");
+        Console.WriteLine(new string('=', 40));
 
         var allPassed = true;
 
         // Check .NET version
-        console.Out.Write("\n[1/5] .NET Runtime: ");
+        Console.Write("\n[1/5] .NET Runtime: ");
         try
         {
             var version = Environment.Version;
-            console.Out.WriteLine($"OK ({version})");
+            Console.WriteLine($"OK ({version})");
             if (verbose)
             {
-                console.Out.WriteLine($"  Runtime: {RuntimeInformation.FrameworkDescription}");
-                console.Out.WriteLine($"  OS: {RuntimeInformation.OSDescription}");
-                console.Out.WriteLine($"  Processor: {RuntimeInformation.ProcessArchitecture}");
+                Console.WriteLine($"  Runtime: {RuntimeInformation.FrameworkDescription}");
+                Console.WriteLine($"  OS: {RuntimeInformation.OSDescription}");
+                Console.WriteLine($"  Processor: {RuntimeInformation.ProcessArchitecture}");
             }
         }
         catch (Exception ex)
         {
-            console.Out.WriteLine($"FAIL ({ex.Message})");
+            Console.WriteLine($"FAIL ({ex.Message})");
             allPassed = false;
         }
 
         // Check working directory
-        console.Out.Write("[2/5] Working Directory: ");
+        Console.Write("[2/5] Working Directory: ");
         try
         {
             var cwd = Directory.GetCurrentDirectory();
-            console.Out.WriteLine($"OK ({cwd})");
+            Console.WriteLine($"OK ({cwd})");
             if (verbose)
             {
-                console.Out.WriteLine($"  Readable: {Directory.Exists(cwd)}");
-                console.Out.WriteLine($"  Writable: {HasWritePermission(cwd)}");
+                Console.WriteLine($"  Readable: {Directory.Exists(cwd)}");
+                Console.WriteLine($"  Writable: {HasWritePermission(cwd)}");
             }
         }
         catch (Exception ex)
         {
-            console.Out.WriteLine($"FAIL ({ex.Message})");
+            Console.WriteLine($"FAIL ({ex.Message})");
             allPassed = false;
         }
 
         // Check temp directory
-        console.Out.Write("[3/5] Temp Directory: ");
+        Console.Write("[3/5] Temp Directory: ");
         try
         {
             var temp = Path.GetTempPath();
-            console.Out.WriteLine($"OK ({temp})");
+            Console.WriteLine($"OK ({temp})");
             if (verbose)
             {
-                console.Out.WriteLine($"  Exists: {Directory.Exists(temp)}");
-                console.Out.WriteLine($"  Writable: {HasWritePermission(temp)}");
+                Console.WriteLine($"  Exists: {Directory.Exists(temp)}");
+                Console.WriteLine($"  Writable: {HasWritePermission(temp)}");
             }
         }
         catch (Exception ex)
         {
-            console.Out.WriteLine($"FAIL ({ex.Message})");
+            Console.WriteLine($"FAIL ({ex.Message})");
             allPassed = false;
         }
 
         // Check environment variables
-        console.Out.Write("[4/5] Environment Variables: ");
+        Console.Write("[4/5] Environment Variables: ");
         try
         {
-            var envVars = new[] { "PATH", "HOME", "USERPROFILE" };
-            var missing = envVars.Where(v => string.IsNullOrEmpty(Environment.GetEnvironmentVariable(v))).ToList();
-            if (missing.Any())
+            var missing = EnvVars.Where(v => string.IsNullOrEmpty(Environment.GetEnvironmentVariable(v))).ToList();
+            if (missing.Count > 0)
             {
-                console.Out.WriteLine($"WARN (Missing: {string.Join(", ", missing)})");
+                Console.WriteLine($"WARN (Missing: {string.Join(", ", missing)})");
             }
             else
             {
-                console.Out.WriteLine("OK");
+                Console.WriteLine("OK");
             }
             if (verbose)
             {
-                foreach (var envVar in envVars)
+                foreach (var envVar in EnvVars)
                 {
                     var value = Environment.GetEnvironmentVariable(envVar);
-                    console.Out.WriteLine($"  {envVar}: {value ?? "(not set)"}");
+                    Console.WriteLine($"  {envVar}: {value ?? "(not set)"}");
                 }
             }
         }
         catch (Exception ex)
         {
-            console.Out.WriteLine($"FAIL ({ex.Message})");
+            Console.WriteLine($"FAIL ({ex.Message})");
             allPassed = false;
         }
 
         // Check file system
-        console.Out.Write("[5/5] File System: ");
+        Console.Write("[5/5] File System: ");
         try
         {
             var testFile = Path.Combine(Path.GetTempPath(), $"ghost-doctor-test-{Guid.NewGuid()}.tmp");
             File.WriteAllText(testFile, "test");
             File.Delete(testFile);
-            console.Out.WriteLine("OK");
+            Console.WriteLine("OK");
             if (verbose)
             {
-                console.Out.WriteLine("  Read/write test passed");
+                Console.WriteLine("  Read/write test passed");
             }
         }
         catch (Exception ex)
         {
-            console.Out.WriteLine($"FAIL ({ex.Message})");
+            Console.WriteLine($"FAIL ({ex.Message})");
             allPassed = false;
         }
 
-        console.Out.WriteLine();
-        console.Out.WriteLine(new string('=', 40));
+        Console.WriteLine();
+        Console.WriteLine(new string('=', 40));
         if (allPassed)
         {
-            console.Out.WriteLine("All checks passed!");
+            Console.WriteLine("All checks passed!");
             Environment.Exit(0);
         }
         else
         {
-            console.Out.WriteLine("Some checks failed. Please fix the issues above.");
+            Console.WriteLine("Some checks failed. Please fix the issues above.");
             Environment.Exit(1);
         }
     }
