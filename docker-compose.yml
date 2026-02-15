@@ -3,7 +3,7 @@ services:
     image: ghost-webapi:latest
     build:
       context: .
-      dockerfile: src/Ghost.WebApi/Dockerfile
+      dockerfile: src/Apps/Ghost.WebApi/Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - Ghost__Kernel__Headless=true

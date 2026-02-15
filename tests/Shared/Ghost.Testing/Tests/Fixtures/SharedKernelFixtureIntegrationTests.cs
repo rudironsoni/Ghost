@@ -1,5 +1,5 @@
 using FluentAssertions;
-using Ghost.Core;
+using Ghost.Kernel;
 using Ghost.Testing.Fixtures;
 using Xunit;
 
@@ -20,7 +20,7 @@ public class SharedKernelFixtureIntegrationTests
     }
 
     [Fact]
-    public async Task SharedKernel_IsInitialized()
+    public async Task SharedKernel_IsInitializedAsync()
     {
         // Act
         IGhostKernel kernel = _fixture.Kernel;
@@ -30,7 +30,7 @@ public class SharedKernelFixtureIntegrationTests
     }
 
     [Fact]
-    public async Task SharedKernel_CanCreateSession()
+    public async Task SharedKernel_CanCreateSessionAsync()
     {
         // Act
         IBrowserSession session = await _fixture.CreateSessionAsync();
@@ -41,7 +41,7 @@ public class SharedKernelFixtureIntegrationTests
     }
 
     [Fact]
-    public async Task SharedKernel_MultipleSessionsAreIndependent()
+    public async Task SharedKernel_MultipleSessionsAreIndependentAsync()
     {
         // Arrange & Act
         IBrowserSession session1 = await _fixture.CreateSessionAsync();

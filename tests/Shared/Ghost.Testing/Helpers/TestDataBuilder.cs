@@ -1,4 +1,4 @@
-using Ghost.Core;
+using Ghost.Kernel;
 
 namespace Ghost.Testing.Helpers;
 
