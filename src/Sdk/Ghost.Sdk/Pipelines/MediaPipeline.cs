@@ -72,7 +72,7 @@ public class MediaPipeline : IMediaPipeline
         Directory.CreateDirectory(request.OutputPath);
 
         // Save file
-        await using (FileStream fs = File.Create(localPath).ConfigureAwait(false))
+        await using (FileStream fs = File.Create(localPath))
         {
             await response.Content.CopyToAsync(fs, ct).ConfigureAwait(false);
         }
@@ -117,7 +117,7 @@ public class MediaPipeline : IMediaPipeline
 
     private static async Task<string> CalculateChecksumAsync(string path, CancellationToken ct)
     {
-        await using FileStream fs = File.OpenRead(path).ConfigureAwait(false);
+        await using FileStream fs = File.OpenRead(path);
         byte[] hash = await SHA256.HashDataAsync(fs, ct).ConfigureAwait(false);
         return Convert.ToHexString(hash);
     }

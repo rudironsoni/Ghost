@@ -81,7 +81,7 @@ public sealed class XmlFeedExporter : IFeedExporter
             OmitXmlDeclaration = false
         };
 
-        await using var writer = XmlWriter.Create(output, settings).ConfigureAwait(false);
+        await using XmlWriter writer = XmlWriter.Create(output, settings);
         await document.WriteToAsync(writer, ct).ConfigureAwait(false);
         await writer.FlushAsync().ConfigureAwait(false);
     }

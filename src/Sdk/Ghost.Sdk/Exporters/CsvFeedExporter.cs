@@ -42,7 +42,7 @@ public sealed class CsvFeedExporter : IFeedExporter
         ArgumentNullException.ThrowIfNull(items);
         ArgumentNullException.ThrowIfNull(output);
 
-        await using var writer = new StreamWriter(output, _encoding, leaveOpen: true).ConfigureAwait(false);
+        await using StreamWriter writer = new StreamWriter(output, _encoding, leaveOpen: true);
 
         var itemsList = items.ToList();
         if (itemsList.Count == 0)

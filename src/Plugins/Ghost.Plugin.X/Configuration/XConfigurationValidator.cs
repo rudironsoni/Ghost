@@ -217,7 +217,7 @@ public partial class XPlatformHealthCheck
     {
         try
         {
-            await using IPage page = (await _session.NewPageAsync(ct: ct).ConfigureAwait(false)).ConfigureAwait(false);
+            await using IPage page = await _session.NewPageAsync(ct: ct).ConfigureAwait(false);
             await page.NavigateAsync("about:blank", ct: ct).ConfigureAwait(false);
             return true;
         }
@@ -248,7 +248,7 @@ public partial class XPlatformHealthCheck
     {
         try
         {
-            await using IPage page = (await _session.NewPageAsync(ct: ct).ConfigureAwait(false)).ConfigureAwait(false);
+            await using IPage page = await _session.NewPageAsync(ct: ct).ConfigureAwait(false);
             await page.NavigateAsync(_options.BaseUrl, ct: ct).ConfigureAwait(false);
             await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
             return page.Url.Contains("x.com") || page.Url.Contains("twitter.com");
