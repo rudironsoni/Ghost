@@ -256,14 +256,36 @@
 
 ## 25. Project Structure
 
-- Layer 0: `src/Core/Ghost/` - Core engine, stealth, sessions, proxies
-- Layer 1: `src/Contracts/` - Interfaces, DTOs, shared contracts
+- Layer 0: `src/Kernel/Ghost/` - Core engine, stealth, sessions, proxies (renamed from Core for clarity)
+- Layer 1: `src/Contracts/` - Public interfaces, DTOs, shared contracts
 - Layer 2: `src/Plugins/` - Platform-specific plugins (LinkedIn, Indeed, Google, etc.)
-- Layer 3: `src/Hosting/` - WebAPI, workers, CLI
-- Layer 4: `src/Sdk/` - Spider framework for building scrapers
-- Tests: `tests/Plugins/` mirrors plugin layout
+  - Plugins are in flat structure: `src/Plugins/Ghost.Plugin.<Name>/`
+  - Planned: Plugin subfolders `src/Plugins/<Name>/Ghost.Plugin.<Name>/` for better organization
+- Layer 3: `src/Platform/` - Shared infrastructure
+  - `src/Platform/Abstractions/` - Interfaces and pure abstractions
+  - `src/Platform/Contracts/` - Contracts and DTOs
+  - `src/Platform/Extensions/` - Extension methods and utilities
+  - `src/Platform/Hosting/` - Hosting infrastructure
+  - `src/Platform/Observability/` - Telemetry, logging, metrics
+  - `src/Platform/Storage/` - Persistence layer (renamed from Infrastructure)
+- Layer 4: `src/Engine/` - Scraper engines
+- Layer 5: `src/Apps/` - Deployable entrypoints
+  - `src/Apps/Ghost.WebApi/` - Web API application
+  - `src/Apps/Ghost.Worker/` - Background worker application
+- Layer 6: `src/Sdk/` - Framework for building scrapers
+- Tests: `tests/` with proper hierarchy and suffix taxonomy
+  - `tests/Kernel/` - Kernel tests (UnitTests, IntegrationTests, SmokeTests)
+  - `tests/Platform/` - Platform tests (Hosting.UnitTests)
+  - `tests/Plugins/` - Plugin tests (UnitTests, IntegrationTests, End2EndTests)
+  - `tests/Apps/` - Application tests (WebApi.UnitTests, Worker.UnitTests)
+  - `tests/Engine/` - Engine tests
+  - `tests/Contracts/` - Contracts tests
+  - `tests/Sdk/` - SDK tests
+  - `tests/Shared/` - Shared testing infrastructure
+  - `tests/Legacy/Platforms/` - Legacy platform tests (preserved for reference)
+  - `tests/Architecture/` - Architecture tests
 
-**Note:** Architecture migrated from Platforms to Plugins. All platform implementations live in `src/Plugins/`.
+**Note:** Architecture migrated from Platforms to Plugins. All platform implementations live in `src/Plugins/`. Core renamed to Kernel for clarity. Hosting and Infrastructure moved to Platform boundary with proper sub-organization.
 
 ## 26. Reference Documents
 
@@ -302,13 +324,15 @@
 ## 29. Plugin Architecture & Isolation
 
 - Plugins must be independent and self-contained
-- Layer 2 dependencies: Core, Contracts, Plugin.Common only
-- No Hosting layer dependencies in plugins
+- Layer 2 dependencies: Kernel, Contracts, Plugin.Common only
+- No Platform layer dependencies in plugins
 - IExtension implementation required for all plugins
 - Plugin boundaries must be enforced via architecture tests
 - No direct plugin-to-plugin dependencies
 - All plugin communication through contracts
 - Plugin lifecycle managed by hosting layer
+- Plugin structure: `src/Plugins/Ghost.Plugin.<Name>/` (current flat structure)
+- Planned: Plugin subfolders `src/Plugins/<Name>/Ghost.Plugin.<Name>/` for better organization
 
 ## 30. Architecture Compliance
 
@@ -371,6 +395,9 @@
 - Tests must be deterministic and repeatable
 - Test names must describe behavior, not implementation
 - Arrange-Act-Assert pattern for test structure
+- Test projects follow suffix taxonomy: UnitTests, ComponentTests, IntegrationTests, End2EndTests, SmokeTests
+- Test structure mirrors source structure under tests/ directory
+- Legacy tests preserved in tests/Legacy/Platforms/ for reference
 
 ## 36. Performance & Observability
 
