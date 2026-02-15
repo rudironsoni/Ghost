@@ -1,37 +1,110 @@
-![act-logo](https://raw.githubusercontent.com/wiki/nektos/act/img/logo-150.png)
+# Ghost Job Scraping Platform
 
-# Overview [![push](https://github.com/nektos/act/workflows/push/badge.svg?branch=master&event=push)](https://github.com/nektos/act/actions) [![Join the chat at https://gitter.im/nektos/act](https://badges.gitter.im/nektos/act.svg)](https://gitter.im/nektos/act?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Go Report Card](https://goreportcard.com/badge/github.com/nektos/act)](https://goreportcard.com/report/github.com/nektos/act) [![awesome-runners](https://img.shields.io/badge/listed%20on-awesome--runners-blue.svg)](https://github.com/jonico/awesome-runners)
+A .NET 10 job scraping platform with plugin architecture for extracting job listings from multiple job boards and career sites.
 
-> "Think globally, `act` locally"
+## Architecture
 
-Run your [GitHub Actions](https://developer.github.com/actions/) locally! Why would you want to do this? Two reasons:
+Ghost is built with a layered architecture that provides clear separation of concerns and extensibility:
 
-- **Fast Feedback** - Rather than having to commit/push every time you want to test out the changes you are making to your `.github/workflows/` files (or for any changes to embedded GitHub actions), you can use `act` to run the actions locally. The [environment variables](https://help.github.com/en/actions/configuring-and-managing-workflows/using-environment-variables#default-environment-variables) and [filesystem](https://help.github.com/en/actions/reference/virtual-environments-for-github-hosted-runners#filesystems-on-github-hosted-runners) are all configured to match what GitHub provides.
-- **Local Task Runner** - I love [make](<https://en.wikipedia.org/wiki/Make_(software)>). However, I also hate repeating myself. With `act`, you can use the GitHub Actions defined in your `.github/workflows/` to replace your `Makefile`!
+- **Layer 0 - Kernel**: Core engine, stealth, sessions, proxies
+- **Layer 1 - Contracts**: Public interfaces, DTOs, shared contracts
+- **Layer 2 - Plugins**: Platform-specific plugins (LinkedIn, Indeed, Google, Glassdoor, etc.)
+- **Layer 3 - Platform**: Shared infrastructure (Abstractions, Contracts, Extensions, Hosting, Observability, Storage)
+- **Layer 4 - Engine**: Scraper engines
+- **Layer 5 - Apps**: Deployable entrypoints (WebApi, Worker)
+- **Layer 6 - Sdk**: Framework for building scrapers
 
-# How Does It Work?
+## Directory Structure
 
-When you run `act` it reads in your GitHub Actions from `.github/workflows/` and determines the set of actions that need to be run. It uses the Docker API to either pull or build the necessary images, as defined in your workflow files and finally determines the execution path based on the dependencies that were defined. Once it has the execution path, it then uses the Docker API to run containers for each action based on the images prepared earlier. The [environment variables](https://help.github.com/en/actions/configuring-and-managing-workflows/using-environment-variables#default-environment-variables) and [filesystem](https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#file-systems) are all configured to match what GitHub provides.
+```
+Ghost/
+├── src/
+│   ├── Kernel/Ghost/              # Core engine (renamed from Core)
+│   ├── Contracts/                 # Public interfaces and DTOs
+│   ├── Plugins/                   # Platform-specific plugins
+│   │   ├── Ghost.Plugin.LinkedIn/
+│   │   ├── Ghost.Plugin.Indeed/
+│   │   ├── Ghost.Plugin.Google/
+│   │   └── ...
+│   ├── Platform/                  # Shared infrastructure
+│   │   ├── Abstractions/
+│   │   ├── Contracts/
+│   │   ├── Extensions/
+│   │   ├── Hosting/
+│   │   ├── Observability/
+│   │   └── Storage/
+│   ├── Engine/                    # Scraper engines
+│   ├── Apps/                      # Deployable entrypoints
+│   │   ├── Ghost.WebApi/
+│   │   └── Ghost.Worker/
+│   └── Sdk/                       # Framework for building scrapers
+├── tests/                         # Test projects with suffix taxonomy
+│   ├── Kernel/                    # Kernel tests
+│   ├── Platform/                  # Platform tests
+│   ├── Plugins/                   # Plugin tests
+│   ├── Apps/                      # Application tests
+│   ├── Engine/                    # Engine tests
+│   ├── Contracts/                 # Contracts tests
+│   ├── Sdk/                       # SDK tests
+│   ├── Shared/                    # Shared testing infrastructure
+│   ├── Legacy/                    # Legacy tests (preserved for reference)
+│   └── Architecture/              # Architecture tests
+├── docs/                          # Documentation
+├── Ghost.sln                      # Solution file
+└── docker-compose.yml             # Docker composition
+```
 
-Let's see it in action with a [sample repo](https://github.com/cplee/github-actions-demo)!
+## Build
 
-![Demo](https://raw.githubusercontent.com/wiki/nektos/act/quickstart/act-quickstart-2.gif)
+Build the entire solution:
 
-# Act User Guide
+```bash
+dotnet build Ghost.sln
+```
 
-Please look at the [act user guide](https://nektosact.com) for more documentation.
+## Test
 
-# Support
+Run all tests:
 
-Need help? Ask on [Gitter](https://gitter.im/nektos/act)!
+```bash
+dotnet test Ghost.sln
+```
 
-# Contributing
+## Docker
 
-Want to contribute to act? Awesome! Check out the [contributing guidelines](CONTRIBUTING.md) to get involved.
+Build and run with Docker Compose:
 
-## Manually building from source
+```bash
+docker-compose up
+```
 
-- Install Go tools 1.20+ - (<https://golang.org/doc/install>)
-- Clone this repo `git clone git@github.com:nektos/act.git`
-- Run unit tests with `make test`
-- Build and install: `make install`
+Build specific service:
+
+```bash
+docker-compose build ghost-webapi
+```
+
+## Quick Start
+
+1. Clone the repository
+2. Restore dependencies: `dotnet restore Ghost.sln`
+3. Build the solution: `dotnet build Ghost.sln`
+4. Run tests: `dotnet test Ghost.sln`
+5. Run the Web API: `dotnet run --project src/Apps/Ghost.WebApi/Ghost.WebApi.csproj`
+
+## Features
+
+- **Plugin Architecture**: Extensible plugin system for adding new job boards
+- **Stealth Mode**: Advanced browser fingerprinting and behavior mimicking
+- **Proxy Management**: Rotating proxy support with health checking
+- **Resilience**: Circuit breaker and retry patterns for reliability
+- **Observability**: Structured logging, metrics, and health checks
+- **Multi-Platform**: Support for LinkedIn, Indeed, Google, Glassdoor, and more
+
+## Contributing
+
+Contributions are welcome! Please ensure all tests pass and follow the coding standards defined in AGENTS.md.
+
+## License
+
+[Add your license information here]
