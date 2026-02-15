@@ -39,7 +39,7 @@ public sealed class JsonFeedExporter : IFeedExporter
         ArgumentNullException.ThrowIfNull(items);
         ArgumentNullException.ThrowIfNull(output);
 
-        await using var writer = new StreamWriter(output, leaveOpen: true).ConfigureAwait(false);
+        await using StreamWriter writer = new StreamWriter(output, leaveOpen: true);
 
         foreach (T? item in items)
         {

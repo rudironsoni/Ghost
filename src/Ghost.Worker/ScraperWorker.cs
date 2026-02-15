@@ -124,7 +124,7 @@ public sealed partial class ScraperWorker : BackgroundService
             await UpdateJobStatusAsync(jobRequest.JobId, JobStatus.Processing, cancellationToken).ConfigureAwait(false);
 
             // Resolve the appropriate job client for the platform
-            await using AsyncServiceScope scope = _serviceProvider.CreateAsyncScope().ConfigureAwait(false);
+            await using AsyncServiceScope scope = _serviceProvider.CreateAsyncScope();
             IJobClient jobClient = ResolveJobClient(scope.ServiceProvider, jobRequest.Platform)
                 ?? throw new NotSupportedException($"Platform '{jobRequest.Platform}' is not supported");
 
