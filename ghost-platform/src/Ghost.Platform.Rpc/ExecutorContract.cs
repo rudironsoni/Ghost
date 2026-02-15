@@ -11,7 +11,7 @@ public abstract record ExecutorMessageBase
     /// <summary>
     /// Message type identifier.
     /// </summary>
-    public required string MessageType { get; init; }
+    public string MessageType { get; init; } = string.Empty;
 }
 
 /// <summary>

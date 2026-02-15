@@ -89,5 +89,5 @@ public sealed class SupervisionOptions
     /// <summary>
     /// Whether to use shell execute.
     /// </summary>
-    public bool UseShellExecute { get; init; } = false;
+    public bool UseShellExecute { get; init; }
 }

@@ -15,7 +15,7 @@ public sealed class ExecutorSupervisor : IExecutorSupervisor
     private Process? _process;
     private IExecutorClient? _client;
     private int _restartCount;
-    private DateTimeOffset? _lastRestartTimeUtc = null;
+    private DateTimeOffset? _lastRestartTimeUtc;
     private CancellationTokenSource? _shutdownCts;
     private Task? _processMonitorTask;
 
@@ -140,7 +140,7 @@ public sealed class ExecutorSupervisor : IExecutorSupervisor
             _logger.LogInformation("Executor process started with PID: {ProcessId}", process.Id);
 
             // Start monitoring the process
-            _processMonitorTask = Task.Run(() => MonitorProcessAsync(_shutdownCts.Token));
+            _processMonitorTask = Task.Run(() => MonitorProcessAsync(_shutdownCts.Token), cancellationToken);
 
             // Create client (placeholder - actual implementation would depend on transport)
             _client = CreateExecutorClient(process);
