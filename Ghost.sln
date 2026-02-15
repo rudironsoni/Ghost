@@ -25,7 +25,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Hosting.WebApi", "src
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugins", "Plugins", "{D87F64FC-77E7-48EB-B9AF-B28F6BA871FA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.LinkedIn", "src\Plugins\Ghost.Plugin.LinkedIn\Ghost.Plugin.LinkedIn.csproj", "{A8E4C87B-59B3-446C-9028-CF17FE0B9E9A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.LinkedIn", "src\Plugins\LinkedIn\Ghost.Plugin.LinkedIn\Ghost.Plugin.LinkedIn.csproj", "{A8E4C87B-59B3-446C-9028-CF17FE0B9E9A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sdk", "Sdk", "{51B637F8-9C04-5803-F48E-8CB9352021B0}"
 EndProject
@@ -73,17 +73,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Engine.Tests", "tests
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Engine.Hosting", "src\Engine\Ghost.Engine.Hosting\Ghost.Engine.Hosting.csproj", "{49FB440B-60BA-407A-9D5D-44D9ED291374}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Indeed", "src\Plugins\Ghost.Plugin.Indeed\Ghost.Plugin.Indeed.csproj", "{E6B0937C-F7B0-42B0-8F1B-9B860DDD8983}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Indeed", "src\Plugins\Indeed\Ghost.Plugin.Indeed\Ghost.Plugin.Indeed.csproj", "{E6B0937C-F7B0-42B0-8F1B-9B860DDD8983}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Glassdoor", "src\Plugins\Ghost.Plugin.Glassdoor\Ghost.Plugin.Glassdoor.csproj", "{008CC80A-8923-4C12-987C-6886B1411787}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Glassdoor", "src\Plugins\Glassdoor\Ghost.Plugin.Glassdoor\Ghost.Plugin.Glassdoor.csproj", "{008CC80A-8923-4C12-987C-6886B1411787}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Google", "src\Plugins\Ghost.Plugin.Google\Ghost.Plugin.Google.csproj", "{236638D4-ADB0-42CC-B2B6-6DF8587E26BC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Google", "src\Plugins\Google\Ghost.Plugin.Google\Ghost.Plugin.Google.csproj", "{236638D4-ADB0-42CC-B2B6-6DF8587E26BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Anthropic", "src\Plugins\Ghost.Plugin.Anthropic\Ghost.Plugin.Anthropic.csproj", "{7966647C-4D65-498C-9B37-799833901A6C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Anthropic", "src\Plugins\Anthropic\Ghost.Plugin.Anthropic\Ghost.Plugin.Anthropic.csproj", "{7966647C-4D65-498C-9B37-799833901A6C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.OpenAI", "src\Plugins\Ghost.Plugin.OpenAI\Ghost.Plugin.OpenAI.csproj", "{623AA881-9E9D-4E91-9760-2B4AFF1F894D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.OpenAI", "src\Plugins\OpenAI\Ghost.Plugin.OpenAI\Ghost.Plugin.OpenAI.csproj", "{623AA881-9E9D-4E91-9760-2B4AFF1F894D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.X", "src\Plugins\Ghost.Plugin.X\Ghost.Plugin.X.csproj", "{5E43A3AE-5363-4FA1-81B2-A9E65AACF5A6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.X", "src\Plugins\X\Ghost.Plugin.X\Ghost.Plugin.X.csproj", "{5E43A3AE-5363-4FA1-81B2-A9E65AACF5A6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Contracts.Social", "src\Contracts\Ghost.Contracts.Social\Ghost.Contracts.Social.csproj", "{9466CF22-AECB-499D-811C-203586268BF4}"
 EndProject
@@ -91,7 +91,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastru
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Infrastructure.Session", "src\Platform\Storage\Ghost.Infrastructure.Session\Ghost.Infrastructure.Session.csproj", "{D0142C1A-BE66-42F6-9C7A-11151E27ACD7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Common", "src\Plugins\Ghost.Plugin.Common\Ghost.Plugin.Common.csproj", "{F461D74E-9B01-4F50-9015-2D7D55069218}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Common", "src\Plugins\Common\Ghost.Plugin.Common\Ghost.Plugin.Common.csproj", "{F461D74E-9B01-4F50-9015-2D7D55069218}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Platform", "Platform", "{0BBE7088-7CBC-971A-0DFF-8D023E1EA1B7}"
 EndProject
