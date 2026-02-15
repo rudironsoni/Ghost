@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using Ghost.Platform.Indeed.Internal;
+using Ghost.Plugin.Indeed.Internal;
 using Xunit;
 
 namespace Ghost.Platform.Indeed.Tests;

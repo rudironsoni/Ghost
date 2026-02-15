@@ -1,6 +1,6 @@
 using Ghost.Contracts.Jobs;
 using Ghost.Hosting;
-using Ghost.Platform.Indeed.Internal;
+using Ghost.Plugin.Indeed.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

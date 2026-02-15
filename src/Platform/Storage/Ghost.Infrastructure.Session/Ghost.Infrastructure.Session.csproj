@@ -19,8 +19,8 @@
 
   <ItemGroup>
     <ProjectReference Include="../../../Kernel/Ghost/Ghost.csproj" />
-    <ProjectReference Include="../../Contracts/Ghost.Contracts.Jobs/Ghost.Contracts.Jobs.csproj" />
-    <ProjectReference Include="../../Platform/Hosting/Ghost.Hosting/Ghost.Hosting.csproj" />
+    <ProjectReference Include="../../../Contracts/Ghost.Contracts.Jobs/Ghost.Contracts.Jobs.csproj" />
+    <ProjectReference Include="../../Hosting/Ghost.Hosting/Ghost.Hosting.csproj" />
   </ItemGroup>
 
 </Project>

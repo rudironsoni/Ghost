@@ -27,10 +27,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../../../../src/Kernel\Ghost\Ghost.csproj" />
-    <ProjectReference Include="../../../../../src/Contracts\Ghost.Contracts.Social\Ghost.Contracts.Social.csproj" />
-    <ProjectReference Include="../../../../../src/Contracts\Ghost.Contracts.Simulation\Ghost.Contracts.Simulation.csproj" />
-    <ProjectReference Include="..\..\Shared\Ghost.Testing\Ghost.Testing.csproj" />
+    <ProjectReference Include="../../../../src/Kernel/Ghost/Ghost.csproj" />
+    <ProjectReference Include="../../../../src/Contracts/Ghost.Contracts.Social/Ghost.Contracts.Social.csproj" />
+    <ProjectReference Include="../../../../src/Contracts/Ghost.Contracts.Simulation/Ghost.Contracts.Simulation.csproj" />
+    <ProjectReference Include="../../../Shared/Ghost.Testing/Ghost.Testing.csproj" />
   </ItemGroup>
 
 </Project>

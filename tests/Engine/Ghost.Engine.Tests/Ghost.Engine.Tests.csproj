@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../../../../src/Engine\Ghost.Engine\Ghost.Engine.csproj" />
+    <ProjectReference Include="../../../src/Engine/Ghost.Engine/Ghost.Engine.csproj" />
+    <ProjectReference Include="../../../src/Engine/Ghost.Engine.Abstractions/Ghost.Engine.Abstractions.csproj" />
   </ItemGroup>
 </Project>

@@ -1,7 +1,7 @@
 using Ghost.Contracts.Jobs;
-using Ghost.Platform.Common.Session;
+using Ghost.Infrastructure.Session;
 using Ghost.Platform.Indeed;
-using Ghost.Platform.Indeed.Internal;
+using Ghost.Plugin.Indeed.Internal;
 using Ghost.Platform.Indeed.Tests.Contracts;
 using Ghost.Testing.Contracts;
 using Microsoft.Extensions.Logging;

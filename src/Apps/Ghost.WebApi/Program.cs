@@ -146,18 +146,18 @@ builder.Services.AddGhost(builder.Configuration, gw =>
         gw.UseExtension(new Ghost.Plugin.Google.GooglePlugin());
     }
 
-    // InfoJobs
-    if (builder.Configuration.GetValue("Ghost:Extensions:InfoJobs:Enabled", false))
-    {
-        gw.UseExtension(new Ghost.Plugin.InfoJobs.InfoJobsPlugin());
-    }
+    // InfoJobs - Plugin not yet migrated to new structure
+    // if (builder.Configuration.GetValue("Ghost:Extensions:InfoJobs:Enabled", false))
+    // {
+    //     gw.UseExtension(new Ghost.Plugin.InfoJobs.InfoJobsPlugin());
+    // }
 
 });
 
 // Ensure IDeduplicationService is registered (should already be registered by AddGhost)
 // Register aggregator after extensions have been loaded so it can compose available scrapers
 // Register as Scoped to match the lifetime of IJobScraper implementations
-builder.Services.AddScoped<Ghost.Contracts.Jobs.IJobClient, Ghost.Services.AggregatedJobClient>();
+builder.Services.AddScoped<Ghost.Contracts.Jobs.IJobClient, Ghost.Kernel.Services.AggregatedJobClient>();
 
 WebApplication app = builder.Build();
 

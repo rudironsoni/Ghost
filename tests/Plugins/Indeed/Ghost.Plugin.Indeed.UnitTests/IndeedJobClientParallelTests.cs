@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
-using Ghost.Platform.Indeed.Internal;
+using Ghost.Plugin.Indeed.Internal;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
