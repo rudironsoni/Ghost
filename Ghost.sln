@@ -19,9 +19,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Contracts.Simulation"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hosting", "Hosting", "{F489E2D5-C65D-9AA9-2B96-C7DF79630172}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Hosting", "src\Hosting\Ghost.Hosting\Ghost.Hosting.csproj", "{3C0D5277-502A-473B-B3C8-498C13721E2D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Hosting", "src\Platform\Hosting\Ghost.Hosting\Ghost.Hosting.csproj", "{3C0D5277-502A-473B-B3C8-498C13721E2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Hosting.WebApi", "src\Hosting\Ghost.Hosting.WebApi\Ghost.Hosting.WebApi.csproj", "{43EF203C-41AC-4DEB-A003-F5D0E32378B1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Hosting.WebApi", "src\Platform\Hosting\Ghost.Hosting.WebApi\Ghost.Hosting.WebApi.csproj", "{43EF203C-41AC-4DEB-A003-F5D0E32378B1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugins", "Plugins", "{D87F64FC-77E7-48EB-B9AF-B28F6BA871FA}"
 EndProject
@@ -87,11 +87,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.X", "src\Plugi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Contracts.Social", "src\Contracts\Ghost.Contracts.Social\Ghost.Contracts.Social.csproj", "{9466CF22-AECB-499D-811C-203586268BF4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.InfoJobs", "src\Plugins\Ghost.Plugin.InfoJobs\Ghost.Plugin.InfoJobs.csproj", "{DADC1171-9821-4ACD-926B-D5C5E1355FAE}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{9048EB7F-3875-A59E-E36B-5BD4C6F2A282}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Infrastructure.Session", "src\Infrastructure\Ghost.Infrastructure.Session\Ghost.Infrastructure.Session.csproj", "{D0142C1A-BE66-42F6-9C7A-11151E27ACD7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Infrastructure.Session", "src\Platform\Storage\Ghost.Infrastructure.Session\Ghost.Infrastructure.Session.csproj", "{D0142C1A-BE66-42F6-9C7A-11151E27ACD7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Plugin.Common", "src\Plugins\Ghost.Plugin.Common\Ghost.Plugin.Common.csproj", "{F461D74E-9B01-4F50-9015-2D7D55069218}"
 EndProject
@@ -473,18 +471,6 @@ Global
 		{9466CF22-AECB-499D-811C-203586268BF4}.Release|x64.Build.0 = Release|Any CPU
 		{9466CF22-AECB-499D-811C-203586268BF4}.Release|x86.ActiveCfg = Release|Any CPU
 		{9466CF22-AECB-499D-811C-203586268BF4}.Release|x86.Build.0 = Release|Any CPU
-		{DADC1171-9821-4ACD-926B-D5C5E1355FAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DADC1171-9821-4ACD-926B-D5C5E1355FAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DADC1171-9821-4ACD-926B-D5C5E1355FAE}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{DADC1171-9821-4ACD-926B-D5C5E1355FAE}.Debug|x64.Build.0 = Debug|Any CPU
-		{DADC1171-9821-4ACD-926B-D5C5E1355FAE}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{DADC1171-9821-4ACD-926B-D5C5E1355FAE}.Debug|x86.Build.0 = Debug|Any CPU
-		{DADC1171-9821-4ACD-926B-D5C5E1355FAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DADC1171-9821-4ACD-926B-D5C5E1355FAE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DADC1171-9821-4ACD-926B-D5C5E1355FAE}.Release|x64.ActiveCfg = Release|Any CPU
-		{DADC1171-9821-4ACD-926B-D5C5E1355FAE}.Release|x64.Build.0 = Release|Any CPU
-		{DADC1171-9821-4ACD-926B-D5C5E1355FAE}.Release|x86.ActiveCfg = Release|Any CPU
-		{DADC1171-9821-4ACD-926B-D5C5E1355FAE}.Release|x86.Build.0 = Release|Any CPU
 		{D0142C1A-BE66-42F6-9C7A-11151E27ACD7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D0142C1A-BE66-42F6-9C7A-11151E27ACD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0142C1A-BE66-42F6-9C7A-11151E27ACD7}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -602,7 +588,6 @@ Global
 		{623AA881-9E9D-4E91-9760-2B4AFF1F894D} = {D87F64FC-77E7-48EB-B9AF-B28F6BA871FA}
 		{5E43A3AE-5363-4FA1-81B2-A9E65AACF5A6} = {D87F64FC-77E7-48EB-B9AF-B28F6BA871FA}
 		{9466CF22-AECB-499D-811C-203586268BF4} = {FFBE31B8-50B9-B415-22BC-2F92C97CADA3}
-		{DADC1171-9821-4ACD-926B-D5C5E1355FAE} = {D87F64FC-77E7-48EB-B9AF-B28F6BA871FA}
 		{9048EB7F-3875-A59E-E36B-5BD4C6F2A282} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{D0142C1A-BE66-42F6-9C7A-11151E27ACD7} = {9048EB7F-3875-A59E-E36B-5BD4C6F2A282}
 		{F461D74E-9B01-4F50-9015-2D7D55069218} = {D87F64FC-77E7-48EB-B9AF-B28F6BA871FA}
