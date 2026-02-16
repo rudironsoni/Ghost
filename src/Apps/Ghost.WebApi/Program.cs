@@ -149,9 +149,7 @@ builder.Services.AddGhost(builder.Configuration, gw =>
         gw.UseExtension(new Ghost.Plugin.Google.GooglePlugin());
     }
 
-    // InfoJobs - Plugin not yet migrated to new structure
-    // TODO: InfoJobs plugin migration - Plugin code exists in src/Legacy/ghost-platform-orphan/
-    // and needs to be migrated to src/Plugins/InfoJobs/ structure before re-enabling
+    // InfoJobs - Disabled pending configuration
     // if (builder.Configuration.GetValue("Ghost:Extensions:InfoJobs:Enabled", false))
     // {
     //     gw.UseExtension(new Ghost.Plugin.InfoJobs.InfoJobsPlugin());

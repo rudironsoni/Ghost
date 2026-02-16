@@ -259,8 +259,8 @@
 - Layer 0: `src/Kernel/Ghost/` - Core engine, stealth, sessions, proxies (renamed from Core for clarity)
 - Layer 1: `src/Contracts/` - Public interfaces, DTOs, shared contracts
 - Layer 2: `src/Plugins/` - Platform-specific plugins (LinkedIn, Indeed, Google, etc.)
-  - Plugins are in flat structure: `src/Plugins/Ghost.Plugin.<Name>/`
-  - Planned: Plugin subfolders `src/Plugins/<Name>/Ghost.Plugin.<Name>/` for better organization
+  - Plugins use subfolder structure: `src/Plugins/<Name>/Ghost.Plugin.<Name>/` for better organization
+  - Each plugin has its own directory containing source, tests, and configuration
 - Layer 3: `src/Platform/` - Shared infrastructure
   - `src/Platform/Abstractions/` - Interfaces and pure abstractions
   - `src/Platform/Contracts/` - Contracts and DTOs
@@ -275,6 +275,7 @@
 - Layer 6: `src/Sdk/` - Framework for building scrapers
 - Tests: `tests/` with proper hierarchy and suffix taxonomy
   - `tests/Kernel/` - Kernel tests (UnitTests, IntegrationTests, SmokeTests)
+  - `tests/Core/` - Core tests (legacy migration in progress)
   - `tests/Platform/` - Platform tests (Hosting.UnitTests)
   - `tests/Plugins/` - Plugin tests (UnitTests, IntegrationTests, End2EndTests)
   - `tests/Apps/` - Application tests (WebApi.UnitTests, Worker.UnitTests)
@@ -402,8 +403,7 @@ For more details, see README.md and docs/QUICKSTART.md.
 - No direct plugin-to-plugin dependencies
 - All plugin communication through contracts
 - Plugin lifecycle managed by hosting layer
-- Plugin structure: `src/Plugins/Ghost.Plugin.<Name>/` (current flat structure)
-- Planned: Plugin subfolders `src/Plugins/<Name>/Ghost.Plugin.<Name>/` for better organization
+- Plugin structure: `src/Plugins/<Name>/Ghost.Plugin.<Name>/` (subfolder organization)
 
 ## 30. Architecture Compliance
 
@@ -497,9 +497,9 @@ For more details, see README.md and docs/QUICKSTART.md.
 
 ## 38. Scaffolding & Templates
 
-- Use `dotnet new ghost-plugin -n Name` for new plugins
-- Templates in /templates/
-- Never create from scratch when templates exist
+- Planned: `dotnet new ghost-plugin -n Name` template for new plugins
+- Planned: Templates in /templates/ directory
+- When templates exist: Never create from scratch, use templates
 - Template updates must be backward compatible
 - Custom templates documented in templates/README.md
 - Template validation required before use
@@ -521,13 +521,13 @@ For more details, see README.md and docs/QUICKSTART.md.
 ## 40. Future Roadmap
 
 - Plugin isolation out-of-process architecture (planned)
-- Beads integration for plugin management
 - Enhanced observability and monitoring
 - Performance optimization initiatives
 - Security hardening measures
 - Documentation expansion
 - Test coverage improvements
 - Developer experience enhancements
+- Plugin scaffolding templates (dotnet new)
 
 ## Landing the Plane (Session Completion)
 
