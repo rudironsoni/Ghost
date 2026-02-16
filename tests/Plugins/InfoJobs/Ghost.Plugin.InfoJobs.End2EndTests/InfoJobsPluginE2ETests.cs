@@ -30,7 +30,7 @@ public sealed class InfoJobsPluginE2ETests
         var plugin = new InfoJobsPlugin();
 
         // Act
-        var name = plugin.Name;
+        string name = plugin.Name;
 
         // Assert
         Assert.Equal("InfoJobs", name);
@@ -44,7 +44,7 @@ public sealed class InfoJobsPluginE2ETests
         var plugin = new InfoJobsPlugin();
 
         // Act
-        var version = plugin.Version;
+        Version version = plugin.Version;
 
         // Assert
         Assert.NotNull(version);
@@ -60,7 +60,7 @@ public sealed class InfoJobsPluginE2ETests
         var plugin = new InfoJobsPlugin();
 
         // Act
-        var providedServices = plugin.ProvidedServices;
+        IReadOnlyList<Type> providedServices = plugin.ProvidedServices;
 
         // Assert
         Assert.Contains(typeof(IJobClient), providedServices);
@@ -71,7 +71,7 @@ public sealed class InfoJobsPluginE2ETests
     public void ConfigureServices_RegistersInfoJobClient()
     {
         // Arrange
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["Ghost:Extensions:InfoJobs:Enabled"] = "true",
@@ -89,8 +89,8 @@ public sealed class InfoJobsPluginE2ETests
         plugin.ConfigureServices(services, configuration);
 
         // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var client = serviceProvider.GetService<IJobClient>();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
+        IJobClient? client = serviceProvider.GetService<IJobClient>();
         Assert.NotNull(client);
     }
 
@@ -99,7 +99,7 @@ public sealed class InfoJobsPluginE2ETests
     public void ConfigureServices_RegistersInfoJobsOptions()
     {
         // Arrange
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["Ghost:Extensions:InfoJobs:Enabled"] = "true",
@@ -116,8 +116,8 @@ public sealed class InfoJobsPluginE2ETests
         plugin.ConfigureServices(services, configuration);
 
         // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var options = serviceProvider.GetService<IOptions<InfoJobsOptions>>();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
+        IOptions<InfoJobsOptions>? options = serviceProvider.GetService<IOptions<InfoJobsOptions>>();
         Assert.NotNull(options);
         Assert.True(options.Value.Enabled);
         Assert.Equal("test-key", options.Value.ApiKey);
@@ -128,7 +128,7 @@ public sealed class InfoJobsPluginE2ETests
     public void ConfigureServices_RegistersPluginCapabilities()
     {
         // Arrange
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["Ghost:Extensions:InfoJobs:Enabled"] = "true",
@@ -144,8 +144,8 @@ public sealed class InfoJobsPluginE2ETests
         plugin.ConfigureServices(services, configuration);
 
         // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var capabilities = serviceProvider.GetService<InfoJobsPluginCapabilities>();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
+        InfoJobsPluginCapabilities? capabilities = serviceProvider.GetService<InfoJobsPluginCapabilities>();
         Assert.NotNull(capabilities);
         Assert.True(capabilities.SupportsJobs);
         Assert.False(capabilities.SupportsSocial);
@@ -157,7 +157,7 @@ public sealed class InfoJobsPluginE2ETests
     public void ConfigureServices_RegistersReadinessCheck()
     {
         // Arrange
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["Ghost:Extensions:InfoJobs:Enabled"] = "true",
@@ -173,8 +173,8 @@ public sealed class InfoJobsPluginE2ETests
         plugin.ConfigureServices(services, configuration);
 
         // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var readinessCheck = serviceProvider.GetService<IInfoJobsPluginReadinessCheck>();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
+        IInfoJobsPluginReadinessCheck? readinessCheck = serviceProvider.GetService<IInfoJobsPluginReadinessCheck>();
         Assert.NotNull(readinessCheck);
     }
 }

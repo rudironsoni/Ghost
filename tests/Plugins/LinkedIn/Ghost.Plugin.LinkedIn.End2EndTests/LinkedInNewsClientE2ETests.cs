@@ -25,11 +25,11 @@ public sealed class LinkedInNewsClientE2ETests
     public async Task GetArticlesAsync_ReturnsArticles()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
+        LinkedInNewsClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
         var filter = new NewsFilter { MaxResults = 10 };
 
         // Act
-        var results = await client.GetArticlesAsync(filter);
+        IReadOnlyList<NewsArticle> results = await client.GetArticlesAsync(filter);
 
         // Assert
         Assert.NotNull(results);
@@ -40,12 +40,12 @@ public sealed class LinkedInNewsClientE2ETests
     public async Task SearchAsync_WithValidQuery_ReturnsArticles()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
-        var query = "technology";
+        LinkedInNewsClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
+        string query = "technology";
         var options = new NewsSearchOptions { MaxResults = 5 };
 
         // Act
-        var results = await client.SearchAsync(query, options);
+        IReadOnlyList<NewsArticle> results = await client.SearchAsync(query, options);
 
         // Assert
         Assert.NotNull(results);
@@ -56,10 +56,10 @@ public sealed class LinkedInNewsClientE2ETests
     public void PlatformName_ReturnsExpectedValue()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
+        LinkedInNewsClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
 
         // Act
-        var platformName = client.PlatformName;
+        string platformName = client.PlatformName;
 
         // Assert
         Assert.Equal("LinkedIn", platformName);
@@ -70,8 +70,8 @@ public sealed class LinkedInNewsClientE2ETests
     public async Task GetArticleAsync_ThrowsNotImplementedException()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
-        var articleId = "article-001";
+        LinkedInNewsClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
+        string articleId = "article-001";
 
         // Act & Assert
         await Assert.ThrowsAsync<NotImplementedException>(() => client.GetArticleAsync(articleId));

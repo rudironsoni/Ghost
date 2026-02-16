@@ -25,7 +25,7 @@ public sealed class IndeedJobClientE2ETests
     public async Task SearchJobsAsync_WithValidCriteria_ReturnsJobListings()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
+        IndeedJobClient client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
         var criteria = new JobSearchCriteria
         {
             Query = "Software Engineer",
@@ -34,13 +34,13 @@ public sealed class IndeedJobClientE2ETests
         };
 
         // Act
-        var results = await client.SearchJobsAsync(criteria);
+        IReadOnlyList<JobListing> results = await client.SearchJobsAsync(criteria);
 
         // Assert
         Assert.NotNull(results);
         Assert.NotEmpty(results);
 
-        var firstJob = results.First();
+        JobListing firstJob = results.First();
         Assert.NotNull(firstJob.Id);
         Assert.Equal("Indeed", firstJob.Source);
     }
@@ -50,11 +50,11 @@ public sealed class IndeedJobClientE2ETests
     public async Task GetJobDetailsAsync_WithValidJobId_ReturnsJobDetails()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
-        var jobId = "indeed-job-001";
+        IndeedJobClient client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
+        string jobId = "indeed-job-001";
 
         // Act
-        var result = await client.GetJobDetailsAsync(jobId);
+        JobListing result = await client.GetJobDetailsAsync(jobId);
 
         // Assert
         Assert.NotNull(result);
@@ -67,10 +67,10 @@ public sealed class IndeedJobClientE2ETests
     public async Task PlatformName_ReturnsExpectedValue()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
+        IndeedJobClient client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
 
         // Act
-        var platformName = client.PlatformName;
+        string platformName = client.PlatformName;
 
         // Assert
         Assert.Equal("Indeed", platformName);
@@ -81,10 +81,10 @@ public sealed class IndeedJobClientE2ETests
     public async Task GetSavedJobsAsync_ReturnsEmptyList()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
+        IndeedJobClient client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
 
         // Act
-        var results = await client.GetSavedJobsAsync();
+        IReadOnlyList<JobListing> results = await client.GetSavedJobsAsync();
 
         // Assert
         Assert.NotNull(results);
@@ -96,10 +96,10 @@ public sealed class IndeedJobClientE2ETests
     public async Task GetApplicationsAsync_ReturnsEmptyList()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
+        IndeedJobClient client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
 
         // Act
-        var results = await client.GetApplicationsAsync();
+        IReadOnlyList<JobApplication> results = await client.GetApplicationsAsync();
 
         // Assert
         Assert.NotNull(results);
@@ -111,8 +111,8 @@ public sealed class IndeedJobClientE2ETests
     public async Task ApplyAsync_ReturnsJobApplication()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
-        var jobId = "indeed-job-001";
+        IndeedJobClient client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
+        string jobId = "indeed-job-001";
         var details = new ApplicationDetails
         {
             ApplicantEmail = "test@example.com",
@@ -121,7 +121,7 @@ public sealed class IndeedJobClientE2ETests
         };
 
         // Act
-        var result = await client.ApplyAsync(jobId, details);
+        JobApplication result = await client.ApplyAsync(jobId, details);
 
         // Assert
         Assert.NotNull(result);

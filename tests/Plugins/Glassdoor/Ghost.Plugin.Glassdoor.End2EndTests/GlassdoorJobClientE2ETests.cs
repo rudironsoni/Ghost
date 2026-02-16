@@ -25,7 +25,7 @@ public sealed class GlassdoorJobClientE2ETests
     public async Task SearchJobsAsync_WithValidCriteria_ReturnsJobListings()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
+        GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
         var criteria = new JobSearchCriteria
         {
             Query = "Software Engineer",
@@ -34,13 +34,13 @@ public sealed class GlassdoorJobClientE2ETests
         };
 
         // Act
-        var results = await client.SearchJobsAsync(criteria);
+        IReadOnlyList<JobListing> results = await client.SearchJobsAsync(criteria);
 
         // Assert
         Assert.NotNull(results);
         Assert.NotEmpty(results);
 
-        var firstJob = results.First();
+        JobListing firstJob = results.First();
         Assert.NotNull(firstJob.Id);
         Assert.Equal("Software Engineer", firstJob.Title);
         Assert.Equal("Tech Corp", firstJob.Company);
@@ -52,11 +52,11 @@ public sealed class GlassdoorJobClientE2ETests
     public async Task GetJobDetailsAsync_WithValidJobId_ReturnsJobDetails()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
-        var jobId = "123456";
+        GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
+        string jobId = "123456";
 
         // Act
-        var result = await client.GetJobDetailsAsync(jobId);
+        JobListing result = await client.GetJobDetailsAsync(jobId);
 
         // Assert
         Assert.NotNull(result);
@@ -69,7 +69,7 @@ public sealed class GlassdoorJobClientE2ETests
     public async Task SearchJobsAsync_WithEmptyQuery_ReturnsEmptyResults()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
+        GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
         var criteria = new JobSearchCriteria
         {
             Query = string.Empty,
@@ -78,7 +78,7 @@ public sealed class GlassdoorJobClientE2ETests
         };
 
         // Act
-        var results = await client.SearchJobsAsync(criteria);
+        IReadOnlyList<JobListing> results = await client.SearchJobsAsync(criteria);
 
         // Assert
         Assert.NotNull(results);
@@ -89,10 +89,10 @@ public sealed class GlassdoorJobClientE2ETests
     public async Task PlatformName_ReturnsExpectedValue()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
+        GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
 
         // Act
-        var platformName = client.PlatformName;
+        string platformName = client.PlatformName;
 
         // Assert
         Assert.Equal("Glassdoor", platformName);
@@ -103,10 +103,10 @@ public sealed class GlassdoorJobClientE2ETests
     public async Task GetSavedJobsAsync_ReturnsEmptyList()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
+        GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
 
         // Act
-        var results = await client.GetSavedJobsAsync();
+        IReadOnlyList<JobListing> results = await client.GetSavedJobsAsync();
 
         // Assert
         Assert.NotNull(results);
@@ -118,10 +118,10 @@ public sealed class GlassdoorJobClientE2ETests
     public async Task GetApplicationsAsync_ReturnsEmptyList()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
+        GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
 
         // Act
-        var results = await client.GetApplicationsAsync();
+        IReadOnlyList<JobApplication> results = await client.GetApplicationsAsync();
 
         // Assert
         Assert.NotNull(results);

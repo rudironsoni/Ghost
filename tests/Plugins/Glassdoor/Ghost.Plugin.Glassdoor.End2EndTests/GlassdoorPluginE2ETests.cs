@@ -29,7 +29,7 @@ public sealed class GlassdoorPluginE2ETests
         var plugin = new GlassdoorPlugin();
 
         // Act
-        var name = plugin.Name;
+        string name = plugin.Name;
 
         // Assert
         Assert.Equal("Glassdoor", name);
@@ -43,7 +43,7 @@ public sealed class GlassdoorPluginE2ETests
         var plugin = new GlassdoorPlugin();
 
         // Act
-        var version = plugin.Version;
+        Version version = plugin.Version;
 
         // Assert
         Assert.NotNull(version);
@@ -59,7 +59,7 @@ public sealed class GlassdoorPluginE2ETests
         var plugin = new GlassdoorPlugin();
 
         // Act
-        var providedServices = plugin.ProvidedServices;
+        IReadOnlyList<Type> providedServices = plugin.ProvidedServices;
 
         // Assert
         Assert.Contains(typeof(IJobClient), providedServices);
@@ -70,7 +70,7 @@ public sealed class GlassdoorPluginE2ETests
     public void ConfigureServices_RegistersGlassdoorJobClient()
     {
         // Arrange
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["Ghost:Extensions:Glassdoor:Enabled"] = "true",
@@ -85,8 +85,8 @@ public sealed class GlassdoorPluginE2ETests
         plugin.ConfigureServices(services, configuration);
 
         // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var client = serviceProvider.GetService<IJobClient>();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
+        IJobClient? client = serviceProvider.GetService<IJobClient>();
         Assert.NotNull(client);
     }
 
@@ -95,7 +95,7 @@ public sealed class GlassdoorPluginE2ETests
     public void ConfigureServices_RegistersGlassdoorApiClient()
     {
         // Arrange
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["Ghost:Extensions:Glassdoor:Enabled"] = "true"
@@ -110,8 +110,8 @@ public sealed class GlassdoorPluginE2ETests
         plugin.ConfigureServices(services, configuration);
 
         // Assert
-        var serviceProvider = services.BuildServiceProvider();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
         // ApiClient is internal, but we can verify the service collection has the expected registrations
-        Assert.True(services.Any(s => s.ServiceType.Name.Contains("GlassdoorApiClient")));
+        Assert.Contains(services, s => s.ServiceType.Name.Contains("GlassdoorApiClient"));
     }
 }

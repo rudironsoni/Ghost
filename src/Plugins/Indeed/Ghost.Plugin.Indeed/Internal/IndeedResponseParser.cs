@@ -47,22 +47,22 @@ public sealed class IndeedResponseParser
         string trimmed = responseContent.TrimStart();
 
         // If it starts with valid JSON object with "data" property, it's likely a valid response
-        if (trimmed.StartsWith(""""{\"data\":""", StringComparison.Ordinal) ||
-            trimmed.StartsWith(""""{\"data\": {""", StringComparison.Ordinal))
+        if (trimmed.StartsWith("{\"data\":", StringComparison.Ordinal) ||
+            trimmed.StartsWith("{\"data\": ", StringComparison.Ordinal))
         {
             return false;
         }
 
         // Check for explicit error page indicators
-        return trimmed.StartsWith(""""<html""", StringComparison.OrdinalIgnoreCase) ||
-               trimmed.StartsWith(""""<!DOCTYPE""", StringComparison.OrdinalIgnoreCase) ||
-               trimmed.StartsWith('""""<') ||
-               responseContent.Contains(""""\"errors\":""", StringComparison.Ordinal) ||
+        return trimmed.StartsWith("<html", StringComparison.OrdinalIgnoreCase) ||
+               trimmed.StartsWith("<!DOCTYPE", StringComparison.OrdinalIgnoreCase) ||
+               trimmed.StartsWith("\"<", StringComparison.Ordinal) ||
+               responseContent.Contains("\"errors\":", StringComparison.Ordinal) ||
                responseContent.Contains("access denied", StringComparison.OrdinalIgnoreCase) ||
                responseContent.Contains("rate limit exceeded", StringComparison.OrdinalIgnoreCase) ||
                responseContent.Contains("throttled", StringComparison.OrdinalIgnoreCase) ||
-               responseContent.Contains(""""\"unauthorized\"""", StringComparison.OrdinalIgnoreCase) ||
-               responseContent.Contains(""""\"forbidden\"""", StringComparison.OrdinalIgnoreCase) ||
+               responseContent.Contains("\"unauthorized\":", StringComparison.OrdinalIgnoreCase) ||
+               responseContent.Contains("\"forbidden\":", StringComparison.OrdinalIgnoreCase) ||
                responseContent.Contains("blocked", StringComparison.OrdinalIgnoreCase) ||
                responseContent.Contains("g-recaptcha", StringComparison.OrdinalIgnoreCase) ||
                responseContent.Contains("cf_chl_jschl", StringComparison.OrdinalIgnoreCase);

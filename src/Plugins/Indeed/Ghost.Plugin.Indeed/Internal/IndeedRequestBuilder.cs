@@ -1,6 +1,8 @@
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
+using Ghost.Models;
 
 namespace Ghost.Plugin.Indeed.Internal;
 
@@ -108,11 +110,11 @@ public sealed class IndeedRequestBuilder
     public string BuildSearchQuery(string query, string location, int limit, string? cursor)
     {
         var sb = new StringBuilder();
-        sb.Append($""""query: \"{EscapeGraphQLString(query)}\" location: \"{EscapeGraphQLString(location)}\" limit: {Math.Min(25, limit)}"""");
+        sb.Append(CultureInfo.InvariantCulture, $"query: \"{EscapeGraphQLString(query)}\" location: \"{EscapeGraphQLString(location)}\" limit: {Math.Min(25, limit)}");
 
         if (!string.IsNullOrWhiteSpace(cursor))
         {
-            sb.Append($"""" after: \"{cursor}\""""");
+            sb.Append(CultureInfo.InvariantCulture, $" after: \"{cursor}\"");
         }
 
         return sb.ToString();
@@ -127,11 +129,11 @@ public sealed class IndeedRequestBuilder
             return input;
 
         return input
-            .Replace("\\", "\\\\")
-            .Replace(""""""", "\\\"""
-            .Replace("\n", "\\n")
-            .Replace("\r", "\\r")
-            .Replace("\t", "\\t");
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal)
+            .Replace("\n", "\\n", StringComparison.Ordinal)
+            .Replace("\r", "\\r", StringComparison.Ordinal)
+            .Replace("\t", "\\t", StringComparison.Ordinal);
     }
 
     /// <summary>

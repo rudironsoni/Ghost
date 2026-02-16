@@ -2,6 +2,7 @@ using Ghost.Contracts.Jobs;
 using Ghost.Contracts.News;
 using Ghost.Contracts.Social;
 using Ghost.Hosting;
+using Ghost.Kernel;
 using Ghost.Plugin.LinkedIn.End2EndTests.Fixtures;
 using Ghost.Plugin.LinkedIn.Internal;
 using Microsoft.Extensions.Configuration;
@@ -33,7 +34,7 @@ public sealed class LinkedInPluginE2ETests
         var plugin = new LinkedInPlugin();
 
         // Act
-        var name = plugin.Name;
+        string name = plugin.Name;
 
         // Assert
         Assert.Equal("LinkedIn", name);
@@ -47,7 +48,7 @@ public sealed class LinkedInPluginE2ETests
         var plugin = new LinkedInPlugin();
 
         // Act
-        var version = plugin.Version;
+        Version version = plugin.Version;
 
         // Assert
         Assert.NotNull(version);
@@ -63,7 +64,7 @@ public sealed class LinkedInPluginE2ETests
         var plugin = new LinkedInPlugin();
 
         // Act
-        var providedServices = plugin.ProvidedServices;
+        IReadOnlyList<Type> providedServices = plugin.ProvidedServices;
 
         // Assert
         Assert.Contains(typeof(ISocialClient), providedServices);
@@ -79,7 +80,7 @@ public sealed class LinkedInPluginE2ETests
         var plugin = new LinkedInPlugin();
 
         // Act
-        var requiredServices = plugin.RequiredServices;
+        IReadOnlyList<Type> requiredServices = plugin.RequiredServices;
 
         // Assert
         Assert.Contains(typeof(Ghost.IBrowserSession), requiredServices);
@@ -90,7 +91,7 @@ public sealed class LinkedInPluginE2ETests
     public void ConfigureServices_RegistersLinkedInJobClient()
     {
         // Arrange
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["Ghost:Extensions:LinkedIn:Enabled"] = "true",
@@ -112,8 +113,8 @@ public sealed class LinkedInPluginE2ETests
         plugin.ConfigureServices(services, configuration);
 
         // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var client = serviceProvider.GetService<IJobClient>();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
+        IJobClient? client = serviceProvider.GetService<IJobClient>();
         Assert.NotNull(client);
     }
 
@@ -122,7 +123,7 @@ public sealed class LinkedInPluginE2ETests
     public void ConfigureServices_RegistersLinkedInSocialClient()
     {
         // Arrange
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["Ghost:Extensions:LinkedIn:Enabled"] = "true",
@@ -142,8 +143,8 @@ public sealed class LinkedInPluginE2ETests
         plugin.ConfigureServices(services, configuration);
 
         // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var client = serviceProvider.GetService<ISocialClient>();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
+        ISocialClient? client = serviceProvider.GetService<ISocialClient>();
         Assert.NotNull(client);
     }
 
@@ -152,7 +153,7 @@ public sealed class LinkedInPluginE2ETests
     public void ConfigureServices_RegistersLinkedInNewsClient()
     {
         // Arrange
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["Ghost:Extensions:LinkedIn:Enabled"] = "true"
@@ -171,8 +172,8 @@ public sealed class LinkedInPluginE2ETests
         plugin.ConfigureServices(services, configuration);
 
         // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var client = serviceProvider.GetService<INewsClient>();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
+        INewsClient? client = serviceProvider.GetService<INewsClient>();
         Assert.NotNull(client);
     }
 
@@ -181,7 +182,7 @@ public sealed class LinkedInPluginE2ETests
     public void ConfigureServices_RegistersSessionPool()
     {
         // Arrange
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["Ghost:Extensions:LinkedIn:Enabled"] = "true",
@@ -193,7 +194,7 @@ public sealed class LinkedInPluginE2ETests
         services.AddLogging();
 
         // Mock required services
-        var mockKernel = NSubstitute.Substitute.For<Ghost.Kernel.IGhostKernel>();
+        IGhostKernel mockKernel = NSubstitute.Substitute.For<Ghost.Kernel.IGhostKernel>();
         services.AddSingleton(mockKernel);
         services.AddSingleton<NSubstitute.Substitute.For<Ghost.IProxyProvider>>();
 
@@ -203,9 +204,9 @@ public sealed class LinkedInPluginE2ETests
         plugin.ConfigureServices(services, configuration);
 
         // Assert - SessionPool is registered
-        var serviceProvider = services.BuildServiceProvider();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
         // SessionPool is internal, verify by checking configuration was bound
-        var options = serviceProvider.GetService<IOptions<LinkedInSessionPoolOptions>>();
+        IOptions<LinkedInSessionPoolOptions>? options = serviceProvider.GetService<IOptions<LinkedInSessionPoolOptions>>();
         Assert.NotNull(options);
         Assert.Equal(5, options.Value.MaxSessions);
     }

@@ -11,6 +11,7 @@ using WireMock.Net;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
+using Xunit;
 
 namespace Ghost.Plugin.LinkedIn.End2EndTests.Fixtures;
 
@@ -64,8 +65,8 @@ public sealed class LinkedInE2EFixture : IDisposable
         });
 
         // Mock IBrowserSession
-        var mockBrowserSession = Substitute.For<Ghost.IBrowserSession>();
-        var mockPage = Substitute.For<Ghost.IPage>();
+        IBrowserSession mockBrowserSession = Substitute.For<Ghost.IBrowserSession>();
+        IPage mockPage = Substitute.For<Ghost.IPage>();
 
         // Setup mock page behavior
         mockPage.NavigateAsync(Arg.Any<string>(), Arg.Any<Ghost.NavigationOptions>(), Arg.Any<CancellationToken>())
