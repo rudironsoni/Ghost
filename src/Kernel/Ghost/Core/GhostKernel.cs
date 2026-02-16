@@ -267,31 +267,46 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
         {
             await _browser.CloseAsync().ConfigureAwait(false);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[WARNING] GhostKernel: Failed to close browser during disposal: {ex.Message}");
+        }
 
         try
         {
             await _browser.DisposeAsync().ConfigureAwait(false);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[WARNING] GhostKernel: Failed to dispose browser during disposal: {ex.Message}");
+        }
 
         try
         {
             _playwright.Dispose();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[WARNING] GhostKernel: Failed to dispose playwright during disposal: {ex.Message}");
+        }
 
         try
         {
             _globalProxyBridge?.Dispose();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[WARNING] GhostKernel: Failed to dispose proxy bridge during disposal: {ex.Message}");
+        }
 
         try
         {
             _sessionLock.Dispose();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[WARNING] GhostKernel: Failed to dispose session lock during disposal: {ex.Message}");
+        }
     }
 
 #pragma warning restore IDE1006

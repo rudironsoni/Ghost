@@ -75,7 +75,12 @@ public static class JobsEndpoints
                     jobsLog(logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance, platform, status, timeMs, query, null);
                 }
             }
-            catch { /* swallow logging errors to avoid interfering with response */ }
+            catch (Exception logEx)
+{
+    // Intentionally swallow logging errors to avoid interfering with response,
+    // but write to stderr as a last resort for diagnostics
+    Console.Error.WriteLine($"[ERROR] Failed to log job search metrics: {logEx.Message}");
+}
         }
     }
 

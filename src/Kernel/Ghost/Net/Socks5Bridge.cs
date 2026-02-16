@@ -56,19 +56,32 @@ public class Socks5Bridge : IDisposable
         {
             _cts?.Cancel();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[WARNING] Socks5Bridge: Failed to cancel CTS during Stop: {ex.Message}");
+        }
 
         try
         {
             _listener?.Stop();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[WARNING] Socks5Bridge: Failed to stop listener during Stop: {ex.Message}");
+        }
 
         lock (_lock)
         {
             foreach (TcpClient c in _activeClients.ToArray())
             {
-                try { c.Close(); } catch { }
+                try
+                {
+                    c.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[DEBUG] Socks5Bridge: Failed to close client during Stop: {ex.Message}");
+                }
             }
             _activeClients.Clear();
         }
@@ -84,19 +97,32 @@ public class Socks5Bridge : IDisposable
         {
             _cts?.Cancel();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[WARNING] Socks5Bridge: Failed to cancel CTS during StopAsync: {ex.Message}");
+        }
 
         try
         {
             _listener?.Stop();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[WARNING] Socks5Bridge: Failed to stop listener during StopAsync: {ex.Message}");
+        }
 
         lock (_lock)
         {
             foreach (TcpClient c in _activeClients.ToArray())
             {
-                try { c.Close(); } catch { }
+                try
+                {
+                    c.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[DEBUG] Socks5Bridge: Failed to close client during StopAsync: {ex.Message}");
+                }
             }
             _activeClients.Clear();
         }
@@ -107,7 +133,10 @@ public class Socks5Bridge : IDisposable
             {
                 await _acceptLoopTask.ConfigureAwait(false);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"[DEBUG] Socks5Bridge: Accept loop task completed with exception: {ex.Message}");
+            }
         }
     }
 
@@ -147,10 +176,20 @@ public class Socks5Bridge : IDisposable
                 {
                     await HandleClientAsync(client, ct).ConfigureAwait(false);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[DEBUG] Socks5Bridge: HandleClientAsync failed: {ex.Message}");
+                }
                 finally
                 {
-                    try { client.Close(); } catch { }
+                    try
+                    {
+                        client.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine($"[DEBUG] Socks5Bridge: Failed to close client: {ex.Message}");
+                    }
                     lock (_lock) { _activeClients.Remove(client); }
                 }
             }, ct);
@@ -183,13 +222,15 @@ public class Socks5Bridge : IDisposable
             {
                 header = await ReadExactlyAsync(clientStream, 2, ct).ConfigureAwait(false);
             }
-            catch
+            catch (Exception ex)
             {
+                Console.Error.WriteLine($"[DEBUG] Socks5Bridge: Failed to read client handshake header: {ex.Message}");
                 return;
             }
 
             if (header.Length < 2 || header[0] != 0x05)
             {
+                Console.Error.WriteLine("[DEBUG] Socks5Bridge: Invalid SOCKS5 handshake header");
                 return;
             }
 
@@ -198,8 +239,9 @@ public class Socks5Bridge : IDisposable
             {
                 byte[] methods = await ReadExactlyAsync(clientStream, nmethods, ct).ConfigureAwait(false);
             }
-            catch
+            catch (Exception ex)
             {
+                Console.Error.WriteLine($"[DEBUG] Socks5Bridge: Failed to read client authentication methods: {ex.Message}");
                 return;
             }
 
@@ -209,8 +251,9 @@ public class Socks5Bridge : IDisposable
                 byte[] resp = new byte[] { 0x05, 0x00 };
                 await clientStream.WriteAsync(resp.AsMemory(0, 2), ct).ConfigureAwait(false);
             }
-            catch
+            catch (Exception ex)
             {
+                Console.Error.WriteLine($"[DEBUG] Socks5Bridge: Failed to write handshake response: {ex.Message}");
                 return;
             }
 
@@ -220,8 +263,9 @@ public class Socks5Bridge : IDisposable
             {
                 reqHeader = await ReadExactlyAsync(clientStream, 4, ct).ConfigureAwait(false);
             }
-            catch
+            catch (Exception ex)
             {
+                Console.Error.WriteLine($"[DEBUG] Socks5Bridge: Failed to read client request header: {ex.Message}");
                 return;
             }
 
@@ -271,15 +315,19 @@ public class Socks5Bridge : IDisposable
                         {
                             await upstream.ConnectAsync(_upstreamHost, _upstreamPort).ConfigureAwait(false);
                         }
-                        catch
+                        catch (Exception ex)
                         {
                             // can't connect upstream, reply to client with general failure
+                            Console.Error.WriteLine($"[WARNING] Socks5Bridge: Failed to connect to upstream {_upstreamHost}:{_upstreamPort}: {ex.Message}");
                             try
                             {
                                 byte[] fail = new byte[] { 0x05, 0x01, 0x00, 0x01, 0, 0, 0, 0, 0, 0 };
                                 await clientStream.WriteAsync(fail.AsMemory(0, fail.Length), ct).ConfigureAwait(false);
                             }
-                            catch { }
+                            catch (Exception writeEx)
+                            {
+                                Console.Error.WriteLine($"[DEBUG] Socks5Bridge: Failed to write failure response to client: {writeEx.Message}");
+                            }
                             return;
                         }
 
@@ -391,14 +439,22 @@ public class Socks5Bridge : IDisposable
                         }
                         finally
                         {
-                            try { upstream.Close(); } catch { }
+                            try
+                            {
+                                upstream.Close();
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.Error.WriteLine($"[DEBUG] Socks5Bridge: Failed to close upstream connection: {ex.Message}");
+                            }
                             lock (_lock) { _activeClients.Remove(upstream); }
                         }
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Console.Error.WriteLine($"[DEBUG] Socks5Bridge: HandleClientAsync main loop exception: {ex.Message}");
                 return;
             }
         }
@@ -407,7 +463,14 @@ public class Socks5Bridge : IDisposable
     public void Dispose()
     {
         Stop();
-        try { _cts?.Dispose(); } catch { }
+        try
+        {
+            _cts?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[WARNING] Socks5Bridge: Failed to dispose CancellationTokenSource: {ex.Message}");
+        }
         GC.SuppressFinalize(this);
     }
 }

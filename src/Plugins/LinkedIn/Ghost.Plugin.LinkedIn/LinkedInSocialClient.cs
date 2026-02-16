@@ -38,70 +38,7 @@ public sealed class LinkedInSocialClient : ISocialClient
     {
         try
         {
-            PageOptions? pageOpts = _options.GetPageOptions();
-            IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
-            try
-            {
-                string url = $"{_options.BaseUrl}/in/{profileId}";
-                await page.NavigateAsync(url, ct: ct).ConfigureAwait(false);
-                await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
-
-                // Ensure we're authenticated / logged in for richer scraping
-                try
-                {
-                    bool logged = await _authenticator.IsLoggedInAsync(page, ct).ConfigureAwait(false);
-                    if (!logged)
-                    {
-                        _logger.LogNotLoggedIn();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogLoginVerificationFailed(ex);
-                }
-
-                // Expand "About" section if "see more" exists
-                await ExpandSeeMoreAsync(page, null, ct).ConfigureAwait(false);
-
-                string name = await page.EvaluateAsync<string>("() => document.querySelector('.text-heading-xlarge')?.innerText || ''", ct: ct).ConfigureAwait(false);
-                string bio = await page.EvaluateAsync<string>("() => document.querySelector('.text-body-medium')?.innerText || ''", ct: ct).ConfigureAwait(false);
-                string about = await page.EvaluateAsync<string>("() => document.querySelector('.pv-about__summary-text')?.innerText || ''", ct: ct).ConfigureAwait(false);
-
-                var profile = new SocialProfile { Id = profileId, Name = name ?? string.Empty, Bio = string.IsNullOrWhiteSpace(about) ? bio : about };
-
-                // Parse more advanced sections
-                try
-                {
-                    List<SocialExperience> experiences = await ParseExperienceAsync(page, ct).ConfigureAwait(false);
-                    if (experiences?.Count > 0)
-                    {
-                        profile.Experience.AddRange(experiences);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogExperienceParseFailed(ex);
-                }
-
-                try
-                {
-                    List<SocialEducation> education = await ParseEducationAsync(page, ct).ConfigureAwait(false);
-                    if (education?.Count > 0)
-                    {
-                        profile.Education.AddRange(education);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogEducationParseFailed(ex);
-                }
-
-                return profile;
-            }
-            finally
-            {
-                try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
-            }
+            return await FetchProfileInternalAsync(profileId, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -109,18 +46,134 @@ public sealed class LinkedInSocialClient : ISocialClient
         }
         catch (Exception ex)
         {
-            // Any exception - return mock profile
-            LinkedInLog.LogProfileFetchFailed(_logger, profileId, ex);
-            return new SocialProfile
-            {
-                Id = profileId,
-                Name = "John Doe",
-                Bio = "Software Engineer with 5+ years of experience in building scalable applications."
-            };
+            return CreateMockProfile(profileId, ex);
         }
     }
 
-    private static async Task ExpandSeeMoreAsync(Ghost.IPage page, Ghost.IElement? container, CancellationToken ct)
+    private async Task<SocialProfile> FetchProfileInternalAsync(string profileId, CancellationToken ct)
+    {
+        PageOptions? pageOptions = _options.GetPageOptions();
+        IPage page = await _session.NewPageAsync(pageOptions, ct: ct).ConfigureAwait(false);
+
+        try
+        {
+            await NavigateToProfilePageAsync(page, profileId, ct).ConfigureAwait(false);
+            await VerifyAuthenticationAsync(page, ct).ConfigureAwait(false);
+            await ExpandSeeMoreAsync(page, null, ct).ConfigureAwait(false);
+
+            SocialProfile profile = await ExtractProfileDataAsync(page, profileId, ct).ConfigureAwait(false);
+            await EnrichProfileWithExperienceAsync(page, profile, ct).ConfigureAwait(false);
+            await EnrichProfileWithEducationAsync(page, profile, ct).ConfigureAwait(false);
+
+            return profile;
+        }
+        finally
+        {
+            await DisposePageAsync(page).ConfigureAwait(false);
+        }
+    }
+
+    private async Task NavigateToProfilePageAsync(IPage page, string profileId, CancellationToken ct)
+    {
+        string url = $"{_options.BaseUrl}/in/{profileId}";
+        await page.NavigateAsync(url, ct: ct).ConfigureAwait(false);
+        await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
+    }
+
+    private async Task VerifyAuthenticationAsync(IPage page, CancellationToken ct)
+    {
+        try
+        {
+            bool isLoggedIn = await _authenticator.IsLoggedInAsync(page, ct).ConfigureAwait(false);
+            if (!isLoggedIn)
+            {
+                _logger.LogNotLoggedIn();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogLoginVerificationFailed(ex);
+        }
+    }
+
+    private static async Task DisposePageAsync(IPage page)
+    {
+        try
+        {
+            await page.DisposeAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // Intentionally swallow disposal errors - page may already be disposed or connection lost
+            // Log to stderr as a last resort since we don't have logger access in static context
+            Console.Error.WriteLine($"[WARNING] Failed to dispose page: {ex.Message}");
+        }
+    }
+
+    private async Task<SocialProfile> ExtractProfileDataAsync(IPage page, string profileId, CancellationToken ct)
+    {
+        string name = await GetElementTextAsync(page, ".text-heading-xlarge", ct).ConfigureAwait(false);
+        string bio = await GetElementTextAsync(page, ".text-body-medium", ct).ConfigureAwait(false);
+        string about = await GetElementTextAsync(page, ".pv-about__summary-text", ct).ConfigureAwait(false);
+
+        return new SocialProfile
+        {
+            Id = profileId,
+            Name = name ?? string.Empty,
+            Bio = string.IsNullOrWhiteSpace(about) ? bio : about
+        };
+    }
+
+    private static async Task<string> GetElementTextAsync(IPage page, string selector, CancellationToken ct)
+    {
+        string script = $"() => document.querySelector('{selector}')?.innerText || ''";
+        return await page.EvaluateAsync<string>(script, ct: ct).ConfigureAwait(false);
+    }
+
+    private async Task EnrichProfileWithExperienceAsync(IPage page, SocialProfile profile, CancellationToken ct)
+    {
+        try
+        {
+            List<SocialExperience> experiences = await ParseExperienceAsync(page, ct).ConfigureAwait(false);
+            if (experiences?.Count > 0)
+            {
+                profile.Experience.AddRange(experiences);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogExperienceParseFailed(ex);
+        }
+    }
+
+    private async Task EnrichProfileWithEducationAsync(IPage page, SocialProfile profile, CancellationToken ct)
+    {
+        try
+        {
+            List<SocialEducation> education = await ParseEducationAsync(page, ct).ConfigureAwait(false);
+            if (education?.Count > 0)
+            {
+                profile.Education.AddRange(education);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogEducationParseFailed(ex);
+        }
+    }
+
+    private SocialProfile CreateMockProfile(string profileId, Exception ex)
+    {
+        LinkedInLog.LogProfileFetchFailed(_logger, profileId, ex);
+        return new SocialProfile
+        {
+            Id = profileId,
+            Name = "John Doe",
+            Bio = "Software Engineer with 5+ years of experience in building scalable applications."
+        };
+    }
+
+    private async Task ExpandSeeMoreAsync(Ghost.IPage page, Ghost.IElement? container, CancellationToken ct)
     {
         try
         {
@@ -141,10 +194,16 @@ public sealed class LinkedInSocialClient : ISocialClient
                     // Check if visible (HumanClick handles some checks, but we should be sure it's interacting)
                     await btn.HumanClickAsync(ct).ConfigureAwait(false);
                 }
-                catch { /* ignore click failures, it might be hidden or covered */ }
+                catch (Exception)
+                {
+                    // Intentionally ignore click failures - element might be hidden, covered, or detached
+                }
             }
         }
-        catch { }
+        catch (Exception)
+        {
+            // Intentionally ignore expansion failures
+        }
     }
 
     private async Task<List<SocialExperience>> ParseExperienceAsync(Ghost.IPage page, CancellationToken ct)
@@ -167,7 +226,10 @@ public sealed class LinkedInSocialClient : ISocialClient
                     break;
                 }
             }
-            catch { }
+            catch
+            {
+                // Ignore parsing errors for individual sections
+            }
         }
 
         if (expSection == null) return list;
@@ -246,7 +308,10 @@ public sealed class LinkedInSocialClient : ISocialClient
                     break;
                 }
             }
-            catch { }
+            catch
+            {
+                // Ignore parsing errors for individual sections
+            }
         }
 
         if (edSection == null) return list;
@@ -326,7 +391,14 @@ public sealed class LinkedInSocialClient : ISocialClient
         }
         finally
         {
-            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+            try
+            {
+                await page.DisposeAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore page disposal errors
+            }
         }
     }
 
@@ -351,7 +423,14 @@ public sealed class LinkedInSocialClient : ISocialClient
         }
         finally
         {
-            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+            try
+            {
+                await page.DisposeAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore page disposal errors
+            }
         }
     }
 
@@ -373,14 +452,24 @@ public sealed class LinkedInSocialClient : ISocialClient
                     string content = await n.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty;
                     list.Add(new SocialPost { Id = Guid.NewGuid().ToString(), Content = content });
                 }
-                catch { }
+                catch
+                {
+                    // Ignore stale element errors
+                }
             }
 
             return list;
         }
         finally
         {
-            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+            try
+            {
+                await page.DisposeAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore page disposal errors
+            }
         }
     }
 
@@ -397,7 +486,14 @@ public sealed class LinkedInSocialClient : ISocialClient
         }
         finally
         {
-            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+            try
+            {
+                await page.DisposeAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore page disposal errors
+            }
         }
     }
 
@@ -422,14 +518,24 @@ public sealed class LinkedInSocialClient : ISocialClient
                     string name = nameEl is not null ? await nameEl.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty : string.Empty;
                     list.Add(new Ghost.Contracts.Social.SocialConnection { Id = id, FromProfileId = string.Empty, ToProfileId = string.Empty });
                 }
-                catch { }
+                catch
+                {
+                    // Ignore stale element errors
+                }
             }
 
             return list;
         }
         finally
         {
-            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+            try
+            {
+                await page.DisposeAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore page disposal errors
+            }
         }
     }
 
@@ -452,7 +558,14 @@ public sealed class LinkedInSocialClient : ISocialClient
         }
         finally
         {
-            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+            try
+            {
+                await page.DisposeAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore page disposal errors
+            }
         }
     }
 }
