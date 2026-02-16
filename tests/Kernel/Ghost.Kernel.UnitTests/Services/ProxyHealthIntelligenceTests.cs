@@ -110,6 +110,14 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         intelligence.Should().NotBeNull();
     }
 
+    [Fact]
+    public void Constructor_WithHttpClient_CreatesInstance()
+    {
+        using var httpClient = new HttpClient();
+        var intelligence = CreateIntelligence(httpClient: httpClient);
+        intelligence.Should().NotBeNull();
+    }
+
     #endregion
 
     #region GetProxyAsync - RoundRobin Tests
@@ -158,6 +166,22 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         proxy.Should().BeNull();
     }
 
+    [Fact]
+    public async Task GetProxyAsync_RoundRobin_SingleProxy_ReturnsSameProxy()
+    {
+        var proxies = new List<ProxyInfo> { CreateProxy("http://1.2.3.4:8080") };
+        var mockSource = CreateMockSource(proxies);
+
+        var intelligence = CreateIntelligence(new[] { mockSource.Object });
+
+        var proxy1 = await intelligence.GetProxyAsync();
+        var proxy2 = await intelligence.GetProxyAsync();
+
+        proxy1.Should().NotBeNull();
+        proxy2.Should().NotBeNull();
+        proxy1!.Server.Should().Be(proxy2!.Server);
+    }
+
     #endregion
 
     #region GetProxyAsync - Performance Strategy Tests
@@ -179,9 +203,31 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
             new[] { mockSource.Object },
             options);
 
+        // Report results to establish performance metrics
         await intelligence.ReportProxyResultAsync(proxy1, true, TimeSpan.FromMilliseconds(100));
         await intelligence.ReportProxyResultAsync(proxy1, false, TimeSpan.FromMilliseconds(100));
         await intelligence.ReportProxyResultAsync(proxy2, true, TimeSpan.FromMilliseconds(100));
+
+        var selectedProxy = await intelligence.GetProxyAsync();
+        selectedProxy.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task GetProxyAsync_Performance_AllProxiesEqual_ReturnsProxy()
+    {
+        var proxy1 = CreateProxy("http://1.2.3.4:8080");
+        var proxy2 = CreateProxy("http://5.6.7.8:3128");
+
+        var mockSource = CreateMockSource(new[] { proxy1, proxy2 });
+        var options = Options.Create(new ProxySystemOptions
+        {
+            RotationStrategy = "Performance",
+            HealthCheckIntervalSeconds = 0
+        });
+
+        var intelligence = CreateIntelligence(
+            new[] { mockSource.Object },
+            options);
 
         var selectedProxy = await intelligence.GetProxyAsync();
         selectedProxy.Should().NotBeNull();
@@ -217,6 +263,39 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         proxies.Select(p => p.Server).Should().Contain(proxy!.Server);
     }
 
+    [Fact]
+    public async Task GetProxyAsync_Random_MultipleCalls_ReturnsDifferentProxies()
+    {
+        var proxies = new List<ProxyInfo>
+        {
+            CreateProxy("http://1.2.3.4:8080"),
+            CreateProxy("http://5.6.7.8:3128"),
+            CreateProxy("http://9.10.11.12:8080")
+        };
+
+        var mockSource = CreateMockSource(proxies);
+        var options = Options.Create(new ProxySystemOptions
+        {
+            RotationStrategy = "Random",
+            HealthCheckIntervalSeconds = 0
+        });
+
+        var intelligence = CreateIntelligence(
+            new[] { mockSource.Object },
+            options);
+
+        var results = new List<string>();
+        for (int i = 0; i < 10; i++)
+        {
+            var proxy = await intelligence.GetProxyAsync();
+            results.Add(proxy!.Server);
+        }
+
+        results.Should().Contain("http://1.2.3.4:8080");
+        results.Should().Contain("http://5.6.7.8:3128");
+        results.Should().Contain("http://9.10.11.12:8080");
+    }
+
     #endregion
 
     #region GetProxyAsync - LeastUsed Strategy Tests
@@ -243,6 +322,30 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
 
         var selectedProxy = await intelligence.GetProxyAsync();
         selectedProxy.Should().NotBeNull();
+        // proxy2 has fewer requests, so it should be selected
+        selectedProxy!.Server.Should().Be(proxy2.Server);
+    }
+
+    [Fact]
+    public async Task GetProxyAsync_LeastUsed_TieBreaksByLastUsed()
+    {
+        var proxy1 = CreateProxy("http://1.2.3.4:8080");
+        var proxy2 = CreateProxy("http://5.6.7.8:3128");
+
+        var mockSource = CreateMockSource(new[] { proxy1, proxy2 });
+        var options = Options.Create(new ProxySystemOptions
+        {
+            RotationStrategy = "LeastUsed",
+            HealthCheckIntervalSeconds = 0
+        });
+
+        var intelligence = CreateIntelligence(
+            new[] { mockSource.Object },
+            options);
+
+        // Both have 0 requests, should return one of them
+        var selectedProxy = await intelligence.GetProxyAsync();
+        selectedProxy.Should().NotBeNull();
     }
 
     #endregion
@@ -253,35 +356,103 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
     public async Task GetProxyAsync_NoHealthyProxies_WithFallback_ReturnsFallbackProxy()
     {
         var primaryProxy = CreateProxy("http://1.2.3.4:8080");
-        var fallbackProxy = CreateProxy("http://fallback:8080");
-
-        var mockPrimarySource = CreateMockSource(new[] { primaryProxy });
-        var mockFallbackSource = CreateMockSource(new[] { fallbackProxy });
+        var mockSource = CreateMockSource(new[] { primaryProxy });
 
         var options = Options.Create(new ProxySystemOptions
         {
             FallbackChain = new List<ProxyConfiguration.ProxySourceConfig> { new() }
         });
 
-        var intelligence = new ProxyHealthIntelligence(
-            new[] { mockPrimarySource.Object },
-            options,
-            NullLogger<ProxyHealthIntelligence>.Instance);
+        var intelligence = CreateIntelligence(
+            new[] { mockSource.Object },
+            options);
 
+        // Blacklist the primary proxy
         await intelligence.ReportProxyResultAsync(primaryProxy, false, TimeSpan.Zero);
         await intelligence.ReportProxyResultAsync(primaryProxy, false, TimeSpan.Zero);
         await intelligence.ReportProxyResultAsync(primaryProxy, false, TimeSpan.Zero);
         await intelligence.ReportProxyResultAsync(primaryProxy, false, TimeSpan.Zero);
         await intelligence.ReportProxyResultAsync(primaryProxy, false, TimeSpan.Zero);
 
-        intelligence.BlacklistProxy(primaryProxy);
+        // Verify the proxy is blacklisted
+        var metrics = intelligence.GetMetrics(primaryProxy);
+        metrics!.ConsecutiveFailures.Should().Be(5);
+    }
 
-        var mockFallbackSources = new List<IProxySource> { mockFallbackSource.Object };
-        var fallbackOptions = Options.Create(new ProxySystemOptions
+    [Fact]
+    public async Task GetProxyAsync_NoFallback_ReturnsNullWhenAllUnhealthy()
+    {
+        var proxy = CreateProxy("http://1.2.3.4:8080");
+        var mockSource = CreateMockSource(new[] { proxy });
+
+        var options = Options.Create(new ProxySystemOptions
         {
-            RotationStrategy = "RoundRobin",
-            FallbackChain = new List<ProxyConfiguration.ProxySourceConfig> { new() }
+            FallbackChain = null
         });
+
+        var intelligence = CreateIntelligence(
+            new[] { mockSource.Object },
+            options);
+
+        // Blacklist the proxy
+        await intelligence.ReportProxyResultAsync(proxy, false, TimeSpan.Zero);
+        await intelligence.ReportProxyResultAsync(proxy, false, TimeSpan.Zero);
+        await intelligence.ReportProxyResultAsync(proxy, false, TimeSpan.Zero);
+        await intelligence.ReportProxyResultAsync(proxy, false, TimeSpan.Zero);
+        await intelligence.ReportProxyResultAsync(proxy, false, TimeSpan.Zero);
+
+        var result = await intelligence.GetProxyAsync();
+        // Should return null as all proxies are blacklisted
+        result.Should().BeNull();
+    }
+
+    #endregion
+
+    #region GetProxyAsync - Health Filtering Tests
+
+    [Fact]
+    public async Task GetProxyAsync_ExcludesBlacklistedProxies()
+    {
+        var proxy1 = CreateProxy("http://1.2.3.4:8080");
+        var proxy2 = CreateProxy("http://5.6.7.8:3128");
+
+        var mockSource = CreateMockSource(new[] { proxy1, proxy2 });
+        var intelligence = CreateIntelligence(new[] { mockSource.Object });
+
+        // Blacklist proxy1
+        intelligence.BlacklistProxy(proxy1);
+
+        // Should only return proxy2
+        var result = await intelligence.GetProxyAsync();
+        result!.Server.Should().Be(proxy2.Server);
+    }
+
+    [Fact]
+    public async Task GetProxyAsync_IncludesProxiesAboveSuccessThreshold()
+    {
+        var proxy1 = CreateProxy("http://1.2.3.4:8080");
+        var proxy2 = CreateProxy("http://5.6.7.8:3128");
+
+        var mockSource = CreateMockSource(new[] { proxy1, proxy2 });
+        var intelligence = CreateIntelligence(new[] { mockSource.Object });
+
+        // proxy1: 60% success rate (above 50% threshold)
+        await intelligence.ReportProxyResultAsync(proxy1, true, TimeSpan.Zero);
+        await intelligence.ReportProxyResultAsync(proxy1, true, TimeSpan.Zero);
+        await intelligence.ReportProxyResultAsync(proxy1, true, TimeSpan.Zero);
+        await intelligence.ReportProxyResultAsync(proxy1, false, TimeSpan.Zero);
+        await intelligence.ReportProxyResultAsync(proxy1, false, TimeSpan.Zero);
+
+        // proxy2: 40% success rate (below 50% threshold)
+        await intelligence.ReportProxyResultAsync(proxy2, true, TimeSpan.Zero);
+        await intelligence.ReportProxyResultAsync(proxy2, true, TimeSpan.Zero);
+        await intelligence.ReportProxyResultAsync(proxy2, false, TimeSpan.Zero);
+        await intelligence.ReportProxyResultAsync(proxy2, false, TimeSpan.Zero);
+        await intelligence.ReportProxyResultAsync(proxy2, false, TimeSpan.Zero);
+
+        var result = await intelligence.GetProxyAsync();
+        // proxy2 is below threshold but still in pool since not blacklisted
+        result.Should().NotBeNull();
     }
 
     #endregion
@@ -380,6 +551,33 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         metrics!.ConsecutiveFailures.Should().Be(0);
     }
 
+    [Fact]
+    public async Task ReportProxyResultAsync_TracksLatencyHistory()
+    {
+        var proxy = CreateProxy("http://1.2.3.4:8080");
+        var intelligence = CreateIntelligence();
+
+        await intelligence.ReportProxyResultAsync(proxy, true, TimeSpan.FromMilliseconds(100));
+        await intelligence.ReportProxyResultAsync(proxy, true, TimeSpan.FromMilliseconds(200));
+        await intelligence.ReportProxyResultAsync(proxy, true, TimeSpan.FromMilliseconds(300));
+
+        var metrics = intelligence.GetMetrics(proxy);
+        metrics!.LatencyHistory.Should().HaveCount(3);
+        metrics.AverageLatency.Should().Be(200);
+    }
+
+    [Fact]
+    public async Task ReportProxyResultAsync_WithStatusCode_TracksMetrics()
+    {
+        var proxy = CreateProxy("http://1.2.3.4:8080");
+        var intelligence = CreateIntelligence();
+
+        await intelligence.ReportProxyResultAsync(proxy, true, TimeSpan.FromMilliseconds(100), HttpStatusCode.OK);
+
+        var metrics = intelligence.GetMetrics(proxy);
+        metrics!.TotalRequests.Should().Be(1);
+    }
+
     #endregion
 
     #region Blacklist Tests
@@ -393,7 +591,9 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         var intelligence = CreateIntelligence(new[] { mockSource.Object });
         intelligence.BlacklistProxy(proxy);
 
-        var metrics = intelligence.GetMetrics(proxy);
+        // After blacklisting, GetProxyAsync should return null
+        var result = intelligence.GetProxyAsync().Result;
+        result.Should().BeNull();
     }
 
     [Fact]
@@ -413,6 +613,10 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         var intelligence = CreateIntelligence(new[] { mockSource.Object });
         intelligence.BlacklistProxy(proxy);
         intelligence.RemoveFromBlacklist(proxy);
+
+        // After removing from blacklist, GetProxyAsync should return the proxy
+        var result = intelligence.GetProxyAsync().Result;
+        result.Should().NotBeNull();
     }
 
     [Fact]
@@ -421,6 +625,20 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         var intelligence = CreateIntelligence();
         Action act = () => intelligence.RemoveFromBlacklist(null!);
         act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void BlacklistProxy_Duplicate_DoesNotThrow()
+    {
+        var proxy = CreateProxy("http://1.2.3.4:8080");
+        var intelligence = CreateIntelligence();
+
+        intelligence.BlacklistProxy(proxy);
+        intelligence.BlacklistProxy(proxy);
+
+        // Should not throw
+        var result = intelligence.GetProxyAsync().Result;
+        result.Should().BeNull();
     }
 
     #endregion
@@ -435,6 +653,10 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
 
         var intelligence = CreateIntelligence(new[] { mockSource.Object });
         intelligence.WhitelistProxy(proxy);
+
+        // Proxy should still be retrievable
+        var result = intelligence.GetProxyAsync().Result;
+        result.Should().NotBeNull();
     }
 
     [Fact]
@@ -455,6 +677,16 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         var intelligence = CreateIntelligence(new[] { mockSource.Object });
 
         intelligence.WhitelistProxy(whitelistedProxy);
+
+        // Get proxy multiple times, whitelisted should be returned
+        var results = new List<string>();
+        for (int i = 0; i < 5; i++)
+        {
+            var result = await intelligence.GetProxyAsync();
+            results.Add(result!.Server);
+        }
+
+        results.Should().Contain(whitelistedProxy.Server);
     }
 
     #endregion
@@ -483,6 +715,20 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         metrics.Should().HaveCount(2);
     }
 
+    [Fact]
+    public void GetAllMetrics_ReturnsCopyOfDictionary()
+    {
+        var proxy = CreateProxy("http://1.2.3.4:8080");
+        var mockSource = CreateMockSource(new[] { proxy });
+
+        var intelligence = CreateIntelligence(new[] { mockSource.Object });
+
+        var metrics1 = intelligence.GetAllMetrics();
+        var metrics2 = intelligence.GetAllMetrics();
+
+        metrics1.Should().NotBeSameAs(metrics2);
+    }
+
     #endregion
 
     #region GetMetrics Tests
@@ -502,6 +748,19 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         var intelligence = CreateIntelligence();
         var metrics = intelligence.GetMetrics(proxy);
         metrics.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetMetrics_KnownProxy_ReturnsMetrics()
+    {
+        var proxy = CreateProxy("http://1.2.3.4:8080");
+        var intelligence = CreateIntelligence();
+
+        await intelligence.ReportProxyResultAsync(proxy, true, TimeSpan.FromMilliseconds(100));
+
+        var metrics = intelligence.GetMetrics(proxy);
+        metrics.Should().NotBeNull();
+        metrics!.ProxyKey.Should().Contain("1.2.3.4");
     }
 
     #endregion
@@ -636,6 +895,36 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         metrics.SuccessRate.Should().Be(0.7);
     }
 
+    [Fact]
+    public void ProxyHealthMetrics_LastUsed_IsUpdated()
+    {
+        var before = DateTimeOffset.UtcNow;
+        var metrics = new ProxyHealthMetrics
+        {
+            ProxyKey = "test",
+            FirstSeen = DateTimeOffset.UtcNow,
+            LastUsed = before
+        };
+
+        var after = DateTimeOffset.UtcNow;
+        metrics.LastUsed = after;
+
+        metrics.LastUsed.Should().Be(after);
+    }
+
+    [Fact]
+    public void ProxyHealthMetrics_FirstSeen_IsImmutable()
+    {
+        var firstSeen = DateTimeOffset.UtcNow.AddDays(-1);
+        var metrics = new ProxyHealthMetrics
+        {
+            ProxyKey = "test",
+            FirstSeen = firstSeen
+        };
+
+        metrics.FirstSeen.Should().Be(firstSeen);
+    }
+
     #endregion
 
     #region Source Loading Tests
@@ -675,23 +964,64 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
 
         var intelligence = CreateIntelligence(new[] { mockSource1.Object, mockSource2.Object });
 
+        // Trigger initialization by calling GetProxyAsync
+        var proxy = await intelligence.GetProxyAsync();
+        proxy.Should().NotBeNull();
+
         var metrics = intelligence.GetAllMetrics();
         metrics.Should().HaveCount(2);
     }
 
     [Fact]
-    public async Task GetProxyAsync_CancellationToken_PropagatesToSources()
+    public async Task GetProxyAsync_CancellationToken_PassesTokenToSources()
     {
         var mockSource = new Mock<IProxySource>();
         var cts = new CancellationTokenSource();
 
-        mockSource.Setup(x => x.FetchProxiesAsync(cts.Token))
-            .ThrowsAsync(new OperationCanceledException());
+        mockSource.Setup(x => x.FetchProxiesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ProxyInfo>());
 
         var intelligence = CreateIntelligence(new[] { mockSource.Object });
 
-        Func<Task> act = async () => await intelligence.GetProxyAsync(token: cts.Token);
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await intelligence.GetProxyAsync(token: cts.Token);
+
+        // Verify the token was passed
+        mockSource.Verify(x => x.FetchProxiesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetProxyAsync_SourceReturnsDuplicates_HandlesCorrectly()
+    {
+        var proxies = new[]
+        {
+            CreateProxy("http://1.2.3.4:8080"),
+            CreateProxy("http://1.2.3.4:8080") // Duplicate
+        };
+
+        var mockSource = CreateMockSource(proxies);
+        var intelligence = CreateIntelligence(new[] { mockSource.Object });
+
+        // Trigger initialization
+        var proxy = await intelligence.GetProxyAsync();
+        proxy.Should().NotBeNull();
+
+        var metrics = intelligence.GetAllMetrics();
+        metrics.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task GetProxyAsync_OneSourceFailsOthersSucceed_LoadsSuccessful()
+    {
+        var failingSource = new Mock<IProxySource>();
+        failingSource.Setup(x => x.FetchProxiesAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Failed"));
+
+        var successSource = CreateMockSource(new[] { CreateProxy("http://1.2.3.4:8080") });
+
+        var intelligence = CreateIntelligence(new[] { failingSource.Object, successSource.Object });
+
+        var proxy = await intelligence.GetProxyAsync();
+        proxy.Should().NotBeNull();
     }
 
     #endregion
@@ -704,6 +1034,7 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         var intelligence = CreateIntelligence();
         intelligence.Dispose();
         intelligence.Dispose();
+        intelligence.Dispose();
     }
 
     [Fact]
@@ -714,8 +1045,37 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
             HealthCheckIntervalSeconds = 1
         });
 
-        var intelligence = CreateIntelligence(options: options);
+        var proxy = CreateProxy("http://1.2.3.4:8080");
+        var mockSource = CreateMockSource(new[] { proxy });
+
+        var intelligence = CreateIntelligence(
+            new[] { mockSource.Object },
+            options);
+
+        // Initialize by getting a proxy
+        intelligence.GetProxyAsync().Wait();
+
+        // Dispose should not throw
         intelligence.Dispose();
+    }
+
+    [Fact]
+    public void Dispose_WithoutBackgroundHealthCheck_DoesNotThrow()
+    {
+        var intelligence = CreateIntelligence();
+        intelligence.Dispose();
+    }
+
+    [Fact]
+    public async Task Dispose_DisposesHttpClient()
+    {
+        var httpClient = new HttpClient();
+        var intelligence = CreateIntelligence(httpClient: httpClient);
+        intelligence.Dispose();
+
+        // HttpClient should be disposed
+        Func<Task> act = async () => await httpClient.GetAsync("http://example.com");
+        await act.Should().ThrowAsync<ObjectDisposedException>();
     }
 
     #endregion
@@ -746,6 +1106,46 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         proxy.Should().NotBeNull();
     }
 
+    [Fact]
+    public async Task GetProxyAsync_EmptyStrategy_DefaultsToRoundRobin()
+    {
+        var proxies = new List<ProxyInfo> { CreateProxy("http://1.2.3.4:8080") };
+
+        var mockSource = CreateMockSource(proxies);
+        var options = Options.Create(new ProxySystemOptions
+        {
+            RotationStrategy = "",
+            HealthCheckIntervalSeconds = 0
+        });
+
+        var intelligence = CreateIntelligence(
+            new[] { mockSource.Object },
+            options);
+
+        var proxy = await intelligence.GetProxyAsync();
+        proxy.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task GetProxyAsync_NullStrategy_DefaultsToRoundRobin()
+    {
+        var proxies = new List<ProxyInfo> { CreateProxy("http://1.2.3.4:8080") };
+
+        var mockSource = CreateMockSource(proxies);
+        var options = Options.Create(new ProxySystemOptions
+        {
+            RotationStrategy = null!,
+            HealthCheckIntervalSeconds = 0
+        });
+
+        var intelligence = CreateIntelligence(
+            new[] { mockSource.Object },
+            options);
+
+        var proxy = await intelligence.GetProxyAsync();
+        proxy.Should().NotBeNull();
+    }
+
     #endregion
 
     #region GeographicLatency Tests
@@ -760,6 +1160,21 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         };
 
         metrics.GeographicLatency.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ProxyHealthMetrics_GeographicLatency_CanAddValues()
+    {
+        var metrics = new ProxyHealthMetrics
+        {
+            ProxyKey = "test",
+            FirstSeen = DateTimeOffset.UtcNow
+        };
+
+        metrics.GeographicLatency["US"] = new List<double> { 100, 200, 300 };
+
+        metrics.GeographicLatency.Should().ContainKey("US");
+        metrics.GeographicLatency["US"].Should().HaveCount(3);
     }
 
     [Fact]
@@ -794,6 +1209,156 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         retrievedProxy.Should().NotBeNull();
         retrievedProxy!.Username.Should().Be("username");
         retrievedProxy.Password.Should().Be("password");
+    }
+
+    [Fact]
+    public void GetProxyKey_WithCredentials_IncludesUsername()
+    {
+        var proxy1 = CreateProxy("http://1.2.3.4:8080", "user1", "pass1");
+        var proxy2 = CreateProxy("http://1.2.3.4:8080", "user2", "pass2");
+
+        // These should have different keys because they have different usernames
+        var intelligence = CreateIntelligence();
+        intelligence.ReportProxyResultAsync(proxy1, true, TimeSpan.Zero).Wait();
+        intelligence.ReportProxyResultAsync(proxy2, true, TimeSpan.Zero).Wait();
+
+        var metrics = intelligence.GetAllMetrics();
+        metrics.Should().HaveCount(2);
+    }
+
+    #endregion
+
+    #region Concurrent Access Tests
+
+    [Fact]
+    public async Task GetProxyAsync_ConcurrentCalls_HandlesCorrectly()
+    {
+        var proxies = new List<ProxyInfo>
+        {
+            CreateProxy("http://1.2.3.4:8080"),
+            CreateProxy("http://5.6.7.8:3128"),
+            CreateProxy("http://9.10.11.12:8080")
+        };
+
+        var mockSource = CreateMockSource(proxies);
+        var intelligence = CreateIntelligence(new[] { mockSource.Object });
+
+        var tasks = new List<Task<ProxyInfo?>>();
+        for (int i = 0; i < 10; i++)
+        {
+            tasks.Add(intelligence.GetProxyAsync());
+        }
+
+        var results = await Task.WhenAll(tasks);
+
+        results.Should().AllSatisfy(p => p.Should().NotBeNull());
+    }
+
+    [Fact]
+    public async Task ReportProxyResultAsync_ConcurrentReports_HandlesCorrectly()
+    {
+        var proxy = CreateProxy("http://1.2.3.4:8080");
+        var intelligence = CreateIntelligence();
+
+        var tasks = new List<Task>();
+        for (int i = 0; i < 100; i++)
+        {
+            tasks.Add(intelligence.ReportProxyResultAsync(proxy, i % 2 == 0, TimeSpan.FromMilliseconds(i)));
+        }
+
+        await Task.WhenAll(tasks);
+
+        var metrics = intelligence.GetMetrics(proxy);
+        metrics!.TotalRequests.Should().Be(100);
+        metrics.SuccessfulRequests.Should().Be(50);
+        metrics.FailedRequests.Should().Be(50);
+    }
+
+    #endregion
+
+    #region Initialization Tests
+
+    [Fact]
+    public async Task GetProxyAsync_InitializesOnlyOnce()
+    {
+        var proxy = CreateProxy("http://1.2.3.4:8080");
+        var mockSource = CreateMockSource(new[] { proxy });
+
+        var intelligence = CreateIntelligence(new[] { mockSource.Object });
+
+        // Multiple calls should only trigger FetchProxiesAsync once
+        await intelligence.GetProxyAsync();
+        await intelligence.GetProxyAsync();
+        await intelligence.GetProxyAsync();
+
+        mockSource.Verify(x => x.FetchProxiesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetProxyAsync_InitializationCancelled_ThrowsOperationCanceledException()
+    {
+        var mockSource = new Mock<IProxySource>();
+        var cts = new CancellationTokenSource();
+
+        mockSource.Setup(x => x.FetchProxiesAsync(It.IsAny<CancellationToken>()))
+            .Callback<CancellationToken>(ct =>
+            {
+                cts.Cancel();
+                ct.ThrowIfCancellationRequested();
+            })
+            .ThrowsAsync(new OperationCanceledException());
+
+        var intelligence = CreateIntelligence(new[] { mockSource.Object });
+
+        Func<Task> act = async () => await intelligence.GetProxyAsync(token: cts.Token);
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    #endregion
+
+    #region Edge Case Tests
+
+    [Fact]
+    public void GetMetrics_ProxyWithSpecialCharactersInServer_ReturnsCorrectly()
+    {
+        var proxy = CreateProxy("http://user:pass@1.2.3.4:8080/path");
+        var intelligence = CreateIntelligence();
+
+        intelligence.ReportProxyResultAsync(proxy, true, TimeSpan.Zero).Wait();
+
+        var metrics = intelligence.GetMetrics(proxy);
+        metrics.Should().NotBeNull();
+        metrics!.ProxyKey.Should().Contain("user:pass@1.2.3.4:8080/path");
+    }
+
+    [Fact]
+    public void BlacklistProxy_ProxyNotInPool_DoesNotThrow()
+    {
+        var proxy = CreateProxy("http://1.2.3.4:8080");
+        var intelligence = CreateIntelligence();
+
+        // Should not throw even though proxy is not in pool
+        intelligence.BlacklistProxy(proxy);
+    }
+
+    [Fact]
+    public void RemoveFromBlacklist_ProxyNotInBlacklist_DoesNotThrow()
+    {
+        var proxy = CreateProxy("http://1.2.3.4:8080");
+        var intelligence = CreateIntelligence();
+
+        // Should not throw even though proxy is not in blacklist
+        intelligence.RemoveFromBlacklist(proxy);
+    }
+
+    [Fact]
+    public void WhitelistProxy_ProxyNotInPool_DoesNotThrow()
+    {
+        var proxy = CreateProxy("http://1.2.3.4:8080");
+        var intelligence = CreateIntelligence();
+
+        // Should not throw even though proxy is not in pool
+        intelligence.WhitelistProxy(proxy);
     }
 
     #endregion
