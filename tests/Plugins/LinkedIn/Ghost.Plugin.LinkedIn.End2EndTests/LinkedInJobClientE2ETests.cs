@@ -22,7 +22,7 @@ public sealed class LinkedInJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task SearchJobsAsync_WithValidCriteria_ReturnsJobListings()
+    public async Task SearchJobs_WithValidCriteria_ReturnsJobListingsAsync()
     {
         // Arrange
         LinkedInJobClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
@@ -43,7 +43,7 @@ public sealed class LinkedInJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetJobDetailsAsync_WithValidJobId_ReturnsJobDetails()
+    public async Task GetJobDetails_WithValidJobId_ReturnsJobDetailsAsync()
     {
         // Arrange
         LinkedInJobClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
@@ -74,7 +74,7 @@ public sealed class LinkedInJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetSavedJobsAsync_ThrowsNotImplementedException()
+    public async Task GetSavedJobs_ThrowsNotImplementedExceptionAsync()
     {
         // Arrange
         LinkedInJobClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
@@ -85,7 +85,7 @@ public sealed class LinkedInJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetApplicationsAsync_ThrowsNotImplementedException()
+    public async Task GetApplications_ThrowsNotImplementedExceptionAsync()
     {
         // Arrange
         LinkedInJobClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
@@ -96,7 +96,7 @@ public sealed class LinkedInJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task ApplyAsync_WithValidJobId_ReturnsJobApplication()
+    public async Task Apply_WithValidJobId_ReturnsJobApplicationAsync()
     {
         // Arrange
         LinkedInJobClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();

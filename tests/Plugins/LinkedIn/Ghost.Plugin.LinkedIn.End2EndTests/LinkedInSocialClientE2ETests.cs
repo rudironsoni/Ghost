@@ -22,7 +22,7 @@ public sealed class LinkedInSocialClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetProfileAsync_WithValidProfileId_ReturnsProfile()
+    public async Task GetProfile_WithValidProfileId_ReturnsProfileAsync()
     {
         // Arrange
         LinkedInSocialClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
@@ -38,7 +38,7 @@ public sealed class LinkedInSocialClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task SearchProfilesAsync_WithValidCriteria_ReturnsProfiles()
+    public async Task SearchProfiles_WithValidCriteria_ReturnsProfilesAsync()
     {
         // Arrange
         LinkedInSocialClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
@@ -71,7 +71,7 @@ public sealed class LinkedInSocialClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetConnectionsAsync_ReturnsConnections()
+    public async Task GetConnections_ReturnsConnectionsAsync()
     {
         // Arrange
         LinkedInSocialClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
@@ -85,7 +85,7 @@ public sealed class LinkedInSocialClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task SendConnectionRequestAsync_DoesNotThrow()
+    public async Task SendConnectionRequest_DoesNotThrowAsync()
     {
         // Arrange
         LinkedInSocialClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();

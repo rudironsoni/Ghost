@@ -72,7 +72,7 @@ public sealed class InfoJobsPluginE2ETests
     {
         // Arrange
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:InfoJobs:Enabled"] = "true",
                 ["Ghost:Extensions:InfoJobs:ApiKey"] = "test-key",
@@ -100,7 +100,7 @@ public sealed class InfoJobsPluginE2ETests
     {
         // Arrange
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:InfoJobs:Enabled"] = "true",
                 ["Ghost:Extensions:InfoJobs:ApiKey"] = "test-key",
@@ -129,7 +129,7 @@ public sealed class InfoJobsPluginE2ETests
     {
         // Arrange
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:InfoJobs:Enabled"] = "true",
                 ["Ghost:Plugins:InfoJobs:RegisterReadinessServices"] = "true"
@@ -158,7 +158,7 @@ public sealed class InfoJobsPluginE2ETests
     {
         // Arrange
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:InfoJobs:Enabled"] = "true",
                 ["Ghost:Plugins:InfoJobs:RegisterReadinessServices"] = "true"

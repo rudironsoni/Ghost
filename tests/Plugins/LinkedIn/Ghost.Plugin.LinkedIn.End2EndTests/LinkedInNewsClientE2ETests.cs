@@ -22,7 +22,7 @@ public sealed class LinkedInNewsClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetArticlesAsync_ReturnsArticles()
+    public async Task GetArticles_ReturnsArticlesAsync()
     {
         // Arrange
         LinkedInNewsClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
@@ -37,7 +37,7 @@ public sealed class LinkedInNewsClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task SearchAsync_WithValidQuery_ReturnsArticles()
+    public async Task Search_WithValidQuery_ReturnsArticlesAsync()
     {
         // Arrange
         LinkedInNewsClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
@@ -67,7 +67,7 @@ public sealed class LinkedInNewsClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetArticleAsync_ThrowsNotImplementedException()
+    public async Task GetArticle_ThrowsNotImplementedExceptionAsync()
     {
         // Arrange
         LinkedInNewsClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInNewsClient>();

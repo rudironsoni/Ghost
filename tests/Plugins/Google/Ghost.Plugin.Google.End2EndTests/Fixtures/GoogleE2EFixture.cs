@@ -221,6 +221,6 @@ public sealed class GoogleE2EFixture : IDisposable
 /// Collection attribute for Google E2E tests.
 /// </summary>
 [CollectionDefinition("GoogleEnd2End")]
-public class GoogleE2ECollection : ICollectionFixture<GoogleE2EFixture>
+public class GoogleE2EFixtures : ICollectionFixture<GoogleE2EFixture>
 {
 }

@@ -22,7 +22,7 @@ public sealed class IndeedJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task SearchJobsAsync_WithValidCriteria_ReturnsJobListings()
+    public async Task SearchJobs_WithValidCriteria_ReturnsJobListingsAsync()
     {
         // Arrange
         IndeedJobClient client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
@@ -40,14 +40,14 @@ public sealed class IndeedJobClientE2ETests
         Assert.NotNull(results);
         Assert.NotEmpty(results);
 
-        JobListing firstJob = results.First();
+        JobListing firstJob = results[0];
         Assert.NotNull(firstJob.Id);
         Assert.Equal("Indeed", firstJob.Source);
     }
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetJobDetailsAsync_WithValidJobId_ReturnsJobDetails()
+    public async Task GetJobDetails_WithValidJobId_ReturnsJobDetailsAsync()
     {
         // Arrange
         IndeedJobClient client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
@@ -64,7 +64,7 @@ public sealed class IndeedJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task PlatformName_ReturnsExpectedValue()
+    public async Task PlatformName_ReturnsExpectedValueAsync()
     {
         // Arrange
         IndeedJobClient client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
@@ -78,7 +78,7 @@ public sealed class IndeedJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetSavedJobsAsync_ReturnsEmptyList()
+    public async Task GetSavedJobs_ReturnsEmptyListAsync()
     {
         // Arrange
         IndeedJobClient client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
@@ -93,7 +93,7 @@ public sealed class IndeedJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetApplicationsAsync_ReturnsEmptyList()
+    public async Task GetApplications_ReturnsEmptyListAsync()
     {
         // Arrange
         IndeedJobClient client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();
@@ -108,7 +108,7 @@ public sealed class IndeedJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task ApplyAsync_ReturnsJobApplication()
+    public async Task Apply_ReturnsJobApplicationAsync()
     {
         // Arrange
         IndeedJobClient client = _fixture.ServiceProvider.GetRequiredService<IndeedJobClient>();

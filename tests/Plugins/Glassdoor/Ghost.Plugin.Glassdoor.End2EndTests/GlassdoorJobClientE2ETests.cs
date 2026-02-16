@@ -22,7 +22,7 @@ public sealed class GlassdoorJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task SearchJobsAsync_WithValidCriteria_ReturnsJobListings()
+    public async Task SearchJobs_WithValidCriteria_ReturnsJobListingsAsync()
     {
         // Arrange
         GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
@@ -40,7 +40,7 @@ public sealed class GlassdoorJobClientE2ETests
         Assert.NotNull(results);
         Assert.NotEmpty(results);
 
-        JobListing firstJob = results.First();
+        JobListing firstJob = results[0];
         Assert.NotNull(firstJob.Id);
         Assert.Equal("Software Engineer", firstJob.Title);
         Assert.Equal("Tech Corp", firstJob.Company);
@@ -49,7 +49,7 @@ public sealed class GlassdoorJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetJobDetailsAsync_WithValidJobId_ReturnsJobDetails()
+    public async Task GetJobDetails_WithValidJobId_ReturnsJobDetailsAsync()
     {
         // Arrange
         GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
@@ -66,7 +66,7 @@ public sealed class GlassdoorJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task SearchJobsAsync_WithEmptyQuery_ReturnsEmptyResults()
+    public async Task SearchJobs_WithEmptyQuery_ReturnsEmptyResultsAsync()
     {
         // Arrange
         GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
@@ -86,7 +86,7 @@ public sealed class GlassdoorJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task PlatformName_ReturnsExpectedValue()
+    public async Task PlatformName_ReturnsExpectedValueAsync()
     {
         // Arrange
         GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
@@ -100,7 +100,7 @@ public sealed class GlassdoorJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetSavedJobsAsync_ReturnsEmptyList()
+    public async Task GetSavedJobs_ReturnsEmptyListAsync()
     {
         // Arrange
         GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
@@ -115,7 +115,7 @@ public sealed class GlassdoorJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetApplicationsAsync_ReturnsEmptyList()
+    public async Task GetApplications_ReturnsEmptyListAsync()
     {
         // Arrange
         GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();

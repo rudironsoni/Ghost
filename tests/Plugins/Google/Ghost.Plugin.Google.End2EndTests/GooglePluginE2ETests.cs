@@ -75,7 +75,7 @@ public sealed class GooglePluginE2ETests
     {
         // Arrange
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Plugins:Google:Jobs:Enabled"] = "true",
                 ["Ghost:Plugins:Google:Jobs:ApiKey"] = "test-key"
@@ -101,7 +101,7 @@ public sealed class GooglePluginE2ETests
     {
         // Arrange
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Plugins:Google:Gemini:Enabled"] = "true",
                 ["Ghost:Plugins:Google:Gemini:ApiKey"] = "test-key"
