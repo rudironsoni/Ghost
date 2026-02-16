@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Ghost.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -7,15 +8,13 @@ namespace Ghost.Extensions.Tests;
 public class ServiceCollectionExtensionsTests
 {
     [Fact]
-    [Obsolete("This test validates the obsolete AddGhostKernel method. Use GhostKernelManager instead.")]
-    public void AddGhostKernelRegistersOptionsAndLoggerFactory()
+    public void AddGhostKernelServices_RegistersDeduplicationService()
     {
         var services = new ServiceCollection();
-        services.AddGhostKernel();
+        services.AddGhostKernelServices();
 
-        services.Should().Contain(sd => sd.ServiceType == typeof(Ghost.Kernel.KernelOptions));
-        services.Should().Contain(sd => sd.ServiceType == typeof(Microsoft.Extensions.Logging.ILoggerFactory));
-        // Do not resolve GhostKernel here as it will attempt to launch a browser; ensure descriptor exists
-        services.Should().Contain(sd => sd.ServiceType == typeof(Ghost.Kernel.GhostKernel));
+        services.Should().Contain(sd => sd.ServiceType == typeof(IDeduplicationService));
+        services.Should().Contain(sd => sd.ImplementationType == typeof(DeduplicationService));
+        services.Should().Contain(sd => sd.Lifetime == ServiceLifetime.Singleton);
     }
 }
