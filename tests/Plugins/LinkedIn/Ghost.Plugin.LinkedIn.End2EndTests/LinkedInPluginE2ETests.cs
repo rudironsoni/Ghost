@@ -95,7 +95,7 @@ public sealed class LinkedInPluginE2ETests
     {
         // Arrange
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:LinkedIn:Enabled"] = "true",
                 ["Ghost:Extensions:LinkedIn:BaseUrl"] = "https://www.linkedin.com"
@@ -127,7 +127,7 @@ public sealed class LinkedInPluginE2ETests
     {
         // Arrange
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:LinkedIn:Enabled"] = "true",
                 ["Ghost:Extensions:LinkedIn:BaseUrl"] = "https://www.linkedin.com"
@@ -157,7 +157,7 @@ public sealed class LinkedInPluginE2ETests
     {
         // Arrange
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:LinkedIn:Enabled"] = "true"
             })
@@ -186,7 +186,7 @@ public sealed class LinkedInPluginE2ETests
     {
         // Arrange
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:LinkedIn:Enabled"] = "true",
                 ["Ghost:Extensions:LinkedIn:SessionPool:MaxSessions"] = "5"

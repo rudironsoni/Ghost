@@ -71,7 +71,7 @@ public sealed class IndeedPluginE2ETests
     {
         // Arrange
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:Indeed:Enabled"] = "true",
                 ["Ghost:Extensions:Indeed:Country"] = "us",
@@ -98,7 +98,7 @@ public sealed class IndeedPluginE2ETests
     {
         // Arrange
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:Indeed:Enabled"] = "true",
                 ["Ghost:Extensions:Indeed:Country"] = "us"

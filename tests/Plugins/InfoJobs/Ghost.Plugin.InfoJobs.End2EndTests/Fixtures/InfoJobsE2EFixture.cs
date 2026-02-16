@@ -271,6 +271,6 @@ public sealed class InfoJobsE2EFixture : IDisposable
 /// Collection attribute for InfoJobs E2E tests.
 /// </summary>
 [CollectionDefinition("InfoJobsEnd2End")]
-public class InfoJobsE2ECollection : ICollectionFixture<InfoJobsE2EFixture>
+public class InfoJobsE2EFixtures : ICollectionFixture<InfoJobsE2EFixture>
 {
 }

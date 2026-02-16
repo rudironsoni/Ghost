@@ -172,6 +172,6 @@ public sealed class GlassdoorE2EFixture : IDisposable
 /// Ensures tests run sequentially with shared fixture.
 /// </summary>
 [CollectionDefinition("GlassdoorEnd2End")]
-public class GlassdoorE2ECollection : ICollectionFixture<GlassdoorE2EFixture>
+public class GlassdoorE2EFixtures : ICollectionFixture<GlassdoorE2EFixture>
 {
 }

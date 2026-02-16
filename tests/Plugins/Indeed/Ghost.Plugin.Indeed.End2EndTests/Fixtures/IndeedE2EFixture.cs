@@ -72,7 +72,7 @@ public sealed class IndeedE2EFixture : IDisposable
         services.AddSingleton<IndeedApiClient>(sp =>
         {
             ILogger<IndeedApiClient> logger = sp.GetRequiredService<ILogger<IndeedApiClient>>();
-            return new IndeedApiClient(sp.GetService<IProxyProvider>(), sp.GetRequiredService<IndeedOptions>(), logger);
+            return new IndeedApiClient(sp.GetService<IProxyProvider>()!, sp.GetRequiredService<IndeedOptions>(), logger);
         });
 
         services.AddScoped<IndeedJobClient>();
@@ -212,6 +212,6 @@ public sealed class IndeedE2EFixture : IDisposable
 /// Collection attribute for Indeed E2E tests.
 /// </summary>
 [CollectionDefinition("IndeedEnd2End")]
-public class IndeedE2ECollection : ICollectionFixture<IndeedE2EFixture>
+public class IndeedE2EFixtures : ICollectionFixture<IndeedE2EFixture>
 {
 }

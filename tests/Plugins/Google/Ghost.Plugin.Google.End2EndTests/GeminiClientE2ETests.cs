@@ -23,7 +23,7 @@ public sealed class GeminiClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task CompleteAsync_WithValidRequest_ReturnsInferenceResponse()
+    public async Task Complete_WithValidRequest_ReturnsInferenceResponseAsync()
     {
         // Arrange
         GeminiClient client = _fixture.ServiceProvider.GetRequiredService<GeminiClient>();
@@ -63,7 +63,7 @@ public sealed class GeminiClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task StreamAsync_WithValidRequest_ReturnsChunks()
+    public async Task Stream_WithValidRequest_ReturnsChunksAsync()
     {
         // Arrange
         GeminiClient client = _fixture.ServiceProvider.GetRequiredService<GeminiClient>();

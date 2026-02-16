@@ -23,7 +23,7 @@ public sealed class GoogleJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task SearchJobsAsync_WithValidCriteria_ReturnsJobListings()
+    public async Task SearchJobs_WithValidCriteria_ReturnsJobListingsAsync()
     {
         // Arrange
         GoogleJobClient client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
@@ -41,14 +41,14 @@ public sealed class GoogleJobClientE2ETests
         Assert.NotNull(results);
         Assert.NotEmpty(results);
 
-        JobListing firstJob = results.First();
+        JobListing firstJob = results[0];
         Assert.NotNull(firstJob.Id);
         Assert.Equal("Google", firstJob.Source);
     }
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetJobDetailsAsync_WithValidJobId_ReturnsJobDetails()
+    public async Task GetJobDetails_WithValidJobId_ReturnsJobDetailsAsync()
     {
         // Arrange
         GoogleJobClient client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
@@ -65,7 +65,7 @@ public sealed class GoogleJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task PlatformName_ReturnsExpectedValue()
+    public async Task PlatformName_ReturnsExpectedValueAsync()
     {
         // Arrange
         GoogleJobClient client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
@@ -79,7 +79,7 @@ public sealed class GoogleJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task SearchJobsAsync_WithEmptyQuery_ReturnsResults()
+    public async Task SearchJobs_WithEmptyQuery_ReturnsResultsAsync()
     {
         // Arrange
         GoogleJobClient client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
@@ -99,7 +99,7 @@ public sealed class GoogleJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetSavedJobsAsync_ThrowsNotImplementedException()
+    public async Task GetSavedJobs_ThrowsNotImplementedExceptionAsync()
     {
         // Arrange
         GoogleJobClient client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
@@ -110,7 +110,7 @@ public sealed class GoogleJobClientE2ETests
 
     [Fact]
     [Trait("TestType", "End2End")]
-    public async Task GetApplicationsAsync_ThrowsNotImplementedException()
+    public async Task GetApplications_ThrowsNotImplementedExceptionAsync()
     {
         // Arrange
         GoogleJobClient client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();

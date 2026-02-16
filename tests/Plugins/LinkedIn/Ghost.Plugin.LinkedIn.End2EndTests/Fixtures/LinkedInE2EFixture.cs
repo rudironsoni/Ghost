@@ -1,3 +1,5 @@
+#pragma warning disable CA2012 // NSubstitute uses ValueTask patterns that trigger this warning
+
 using Ghost.Contracts.Jobs;
 using Ghost.Contracts.News;
 using Ghost.Contracts.Social;
@@ -81,8 +83,7 @@ public sealed class LinkedInE2EFixture : IDisposable
             .Returns(GetMockJobSearchHtml());
         mockPage.QuerySelectorAllAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns([]);
-        mockPage.DisposeAsync()
-            .Returns(ValueTask.CompletedTask);
+        mockPage.DisposeAsync().Returns(_ => ValueTask.CompletedTask);
 
         mockBrowserSession.NewPageAsync(Arg.Any<Ghost.PageOptions>(), Arg.Any<CancellationToken>())
             .Returns(mockPage);
@@ -185,6 +186,6 @@ public sealed class LinkedInE2EFixture : IDisposable
 /// Collection attribute for LinkedIn E2E tests.
 /// </summary>
 [CollectionDefinition("LinkedInEnd2End")]
-public class LinkedInE2ECollection : ICollectionFixture<LinkedInE2EFixture>
+public class LinkedInE2EFixtures : ICollectionFixture<LinkedInE2EFixture>
 {
 }

@@ -71,7 +71,7 @@ public sealed class GlassdoorPluginE2ETests
     {
         // Arrange
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:Glassdoor:Enabled"] = "true",
                 ["Ghost:Extensions:Glassdoor:BaseUrl"] = "https://www.glassdoor.com"
@@ -96,7 +96,7 @@ public sealed class GlassdoorPluginE2ETests
     {
         // Arrange
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:Glassdoor:Enabled"] = "true"
             })
