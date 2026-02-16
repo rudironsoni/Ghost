@@ -26,7 +26,14 @@ public class IndeedExtension : Ghost.Hosting.IExtension
         services.AddSingleton<Microsoft.Extensions.Options.IValidateOptions<IndeedOptions>, IndeedOptionsValidator>();
         services.Configure<IndeedOptions>(configuration.GetSection("Ghost:Extensions:Indeed"));
         IndeedOptions opts = configuration.GetSection("Ghost:Extensions:Indeed").Get<IndeedOptions>() ?? new IndeedOptions();
-        try { Console.WriteLine($"[DEBUG] IndeedExtension bound options: Country={opts.Country}"); } catch { }
+        try
+{
+    Console.WriteLine($"[DEBUG] IndeedExtension bound options: Country={opts.Country}");
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"[WARNING] Failed to log IndeedExtension options: {ex.Message}");
+}
 
         if (!opts.Enabled) return;
 

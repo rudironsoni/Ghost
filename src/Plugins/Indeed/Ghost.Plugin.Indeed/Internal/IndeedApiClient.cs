@@ -85,6 +85,12 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
     private static readonly Action<ILogger, string, Exception?> LogSessionCloseFailed =
         LoggerMessage.Define<string>(LogLevel.Error, new EventId(2014, "SessionCloseFailed"), "Failed to close session {SessionId} during disposal");
 
+    private static readonly Action<ILogger, string, Exception?> LogLoggingFailed =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(2015, "LoggingFailed"), "Failed to log {Message}");
+
+    private static readonly Action<ILogger, string, Exception?> LogDisposalFailed =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(2016, "DisposalFailed"), "Failed to dispose {Resource}");
+
     private static readonly CompositeFormat JobSearchQueryFormat = CompositeFormat.Parse(IndeedConstants.JobSearchQuery);
 
     /// <summary>
@@ -156,7 +162,10 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         {
             LogConstructedWithCountry(_logger, _country, null);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            LogLoggingFailed(_logger, "constructor country information", ex);
+        }
     }
 
     private async Task ApplyRateLimitAsync(CancellationToken ct)
@@ -396,150 +405,282 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
 
         try
         {
-            var context = new SessionAllocationContext(
-                PlatformName: "Indeed",
-                CountryCode: _country.ToString(),
-                SessionType: SessionType.Http,
-                ComplexityScore: 30,
-                Metadata: new Dictionary<string, string>
-                {
-                    ["Query"] = query,
-                    ["Location"] = location
-                }
-            );
-
-            var affinityOptions = new SessionAffinityOptions(
-                AffinityKey: affinityKey,
-                AffinityDuration: TimeSpan.FromMinutes(5),
-                AllowFallback: true
-            );
-
-            _currentSessionId = await _sessionOrchestrator!.AllocateSessionWithAffinityAsync(context, affinityOptions, default).ConfigureAwait(false);
-            LogSessionAllocated(_logger, _currentSessionId, null);
-
-            RotatingProxySession? httpSession = await _sessionOrchestrator.GetHttpSessionAsync(_currentSessionId, default).ConfigureAwait(false);
+            RotatingProxySession? httpSession = await AllocateAndGetHttpSessionAsync(query, location, affinityKey).ConfigureAwait(false);
             if (httpSession == null)
             {
-                LogSessionGetFailed(_logger, _currentSessionId, null);
                 yield break;
             }
 
-            do
+            await foreach (JsonElement result in ExecuteSearchWithPaginationAsync(httpSession, query, location, cursor, remaining).ConfigureAwait(false))
             {
-                await ApplyRateLimitAsync(default).ConfigureAwait(false);
-
-                string formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, remaining));
-                var payload = new { query = formattedQuery };
-                string json = JsonSerializer.Serialize(payload);
-                LogRequestPayload(_logger, json, null);
-
-                LogSendingRequest(_logger, _apiEndpoint, null);
-
-                foreach (KeyValuePair<string, IEnumerable<string>> header in _httpClient.DefaultRequestHeaders)
-                {
-                    LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
-                }
-
-                try
-                {
-                    LogUsingCountryForRequest(_logger, _country, null);
-                }
-                catch { }
-                HttpResponseMessage? resp = null;
-                string content = string.Empty;
-                bool success = false;
-                Stopwatch stopwatch;
-                StartRequestMetrics(out stopwatch);
-
-                for (int attempt = 0; attempt < 3; attempt++)
-                {
-                    try
-                    {
-                        using HttpRequestMessage req = CreateRequest(payload);
-                        foreach (KeyValuePair<string, IEnumerable<string>> header in req.Headers)
-                        {
-                            LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
-                        }
-                        if (req.Content?.Headers != null)
-                        {
-                            foreach (KeyValuePair<string, IEnumerable<string>> header in req.Content.Headers)
-                            {
-                                LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
-                            }
-                        }
-                        resp = await httpSession.ExecuteAsync(() => req, default).ConfigureAwait(false);
-
-                        if ((int)resp.StatusCode == 429)
-                        {
-                            await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000)).ConfigureAwait(false);
-                            continue;
-                        }
-
-                        LogResponseStatus(_logger, resp.StatusCode.ToString(), null);
-
-                        content = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-                        LogResponseContent(_logger, content, null);
-
-                        try { System.IO.File.WriteAllText($"logs/indeed_jobs_search_{attempt}.json", content); } catch { }
-
-                        resp.EnsureSuccessStatusCode();
-
-                        if (IsBlockedOrConsentRequired(content))
-                        {
-                            if (attempt < 2)
-                            {
-                                await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 2000)).ConfigureAwait(false);
-                                continue;
-                            }
-                            break;
-                        }
-
-                        success = true;
-                        break;
-                    }
-                    catch (HttpRequestException) when (attempt < 2)
-                    {
-                        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000)).ConfigureAwait(false);
-                        continue;
-                    }
-                    catch (Exception)
-                    {
-                        throw;
-                    }
-                }
-
-                EndRequestMetrics(success && resp != null && resp.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content), stopwatch);
-
-                if (!success || resp == null || !resp.IsSuccessStatusCode || IsBlockedOrConsentRequired(content))
-                {
-                    await CheckAndRecycleSessionAsync().ConfigureAwait(false);
-                    break;
-                }
-
-                using var doc = JsonDocument.Parse(content);
-                if (doc is null) yield break;
-
-                yield return doc.RootElement.Clone();
-
-                if (!doc.RootElement.TryGetProperty("data", out JsonElement data) || !data.TryGetProperty("jobSearch", out JsonElement jobSearch) || !jobSearch.TryGetProperty("pageInfo", out JsonElement pageInfo) || !pageInfo.TryGetProperty("nextCursor", out JsonElement nextCursorEl))
-                {
-                    break;
-                }
-
-                cursor = nextCursorEl.GetString();
-                if (string.IsNullOrEmpty(cursor)) break;
-                remaining -= 25;
+                yield return result;
             }
-            while (remaining > 0);
         }
         finally
         {
-            if (_currentSessionId != null)
+            await CloseCurrentSessionAsync().ConfigureAwait(false);
+        }
+    }
+
+    private async Task<RotatingProxySession?> AllocateAndGetHttpSessionAsync(string query, string location, string affinityKey)
+    {
+        SessionAllocationContext context = CreateSessionAllocationContext(query, location);
+        SessionAffinityOptions affinityOptions = new(
+            AffinityKey: affinityKey,
+            AffinityDuration: TimeSpan.FromMinutes(5),
+            AllowFallback: true
+        );
+
+        _currentSessionId = await _sessionOrchestrator!.AllocateSessionWithAffinityAsync(context, affinityOptions, default).ConfigureAwait(false);
+        LogSessionAllocated(_logger, _currentSessionId, null);
+
+        RotatingProxySession? httpSession = await _sessionOrchestrator.GetHttpSessionAsync(_currentSessionId, default).ConfigureAwait(false);
+        if (httpSession == null)
+        {
+            LogSessionGetFailed(_logger, _currentSessionId, null);
+        }
+
+        return httpSession;
+    }
+
+    private SessionAllocationContext CreateSessionAllocationContext(string query, string location)
+    {
+        return new SessionAllocationContext(
+            PlatformName: "Indeed",
+            CountryCode: _country.ToString(),
+            SessionType: SessionType.Http,
+            ComplexityScore: 30,
+            Metadata: new Dictionary<string, string>
             {
-                await _sessionOrchestrator!.CloseSessionAsync(_currentSessionId, default).ConfigureAwait(false);
-                _currentSessionId = null;
+                ["Query"] = query,
+                ["Location"] = location
+            }
+        );
+    }
+
+    private async IAsyncEnumerable<JsonElement> ExecuteSearchWithPaginationAsync(
+        RotatingProxySession httpSession,
+        string query,
+        string location,
+        string? cursor,
+        int remaining)
+    {
+        int itemsRemaining = remaining;
+        string? currentCursor = cursor;
+
+        do
+        {
+            SearchPageResult result = await ExecuteSearchPageAsync(httpSession, query, location, currentCursor, itemsRemaining).ConfigureAwait(false);
+
+            if (!result.Success || result.Document == null)
+            {
+                await CheckAndRecycleSessionAsync().ConfigureAwait(false);
+                yield break;
+            }
+
+            yield return result.Document.RootElement.Clone();
+
+            currentCursor = ExtractNextCursor(result.Document);
+            if (string.IsNullOrEmpty(currentCursor))
+            {
+                yield break;
+            }
+
+            itemsRemaining -= 25;
+        }
+        while (itemsRemaining > 0);
+    }
+
+    private static string? ExtractNextCursor(JsonDocument document)
+    {
+        if (!document.RootElement.TryGetProperty("data", out JsonElement data))
+        {
+            return null;
+        }
+
+        if (!data.TryGetProperty("jobSearch", out JsonElement jobSearch))
+        {
+            return null;
+        }
+
+        if (!jobSearch.TryGetProperty("pageInfo", out JsonElement pageInfo))
+        {
+            return null;
+        }
+
+        if (!pageInfo.TryGetProperty("nextCursor", out JsonElement nextCursorElement))
+        {
+            return null;
+        }
+
+        return nextCursorElement.GetString();
+    }
+
+    private async Task<SearchPageResult> ExecuteSearchPageAsync(
+        RotatingProxySession httpSession,
+        string query,
+        string location,
+        string? cursor,
+        int remaining)
+    {
+        await ApplyRateLimitAsync(default).ConfigureAwait(false);
+
+        string formattedQuery = BuildSearchQuery(query, location, remaining);
+        var payload = new { query = formattedQuery };
+
+        LogSearchRequest(payload);
+
+        HttpResponseMessage? response = null;
+        string content = string.Empty;
+        bool success = false;
+        Stopwatch stopwatch;
+        StartRequestMetrics(out stopwatch);
+
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            (response, content, success) = await TryExecuteSearchRequestAsync(httpSession, payload, attempt).ConfigureAwait(false);
+
+            if (success)
+            {
+                break;
             }
         }
+
+        EndRequestMetrics(success && response != null && response.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content), stopwatch);
+
+        if (!success || response == null || !response.IsSuccessStatusCode || IsBlockedOrConsentRequired(content))
+        {
+            return new SearchPageResult { Success = false };
+        }
+
+        JsonDocument? document = JsonDocument.Parse(content);
+        return new SearchPageResult { Success = true, Document = document };
+    }
+
+    private string BuildSearchQuery(string query, string location, int remaining)
+    {
+        return string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, remaining));
+    }
+
+    private void LogSearchRequest(object payload)
+    {
+        string json = JsonSerializer.Serialize(payload);
+        LogRequestPayload(_logger, json, null);
+        LogSendingRequest(_logger, _apiEndpoint, null);
+
+        foreach (KeyValuePair<string, IEnumerable<string>> header in _httpClient.DefaultRequestHeaders)
+        {
+            LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
+        }
+
+        try
+        {
+            LogUsingCountryForRequest(_logger, _country, null);
+        }
+        catch (Exception)
+        {
+            // Logging failure ignored intentionally
+        }
+    }
+
+    private async Task<(HttpResponseMessage? Response, string Content, bool Success)> TryExecuteSearchRequestAsync(
+        RotatingProxySession httpSession,
+        object payload,
+        int attempt)
+    {
+        HttpResponseMessage? response = null;
+        string content = string.Empty;
+
+        try
+        {
+            using HttpRequestMessage request = CreateRequest(payload);
+            LogRequestHeaders(request);
+
+            response = await httpSession.ExecuteAsync(() => request, default).ConfigureAwait(false);
+
+            if ((int)response.StatusCode == 429)
+            {
+                await DelayForRetryAsync(attempt, 1000).ConfigureAwait(false);
+                return (null, string.Empty, false);
+            }
+
+            LogResponseStatus(_logger, response.StatusCode.ToString(), null);
+
+            content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            LogResponseContent(_logger, content, null);
+
+            TryWriteDebugLog(content, attempt);
+
+            response.EnsureSuccessStatusCode();
+
+            if (IsBlockedOrConsentRequired(content))
+            {
+                if (attempt < 2)
+                {
+                    await DelayForRetryAsync(attempt, 2000).ConfigureAwait(false);
+                    return (null, string.Empty, false);
+                }
+                return (response, content, false);
+            }
+
+            return (response, content, true);
+        }
+        catch (HttpRequestException) when (attempt < 2)
+        {
+            await DelayForRetryAsync(attempt, 1000).ConfigureAwait(false);
+            return (null, string.Empty, false);
+        }
+    }
+
+    private void LogRequestHeaders(HttpRequestMessage request)
+    {
+        foreach (KeyValuePair<string, IEnumerable<string>> header in request.Headers)
+        {
+            LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
+        }
+
+        if (request.Content?.Headers != null)
+        {
+            foreach (KeyValuePair<string, IEnumerable<string>> header in request.Content.Headers)
+            {
+                LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
+            }
+        }
+    }
+
+    private static void TryWriteDebugLog(string content, int attempt)
+    {
+        try
+        {
+            System.IO.File.WriteAllText($"logs/indeed_jobs_search_{attempt}.json", content);
+        }
+        catch (Exception ex)
+        {
+            // Intentionally swallow debug logging errors - directory may not exist or permissions may be insufficient
+            Console.Error.WriteLine($"[DEBUG] Failed to write debug log file for attempt {attempt}: {ex.Message}");
+        }
+    }
+
+    private static async Task DelayForRetryAsync(int attempt, int baseMilliseconds)
+    {
+        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * baseMilliseconds)).ConfigureAwait(false);
+    }
+
+    private async Task CloseCurrentSessionAsync()
+    {
+        if (_currentSessionId == null)
+        {
+            return;
+        }
+
+        await _sessionOrchestrator!.CloseSessionAsync(_currentSessionId, default).ConfigureAwait(false);
+        _currentSessionId = null;
+    }
+
+    private sealed class SearchPageResult
+    {
+        public bool Success { get; init; }
+        public JsonDocument? Document { get; init; }
     }
 
     private async IAsyncEnumerable<JsonElement> SearchLegacyAsync(string query, string location, int limit)
@@ -551,108 +692,150 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
 
         do
         {
-            await ApplyRateLimitAsync(default).ConfigureAwait(false);
+            LegacyPageResult result = await ExecuteLegacySearchPageAsync(query, location, cursor, remaining).ConfigureAwait(false);
 
-            string formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, remaining));
-            var payload = new { query = formattedQuery };
-            string json = JsonSerializer.Serialize(payload);
-            LogRequestPayload(_logger, json, null);
-
-            LogSendingRequest(_logger, _apiEndpoint, null);
-
-            foreach (KeyValuePair<string, IEnumerable<string>> header in _httpClient.DefaultRequestHeaders)
+            if (!result.Success || result.Document == null)
             {
-                LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
+                yield break;
             }
 
-            try
+            yield return result.Document.RootElement.Clone();
+
+            cursor = ExtractNextCursor(result.Document);
+            if (string.IsNullOrEmpty(cursor))
             {
-                LogUsingCountryForRequest(_logger, _country, null);
-            }
-            catch { }
-            HttpResponseMessage? resp = null;
-            string content = string.Empty;
-            Stopwatch stopwatch;
-            StartRequestMetrics(out stopwatch);
-
-            for (int attempt = 0; attempt < 3; attempt++)
-            {
-                try
-                {
-                    using HttpRequestMessage attemptReq = CreateRequest(payload);
-                    foreach (KeyValuePair<string, IEnumerable<string>> header in attemptReq.Headers)
-                    {
-                        LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
-                    }
-                    if (attemptReq.Content?.Headers != null)
-                    {
-                        foreach (KeyValuePair<string, IEnumerable<string>> header in attemptReq.Content.Headers)
-                        {
-                            LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
-                        }
-                    }
-                    resp = await _httpClient.SendAsync(attemptReq).ConfigureAwait(false);
-
-                    if ((int)resp.StatusCode == 429)
-                    {
-                        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000)).ConfigureAwait(false);
-                        continue;
-                    }
-
-                    LogResponseStatus(_logger, resp.StatusCode.ToString(), null);
-
-                    content = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    LogResponseContent(_logger, content, null);
-
-                    try { System.IO.File.WriteAllText($"logs/indeed_jobs_search_{attempt}.json", content); } catch { }
-
-                    resp.EnsureSuccessStatusCode();
-
-                    if (IsBlockedOrConsentRequired(content))
-                    {
-                        if (attempt < 2)
-                        {
-                            await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 2000)).ConfigureAwait(false);
-                            continue;
-                        }
-                        break;
-                    }
-
-                    break;
-                }
-                catch (HttpRequestException) when (attempt < 2)
-                {
-                    await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000)).ConfigureAwait(false);
-                    continue;
-                }
-                catch (Exception)
-                {
-                    throw;
-                }
+                yield break;
             }
 
-            EndRequestMetrics(resp != null && resp.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content), stopwatch);
-
-            if (resp == null || !resp.IsSuccessStatusCode || IsBlockedOrConsentRequired(content))
-            {
-                break;
-            }
-
-            using var doc = JsonDocument.Parse(content);
-            if (doc is null) yield break;
-
-            yield return doc.RootElement.Clone();
-
-            if (!doc.RootElement.TryGetProperty("data", out JsonElement data) || !data.TryGetProperty("jobSearch", out JsonElement jobSearch) || !jobSearch.TryGetProperty("pageInfo", out JsonElement pageInfo) || !pageInfo.TryGetProperty("nextCursor", out JsonElement nextCursorEl))
-            {
-                break;
-            }
-
-            cursor = nextCursorEl.GetString();
-            if (string.IsNullOrEmpty(cursor)) break;
             remaining -= 25;
         }
         while (remaining > 0);
+    }
+
+    private async Task<LegacyPageResult> ExecuteLegacySearchPageAsync(
+        string query,
+        string location,
+        string? cursor,
+        int remaining)
+    {
+        await ApplyRateLimitAsync(default).ConfigureAwait(false);
+
+        string formattedQuery = FormatSearchQueryWithCursor(query, location, cursor, remaining);
+        var payload = new { query = formattedQuery };
+
+        LogLegacySearchRequest(payload);
+
+        HttpResponseMessage? response = null;
+        string content = string.Empty;
+        Stopwatch stopwatch;
+        StartRequestMetrics(out stopwatch);
+
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            (response, content) = await TryExecuteLegacyRequestAsync(payload, attempt).ConfigureAwait(false);
+
+            if (response != null && response.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content))
+            {
+                break;
+            }
+        }
+
+        EndRequestMetrics(response != null && response.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content), stopwatch);
+
+        if (response == null || !response.IsSuccessStatusCode || IsBlockedOrConsentRequired(content))
+        {
+            return new LegacyPageResult { Success = false };
+        }
+
+        JsonDocument? document = JsonDocument.Parse(content);
+        return new LegacyPageResult { Success = true, Document = document };
+    }
+
+    private string FormatSearchQueryWithCursor(string query, string location, string? cursor, int remaining)
+    {
+        string formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, remaining));
+
+        if (!string.IsNullOrWhiteSpace(cursor))
+        {
+            formattedQuery += $" after: \"{cursor}\"";
+        }
+
+        return formattedQuery;
+    }
+
+    private void LogLegacySearchRequest(object payload)
+    {
+        string json = JsonSerializer.Serialize(payload);
+        LogRequestPayload(_logger, json, null);
+        LogSendingRequest(_logger, _apiEndpoint, null);
+
+        foreach (KeyValuePair<string, IEnumerable<string>> header in _httpClient.DefaultRequestHeaders)
+        {
+            LogRequestHeader(_logger, header.Key, string.Join(",", header.Value), null);
+        }
+
+        try
+        {
+            LogUsingCountryForRequest(_logger, _country, null);
+        }
+        catch (Exception)
+        {
+            // Logging failure ignored intentionally
+        }
+    }
+
+    private async Task<(HttpResponseMessage? Response, string Content)> TryExecuteLegacyRequestAsync(
+        object payload,
+        int attempt)
+    {
+        HttpResponseMessage? response = null;
+        string content = string.Empty;
+
+        try
+        {
+            using HttpRequestMessage request = CreateRequest(payload);
+            LogRequestHeaders(request);
+
+            response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+
+            if ((int)response.StatusCode == 429)
+            {
+                await DelayForRetryAsync(attempt, 1000).ConfigureAwait(false);
+                return (null, string.Empty);
+            }
+
+            LogResponseStatus(_logger, response.StatusCode.ToString(), null);
+
+            content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            LogResponseContent(_logger, content, null);
+
+            TryWriteDebugLog(content, attempt);
+
+            response.EnsureSuccessStatusCode();
+
+            if (IsBlockedOrConsentRequired(content))
+            {
+                if (attempt < 2)
+                {
+                    await DelayForRetryAsync(attempt, 2000).ConfigureAwait(false);
+                    return (null, string.Empty);
+                }
+                return (response, content);
+            }
+
+            return (response, content);
+        }
+        catch (HttpRequestException) when (attempt < 2)
+        {
+            await DelayForRetryAsync(attempt, 1000).ConfigureAwait(false);
+            return (null, string.Empty);
+        }
+    }
+
+    private sealed class LegacyPageResult
+    {
+        public bool Success { get; init; }
+        public JsonDocument? Document { get; init; }
     }
 
     private async Task CheckAndRecycleSessionAsync()
@@ -688,13 +871,19 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         {
             _httpClient?.Dispose();
         }
-        catch { }
+        catch
+        {
+            // Ignore disposal errors
+        }
 
         try
         {
             _handler?.Dispose();
         }
-        catch { }
+        catch
+        {
+            // Ignore disposal errors
+        }
 
         if (_currentSessionId != null && _sessionOrchestrator != null)
         {
@@ -722,13 +911,19 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         {
             _httpClient?.Dispose();
         }
-        catch { }
+        catch
+        {
+            // Ignore disposal errors
+        }
 
         try
         {
             _handler?.Dispose();
         }
-        catch { }
+        catch
+        {
+            // Ignore disposal errors
+        }
 
         // Note: We cannot call CloseSessionAsync synchronously here.
         // Callers should use DisposeAsync for proper cleanup.
@@ -772,6 +967,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
     private async Task<JsonElement> SearchPageWithOrchestratorAsync(string query, string location, int limit, string? cursor, CancellationToken ct)
     {
         await EnsureSessionAsync(query, location, ct).ConfigureAwait(false);
+
         RotatingProxySession? httpSession = await _sessionOrchestrator!.GetHttpSessionAsync(_currentSessionId!, ct).ConfigureAwait(false);
         if (httpSession is null)
         {
@@ -779,54 +975,9 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
             return default;
         }
 
-        await ApplyRateLimitAsync(ct).ConfigureAwait(false);
-        string formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, limit));
-        if (!string.IsNullOrWhiteSpace(cursor))
-        {
-            formattedQuery += $" after: \"{cursor}\"";
-        }
+        (string content, bool success) = await ExecutePageRequestWithRetryAsync(httpSession, query, location, limit, cursor, ct).ConfigureAwait(false);
 
-        var payload = new { query = formattedQuery };
-        string content = string.Empty;
-        bool success = false;
-        HttpResponseMessage? resp = null;
-        Stopwatch stopwatch;
-        StartRequestMetrics(out stopwatch);
-
-        for (int attempt = 0; attempt < 3; attempt++)
-        {
-            try
-            {
-                using HttpRequestMessage req = CreateRequest(payload);
-                resp = await httpSession.ExecuteAsync(() => req, ct).ConfigureAwait(false);
-                if ((int)resp.StatusCode == 429)
-                {
-                    await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000), ct).ConfigureAwait(false);
-                    continue;
-                }
-
-                content = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-                if (IsBlockedOrConsentRequired(content))
-                {
-                    if (attempt < 2)
-                    {
-                        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 2000), ct).ConfigureAwait(false);
-                        continue;
-                    }
-                    break;
-                }
-
-                success = true;
-                break;
-            }
-            catch (HttpRequestException) when (attempt < 2)
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000), ct).ConfigureAwait(false);
-            }
-        }
-
-        EndRequestMetrics(success && resp != null && resp.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content), stopwatch);
-        if (!success || resp == null || !resp.IsSuccessStatusCode || IsBlockedOrConsentRequired(content))
+        if (!success || IsBlockedOrConsentRequired(content))
         {
             await CheckAndRecycleSessionAsync().ConfigureAwait(false);
             return default;
@@ -836,60 +987,170 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         return doc.RootElement.Clone();
     }
 
-    private async Task<JsonElement> SearchPageLegacyAsync(string query, string location, int limit, string? cursor, CancellationToken ct)
+    private async Task<(string Content, bool Success)> ExecutePageRequestWithRetryAsync(
+        RotatingProxySession httpSession,
+        string query,
+        string location,
+        int limit,
+        string? cursor,
+        CancellationToken ct)
     {
         await ApplyRateLimitAsync(ct).ConfigureAwait(false);
-        string formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, limit));
-        if (!string.IsNullOrWhiteSpace(cursor))
-        {
-            formattedQuery += $" after: \"{cursor}\"";
-        }
 
+        string formattedQuery = BuildFormattedQuery(query, location, limit, cursor);
         var payload = new { query = formattedQuery };
+
         string content = string.Empty;
-        HttpResponseMessage? resp = null;
+        bool success = false;
+        HttpResponseMessage? response = null;
         Stopwatch stopwatch;
         StartRequestMetrics(out stopwatch);
 
         for (int attempt = 0; attempt < 3; attempt++)
         {
-            try
+            (response, content, success) = await TryExecutePageRequestAsync(httpSession, payload, attempt, ct).ConfigureAwait(false);
+
+            if (success)
             {
-                using HttpRequestMessage req = CreateRequest(payload);
-                resp = await _httpClient.SendAsync(req, ct).ConfigureAwait(false);
-                if ((int)resp.StatusCode == 429)
-                {
-                    await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000), ct).ConfigureAwait(false);
-                    continue;
-                }
-
-                content = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-                if (IsBlockedOrConsentRequired(content))
-                {
-                    if (attempt < 2)
-                    {
-                        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 2000), ct).ConfigureAwait(false);
-                        continue;
-                    }
-                    break;
-                }
-
                 break;
-            }
-            catch (HttpRequestException) when (attempt < 2)
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 1000), ct).ConfigureAwait(false);
             }
         }
 
-        EndRequestMetrics(resp != null && resp.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content), stopwatch);
-        if (resp == null || !resp.IsSuccessStatusCode || IsBlockedOrConsentRequired(content))
+        EndRequestMetrics(success && response != null && response.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content), stopwatch);
+
+        return (content, success && response != null && response.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content));
+    }
+
+    private static string BuildFormattedQuery(string query, string location, int limit, string? cursor)
+    {
+        string formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, limit));
+
+        if (!string.IsNullOrWhiteSpace(cursor))
+        {
+            formattedQuery += $" after: \"{cursor}\"";
+        }
+
+        return formattedQuery;
+    }
+
+    private async Task<(HttpResponseMessage? Response, string Content, bool Success)> TryExecutePageRequestAsync(
+        RotatingProxySession httpSession,
+        object payload,
+        int attempt,
+        CancellationToken ct)
+    {
+        try
+        {
+            using HttpRequestMessage request = CreateRequest(payload);
+            HttpResponseMessage response = await httpSession.ExecuteAsync(() => request, ct).ConfigureAwait(false);
+
+            if ((int)response.StatusCode == 429)
+            {
+                await DelayForRetryAsync(attempt, 1000, ct).ConfigureAwait(false);
+                return (null, string.Empty, false);
+            }
+
+            string content = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+
+            if (IsBlockedOrConsentRequired(content))
+            {
+                if (attempt < 2)
+                {
+                    await DelayForRetryAsync(attempt, 2000, ct).ConfigureAwait(false);
+                    return (null, string.Empty, false);
+                }
+                return (response, content, false);
+            }
+
+            return (response, content, true);
+        }
+        catch (HttpRequestException) when (attempt < 2)
+        {
+            await DelayForRetryAsync(attempt, 1000, ct).ConfigureAwait(false);
+            return (null, string.Empty, false);
+        }
+    }
+
+    private static async Task DelayForRetryAsync(int attempt, int baseMilliseconds, CancellationToken ct)
+    {
+        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * baseMilliseconds), ct).ConfigureAwait(false);
+    }
+
+    private async Task<JsonElement> SearchPageLegacyAsync(string query, string location, int limit, string? cursor, CancellationToken ct)
+    {
+        await ApplyRateLimitAsync(ct).ConfigureAwait(false);
+
+        string formattedQuery = BuildFormattedQuery(query, location, limit, cursor);
+        var payload = new { query = formattedQuery };
+
+        (string content, HttpResponseMessage? response) = await ExecuteLegacyPageRequestWithRetryAsync(payload, ct).ConfigureAwait(false);
+
+        EndRequestMetrics(response != null && response.IsSuccessStatusCode && !IsBlockedOrConsentRequired(content), null!);
+
+        if (response == null || !response.IsSuccessStatusCode || IsBlockedOrConsentRequired(content))
         {
             return default;
         }
 
         using var doc = JsonDocument.Parse(content);
         return doc.RootElement.Clone();
+    }
+
+    private async Task<(string Content, HttpResponseMessage? Response)> ExecuteLegacyPageRequestWithRetryAsync(
+        object payload,
+        CancellationToken ct)
+    {
+        string content = string.Empty;
+        HttpResponseMessage? response = null;
+
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            (response, content, bool shouldContinue) = await TryExecuteLegacyPageRequestAsync(payload, attempt, ct).ConfigureAwait(false);
+
+            if (!shouldContinue)
+            {
+                break;
+            }
+        }
+
+        return (content, response);
+    }
+
+    private async Task<(HttpResponseMessage? Response, string Content, bool ShouldContinue)> TryExecuteLegacyPageRequestAsync(
+        object payload,
+        int attempt,
+        CancellationToken ct)
+    {
+        try
+        {
+            using HttpRequestMessage request = CreateRequest(payload);
+            HttpResponseMessage response = await _httpClient.SendAsync(request, ct).ConfigureAwait(false);
+
+            if ((int)response.StatusCode == 429)
+            {
+                await DelayForRetryAsync(attempt, 1000, ct).ConfigureAwait(false);
+                return (null, string.Empty, true);
+            }
+
+            string content = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+
+            if (IsBlockedOrConsentRequired(content))
+            {
+                if (attempt < 2)
+                {
+                    await DelayForRetryAsync(attempt, 2000, ct).ConfigureAwait(false);
+                    return (null, string.Empty, true);
+                }
+                return (response, content, false);
+            }
+
+            return (response, content, false);
+        }
+        catch (HttpRequestException) when (attempt < 2)
+        {
+            await DelayForRetryAsync(attempt, 1000, ct).ConfigureAwait(false);
+            return (null, string.Empty, true);
+        }
     }
 
     private async Task EnsureSessionAsync(string query, string location, CancellationToken ct)

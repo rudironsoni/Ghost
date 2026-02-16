@@ -37,7 +37,14 @@ public sealed class IndeedPlugin : Ghost.Hosting.IExtension
         services.AddSingleton<Microsoft.Extensions.Options.IValidateOptions<IndeedOptions>, IndeedOptionsValidator>();
         services.Configure<IndeedOptions>(configuration.GetSection("Ghost:Extensions:Indeed"));
         IndeedOptions opts = configuration.GetSection("Ghost:Extensions:Indeed").Get<IndeedOptions>() ?? new IndeedOptions();
-        try { Console.WriteLine($"[DEBUG] IndeedPlugin bound options: Country={opts.Country}"); } catch { }
+        try
+{
+    Console.WriteLine($"[DEBUG] IndeedPlugin bound options: Country={opts.Country}");
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"[WARNING] Failed to log IndeedPlugin options: {ex.Message}");
+}
 
         if (!opts.Enabled) return;
 

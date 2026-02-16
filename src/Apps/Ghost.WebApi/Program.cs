@@ -29,7 +29,10 @@ try
     Console.WriteLine($"[DEBUG] Ghost:Extensions:Google:Enabled = {builder.Configuration.GetValue<bool?>("Ghost:Extensions:Google:Enabled")}");
     Console.WriteLine($"[DEBUG] Indeed:Country = {builder.Configuration.GetValue<string>("Indeed:Country")}");
 }
-catch { }
+catch (Exception ex)
+{
+    Console.WriteLine($"[WARNING] Failed to log debug configuration: {ex.Message}");
+}
 
 // Force enable platforms for testing
 Environment.SetEnvironmentVariable("GHOST__EXTENSIONS__LINKEDIN__ENABLED", "true");
