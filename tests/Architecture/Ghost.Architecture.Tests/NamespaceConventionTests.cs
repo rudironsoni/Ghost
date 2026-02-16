@@ -1,7 +1,6 @@
 using FluentAssertions;
 using NetArchTest.Rules;
 using Xunit;
-using IExtension = Ghost.Contracts.IExtension;
 
 namespace Ghost.Architecture.Tests;
 
@@ -20,7 +19,7 @@ public sealed class NamespaceConventionTests
     public void Contracts_TypesShouldBeIn_ContractsNamespace()
     {
         TestResult result = Types
-            .InAssembly(typeof(IExtension).Assembly)
+            .InAssembly(typeof(Ghost.Contracts.IExtension).Assembly)
             .Should()
             .ResideInNamespaceStartingWith("Ghost.Contracts")
             .GetResult();
@@ -36,11 +35,9 @@ public sealed class NamespaceConventionTests
     public void ContractsJobs_TypesShouldBeIn_CorrectNamespace()
     {
         TestResult result = Types
-            .InAssembly(typeof(Contracts.Jobs.IJobClient).Assembly)
+            .InAssembly(typeof(Ghost.Contracts.Jobs.IJobClient).Assembly)
             .Should()
             .ResideInNamespaceStartingWith("Ghost.Contracts.Jobs")
-            .Or()
-            .ResideInNamespaceStartingWith("Ghost.Contracts") // DTOs might be in sub-namespaces
             .GetResult();
 
         result.IsSuccessful.Should().BeTrue(
@@ -118,8 +115,6 @@ public sealed class NamespaceConventionTests
                     .ResideInNamespace($"{plugin}.Internal")
                     .Should()
                     .NotBePublic()
-                    .Or()
-                    .BeSealed()
                     .GetResult();
 
                 // Log but don't fail - some internal types might need to be public
@@ -219,7 +214,7 @@ public sealed class NamespaceConventionTests
     public void ContractsAssembly_ShouldHaveTypesIn_ContractsNamespace()
     {
         TestResult result = Types
-            .InAssembly(typeof(IExtension).Assembly)
+            .InAssembly(typeof(Ghost.Contracts.IExtension).Assembly)
             .Should()
             .ResideInNamespace("Ghost.Contracts")
             .Or()
@@ -238,8 +233,8 @@ public sealed class NamespaceConventionTests
     {
         System.Reflection.Assembly[] assembliesToCheck = new[]
         {
-            typeof(IExtension).Assembly,
-            typeof(Ghost.Cookie).Assembly,
+            typeof(Ghost.Contracts.IExtension).Assembly,
+            typeof(global::Ghost.Cookie).Assembly,
             typeof(Ghost.Hosting.ServiceCollectionExtensions).Assembly
         };
 
@@ -288,16 +283,20 @@ public sealed class NamespaceConventionTests
 
             if (otherContractNamespaces.Length > 0 && currentNamespace != "Ghost.Contracts")
             {
-                TestResult result = Types
-                    .InCurrentDomain()
-                    .That()
-                    .ResideInNamespaceStartingWith(currentNamespace)
-                    .ShouldNot()
-                    .HaveDependencyOnAny(otherContractNamespaces)
-                    .GetResult();
+                // Check each dependency individually since HaveDependencyOnAny doesn't exist
+                foreach (string otherNamespace in otherContractNamespaces)
+                {
+                    TestResult result = Types
+                        .InCurrentDomain()
+                        .That()
+                        .ResideInNamespaceStartingWith(currentNamespace)
+                        .ShouldNot()
+                        .HaveDependencyOn(otherNamespace)
+                        .GetResult();
 
-                result.IsSuccessful.Should().BeTrue(
-                    $"{currentNamespace} should not depend on other specialized contract namespaces.");
+                    result.IsSuccessful.Should().BeTrue(
+                        $"{currentNamespace} should not depend on {otherNamespace}.");
+                }
             }
         }
     }

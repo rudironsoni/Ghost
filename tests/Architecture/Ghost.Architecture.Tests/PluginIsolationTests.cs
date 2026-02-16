@@ -44,16 +44,20 @@ public sealed class PluginIsolationTests
             .Where(p => !p.Equals(pluginNamespace, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        TestResult result = Types
-            .InCurrentDomain()
-            .That()
-            .ResideInNamespace(pluginNamespace)
-            .ShouldNot()
-            .HaveDependencyOnAny(otherPlugins.ToArray())
-            .GetResult();
+        // Check each plugin dependency individually since HaveDependencyOnAny doesn't exist
+        foreach (string otherPlugin in otherPlugins)
+        {
+            TestResult result = Types
+                .InCurrentDomain()
+                .That()
+                .ResideInNamespace(pluginNamespace)
+                .ShouldNot()
+                .HaveDependencyOn(otherPlugin)
+                .GetResult();
 
-        result.IsSuccessful.Should().BeTrue(
-            $"Plugin {pluginNamespace} should not depend on other plugins.");
+            result.IsSuccessful.Should().BeTrue(
+                $"Plugin {pluginNamespace} should not depend on {otherPlugin}.");
+        }
     }
 
     [Fact]
@@ -65,16 +69,20 @@ public sealed class PluginIsolationTests
                 .Where(p => !p.Equals(plugin, StringComparison.OrdinalIgnoreCase))
                 .ToArray();
 
-            TestResult result = Types
-                .InCurrentDomain()
-                .That()
-                .ResideInNamespace(plugin)
-                .ShouldNot()
-                .HaveDependencyOnAny(otherPlugins)
-                .GetResult();
+            // Check each plugin dependency individually since HaveDependencyOnAny doesn't exist
+            foreach (string otherPlugin in otherPlugins)
+            {
+                TestResult result = Types
+                    .InCurrentDomain()
+                    .That()
+                    .ResideInNamespace(plugin)
+                    .ShouldNot()
+                    .HaveDependencyOn(otherPlugin)
+                    .GetResult();
 
-            result.IsSuccessful.Should().BeTrue(
-                $"Plugin {plugin} should not depend on other plugins.");
+                result.IsSuccessful.Should().BeTrue(
+                    $"Plugin {plugin} should not depend on {otherPlugin}.");
+            }
         }
     }
 
@@ -99,7 +107,7 @@ public sealed class PluginIsolationTests
             .That()
             .ResideInNamespace(pluginNamespace)
             .Should()
-            .HaveDependencyOnAny(new[] { "Ghost.Contracts" })
+            .HaveDependencyOn("Ghost.Contracts")
             .GetResult();
 
         // This is a "should" test - plugins typically depend on contracts
@@ -147,16 +155,20 @@ public sealed class PluginIsolationTests
             .Where(p => p != "Ghost.Plugin.Common")
             .ToArray();
 
-        TestResult result = Types
-            .InCurrentDomain()
-            .That()
-            .ResideInNamespace("Ghost.Plugin.Common")
-            .ShouldNot()
-            .HaveDependencyOnAny(otherPlugins)
-            .GetResult();
+        // Check each plugin dependency individually since HaveDependencyOnAny doesn't exist
+        foreach (string otherPlugin in otherPlugins)
+        {
+            TestResult result = Types
+                .InCurrentDomain()
+                .That()
+                .ResideInNamespace("Ghost.Plugin.Common")
+                .ShouldNot()
+                .HaveDependencyOn(otherPlugin)
+                .GetResult();
 
-        result.IsSuccessful.Should().BeTrue(
-            "Ghost.Plugin.Common should not depend on other plugins, only abstractions.");
+            result.IsSuccessful.Should().BeTrue(
+                $"Ghost.Plugin.Common should not depend on {otherPlugin}.");
+        }
     }
 
     #endregion

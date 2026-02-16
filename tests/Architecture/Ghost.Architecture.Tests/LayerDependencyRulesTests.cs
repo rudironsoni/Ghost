@@ -3,7 +3,6 @@ using Ghost.Engine.Abstractions.Engine;
 using Ghost.Hosting;
 using NetArchTest.Rules;
 using Xunit;
-using IExtension = Ghost.Contracts.IExtension;
 
 namespace Ghost.Architecture.Tests;
 
@@ -23,7 +22,7 @@ public sealed class LayerDependencyRulesTests
     public void Contracts_ShouldNotDependOn_Kernel()
     {
         TestResult result = Types
-            .InAssembly(typeof(IExtension).Assembly)
+            .InAssembly(typeof(Ghost.Contracts.IExtension).Assembly)
             .ShouldNot()
             .HaveDependencyOn("Ghost")
             .GetResult();
@@ -35,7 +34,7 @@ public sealed class LayerDependencyRulesTests
     public void Contracts_ShouldNotDependOn_Plugins()
     {
         TestResult result = Types
-            .InAssembly(typeof(IExtension).Assembly)
+            .InAssembly(typeof(Ghost.Contracts.IExtension).Assembly)
             .ShouldNot()
             .HaveDependencyOn("Ghost.Plugin")
             .GetResult();
@@ -47,7 +46,7 @@ public sealed class LayerDependencyRulesTests
     public void Contracts_ShouldNotDependOn_Hosting()
     {
         TestResult result = Types
-            .InAssembly(typeof(IExtension).Assembly)
+            .InAssembly(typeof(Ghost.Contracts.IExtension).Assembly)
             .ShouldNot()
             .HaveDependencyOn("Ghost.Hosting")
             .GetResult();
@@ -59,7 +58,7 @@ public sealed class LayerDependencyRulesTests
     public void Contracts_ShouldNotDependOn_Engine()
     {
         TestResult result = Types
-            .InAssembly(typeof(IExtension).Assembly)
+            .InAssembly(typeof(Ghost.Contracts.IExtension).Assembly)
             .ShouldNot()
             .HaveDependencyOn("Ghost.Engine")
             .GetResult();
@@ -115,9 +114,9 @@ public sealed class LayerDependencyRulesTests
     public void Kernel_ShouldOnlyDependOn_Contracts()
     {
         // Kernel should NOT depend on Plugins
-        // Use Ghost.Cookie as a representative type from the Ghost namespace
+        // Use global::Ghost.Cookie as a representative type from the Ghost namespace
         TestResult result = Types
-            .InAssembly(typeof(Ghost.Cookie).Assembly)
+            .InAssembly(typeof(global::Ghost.Cookie).Assembly)
             .ShouldNot()
             .HaveDependencyOn("Ghost.Plugin")
             .GetResult();
@@ -128,9 +127,9 @@ public sealed class LayerDependencyRulesTests
     [Fact]
     public void Kernel_ShouldNotDependOn_Hosting()
     {
-        // Use Ghost.Cookie as a representative type from the Ghost namespace
+        // Use global::Ghost.Cookie as a representative type from the Ghost namespace
         TestResult result = Types
-            .InAssembly(typeof(Ghost.Cookie).Assembly)
+            .InAssembly(typeof(global::Ghost.Cookie).Assembly)
             .ShouldNot()
             .HaveDependencyOn("Ghost.Hosting")
             .GetResult();
@@ -142,9 +141,9 @@ public sealed class LayerDependencyRulesTests
     public void Kernel_ShouldNotDependOn_EngineImplementations()
     {
         // Kernel can use Engine.Abstractions but not Engine implementations
-        // Use Ghost.Cookie as a representative type from the Ghost namespace
+        // Use global::Ghost.Cookie as a representative type from the Ghost namespace
         TestResult result = Types
-            .InAssembly(typeof(Ghost.Cookie).Assembly)
+            .InAssembly(typeof(global::Ghost.Cookie).Assembly)
             .That()
             .ResideInNamespace("Ghost")
             .ShouldNot()
