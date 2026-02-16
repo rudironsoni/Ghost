@@ -40,7 +40,7 @@ public class IndeedProviderContractTests : ProviderContractTests<IndeedContractA
         ILogger<Ghost.Plugin.Indeed.Jobs.IndeedJobDetailsScraper> detailsLogger = Substitute.For<ILogger<Ghost.Plugin.Indeed.Jobs.IndeedJobDetailsScraper>>();
 
         // Add Indeed options
-        var options = new IndeedOptions { Enabled = true, Country = Ghost.Models.CountryCode.US };
+        var options = new IndeedOptions { Enabled = true, Country = Ghost.Models.CountryCode.US, ApiKey = "test-api-key-for-contract-tests" };
 
         // Create Indeed API client
         var apiClient = new IndeedApiClient(proxyProvider, sessionOrchestrator, options, apiLogger);
