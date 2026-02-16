@@ -2,6 +2,9 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+    <!-- Suppress style warnings in test code -->
+    <NoWarn>$(NoWarn);IDE0008;CA1310;CA1860;CA1861;CA2252</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,9 +23,40 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Engine -->
     <ProjectReference Include="../../../src/Engine/Ghost.Engine.Abstractions/Ghost.Engine.Abstractions.csproj" />
+    <ProjectReference Include="../../../src/Engine/Ghost.Engine/Ghost.Engine.csproj" />
+    <ProjectReference Include="../../../src/Engine/Ghost.Engine.Hosting/Ghost.Engine.Hosting.csproj" />
+
+    <!-- Platform -->
     <ProjectReference Include="../../../src/Platform/Hosting/Ghost.Hosting/Ghost.Hosting.csproj" />
+    <ProjectReference Include="../../../src/Platform/Hosting/Ghost.Hosting.WebApi/Ghost.Hosting.WebApi.csproj" />
+    <ProjectReference Include="../../../src/Platform/Storage/Ghost.Infrastructure.Session/Ghost.Infrastructure.Session.csproj" />
+
+    <!-- Kernel -->
     <ProjectReference Include="../../../src/Kernel/Ghost/Ghost.csproj" />
+
+    <!-- Contracts -->
     <ProjectReference Include="../../../src/Contracts/Ghost.Contracts/Ghost.Contracts.csproj" />
+    <ProjectReference Include="../../../src/Contracts/Ghost.Contracts.Jobs/Ghost.Contracts.Jobs.csproj" />
+    <ProjectReference Include="../../../src/Contracts/Ghost.Contracts.Social/Ghost.Contracts.Social.csproj" />
+    <ProjectReference Include="../../../src/Contracts/Ghost.Contracts.Inference/Ghost.Contracts.Inference.csproj" />
+    <ProjectReference Include="../../../src/Contracts/Ghost.Contracts.News/Ghost.Contracts.News.csproj" />
+    <ProjectReference Include="../../../src/Contracts/Ghost.Contracts.Simulation/Ghost.Contracts.Simulation.csproj" />
+
+    <!-- SDK -->
+    <ProjectReference Include="../../../src/Sdk/Ghost.Sdk/Ghost.Sdk.csproj" />
+    <ProjectReference Include="../../../src/Sdk/Ghost.Sdk.Spider/Ghost.Sdk.Spider.csproj" />
+
+    <!-- Plugins -->
+    <ProjectReference Include="../../../src/Plugins/Indeed/Ghost.Plugin.Indeed/Ghost.Plugin.Indeed.csproj" />
+    <ProjectReference Include="../../../src/Plugins/LinkedIn/Ghost.Plugin.LinkedIn/Ghost.Plugin.LinkedIn.csproj" />
+    <ProjectReference Include="../../../src/Plugins/Google/Ghost.Plugin.Google/Ghost.Plugin.Google.csproj" />
+    <ProjectReference Include="../../../src/Plugins/Glassdoor/Ghost.Plugin.Glassdoor/Ghost.Plugin.Glassdoor.csproj" />
+    <ProjectReference Include="../../../src/Plugins/Anthropic/Ghost.Plugin.Anthropic/Ghost.Plugin.Anthropic.csproj" />
+    <ProjectReference Include="../../../src/Plugins/OpenAI/Ghost.Plugin.OpenAI/Ghost.Plugin.OpenAI.csproj" />
+    <ProjectReference Include="../../../src/Plugins/X/Ghost.Plugin.X/Ghost.Plugin.X.csproj" />
+    <ProjectReference Include="../../../src/Plugins/InfoJobs/Ghost.Plugin.InfoJobs/Ghost.Plugin.InfoJobs.csproj" />
+    <ProjectReference Include="../../../src/Plugins/Common/Ghost.Plugin.Common/Ghost.Plugin.Common.csproj" />
   </ItemGroup>
 </Project>
