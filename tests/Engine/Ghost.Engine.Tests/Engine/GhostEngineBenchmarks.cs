@@ -23,32 +23,32 @@ public class GhostEngineBenchmarks
     [InlineData(100, 10)]
     [InlineData(1000, 50)]
     [InlineData(10000, 100)]
-    public async Task Benchmark_ConcurrentBagVsChannel_TaskThroughput(int taskCount, int maxInFlight)
+    public async Task Benchmark_ConcurrentBagVsChannel_TaskThroughputAsync(int taskCount, int maxInFlight)
     {
         // Warmup
-        await RunConcurrentBagBenchmark(100, 10);
-        await RunChannelBenchmark(100, 10);
+        await RunConcurrentBagBenchmarkAsync(100, 10);
+        await RunChannelBenchmarkAsync(100, 10);
 
         GC.Collect();
         GC.WaitForPendingFinalizers();
 
         // Measure ConcurrentBag
-        var sw = Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
         long bagMemoryBefore = GC.GetTotalMemory(true);
-        await RunConcurrentBagBenchmark(taskCount, maxInFlight);
+        await RunConcurrentBagBenchmarkAsync(taskCount, maxInFlight);
         long bagMemoryAfter = GC.GetTotalMemory(true);
-        long bagElapsedMs = sw.ElapsedMilliseconds;
+        long bagElapsedMs = stopwatch.ElapsedMilliseconds;
         long bagMemoryAllocated = bagMemoryAfter - bagMemoryBefore;
 
         GC.Collect();
         GC.WaitForPendingFinalizers();
 
         // Measure Channel
-        sw.Restart();
+        stopwatch.Restart();
         long channelMemoryBefore = GC.GetTotalMemory(true);
-        await RunChannelBenchmark(taskCount, maxInFlight);
+        await RunChannelBenchmarkAsync(taskCount, maxInFlight);
         long channelMemoryAfter = GC.GetTotalMemory(true);
-        long channelElapsedMs = sw.ElapsedMilliseconds;
+        long channelElapsedMs = stopwatch.ElapsedMilliseconds;
         long channelMemoryAllocated = channelMemoryAfter - channelMemoryBefore;
 
         // Report results
@@ -74,7 +74,7 @@ public class GhostEngineBenchmarks
     }
 
     [Fact]
-    public async Task Benchmark_ChannelBackpressure_RespectsBounds()
+    public async Task Benchmark_ChannelBackpressure_RespectsBoundsAsync()
     {
         const int maxInFlight = 10;
         const int taskCount = 100;
@@ -127,7 +127,7 @@ public class GhostEngineBenchmarks
     }
 
     [Fact]
-    public async Task Benchmark_Cancellation_HandledGracefully()
+    public async Task Benchmark_Cancellation_HandledGracefullyAsync()
     {
         const int taskCount = 100;
         const int maxInFlight = 10;
@@ -203,7 +203,7 @@ public class GhostEngineBenchmarks
         Assert.True(writtenTasks <= taskCount, "Should not have written more tasks than expected");
     }
 
-    private static async Task RunConcurrentBagBenchmark(int taskCount, int maxInFlight)
+    private static async Task RunConcurrentBagBenchmarkAsync(int taskCount, int maxInFlight)
     {
         var processingTasks = new ConcurrentBag<Task>();
         using var semaphore = new SemaphoreSlim(maxInFlight);
@@ -222,7 +222,7 @@ public class GhostEngineBenchmarks
         await Task.WhenAll(processingTasks);
     }
 
-    private static async Task RunChannelBenchmark(int taskCount, int maxInFlight)
+    private static async Task RunChannelBenchmarkAsync(int taskCount, int maxInFlight)
     {
         var channelOptions = new BoundedChannelOptions(maxInFlight)
         {
