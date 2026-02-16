@@ -33,6 +33,11 @@ public sealed class GlassdoorOptions
     public bool Enabled { get; set; } = true;
 
     /// <summary>
+    /// Base URL for Glassdoor website
+    /// </summary>
+    public string BaseUrl { get; set; } = "https://www.glassdoor.com";
+
+    /// <summary>
     /// When true, the Glassdoor HTTP client will attempt to use the configured proxy provider.
     /// When false, the client will use a direct connection.
     /// Defaults to FALSE to avoid proxy authentication issues with SOCKS5 proxies.

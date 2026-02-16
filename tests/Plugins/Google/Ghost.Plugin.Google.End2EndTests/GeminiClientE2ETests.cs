@@ -32,7 +32,7 @@ public sealed class GeminiClientE2ETests
             Model = "gemini-pro",
             Messages =
             [
-                new InferenceMessage { Role = "user", Content = "Hello, how are you?" }
+                new InferenceMessage { Role = InferenceRole.User, Content = "Hello, how are you?" }
             ],
             MaxTokens = 100,
             Temperature = 0.7f
@@ -72,7 +72,7 @@ public sealed class GeminiClientE2ETests
             Model = "gemini-pro",
             Messages =
             [
-                new InferenceMessage { Role = "user", Content = "Tell me a story" }
+                new InferenceMessage { Role = InferenceRole.User, Content = "Tell me a story" }
             ],
             MaxTokens = 200
         };

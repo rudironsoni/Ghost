@@ -2,6 +2,8 @@ using Ghost.Contracts.Jobs;
 using Ghost.Contracts.News;
 using Ghost.Contracts.Social;
 using Ghost.Plugin.LinkedIn.Internal;
+using Ghost.Sdk.Spider.Adapters;
+using Ghost.Sdk.Spider.Core.Extraction;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,6 +13,7 @@ using WireMock.Net;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
+using WireMock.Settings;
 using Xunit;
 
 namespace Ghost.Plugin.LinkedIn.End2EndTests.Fixtures;
@@ -53,15 +56,14 @@ public sealed class LinkedInE2EFixture : IDisposable
         // Configuration
         services.Configure<LinkedInOptions>(options =>
         {
-            options.Enabled = true;
             options.BaseUrl = $"http://localhost:{WireMockServer.Port}";
             options.ScrapingStrategy = JobScrapingStrategy.Browser;
         });
 
         services.Configure<LinkedInSessionPoolOptions>(options =>
         {
-            options.MaxSessions = 2;
-            options.SessionTimeoutMinutes = 30;
+            options.MaxSize = 2;
+            options.MaxIdleTime = TimeSpan.FromMinutes(30);
         });
 
         // Mock IBrowserSession
@@ -71,16 +73,16 @@ public sealed class LinkedInE2EFixture : IDisposable
         // Setup mock page behavior
         mockPage.NavigateAsync(Arg.Any<string>(), Arg.Any<Ghost.NavigationOptions>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
-        mockPage.WaitForLoadStateAsync(Arg.Any<CancellationToken>())
+        mockPage.WaitForLoadStateAsync(Arg.Any<Ghost.WaitOptions>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
-        mockPage.EvaluateAsync<string>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+        mockPage.EvaluateAsync<string>(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<CancellationToken>())
             .Returns("LinkedIn Jobs");
         mockPage.GetContentAsync(Arg.Any<CancellationToken>())
             .Returns(GetMockJobSearchHtml());
         mockPage.QuerySelectorAllAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns([]);
         mockPage.DisposeAsync()
-            .Returns(Task.CompletedTask);
+            .Returns(ValueTask.CompletedTask);
 
         mockBrowserSession.NewPageAsync(Arg.Any<Ghost.PageOptions>(), Arg.Any<CancellationToken>())
             .Returns(mockPage);

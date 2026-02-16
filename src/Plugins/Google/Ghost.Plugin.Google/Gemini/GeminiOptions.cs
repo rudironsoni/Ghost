@@ -9,4 +9,9 @@ public sealed class GeminiOptions
     public TimeSpan ResponseTimeout { get; set; } = TimeSpan.FromMinutes(2);
     public string DefaultModel { get; set; } = "gemini-pro";
     public bool Enabled { get; set; } = true;
+
+    /// <summary>
+    /// API key for Gemini API authentication
+    /// </summary>
+    public string ApiKey { get; set; } = string.Empty;
 }

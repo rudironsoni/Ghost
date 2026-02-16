@@ -104,7 +104,7 @@ public sealed class LinkedInJobClientE2ETests
         var details = new ApplicationDetails
         {
             ApplicantEmail = "test@example.com",
-            Resume = "resume.pdf",
+            ResumeUrl = "resume.pdf",
             CoverLetter = "Test cover letter"
         };
 

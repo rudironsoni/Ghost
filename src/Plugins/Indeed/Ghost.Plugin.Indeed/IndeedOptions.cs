@@ -20,4 +20,14 @@ public class IndeedOptions
     /// Base URL for Indeed website (for test mocking support)
     /// </summary>
     public string BaseUrl { get; set; } = "https://www.indeed.com";
+
+    /// <summary>
+    /// Request timeout in milliseconds
+    /// </summary>
+    public int RequestTimeoutMs { get; set; } = 30000;
+
+    /// <summary>
+    /// Number of results to return per page
+    /// </summary>
+    public int ResultsPerPage { get; set; } = 25;
 }

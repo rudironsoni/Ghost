@@ -116,7 +116,7 @@ public sealed class IndeedJobClientE2ETests
         var details = new ApplicationDetails
         {
             ApplicantEmail = "test@example.com",
-            Resume = "resume.pdf",
+            ResumeUrl = "resume.pdf",
             CoverLetter = "Cover letter text"
         };
 

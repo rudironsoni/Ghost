@@ -27,4 +27,19 @@ public sealed class InfoJobsOptions
     /// Base URL for InfoJobs website
     /// </summary>
     public string BaseUrl { get; set; } = "https://www.infojobs.net/";
+
+    /// <summary>
+    /// API key for InfoJobs API authentication (legacy, use ClientId/ClientSecret)
+    /// </summary>
+    public string ApiKey { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Request timeout in milliseconds
+    /// </summary>
+    public int RequestTimeoutMs { get; set; } = 30000;
+
+    /// <summary>
+    /// Maximum number of retry attempts for failed requests
+    /// </summary>
+    public int MaxRetries { get; set; } = 3;
 }
