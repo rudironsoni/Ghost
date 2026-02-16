@@ -120,4 +120,65 @@ public class ShadowDOMHelperTests
         // Assert
         Assert.False(result);
     }
+
+    [Theory]
+    [InlineData("<script>alert('xss')</script>")]
+    [InlineData("javascript:alert('xss')")]
+    [InlineData("';alert('xss');//")]
+    [InlineData("div[onclick='alert(1)')]")]
+    [InlineData("eval(alert('xss'))")]
+    [InlineData("//comment")]
+    [InlineData("/*comment*/")]
+    [InlineData("@import url()")]
+    [InlineData("div; alert('xss')")]
+    public async Task FindInShadowDOMAsync_WithXssAttempt_ThrowsArgumentException(string maliciousSelector)
+    {
+        // Arrange
+        var mockPage = new Mock<IPage>();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(
+            async () => await ShadowDOMHelper.FindInShadowDOMAsync(mockPage.Object, maliciousSelector).ConfigureAwait(false));
+    }
+
+    [Theory]
+    [InlineData("<script>alert('xss')</script>")]
+    [InlineData("javascript:alert('xss')")]
+    [InlineData("';alert('xss');//")]
+    [InlineData("div[onerror='alert(1)')]")]
+    [InlineData("${alert('xss')}")]
+    public async Task ClickInShadowDOMAsync_WithXssAttempt_ThrowsArgumentException(string maliciousSelector)
+    {
+        // Arrange
+        var mockPage = new Mock<IPage>();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(
+            async () => await ShadowDOMHelper.ClickInShadowDOMAsync(mockPage.Object, maliciousSelector).ConfigureAwait(false));
+    }
+
+    [Theory]
+    [InlineData(".my-class")]
+    [InlineData("#my-id")]
+    [InlineData("div[data-test='value']")]
+    [InlineData("button.btn-primary")]
+    [InlineData("input[type='text']")]
+    [InlineData("div > span")]
+    [InlineData(".item:nth-child(2)")]
+    [InlineData("[data-test^='prefix']")]
+    public async Task FindInShadowDOMAsync_WithValidSelector_CallsQuerySelector(string validSelector)
+    {
+        // Arrange
+        var mockPage = new Mock<IPage>();
+        mockPage.Setup(p => p.QuerySelectorAsync($"pierce/{validSelector}"))
+            .ReturnsAsync((IElement?)null);
+        mockPage.Setup(p => p.EvaluateAsync<bool>(It.IsAny<string>(), It.IsAny<object?>()))
+            .ReturnsAsync(false);
+
+        // Act
+        await ShadowDOMHelper.FindInShadowDOMAsync(mockPage.Object, validSelector);
+
+        // Assert - should call QuerySelectorAsync with pierce selector
+        mockPage.Verify(p => p.QuerySelectorAsync($"pierce/{validSelector}"), Times.Once);
+    }
 }

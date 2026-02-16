@@ -19,6 +19,12 @@ public static class ShadowDOMHelper
         ArgumentNullException.ThrowIfNull(page);
         ArgumentNullException.ThrowIfNull(selector);
 
+        // Validate selector to prevent injection
+        if (!IsValidCssSelector(selector))
+        {
+            throw new ArgumentException("Invalid CSS selector provided.", nameof(selector));
+        }
+
         try
         {
             // Use Playwright's piercing selector to search through shadow DOMs
@@ -30,28 +36,29 @@ public static class ShadowDOMHelper
         }
         catch
         {
-            // Fallback to JavaScript evaluation
+            // Fallback to JavaScript evaluation with typed parameter passing
             try
             {
-                bool found = await page.EvaluateAsync<bool>($@"
-                    () => {{
-                        const findInShadow = (root, selector) => {{
+                bool found = await page.EvaluateAsync<bool>(
+                    @"
+                    (selector) => {
+                        const findInShadow = (root, sel) => {
                             // Try direct query first
-                            const element = root.querySelector(selector);
+                            const element = root.querySelector(sel);
                             if (element) return element;
 
                             // Recursively search shadow roots
                             const allElements = root.querySelectorAll('*');
-                            for (const el of allElements) {{
-                                if (el.shadowRoot) {{
-                                    const found = findInShadow(el.shadowRoot, selector);
+                            for (const el of allElements) {
+                                if (el.shadowRoot) {
+                                    const found = findInShadow(el.shadowRoot, sel);
                                     if (found) return found;
-                                }}
-                            }}
+                                }
+                            }
                             return null;
-                        }};
+                        };
 
-                        const element = findInShadow(document, '{selector.Replace("'", "\\'")}');
+                        const element = findInShadow(document, selector);
                         if (!element) return false;
 
                         // Check visibility
@@ -61,8 +68,9 @@ public static class ShadowDOMHelper
                                style.opacity !== '0' &&
                                element.offsetWidth > 0 &&
                                element.offsetHeight > 0;
-                    }}
-                ").ConfigureAwait(false);
+                    }
+                    ",
+                    selector).ConfigureAwait(false);
                 return found;
             }
             catch
@@ -85,6 +93,12 @@ public static class ShadowDOMHelper
         ArgumentNullException.ThrowIfNull(page);
         ArgumentNullException.ThrowIfNull(selector);
 
+        // Validate selector to prevent injection
+        if (!IsValidCssSelector(selector))
+        {
+            throw new ArgumentException("Invalid CSS selector provided.", nameof(selector));
+        }
+
         try
         {
             // Try Playwright's piercing selector first
@@ -97,33 +111,35 @@ public static class ShadowDOMHelper
         }
         catch
         {
-            // Fallback to JavaScript click
+            // Fallback to JavaScript click with typed parameter passing
             try
             {
-                bool clicked = await page.EvaluateAsync<bool>($@"
-                    () => {{
-                        const findInShadow = (root, selector) => {{
-                            const element = root.querySelector(selector);
+                bool clicked = await page.EvaluateAsync<bool>(
+                    @"
+                    (selector) => {
+                        const findInShadow = (root, sel) => {
+                            const element = root.querySelector(sel);
                             if (element) return element;
 
                             const allElements = root.querySelectorAll('*');
-                            for (const el of allElements) {{
-                                if (el.shadowRoot) {{
-                                    const found = findInShadow(el.shadowRoot, selector);
+                            for (const el of allElements) {
+                                if (el.shadowRoot) {
+                                    const found = findInShadow(el.shadowRoot, sel);
                                     if (found) return found;
-                                }}
-                            }}
+                                }
+                            }
                             return null;
-                        }};
+                        };
 
-                        const element = findInShadow(document, '{selector.Replace("'", "\\'")}');
-                        if (element) {{
+                        const element = findInShadow(document, selector);
+                        if (element) {
                             element.click();
                             return true;
-                        }}
+                        }
                         return false;
-                    }}
-                ").ConfigureAwait(false);
+                    }
+                    ",
+                    selector).ConfigureAwait(false);
                 return clicked;
             }
             catch
@@ -169,5 +185,62 @@ public static class ShadowDOMHelper
         {
             return 0;
         }
+    }
+
+    /// <summary>
+    /// Validates that a string is a safe CSS selector and does not contain script injection attempts.
+    /// </summary>
+    /// <param name="selector">The CSS selector to validate.</param>
+    /// <returns>True if the selector is valid and safe; otherwise false.</returns>
+    private static bool IsValidCssSelector(string selector)
+    {
+        if (string.IsNullOrWhiteSpace(selector))
+        {
+            return false;
+        }
+
+        // Check for script injection patterns
+        string[] forbiddenPatterns = new[]
+        {
+            "<script",
+            "javascript:",
+            "onerror=",
+            "onload=",
+            "onclick=",
+            "eval(",
+            "function(",
+            "=>",
+            "${",
+            ";",
+            "//",
+            "/*",
+            "@import",
+            "behavior:",
+            "expression("
+        };
+
+        string lowerSelector = selector.ToLowerInvariant();
+        foreach (string pattern in forbiddenPatterns)
+        {
+            if (lowerSelector.Contains(pattern))
+            {
+                return false;
+            }
+        }
+
+        // Validate selector only contains safe CSS selector characters
+        // Allow: alphanumeric, spaces, dots, hashes, brackets, colons, dashes, underscores, >, +, ~, =, quotes, ^, $, *, |, (, ), ,
+        foreach (char c in selector)
+        {
+            if (!char.IsLetterOrDigit(c) &&
+                c != ' ' && c != '.' && c != '#' && c != '[' && c != ']' && c != ':' && c != '-' && c != '_' &&
+                c != '>' && c != '+' && c != '~' && c != '=' && c != '"' && c != '\'' && c != '^' && c != '$' &&
+                c != '*' && c != '|' && c != '(' && c != ')' && c != ',')
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

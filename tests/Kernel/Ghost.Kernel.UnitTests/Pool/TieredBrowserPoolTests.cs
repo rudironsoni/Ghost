@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Ghost.Tests.Pool;
 
-[Trait("Category", TestCategories.Unit)]
+[Trait("Category", "Unit")]
 [SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "Async disposal handled by IAsyncLifetime")]
 public class TieredBrowserPoolTests : IAsyncLifetime
 {

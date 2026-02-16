@@ -72,6 +72,8 @@ public class FakePage : IPage
     public Task HoverAsync(string selector, CancellationToken ct = default) => Task.CompletedTask;
     public Task PressAsync(string selector, string key, CancellationToken ct = default) => Task.CompletedTask;
 
+    public Task AddCookiesAsync(IEnumerable<Ghost.Cookie> cookies, CancellationToken ct = default) => Task.CompletedTask;
+
     /// <summary>
     /// Helper method for tests to register elements that can be queried.
     /// </summary>

@@ -1,5 +1,9 @@
+using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ghost.Kernel.ProxyManagement;
 
@@ -56,7 +60,23 @@ public sealed class IPv6Rotator : IDisposable
     private readonly Random _random;
     private readonly SemaphoreSlim _lock = new(1, 1);
     private readonly HashSet<string> _activeAddresses = new();
+    private readonly ILogger<IPv6Rotator> _logger;
     private bool _disposed;
+
+    // Security: Whitelist patterns for input validation
+    // These regex patterns prevent command injection by only allowing safe characters
+    private static readonly Regex InterfaceNameRegex = new(
+        "^[a-zA-Z0-9_-]+$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    private static readonly Regex IPv6AddressRegex = new(
+        "^[0-9a-fA-F:.]+$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    // Security: Regex for validating IPv6 prefix (4 groups of hex digits separated by colons)
+    private static readonly Regex IPv6PrefixRegex = new(
+        "^[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="IPv6Rotator"/> class.
@@ -65,20 +85,43 @@ public sealed class IPv6Rotator : IDisposable
     /// <exception cref="ArgumentNullException">Thrown when options is null.</exception>
     /// <exception cref="ArgumentException">Thrown when subnet prefix is invalid.</exception>
     public IPv6Rotator(IPv6RotatorOptions options)
+        : this(options, NullLogger<IPv6Rotator>.Instance)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="IPv6Rotator"/> class.
+    /// </summary>
+    /// <param name="options">Configuration options.</param>
+    /// <param name="logger">Logger for audit and diagnostic messages.</param>
+    /// <exception cref="ArgumentNullException">Thrown when options is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when subnet prefix is invalid.</exception>
+    public IPv6Rotator(IPv6RotatorOptions options, ILogger<IPv6Rotator> logger)
     {
         ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(logger);
 
         if (string.IsNullOrWhiteSpace(options.SubnetPrefix))
         {
             throw new ArgumentException("SubnetPrefix cannot be empty", nameof(options));
         }
 
+        // Security: Validate subnet prefix for command injection attempts
+        ValidateIPv6PrefixForSecurity(options.SubnetPrefix);
+
         if (!IsValidIPv6Prefix(options.SubnetPrefix))
         {
             throw new ArgumentException($"Invalid IPv6 prefix: {options.SubnetPrefix}", nameof(options));
         }
 
+        // Security: Validate network interface name if provided
+        if (!string.IsNullOrWhiteSpace(options.NetworkInterface))
+        {
+            ValidateInterfaceName(options.NetworkInterface);
+        }
+
         _options = options;
+        _logger = logger;
         _random = new Random();
     }
 
@@ -99,7 +142,11 @@ public sealed class IPv6Rotator : IDisposable
             _random.NextBytes(hostBytes);
 
             // Construct full IPv6 address: prefix + random host
+            // Security: Using format specifiers ensures only hex digits are produced
             string address = $"{_options.SubnetPrefix}:{hostBytes[0]:x2}{hostBytes[1]:x2}:{hostBytes[2]:x2}{hostBytes[3]:x2}:{hostBytes[4]:x2}{hostBytes[5]:x2}:{hostBytes[6]:x2}{hostBytes[7]:x2}";
+
+            // Security: Validate the generated address before use
+            ValidateIPv6Address(address);
 
             // Normalize address format
             var ipAddress = IPAddress.Parse(address);
@@ -199,6 +246,7 @@ public sealed class IPv6Rotator : IDisposable
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if binding succeeded, false otherwise.</returns>
     /// <exception cref="NotSupportedException">Thrown on non-Linux platforms.</exception>
+    /// <exception cref="ArgumentException">Thrown when address contains invalid characters.</exception>
     public async Task<bool> BindAddressAsync(string address, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(address);
@@ -213,31 +261,65 @@ public sealed class IPv6Rotator : IDisposable
             throw new InvalidOperationException("NetworkInterface must be specified for address binding");
         }
 
+        // Security: Validate inputs before use
+        ValidateIPv6Address(address);
+        ValidateInterfaceName(_options.NetworkInterface);
+
         try
         {
-            // Use ip command to add address to interface
+            // Security: Use ArgumentList instead of string interpolation to prevent command injection
             // Example: ip -6 addr add 2001:db8::1/128 dev eth0
-            var processStartInfo = new System.Diagnostics.ProcessStartInfo
+            var processStartInfo = new ProcessStartInfo
             {
                 FileName = "ip",
-                Arguments = $"-6 addr add {address}/128 dev {_options.NetworkInterface}",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
 
-            using var process = System.Diagnostics.Process.Start(processStartInfo);
+            // Security: Use ArgumentList to safely pass arguments (prevents shell injection)
+            // DO NOT use string interpolation with user input - add each argument separately
+            processStartInfo.ArgumentList.Add("-6");
+            processStartInfo.ArgumentList.Add("addr");
+            processStartInfo.ArgumentList.Add("add");
+            // Security: Combine address and subnet mask into single CIDR notation argument
+            // Using string concatenation (not interpolation with user input) is safe here
+            // because the address has already been validated by ValidateIPv6Address
+            processStartInfo.ArgumentList.Add(address + "/128");
+            processStartInfo.ArgumentList.Add("dev");
+            processStartInfo.ArgumentList.Add(_options.NetworkInterface);
+
+            // Audit logging: log the command being executed for security audit trail
+            _logger.LogInformation(
+                "Executing command: {Command} {Address} {Subnet} dev {Interface}",
+                "ip -6 addr add",
+                address,
+                "/128",
+                _options.NetworkInterface);
+
+            using var process = Process.Start(processStartInfo);
             if (process == null)
             {
+                _logger.LogError("Failed to start ip command process");
                 return false;
             }
 
             await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
-            return process.ExitCode == 0;
+
+            if (process.ExitCode != 0)
+            {
+                string error = await process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+                _logger.LogError("ip command failed with exit code {ExitCode}: {Error}", process.ExitCode, error);
+                return false;
+            }
+
+            _logger.LogInformation("Successfully bound address to interface {Interface}", _options.NetworkInterface);
+            return true;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Exception while binding address to interface");
             return false;
         }
     }
@@ -249,6 +331,7 @@ public sealed class IPv6Rotator : IDisposable
     /// <param name="address">IPv6 address to unbind.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if unbinding succeeded, false otherwise.</returns>
+    /// <exception cref="ArgumentException">Thrown when address contains invalid characters.</exception>
     public async Task<bool> UnbindAddressAsync(string address, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(address);
@@ -263,30 +346,64 @@ public sealed class IPv6Rotator : IDisposable
             throw new InvalidOperationException("NetworkInterface must be specified for address unbinding");
         }
 
+        // Security: Validate inputs before use
+        ValidateIPv6Address(address);
+        ValidateInterfaceName(_options.NetworkInterface);
+
         try
         {
-            // Use ip command to remove address from interface
-            var processStartInfo = new System.Diagnostics.ProcessStartInfo
+            // Security: Use ArgumentList instead of string interpolation to prevent command injection
+            var processStartInfo = new ProcessStartInfo
             {
                 FileName = "ip",
-                Arguments = $"-6 addr del {address}/128 dev {_options.NetworkInterface}",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
 
-            using var process = System.Diagnostics.Process.Start(processStartInfo);
+            // Security: Use ArgumentList to safely pass arguments (prevents shell injection)
+            // DO NOT use string interpolation with user input - add each argument separately
+            processStartInfo.ArgumentList.Add("-6");
+            processStartInfo.ArgumentList.Add("addr");
+            processStartInfo.ArgumentList.Add("del");
+            // Security: Combine address and subnet mask into single CIDR notation argument
+            // Using string concatenation (not interpolation with user input) is safe here
+            // because the address has already been validated by ValidateIPv6Address
+            processStartInfo.ArgumentList.Add(address + "/128");
+            processStartInfo.ArgumentList.Add("dev");
+            processStartInfo.ArgumentList.Add(_options.NetworkInterface);
+
+            // Audit logging: log the command being executed for security audit trail
+            _logger.LogInformation(
+                "Executing command: {Command} {Address} {Subnet} dev {Interface}",
+                "ip -6 addr del",
+                address,
+                "/128",
+                _options.NetworkInterface);
+
+            using var process = Process.Start(processStartInfo);
             if (process == null)
             {
+                _logger.LogError("Failed to start ip command process");
                 return false;
             }
 
             await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
-            return process.ExitCode == 0;
+
+            if (process.ExitCode != 0)
+            {
+                string error = await process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+                _logger.LogError("ip command failed with exit code {ExitCode}: {Error}", process.ExitCode, error);
+                return false;
+            }
+
+            _logger.LogInformation("Successfully unbound address from interface {Interface}", _options.NetworkInterface);
+            return true;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Exception while unbinding address from interface");
             return false;
         }
     }
@@ -308,10 +425,140 @@ public sealed class IPv6Rotator : IDisposable
     }
 
     /// <summary>
+    /// Validates that the interface name contains only allowed characters.
+    /// Throws ArgumentException if validation fails.
+    /// </summary>
+    /// <param name="interfaceName">The interface name to validate.</param>
+    /// <exception cref="ArgumentException">Thrown when interface name contains invalid characters.</exception>
+    private static void ValidateInterfaceName(string interfaceName)
+    {
+        if (string.IsNullOrWhiteSpace(interfaceName))
+        {
+            throw new ArgumentException("Interface name cannot be null or empty", nameof(interfaceName));
+        }
+
+        // Security: Whitelist allowed characters for interface names
+        // Valid interface names: alphanumeric, underscore, hyphen
+        // Examples: eth0, wlan0, br-1234, enp0s1
+        if (!InterfaceNameRegex.IsMatch(interfaceName))
+        {
+            throw new ArgumentException(
+                $"Invalid interface name: '{interfaceName}'. Interface names must contain only alphanumeric characters, underscores, and hyphens.",
+                nameof(interfaceName));
+        }
+
+        // Additional check: interface name length
+        if (interfaceName.Length > 64)
+        {
+            throw new ArgumentException(
+                $"Interface name too long: {interfaceName.Length} characters (max 64)",
+                nameof(interfaceName));
+        }
+    }
+
+    /// <summary>
+    /// Validates that the IPv6 address contains only valid characters.
+    /// Throws ArgumentException if validation fails.
+    /// </summary>
+    /// <param name="address">The IPv6 address to validate.</param>
+    /// <exception cref="ArgumentException">Thrown when address contains invalid characters.</exception>
+    private static void ValidateIPv6Address(string address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            throw new ArgumentException("IPv6 address cannot be null or empty", nameof(address));
+        }
+
+        // Security: Whitelist allowed characters for IPv6 addresses
+        // Valid: hexadecimal digits (0-9, a-f, A-F), colons (:), and periods (.) for IPv4-mapped addresses
+        if (!IPv6AddressRegex.IsMatch(address))
+        {
+            throw new ArgumentException(
+                $"Invalid IPv6 address format: '{address}'. Address contains invalid characters.",
+                nameof(address));
+        }
+
+        // Additional validation: check for suspicious patterns
+        if (address.Contains("..") || address.Contains(":::") || address.Contains("//"))
+        {
+            throw new ArgumentException(
+                $"Invalid IPv6 address format: '{address}'. Address contains invalid sequences.",
+                nameof(address));
+        }
+    }
+
+    /// <summary>
+    /// Validates the IPv6 prefix for security - checks for injection attempts.
+    /// Throws ArgumentException if validation fails.
+    /// </summary>
+    /// <param name="prefix">The IPv6 prefix to validate.</param>
+    /// <exception cref="ArgumentException">Thrown when prefix contains invalid characters or patterns.</exception>
+    private static void ValidateIPv6PrefixForSecurity(string prefix)
+    {
+        if (string.IsNullOrWhiteSpace(prefix))
+        {
+            throw new ArgumentException("IPv6 prefix cannot be null or empty", nameof(prefix));
+        }
+
+        // Security: Whitelist allowed characters for IPv6 prefix
+        // Valid: hexadecimal digits (0-9, a-f, A-F), colons (:)
+        // Invalid: shell metacharacters, backticks, pipes, redirections, non-hex letters, etc.
+        foreach (char c in prefix)
+        {
+            if (c == ':')
+            {
+                continue; // Colon is valid separator
+            }
+
+            // Check if character is a valid hexadecimal digit
+            if (!IsHexDigit(c))
+            {
+                throw new ArgumentException(
+                    $"Invalid character '{c}' in IPv6 prefix. Prefix must contain only hexadecimal digits (0-9, a-f, A-F) and colons.",
+                    nameof(prefix));
+            }
+        }
+
+        // Helper function to check if a character is a valid hex digit
+        static bool IsHexDigit(char c)
+        {
+            return (c >= '0' && c <= '9') ||
+                   (c >= 'a' && c <= 'f') ||
+                   (c >= 'A' && c <= 'F');
+        }
+
+        // Security: Check for suspicious patterns that could indicate injection
+        string[] dangerousPatterns = new[] { "..", "//", "\\", "${", "$((", "`", "|", "&", ";", "<", ">", "*", "?" };
+        foreach (string pattern in dangerousPatterns)
+        {
+            if (prefix.Contains(pattern, StringComparison.Ordinal))
+            {
+                throw new ArgumentException(
+                    $"Invalid pattern '{pattern}' in IPv6 prefix. Potential command injection attempt detected.",
+                    nameof(prefix));
+            }
+        }
+
+        // Security: Prefix length validation (max reasonable IPv6 prefix length)
+        if (prefix.Length > 39) // Max IPv6 address length is 39 characters (8 groups of 4 hex digits + 7 colons)
+        {
+            throw new ArgumentException(
+                $"IPv6 prefix too long: {prefix.Length} characters (max 39)",
+                nameof(prefix));
+        }
+    }
+
+    /// <summary>
     /// Validates if a string is a valid IPv6 /64 prefix.
     /// </summary>
     private static bool IsValidIPv6Prefix(string prefix)
     {
+        // Security: First validate against whitelist regex
+        if (!IPv6PrefixRegex.IsMatch(prefix))
+        {
+            return false;
+        }
+
         // IPv6 /64 prefix should have 4 groups (64 bits)
         // Example: 2001:db8:1234:5678
         string[] parts = prefix.Split(':', StringSplitOptions.RemoveEmptyEntries);

@@ -216,10 +216,10 @@ public sealed class SessionManager : ISessionManager, IDisposable
 
         try
         {
-            // Restore cookies (convert BrowserContextCookiesResult to Cookie)
+            // Restore cookies (convert BrowserContextCookiesResult to Playwright Cookie)
             if (session.Cookies.Count > 0)
             {
-                var cookiesToAdd = session.Cookies.Select(c => new Cookie
+                var cookiesToAdd = session.Cookies.Select(c => new Microsoft.Playwright.Cookie
                 {
                     Name = c.Name,
                     Value = c.Value,

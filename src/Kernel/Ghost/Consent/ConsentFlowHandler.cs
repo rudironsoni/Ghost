@@ -134,10 +134,74 @@ public class ConsentFlowHandler
     }
 
     /// <summary>
+    /// Validates that a string is a safe CSS selector and does not contain script injection attempts.
+    /// </summary>
+    private static bool IsValidCssSelector(string selector)
+    {
+        if (string.IsNullOrWhiteSpace(selector))
+        {
+            return false;
+        }
+
+        // Check for script injection patterns
+        string[] forbiddenPatterns = new[]
+        {
+            "<script",
+            "javascript:",
+            "onerror=",
+            "onload=",
+            "onclick=",
+            "eval(",
+            "function(",
+            "=>",
+            "${",
+            ";",
+            "//",
+            "/*",
+            "@import",
+            "behavior:",
+            "expression("
+        };
+
+        string lowerSelector = selector.ToLowerInvariant();
+        foreach (string pattern in forbiddenPatterns)
+        {
+            if (lowerSelector.Contains(pattern))
+            {
+                return false;
+            }
+        }
+
+        // Validate selector only contains safe CSS selector characters
+        foreach (char c in selector)
+        {
+            if (!char.IsLetterOrDigit(c) &&
+                c != ' ' && c != '.' && c != '#' && c != '[' && c != ']' && c != ':' && c != '-' && c != '_' &&
+                c != '>' && c != '+' && c != '~' && c != '=' && c != '"' && c != '\'' && c != '^' && c != '$' &&
+                c != '*' && c != '|' && c != '(' && c != ')' && c != ',')
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// Tries to click an element in the regular DOM.
     /// </summary>
     private async Task<bool> TryClickRegularAsync(IPage page, string selector)
     {
+        // Validate selector to prevent injection
+        if (!IsValidCssSelector(selector))
+        {
+            if (_logger.IsEnabled(LogLevel.Warning))
+            {
+                _logger.LogWarning("Invalid CSS selector rejected: {Selector}", selector);
+            }
+            return false;
+        }
+
         try
         {
             IElement? element = await page.QuerySelectorAsync(selector).ConfigureAwait(false);
@@ -155,8 +219,10 @@ public class ConsentFlowHandler
                     }
                     catch
                     {
-                        // Fallback to JavaScript click
-                        await page.EvaluateAsync<object>($"document.querySelector('{selector.Replace("'", "\\'")}')?.click()").ConfigureAwait(false);
+                        // Fallback to JavaScript click with typed parameter passing
+                        await page.EvaluateAsync<object>(
+                            "(selector) => document.querySelector(selector)?.click()",
+                            selector).ConfigureAwait(false);
                         return true;
                     }
                 }
@@ -205,19 +271,35 @@ public class ConsentFlowHandler
             }
 
             string iframeSelector = config.Detectors[0]; // First detector is the iframe selector
-            bool clicked = await page.EvaluateAsync<bool>($@"
-                () => {{
-                    var iframe = document.querySelector('{iframeSelector.Replace("'", "\\'")}');
-                    if (iframe && iframe.contentDocument) {{
-                        var btn = iframe.contentDocument.querySelector('{selector.Replace("'", "\\'")}');
-                        if (btn) {{
+
+            // Validate both selectors to prevent injection
+            if (!IsValidCssSelector(iframeSelector) || !IsValidCssSelector(selector))
+            {
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning("Invalid CSS selector rejected for iframe interaction");
+                }
+                return false;
+            }
+
+            // Use typed parameter passing instead of string interpolation
+            bool clicked = await page.EvaluateAsync<bool>(
+                @"
+                (selectors) => {
+                    const iframeSelector = selectors.iframeSelector;
+                    const buttonSelector = selectors.buttonSelector;
+                    var iframe = document.querySelector(iframeSelector);
+                    if (iframe && iframe.contentDocument) {
+                        var btn = iframe.contentDocument.querySelector(buttonSelector);
+                        if (btn) {
                             btn.click();
                             return true;
-                        }}
-                    }}
+                        }
+                    }
                     return false;
-                }}
-            ").ConfigureAwait(false);
+                }
+                ",
+                new { iframeSelector, buttonSelector = selector }).ConfigureAwait(false);
 
             return clicked;
         }

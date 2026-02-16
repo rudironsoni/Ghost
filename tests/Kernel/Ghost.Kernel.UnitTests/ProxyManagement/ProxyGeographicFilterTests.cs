@@ -48,7 +48,7 @@ public sealed class ProxyGeographicFilterTests
     {
         // Arrange
         var filter = new ProxyGeographicFilter(NullLogger<ProxyGeographicFilter>.Instance);
-        ProxyInfo[] proxies = Array.Empty<Ghost.Abstractions.ProxyInfo>();
+        ProxyInfo[] proxies = Array.Empty<Ghost.ProxyInfo>();
 
         // Act
         Dictionary<string, ProxyGeolocation> result = await filter.EnrichProxiesAsync(proxies, CancellationToken.None);
