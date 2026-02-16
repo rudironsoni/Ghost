@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+using System.Threading.Channels;
 using Ghost.Engine.Abstractions.Downloader;
 using Ghost.Engine.Abstractions.Engine;
 using Ghost.Engine.Abstractions.Pipelines;
@@ -9,7 +9,7 @@ using Ghost.Engine.Abstractions.Transport;
 namespace Ghost.Engine.Engine;
 
 /// <summary>
-/// Concrete implementation of the Ghost engine with unified backpressure.
+/// Concrete implementation of the Ghost engine with unified backpressure using Channel for optimal async performance.
 /// </summary>
 public sealed class GhostEngine : IGhostEngine
 {
@@ -47,37 +47,84 @@ public sealed class GhostEngine : IGhostEngine
             await _scheduler.EnqueueAsync(startRequest, priority: 0, cancellationToken).ConfigureAwait(false);
         }
 
-        // Process requests until scheduler is empty and no in-flight requests
-        var processingTasks = new ConcurrentBag<Task>();
-
-        while (!cancellationToken.IsCancellationRequested)
+        // Create bounded channel for task tracking with natural backpressure
+        // The bounded channel naturally limits concurrent operations and provides
+        // efficient async backpressure without polling delays
+        var channelOptions = new BoundedChannelOptions(_options.MaxInFlight)
         {
-            // Check unified backpressure
-            if (IsUnderBackpressure())
-            {
-                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
-                continue;
-            }
+            FullMode = BoundedChannelFullMode.Wait,
+            SingleReader = true,
+            SingleWriter = true
+        };
+        Channel<Task> processingTasks = Channel.CreateBounded<Task>(channelOptions);
 
-            GhostRequest? request = await _scheduler.DequeueAsync(cancellationToken).ConfigureAwait(false);
-            if (request == null)
+        // Track completion of task consumer
+        Task taskConsumer = ConsumeTasksAsync(processingTasks.Reader, cancellationToken);
+
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
             {
-                // No more requests and no in-flight work
-                if (Volatile.Read(ref _inFlightCount) == 0)
+                // Check unified backpressure (in-flight count is now managed by channel bounds)
+                if (IsUnderBackpressure())
                 {
-                    break;
+                    await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+                    continue;
                 }
-                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
-                continue;
-            }
 
-            // Process request
-            Task task = ProcessRequestAsync(request, spider, context, cancellationToken);
-            processingTasks.Add(task);
+                GhostRequest? request = await _scheduler.DequeueAsync(cancellationToken).ConfigureAwait(false);
+                if (request is null)
+                {
+                    // No more requests in scheduler
+                    // Wait for all in-flight tasks to complete
+                    if (Volatile.Read(ref _inFlightCount) == 0)
+                    {
+                        break;
+                    }
+
+                    await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
+                // Process request - channel WriteAsync provides natural backpressure
+                // when MaxInFlight tasks are already queued/executing
+                Task task = ProcessRequestAsync(request, spider, context, cancellationToken);
+                await processingTasks.Writer.WriteAsync(task, cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancellation requested - will drain remaining tasks
+            throw;
+        }
+        finally
+        {
+            // Signal completion - no more tasks will be written
+            processingTasks.Writer.Complete();
         }
 
-        // Wait for all processing to complete
-        await Task.WhenAll(processingTasks).ConfigureAwait(false);
+        // Wait for the consumer to process all remaining tasks
+        await taskConsumer.ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Consumes tasks from the channel and awaits their completion.
+    /// Handles exceptions gracefully to ensure all tasks are processed.
+    /// </summary>
+    private static async Task ConsumeTasksAsync(ChannelReader<Task> reader, CancellationToken cancellationToken)
+    {
+        await foreach (Task task in reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
+        {
+            try
+            {
+                await task.ConfigureAwait(false);
+            }
+            catch
+            {
+                // Exceptions are captured in the task and already handled by ProcessRequestAsync
+                // We continue processing remaining tasks regardless of individual failures
+            }
+        }
     }
 
     private bool IsUnderBackpressure()

@@ -91,8 +91,8 @@ public sealed class LinkedInNewsClient : INewsClient
             IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
             try
             {
-                string q = System.Uri.EscapeDataString(query);
-                await page.NavigateAsync($"{_options.BaseUrl}/search/results/content/?keywords={q}", ct: ct).ConfigureAwait(false);
+                string queryEncoded = System.Uri.EscapeDataString(query);
+                await page.NavigateAsync($"{_options.BaseUrl}/search/results/content/?keywords={queryEncoded}", ct: ct).ConfigureAwait(false);
                 await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
                 // Search results for content usually appear as update cards

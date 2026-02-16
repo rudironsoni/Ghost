@@ -12,7 +12,7 @@ public static class HtmlSanitizer
             return string.Empty;
 
         string text = RemoveScriptsAndStyles(html);
-        var sb = new StringBuilder(text.Length);
+        var stringBuilder = new StringBuilder(text.Length);
         bool insideTag = false;
         bool lastWasSpace = false;
         int pendingNewlines = 0;
@@ -49,7 +49,7 @@ public static class HtmlSanitizer
 
             if (pendingNewlines > 0)
             {
-                AppendNewlines(sb, pendingNewlines);
+                AppendNewlines(stringBuilder, pendingNewlines);
                 pendingNewlines = 0;
                 lastWasSpace = true;
             }
@@ -58,18 +58,18 @@ public static class HtmlSanitizer
             {
                 if (!lastWasSpace)
                 {
-                    sb.Append(' ');
+                    stringBuilder.Append(' ');
                     lastWasSpace = true;
                 }
 
                 continue;
             }
 
-            sb.Append(ch);
+            stringBuilder.Append(ch);
             lastWasSpace = false;
         }
 
-        string cleaned = DecodeHtmlEntities(sb.ToString());
+        string cleaned = DecodeHtmlEntities(stringBuilder.ToString());
         cleaned = NormalizeWhitespace(cleaned);
         return cleaned;
     }
@@ -167,16 +167,16 @@ public static class HtmlSanitizer
         return tagName is "p" or "div" or "li" || isHeader;
     }
 
-    private static void AppendNewlines(StringBuilder sb, int count)
+    private static void AppendNewlines(StringBuilder stringBuilder, int count)
     {
-        char last = sb.Length > 0 ? sb[^1] : '\0';
+        char last = stringBuilder.Length > 0 ? stringBuilder[^1] : '\0';
         if (last == '\n')
         {
             count = Math.Max(0, count - 1);
         }
 
         for (int i = 0; i < count; i++)
-            sb.Append('\n');
+            stringBuilder.Append('\n');
     }
 
     private static string NormalizeWhitespace(string text)
@@ -184,7 +184,7 @@ public static class HtmlSanitizer
         if (string.IsNullOrWhiteSpace(text))
             return string.Empty;
 
-        var sb = new StringBuilder(text.Length);
+        var stringBuilder = new StringBuilder(text.Length);
         bool lastWasSpace = false;
         int newlineCount = 0;
 
@@ -195,7 +195,7 @@ public static class HtmlSanitizer
             {
                 if (newlineCount < 2)
                 {
-                    sb.Append('\n');
+                    stringBuilder.Append('\n');
                 }
 
                 newlineCount++;
@@ -207,19 +207,19 @@ public static class HtmlSanitizer
             {
                 if (!lastWasSpace)
                 {
-                    sb.Append(' ');
+                    stringBuilder.Append(' ');
                     lastWasSpace = true;
                 }
 
                 continue;
             }
 
-            sb.Append(ch);
+            stringBuilder.Append(ch);
             lastWasSpace = false;
             newlineCount = 0;
         }
 
-        return sb.ToString().Trim();
+        return stringBuilder.ToString().Trim();
     }
 
     private static int IndexOf(ReadOnlySpan<char> source, char value, int startIndex)

@@ -83,9 +83,9 @@ public class ConsentScenarioTests : IAsyncLifetime
 
     private static async Task WaitUntilVisibleAsync(IPage page, string selector, int timeoutMs = 30_000)
     {
-        var sw = Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
 
-        while (sw.ElapsedMilliseconds < timeoutMs)
+        while (stopwatch.ElapsedMilliseconds < timeoutMs)
         {
             bool isVisible = await page.EvaluateAsync<bool>("""
                 (sel) => {
@@ -110,9 +110,9 @@ public class ConsentScenarioTests : IAsyncLifetime
 
     private static async Task WaitUntilHiddenAsync(IPage page, string selector, int timeoutMs = 30_000)
     {
-        var sw = Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
 
-        while (sw.ElapsedMilliseconds < timeoutMs)
+        while (stopwatch.ElapsedMilliseconds < timeoutMs)
         {
             bool isVisible = await page.EvaluateAsync<bool>("""
                 (sel) => {

@@ -531,9 +531,9 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
 
     private string BuildBrowserSearchUrl(string keywords, string location)
     {
-        string q = System.Uri.EscapeDataString(keywords);
-        string loc = System.Uri.EscapeDataString(location);
-        return $"{_options.BaseUrl}/jobs/search?keywords={q}&location={loc}";
+        string query = System.Uri.EscapeDataString(keywords);
+        string locationEncoded = System.Uri.EscapeDataString(location);
+        return $"{_options.BaseUrl}/jobs/search?keywords={query}&location={locationEncoded}";
     }
 
     private static List<JobListing> GenerateMockJobs(string keywords, string location, int count)
@@ -548,14 +548,14 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
         {
             string title = jobTitles[i % jobTitles.Length];
             string company = companies[i % companies.Length];
-            string loc = string.IsNullOrWhiteSpace(location) ? locations[i % locations.Length] : location;
+            string locationValue = string.IsNullOrWhiteSpace(location) ? locations[i % locations.Length] : location;
 
             mockJobs.Add(new JobListing
             {
                 Id = $"linkedin-job-{i + 1}",
                 Title = title,
                 Company = company,
-                Location = loc,
+                Location = locationValue,
                 Description = $"Looking for an experienced {title.ToLowerInvariant()} to join our team. Work with cutting-edge technologies and solve challenging problems.",
                 Source = "LinkedIn",
                 PostedAt = DateTimeOffset.UtcNow.AddDays(-random.Next(1, 30)),

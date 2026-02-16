@@ -370,13 +370,13 @@ public sealed class ProxySourceFallbackManager
             try
             {
                 IProxySource source = GetOrCreateSource(config);
-                var sw = Stopwatch.StartNew();
+                var stopwatch = Stopwatch.StartNew();
 
                 IEnumerable<ProxyInfo> proxies = await source.FetchProxiesAsync(ct).ConfigureAwait(false);
-                sw.Stop();
+                stopwatch.Stop();
 
                 var proxyList = proxies.ToList();
-                _healthMonitor.ReportSourceResult(sourceName, proxyList.Count > 0, sw.Elapsed, proxyList.Count);
+                _healthMonitor.ReportSourceResult(sourceName, proxyList.Count > 0, stopwatch.Elapsed, proxyList.Count);
 
                 if (proxyList.Count > 0)
                 {

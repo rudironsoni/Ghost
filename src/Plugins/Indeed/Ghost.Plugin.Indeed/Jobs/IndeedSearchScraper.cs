@@ -97,7 +97,7 @@ public class IndeedSearchScraper
         }
 
         // Strategy 2: Browser fallback (secondary)
-        if (_browserSession != null)
+        if (_browserSession is not null)
         {
             try
             {
@@ -149,7 +149,7 @@ public class IndeedSearchScraper
         int maxResults,
         CancellationToken ct)
     {
-        if (_browserSession == null)
+        if (_browserSession is null)
         {
             return Array.Empty<JobListing>();
         }
@@ -178,7 +178,7 @@ public class IndeedSearchScraper
                     string jobId = await card.GetAttributeAsync("data-jk", ct).ConfigureAwait(false) ?? string.Empty;
                     string title = await ExtractTextAsync(card, ".jobTitle, h2[class*='jobTitle']", ct).ConfigureAwait(false);
                     string company = await ExtractTextAsync(card, ".companyName, [class*='companyName']", ct).ConfigureAwait(false);
-                    string loc = await ExtractTextAsync(card, ".companyLocation, [class*='companyLocation']", ct).ConfigureAwait(false);
+                    string locationText = await ExtractTextAsync(card, ".companyLocation, [class*='companyLocation']", ct).ConfigureAwait(false);
                     string salary = await ExtractTextAsync(card, ".salary-snippet, [class*='salary']", ct).ConfigureAwait(false);
                     string description = await ExtractTextAsync(card, ".job-snippet, [class*='job-snippet']", ct).ConfigureAwait(false);
 
@@ -189,7 +189,7 @@ public class IndeedSearchScraper
                             Id = jobId,
                             Title = title,
                             Company = company,
-                            Location = loc,
+                            Location = locationText,
                             Description = description,
                             Salary = salary,
                             Url = $"{_options.BaseUrl}/viewjob?jk={jobId}",
@@ -220,7 +220,7 @@ public class IndeedSearchScraper
         try
         {
             IElement? target = await element.QuerySelectorAsync(selector, ct).ConfigureAwait(false);
-            if (target == null)
+            if (target is null)
             {
                 return string.Empty;
             }

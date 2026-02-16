@@ -172,11 +172,11 @@ public sealed class ProxyHealthChecker
                 Timeout = s_defaultTimeout
             };
 
-            var sw = Stopwatch.StartNew();
+            var stopwatch = Stopwatch.StartNew();
             using HttpResponseMessage response = await client.GetAsync(s_healthCheckUri, cancellationToken).ConfigureAwait(false);
-            sw.Stop();
+            stopwatch.Stop();
 
-            status.LatencyMs = sw.ElapsedMilliseconds;
+            status.LatencyMs = stopwatch.ElapsedMilliseconds;
             status.LastChecked = DateTime.UtcNow;
 
             if (response.IsSuccessStatusCode && status.LatencyMs < HealthyLatencyThresholdMs)

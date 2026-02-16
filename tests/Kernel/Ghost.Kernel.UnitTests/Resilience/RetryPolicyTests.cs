@@ -129,7 +129,7 @@ public class RetryPolicyTests
             UseJitter = false
         });
 
-        var sw = Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
 
         await Assert.ThrowsAsync<HttpRequestException>(async () =>
             await policy.ExecuteAsync(async () =>
@@ -137,9 +137,9 @@ public class RetryPolicyTests
                 throw new HttpRequestException("transient");
             }, RetryableErrorClassifier.IsRetryable).ConfigureAwait(false));
 
-        sw.Stop();
+        stopwatch.Stop();
 
-        sw.Elapsed.Should().BeGreaterOrEqualTo(TimeSpan.FromMilliseconds(50));
+        stopwatch.Elapsed.Should().BeGreaterOrEqualTo(TimeSpan.FromMilliseconds(50));
     }
 
     [Fact]
@@ -338,7 +338,7 @@ public class RetryPolicyTests
             UseJitter = true
         });
 
-        var sw = Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
 
         await Assert.ThrowsAsync<HttpRequestException>(async () =>
             await policy.ExecuteAsync(async () =>
@@ -346,8 +346,8 @@ public class RetryPolicyTests
                 throw new HttpRequestException("transient");
             }, RetryableErrorClassifier.IsRetryable).ConfigureAwait(false));
 
-        sw.Stop();
+        stopwatch.Stop();
 
-        sw.Elapsed.Should().BeGreaterOrEqualTo(TimeSpan.FromMilliseconds(100));
+        stopwatch.Elapsed.Should().BeGreaterOrEqualTo(TimeSpan.FromMilliseconds(100));
     }
 }

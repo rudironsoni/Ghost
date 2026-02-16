@@ -85,8 +85,8 @@ public sealed partial class AnthropicClient : Ghost.Contracts.Inference.IInferen
 
             // Poll for partial response. This is intentionally conservative and robust.
             string last = string.Empty;
-            var sw = System.Diagnostics.Stopwatch.StartNew();
-            while (!ct.IsCancellationRequested && sw.Elapsed < _options.ResponseTimeout)
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            while (!ct.IsCancellationRequested && stopwatch.Elapsed < _options.ResponseTimeout)
             {
                 // attempt to read a standard response container
                 string content = string.Empty;

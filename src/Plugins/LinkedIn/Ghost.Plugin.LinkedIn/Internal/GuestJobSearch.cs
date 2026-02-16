@@ -118,13 +118,13 @@ public sealed class GuestJobSearch : IGuestJobSearch
     private async Task<List<string>> SearchIdsAsync(JobSearchCriteria criteria, int limit, CancellationToken ct)
     {
         var ids = new List<string>();
-        string q = Uri.EscapeDataString(criteria.Query ?? string.Empty);
-        string loc = Uri.EscapeDataString(criteria.Location ?? string.Empty);
+        string query = Uri.EscapeDataString(criteria.Query ?? string.Empty);
+        string locationEncoded = Uri.EscapeDataString(criteria.Location ?? string.Empty);
 
         for (int offset = 0; ids.Count < limit; offset += 25)
         {
             ct.ThrowIfCancellationRequested();
-            string url = BuildSearchUrl(criteria, q, loc, offset);
+            string url = BuildSearchUrl(criteria, query, locationEncoded, offset);
             List<string>? found = await TryFetchIdsAsync(url, ct).ConfigureAwait(false);
 
             if (found is null) return ids;

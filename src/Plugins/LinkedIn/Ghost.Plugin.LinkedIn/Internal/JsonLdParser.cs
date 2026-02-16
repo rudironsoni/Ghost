@@ -83,8 +83,8 @@ internal sealed class JsonLdParser
         try
         {
             // fallback: jobId query param
-            var q = new UriBuilder(url);
-            NameValueCollection query = System.Web.HttpUtility.ParseQueryString(q.Query);
+            var uriBuilder = new UriBuilder(url);
+            NameValueCollection query = System.Web.HttpUtility.ParseQueryString(uriBuilder.Query);
             string? id = query["jobId"] ?? query["id"];
             return id;
         }
