@@ -502,10 +502,38 @@ public sealed class ProxyHealthIntelligence : IDisposable
 
     public void Dispose()
     {
-        _healthCheckCts?.Cancel();
-        _healthCheckTask?.Wait(TimeSpan.FromSeconds(5));
-        _healthCheckCts?.Dispose();
-        _initLock?.Dispose();
+        try
+        {
+            _healthCheckCts?.Cancel();
+            _healthCheckTask?.Wait(TimeSpan.FromSeconds(5));
+        }
+        catch (ObjectDisposedException)
+        {
+            // Already disposed, ignore
+        }
+        catch (AggregateException)
+        {
+            // Task was canceled or faulted, ignore
+        }
+
+        try
+        {
+            _healthCheckCts?.Dispose();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Already disposed
+        }
+
+        try
+        {
+            _initLock?.Dispose();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Already disposed
+        }
+
         _healthCheckClient?.Dispose();
     }
 }

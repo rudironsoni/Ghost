@@ -73,6 +73,9 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
     private static readonly Action<ILogger, string, Exception?> _logDeleteFailed =
         LoggerMessage.Define<string>(LogLevel.Warning, new EventId(6, "DeleteFailed"), "Failed to delete cache file {File}");
 
+    private static readonly Action<ILogger, string, Exception?> _logSemaphoreDisposed =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(7, "SemaphoreDisposed"), "Semaphore disposed for evicted cache entry {Key}");
+
     private readonly IMemoryCache _memoryCache;
     private readonly string _diskCachePath;
     private readonly ILogger<MemoryFileHybridCache> _logger;
@@ -81,6 +84,12 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
     private long _hits;
     private long _misses;
     private long _diskFallbacks;
+    private long _evictions;
+    private bool _disposed;
+
+    // Default cache entry options with sliding expiration
+    private static readonly TimeSpan DefaultSlidingExpiration = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan DefaultAbsoluteExpiration = TimeSpan.FromHours(2);
 
     public MemoryFileHybridCache(
         IMemoryCache memoryCache,
@@ -99,6 +108,7 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
     public async Task<IReadOnlyList<JobListing>?> GetJobsAsync(string cacheKey, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(cacheKey);
+        ObjectDisposedException.ThrowIf(_disposed, this);
 
         // Try memory first
         if (_memoryCache.TryGetValue(cacheKey, out IReadOnlyList<JobListing>? jobs))
@@ -114,18 +124,27 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
         {
             try
             {
-                SemaphoreSlim lockObj = _locks.GetOrAdd(cacheKey, _ => new SemaphoreSlim(1, 1));
+                // Get or create semaphore atomically to prevent duplicate creation
+                SemaphoreSlim lockObj = GetOrCreateSemaphore(cacheKey);
                 await lockObj.WaitAsync(ct).ConfigureAwait(false);
 
                 try
                 {
+                    // Double-check after acquiring lock
+                    if (_memoryCache.TryGetValue(cacheKey, out jobs))
+                    {
+                        Interlocked.Increment(ref _hits);
+                        _logCacheHit(_logger, cacheKey, null);
+                        return jobs;
+                    }
+
                     string json = await File.ReadAllTextAsync(diskPath, ct).ConfigureAwait(false);
                     jobs = System.Text.Json.JsonSerializer.Deserialize<List<JobListing>>(json);
 
                     if (jobs != null)
                     {
-                        // Promote to memory
-                        _memoryCache.Set(cacheKey, jobs, TimeSpan.FromMinutes(5));
+                        // Promote to memory with sliding expiration
+                        SetMemoryCacheEntry(cacheKey, jobs);
                         Interlocked.Increment(ref _hits);
                         Interlocked.Increment(ref _diskFallbacks);
                         _logDiskFallback(_logger, cacheKey, null);
@@ -152,15 +171,14 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
     {
         ArgumentException.ThrowIfNullOrEmpty(cacheKey);
         ArgumentNullException.ThrowIfNull(jobs);
+        ObjectDisposedException.ThrowIf(_disposed, this);
 
-        TimeSpan exp = expiration ?? TimeSpan.FromMinutes(30);
-
-        // Set in memory
-        _memoryCache.Set(cacheKey, jobs, exp);
+        // Set in memory with sliding expiration
+        SetMemoryCacheEntry(cacheKey, jobs, expiration);
 
         // Async write to disk
         string diskPath = GetDiskPath(cacheKey);
-        SemaphoreSlim lockObj = _locks.GetOrAdd(cacheKey, _ => new SemaphoreSlim(1, 1));
+        SemaphoreSlim lockObj = GetOrCreateSemaphore(cacheKey);
 
         _ = Task.Run(async () =>
         {
@@ -185,9 +203,7 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
 
     public Task InvalidateAsync(string pattern, CancellationToken ct = default)
     {
-        // Memory invalidation
-        // Note: IMemoryCache doesn't support pattern-based eviction, so we track keys externally
-        // For production, use a proper cache like Redis or MemoryCache with eviction callbacks
+        ObjectDisposedException.ThrowIf(_disposed, this);
 
         // Disk invalidation
         string[] files = Directory.GetFiles(_diskCachePath, "*.json");
@@ -215,11 +231,58 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
         {
             Hits = Interlocked.Read(ref _hits),
             Misses = Interlocked.Read(ref _misses),
-            Evictions = _stats.Evictions,
+            Evictions = Interlocked.Read(ref _evictions),
             DiskFallbacks = Interlocked.Read(ref _diskFallbacks),
             MemorySize = _stats.MemorySize,
             DiskSize = GetDiskSize()
         };
+    }
+
+    /// <summary>
+    /// Gets or creates a semaphore for the given cache key atomically.
+    /// </summary>
+    private SemaphoreSlim GetOrCreateSemaphore(string cacheKey)
+    {
+        return _locks.GetOrAdd(cacheKey, static _ => new SemaphoreSlim(1, 1));
+    }
+
+    /// <summary>
+    /// Sets a cache entry with sliding expiration and eviction callback.
+    /// </summary>
+    private void SetMemoryCacheEntry(string cacheKey, IReadOnlyList<JobListing> jobs, TimeSpan? expiration = null)
+    {
+        MemoryCacheEntryOptions options = new MemoryCacheEntryOptions()
+            .SetSlidingExpiration(expiration ?? DefaultSlidingExpiration)
+            .SetAbsoluteExpiration(DefaultAbsoluteExpiration)
+            .RegisterPostEvictionCallback(OnCacheEntryEvicted, this);
+
+        _memoryCache.Set(cacheKey, jobs, options);
+    }
+
+    /// <summary>
+    /// Called when a cache entry is evicted. Disposes the associated semaphore.
+    /// </summary>
+    private static void OnCacheEntryEvicted(object key, object? value, EvictionReason reason, object? state)
+    {
+        if (state is not MemoryFileHybridCache cache)
+            return;
+
+        string cacheKey = (string)key;
+
+        // Remove and dispose the semaphore if it exists
+        if (cache._locks.TryRemove(cacheKey, out SemaphoreSlim? semaphore))
+        {
+            try
+            {
+                semaphore.Dispose();
+                _logSemaphoreDisposed(cache._logger, cacheKey, null);
+                Interlocked.Increment(ref cache._evictions);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Already disposed, ignore
+            }
+        }
     }
 
     private string GetDiskPath(string cacheKey)
@@ -243,9 +306,22 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
 
     public void Dispose()
     {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
+        // Dispose all remaining semaphores
         foreach (KeyValuePair<string, SemaphoreSlim> kvp in _locks)
         {
-            kvp.Value.Dispose();
+            try
+            {
+                kvp.Value.Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Already disposed, ignore
+            }
         }
         _locks.Clear();
         GC.SuppressFinalize(this);
