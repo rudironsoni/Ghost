@@ -161,7 +161,14 @@ public partial class BrowserSessionPool : IBrowserSessionPool
         return idleTime > _options.IdleTimeout;
     }
 
-    private async void CleanupIdleSessionsAsync(object? state)
+    private void CleanupIdleSessionsAsync(object? state)
+    {
+        // Fire-and-forget with proper exception handling
+        // Timer callbacks cannot be async Task, so we use this pattern
+        _ = CleanupIdleSessionsInternalAsync();
+    }
+
+    private async Task CleanupIdleSessionsInternalAsync()
     {
         try
         {

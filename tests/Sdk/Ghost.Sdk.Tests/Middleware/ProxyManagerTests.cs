@@ -124,7 +124,7 @@ public sealed class ProxyManagerTests
 
     [Fact]
     [Trait("Category", "Unit")]
-    public void AddProxy_WithAuthentication_ShouldSetCredentials()
+    public async Task AddProxy_WithAuthentication_ShouldSetCredentials()
     {
         // Arrange
         var options = new ProxyOptions();
@@ -134,10 +134,10 @@ public sealed class ProxyManagerTests
         manager.AddProxy("proxy.example.com", 8080, "username", "password");
 
         // Assert
-        var proxy = manager.GetNextProxyAsync().Result;
+        var proxy = await manager.GetNextProxyAsync();
         proxy.Should().NotBeNull();
         proxy!.Credentials.Should().NotBeNull();
-        
+
         var credentials = proxy.Credentials as NetworkCredential;
         credentials.Should().NotBeNull();
         credentials!.UserName.Should().Be("username");
@@ -146,7 +146,7 @@ public sealed class ProxyManagerTests
 
     [Fact]
     [Trait("Category", "Unit")]
-    public void AddProxy_WithoutAuthentication_ShouldNotSetCredentials()
+    public async Task AddProxy_WithoutAuthentication_ShouldNotSetCredentials()
     {
         // Arrange
         var options = new ProxyOptions();
@@ -156,7 +156,7 @@ public sealed class ProxyManagerTests
         manager.AddProxy("proxy.example.com", 8080);
 
         // Assert
-        var proxy = manager.GetNextProxyAsync().Result;
+        var proxy = await manager.GetNextProxyAsync();
         proxy.Should().NotBeNull();
         proxy!.Credentials.Should().BeNull();
     }
@@ -374,7 +374,7 @@ public sealed class ProxyManagerTests
 
     [Fact]
     [Trait("Category", "Unit")]
-    public void AddProxy_SameHostAndPort_ShouldUpdateExisting()
+    public async Task AddProxy_SameHostAndPort_ShouldUpdateExisting()
     {
         // Arrange
         var options = new ProxyOptions();
@@ -385,9 +385,9 @@ public sealed class ProxyManagerTests
         manager.AddProxy("proxy.example.com", 8080, "user2", "pass2");
 
         // Assert
-        var proxy = manager.GetNextProxyAsync().Result;
+        var proxy = await manager.GetNextProxyAsync();
         proxy.Should().NotBeNull();
-        
+
         var credentials = proxy!.Credentials as NetworkCredential;
         credentials.Should().NotBeNull();
         credentials!.UserName.Should().Be("user2");

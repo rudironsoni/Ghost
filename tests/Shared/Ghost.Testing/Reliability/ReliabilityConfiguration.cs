@@ -61,7 +61,12 @@ internal sealed class ReliabilityExecutor : XunitTestFrameworkExecutor
     /// <summary>
     /// Runs tests with reliability enhancements.
     /// </summary>
-    protected override async void RunTestCases(
+    /// <remarks>
+    /// This method uses a synchronous wait for cleanup because it overrides the Xunit framework
+    /// contract which requires void return type. The synchronous wait is acceptable here
+    /// because it's test framework infrastructure code, not library code.
+    /// </remarks>
+    protected override void RunTestCases(
         IEnumerable<IXunitTestCase> testCases,
         IMessageSink executionMessageSink,
         ITestFrameworkExecutionOptions executionOptions)
@@ -77,7 +82,8 @@ internal sealed class ReliabilityExecutor : XunitTestFrameworkExecutor
         finally
         {
             // Check for leaked browser processes after tests complete
-            await Task.Delay(1000).ConfigureAwait(false); // Give processes a moment to clean up
+            // Use synchronous wait because Xunit framework contract requires void return
+            Task.Delay(1000).GetAwaiter().GetResult(); // Give processes a moment to clean up
             List<Process> leakedProcesses = BrowserLeakDetector.DetectNewProcesses(initialSnapshot);
 
             if (leakedProcesses.Count > 0)
