@@ -37,13 +37,13 @@ public class StorageContext
     /// Gets or sets custom metadata for the storage operation.
     /// </summary>
     /// <value>Dictionary of custom key-value pairs.</value>
-    public Dictionary<string, object> Metadata { get; set; } = new();
+    public Dictionary<string, object> Metadata { get; set; } = [];
 
     /// <summary>
     /// Gets or sets tags for categorizing the stored data.
     /// </summary>
     /// <value>List of tags.</value>
-    public List<string> Tags { get; set; } = new();
+    public List<string> Tags { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the batch identifier for grouped operations.
@@ -61,7 +61,7 @@ public class StorageContext
     /// Gets or sets the unique key field names for conflict detection.
     /// </summary>
     /// <value>List of field names that form the unique key.</value>
-    public List<string> UniqueKeys { get; set; } = new();
+    public List<string> UniqueKeys { get; set; } = [];
 
     /// <summary>
     /// Creates a new storage context with the specified spider name.

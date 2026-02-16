@@ -94,7 +94,7 @@ public class BrowserPoolOptions
     /// <item>--window-size=1920,1080: Set viewport size</item>
     /// </list>
     /// </remarks>
-    public List<string> BrowserArgs { get; set; } = new();
+    public List<string> BrowserArgs { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the default viewport width for browser instances.

@@ -44,7 +44,7 @@ public class JmesPathSelector : ISelector
 
             if (parsedResult is JArray array)
             {
-                var results = new List<string>();
+                List<string> results = [];
                 foreach (JToken item in array)
                 {
                     string? value = ExtractValue(item);

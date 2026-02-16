@@ -479,7 +479,7 @@ public class MessageBufferTests
     {
         // Arrange
         var buffer = new MessageBuffer(maxMessageCount: 1000);
-        var tasks = new List<Task>();
+        List<Task> tasks = [];
 
         // Act
         for (int i = 0; i < 10; i++)

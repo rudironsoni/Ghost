@@ -32,7 +32,7 @@ public sealed class RequiredFieldsContract : ProviderContractBase
             return Failure("No jobs returned to validate required fields");
         }
 
-        var errors = new List<string>();
+        List<string> errors = [];
         var context = new Dictionary<string, object>
         {
             ["TotalJobs"] = jobs.Count

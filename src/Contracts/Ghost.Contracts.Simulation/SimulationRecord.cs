@@ -60,7 +60,7 @@ public class SimulationRecord
     /// <summary>
     /// Gets or sets additional context data for this record.
     /// </summary>
-    public Dictionary<string, object> Context { get; set; } = new();
+    public Dictionary<string, object> Context { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the sequence number within the session.
@@ -75,5 +75,5 @@ public class SimulationRecord
     /// <summary>
     /// Gets or sets the list of child record IDs.
     /// </summary>
-    public List<Guid> ChildRecordIds { get; set; } = new();
+    public List<Guid> ChildRecordIds { get; set; } = [];
 }

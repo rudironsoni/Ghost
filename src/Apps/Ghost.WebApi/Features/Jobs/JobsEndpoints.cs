@@ -99,7 +99,7 @@ public static class JobsEndpoints
         {
             Jobs = jobs,
             Success = true,
-            PlatformErrors = new List<PlatformError>(),
+            PlatformErrors = [],
             Metadata = new SearchMetadata
             {
                 TotalPlatforms = 1,

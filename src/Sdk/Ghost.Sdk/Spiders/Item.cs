@@ -22,7 +22,7 @@ public class Item
     /// <item>Custom extraction metadata</item>
     /// </list>
     /// </remarks>
-    public Dictionary<string, object> Metadata { get; set; } = new();
+    public Dictionary<string, object> Metadata { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the source URL where this item was extracted.

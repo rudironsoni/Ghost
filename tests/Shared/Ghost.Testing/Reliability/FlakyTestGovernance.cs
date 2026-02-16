@@ -207,7 +207,7 @@ public sealed class FlakyTestTracker
     /// <returns>List of potentially flaky tests.</returns>
     public static List<FlakyTestCandidate> DetectFlakyTests(int minExecutions = 10, double flakeThreshold = 0.1)
     {
-        var candidates = new List<FlakyTestCandidate>();
+        List<FlakyTestCandidate> candidates = [];
 
         foreach (KeyValuePair<string, TestStabilityMetrics> kvp in _metrics)
         {
@@ -406,12 +406,12 @@ public sealed class TestStabilityMetrics
     /// <summary>
     /// Gets or sets the execution times in milliseconds.
     /// </summary>
-    public List<long> ExecutionTimes { get; set; } = new();
+    public List<long> ExecutionTimes { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the recent executions (timestamp, passed).
     /// </summary>
-    public Queue<(DateTime Timestamp, bool Passed)> RecentExecutions { get; set; } = new();
+    public Queue<(DateTime Timestamp, bool Passed)> RecentExecutions { get; set; } = [];
 }
 
 /// <summary>
@@ -493,7 +493,7 @@ public sealed class FlakeReport
     /// <summary>
     /// Gets or sets the list of flaky tests.
     /// </summary>
-    public List<FlakyTestCandidate> FlakyTests { get; set; } = new();
+    public List<FlakyTestCandidate> FlakyTests { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the total number of tracked tests.

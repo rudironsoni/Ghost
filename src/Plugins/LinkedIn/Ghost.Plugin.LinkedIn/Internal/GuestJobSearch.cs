@@ -117,7 +117,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
 
     private async Task<List<string>> SearchIdsAsync(JobSearchCriteria criteria, int limit, CancellationToken ct)
     {
-        var ids = new List<string>();
+        List<string> ids = [];
         string query = Uri.EscapeDataString(criteria.Query ?? string.Empty);
         string locationEncoded = Uri.EscapeDataString(criteria.Location ?? string.Empty);
 
@@ -213,7 +213,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
         {
             s_logGuestSearchFailed(_logger, ex);
             LinkedInLog.LogFailedToParseSearchNode(_logger, ex);
-            return new TryFetchResult { Ids = new List<string>(), ShouldBreak = true };
+            return new TryFetchResult { Ids = [], ShouldBreak = true };
         }
         finally
         {
@@ -256,12 +256,12 @@ public sealed class GuestJobSearch : IGuestJobSearch
 
     private TryFetchResult? ValidateSearchResponse(string html)
     {
-        if (string.IsNullOrEmpty(html)) return new TryFetchResult { Ids = new List<string>(), ShouldBreak = true };
+        if (string.IsNullOrEmpty(html)) return new TryFetchResult { Ids = [], ShouldBreak = true };
 
         if (html.Contains("429 Too Many Requests", StringComparison.OrdinalIgnoreCase) || html.Contains("too many requests", StringComparison.OrdinalIgnoreCase))
         {
             LinkedInLogGuest.LogGuestApiThrottled(_logger);
-            return new TryFetchResult { Ids = new List<string>(), ShouldBreak = true };
+            return new TryFetchResult { Ids = [], ShouldBreak = true };
         }
 
         return null;
@@ -697,7 +697,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
 
     private static List<string> ExtractIdsFromSearchHtml(string html)
     {
-        var ids = new List<string>();
+        List<string> ids = [];
 
         foreach (Match m in Regex.Matches(html, "data-entity-urn=\"urn:li:jobPosting:(?<id>[0-9]+)\"", RegexOptions.IgnoreCase))
         {

@@ -60,7 +60,7 @@ public class IndeedJobClient : Ghost.IJobScraper
         }
 
         // Fallback to legacy API-only approach
-        var list = new List<JobListing>();
+        List<JobListing> list = [];
         int rawCount = 0;
         int parsedCount = 0;
         await foreach (JsonElement root in _api.SearchAsync(criteria.Query ?? string.Empty, criteria.Location ?? string.Empty, criteria.MaxResults).ConfigureAwait(false))

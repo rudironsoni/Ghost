@@ -40,7 +40,7 @@ public class RegexSelector : ISelector
             return new List<string>();
 
         MatchCollection matches = _regex.Matches(content);
-        var results = new List<string>();
+        List<string> results = [];
 
         foreach (Match match in matches)
         {

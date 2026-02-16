@@ -389,7 +389,7 @@ public class AdapterRegistryTests
     public async Task Register_ThreadSafety_ShouldHandleConcurrentRegistrations()
     {
         // Arrange
-        var tasks = new List<Task>();
+        List<Task> tasks = [];
         var registry = new AdapterRegistry();
 
         // Act

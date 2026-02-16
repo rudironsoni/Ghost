@@ -54,8 +54,8 @@ namespace Ghost.Sdk.Spiders;
 public class CrawlSpider : Spider, ICrawlSpider
 {
     private readonly ILinkExtractor _linkExtractor;
-    private readonly List<Request> _scheduledRequests = new();
-    private readonly List<Item> _extractedItems = new();
+    private readonly List<Request> _scheduledRequests = [];
+    private readonly List<Item> _extractedItems = [];
 
     /// <summary>
     /// Gets the name of this spider.
@@ -66,7 +66,7 @@ public class CrawlSpider : Spider, ICrawlSpider
     /// Gets the collection of crawl rules.
     /// </summary>
     /// <value>List of rules that control crawling behavior.</value>
-    public List<CrawlRule> Rules { get; } = new();
+    public List<CrawlRule> Rules { get; } = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CrawlSpider"/> class.

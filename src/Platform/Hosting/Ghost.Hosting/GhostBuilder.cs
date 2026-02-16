@@ -11,7 +11,7 @@ public sealed class GhostBuilder
 {
     private readonly IServiceCollection _services;
     private readonly IConfiguration _configuration;
-    private readonly List<IExtension> _extensions = new();
+    private readonly List<IExtension> _extensions = [];
     private Action<KernelOptions>? _kernelConfigure;
 
     internal GhostBuilder(IServiceCollection services, IConfiguration configuration)

@@ -51,13 +51,13 @@ public class SpiderOptions
     /// Gets or sets allowed domains for crawling.
     /// </summary>
     /// <value>List of allowed domain patterns, or empty for all domains.</value>
-    public List<string> AllowedDomains { get; set; } = new();
+    public List<string> AllowedDomains { get; set; } = [];
 
     /// <summary>
     /// Gets or sets URL patterns to exclude.
     /// </summary>
     /// <value>List of regex patterns for URLs to skip.</value>
-    public List<string> ExcludePatterns { get; set; } = new();
+    public List<string> ExcludePatterns { get; set; } = [];
 
     /// <summary>
     /// Gets or sets a value indicating whether to enable auto-throttling.
@@ -69,5 +69,5 @@ public class SpiderOptions
     /// Gets or sets custom metadata for the spider.
     /// </summary>
     /// <value>Dictionary of custom key-value pairs.</value>
-    public Dictionary<string, object> Metadata { get; set; } = new();
+    public Dictionary<string, object> Metadata { get; set; } = [];
 }

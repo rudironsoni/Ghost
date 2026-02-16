@@ -91,7 +91,7 @@ public class ContentResult
     /// <item>"CacheHit": Whether content was served from cache</item>
     /// </list>
     /// </remarks>
-    public Dictionary<string, object> Metadata { get; set; } = new();
+    public Dictionary<string, object> Metadata { get; set; } = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ContentResult"/> class.

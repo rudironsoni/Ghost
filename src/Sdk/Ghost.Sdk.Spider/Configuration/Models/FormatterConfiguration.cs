@@ -13,7 +13,7 @@ public sealed class FormatterConfiguration
     /// <summary>
     /// Gets or sets formatter-specific parameters.
     /// </summary>
-    public Dictionary<string, string> Parameters { get; set; } = new();
+    public Dictionary<string, string> Parameters { get; set; } = [];
 
     /// <summary>
     /// Gets or sets custom formatter code (for Custom type).

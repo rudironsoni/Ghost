@@ -1,5 +1,7 @@
 using Ghost.Contracts.Jobs;
 using Ghost.Hosting;
+using Ghost.Kernel;
+using Ghost.Kernel.Services;
 using Ghost.Plugin.Glassdoor;
 using Ghost.Plugin.Google;
 using Ghost.Plugin.Indeed;
@@ -7,6 +9,7 @@ using Ghost.Plugin.InfoJobs;
 using Ghost.Plugin.LinkedIn;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Xunit;
 
 namespace Ghost.Smoke.Tests.Integration;
@@ -27,6 +30,18 @@ public class PlatformIntegrationTestFixture : IAsyncLifetime
         IConfigurationBuilder builder = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                // Enable all platforms for testing
+                ["Ghost:Extensions:LinkedIn:Enabled"] = "true",
+                ["Ghost:Extensions:Indeed:Enabled"] = "true",
+                ["Ghost:Extensions:Google:Enabled"] = "true",
+                ["Ghost:Extensions:Glassdoor:Enabled"] = "true",
+                ["Ghost:Extensions:Glassdoor:ProxyEnabled"] = "false",
+                ["Ghost:Extensions:InfoJobs:Enabled"] = "false",
+                ["Ghost:Kernel:Headless"] = "true",
+                ["Ghost:Kernel:MaxConcurrentSessions"] = "2"
+            })
             .AddEnvironmentVariables();
 
         Configuration = builder.Build();
@@ -35,10 +50,43 @@ public class PlatformIntegrationTestFixture : IAsyncLifetime
         var services = new ServiceCollection();
 
         // Add core Ghost services
-        services.AddLogging();
+        services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
         services.AddHttpClient();
 
-        // Register platform plugins ONLY if they are enabled
+        // Register Ghost Kernel services
+        services.AddGhost(Configuration, ghostBuilder =>
+        {
+            ghostBuilder.ConfigureKernel(options =>
+            {
+                Configuration.GetSection("Ghost:Kernel").Bind(options);
+            });
+
+            // Register enabled extensions
+            if (Configuration.GetValue<bool>("Ghost:Extensions:LinkedIn:Enabled"))
+            {
+                ghostBuilder.UseExtension(new LinkedInPlugin());
+            }
+
+            if (Configuration.GetValue<bool>("Ghost:Extensions:Indeed:Enabled"))
+            {
+                ghostBuilder.UseExtension(new IndeedPlugin());
+            }
+
+            if (Configuration.GetValue<bool>("Ghost:Extensions:Google:Enabled"))
+            {
+                ghostBuilder.UseExtension(new GooglePlugin());
+            }
+
+            if (Configuration.GetValue<bool>("Ghost:Extensions:Glassdoor:Enabled"))
+            {
+                ghostBuilder.UseExtension(new GlassdoorPlugin());
+            }
+        });
+
+        // Register the AggregatedJobClient as the IJobClient implementation
+        services.AddScoped<IJobClient, AggregatedJobClient>();
+
+        // Register individual platform clients as keyed services
         RegisterEnabledPlugins(services, Configuration);
 
         // Build service provider

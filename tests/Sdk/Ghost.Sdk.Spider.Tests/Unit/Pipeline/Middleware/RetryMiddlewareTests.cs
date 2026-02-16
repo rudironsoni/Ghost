@@ -237,7 +237,7 @@ public class RetryMiddlewareTests
         var context = CreateContext();
         var callCount = 0;
         var startTime = DateTime.UtcNow;
-        var delays = new List<TimeSpan>();
+        List<TimeSpan> delays = [];
 
         PipelineDelegate next = _ =>
         {

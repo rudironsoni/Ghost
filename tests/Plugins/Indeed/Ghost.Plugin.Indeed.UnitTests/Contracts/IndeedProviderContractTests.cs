@@ -1,5 +1,5 @@
 using Ghost.Contracts.Jobs;
-using Ghost.Infrastructure.Session;
+using Ghost.Platform.Storage.Session;
 using Ghost.Plugin.Indeed;
 using Ghost.Plugin.Indeed.Internal;
 using Ghost.Plugin.Indeed.Tests.Contracts;

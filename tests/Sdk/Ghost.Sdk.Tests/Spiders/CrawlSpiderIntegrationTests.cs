@@ -221,8 +221,8 @@ public class CrawlSpiderIntegrationTests
         var linkExtractor = new HtmlAgilityLinkExtractor();
         var spider = new CrawlSpider(linkExtractor);
 
-        var productItems = new List<Item>();
-        var categoryItems = new List<Item>();
+        List<Item> productItems = [];
+        List<Item> categoryItems = [];
 
         // Rule for products - extract items
         spider.AddRule(

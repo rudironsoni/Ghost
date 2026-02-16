@@ -48,7 +48,7 @@ public class StrategyChain
     /// <summary>
     /// Gets or sets additional metadata for the chain.
     /// </summary>
-    public Dictionary<string, object> Metadata { get; init; } = new();
+    public Dictionary<string, object> Metadata { get; init; } = [];
 
     /// <summary>
     /// Gets or sets a description of what this chain does.
@@ -58,7 +58,7 @@ public class StrategyChain
     /// <summary>
     /// Gets or sets the tags for categorizing this chain.
     /// </summary>
-    public List<string> Tags { get; init; } = new();
+    public List<string> Tags { get; init; } = [];
 
     /// <summary>
     /// Gets or sets a value indicating whether to continue executing subsequent strategies

@@ -60,7 +60,7 @@ public sealed class CaptchaService
 
         _logAttemptingSolve(_logger, challenge.Type, _providers.Count(), null);
 
-        var errors = new List<Exception>();
+        List<Exception> errors = [];
 
         foreach (ICaptchaProvider provider in _providers)
         {
@@ -120,7 +120,7 @@ public sealed class CaptchaService
 /// </summary>
 public sealed class CaptchaMetrics
 {
-    private readonly Dictionary<string, ProviderMetrics> _providerMetrics = new();
+    private readonly Dictionary<string, ProviderMetrics> _providerMetrics = [];
     private readonly object _lock = new();
 
     public void RecordSuccess(string providerName, CaptchaType type)

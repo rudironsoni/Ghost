@@ -31,7 +31,7 @@
     <!-- Platform -->
     <ProjectReference Include="../../../src/Platform/Hosting/Ghost.Hosting/Ghost.Hosting.csproj" />
     <ProjectReference Include="../../../src/Platform/Hosting/Ghost.Hosting.WebApi/Ghost.Hosting.WebApi.csproj" />
-    <ProjectReference Include="../../../src/Platform/Storage/Ghost.Infrastructure.Session/Ghost.Infrastructure.Session.csproj" />
+    <ProjectReference Include="../../../src/Platform/Storage/Ghost.Platform.Storage.Session/Ghost.Platform.Storage.Session.csproj" />
 
     <!-- Kernel -->
     <ProjectReference Include="../../../src/Kernel/Ghost/Ghost.csproj" />

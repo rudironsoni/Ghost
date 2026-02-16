@@ -168,5 +168,5 @@ public class ScheduleInfo
     /// Gets or sets custom metadata for the schedule.
     /// </summary>
     /// <value>Dictionary of metadata key-value pairs.</value>
-    public Dictionary<string, object> Metadata { get; init; } = new();
+    public Dictionary<string, object> Metadata { get; init; } = [];
 }

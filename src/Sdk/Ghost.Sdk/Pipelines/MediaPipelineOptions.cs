@@ -17,7 +17,7 @@ public class MediaPipelineOptions
     /// Gets or sets the list of allowed file extensions.
     /// Empty list allows all extensions.
     /// </summary>
-    public List<string> AllowedExtensions { get; set; } = new();
+    public List<string> AllowedExtensions { get; set; } = [];
 
     /// <summary>
     /// Gets or sets whether to calculate checksums for downloaded files.

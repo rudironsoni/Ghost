@@ -13,10 +13,10 @@ public class OffsiteOptions
     /// <summary>
     /// Gets or sets the list of allowed domains.
     /// </summary>
-    public List<string> AllowedDomains { get; set; } = new();
+    public List<string> AllowedDomains { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the list of denied domains.
     /// </summary>
-    public List<string> DenyDomains { get; set; } = new();
+    public List<string> DenyDomains { get; set; } = [];
 }

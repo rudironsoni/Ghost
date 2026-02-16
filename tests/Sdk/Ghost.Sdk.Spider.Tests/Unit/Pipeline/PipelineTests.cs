@@ -226,7 +226,7 @@ public class PipelineTests
     public async Task PipelineDelegate_ShouldChain()
     {
         // Arrange
-        var executionOrder = new List<string>();
+        List<string> executionOrder = [];
 
         PipelineDelegate del1 = async ctx =>
         {

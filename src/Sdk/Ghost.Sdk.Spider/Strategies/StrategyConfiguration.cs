@@ -33,22 +33,22 @@ public class StrategyConfiguration
     /// <summary>
     /// Gets or sets the conditions that must be met for this strategy to execute.
     /// </summary>
-    public List<ConditionConfiguration> Conditions { get; init; } = new();
+    public List<ConditionConfiguration> Conditions { get; init; } = [];
 
     /// <summary>
     /// Gets or sets the fallback conditions that trigger this strategy after another fails.
     /// </summary>
-    public List<ConditionConfiguration> FallbackConditions { get; init; } = new();
+    public List<ConditionConfiguration> FallbackConditions { get; init; } = [];
 
     /// <summary>
     /// Gets or sets additional parameters specific to this strategy.
     /// </summary>
-    public Dictionary<string, object> Parameters { get; init; } = new();
+    public Dictionary<string, object> Parameters { get; init; } = [];
 
     /// <summary>
     /// Gets or sets the tags for categorizing this strategy.
     /// </summary>
-    public List<string> Tags { get; init; } = new();
+    public List<string> Tags { get; init; } = [];
 
     /// <summary>
     /// Gets or sets a description of what this strategy does.

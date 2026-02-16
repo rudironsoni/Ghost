@@ -18,7 +18,7 @@ public class StealthMiddlewareFullTests
         // Arrange & Act
         var config = new Dictionary<string, object>
         {
-            ["UserAgents"] = new List<string>()
+            ["UserAgents"] = []
         };
         var middleware = new StealthMiddleware(config);
 
@@ -37,7 +37,7 @@ public class StealthMiddlewareFullTests
             ["RandomDelay"] = false
         };
         var middleware = new StealthMiddleware(config);
-        var userAgents = new List<string>();
+        List<string> userAgents = [];
 
         // Act - Make 3 requests
         for (int i = 0; i < 3; i++)
@@ -259,7 +259,7 @@ public class StealthMiddlewareFullTests
             ["RandomDelay"] = false
         };
         var middleware = new StealthMiddleware(config);
-        var userAgents = new List<string>();
+        List<string> userAgents = [];
 
         // Act - Make 105 requests (to test wrap-around)
         for (int i = 0; i < 105; i++)

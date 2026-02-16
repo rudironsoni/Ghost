@@ -106,7 +106,7 @@ public sealed class IndeedMultiStrategyParser
     /// </summary>
     private List<JobListing> ConvertEntitiesToJobListings(List<IndeedJobEntity> entities, string baseUrl)
     {
-        var jobListings = new List<JobListing>();
+        List<JobListing> jobListings = [];
 
         foreach (IndeedJobEntity entity in entities)
         {

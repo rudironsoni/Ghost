@@ -1,6 +1,6 @@
 using System;
 
-namespace Ghost.Infrastructure.Session;
+namespace Ghost.Platform.Storage.Session;
 
 /// <summary>
 /// Factory for creating consistent RotatingProxySession instances

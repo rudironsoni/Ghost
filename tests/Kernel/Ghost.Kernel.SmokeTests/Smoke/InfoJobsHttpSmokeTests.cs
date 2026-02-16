@@ -16,18 +16,18 @@ namespace Ghost.Smoke.Tests.Smoke;
 /// </summary>
 [Trait("Category", "Smoke")]
 [Trait("Plugin", "InfoJobs")]
-public class InfoJobsHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
+public class InfoJobsHttpSmokeTests : IClassFixture<GhostWebApiFixture>
 {
-    private readonly HttpSmokeTestFixture _fixture;
+    private readonly GhostWebApiFixture _fixture;
     private readonly ITestOutputHelper _output;
 
-    public InfoJobsHttpSmokeTests(HttpSmokeTestFixture fixture, ITestOutputHelper output)
+    public InfoJobsHttpSmokeTests(GhostWebApiFixture fixture, ITestOutputHelper output)
     {
         _fixture = fixture;
         _output = output;
     }
 
-    [Fact(Skip = "Smoke tests require running Ghost server - run manually")]
+    [Fact(Skip = "InfoJobs plugin not migrated to new structure")]
     public async Task SearchJobs_Returns_Populated_Fresh_Data()
     {
         // Arrange
@@ -73,7 +73,7 @@ public class InfoJobsHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         _output.WriteLine($"Source: {sampleJob.Source}");
     }
 
-    [Fact(Skip = "Smoke tests require running Ghost server - run manually")]
+    [Fact(Skip = "InfoJobs plugin not migrated to new structure")]
     public async Task SearchJobs_WithLocation_Returns_Jobs_In_Location()
     {
         // Arrange
@@ -114,7 +114,7 @@ public class InfoJobsHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         }
     }
 
-    [Fact(Skip = "Smoke tests require running Ghost server - run manually")]
+    [Fact(Skip = "InfoJobs plugin not migrated to new structure")]
     public async Task GetJobDetails_ById_Returns_Valid_Data()
     {
         // Arrange

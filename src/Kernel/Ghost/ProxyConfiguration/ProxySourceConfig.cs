@@ -38,7 +38,7 @@ public class ProxySourceConfig
     /// Supports formats: "host:port", "host", "scheme://host:port", "scheme://user:pass@host:port"
     /// Used primarily for direct static proxy configuration.
     /// </summary>
-    public List<string> Hosts { get; set; } = new();
+    public List<string> Hosts { get; set; } = [];
 
     /// <summary>
     /// URL endpoint for API-based proxy sources.

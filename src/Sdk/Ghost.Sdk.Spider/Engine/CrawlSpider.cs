@@ -270,7 +270,7 @@ public abstract class CrawlSpider : Spider, ICrawlSpider
             return Enumerable.Empty<Request>();
         }
 
-        var requests = new List<Request>();
+        List<Request> requests = [];
         while (queue.TryDequeue(out Request? request))
         {
             requests.Add(request);

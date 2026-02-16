@@ -305,7 +305,7 @@ public class TransformationTests
 
     private static Dictionary<string, object> GetProperties(object obj)
     {
-        var dict = new Dictionary<string, object>();
+        Dictionary<string, object> dict = [];
 
         // Handle ExpandoObject
         if (obj is IDictionary<string, object> expando)
@@ -329,7 +329,7 @@ public class TransformationTests
     {
         public static Task<object> TransformAsync(object item, StorageContext context)
         {
-            var result = new Dictionary<string, object>();
+            Dictionary<string, object> result = [];
             var inputDict = GetProperties(item);
 
             foreach (var kvp in inputDict)
@@ -366,7 +366,7 @@ public class TransformationTests
     {
         public static Task<object> TransformAsync(object item, StorageContext context)
         {
-            var result = new Dictionary<string, object>();
+            Dictionary<string, object> result = [];
             foreach (var prop in item.GetType().GetProperties())
             {
                 result[prop.Name] = prop.GetValue(item)!;
@@ -382,7 +382,7 @@ public class TransformationTests
     {
         public static Task<object> TransformAsync(object item, StorageContext context)
         {
-            var result = new Dictionary<string, object>();
+            Dictionary<string, object> result = [];
             var inputDict = GetProperties(item);
 
             foreach (var kvp in inputDict)
@@ -404,7 +404,7 @@ public class TransformationTests
     {
         public static Task<object> TransformAsync(object item, StorageContext context)
         {
-            var result = new Dictionary<string, object>();
+            Dictionary<string, object> result = [];
             foreach (var prop in item.GetType().GetProperties())
             {
                 var value = prop.GetValue(item);
@@ -433,7 +433,7 @@ public class TransformationTests
     {
         public static Task<object> TransformAsync(object item, StorageContext context)
         {
-            var result = new Dictionary<string, object>();
+            Dictionary<string, object> result = [];
             foreach (var prop in item.GetType().GetProperties())
             {
                 var value = prop.GetValue(item);
@@ -475,7 +475,7 @@ public class TransformationTests
 
         public static async Task<object> TransformAsync(object item, StorageContext context)
         {
-            var result = new Dictionary<string, object>();
+            Dictionary<string, object> result = [];
             foreach (var prop in item.GetType().GetProperties())
             {
                 result[prop.Name] = prop.GetValue(item)!;
@@ -496,7 +496,7 @@ public class TransformationTests
     {
         public static Task<object> TransformAsync(object item, StorageContext context)
         {
-            var result = new Dictionary<string, object>();
+            Dictionary<string, object> result = [];
             foreach (var prop in item.GetType().GetProperties())
             {
                 var value = prop.GetValue(item);
@@ -534,7 +534,7 @@ public class TransformationTests
             var queryString = string.Empty;
             if (filteredQuery.Count > 0)
             {
-                var items = new List<string>();
+                List<string> items = [];
                 foreach (string? key in filteredQuery.AllKeys)
                 {
                     if (key != null)
@@ -557,7 +557,7 @@ public class TransformationTests
 
     private sealed class DeduplicationTransformation
     {
-        private readonly HashSet<string> _seen = new();
+        private readonly HashSet<string> _seen = [];
 
         public Task<bool> ShouldIncludeAsync(object item, StorageContext context)
         {
@@ -568,7 +568,7 @@ public class TransformationTests
 
     private sealed class CompositeTransformation
     {
-        private readonly List<dynamic> _transformations = new();
+        private readonly List<dynamic> _transformations = [];
 
         public void AddTransformation(dynamic transformation)
         {
@@ -597,7 +597,7 @@ public class TransformationTests
 
         public Task<ValidationResult> ValidateAsync(object item, StorageContext context)
         {
-            var errors = new List<string>();
+            List<string> errors = [];
             var props = item.GetType().GetProperties().Select(p => p.Name).ToHashSet();
 
             foreach (var field in _requiredFields)
@@ -619,7 +619,7 @@ public class TransformationTests
     private sealed class ValidationResult
     {
         public bool IsValid { get; set; }
-        public List<string> Errors { get; set; } = new();
+        public List<string> Errors { get; set; } = [];
     }
 
     private sealed class TruncateTransformation
@@ -633,7 +633,7 @@ public class TransformationTests
 
         public Task<object> TransformAsync(object item, StorageContext context)
         {
-            var result = new Dictionary<string, object>();
+            Dictionary<string, object> result = [];
             foreach (var prop in item.GetType().GetProperties())
             {
                 var value = prop.GetValue(item);
@@ -661,7 +661,7 @@ public class TransformationTests
 
         public Task<object> TransformAsync(object item, StorageContext context)
         {
-            var result = new Dictionary<string, object>();
+            Dictionary<string, object> result = [];
             foreach (var prop in item.GetType().GetProperties())
             {
                 result[prop.Name] = prop.GetValue(item)!;

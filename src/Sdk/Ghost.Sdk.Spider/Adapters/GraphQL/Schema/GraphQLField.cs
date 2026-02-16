@@ -37,7 +37,7 @@ public class GraphQLField
     /// </summary>
     /// <value>List of input values that can be passed to this field.</value>
     [JsonPropertyName("args")]
-    public List<GraphQLInputValue> Args { get; set; } = new();
+    public List<GraphQLInputValue> Args { get; set; } = [];
 
     /// <summary>
     /// Gets or sets a value indicating whether this field is deprecated.

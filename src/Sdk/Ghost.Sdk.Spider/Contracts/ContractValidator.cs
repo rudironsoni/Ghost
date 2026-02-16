@@ -34,7 +34,7 @@ public class ContractValidator
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var results = new List<ContractResult>();
+        List<ContractResult> results = [];
         foreach (ISpiderContract contract in _contracts)
         {
             bool passed = await contract.ValidateAsync(context, ct).ConfigureAwait(false);

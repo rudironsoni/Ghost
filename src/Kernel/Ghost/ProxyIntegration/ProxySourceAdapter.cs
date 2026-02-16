@@ -284,7 +284,7 @@ public sealed class ProxySourceFallbackManager
     private readonly List<Ghost.Kernel.ProxySourceConfig> _sourcesChain;
     private readonly ProxySourceHealthMonitor _healthMonitor;
     private readonly ILogger<ProxySourceFallbackManager> _logger;
-    private readonly Dictionary<string, IProxySource> _sourceCache = new();
+    private readonly Dictionary<string, IProxySource> _sourceCache = [];
     private readonly HttpClient? _httpClient;
     private int _currentSourceIndex;
 
@@ -557,7 +557,7 @@ public sealed class ProxySourceHealthMetrics
     /// <summary>
     /// Latency measurements (in milliseconds).
     /// </summary>
-    public List<double> LatencyHistory { get; } = new();
+    public List<double> LatencyHistory { get; } = [];
 
     /// <summary>
     /// Calculates the success rate (0.0 to 1.0).

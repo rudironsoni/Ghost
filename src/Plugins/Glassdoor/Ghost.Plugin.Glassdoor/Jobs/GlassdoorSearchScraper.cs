@@ -88,7 +88,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
 
         s_logSearchStarting(_logger, criteria.Query, criteria.Location, limit, null);
 
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
         string query = Uri.EscapeDataString(criteria.Query ?? string.Empty);
         string location = Uri.EscapeDataString(criteria.Location ?? string.Empty);
 
@@ -210,7 +210,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
     private static string BuildSearchUrl(string query, string location)
     {
         string baseUrl = "https://www.glassdoor.com/Job/jobs.htm";
-        var parameters = new List<string>();
+        List<string> parameters = [];
 
         if (!string.IsNullOrEmpty(query))
         {
@@ -358,7 +358,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
 
     private async Task<List<JobListing>> ExtractJobsFromPageAsync(IPage page, string html, CancellationToken ct)
     {
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
 
         try
         {
@@ -630,7 +630,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
 
     private static List<JobListing> ExtractJobsWithRegex(string html)
     {
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
 
         if (string.IsNullOrEmpty(html))
             return jobs;
@@ -754,7 +754,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
 
     private static List<JobListing> ExtractJobsFromJsonElement(System.Text.Json.JsonElement element)
     {
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
 
         try
         {

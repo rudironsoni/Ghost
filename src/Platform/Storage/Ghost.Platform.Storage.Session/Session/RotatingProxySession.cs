@@ -7,7 +7,7 @@ using Ghost.Http;
 using Polly;
 using Polly.Retry;
 
-namespace Ghost.Infrastructure.Session;
+namespace Ghost.Platform.Storage.Session;
 
 /// <summary>
 /// Implements JobSpy-inspired session management with proxy rotation and TLS fingerprinting
@@ -33,7 +33,7 @@ public class RotatingProxySession : IDisposable
         _options = options ?? new RotatingProxySessionOptions();
 
         // Initialize proxy pool
-        _proxyPool = new List<ProxyInfo>();
+        _proxyPool = [];
         _currentProxyIndex = 0;
 
         // Set default headers

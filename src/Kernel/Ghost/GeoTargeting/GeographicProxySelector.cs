@@ -203,7 +203,7 @@ public sealed class GeographicProxySelector : IDisposable
     /// </summary>
     public IReadOnlyDictionary<string, RegionTargetingStats> GetRegionTargetingStats()
     {
-        var stats = new Dictionary<string, RegionTargetingStats>();
+        Dictionary<string, RegionTargetingStats> stats = [];
 
         foreach (string region in _geoPoolCache.Keys)
         {
@@ -587,7 +587,7 @@ public class GeographicProxyPool
 {
     private readonly string _regionCode;
     private readonly GeographicTargetingOptions _options;
-    private readonly List<ProxyInfo> _proxies = new();
+    private readonly List<ProxyInfo> _proxies = [];
     private readonly object _proxyLock = new();
 
     public string RegionCode => _regionCode;
@@ -673,7 +673,7 @@ public class GeographicProxyPool
 /// </summary>
 public class ProxyLocationMetrics
 {
-    private readonly List<double> _latencyHistory = new();
+    private readonly List<double> _latencyHistory = [];
     private readonly object _lock = new();
 
     public string ProxyKey { get; set; } = string.Empty;

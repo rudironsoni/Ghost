@@ -40,7 +40,7 @@ public sealed class FailureAnalysisViewBuilder
     /// <returns>A failure analysis view of the run.</returns>
     public static async Task<FailureAnalysisView> Build(IAsyncEnumerable<EngineEvent> events)
     {
-        var failures = new List<Failure>();
+        List<Failure> failures = [];
         string? runId = null;
 
         await foreach (var e in events)

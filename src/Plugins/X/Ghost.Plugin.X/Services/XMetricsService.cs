@@ -122,6 +122,6 @@ public class XMetrics
     public int TotalPosts { get; set; }
     public DateTime? FirstRequestAt { get; set; }
     public DateTime LastRequestAt { get; set; }
-    public Dictionary<string, int> ErrorCounts { get; set; } = new();
-    public List<PostMetric> RecentPosts { get; set; } = new();
+    public Dictionary<string, int> ErrorCounts { get; set; } = [];
+    public List<PostMetric> RecentPosts { get; set; } = [];
 }

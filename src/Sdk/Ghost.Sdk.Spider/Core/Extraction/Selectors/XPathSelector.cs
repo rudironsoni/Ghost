@@ -51,7 +51,7 @@ public class XPathSelector : ISelector
         if (nodes == null || nodes.Count == 0)
             return new List<string>();
 
-        var results = new List<string>();
+        List<string> results = [];
         foreach (HtmlNode? node in nodes)
         {
             string? value = ExtractValue(node);

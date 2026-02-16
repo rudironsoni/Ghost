@@ -29,7 +29,7 @@ public class Response
     /// <summary>
     /// Gets or sets the response headers.
     /// </summary>
-    public Dictionary<string, string> Headers { get; set; } = new();
+    public Dictionary<string, string> Headers { get; set; } = [];
 }
 
 /// <summary>

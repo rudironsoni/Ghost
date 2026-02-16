@@ -511,7 +511,7 @@ public class ExecutionContextTests
         var context = new SpiderExecutionContext("RealUsageSpider", new SpiderOptions { MaxRequests = 100 });
 
         // Act - Simulate processing 50 requests, 45 succeed, 5 fail
-        var tasks = new List<Task>();
+        List<Task> tasks = [];
         for (int i = 0; i < 50; i++)
         {
             var index = i; // Capture loop variable

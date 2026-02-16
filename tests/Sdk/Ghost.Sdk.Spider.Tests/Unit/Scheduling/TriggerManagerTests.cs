@@ -29,7 +29,7 @@ public class TriggerManagerTests
     public async Task TriggerManager_ScheduleMultipleTriggers_ShouldTrackAll()
     {
         // Arrange
-        var scheduleIds = new List<string>();
+        List<string> scheduleIds = [];
 
         _mockScheduler
             .Setup(s => s.ScheduleCronAsync(It.IsAny<string>(), It.IsAny<SpiderBase>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))

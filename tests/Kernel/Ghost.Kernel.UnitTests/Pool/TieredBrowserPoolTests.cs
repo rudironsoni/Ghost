@@ -205,7 +205,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
     [Fact]
     public async Task PoolFallsBackToWarmWhenHotExhausted()
     {
-        var hotSessions = new List<IBrowserSession>();
+        List<IBrowserSession> hotSessions = [];
 
         for (int i = 0; i < 10; i++)
         {
@@ -227,7 +227,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
     [Fact]
     public async Task PoolFallsBackToColdWhenWarmExhausted()
     {
-        var sessions = new List<IBrowserSession>();
+        List<IBrowserSession> sessions = [];
 
         for (int i = 0; i < 20; i++)
         {

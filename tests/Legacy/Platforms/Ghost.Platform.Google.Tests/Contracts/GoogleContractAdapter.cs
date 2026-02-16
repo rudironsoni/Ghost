@@ -46,7 +46,7 @@ public sealed class GoogleContractAdapter : IProviderContractAdapter
         int maxPages = 10,
         CancellationToken ct = default)
     {
-        var allJobs = new List<JobListing>();
+        List<JobListing> allJobs = [];
 
         // Google Jobs uses cursor-based pagination
         // We'll simulate this by making multiple searches
@@ -125,7 +125,7 @@ public sealed class GoogleContractAdapter : IProviderContractAdapter
     /// </summary>
     private static List<JobListing> GenerateSyntheticJobs(int count, int pageNumber = 0)
     {
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
         for (int i = 0; i < count; i++)
         {
             var globalIndex = (pageNumber * count) + i;
@@ -153,7 +153,7 @@ public sealed class GoogleContractAdapter : IProviderContractAdapter
 
     private static List<JobListing> GenerateSyntheticPaginatedJobs(int maxPages, int pageSize = 4)
     {
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
         var safePages = maxPages < 1 ? 1 : maxPages;
 
         for (int page = 0; page < safePages; page++)

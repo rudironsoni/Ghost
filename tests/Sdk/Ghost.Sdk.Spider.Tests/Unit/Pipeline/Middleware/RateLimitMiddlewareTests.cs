@@ -233,7 +233,7 @@ public class RateLimitMiddlewareTests
     public void Constructor_WithEmptyConfiguration_ShouldUseDefaults()
     {
         // Arrange
-        var config = new Dictionary<string, object>();
+        Dictionary<string, object> config = [];
 
         // Act
         var middleware = new RateLimitMiddleware(config);

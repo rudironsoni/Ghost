@@ -112,7 +112,7 @@ public class GraphQLRequest
     /// <returns>This <see cref="GraphQLRequest"/> instance for method chaining.</returns>
     public GraphQLRequest WithVariable(string name, object value)
     {
-        Variables ??= new Dictionary<string, object>();
+        Variables ??= [];
         Variables[name] = value;
         return this;
     }
@@ -136,7 +136,7 @@ public class GraphQLRequest
     /// <returns>This <see cref="GraphQLRequest"/> instance for method chaining.</returns>
     public GraphQLRequest WithExtension(string name, object value)
     {
-        Extensions ??= new Dictionary<string, object>();
+        Extensions ??= [];
         Extensions[name] = value;
         return this;
     }

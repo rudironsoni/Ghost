@@ -27,5 +27,5 @@ public class DepthStatistics
     /// The key is the depth level, and the value is the count of URLs at that depth.
     /// Example: { 0: 1, 1: 5, 2: 20 } means 1 URL at depth 0, 5 at depth 1, and 20 at depth 2.
     /// </remarks>
-    public Dictionary<int, int> Distribution { get; set; } = new();
+    public Dictionary<int, int> Distribution { get; set; } = [];
 }

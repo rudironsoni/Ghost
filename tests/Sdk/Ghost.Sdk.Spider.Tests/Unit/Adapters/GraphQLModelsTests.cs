@@ -217,7 +217,7 @@ public class GraphQLModelsTests
         // Arrange
         var response = new GraphQLResponse
         {
-            Errors = new List<GraphQLError>()
+            Errors = []
         };
 
         // Assert

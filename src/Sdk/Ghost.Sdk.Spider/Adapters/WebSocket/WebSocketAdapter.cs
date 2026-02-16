@@ -21,7 +21,7 @@ public class WebSocketAdapter : IContentAdapter, IDisposable
 {
     private readonly ILogger<WebSocketAdapter>? _logger;
     private readonly WebSocketAdapterOptions _defaultOptions;
-    private readonly Dictionary<string, WebSocketConnection> _connections = new();
+    private readonly Dictionary<string, WebSocketConnection> _connections = [];
     private readonly object _connectionsLock = new();
     private bool _disposed;
 
@@ -111,7 +111,7 @@ public class WebSocketAdapter : IContentAdapter, IDisposable
                 .ConfigureAwait(false);
 
             // Receive messages until timeout or close
-            List<WebSocketMessage> messages = new List<WebSocketMessage>();
+            List<WebSocketMessage> messages = [];
             using CancellationTokenSource receiveCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             receiveCts.CancelAfter(wsOptions.ReceiveTimeout);
 

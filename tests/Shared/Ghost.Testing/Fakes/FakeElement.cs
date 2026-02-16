@@ -2,7 +2,7 @@ namespace Ghost.Testing.Fakes;
 
 public class FakeElement : IElement
 {
-    private readonly Dictionary<string, string> _attributes = new();
+    private readonly Dictionary<string, string> _attributes = [];
     private string _textContent = string.Empty;
     private string _innerHTML = string.Empty;
 

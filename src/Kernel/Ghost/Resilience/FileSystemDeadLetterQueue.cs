@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Kernel;
+using Ghost.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -169,7 +170,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
         EnsureDirectories();
         await AutoArchiveIfDueAsync().ConfigureAwait(false);
 
-        var items = new List<Ghost.Kernel.DeadLetterItem>();
+        List<Ghost.Kernel.DeadLetterItem> items = [];
 
         foreach (string? path in EnumerateActiveFiles().Take(count))
         {
@@ -245,7 +246,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
         await AutoArchiveIfDueAsync().ConfigureAwait(false);
 
         DateTime threshold = GetThresholdUtc(since);
-        var jobs = new List<FailedScrapeJob>();
+        List<FailedScrapeJob> jobs = [];
 
         foreach (string path in EnumerateActiveFiles())
         {
@@ -276,7 +277,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
         await AutoArchiveIfDueAsync().ConfigureAwait(false);
 
         DateTime threshold = GetThresholdUtc(since);
-        var jobs = new List<FailedScrapeJob>();
+        List<FailedScrapeJob> jobs = [];
 
         foreach (string path in EnumerateActiveFiles())
         {
@@ -533,12 +534,9 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
     {
         try
         {
-            FileStream stream = new(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
-            await using (stream.ConfigureAwait(false))
-            {
-                FailedScrapeJob? job = await JsonSerializer.DeserializeAsync<FailedScrapeJob>(stream, _serializerOptions).ConfigureAwait(false);
-                return job;
-            }
+            string json = await File.ReadAllTextAsync(path).ConfigureAwait(false);
+            FailedScrapeJob? job = JsonSerializer.Deserialize(json, KernelSerializerContext.Default.FailedScrapeJob);
+            return job;
         }
         catch (FileNotFoundException)
         {
@@ -566,12 +564,8 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
         string tempPath = path + ".tmp-" + Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
         try
         {
-            FileStream stream = new(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, useAsync: true);
-            await using (stream.ConfigureAwait(false))
-            {
-                await JsonSerializer.SerializeAsync(stream, job, _serializerOptions).ConfigureAwait(false);
-                await stream.FlushAsync().ConfigureAwait(false);
-            }
+            string json = JsonSerializer.Serialize(job, KernelSerializerContext.Default.FailedScrapeJob);
+            await File.WriteAllTextAsync(tempPath, json).ConfigureAwait(false);
 
             File.Move(tempPath, path, true);
         }

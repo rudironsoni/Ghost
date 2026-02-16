@@ -34,7 +34,7 @@ public sealed class CsvFeedExporterTests
         // Assert
         stream.Position = 0;
         using var reader = new StreamReader(stream);
-        var lines = new List<string>();
+        List<string> lines = [];
         string? line;
         while ((line = await reader.ReadLineAsync()) != null)
         {
@@ -65,7 +65,7 @@ public sealed class CsvFeedExporterTests
         // Assert
         stream.Position = 0;
         using var reader = new StreamReader(stream);
-        var lines = new List<string>();
+        List<string> lines = [];
         string? line;
         while ((line = await reader.ReadLineAsync()) != null)
         {

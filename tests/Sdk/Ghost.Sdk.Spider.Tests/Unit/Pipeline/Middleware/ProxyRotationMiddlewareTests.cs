@@ -26,7 +26,7 @@ public class ProxyRotationMiddlewareTests
         // Arrange
         var config = new Dictionary<string, object>
         {
-            ["ProxyList"] = new List<string>()
+            ["ProxyList"] = []
         };
 
         // Act
@@ -41,7 +41,7 @@ public class ProxyRotationMiddlewareTests
     public void Constructor_WithoutProxyList_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var config = new Dictionary<string, object>();
+        Dictionary<string, object> config = [];
 
         // Act
         var act = () => new ProxyRotationMiddleware(config);
@@ -83,7 +83,7 @@ public class ProxyRotationMiddlewareTests
         };
 
         var middleware = new ProxyRotationMiddleware(config);
-        var selectedProxies = new List<string>();
+        List<string> selectedProxies = [];
 
         for (int i = 0; i < 6; i++)
         {
@@ -135,7 +135,7 @@ public class ProxyRotationMiddlewareTests
         };
 
         var middleware = new ProxyRotationMiddleware(config);
-        var selectedProxies = new HashSet<string>();
+        HashSet<string> selectedProxies = [];
 
         for (int i = 0; i < 20; i++)
         {

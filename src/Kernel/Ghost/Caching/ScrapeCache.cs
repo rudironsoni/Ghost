@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Concurrent;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
+using Ghost.Serialization;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
@@ -139,7 +141,7 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
                     }
 
                     string json = await File.ReadAllTextAsync(diskPath, ct).ConfigureAwait(false);
-                    jobs = System.Text.Json.JsonSerializer.Deserialize<List<JobListing>>(json);
+                    jobs = JsonSerializer.Deserialize(json, KernelSerializerContext.Default.ListJobListing);
 
                     if (jobs != null)
                     {
@@ -185,7 +187,7 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
             await lockObj.WaitAsync().ConfigureAwait(false);
             try
             {
-                string json = System.Text.Json.JsonSerializer.Serialize(jobs);
+                string json = JsonSerializer.Serialize(jobs, KernelSerializerContext.Default.IReadOnlyListJobListing);
                 await File.WriteAllTextAsync(diskPath, json).ConfigureAwait(false);
             }
             catch (Exception ex)

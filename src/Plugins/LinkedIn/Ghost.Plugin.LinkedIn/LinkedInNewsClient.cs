@@ -36,7 +36,7 @@ public sealed class LinkedInNewsClient : INewsClient
                 await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
                 IReadOnlyList<IElement> nodes = await page.QuerySelectorAllAsync(".feed-shared-update-v2", ct: ct).ConfigureAwait(false);
-                var list = new List<NewsArticle>();
+                List<NewsArticle> list = [];
                 foreach (IElement? n in nodes.Take(filter?.MaxResults ?? 20))
                 {
                     try
@@ -98,7 +98,7 @@ public sealed class LinkedInNewsClient : INewsClient
                 // Search results for content usually appear as update cards
                 // Selectors: .search-results-container .search-update-card, or reusing feed classes
                 IReadOnlyList<IElement> nodes = await page.QuerySelectorAllAsync(".search-update-card, .feed-shared-update-v2", ct: ct).ConfigureAwait(false);
-                var list = new List<NewsArticle>();
+                List<NewsArticle> list = [];
                 foreach (IElement? n in nodes.Take(options?.MaxResults ?? 20))
                 {
                     try
@@ -146,7 +146,7 @@ public sealed class LinkedInNewsClient : INewsClient
 
     private static List<NewsArticle> GenerateMockArticles(int count)
     {
-        var mockArticles = new List<NewsArticle>();
+        List<NewsArticle> mockArticles = [];
         string[] titles = new[]
         {
             "Tech Industry Sees Major Growth in AI Development",

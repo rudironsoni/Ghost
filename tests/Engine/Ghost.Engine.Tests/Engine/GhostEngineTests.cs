@@ -30,8 +30,8 @@ public class GhostEngineTests
             MaxPendingItems = 10
         };
 
-        var processedRequests = new List<string>();
-        var processedItems = new List<string>();
+        List<string> processedRequests = [];
+        List<string> processedItems = [];
 
         var spider = new TestSpider(processedRequests, processedItems);
         var downloader = new TestDownloader();
@@ -91,7 +91,7 @@ public class GhostEngineTests
     public async Task RunAsync_WithMiddleware_ExecutesInCorrectOrderAsync()
     {
         // Arrange
-        var executionOrder = new List<string>();
+        List<string> executionOrder = [];
 
         var spider = new TestSpider(new List<string>(), new List<string>());
         var downloader = new TestDownloader();

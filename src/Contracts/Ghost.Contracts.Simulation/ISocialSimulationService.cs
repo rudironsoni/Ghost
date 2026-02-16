@@ -216,7 +216,7 @@ public class SimulationStatistics
     /// <summary>
     /// Gets or sets the number of actions per platform.
     /// </summary>
-    public Dictionary<string, int> ActionsPerPlatform { get; set; } = new();
+    public Dictionary<string, int> ActionsPerPlatform { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the average simulation duration.

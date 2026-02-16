@@ -42,7 +42,7 @@ public class MemoryUsageExtensionIntegrationTests
     {
         // Arrange
         var extension = new MemoryUsageExtension(_logger);
-        var peakValues = new List<long>();
+        List<long> peakValues = [];
 
         // Act - Perform multiple checks
         for (var i = 0; i < 5; i++)
@@ -73,7 +73,7 @@ public class MemoryUsageExtensionIntegrationTests
         var extension = new MemoryUsageExtension(_logger, options);
 
         // Create some garbage
-        var garbage = new List<byte[]>();
+        List<byte[]> garbage = [];
         for (var i = 0; i < 100; i++)
         {
             garbage.Add(new byte[1024 * 1024]); // 1 MB each

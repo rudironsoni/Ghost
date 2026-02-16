@@ -105,7 +105,7 @@ public abstract class AdapterOptions
     /// These headers are added to all requests made by the adapter. Common use cases
     /// include authentication tokens, custom tracking headers, or API keys.
     /// </remarks>
-    public Dictionary<string, string> CustomHeaders { get; set; } = new();
+    public Dictionary<string, string> CustomHeaders { get; set; } = [];
 
     /// <summary>
     /// Gets or sets a value indicating whether to enable caching.
@@ -141,7 +141,7 @@ public abstract class AdapterOptions
     /// values that don't warrant dedicated properties, or to pass through
     /// configuration to underlying libraries.
     /// </remarks>
-    public Dictionary<string, object> Metadata { get; set; } = new();
+    public Dictionary<string, object> Metadata { get; set; } = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AdapterOptions"/> class.

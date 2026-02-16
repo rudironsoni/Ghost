@@ -68,7 +68,7 @@ public class RedirectMiddlewareTests
         var expectedResponse = new Response
         {
             StatusCode = 200,
-            Headers = new Dictionary<string, string>()
+            Headers = []
         };
 
         // Act
@@ -110,7 +110,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);
@@ -149,7 +149,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);
@@ -188,7 +188,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);
@@ -227,7 +227,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);
@@ -266,7 +266,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);
@@ -286,7 +286,7 @@ public class RedirectMiddlewareTests
         var expectedResponse = new Response
         {
             StatusCode = 301,
-            Headers = new Dictionary<string, string>() // No Location header
+            Headers = [] // No Location header
         };
 
         // Act
@@ -354,7 +354,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);
@@ -392,7 +392,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);
@@ -430,7 +430,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);
@@ -468,7 +468,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);
@@ -506,7 +506,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);
@@ -544,7 +544,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);
@@ -582,7 +582,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);
@@ -620,7 +620,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);
@@ -712,7 +712,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);
@@ -777,7 +777,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);
@@ -816,7 +816,7 @@ public class RedirectMiddlewareTests
                 return Task.FromResult(new Response
                 {
                     StatusCode = 200,
-                    Headers = new Dictionary<string, string>()
+                    Headers = []
                 });
             },
             CancellationToken.None);

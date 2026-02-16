@@ -13,6 +13,6 @@ public class ProxySourceConfig
     public string? Type { get; set; }
     public string? Username { get; set; }
     public string? Password { get; set; }
-    public List<string> Hosts { get; set; } = new(); // Renamed from Items
+    public List<string> Hosts { get; set; } = []; // Renamed from Items
     public string? Url { get; set; } // For API
 }

@@ -363,7 +363,7 @@ public class XSimulationE2ETests : IClassFixture<XContextFixture>
     public async Task ValidatePostAsync_TooManyImages_ReturnsCountError()
     {
         // Arrange
-        var tempFiles = new List<string>();
+        List<string> tempFiles = [];
         try
         {
             for (int i = 0; i < 5; i++)

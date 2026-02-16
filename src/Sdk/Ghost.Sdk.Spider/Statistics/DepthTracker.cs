@@ -51,7 +51,7 @@ public class DepthTracker : IDepthTracker
                 MaxDepth = 0,
                 AverageDepth = 0,
                 TotalUrls = 0,
-                Distribution = new Dictionary<int, int>()
+                Distribution = []
             };
         }
 

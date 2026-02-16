@@ -62,7 +62,7 @@ public class ApiProxySource : IProxySource
                 .Select(l => l.Trim())
                 .Where(l => !string.IsNullOrEmpty(l));
 
-            var res = new List<ProxyInfo>();
+            List<ProxyInfo> res = [];
             foreach (string? line in lines)
             {
                 ProxyInfo? p = ParseLine(line);

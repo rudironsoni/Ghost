@@ -75,7 +75,7 @@ public class SpiderResult
     /// Gets or sets additional statistics and metadata.
     /// </summary>
     /// <value>Dictionary of custom statistics.</value>
-    public Dictionary<string, object> Statistics { get; init; } = new();
+    public Dictionary<string, object> Statistics { get; init; } = [];
 
     /// <summary>
     /// Creates a successful spider result.

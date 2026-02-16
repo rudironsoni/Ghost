@@ -294,7 +294,7 @@ public class AggregatedJobClientIntegrationTests
 
     private sealed class TestLogger<T> : ILogger<T>
     {
-        public List<LogEntry> LogEntries { get; } = new();
+        public List<LogEntry> LogEntries { get; } = [];
 
         public IDisposable BeginScope<TState>(TState state) where TState : notnull => throw new NotImplementedException();
 

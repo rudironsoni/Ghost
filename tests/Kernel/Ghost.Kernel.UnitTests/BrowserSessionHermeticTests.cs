@@ -148,7 +148,7 @@ public class BrowserSessionHermeticTests
         var session = new FakeBrowserSession();
 
         // Act
-        var pages = new List<IPage>();
+        List<IPage> pages = [];
         for (int i = 0; i < 5; i++)
         {
             pages.Add(await session.NewPageAsync());

@@ -256,7 +256,7 @@ public class SpiderStateBoxTests
     public async Task Properties_IsThreadSafe_ConcurrentAccess()
     {
         // Arrange
-        var tasks = new List<Task>();
+        List<Task> tasks = [];
         const int iterations = 100;
 
         // Act - Multiple threads writing concurrently
@@ -282,7 +282,7 @@ public class SpiderStateBoxTests
     public async Task Counters_AreThreadSafe_ConcurrentIncrements()
     {
         // Arrange
-        var tasks = new List<Task>();
+        List<Task> tasks = [];
         const int iterations = 1000;
 
         // Act - Multiple threads incrementing concurrently

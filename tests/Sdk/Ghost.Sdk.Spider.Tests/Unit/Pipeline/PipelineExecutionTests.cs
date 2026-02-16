@@ -12,7 +12,7 @@ public class PipelineExecutionTests
     public async Task Build_WithMultipleMiddleware_ExecutesInOrder()
     {
         // Arrange
-        var executionOrder = new List<string>();
+        List<string> executionOrder = [];
         var builder = new PipelineBuilder()
             .Use(async (ctx, next) =>
             {
@@ -91,7 +91,7 @@ public class PipelineExecutionTests
     public async Task Build_WithMiddlewareThatShortCircuits_StopsExecution()
     {
         // Arrange
-        var executionOrder = new List<string>();
+        List<string> executionOrder = [];
         var builder = new PipelineBuilder()
             .Use(async (ctx, next) =>
             {

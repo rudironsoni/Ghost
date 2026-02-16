@@ -19,7 +19,7 @@ public partial class XConfigurationValidator : IValidateOptions<XOptions>
 
     public ValidateOptionsResult Validate(string? name, XOptions options)
     {
-        var failures = new List<string>();
+        List<string> failures = [];
 
         // Validate BaseUrl
         if (string.IsNullOrWhiteSpace(options.BaseUrl))
@@ -286,7 +286,7 @@ public class HealthCheckResult
     public bool BrowserAvailable { get; set; }
     public bool AuthStateValid { get; set; }
     public bool XPlatformReachable { get; set; }
-    public List<string> Messages { get; set; } = new();
+    public List<string> Messages { get; set; } = [];
 }
 
 /// <summary>

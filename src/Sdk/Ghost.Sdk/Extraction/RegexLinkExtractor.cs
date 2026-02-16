@@ -29,7 +29,7 @@ public sealed partial class RegexLinkExtractor : ILinkExtractor
         }
 
         MatchCollection matches = HrefPattern().Matches(html);
-        var links = new HashSet<string>();
+        HashSet<string> links = [];
 
         foreach (Match match in matches)
         {

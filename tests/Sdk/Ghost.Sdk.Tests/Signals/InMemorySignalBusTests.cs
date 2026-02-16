@@ -24,7 +24,7 @@ public sealed class InMemorySignalBusTests : IAsyncLifetime
     public async Task EmitAsync_WithValidSignal_DeliversToSubscriber()
     {
         // Arrange
-        var receivedSignals = new List<SpiderStartedSignal>();
+        List<SpiderStartedSignal> receivedSignals = [];
         var tcs = new TaskCompletionSource();
 
         _signalBus.Subscribe<SpiderStartedSignal>(async (signal, ct) =>
@@ -50,8 +50,8 @@ public sealed class InMemorySignalBusTests : IAsyncLifetime
     public async Task EmitAsync_WithMultipleSubscribers_DeliversToAll()
     {
         // Arrange
-        var received1 = new List<SpiderStartedSignal>();
-        var received2 = new List<SpiderStartedSignal>();
+        List<SpiderStartedSignal> received1 = [];
+        List<SpiderStartedSignal> received2 = [];
         var tcs1 = new TaskCompletionSource();
         var tcs2 = new TaskCompletionSource();
 
@@ -85,7 +85,7 @@ public sealed class InMemorySignalBusTests : IAsyncLifetime
     public async Task Subscribe_WhenDisposed_UnsubscribesHandler()
     {
         // Arrange
-        var receivedSignals = new List<SpiderStartedSignal>();
+        List<SpiderStartedSignal> receivedSignals = [];
         var subscription = _signalBus.Subscribe<SpiderStartedSignal>(async (signal, ct) =>
         {
             receivedSignals.Add(signal);
@@ -114,8 +114,8 @@ public sealed class InMemorySignalBusTests : IAsyncLifetime
     public async Task EmitAsync_WithDifferentSignalTypes_DeliversToCorrectSubscribers()
     {
         // Arrange
-        var startedSignals = new List<SpiderStartedSignal>();
-        var closedSignals = new List<SpiderClosedSignal>();
+        List<SpiderStartedSignal> startedSignals = [];
+        List<SpiderClosedSignal> closedSignals = [];
         var tcs1 = new TaskCompletionSource();
         var tcs2 = new TaskCompletionSource();
 
@@ -200,8 +200,8 @@ public sealed class InMemorySignalBusTests : IAsyncLifetime
     public async Task EmitAsync_WithHandlerException_ContinuesProcessing()
     {
         // Arrange
-        var received1 = new List<SpiderStartedSignal>();
-        var received2 = new List<SpiderStartedSignal>();
+        List<SpiderStartedSignal> received1 = [];
+        List<SpiderStartedSignal> received2 = [];
         var tcs = new TaskCompletionSource();
 
         _signalBus.Subscribe<SpiderStartedSignal>(async (signal, ct) =>

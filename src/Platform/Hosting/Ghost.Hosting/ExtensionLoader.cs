@@ -90,7 +90,7 @@ internal sealed class ExtensionLoader
         var dependsOn = new Dictionary<IExtension, List<IExtension>>();
         foreach (IExtension ext in extensions)
         {
-            var list = new List<IExtension>();
+            List<IExtension> list = [];
             foreach (Type req in ext.RequiredServices)
             {
                 IExtension? provider = extensions.FirstOrDefault(e => e.ProvidedServices.Contains(req));
@@ -103,7 +103,7 @@ internal sealed class ExtensionLoader
         }
 
         var result = new List<IExtension>(extensions.Count);
-        var visited = new Dictionary<IExtension, bool>();
+        Dictionary<IExtension, bool> visited = [];
 
         foreach (IExtension ext in extensions)
         {

@@ -90,7 +90,7 @@ public static class GoogleJobsParser
 
         try
         {
-            var jobs = new List<JobListing>();
+            List<JobListing> jobs = [];
 
             // Try multiple widget key patterns
             string[] widgetKeys = new[] { "520084652", "520084653", "htl;jobs" };
@@ -456,7 +456,7 @@ public static class GoogleJobsParser
             string jsonLdPattern = @"<script\s+type\s*=\s*[""']application/ld\+json[""'][^>]*>(.*?)</script>";
             MatchCollection matches = System.Text.RegularExpressions.Regex.Matches(html, jsonLdPattern, System.Text.RegularExpressions.RegexOptions.Singleline);
 
-            var jobs = new List<JobListing>();
+            List<JobListing> jobs = [];
 
             foreach (System.Text.RegularExpressions.Match match in matches)
             {
@@ -608,7 +608,7 @@ public static class GoogleJobsParser
     /// </summary>
     private static List<JobListing> ExtractJobsFromJsonDocument(JsonDocument doc, ILogger logger)
     {
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
 
         if (doc.RootElement.ValueKind == JsonValueKind.Array)
         {
@@ -652,7 +652,7 @@ public static class GoogleJobsParser
         string snippet = html.Substring(start, maxLen);
         LogJsonCandidateExtraction(logger, snippet.Length, null);
 
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
 
         for (int i = 0; i < snippet.Length; i++)
         {

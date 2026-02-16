@@ -96,8 +96,8 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
 
     public async Task PruneUnhealthyAsync(CancellationToken cancellationToken = default)
     {
-        var healthy = new List<PooledConnection>();
-        var toPrune = new List<PooledConnection>();
+        List<PooledConnection> healthy = [];
+        List<PooledConnection> toPrune = [];
 
         while (_available.TryTake(out PooledConnection? pooled))
         {

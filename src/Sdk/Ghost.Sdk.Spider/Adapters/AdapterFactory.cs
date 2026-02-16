@@ -197,7 +197,7 @@ public class AdapterFactory
         _logger.LogCreatingAdaptersForContentType(contentType);
 
         IEnumerable<Type> adapterTypes = _registry.GetAdaptersByContentType(contentType);
-        var adapters = new List<IContentAdapter>();
+        List<IContentAdapter> adapters = [];
 
         foreach (Type adapterType in adapterTypes)
         {
@@ -227,7 +227,7 @@ public class AdapterFactory
         _logger.LogGettingAllAdapters();
 
         IEnumerable<Type> adapterTypes = _registry.GetAllAdapterTypes();
-        var adapters = new List<IContentAdapter>();
+        List<IContentAdapter> adapters = [];
 
         foreach (Type adapterType in adapterTypes)
         {

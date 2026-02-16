@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using Ghost.Contracts.Jobs;
 using Ghost.Http;
-using Ghost.Infrastructure.Session;
+using Ghost.Platform.Storage.Session;
 using Microsoft.Extensions.Logging;
 using Polly;
 
@@ -551,7 +551,7 @@ public sealed class GoogleJobsApiClient : IDisposable
                 LogCursorNotFound(_logger, null);
             }
 
-            var results = new List<JobListing>();
+            List<JobListing> results = [];
             IReadOnlyList<JobListing> initialParsed = GoogleJobsParser.ParseFromHtml(html, _logger);
             LogParserResults(_logger, 1, initialParsed.Count, null);
             if (initialParsed.Count == 0)

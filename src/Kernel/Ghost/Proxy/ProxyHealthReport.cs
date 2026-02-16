@@ -11,7 +11,7 @@ public class ProxyHealthReport
     /// <summary>
     /// Gets or sets the status entries for each proxy.
     /// </summary>
-    public List<ProxyStatus> Proxies { get; set; } = new();
+    public List<ProxyStatus> Proxies { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the number of proxies considered healthy.

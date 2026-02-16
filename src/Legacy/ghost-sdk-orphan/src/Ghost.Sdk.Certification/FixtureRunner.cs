@@ -22,7 +22,7 @@ public sealed class FixtureRunner
         CertificationOptions options,
         CancellationToken ct = default)
     {
-        var results = new List<Fixture>();
+        List<Fixture> results = [];
 
         foreach (var fixture in fixtures)
         {

@@ -80,7 +80,7 @@ public class RotatingProxyProvider : IProxyProvider
             if (snapshot != null && snapshot.Length > 0)
                 return;
 
-            var list = new List<ProxyInfo>();
+            List<ProxyInfo> list = [];
             foreach (IProxySource src in _sources)
             {
                 try

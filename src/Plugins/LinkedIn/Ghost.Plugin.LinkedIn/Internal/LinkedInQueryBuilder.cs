@@ -66,7 +66,7 @@ internal static class LinkedInQueryBuilder
 
     private static List<string> Tokenize(string input)
     {
-        var tokens = new List<string>();
+        List<string> tokens = [];
         var current = new StringBuilder();
         bool inQuotes = false;
 

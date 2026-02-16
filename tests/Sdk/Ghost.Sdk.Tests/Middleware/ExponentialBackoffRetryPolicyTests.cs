@@ -249,7 +249,7 @@ public class ExponentialBackoffRetryPolicyTests
             BackoffMultiplier = 2.0
         };
         var policy = new ExponentialBackoffRetryPolicy(options);
-        var attemptTimestamps = new List<DateTimeOffset>();
+        List<DateTimeOffset> attemptTimestamps = [];
 
         // Act
         try
@@ -292,7 +292,7 @@ public class ExponentialBackoffRetryPolicyTests
             BackoffMultiplier = 2.0
         };
         var policy = new ExponentialBackoffRetryPolicy(options);
-        var attemptTimestamps = new List<DateTimeOffset>();
+        List<DateTimeOffset> attemptTimestamps = [];
 
         // Act
         try

@@ -19,7 +19,7 @@ internal class HttpRequestBuilder
 {
     private readonly Request _request;
     private readonly StaticHtmlAdapterOptions _options;
-    private readonly Dictionary<string, string> _queryParameters = new();
+    private readonly Dictionary<string, string> _queryParameters = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="HttpRequestBuilder"/> class.
@@ -201,7 +201,7 @@ internal class HttpRequestBuilder
     /// <param name="httpRequest">The HTTP request message to configure.</param>
     private void ConfigureCookies(HttpRequestMessage httpRequest)
     {
-        var cookies = new List<string>();
+        List<string> cookies = [];
 
         // Add cookies from options
         foreach ((string? name, string? value) in _options.Cookies)

@@ -24,7 +24,7 @@ public sealed class ScenarioConfig
     public required string ScenarioId { get; init; }
     public required string Name { get; init; }
     public string? Description { get; init; }
-    public Dictionary<string, object> Parameters { get; init; } = new();
+    public Dictionary<string, object> Parameters { get; init; } = [];
 }
 
 /// <summary>

@@ -9,7 +9,7 @@ public sealed class ProxyConfiguration
     public int HealthCheckRetries { get; set; } = 3;
     public bool EnableHealthChecks { get; set; } = true;
     public bool EnableGeographicRouting { get; set; } = true;
-    public List<ProxyProviderConfig> Providers { get; set; } = new();
+    public List<ProxyProviderConfig> Providers { get; set; } = [];
     public Dictionary<string, List<string>> CountryToProviderMapping { get; set; } = new();
 }
 
@@ -28,8 +28,8 @@ public sealed class ProxyProviderConfig
     public required string Type { get; set; }
     public bool Enabled { get; set; } = true;
     public int Weight { get; set; } = 100;
-    public List<string> SupportedCountries { get; set; } = new();
-    public Dictionary<string, string> Properties { get; set; } = new();
+    public List<string> SupportedCountries { get; set; } = [];
+    public Dictionary<string, string> Properties { get; set; } = [];
 }
 
 public sealed class ProxyHealthStatus

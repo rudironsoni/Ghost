@@ -30,7 +30,7 @@ public sealed class SpiderConfiguration
     /// <summary>
     /// Gets or sets custom tags for categorization and filtering.
     /// </summary>
-    public List<string> Tags { get; set; } = new();
+    public List<string> Tags { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the target URLs and patterns for crawling.
@@ -80,5 +80,5 @@ public sealed class SpiderConfiguration
     /// <summary>
     /// Gets or sets custom metadata for the spider.
     /// </summary>
-    public Dictionary<string, object> Metadata { get; set; } = new();
+    public Dictionary<string, object> Metadata { get; set; } = [];
 }

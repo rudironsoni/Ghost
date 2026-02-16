@@ -44,7 +44,7 @@ public class FreeProxyScraper : IProxySource
     /// </summary>
     public virtual async Task<IEnumerable<ProxyInfo>> FetchProxiesAsync(CancellationToken ct)
     {
-        var allProxies = new List<ProxyInfo>();
+        List<ProxyInfo> allProxies = [];
 
         // Scrape from all sources in parallel
         Task<List<ProxyInfo>>[] tasks = new[]
@@ -77,7 +77,7 @@ public class FreeProxyScraper : IProxySource
     private async Task<List<ProxyInfo>> ScrapeFromFreeProxyListAsync(CancellationToken ct)
     {
         const string source = "free-proxy-list.net";
-        var proxies = new List<ProxyInfo>();
+        List<ProxyInfo> proxies = [];
 
         try
         {
@@ -107,7 +107,7 @@ public class FreeProxyScraper : IProxySource
     private async Task<List<ProxyInfo>> ScrapeFromProxyListDownloadAsync(CancellationToken ct)
     {
         const string source = "proxy-list.download";
-        var proxies = new List<ProxyInfo>();
+        List<ProxyInfo> proxies = [];
 
         try
         {
@@ -141,7 +141,7 @@ public class FreeProxyScraper : IProxySource
     private async Task<List<ProxyInfo>> ScrapeFromProxyScrapeAsync(CancellationToken ct)
     {
         const string source = "api.proxyscrape.com";
-        var proxies = new List<ProxyInfo>();
+        List<ProxyInfo> proxies = [];
 
         try
         {
@@ -167,7 +167,7 @@ public class FreeProxyScraper : IProxySource
     private async Task<List<ProxyInfo>> ScrapeFromProxyScanAsync(CancellationToken ct)
     {
         const string source = "proxyscan.io";
-        var proxies = new List<ProxyInfo>();
+        List<ProxyInfo> proxies = [];
 
         try
         {
@@ -199,7 +199,7 @@ public class FreeProxyScraper : IProxySource
     /// </summary>
     private static List<ProxyInfo> ParseProxyList(string content)
     {
-        var proxies = new List<ProxyInfo>();
+        List<ProxyInfo> proxies = [];
 
         if (string.IsNullOrWhiteSpace(content))
             return proxies;

@@ -34,7 +34,7 @@ public static class MetricsEndpoints
     private static IResult GetPrometheusMetrics([FromServices] IMetricsCollector metrics)
     {
         MetricsSnapshot snapshot = metrics.GetSnapshot();
-        var lines = new List<string>();
+        List<string> lines = [];
 
         lines.Add("# HELP ghost_scrape_attempts Total number of scrape attempts");
         lines.Add("# TYPE ghost_scrape_attempts counter");

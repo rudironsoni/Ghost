@@ -15,7 +15,7 @@ public class CircuitBreakersStatus
 {
     public DateTime Timestamp { get; set; }
     public string OverallStatus { get; set; } = "unknown";
-    public List<CircuitBreakerHealthStatus> CircuitBreakers { get; set; } = new();
+    public List<CircuitBreakerHealthStatus> CircuitBreakers { get; set; } = [];
 }
 
 public static class CircuitBreakerHealthEndpoints

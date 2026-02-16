@@ -38,7 +38,7 @@ public class InMemoryRequestSchedulerTests
     public async Task EnqueueAsync_WithDedupe_SkipsDuplicateRequestsAsync()
     {
         // Arrange
-        var seenUrls = new HashSet<string>();
+        HashSet<string> seenUrls = [];
         var options = new InMemoryRequestSchedulerOptions
         {
             ShouldSkip = req => !seenUrls.Add(req.Url)

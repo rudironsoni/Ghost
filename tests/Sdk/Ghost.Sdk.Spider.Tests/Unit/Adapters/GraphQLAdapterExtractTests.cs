@@ -403,7 +403,7 @@ public class GraphQLAdapterExtractTests : IDisposable
         var request = new Request("https://example.com/graphql")
         {
             Body = "", // Empty body
-            Metadata = new Dictionary<string, object>() // No query in metadata either
+            Metadata = [] // No query in metadata either
         };
 
         // Act

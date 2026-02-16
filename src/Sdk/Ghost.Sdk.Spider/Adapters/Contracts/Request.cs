@@ -42,7 +42,7 @@ public class Request
     /// <item>Referer: Source page URL</item>
     /// </list>
     /// </remarks>
-    public Dictionary<string, string> Headers { get; set; } = new();
+    public Dictionary<string, string> Headers { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the request body for POST/PUT requests.
@@ -99,7 +99,7 @@ public class Request
     /// <item>"ExtractionRules": Custom extraction rules or selectors</item>
     /// </list>
     /// </remarks>
-    public Dictionary<string, object> Metadata { get; set; } = new();
+    public Dictionary<string, object> Metadata { get; set; } = [];
 
     /// <summary>
     /// Gets the type-safe metadata dictionary for storing spider metadata.

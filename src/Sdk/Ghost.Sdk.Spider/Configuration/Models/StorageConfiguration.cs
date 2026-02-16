@@ -53,7 +53,7 @@ public sealed class StorageConfiguration
     /// <summary>
     /// Gets or sets custom storage provider configuration.
     /// </summary>
-    public Dictionary<string, object> CustomConfiguration { get; set; } = new();
+    public Dictionary<string, object> CustomConfiguration { get; set; } = [];
 }
 
 /// <summary>
@@ -84,7 +84,7 @@ public sealed class PostgreSqlConfiguration
     /// <summary>
     /// Gets or sets additional connection parameters.
     /// </summary>
-    public Dictionary<string, string> ConnectionParameters { get; set; } = new();
+    public Dictionary<string, string> ConnectionParameters { get; set; } = [];
 }
 
 /// <summary>
@@ -95,7 +95,7 @@ public sealed class ElasticsearchConfiguration
     /// <summary>
     /// Gets or sets the Elasticsearch node URIs.
     /// </summary>
-    public List<string> Nodes { get; set; } = new();
+    public List<string> Nodes { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the index name.
@@ -135,5 +135,5 @@ public sealed class ElasticsearchConfiguration
     /// <summary>
     /// Gets or sets index mappings configuration.
     /// </summary>
-    public Dictionary<string, object> Mappings { get; set; } = new();
+    public Dictionary<string, object> Mappings { get; set; } = [];
 }

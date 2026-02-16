@@ -120,7 +120,7 @@ public class ComplexValidationTests
         // Arrange & Act
         var config = new ExtractionConfiguration
         {
-            Entities = new List<EntityConfiguration>()
+            Entities = []
         };
 
         // Assert

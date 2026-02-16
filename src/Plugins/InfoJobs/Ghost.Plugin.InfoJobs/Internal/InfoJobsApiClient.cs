@@ -104,7 +104,7 @@ public sealed class InfoJobsApiClient
 
     private string BuildSearchUrl(string query, string location)
     {
-        var parameters = new List<string>();
+        List<string> parameters = [];
 
         if (!string.IsNullOrEmpty(query))
             parameters.Add($"q={Uri.EscapeDataString(query)}");
@@ -135,7 +135,7 @@ public sealed class InfoJobsApiClient
                 return Array.Empty<JobListing>();
             }
 
-            var jobs = new List<JobListing>();
+            List<JobListing> jobs = [];
 
             foreach (JsonElement offer in offersArray.EnumerateArray())
             {

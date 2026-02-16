@@ -139,7 +139,7 @@ public sealed class ProxyGeographicFilter : IDisposable
     {
         ArgumentNullException.ThrowIfNull(proxies);
 
-        var results = new Dictionary<string, ProxyGeolocation>();
+        Dictionary<string, ProxyGeolocation> results = [];
 
         foreach (ProxyInfo proxy in proxies)
         {

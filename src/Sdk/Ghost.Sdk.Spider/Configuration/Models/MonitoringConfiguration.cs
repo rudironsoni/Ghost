@@ -74,7 +74,7 @@ public sealed class LoggingConfiguration
     /// <summary>
     /// Gets or sets custom log enrichers.
     /// </summary>
-    public List<string> Enrichers { get; set; } = new();
+    public List<string> Enrichers { get; set; } = [];
 }
 
 /// <summary>
@@ -100,7 +100,7 @@ public sealed class TelemetryConfiguration
     /// <summary>
     /// Gets or sets custom attributes to add to all telemetry.
     /// </summary>
-    public Dictionary<string, string> CustomAttributes { get; set; } = new();
+    public Dictionary<string, string> CustomAttributes { get; set; } = [];
 }
 
 /// <summary>
@@ -126,7 +126,7 @@ public sealed class HealthCheckConfiguration
     /// <summary>
     /// Gets or sets custom health check endpoints.
     /// </summary>
-    public List<string> CustomChecks { get; set; } = new();
+    public List<string> CustomChecks { get; set; } = [];
 }
 
 /// <summary>
@@ -142,7 +142,7 @@ public sealed class AlertConfiguration
     /// <summary>
     /// Gets or sets alert rules.
     /// </summary>
-    public List<AlertRuleConfiguration> Rules { get; set; } = new();
+    public List<AlertRuleConfiguration> Rules { get; set; } = [];
 }
 
 /// <summary>
@@ -168,10 +168,10 @@ public sealed class AlertRuleConfiguration
     /// <summary>
     /// Gets or sets the notification channels.
     /// </summary>
-    public List<string> Channels { get; set; } = new();
+    public List<string> Channels { get; set; } = [];
 
     /// <summary>
     /// Gets or sets alert metadata.
     /// </summary>
-    public Dictionary<string, string> Metadata { get; set; } = new();
+    public Dictionary<string, string> Metadata { get; set; } = [];
 }

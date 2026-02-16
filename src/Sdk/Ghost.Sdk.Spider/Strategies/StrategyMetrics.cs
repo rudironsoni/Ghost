@@ -81,17 +81,17 @@ public class StrategyMetrics
     /// <summary>
     /// Gets or sets the error counts by error type.
     /// </summary>
-    public Dictionary<string, long> ErrorCounts { get; set; } = new();
+    public Dictionary<string, long> ErrorCounts { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the status code distribution.
     /// </summary>
-    public Dictionary<int, long> StatusCodeDistribution { get; set; } = new();
+    public Dictionary<int, long> StatusCodeDistribution { get; set; } = [];
 
     /// <summary>
     /// Gets or sets custom metric values.
     /// </summary>
-    public Dictionary<string, object> CustomMetrics { get; set; } = new();
+    public Dictionary<string, object> CustomMetrics { get; set; } = [];
 
     /// <summary>
     /// Records a successful execution.

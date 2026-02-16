@@ -33,5 +33,5 @@ public sealed class ExtractionConfiguration
     /// <summary>
     /// Gets or sets the entities to extract.
     /// </summary>
-    public List<EntityConfiguration> Entities { get; set; } = new();
+    public List<EntityConfiguration> Entities { get; set; } = [];
 }

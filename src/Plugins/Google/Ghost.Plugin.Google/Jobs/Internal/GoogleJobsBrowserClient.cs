@@ -110,7 +110,7 @@ public sealed class GoogleJobsBrowserClient
 
         s_logSearchStarting(_logger, query, location, maxResults, null);
 
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
         var sessionOptions = new SessionOptions();
 
         s_logSessionCreating(_logger, null);
@@ -480,7 +480,7 @@ public sealed class GoogleJobsBrowserClient
 
     private async Task<List<JobListing>> ExtractJobsFromPageAsync(IPage page, int maxResults, CancellationToken ct)
     {
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
 
         try
         {
@@ -511,7 +511,7 @@ public sealed class GoogleJobsBrowserClient
 
     private static async Task<List<JobListing>> ExtractJobsFromDomAsync(IPage page, int maxResults, CancellationToken ct)
     {
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
 
         try
         {

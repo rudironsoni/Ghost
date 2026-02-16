@@ -95,7 +95,7 @@ public sealed class AbstractionsContractSmokeTests
 
     private sealed class FakeScheduler : IRequestScheduler
     {
-        private readonly Queue<GhostRequest> _queue = new();
+        private readonly Queue<GhostRequest> _queue = [];
 
         public ValueTask EnqueueAsync(GhostRequest request, int priority = 0, CancellationToken cancellationToken = default)
         {
