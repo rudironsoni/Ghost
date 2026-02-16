@@ -1,4 +1,5 @@
 using System.Net;
+using Ghost.Models;
 using Ghost.Plugin.Indeed.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +8,8 @@ using WireMock.Net;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
+using WireMock.Settings;
+using Xunit;
 
 namespace Ghost.Plugin.Indeed.End2EndTests.Fixtures;
 
@@ -49,7 +52,7 @@ public sealed class IndeedE2EFixture : IDisposable
         var options = new IndeedOptions
         {
             Enabled = true,
-            Country = "us",
+            Country = CountryCode.US,
             BaseUrl = $"http://localhost:{WireMockServer.Port}",
             ApiKey = "test-api-key",
             RequestTimeoutMs = 30000,
@@ -69,7 +72,7 @@ public sealed class IndeedE2EFixture : IDisposable
         services.AddSingleton<IndeedApiClient>(sp =>
         {
             ILogger<IndeedApiClient> logger = sp.GetRequiredService<ILogger<IndeedApiClient>>();
-            return new IndeedApiClient(sp.GetRequiredService<IndeedOptions>(), logger);
+            return new IndeedApiClient(sp.GetService<IProxyProvider>(), sp.GetRequiredService<IndeedOptions>(), logger);
         });
 
         services.AddScoped<IndeedJobClient>();

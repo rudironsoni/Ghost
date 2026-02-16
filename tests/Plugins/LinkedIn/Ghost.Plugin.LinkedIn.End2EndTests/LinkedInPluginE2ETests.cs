@@ -5,9 +5,12 @@ using Ghost.Hosting;
 using Ghost.Kernel;
 using Ghost.Plugin.LinkedIn.End2EndTests.Fixtures;
 using Ghost.Plugin.LinkedIn.Internal;
+using Ghost.Sdk.Spider.Adapters;
+using Ghost.Sdk.Spider.Core.Extraction;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using NSubstitute;
 using Xunit;
 
 namespace Ghost.Plugin.LinkedIn.End2EndTests;
@@ -103,7 +106,7 @@ public sealed class LinkedInPluginE2ETests
         services.AddLogging();
 
         // Add required services
-        services.AddSingleton<NSubstitute.Substitute.For<Ghost.IBrowserSession>>();
+        services.AddSingleton(Substitute.For<Ghost.IBrowserSession>());
         services.AddSingleton<JavaScriptAdapter>();
         services.AddSingleton<EntityParser>();
 
@@ -135,7 +138,7 @@ public sealed class LinkedInPluginE2ETests
         services.AddLogging();
 
         // Add required services
-        services.AddSingleton<NSubstitute.Substitute.For<Ghost.IBrowserSession>>();
+        services.AddSingleton(Substitute.For<Ghost.IBrowserSession>());
 
         var plugin = new LinkedInPlugin();
 
@@ -164,7 +167,7 @@ public sealed class LinkedInPluginE2ETests
         services.AddLogging();
 
         // Add required services
-        services.AddSingleton<NSubstitute.Substitute.For<Ghost.IBrowserSession>>();
+        services.AddSingleton(Substitute.For<Ghost.IBrowserSession>());
 
         var plugin = new LinkedInPlugin();
 
@@ -194,9 +197,9 @@ public sealed class LinkedInPluginE2ETests
         services.AddLogging();
 
         // Mock required services
-        IGhostKernel mockKernel = NSubstitute.Substitute.For<Ghost.Kernel.IGhostKernel>();
+        IGhostKernel mockKernel = Substitute.For<Ghost.Kernel.IGhostKernel>();
         services.AddSingleton(mockKernel);
-        services.AddSingleton<NSubstitute.Substitute.For<Ghost.IProxyProvider>>();
+        services.AddSingleton(Substitute.For<Ghost.IProxyProvider>());
 
         var plugin = new LinkedInPlugin();
 
@@ -208,6 +211,6 @@ public sealed class LinkedInPluginE2ETests
         // SessionPool is internal, verify by checking configuration was bound
         IOptions<LinkedInSessionPoolOptions>? options = serviceProvider.GetService<IOptions<LinkedInSessionPoolOptions>>();
         Assert.NotNull(options);
-        Assert.Equal(5, options.Value.MaxSessions);
+        Assert.Equal(5, options.Value.MaxSize);
     }
 }

@@ -7,6 +7,7 @@ using WireMock.Net;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
+using WireMock.Settings;
 using Xunit;
 
 namespace Ghost.Plugin.Glassdoor.End2EndTests.Fixtures;

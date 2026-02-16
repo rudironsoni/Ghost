@@ -34,6 +34,16 @@ public sealed class GoogleJobsOptions
     public int MaxDelayMs { get; set; } = 800;
 
     /// <summary>
+    /// API key for Google Jobs API (if using official API)
+    /// </summary>
+    public string ApiKey { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Base URL for Google Jobs requests
+    /// </summary>
+    public string BaseUrl { get; set; } = "https://www.google.com";
+
+    /// <summary>
     /// When true, the Google Jobs HTTP client will attempt to use the configured proxy provider.
     /// When false, the client will use a direct connection.
     /// </summary>
