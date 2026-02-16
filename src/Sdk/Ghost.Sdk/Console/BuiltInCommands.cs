@@ -28,11 +28,11 @@ internal sealed class HelpCommand : IConsoleCommand
             string commandName = args[0];
             if (_commands.TryGetValue(commandName, out IConsoleCommand? command))
             {
-                var sb = new StringBuilder();
-                sb.AppendLine(CultureInfo.InvariantCulture, $"Command: {command.Name}");
-                sb.AppendLine(CultureInfo.InvariantCulture, $"Description: {command.Description}");
-                sb.AppendLine(CultureInfo.InvariantCulture, $"Usage: {command.Usage}");
-                return Task.FromResult(sb.ToString());
+                var stringBuilder = new StringBuilder();
+                stringBuilder.AppendLine(CultureInfo.InvariantCulture, $"Command: {command.Name}");
+                stringBuilder.AppendLine(CultureInfo.InvariantCulture, $"Description: {command.Description}");
+                stringBuilder.AppendLine(CultureInfo.InvariantCulture, $"Usage: {command.Usage}");
+                return Task.FromResult(stringBuilder.ToString());
             }
 
             return Task.FromResult($"Unknown command: {commandName}");
@@ -81,14 +81,14 @@ internal sealed class StatusCommand : IConsoleCommand
 
     public Task<string> ExecuteAsync(string[] args, ConsoleContext context, CancellationToken ct = default)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("Console Status:");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"  Session Start: {context.SessionStart:yyyy-MM-dd HH:mm:ss}");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"  Session Duration: {DateTimeOffset.UtcNow - context.SessionStart:hh\\:mm\\:ss}");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"  Client Address: {context.ClientAddress}");
-        sb.AppendLine("  Commands Enabled: help, exit, status, sessions, history");
+        var stringBuilder = new StringBuilder();
+        stringBuilder.AppendLine("Console Status:");
+        stringBuilder.AppendLine(CultureInfo.InvariantCulture, $"  Session Start: {context.SessionStart:yyyy-MM-dd HH:mm:ss}");
+        stringBuilder.AppendLine(CultureInfo.InvariantCulture, $"  Session Duration: {DateTimeOffset.UtcNow - context.SessionStart:hh\\:mm\\:ss}");
+        stringBuilder.AppendLine(CultureInfo.InvariantCulture, $"  Client Address: {context.ClientAddress}");
+        stringBuilder.AppendLine("  Commands Enabled: help, exit, status, sessions, history");
 
-        return Task.FromResult(sb.ToString());
+        return Task.FromResult(stringBuilder.ToString());
     }
 }
 
@@ -115,26 +115,26 @@ internal sealed class SessionsCommand : IConsoleCommand
             return Task.FromResult("No active sessions.");
         }
 
-        var sb = new StringBuilder();
-        sb.AppendLine(CultureInfo.InvariantCulture, $"Active Sessions ({_sessions.Count}):");
-        sb.AppendLine();
+        var stringBuilder = new StringBuilder();
+        stringBuilder.AppendLine(CultureInfo.InvariantCulture, $"Active Sessions ({_sessions.Count}):");
+        stringBuilder.AppendLine();
 
         foreach (TelnetSession? session in _sessions.Values.OrderBy(s => s.ConnectedAt))
         {
             TimeSpan duration = DateTimeOffset.UtcNow - session.ConnectedAt;
             TimeSpan idle = DateTimeOffset.UtcNow - session.LastActivity;
 
-            sb.AppendLine(CultureInfo.InvariantCulture, $"Session ID: {session.SessionId}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  Client: {session.ClientAddress}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  Connected: {session.ConnectedAt:yyyy-MM-dd HH:mm:ss}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  Duration: {duration:hh\\:mm\\:ss}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  Idle: {idle:hh\\:mm\\:ss}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  Authenticated: {session.IsAuthenticated}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  Commands: {session.CommandHistory.Count}");
-            sb.AppendLine();
+            stringBuilder.AppendLine(CultureInfo.InvariantCulture, $"Session ID: {session.SessionId}");
+            stringBuilder.AppendLine(CultureInfo.InvariantCulture, $"  Client: {session.ClientAddress}");
+            stringBuilder.AppendLine(CultureInfo.InvariantCulture, $"  Connected: {session.ConnectedAt:yyyy-MM-dd HH:mm:ss}");
+            stringBuilder.AppendLine(CultureInfo.InvariantCulture, $"  Duration: {duration:hh\\:mm\\:ss}");
+            stringBuilder.AppendLine(CultureInfo.InvariantCulture, $"  Idle: {idle:hh\\:mm\\:ss}");
+            stringBuilder.AppendLine(CultureInfo.InvariantCulture, $"  Authenticated: {session.IsAuthenticated}");
+            stringBuilder.AppendLine(CultureInfo.InvariantCulture, $"  Commands: {session.CommandHistory.Count}");
+            stringBuilder.AppendLine();
         }
 
-        return Task.FromResult(sb.ToString());
+        return Task.FromResult(stringBuilder.ToString());
     }
 }
 

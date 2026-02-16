@@ -256,30 +256,30 @@ public static class RegionDetector
     /// </summary>
     private static PrivacyRegulation MapLocaleToRegulation(string locale)
     {
-        string loc = locale.ToLowerInvariant();
+        string normalizedLocale = locale.ToLowerInvariant();
 
         // European locales
-        if (loc.StartsWith("de", StringComparison.OrdinalIgnoreCase) || loc.StartsWith("fr", StringComparison.OrdinalIgnoreCase) || loc.StartsWith("es", StringComparison.OrdinalIgnoreCase) ||
-            loc.StartsWith("it", StringComparison.OrdinalIgnoreCase) || loc.StartsWith("nl", StringComparison.OrdinalIgnoreCase) || loc.StartsWith("pl", StringComparison.OrdinalIgnoreCase) ||
-            loc.StartsWith("pt-pt", StringComparison.OrdinalIgnoreCase) || loc.StartsWith("sv", StringComparison.OrdinalIgnoreCase) || loc.StartsWith("da", StringComparison.OrdinalIgnoreCase))
+        if (normalizedLocale.StartsWith("de", StringComparison.OrdinalIgnoreCase) || normalizedLocale.StartsWith("fr", StringComparison.OrdinalIgnoreCase) || normalizedLocale.StartsWith("es", StringComparison.OrdinalIgnoreCase) ||
+            normalizedLocale.StartsWith("it", StringComparison.OrdinalIgnoreCase) || normalizedLocale.StartsWith("nl", StringComparison.OrdinalIgnoreCase) || normalizedLocale.StartsWith("pl", StringComparison.OrdinalIgnoreCase) ||
+            normalizedLocale.StartsWith("pt-pt", StringComparison.OrdinalIgnoreCase) || normalizedLocale.StartsWith("sv", StringComparison.OrdinalIgnoreCase) || normalizedLocale.StartsWith("da", StringComparison.OrdinalIgnoreCase))
         {
             return PrivacyRegulation.GDPR;
         }
 
         // Brazilian Portuguese
-        if (loc.StartsWith("pt-br", StringComparison.OrdinalIgnoreCase))
+        if (normalizedLocale.StartsWith("pt-br", StringComparison.OrdinalIgnoreCase))
         {
             return PrivacyRegulation.LGPD;
         }
 
         // Canadian locales
-        if (loc.StartsWith("en-ca", StringComparison.OrdinalIgnoreCase) || loc.StartsWith("fr-ca", StringComparison.OrdinalIgnoreCase))
+        if (normalizedLocale.StartsWith("en-ca", StringComparison.OrdinalIgnoreCase) || normalizedLocale.StartsWith("fr-ca", StringComparison.OrdinalIgnoreCase))
         {
             return PrivacyRegulation.PIPEDA;
         }
 
         // US English could be CCPA, but not guaranteed
-        if (loc.StartsWith("en-us", StringComparison.OrdinalIgnoreCase))
+        if (normalizedLocale.StartsWith("en-us", StringComparison.OrdinalIgnoreCase))
         {
             return PrivacyRegulation.Other; // Could be CCPA but not certain
         }

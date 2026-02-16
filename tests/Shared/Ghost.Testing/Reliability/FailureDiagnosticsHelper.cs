@@ -446,50 +446,50 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
     /// <returns>The summary text.</returns>
     private string GenerateSummary()
     {
-        var sb = new StringBuilder();
+        var stringBuilder = new StringBuilder();
         CultureInfo culture = System.Globalization.CultureInfo.InvariantCulture;
-        sb.AppendLine("=== Ghost Test Failure Diagnostics ===");
-        sb.AppendLine();
-        sb.AppendLine(string.Format(culture, "Test Run ID: {0}", _testRunId));
-        sb.AppendLine(string.Format(culture, "Correlation ID: {0}", CorrelationId));
-        sb.AppendLine(string.Format(culture, "Scenario ID: {0}", ScenarioId));
-        sb.AppendLine(string.Format(culture, "Fixture ID: {0}", FixtureId));
-        sb.AppendLine(string.Format(culture, "Captured At: {0:yyyy-MM-dd HH:mm:ss} UTC", DateTime.UtcNow));
-        sb.AppendLine(string.Format(culture, "Total Duration: {0}ms", _testStopwatch.ElapsedMilliseconds));
-        sb.AppendLine();
-        sb.AppendLine("=== Captured Artifacts ===");
-        sb.AppendLine();
+        stringBuilder.AppendLine("=== Ghost Test Failure Diagnostics ===");
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine(string.Format(culture, "Test Run ID: {0}", _testRunId));
+        stringBuilder.AppendLine(string.Format(culture, "Correlation ID: {0}", CorrelationId));
+        stringBuilder.AppendLine(string.Format(culture, "Scenario ID: {0}", ScenarioId));
+        stringBuilder.AppendLine(string.Format(culture, "Fixture ID: {0}", FixtureId));
+        stringBuilder.AppendLine(string.Format(culture, "Captured At: {0:yyyy-MM-dd HH:mm:ss} UTC", DateTime.UtcNow));
+        stringBuilder.AppendLine(string.Format(culture, "Total Duration: {0}ms", _testStopwatch.ElapsedMilliseconds));
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("=== Captured Artifacts ===");
+        stringBuilder.AppendLine();
 
         foreach (DiagnosticArtifact artifact in _capturedArtifacts)
         {
-            sb.AppendLine(string.Format(culture, "[{0}] {1}", artifact.Type, artifact.Name));
-            sb.AppendLine(string.Format(culture, "  Path: {0}", artifact.Path));
-            sb.AppendLine(string.Format(culture, "  Captured: {0:yyyy-MM-dd HH:mm:ss.fff} UTC", artifact.CapturedAt));
-            sb.AppendLine();
+            stringBuilder.AppendLine(string.Format(culture, "[{0}] {1}", artifact.Type, artifact.Name));
+            stringBuilder.AppendLine(string.Format(culture, "  Path: {0}", artifact.Path));
+            stringBuilder.AppendLine(string.Format(culture, "  Captured: {0:yyyy-MM-dd HH:mm:ss.fff} UTC", artifact.CapturedAt));
+            stringBuilder.AppendLine();
         }
 
-        sb.AppendLine("=== Timeline ===");
-        sb.AppendLine();
+        stringBuilder.AppendLine("=== Timeline ===");
+        stringBuilder.AppendLine();
 
         foreach (TimelineEvent @event in _timeline)
         {
-            sb.AppendLine(string.Format(culture, "[{0:HH:mm:ss.fff}] [{1}] {2} (+{3}ms)",
+            stringBuilder.AppendLine(string.Format(culture, "[{0:HH:mm:ss.fff}] [{1}] {2} (+{3}ms)",
                 @event.Timestamp, @event.EventType, @event.Description, @event.ElapsedMilliseconds));
         }
 
-        sb.AppendLine();
-        sb.AppendLine("=== CI Integration ===");
-        sb.AppendLine();
-        sb.AppendLine("To upload these artifacts to CI, add the following step:");
-        sb.AppendLine("  - name: Upload Test Diagnostics");
-        sb.AppendLine("    if: failure()");
-        sb.AppendLine("    uses: actions/upload-artifact@v4");
-        sb.AppendLine("    with:");
-        sb.AppendLine("      name: test-diagnostics-${{ github.run_id }}");
-        sb.AppendLine(string.Format(culture, "      path: {0}", _diagnosticsRoot));
-        sb.AppendLine("      retention-days: 30");
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("=== CI Integration ===");
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("To upload these artifacts to CI, add the following step:");
+        stringBuilder.AppendLine("  - name: Upload Test Diagnostics");
+        stringBuilder.AppendLine("    if: failure()");
+        stringBuilder.AppendLine("    uses: actions/upload-artifact@v4");
+        stringBuilder.AppendLine("    with:");
+        stringBuilder.AppendLine("      name: test-diagnostics-${{ github.run_id }}");
+        stringBuilder.AppendLine(string.Format(culture, "      path: {0}", _diagnosticsRoot));
+        stringBuilder.AppendLine("      retention-days: 30");
 
-        return sb.ToString();
+        return stringBuilder.ToString();
     }
 
     /// <summary>

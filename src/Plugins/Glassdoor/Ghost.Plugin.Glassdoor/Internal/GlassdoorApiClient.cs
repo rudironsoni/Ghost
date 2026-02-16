@@ -647,12 +647,12 @@ public sealed class GlassdoorApiClient : IDisposable
         if (!string.IsNullOrWhiteSpace(location))
         {
             // Normalize
-            string loc = location.Trim().ToLowerInvariant();
+            string normalizedLocation = location.Trim().ToLowerInvariant();
 
             // Basic mapping for common locations. These IDs are best-effort and
             // may need refinement; they are chosen to change the search scope
             // (country vs state) so results differ from the default remote ID.
-            switch (loc)
+            switch (normalizedLocation)
             {
                 case "remote":
                 case "anywhere":
@@ -682,13 +682,13 @@ public sealed class GlassdoorApiClient : IDisposable
                     resolvedLocationId = 224; // approximate country id for UK
                     resolvedLocationType = "COUNTRY";
                     break;
-                case var s when s.StartsWith("province:", StringComparison.Ordinal) || s.StartsWith("state:", StringComparison.Ordinal):
+                case var locationValue when locationValue.StartsWith("province:", StringComparison.Ordinal) || locationValue.StartsWith("state:", StringComparison.Ordinal):
                     // Allow callers to pass "state:11047" or "province:5" to force an id
-                    string[] parts = s.Split(':', 2);
+                    string[] parts = locationValue.Split(':', 2);
                     if (parts.Length == 2 && int.TryParse(parts[1], out int parsedId))
                     {
                         resolvedLocationId = parsedId;
-                        resolvedLocationType = s.StartsWith("province:", StringComparison.Ordinal) ? "PROVINCE" : "STATE";
+                        resolvedLocationType = locationValue.StartsWith("province:", StringComparison.Ordinal) ? "PROVINCE" : "STATE";
                     }
                     break;
                 default:

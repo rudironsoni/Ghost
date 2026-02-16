@@ -25,12 +25,12 @@ public sealed partial class OpenAIClient : Ghost.Contracts.Inference.IInferenceC
 
     public async Task<InferenceResponse> CompleteAsync(InferenceRequest request, CancellationToken ct = default)
     {
-        var sb = new System.Text.StringBuilder();
-        await foreach (InferenceChunk chunk in StreamAsync(request, ct).ConfigureAwait(false)) sb.Append(chunk.Delta);
+        var stringBuilder = new System.Text.StringBuilder();
+        await foreach (InferenceChunk chunk in StreamAsync(request, ct).ConfigureAwait(false)) stringBuilder.Append(chunk.Delta);
         return new Ghost.Contracts.Inference.InferenceResponse
         {
             Model = request.Model ?? _options.DefaultModel,
-            Content = sb.ToString()
+            Content = stringBuilder.ToString()
         };
     }
 
@@ -48,8 +48,8 @@ public sealed partial class OpenAIClient : Ghost.Contracts.Inference.IInferenceC
             await page.PressAsync("textarea", "Enter", ct).ConfigureAwait(false);
 
             string last = string.Empty;
-            var sw = System.Diagnostics.Stopwatch.StartNew();
-            while (!ct.IsCancellationRequested && sw.Elapsed < _options.ResponseTimeout)
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            while (!ct.IsCancellationRequested && stopwatch.Elapsed < _options.ResponseTimeout)
             {
                 string content = string.Empty;
                 try

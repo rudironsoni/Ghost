@@ -84,10 +84,10 @@ public static class CompressionProfile
         string path = "/chunked",
         int chunkCount = 3)
     {
-        var sb = new StringBuilder();
+        var stringBuilder = new StringBuilder();
         for (int i = 0; i < chunkCount; i++)
         {
-            sb.AppendLine(CultureInfo.InvariantCulture, $"Chunk {i + 1} of {chunkCount}");
+            stringBuilder.AppendLine(CultureInfo.InvariantCulture, $"Chunk {i + 1} of {chunkCount}");
         }
 
         server
@@ -98,7 +98,7 @@ public static class CompressionProfile
                 .WithStatusCode(200)
                 .WithHeader("Transfer-Encoding", "chunked")
                 .WithHeader("Content-Type", "text/plain")
-                .WithBody(sb.ToString()));
+                .WithBody(stringBuilder.ToString()));
 
         return server;
     }

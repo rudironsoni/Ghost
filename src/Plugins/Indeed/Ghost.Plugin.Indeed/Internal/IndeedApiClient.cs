@@ -406,7 +406,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         try
         {
             RotatingProxySession? httpSession = await AllocateAndGetHttpSessionAsync(query, location, affinityKey).ConfigureAwait(false);
-            if (httpSession == null)
+            if (httpSession is null)
             {
                 yield break;
             }
@@ -435,7 +435,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         LogSessionAllocated(_logger, _currentSessionId, null);
 
         RotatingProxySession? httpSession = await _sessionOrchestrator.GetHttpSessionAsync(_currentSessionId, default).ConfigureAwait(false);
-        if (httpSession == null)
+        if (httpSession is null)
         {
             LogSessionGetFailed(_logger, _currentSessionId, null);
         }

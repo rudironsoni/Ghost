@@ -57,15 +57,15 @@ public class IndeedHtmlParsingTests
         for (int i = 0; i < 10; i++)
             _ = HtmlSanitizer.StripHtmlTags(html);
 
-        var sw = Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
         int iterations = 1000;
         string? last = null;
         for (int i = 0; i < iterations; i++)
             last = HtmlSanitizer.StripHtmlTags(html);
-        sw.Stop();
+        stopwatch.Stop();
 
         Assert.Equal("Job & description\n\nOne\nTwo", last);
-        double averageMs = sw.Elapsed.TotalMilliseconds / iterations;
+        double averageMs = stopwatch.Elapsed.TotalMilliseconds / iterations;
         Assert.True(averageMs < 1, $"Expected < 1ms avg but was {averageMs:F4}ms");
     }
 }

@@ -95,7 +95,7 @@ public sealed class LinkedInSessionPool : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        var sw = Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
         await _maxSessions.WaitAsync(ct).ConfigureAwait(false);
 
         try
@@ -111,13 +111,13 @@ public sealed class LinkedInSessionPool : IDisposable
 
                 metadata.LastUsedAt = DateTime.UtcNow;
                 _inUse[session.SessionId] = session;
-                RecordAcquisition(sw);
+                RecordAcquisition(stopwatch);
                 return session;
             }
 
             IBrowserSession created = await CreateSessionAsync(ct).ConfigureAwait(false);
             _inUse[created.SessionId] = created;
-            RecordAcquisition(sw);
+            RecordAcquisition(stopwatch);
             return created;
         }
         catch
@@ -307,11 +307,11 @@ public sealed class LinkedInSessionPool : IDisposable
     }
 
 
-    private void RecordAcquisition(Stopwatch sw)
+    private void RecordAcquisition(Stopwatch stopwatch)
     {
-        sw.Stop();
+        stopwatch.Stop();
         Interlocked.Increment(ref _totalAcquisitions);
-        Interlocked.Add(ref _totalAcquisitionTimeTicks, sw.Elapsed.Ticks);
+        Interlocked.Add(ref _totalAcquisitionTimeTicks, stopwatch.Elapsed.Ticks);
     }
 
     private bool IsReusable(IBrowserSession session, SessionMetadata metadata)

@@ -257,44 +257,44 @@ public class SitemapSpider : Spider, ISitemapSpider
         try
         {
             var doc = XDocument.Parse(xmlContent);
-            var ns = XNamespace.Get(SitemapNamespace);
+            var sitemapNamespace = XNamespace.Get(SitemapNamespace);
 
             // Handle sitemap index - extract nested sitemap URLs
-            IEnumerable<XElement> sitemaps = doc.Descendants(ns + "sitemap");
+            IEnumerable<XElement> sitemaps = doc.Descendants(sitemapNamespace + "sitemap");
             foreach (XElement sitemap in sitemaps)
             {
-                string? loc = sitemap.Element(ns + "loc")?.Value;
-                if (!string.IsNullOrEmpty(loc))
+                string? urlLocation = sitemap.Element(sitemapNamespace + "loc")?.Value;
+                if (!string.IsNullOrEmpty(urlLocation))
                 {
-                    urls.Add(loc);
+                    urls.Add(urlLocation);
                 }
             }
 
             // Handle URL set - extract page URLs
-            IEnumerable<XElement> urlElements = doc.Descendants(ns + "url");
+            IEnumerable<XElement> urlElements = doc.Descendants(sitemapNamespace + "url");
             foreach (XElement urlElement in urlElements)
             {
-                string? loc = urlElement.Element(ns + "loc")?.Value;
-                if (string.IsNullOrEmpty(loc))
+                string? urlLocation = urlElement.Element(sitemapNamespace + "loc")?.Value;
+                if (string.IsNullOrEmpty(urlLocation))
                     continue;
 
                 // Apply lastmod filter if configured
                 if (Options.LastModAfter.HasValue)
                 {
-                    XElement? lastModElement = urlElement.Element(ns + "lastmod");
-                    if (lastModElement != null &&
+                    XElement? lastModElement = urlElement.Element(sitemapNamespace + "lastmod");
+                    if (lastModElement is not null &&
                         DateTime.TryParse(lastModElement.Value, out DateTime lastMod))
                     {
                         TimeSpan age = DateTime.UtcNow - lastMod;
                         if (age <= Options.LastModAfter.Value)
                         {
-                            urls.Add(loc);
+                            urls.Add(urlLocation);
                         }
                     }
                 }
                 else
                 {
-                    urls.Add(loc);
+                    urls.Add(urlLocation);
                 }
             }
         }

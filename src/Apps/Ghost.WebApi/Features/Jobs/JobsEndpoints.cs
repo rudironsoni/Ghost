@@ -20,7 +20,7 @@ public static class JobsEndpoints
 
     private static async Task<IResult> SearchJobsAsync(JobSearchCriteria criteria, [FromServices] IJobClient client, [FromServices] ILoggerFactory loggerFactory, CancellationToken ct)
     {
-        var sw = Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
         string status = "SUCCESS";
         Exception? caughtEx = null;
         try
@@ -36,7 +36,7 @@ public static class JobsEndpoints
                     totalPlatforms = 3,
                     successfulPlatforms = 3,
                     failedPlatforms = 0,
-                    executionTimeMs = sw.ElapsedMilliseconds
+                    executionTimeMs = stopwatch.ElapsedMilliseconds
                 }
             };
             return Results.Ok(response);
@@ -49,12 +49,12 @@ public static class JobsEndpoints
         }
         finally
         {
-            sw.Stop();
+            stopwatch.Stop();
             try
             {
                 ILogger? logger = loggerFactory?.CreateLogger("JobsEndpoints");
                 string platform = client?.PlatformName ?? "Unknown";
-                long timeMs = sw.ElapsedMilliseconds;
+                long timeMs = stopwatch.ElapsedMilliseconds;
                 string query = criteria?.Query ?? string.Empty;
                 // Use LoggerMessage-style delegate to satisfy CA1848/CA2254 and avoid dynamic templates
                 Action<ILogger, string, string, long, string, Exception?> jobsLog = LoggerMessage.Define<string, string, long, string>(
@@ -65,7 +65,7 @@ public static class JobsEndpoints
                 // Define an exception logger delegate to avoid CA1848 when logging exceptions
                 Action<ILogger, string, Exception?> exceptionLog = LoggerMessage.Define<string>(LogLevel.Information, new EventId(2, nameof(SearchJobsAsync)), "Exception: {Message}");
 
-                if (caughtEx != null)
+                if (caughtEx is not null)
                 {
                     jobsLog(logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance, platform, status, timeMs, query, caughtEx);
                     exceptionLog(logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance, caughtEx.Message, caughtEx);
@@ -76,11 +76,11 @@ public static class JobsEndpoints
                 }
             }
             catch (Exception logEx)
-{
-    // Intentionally swallow logging errors to avoid interfering with response,
-    // but write to stderr as a last resort for diagnostics
-    Console.Error.WriteLine($"[ERROR] Failed to log job search metrics: {logEx.Message}");
-}
+            {
+                // Intentionally swallow logging errors to avoid interfering with response,
+                // but write to stderr as a last resort for diagnostics
+                Console.Error.WriteLine($"[ERROR] Failed to log job search metrics: {logEx.Message}");
+            }
         }
     }
 

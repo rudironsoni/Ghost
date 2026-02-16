@@ -79,7 +79,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
     public async Task<IBrowserSession> AcquireBrowserAsync(Tier tier = Tier.Hot, CancellationToken ct = default)
     {
         Interlocked.Increment(ref _totalAcquisitions);
-        var sw = Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
 
         try
         {
@@ -91,8 +91,8 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
                 _ => throw new ArgumentOutOfRangeException(nameof(tier))
             };
 
-            sw.Stop();
-            RecordAcquisitionTime(tier, sw.Elapsed.TotalMilliseconds);
+            stopwatch.Stop();
+            RecordAcquisitionTime(tier, stopwatch.Elapsed.TotalMilliseconds);
 
             _activeSessions[session.SessionId] = new PooledBrowserSession
             {
@@ -109,7 +109,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
                 _logger.LogDebug(
                     "Acquired browser from {Tier} pool in {ElapsedMs}ms (SessionId={SessionId})",
                     tier,
-                    sw.Elapsed.TotalMilliseconds,
+                    stopwatch.Elapsed.TotalMilliseconds,
                     session.SessionId);
             }
 

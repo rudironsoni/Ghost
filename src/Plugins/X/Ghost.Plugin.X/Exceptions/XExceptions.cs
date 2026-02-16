@@ -162,17 +162,17 @@ public class XBrowserException : XException
     {
         get
         {
-            var sb = new System.Text.StringBuilder();
-            sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"Browser automation failed. ");
+            var stringBuilder = new System.Text.StringBuilder();
+            stringBuilder.Append(System.Globalization.CultureInfo.InvariantCulture, $"Browser automation failed. ");
 
             if (!string.IsNullOrEmpty(Selector))
             {
-                sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"The selector '{Selector}' was not found. ");
-                sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"X may have changed their DOM structure or you may need to update selectors. ");
+                stringBuilder.Append(System.Globalization.CultureInfo.InvariantCulture, $"The selector '{Selector}' was not found. ");
+                stringBuilder.Append(System.Globalization.CultureInfo.InvariantCulture, $"X may have changed their DOM structure or you may need to update selectors. ");
             }
 
-            sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"Try enabling stealth mode or waiting for the page to fully load.");
-            return sb.ToString();
+            stringBuilder.Append(System.Globalization.CultureInfo.InvariantCulture, $"Try enabling stealth mode or waiting for the page to fully load.");
+            return stringBuilder.ToString();
         }
     }
 }
@@ -206,18 +206,18 @@ public class XMediaException : XException
     {
         get
         {
-            var sb = new System.Text.StringBuilder();
-            sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"Media upload failed. ");
+            var stringBuilder = new System.Text.StringBuilder();
+            stringBuilder.Append(System.Globalization.CultureInfo.InvariantCulture, $"Media upload failed. ");
 
             if (!string.IsNullOrEmpty(MediaPath))
             {
-                sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"Check that '{MediaPath}' exists and is accessible. ");
+                stringBuilder.Append(System.Globalization.CultureInfo.InvariantCulture, $"Check that '{MediaPath}' exists and is accessible. ");
             }
 
-            sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"Images must be under 5MB (.jpg, .png, .gif, .webp). ");
-            sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"Videos must be under 512MB (.mp4, .mov, .webm).");
+            stringBuilder.Append(System.Globalization.CultureInfo.InvariantCulture, $"Images must be under 5MB (.jpg, .png, .gif, .webp). ");
+            stringBuilder.Append(System.Globalization.CultureInfo.InvariantCulture, $"Videos must be under 512MB (.mp4, .mov, .webm).");
 
-            return sb.ToString();
+            return stringBuilder.ToString();
         }
     }
 }

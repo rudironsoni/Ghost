@@ -243,7 +243,7 @@ public class LinkedInIntegrationTests
             var jobId = (1000000 + i).ToString(System.Globalization.CultureInfo.InvariantCulture);
             var title = jobTitles[i % jobTitles.Length];
             var company = companies[i % companies.Length];
-            var loc = string.IsNullOrWhiteSpace(location) ? locations[i % locations.Length] : location;
+            var jobLocation = string.IsNullOrWhiteSpace(location) ? locations[i % locations.Length] : location;
 
             // Make title relevant to query
             if (!string.IsNullOrWhiteSpace(query))
@@ -256,7 +256,7 @@ public class LinkedInIntegrationTests
                 Id = jobId,
                 Title = title,
                 Company = company,
-                Location = loc,
+                Location = jobLocation,
                 Description = $"We are looking for an experienced {title.ToLowerInvariant()} to join our team. Work with cutting-edge technologies and solve challenging problems.",
                 Source = "LinkedIn",
                 PostedAt = DateTimeOffset.UtcNow.AddDays(-random.Next(1, 30)),

@@ -70,7 +70,7 @@ public static class CircuitBreakerHealthEndpoints
         ICircuitBreaker? breaker = circuitBreakers.FirstOrDefault(cb =>
             cb.Platform.Equals(platform, StringComparison.OrdinalIgnoreCase));
 
-        if (breaker == null)
+        if (breaker is null)
         {
             return Results.NotFound(new { error = $"Circuit breaker for platform '{platform}' not found" });
         }

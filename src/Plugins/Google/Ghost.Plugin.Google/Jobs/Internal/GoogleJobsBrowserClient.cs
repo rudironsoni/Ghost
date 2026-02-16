@@ -123,9 +123,9 @@ public sealed class GoogleJobsBrowserClient
             s_logCookieInjection(_logger, null);
             await InjectConsentCookiesAsync(page, ct).ConfigureAwait(false);
 
-            string q = Uri.EscapeDataString(query);
-            string loc = string.IsNullOrEmpty(location) ? "" : Uri.EscapeDataString(location);
-            string url = $"https://www.google.com/search?q={q}+{loc}&ibp=htl;jobs&udm=8&gl=us&hl=en&pws=0";
+            string queryEncoded = Uri.EscapeDataString(query);
+            string locationEncoded = string.IsNullOrEmpty(location) ? "" : Uri.EscapeDataString(location);
+            string url = $"https://www.google.com/search?q={queryEncoded}+{locationEncoded}&ibp=htl;jobs&udm=8&gl=us&hl=en&pws=0";
 
             // rotate user agent per-request to appear more human-like
             try

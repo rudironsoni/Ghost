@@ -280,11 +280,11 @@ public sealed class GoogleJobsApiClient : IDisposable
             ? query
             : $"{query} jobs {location}";
 
-        string q = System.Uri.EscapeDataString(searchTerm);
+        string queryEncoded = System.Uri.EscapeDataString(searchTerm);
 
         // Direct Google Jobs URL - NO API NEEDED
         // Using ibp=htl;jobs parameter to get the Google Jobs widget
-        string url = $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en";
+        string url = $"https://www.google.com/search?q={queryEncoded}&ibp=htl;jobs&udm=8&gl=us&hl=en";
 
         LogFetchingJobs(_logger, url, null);
         LogDirectGoogleJobsUrl(_logger, url, null);
@@ -445,11 +445,11 @@ public sealed class GoogleJobsApiClient : IDisposable
 
                     string[] alternativeUrls = new[]
                     {
-                    $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en&tbs=qdr:d",
-                    $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en&tbs=qdr:w",
-                    $"https://www.google.com/search?q={q}&ibp=htl;jobs&udm=8&gl=us&hl=en",
-                    $"https://www.google.co.uk/search?q={q}&ibp=htl;jobs&udm=8&gl=uk&hl=en",
-                    $"https://www.google.ca/search?q={q}&ibp=htl;jobs&udm=8&gl=ca&hl=en",
+                    $"https://www.google.com/search?q={queryEncoded}&ibp=htl;jobs&udm=8&gl=us&hl=en&tbs=qdr:d",
+                    $"https://www.google.com/search?q={queryEncoded}&ibp=htl;jobs&udm=8&gl=us&hl=en&tbs=qdr:w",
+                    $"https://www.google.com/search?q={queryEncoded}&ibp=htl;jobs&udm=8&gl=us&hl=en",
+                    $"https://www.google.co.uk/search?q={queryEncoded}&ibp=htl;jobs&udm=8&gl=uk&hl=en",
+                    $"https://www.google.ca/search?q={queryEncoded}&ibp=htl;jobs&udm=8&gl=ca&hl=en",
                 };
 
                     foreach (string? altUrl in alternativeUrls)

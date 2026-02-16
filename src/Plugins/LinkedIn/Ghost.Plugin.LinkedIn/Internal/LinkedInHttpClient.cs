@@ -72,15 +72,15 @@ public sealed class LinkedInHttpClient
         ArgumentNullException.ThrowIfNull(keywords);
 
         var jobs = new List<JobListing>();
-        string q = Uri.EscapeDataString(keywords);
-        string loc = Uri.EscapeDataString(location);
+        string query = Uri.EscapeDataString(keywords);
+        string locationEncoded = Uri.EscapeDataString(location);
 
         for (int offset = 0; jobs.Count < limit; offset += 25)
         {
             ct.ThrowIfCancellationRequested();
 
             string baseUrlDomain = _countryProvider.GetDomain(_options.Country);
-            string url = $"{baseUrlDomain}/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={q}&location={loc}&start={offset}";
+            string url = $"{baseUrlDomain}/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={query}&location={locationEncoded}&start={offset}";
 
             s_logFetching(_logger, url, null);
 

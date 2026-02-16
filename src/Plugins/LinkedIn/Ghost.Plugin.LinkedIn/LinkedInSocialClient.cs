@@ -11,7 +11,7 @@ namespace Ghost.Plugin.LinkedIn;
 /// </summary>
 public sealed class LinkedInSocialClient : ISocialClient
 {
-    private static readonly System.Buffers.SearchValues<char> _digitChars = System.Buffers.SearchValues.Create("0123456789");
+    private static readonly System.Buffers.SearchValues<char> _digitCharacters = System.Buffers.SearchValues.Create("0123456789");
     private readonly Ghost.IBrowserSession _session;
     private readonly LinkedInOptions _options;
     private readonly ILogger<LinkedInSocialClient> _logger;
@@ -182,7 +182,7 @@ public sealed class LinkedInSocialClient : ISocialClient
             string selector = ".inline-show-more-text__button, button[aria-label*='see more']";
             IReadOnlyList<IElement> buttons;
 
-            if (container != null)
+            if (container is not null)
                 buttons = await container.QuerySelectorAllAsync(selector, ct).ConfigureAwait(false);
             else
                 buttons = await page.QuerySelectorAllAsync(selector, ct).ConfigureAwait(false);
@@ -209,7 +209,7 @@ public sealed class LinkedInSocialClient : ISocialClient
     private async Task<List<SocialExperience>> ParseExperienceAsync(Ghost.IPage page, CancellationToken ct)
     {
         var list = new List<SocialExperience>();
-        if (page == null) return list;
+        if (page is null) return list;
 
         IReadOnlyList<IElement> sections = await page.QuerySelectorAllAsync("section", ct: ct).ConfigureAwait(false);
         Ghost.IElement? expSection = null;
@@ -218,7 +218,7 @@ public sealed class LinkedInSocialClient : ISocialClient
             try
             {
                 IElement? h2 = await sec.QuerySelectorAsync("h2", ct).ConfigureAwait(false);
-                if (h2 == null) continue;
+                if (h2 is null) continue;
                 string txt = await h2.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty;
                 if (txt.Contains("Experience", StringComparison.OrdinalIgnoreCase))
                 {
@@ -232,7 +232,7 @@ public sealed class LinkedInSocialClient : ISocialClient
             }
         }
 
-        if (expSection == null) return list;
+        if (expSection is null) return list;
 
         IReadOnlyList<IElement> items = await expSection.QuerySelectorAllAsync("ul > li", ct).ConfigureAwait(false);
         foreach (IElement item in items)
@@ -243,7 +243,7 @@ public sealed class LinkedInSocialClient : ISocialClient
                 await ExpandSeeMoreAsync(page, item, ct).ConfigureAwait(false);
 
                 var texts = new List<string> { await item.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty };
-                if (texts == null || texts.Count == 0) continue;
+                if (texts is null || texts.Count == 0) continue;
 
                 var exp = new SocialExperience();
                 if (texts.Count >= 1) exp = exp with { Title = texts[0] };
@@ -254,7 +254,7 @@ public sealed class LinkedInSocialClient : ISocialClient
                 else
                 {
                     // attempt to find a text that looks like a date range
-                    string? maybe = texts.FirstOrDefault(t => t.AsSpan().IndexOfAny(_digitChars) >= 0);
+                    string? maybe = texts.FirstOrDefault(t => t.AsSpan().IndexOfAny(_digitCharacters) >= 0);
                     if (!string.IsNullOrWhiteSpace(maybe)) dateString = maybe;
                 }
 
@@ -264,7 +264,7 @@ public sealed class LinkedInSocialClient : ISocialClient
                     string[] parts = dateString.Split('·');
                     string range = parts.Length > 0 ? parts[0].Trim() : dateString.Trim();
                     (DateOnly? s, DateOnly? e) = new Ghost.Utilities.DateParser().ParseDateRange(range);
-                    exp = exp with { StartDate = s is null ? null : new DateTime?(s.Value.ToDateTime(TimeOnly.MinValue)), EndDate = e is null ? null : new DateTime?(e.Value.ToDateTime(TimeOnly.MinValue)), IsCurrent = e == null };
+                    exp = exp with { StartDate = s is null ? null : new DateTime?(s.Value.ToDateTime(TimeOnly.MinValue)), EndDate = e is null ? null : new DateTime?(e.Value.ToDateTime(TimeOnly.MinValue)), IsCurrent = e is null };
                     if (parts.Length > 1)
                     {
                         exp = exp with { Duration = parts[1].Trim() };
@@ -291,7 +291,7 @@ public sealed class LinkedInSocialClient : ISocialClient
     private async Task<List<SocialEducation>> ParseEducationAsync(Ghost.IPage page, CancellationToken ct)
     {
         var list = new List<SocialEducation>();
-        if (page == null) return list;
+        if (page is null) return list;
 
         IReadOnlyList<IElement> sections = await page.QuerySelectorAllAsync("section", ct: ct).ConfigureAwait(false);
         Ghost.IElement? edSection = null;
@@ -300,7 +300,7 @@ public sealed class LinkedInSocialClient : ISocialClient
             try
             {
                 IElement? h2 = await sec.QuerySelectorAsync("h2", ct).ConfigureAwait(false);
-                if (h2 == null) continue;
+                if (h2 is null) continue;
                 string txt = await h2.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty;
                 if (txt.Contains("Education", StringComparison.OrdinalIgnoreCase))
                 {
@@ -314,7 +314,7 @@ public sealed class LinkedInSocialClient : ISocialClient
             }
         }
 
-        if (edSection == null) return list;
+        if (edSection is null) return list;
 
         IReadOnlyList<IElement> items = await edSection.QuerySelectorAllAsync("ul > li", ct).ConfigureAwait(false);
         foreach (IElement item in items)
@@ -325,7 +325,7 @@ public sealed class LinkedInSocialClient : ISocialClient
                 await ExpandSeeMoreAsync(page, item, ct).ConfigureAwait(false);
 
                 var texts = new List<string> { await item.GetTextContentAsync(ct).ConfigureAwait(false) ?? string.Empty };
-                if (texts == null || texts.Count == 0) continue;
+                if (texts is null || texts.Count == 0) continue;
 
                 var edu = new SocialEducation();
                 // heuristics: [0]=school, [1]=degree/field, [last]=dates
@@ -336,7 +336,7 @@ public sealed class LinkedInSocialClient : ISocialClient
                 if (texts.Count >= 3) dateString = texts.Last();
                 else
                 {
-                    string? maybe = texts.FirstOrDefault(t => t.AsSpan().IndexOfAny(_digitChars) >= 0);
+                    string? maybe = texts.FirstOrDefault(t => t.AsSpan().IndexOfAny(_digitCharacters) >= 0);
                     if (!string.IsNullOrWhiteSpace(maybe)) dateString = maybe;
                 }
 
@@ -363,8 +363,8 @@ public sealed class LinkedInSocialClient : ISocialClient
         IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
         try
         {
-            string q = System.Uri.EscapeDataString(criteria.Query ?? string.Empty);
-            string url = $"{_options.BaseUrl}/search/results/people/?keywords={q}";
+            string query = System.Uri.EscapeDataString(criteria.Query ?? string.Empty);
+            string url = $"{_options.BaseUrl}/search/results/people/?keywords={query}";
             await page.NavigateAsync(url, ct: ct).ConfigureAwait(false);
             await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 

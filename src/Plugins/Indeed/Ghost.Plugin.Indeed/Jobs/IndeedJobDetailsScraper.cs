@@ -70,7 +70,7 @@ public class IndeedJobDetailsScraper
 
             // Try to extract JSON-LD structured data first (most reliable)
             JobListing? jobListing = await ExtractFromJsonLdAsync(page, jobId, ct).ConfigureAwait(false);
-            if (jobListing != null)
+            if (jobListing is not null)
             {
                 LogDetailsSuccess(_logger, jobId, null);
                 return jobListing;
@@ -99,7 +99,7 @@ public class IndeedJobDetailsScraper
     {
         try
         {
-            if (_jsonLdExtractor == null)
+            if (_jsonLdExtractor is null)
             {
                 return null;
             }
@@ -203,7 +203,7 @@ public class IndeedJobDetailsScraper
         try
         {
             IElement? element = await page.QuerySelectorAsync(selector, ct).ConfigureAwait(false);
-            if (element == null)
+            if (element is null)
             {
                 return string.Empty;
             }

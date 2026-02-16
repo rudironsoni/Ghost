@@ -443,7 +443,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
 
                     try
                     {
-                        var sw = Stopwatch.StartNew();
+                        var stopwatch = Stopwatch.StartNew();
                         var proxyUri = new Uri(proxy.Server);
                         var webProxy = new WebProxy(proxyUri);
 
@@ -456,14 +456,14 @@ public sealed class ProxyHealthIntelligence : IDisposable
                         using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(10) };
 
                         HttpResponseMessage response = await client.GetAsync("https://httpbin.org/ip", token).ConfigureAwait(false);
-                        sw.Stop();
+                        stopwatch.Stop();
 
                         bool success = response.IsSuccessStatusCode;
-                        await ReportProxyResultAsync(proxy, success, sw.Elapsed, response.StatusCode).ConfigureAwait(false);
+                        await ReportProxyResultAsync(proxy, success, stopwatch.Elapsed, response.StatusCode).ConfigureAwait(false);
 
                         if (success)
                         {
-                            s_logProxyHealthy(_logger, proxy.Server, sw.Elapsed.TotalMilliseconds, null);
+                            s_logProxyHealthy(_logger, proxy.Server, stopwatch.Elapsed.TotalMilliseconds, null);
                         }
                         else
                         {
