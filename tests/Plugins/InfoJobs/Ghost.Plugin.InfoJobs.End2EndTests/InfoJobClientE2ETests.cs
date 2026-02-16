@@ -25,7 +25,7 @@ public sealed class InfoJobClientE2ETests
     public async Task SearchJobsAsync_WithValidCriteria_ReturnsJobListings()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
+        InfoJobClient client = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
         var criteria = new JobSearchCriteria
         {
             Query = "Desarrollador",
@@ -34,12 +34,12 @@ public sealed class InfoJobClientE2ETests
         };
 
         // Act
-        var results = await client.SearchJobsAsync(criteria);
+        IReadOnlyList<JobListing> results = await client.SearchJobsAsync(criteria);
 
         // Assert
         Assert.NotNull(results);
 
-        var firstJob = results.First();
+        JobListing firstJob = results.First();
         Assert.NotNull(firstJob.Id);
         Assert.Equal("InfoJobs", firstJob.Source);
     }
@@ -49,11 +49,11 @@ public sealed class InfoJobClientE2ETests
     public async Task GetJobDetailsAsync_WithValidJobId_ReturnsJobDetails()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
-        var jobId = "infojobs-job-001";
+        InfoJobClient client = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
+        string jobId = "infojobs-job-001";
 
         // Act
-        var result = await client.GetJobDetailsAsync(jobId);
+        JobListing result = await client.GetJobDetailsAsync(jobId);
 
         // Assert
         Assert.NotNull(result);
@@ -66,10 +66,10 @@ public sealed class InfoJobClientE2ETests
     public void PlatformName_ReturnsExpectedValue()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
+        InfoJobClient client = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
 
         // Act
-        var platformName = client.PlatformName;
+        string platformName = client.PlatformName;
 
         // Assert
         Assert.Equal("InfoJobs", platformName);
@@ -80,7 +80,7 @@ public sealed class InfoJobClientE2ETests
     public async Task SearchJobsAsync_WithEmptyQuery_ReturnsResults()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
+        InfoJobClient client = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
         var criteria = new JobSearchCriteria
         {
             Query = string.Empty,
@@ -89,7 +89,7 @@ public sealed class InfoJobClientE2ETests
         };
 
         // Act
-        var results = await client.SearchJobsAsync(criteria);
+        IReadOnlyList<JobListing> results = await client.SearchJobsAsync(criteria);
 
         // Assert
         Assert.NotNull(results);
@@ -100,7 +100,7 @@ public sealed class InfoJobClientE2ETests
     public async Task GetSavedJobsAsync_ThrowsNotImplementedException()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
+        InfoJobClient client = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
 
         // Act & Assert
         await Assert.ThrowsAsync<NotImplementedException>(() => client.GetSavedJobsAsync());
@@ -111,7 +111,7 @@ public sealed class InfoJobClientE2ETests
     public async Task GetApplicationsAsync_ThrowsNotImplementedException()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
+        InfoJobClient client = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
 
         // Act & Assert
         await Assert.ThrowsAsync<NotImplementedException>(() => client.GetApplicationsAsync());
@@ -122,8 +122,8 @@ public sealed class InfoJobClientE2ETests
     public async Task ApplyAsync_ThrowsNotImplementedException()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
-        var jobId = "infojobs-job-001";
+        InfoJobClient client = _fixture.ServiceProvider.GetRequiredService<InfoJobClient>();
+        string jobId = "infojobs-job-001";
         var details = new ApplicationDetails
         {
             ApplicantEmail = "test@example.com",

@@ -25,11 +25,11 @@ public sealed class LinkedInSocialClientE2ETests
     public async Task GetProfileAsync_WithValidProfileId_ReturnsProfile()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
-        var profileId = "john-doe";
+        LinkedInSocialClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
+        string profileId = "john-doe";
 
         // Act
-        var result = await client.GetProfileAsync(profileId);
+        SocialProfile result = await client.GetProfileAsync(profileId);
 
         // Assert
         Assert.NotNull(result);
@@ -41,7 +41,7 @@ public sealed class LinkedInSocialClientE2ETests
     public async Task SearchProfilesAsync_WithValidCriteria_ReturnsProfiles()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
+        LinkedInSocialClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
         var criteria = new ProfileSearchCriteria
         {
             Query = "Software Engineer",
@@ -49,7 +49,7 @@ public sealed class LinkedInSocialClientE2ETests
         };
 
         // Act
-        var results = await client.SearchProfilesAsync(criteria);
+        IReadOnlyList<SocialProfile> results = await client.SearchProfilesAsync(criteria);
 
         // Assert
         Assert.NotNull(results);
@@ -60,10 +60,10 @@ public sealed class LinkedInSocialClientE2ETests
     public void PlatformName_ReturnsExpectedValue()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
+        LinkedInSocialClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
 
         // Act
-        var platformName = client.PlatformName;
+        string platformName = client.PlatformName;
 
         // Assert
         Assert.Equal("LinkedIn", platformName);
@@ -74,10 +74,10 @@ public sealed class LinkedInSocialClientE2ETests
     public async Task GetConnectionsAsync_ReturnsConnections()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
+        LinkedInSocialClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
 
         // Act
-        var results = await client.GetConnectionsAsync();
+        IReadOnlyList<SocialConnection> results = await client.GetConnectionsAsync();
 
         // Assert
         Assert.NotNull(results);
@@ -88,9 +88,9 @@ public sealed class LinkedInSocialClientE2ETests
     public async Task SendConnectionRequestAsync_DoesNotThrow()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
-        var profileId = "test-profile";
-        var message = "Hello, I'd like to connect!";
+        LinkedInSocialClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
+        string profileId = "test-profile";
+        string message = "Hello, I'd like to connect!";
 
         // Act & Assert - Should complete without throwing
         await client.SendConnectionRequestAsync(profileId, message);

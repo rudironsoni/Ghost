@@ -32,7 +32,7 @@ public sealed class GooglePluginE2ETests
         var plugin = new GooglePlugin();
 
         // Act
-        var name = plugin.Name;
+        string name = plugin.Name;
 
         // Assert
         Assert.Equal("Google", name);
@@ -46,7 +46,7 @@ public sealed class GooglePluginE2ETests
         var plugin = new GooglePlugin();
 
         // Act
-        var version = plugin.Version;
+        Version version = plugin.Version;
 
         // Assert
         Assert.NotNull(version);
@@ -62,7 +62,7 @@ public sealed class GooglePluginE2ETests
         var plugin = new GooglePlugin();
 
         // Act
-        var providedServices = plugin.ProvidedServices;
+        IReadOnlyList<Type> providedServices = plugin.ProvidedServices;
 
         // Assert
         Assert.Contains(typeof(GoogleJobClient), providedServices);
@@ -74,7 +74,7 @@ public sealed class GooglePluginE2ETests
     public void ConfigureServices_RegistersGoogleJobClient()
     {
         // Arrange
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["Ghost:Plugins:Google:Jobs:Enabled"] = "true",
@@ -90,8 +90,8 @@ public sealed class GooglePluginE2ETests
         plugin.ConfigureServices(services, configuration);
 
         // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var client = serviceProvider.GetService<GoogleJobClient>();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
+        GoogleJobClient? client = serviceProvider.GetService<GoogleJobClient>();
         Assert.NotNull(client);
     }
 
@@ -100,7 +100,7 @@ public sealed class GooglePluginE2ETests
     public void ConfigureServices_RegistersGeminiClient()
     {
         // Arrange
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["Ghost:Plugins:Google:Gemini:Enabled"] = "true",
@@ -112,7 +112,7 @@ public sealed class GooglePluginE2ETests
         services.AddLogging();
 
         // Mock IBrowserSession
-        var mockBrowserSession = NSubstitute.Substitute.For<Ghost.IBrowserSession>();
+        IBrowserSession mockBrowserSession = NSubstitute.Substitute.For<Ghost.IBrowserSession>();
         services.AddSingleton(mockBrowserSession);
 
         var plugin = new GooglePlugin();
@@ -121,8 +121,8 @@ public sealed class GooglePluginE2ETests
         plugin.ConfigureServices(services, configuration);
 
         // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var client = serviceProvider.GetService<GeminiClient>();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
+        GeminiClient? client = serviceProvider.GetService<GeminiClient>();
         Assert.NotNull(client);
     }
 }

@@ -29,7 +29,7 @@ public sealed class IndeedPluginE2ETests
         var plugin = new IndeedPlugin();
 
         // Act
-        var name = plugin.Name;
+        string name = plugin.Name;
 
         // Assert
         Assert.Equal("Indeed", name);
@@ -43,7 +43,7 @@ public sealed class IndeedPluginE2ETests
         var plugin = new IndeedPlugin();
 
         // Act
-        var version = plugin.Version;
+        Version version = plugin.Version;
 
         // Assert
         Assert.NotNull(version);
@@ -59,7 +59,7 @@ public sealed class IndeedPluginE2ETests
         var plugin = new IndeedPlugin();
 
         // Act
-        var providedServices = plugin.ProvidedServices;
+        IReadOnlyList<Type> providedServices = plugin.ProvidedServices;
 
         // Assert
         Assert.Contains(typeof(IJobClient), providedServices);
@@ -70,7 +70,7 @@ public sealed class IndeedPluginE2ETests
     public void ConfigureServices_RegistersIndeedJobClient()
     {
         // Arrange
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["Ghost:Extensions:Indeed:Enabled"] = "true",
@@ -87,8 +87,8 @@ public sealed class IndeedPluginE2ETests
         plugin.ConfigureServices(services, configuration);
 
         // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var client = serviceProvider.GetService<IJobClient>();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
+        IJobClient? client = serviceProvider.GetService<IJobClient>();
         Assert.NotNull(client);
     }
 
@@ -97,7 +97,7 @@ public sealed class IndeedPluginE2ETests
     public void ConfigureServices_RegistersIndeedApiClient()
     {
         // Arrange
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["Ghost:Extensions:Indeed:Enabled"] = "true",
@@ -113,8 +113,8 @@ public sealed class IndeedPluginE2ETests
         plugin.ConfigureServices(services, configuration);
 
         // Assert
-        var serviceProvider = services.BuildServiceProvider();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
         // ApiClient is internal, verify by checking service registration
-        Assert.True(services.Any(s => s.ServiceType.Name.Contains("IndeedApiClient")));
+        Assert.Contains(services, s => s.ServiceType.Name.Contains("IndeedApiClient"));
     }
 }

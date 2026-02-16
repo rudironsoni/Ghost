@@ -68,7 +68,7 @@ public sealed class IndeedE2EFixture : IDisposable
         // Register Indeed services
         services.AddSingleton<IndeedApiClient>(sp =>
         {
-            var logger = sp.GetRequiredService<ILogger<IndeedApiClient>>();
+            ILogger<IndeedApiClient> logger = sp.GetRequiredService<ILogger<IndeedApiClient>>();
             return new IndeedApiClient(sp.GetRequiredService<IndeedOptions>(), logger);
         });
 

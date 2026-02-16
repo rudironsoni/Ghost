@@ -26,7 +26,7 @@ public sealed class GoogleJobClientE2ETests
     public async Task SearchJobsAsync_WithValidCriteria_ReturnsJobListings()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
+        GoogleJobClient client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
         var criteria = new JobSearchCriteria
         {
             Query = "Software Engineer",
@@ -35,13 +35,13 @@ public sealed class GoogleJobClientE2ETests
         };
 
         // Act
-        var results = await client.SearchJobsAsync(criteria);
+        IReadOnlyList<JobListing> results = await client.SearchJobsAsync(criteria);
 
         // Assert
         Assert.NotNull(results);
         Assert.NotEmpty(results);
 
-        var firstJob = results.First();
+        JobListing firstJob = results.First();
         Assert.NotNull(firstJob.Id);
         Assert.Equal("Google", firstJob.Source);
     }
@@ -51,11 +51,11 @@ public sealed class GoogleJobClientE2ETests
     public async Task GetJobDetailsAsync_WithValidJobId_ReturnsJobDetails()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
-        var jobId = "job-001";
+        GoogleJobClient client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
+        string jobId = "job-001";
 
         // Act
-        var result = await client.GetJobDetailsAsync(jobId);
+        JobListing result = await client.GetJobDetailsAsync(jobId);
 
         // Assert
         Assert.NotNull(result);
@@ -68,10 +68,10 @@ public sealed class GoogleJobClientE2ETests
     public async Task PlatformName_ReturnsExpectedValue()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
+        GoogleJobClient client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
 
         // Act
-        var platformName = client.PlatformName;
+        string platformName = client.PlatformName;
 
         // Assert
         Assert.Equal("Google", platformName);
@@ -82,7 +82,7 @@ public sealed class GoogleJobClientE2ETests
     public async Task SearchJobsAsync_WithEmptyQuery_ReturnsResults()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
+        GoogleJobClient client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
         var criteria = new JobSearchCriteria
         {
             Query = string.Empty,
@@ -91,7 +91,7 @@ public sealed class GoogleJobClientE2ETests
         };
 
         // Act
-        var results = await client.SearchJobsAsync(criteria);
+        IReadOnlyList<JobListing> results = await client.SearchJobsAsync(criteria);
 
         // Assert
         Assert.NotNull(results);
@@ -102,7 +102,7 @@ public sealed class GoogleJobClientE2ETests
     public async Task GetSavedJobsAsync_ThrowsNotImplementedException()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
+        GoogleJobClient client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
 
         // Act & Assert
         await Assert.ThrowsAsync<NotImplementedException>(() => client.GetSavedJobsAsync());
@@ -113,7 +113,7 @@ public sealed class GoogleJobClientE2ETests
     public async Task GetApplicationsAsync_ThrowsNotImplementedException()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
+        GoogleJobClient client = _fixture.ServiceProvider.GetRequiredService<GoogleJobClient>();
 
         // Act & Assert
         await Assert.ThrowsAsync<NotImplementedException>(() => client.GetApplicationsAsync());

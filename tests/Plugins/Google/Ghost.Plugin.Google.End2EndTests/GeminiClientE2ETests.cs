@@ -26,7 +26,7 @@ public sealed class GeminiClientE2ETests
     public async Task CompleteAsync_WithValidRequest_ReturnsInferenceResponse()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<GeminiClient>();
+        GeminiClient client = _fixture.ServiceProvider.GetRequiredService<GeminiClient>();
         var request = new InferenceRequest
         {
             Model = "gemini-pro",
@@ -52,10 +52,10 @@ public sealed class GeminiClientE2ETests
     public void ProviderName_ReturnsExpectedValue()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<GeminiClient>();
+        GeminiClient client = _fixture.ServiceProvider.GetRequiredService<GeminiClient>();
 
         // Act
-        var providerName = client.ProviderName;
+        string providerName = client.ProviderName;
 
         // Assert
         Assert.Equal("Google", providerName);
@@ -66,7 +66,7 @@ public sealed class GeminiClientE2ETests
     public async Task StreamAsync_WithValidRequest_ReturnsChunks()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<GeminiClient>();
+        GeminiClient client = _fixture.ServiceProvider.GetRequiredService<GeminiClient>();
         var request = new InferenceRequest
         {
             Model = "gemini-pro",

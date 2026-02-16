@@ -7,6 +7,7 @@ using WireMock.Net;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
+using Xunit;
 
 namespace Ghost.Plugin.Glassdoor.End2EndTests.Fixtures;
 
@@ -66,8 +67,8 @@ public sealed class GlassdoorE2EFixture : IDisposable
         // Register plugin services
         services.AddScoped<GlassdoorApiClient>(sp =>
         {
-            var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(GlassdoorApiClient));
-            var logger = sp.GetRequiredService<ILogger<GlassdoorApiClient>>();
+            HttpClient httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(GlassdoorApiClient));
+            ILogger<GlassdoorApiClient> logger = sp.GetRequiredService<ILogger<GlassdoorApiClient>>();
             return new GlassdoorApiClient(httpClient, logger);
         });
 

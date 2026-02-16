@@ -25,7 +25,7 @@ public sealed record ContractResult
     /// <summary>
     /// Additional context or diagnostic information.
     /// </summary>
-    public IReadOnlyDictionary<string, object> Context { get; init; } = [];
+    public IReadOnlyDictionary<string, object> Context { get; init; } = new Dictionary<string, object>();
 
     /// <summary>
     /// Creates a successful contract result.

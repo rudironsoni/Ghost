@@ -7,6 +7,7 @@ using WireMock.Net;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
+using Xunit;
 
 namespace Ghost.Plugin.InfoJobs.End2EndTests.Fixtures;
 
@@ -71,9 +72,9 @@ public sealed class InfoJobsE2EFixture : IDisposable
         // Register InfoJobs services
         services.AddSingleton<InfoJobsApiClient>(sp =>
         {
-            var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(InfoJobsApiClient));
-            var opts = sp.GetRequiredService<InfoJobsOptions>();
-            var logger = sp.GetRequiredService<ILogger<InfoJobsApiClient>>();
+            HttpClient httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(InfoJobsApiClient));
+            InfoJobsOptions opts = sp.GetRequiredService<InfoJobsOptions>();
+            ILogger<InfoJobsApiClient> logger = sp.GetRequiredService<ILogger<InfoJobsApiClient>>();
             return new InfoJobsApiClient(httpClient, opts, logger);
         });
 

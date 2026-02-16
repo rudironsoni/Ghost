@@ -320,8 +320,8 @@ public sealed class GlassdoorApiClient : IDisposable
                     operationName = "JobSearchResultsQuery",
                     variables = new
                     {
-                        excludeJobListingIds = [],
-                        filterParams = [],
+                        excludeJobListingIds = Array.Empty<int>(),
+                        filterParams = Array.Empty<object>(),
                         keyword = "test",
                         numJobsToShow = 1,
                         locationType = "STATE",
@@ -390,8 +390,8 @@ public sealed class GlassdoorApiClient : IDisposable
                     operationName = "JobSearchResultsQuery",
                     variables = new
                     {
-                        excludeJobListingIds = [],
-                        filterParams = [],
+                        excludeJobListingIds = Array.Empty<int>(),
+                        filterParams = Array.Empty<object>(),
                         keyword = "test",
                         numJobsToShow = 1,
                         locationType = "STATE",
@@ -715,7 +715,7 @@ public sealed class GlassdoorApiClient : IDisposable
             operationName = "JobSearchResultsQuery",
             variables = new
             {
-                excludeJobListingIds = [],
+                excludeJobListingIds = Array.Empty<int>(),
                 filterParams = filterParams,
                 keyword = keyword,
                 numJobsToShow = 30,

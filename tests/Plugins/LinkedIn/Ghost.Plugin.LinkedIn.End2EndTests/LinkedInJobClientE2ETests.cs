@@ -25,7 +25,7 @@ public sealed class LinkedInJobClientE2ETests
     public async Task SearchJobsAsync_WithValidCriteria_ReturnsJobListings()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
+        LinkedInJobClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
         var criteria = new JobSearchCriteria
         {
             Query = "Software Engineer",
@@ -34,7 +34,7 @@ public sealed class LinkedInJobClientE2ETests
         };
 
         // Act
-        var results = await client.SearchJobsAsync(criteria);
+        IReadOnlyList<JobListing> results = await client.SearchJobsAsync(criteria);
 
         // Assert
         Assert.NotNull(results);
@@ -46,11 +46,11 @@ public sealed class LinkedInJobClientE2ETests
     public async Task GetJobDetailsAsync_WithValidJobId_ReturnsJobDetails()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
-        var jobId = "linkedin-job-001";
+        LinkedInJobClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
+        string jobId = "linkedin-job-001";
 
         // Act
-        var result = await client.GetJobDetailsAsync(jobId);
+        JobListing result = await client.GetJobDetailsAsync(jobId);
 
         // Assert
         Assert.NotNull(result);
@@ -63,10 +63,10 @@ public sealed class LinkedInJobClientE2ETests
     public void PlatformName_ReturnsExpectedValue()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
+        LinkedInJobClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
 
         // Act
-        var platformName = client.PlatformName;
+        string platformName = client.PlatformName;
 
         // Assert
         Assert.Equal("LinkedIn", platformName);
@@ -77,7 +77,7 @@ public sealed class LinkedInJobClientE2ETests
     public async Task GetSavedJobsAsync_ThrowsNotImplementedException()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
+        LinkedInJobClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
 
         // Act & Assert
         await Assert.ThrowsAsync<NotImplementedException>(() => client.GetSavedJobsAsync());
@@ -88,7 +88,7 @@ public sealed class LinkedInJobClientE2ETests
     public async Task GetApplicationsAsync_ThrowsNotImplementedException()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
+        LinkedInJobClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
 
         // Act & Assert
         await Assert.ThrowsAsync<NotImplementedException>(() => client.GetApplicationsAsync());
@@ -99,8 +99,8 @@ public sealed class LinkedInJobClientE2ETests
     public async Task ApplyAsync_WithValidJobId_ReturnsJobApplication()
     {
         // Arrange
-        var client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
-        var jobId = "linkedin-job-001";
+        LinkedInJobClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInJobClient>();
+        string jobId = "linkedin-job-001";
         var details = new ApplicationDetails
         {
             ApplicantEmail = "test@example.com",
@@ -109,7 +109,7 @@ public sealed class LinkedInJobClientE2ETests
         };
 
         // Act
-        var result = await client.ApplyAsync(jobId, details);
+        JobApplication result = await client.ApplyAsync(jobId, details);
 
         // Assert - May return null or mock based on browser interaction
         Assert.NotNull(result);

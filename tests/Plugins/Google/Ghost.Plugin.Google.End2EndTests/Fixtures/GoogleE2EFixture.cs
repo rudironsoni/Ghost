@@ -9,6 +9,7 @@ using WireMock.Net;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
+using Xunit;
 
 namespace Ghost.Plugin.Google.End2EndTests.Fixtures;
 
@@ -67,7 +68,7 @@ public sealed class GoogleE2EFixture : IDisposable
         });
 
         // Mock IBrowserSession for Gemini
-        var mockBrowserSession = NSubstitute.Substitute.For<Ghost.IBrowserSession>();
+        IBrowserSession mockBrowserSession = NSubstitute.Substitute.For<Ghost.IBrowserSession>();
         services.AddSingleton(mockBrowserSession);
 
         // Register Google services
