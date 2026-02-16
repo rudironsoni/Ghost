@@ -252,7 +252,7 @@ public class SitemapSpider : Spider, ISitemapSpider
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(xmlContent);
 
-        var urls = new List<string>();
+        List<string> urls = [];
 
         try
         {

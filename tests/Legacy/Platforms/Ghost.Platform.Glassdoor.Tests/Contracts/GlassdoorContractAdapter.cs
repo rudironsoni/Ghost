@@ -44,7 +44,7 @@ public sealed class GlassdoorContractAdapter : IProviderContractAdapter
         int maxPages = 10,
         CancellationToken ct = default)
     {
-        var allJobs = new List<JobListing>();
+        List<JobListing> allJobs = [];
 
         // Glassdoor uses page-based pagination
         // We'll simulate this by making multiple searches

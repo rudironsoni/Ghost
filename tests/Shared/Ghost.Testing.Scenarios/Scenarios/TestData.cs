@@ -21,7 +21,7 @@ public static class TestData
 
     private static List<SyntheticJobPosting> GenerateJobs()
     {
-        var jobs = new List<SyntheticJobPosting>();
+        List<SyntheticJobPosting> jobs = [];
         var random = new Random(42); // Deterministic seed
 
         string[] titles = new[]

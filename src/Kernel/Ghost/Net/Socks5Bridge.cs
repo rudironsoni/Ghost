@@ -20,7 +20,7 @@ public class Socks5Bridge : IDisposable
     private CancellationTokenSource? _cts;
     private Task? _acceptLoopTask;
 
-    private readonly List<TcpClient> _activeClients = new List<TcpClient>();
+    private readonly List<TcpClient> _activeClients = [];
     private readonly object _lock = new object();
 
     public int Port { get; private set; }

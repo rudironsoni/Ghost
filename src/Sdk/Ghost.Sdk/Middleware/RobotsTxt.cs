@@ -15,7 +15,7 @@ public class RobotsTxt
     /// <summary>
     /// Gets the list of sitemaps declared in robots.txt.
     /// </summary>
-    public List<string> Sitemaps { get; } = new();
+    public List<string> Sitemaps { get; } = [];
 
     /// <summary>
     /// Adds rules for a specific user-agent.
@@ -88,7 +88,7 @@ public class RobotsTxt
 /// </summary>
 public class UserAgentRules
 {
-    private readonly List<PathRule> _rules = new();
+    private readonly List<PathRule> _rules = [];
 
     /// <summary>
     /// Gets or sets the crawl delay in seconds.

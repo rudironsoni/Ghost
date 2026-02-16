@@ -31,7 +31,7 @@ namespace Ghost.Sdk.Spider.Pipeline;
 /// </remarks>
 public sealed class PipelineBuilder
 {
-    private readonly List<MiddlewareEntry> _middlewareEntries = new();
+    private readonly List<MiddlewareEntry> _middlewareEntries = [];
     private int _nextOrder;
 
     /// <summary>

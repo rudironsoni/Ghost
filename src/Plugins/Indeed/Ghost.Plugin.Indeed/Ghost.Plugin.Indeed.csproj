@@ -17,7 +17,7 @@
     <ProjectReference Include="..\..\..\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
     <ProjectReference Include="..\..\..\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Platform\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
-    <ProjectReference Include="..\..\..\Platform\Storage\Ghost.Infrastructure.Session\Ghost.Infrastructure.Session.csproj" />
+    <ProjectReference Include="..\..\..\Platform\Storage\Ghost.Platform.Storage.Session\Ghost.Platform.Storage.Session.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Http" />

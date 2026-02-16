@@ -23,10 +23,10 @@ public class WebSocketAdapterTests : IDisposable
 {
     private readonly IWebHost _server;
     private readonly int _port;
-    private readonly List<WebSocket> _serverSockets = new();
+    private readonly List<WebSocket> _serverSockets = [];
     private readonly object _socketLock = new();
     private readonly ILogger<WebSocketAdapter> _logger;
-    private readonly List<IDisposable> _disposables = new();
+    private readonly List<IDisposable> _disposables = [];
 
     public WebSocketAdapterTests(ITestOutputHelper output)
     {
@@ -503,7 +503,7 @@ public class WebSocketAdapterTests : IDisposable
         _disposables.Add(adapter);
 
         var connection = await adapter.ConnectAsync(wsUrl);
-        var receivedMessages = new List<string>();
+        List<string> receivedMessages = [];
 
         // Act - receive all 3 messages that server sends
         for (int i = 0; i < 3; i++)
@@ -1113,7 +1113,7 @@ public class WebSocketAdapterTests : IDisposable
         _disposables.Add(adapter);
 
         var connection = await adapter.ConnectAsync(wsUrl);
-        var receivedMessages = new List<WebSocketMessage>();
+        List<WebSocketMessage> receivedMessages = [];
 
         connection.MessageReceived += (s, e) => receivedMessages.Add(e);
 

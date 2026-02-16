@@ -109,7 +109,7 @@ public class WebSocketAdapterOptions : AdapterOptions
     /// Gets or sets custom subprotocols to request during connection.
     /// </summary>
     /// <value>A list of WebSocket subprotocol names.</value>
-    public List<string> Subprotocols { get; set; } = new();
+    public List<string> Subprotocols { get; set; } = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WebSocketAdapterOptions"/> class.

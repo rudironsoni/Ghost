@@ -208,7 +208,7 @@ public sealed class LinkedInSocialClient : ISocialClient
 
     private async Task<List<SocialExperience>> ParseExperienceAsync(Ghost.IPage page, CancellationToken ct)
     {
-        var list = new List<SocialExperience>();
+        List<SocialExperience> list = [];
         if (page is null) return list;
 
         IReadOnlyList<IElement> sections = await page.QuerySelectorAllAsync("section", ct: ct).ConfigureAwait(false);
@@ -290,7 +290,7 @@ public sealed class LinkedInSocialClient : ISocialClient
 
     private async Task<List<SocialEducation>> ParseEducationAsync(Ghost.IPage page, CancellationToken ct)
     {
-        var list = new List<SocialEducation>();
+        List<SocialEducation> list = [];
         if (page is null) return list;
 
         IReadOnlyList<IElement> sections = await page.QuerySelectorAllAsync("section", ct: ct).ConfigureAwait(false);
@@ -370,7 +370,7 @@ public sealed class LinkedInSocialClient : ISocialClient
 
             // Very simple parsing: find profile links
             IReadOnlyList<IElement> nodes = await page.QuerySelectorAllAsync(".reusable-search__result-container a.app-aware-link", ct: ct).ConfigureAwait(false);
-            var list = new List<SocialProfile>();
+            List<SocialProfile> list = [];
             foreach (IElement? n in nodes.Take(criteria.MaxResults))
             {
                 try
@@ -444,7 +444,7 @@ public sealed class LinkedInSocialClient : ISocialClient
             await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
             IReadOnlyList<IElement> nodes = await page.QuerySelectorAllAsync(".feed-shared-update-v2", ct: ct).ConfigureAwait(false);
-            var list = new List<SocialPost>();
+            List<SocialPost> list = [];
             foreach (IElement? n in nodes.Take(options?.PageSize ?? 20))
             {
                 try
@@ -507,7 +507,7 @@ public sealed class LinkedInSocialClient : ISocialClient
             await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
             IReadOnlyList<IElement> nodes = await page.QuerySelectorAllAsync(".mn-connection-card__details", ct: ct).ConfigureAwait(false);
-            var list = new List<Ghost.Contracts.Social.SocialConnection>();
+            List<Ghost.Contracts.Social.SocialConnection> list = [];
             foreach (IElement? n in nodes.Take(options?.MaxResults ?? 20))
             {
                 try

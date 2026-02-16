@@ -52,7 +52,7 @@
   </PropertyGroup>
 
   <!-- Layer detection -->
-  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Core'))">
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Kernel'))">
     <GhostLayer>Kernel</GhostLayer>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
@@ -62,19 +62,29 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
-  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Platforms'))">
-    <GhostLayer>Platforms</GhostLayer>
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Platform'))">
+    <GhostLayer>Platform</GhostLayer>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
-  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Hosting'))">
-    <GhostLayer>Hosting</GhostLayer>
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Engine'))">
+    <GhostLayer>Engine</GhostLayer>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Plugins'))">
+    <GhostLayer>Plugins</GhostLayer>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Sdk'))">
     <GhostLayer>Sdk</GhostLayer>
     <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Apps'))">
+    <GhostLayer>Apps</GhostLayer>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('tests'))">
@@ -85,11 +95,6 @@
   <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('samples'))">
     <GhostLayer>Samples</GhostLayer>
     <IsPackable>false</IsPackable>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('tools'))">
-    <GhostLayer>Tools</GhostLayer>
-    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <!-- Ensure repository README is included in NuGet packages so PackageReadmeFile resolves -->

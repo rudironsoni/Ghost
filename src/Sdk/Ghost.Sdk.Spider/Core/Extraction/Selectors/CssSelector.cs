@@ -40,7 +40,7 @@ public class CssSelector : ISelector
         IHtmlDocument document = _parser.ParseDocument(content);
         IHtmlCollection<IElement> elements = document.QuerySelectorAll(Expression);
 
-        var results = new List<string>();
+        List<string> results = [];
         foreach (IElement element in elements)
         {
             string? value = ExtractValue(element);

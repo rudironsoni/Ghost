@@ -38,7 +38,7 @@ public class ConditionConfiguration
     /// <summary>
     /// Gets or sets additional parameters for the condition.
     /// </summary>
-    public Dictionary<string, object> Parameters { get; init; } = new();
+    public Dictionary<string, object> Parameters { get; init; } = [];
 }
 
 /// <summary>

@@ -58,7 +58,7 @@ public sealed class LimitsConfiguration
     /// <summary>
     /// Gets or sets allowed content types (MIME types). Empty list means all types allowed.
     /// </summary>
-    public List<string> AllowedContentTypes { get; set; } = new();
+    public List<string> AllowedContentTypes { get; set; } = [];
 
     /// <summary>
     /// Gets or sets blocked content types (MIME types).
@@ -105,5 +105,5 @@ public sealed class ResourceBlockingConfiguration
     /// <summary>
     /// Gets or sets custom URL patterns to block.
     /// </summary>
-    public List<string> BlockedUrlPatterns { get; set; } = new();
+    public List<string> BlockedUrlPatterns { get; set; } = [];
 }

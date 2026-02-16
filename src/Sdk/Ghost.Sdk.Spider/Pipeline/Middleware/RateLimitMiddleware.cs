@@ -60,7 +60,7 @@ public sealed class RateLimitMiddleware : IPipelineMiddleware
             ? waitWhenExceeded
             : true;
 
-        _domainLimiters = new Dictionary<string, TokenBucketRateLimiter>();
+        _domainLimiters = [];
         _globalLimiter = new TokenBucketRateLimiter(_capacity, _tokensPerSecond);
     }
 

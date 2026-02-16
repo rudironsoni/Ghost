@@ -105,7 +105,7 @@ public sealed class RateLimitConfiguration
     /// <summary>
     /// Gets or sets per-domain rate limiting configuration.
     /// </summary>
-    public Dictionary<string, DomainRateLimitConfiguration> PerDomain { get; set; } = new();
+    public Dictionary<string, DomainRateLimitConfiguration> PerDomain { get; set; } = [];
 }
 
 /// <summary>

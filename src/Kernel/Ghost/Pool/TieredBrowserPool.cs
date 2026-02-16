@@ -436,8 +436,8 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
     private Task CleanupExpiredSessionsAsync()
     {
-        var hotExpired = new List<PooledBrowserSession>();
-        var warmExpired = new List<PooledBrowserSession>();
+        List<PooledBrowserSession> hotExpired = [];
+        List<PooledBrowserSession> warmExpired = [];
 
         foreach (PooledBrowserSession session in _hotPool)
         {

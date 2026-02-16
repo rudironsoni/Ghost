@@ -23,12 +23,12 @@ public sealed class EntityConfiguration
     /// <summary>
     /// Gets or sets the fields to extract for this entity.
     /// </summary>
-    public List<FieldConfiguration> Fields { get; set; } = new();
+    public List<FieldConfiguration> Fields { get; set; } = [];
 
     /// <summary>
     /// Gets or sets nested entities.
     /// </summary>
-    public List<EntityConfiguration> NestedEntities { get; set; } = new();
+    public List<EntityConfiguration> NestedEntities { get; set; } = [];
 
     /// <summary>
     /// Gets or sets validation rules for this entity.
@@ -59,5 +59,5 @@ public sealed class EntityValidationConfiguration
     /// <summary>
     /// Gets or sets custom validation expressions.
     /// </summary>
-    public List<string> CustomRules { get; set; } = new();
+    public List<string> CustomRules { get; set; } = [];
 }

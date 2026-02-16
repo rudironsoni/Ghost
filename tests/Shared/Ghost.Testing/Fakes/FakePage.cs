@@ -3,7 +3,7 @@ namespace Ghost.Testing.Fakes;
 public class FakePage : IPage
 {
     private string _content = "<html><body></body></html>";
-    private readonly Dictionary<string, FakeElement> _elements = new();
+    private readonly Dictionary<string, FakeElement> _elements = [];
 
     public string PageId { get; } = Guid.NewGuid().ToString();
     public string Url { get; private set; } = "about:blank";

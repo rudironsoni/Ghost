@@ -187,7 +187,7 @@ public class CircuitBreakerMiddlewareFullTests
     public async Task InvokeAsync_ExceptionPreservesStackTrace_ShouldRethrow()
     {
         // Arrange
-        var config = new Dictionary<string, object>();
+        Dictionary<string, object> config = [];
         var middleware = new CircuitBreakerMiddleware(config);
         var context = CreateContext();
         var originalException = new InvalidOperationException("Original error");

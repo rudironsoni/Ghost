@@ -15,9 +15,9 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
 {
     private readonly string _diagnosticsRoot;
     private readonly string _testRunId;
-    private readonly List<DiagnosticArtifact> _capturedArtifacts = new();
+    private readonly List<DiagnosticArtifact> _capturedArtifacts = [];
     private readonly Stopwatch _testStopwatch = new();
-    private readonly List<TimelineEvent> _timeline = new();
+    private readonly List<TimelineEvent> _timeline = [];
     private bool _disposed;
     private static readonly JsonSerializerOptions s_jsonOptions = new() { WriteIndented = true };
 

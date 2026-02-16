@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>Ghost.Scraper.Benchmarks.JsonSerializationBenchmarks-20260216-193253</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.0, Linux Debian GNU/Linux 13 (trixie)
+Intel Core i5-7500 CPU 3.40GHz (Kaby Lake), 1 CPU, 4 logical and 4 physical cores
+.NET SDK 10.0.103
+  [Host] : .NET 10.0.3 (10.0.326.7603), X64 RyuJIT AVX2
+  Dry    : .NET 10.0.3 (10.0.326.7603), X64 RyuJIT AVX2
+</code></pre>
+<pre><code></code></pre>
+
+<table>
+<thead><tr><th>Method                         </th><th>Job </th><th>Runtime</th><th>IterationCount</th><th>LaunchCount</th><th>RunStrategy</th><th>UnrollFactor</th><th>WarmupCount</th><th>Mean </th><th>Error</th><th>Ratio</th><th>RatioSD</th><th>Allocated</th><th>Alloc Ratio</th>
+</tr>
+</thead><tbody><tr><td>SerializeWithReflection</td><td>Job-PLFSNH</td><td>.NET 9.0</td><td>5</td><td>3</td><td>Default</td><td>16</td><td>3</td><td>NA</td><td>NA</td><td>?</td><td>?</td><td>NA</td><td>?</td>
+</tr><tr><td>SerializeWithSourceGenerator</td><td>Job-PLFSNH</td><td>.NET 9.0</td><td>5</td><td>3</td><td>Default</td><td>16</td><td>3</td><td>NA</td><td>NA</td><td>?</td><td>?</td><td>NA</td><td>?</td>
+</tr><tr><td>DeserializeWithReflection</td><td>Job-PLFSNH</td><td>.NET 9.0</td><td>5</td><td>3</td><td>Default</td><td>16</td><td>3</td><td>NA</td><td>NA</td><td>?</td><td>?</td><td>NA</td><td>?</td>
+</tr><tr><td>DeserializeWithSourceGenerator</td><td>Job-PLFSNH</td><td>.NET 9.0</td><td>5</td><td>3</td><td>Default</td><td>16</td><td>3</td><td>NA</td><td>NA</td><td>?</td><td>?</td><td>NA</td><td>?</td>
+</tr><tr><td>SerializeSingleJobWithReflection</td><td>Job-PLFSNH</td><td>.NET 9.0</td><td>5</td><td>3</td><td>Default</td><td>16</td><td>3</td><td>NA</td><td>NA</td><td>?</td><td>?</td><td>NA</td><td>?</td>
+</tr><tr><td>SerializeSingleJobWithSourceGenerator</td><td>Job-PLFSNH</td><td>.NET 9.0</td><td>5</td><td>3</td><td>Default</td><td>16</td><td>3</td><td>NA</td><td>NA</td><td>?</td><td>?</td><td>NA</td><td>?</td>
+</tr><tr><td>SerializeWithReflection</td><td>Dry</td><td>.NET 10.0</td><td>1</td><td>1</td><td>ColdStart</td><td>1</td><td>1</td><td>597.6 &mu;s</td><td>NA</td><td>1.00</td><td>0.00</td><td>76544 B</td><td>1.00</td>
+</tr><tr><td>SerializeWithSourceGenerator</td><td>Dry</td><td>.NET 10.0</td><td>1</td><td>1</td><td>ColdStart</td><td>1</td><td>1</td><td>16,712.7 &mu;s</td><td>NA</td><td>27.97</td><td>0.00</td><td>76224 B</td><td>1.00</td>
+</tr><tr><td>DeserializeWithReflection</td><td>Dry</td><td>.NET 10.0</td><td>1</td><td>1</td><td>ColdStart</td><td>1</td><td>1</td><td>7,923.1 &mu;s</td><td>NA</td><td>13.26</td><td>0.00</td><td>68936 B</td><td>0.90</td>
+</tr><tr><td>DeserializeWithSourceGenerator</td><td>Dry</td><td>.NET 10.0</td><td>1</td><td>1</td><td>ColdStart</td><td>1</td><td>1</td><td>20,316.3 &mu;s</td><td>NA</td><td>34.00</td><td>0.00</td><td>87672 B</td><td>1.15</td>
+</tr><tr><td>SerializeSingleJobWithReflection</td><td>Dry</td><td>.NET 10.0</td><td>1</td><td>1</td><td>ColdStart</td><td>1</td><td>1</td><td>335.6 &mu;s</td><td>NA</td><td>0.56</td><td>0.00</td><td>848 B</td><td>0.01</td>
+</tr><tr><td>SerializeSingleJobWithSourceGenerator</td><td>Dry</td><td>.NET 10.0</td><td>1</td><td>1</td><td>ColdStart</td><td>1</td><td>1</td><td>14,161.7 &mu;s</td><td>NA</td><td>23.70</td><td>0.00</td><td>1856 B</td><td>0.02</td>
+</tr></tbody></table>
+</body>
+</html>

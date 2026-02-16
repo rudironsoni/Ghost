@@ -47,7 +47,7 @@ public class PaginationScenarioTests : IAsyncLifetime
         // Arrange
         using var page = await _browserFixture.Browser.NewPageAsync();
         var url = $"{_baseUrl}/scenario/pagination/numbered";
-        var extractedJobs = new List<string>();
+        List<string> extractedJobs = [];
 
         // Listen for console logs
         page.Console += (_, msg) =>
@@ -113,7 +113,7 @@ public class PaginationScenarioTests : IAsyncLifetime
         // Arrange
         using var page = await _browserFixture.Browser.NewPageAsync();
         var url = $"{_baseUrl}/scenario/pagination/cursor";
-        var extractedJobs = new List<string>();
+        List<string> extractedJobs = [];
 
         // Listen for console logs
         page.Console += (_, msg) =>
@@ -404,7 +404,7 @@ public class PaginationScenarioTests : IAsyncLifetime
         // Arrange
         using var page = await _browserFixture.Browser.NewPageAsync();
         var url = $"{_baseUrl}/scenario/pagination/circular";
-        var visitedPages = new HashSet<string>();
+        HashSet<string> visitedPages = [];
 
         // Listen for console logs
         page.Console += (_, msg) =>
@@ -543,7 +543,7 @@ public class PaginationScenarioTests : IAsyncLifetime
         // Arrange
         using var page = await _browserFixture.Browser.NewPageAsync();
         var url = $"{_baseUrl}/scenario/pagination/safe-termination";
-        var extractedJobs = new List<string>();
+        List<string> extractedJobs = [];
 
         // Listen for console logs
         page.Console += (_, msg) =>
@@ -641,7 +641,7 @@ public class PaginationScenarioTests : IAsyncLifetime
         // Arrange
         using var page = await _browserFixture.Browser.NewPageAsync();
         var url = $"{_baseUrl}/scenario/pagination/numbered";
-        var extractedJobs = new List<string>();
+        List<string> extractedJobs = [];
 
         // Act
         await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
@@ -691,7 +691,7 @@ public class PaginationScenarioTests : IAsyncLifetime
         // Arrange
         using var page = await _browserFixture.Browser.NewPageAsync();
         var url = $"{_baseUrl}/scenario/pagination/cursor";
-        var cursors = new List<string>();
+        List<string> cursors = [];
 
         // Listen for console logs to track cursors
         page.Console += (_, msg) =>

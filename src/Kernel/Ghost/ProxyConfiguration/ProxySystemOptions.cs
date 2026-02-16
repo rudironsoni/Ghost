@@ -13,7 +13,7 @@ public class ProxySystemOptions
     /// Collection of configured proxy sources.
     /// Supports multiple providers simultaneously (static hosts, APIs, etc.)
     /// </summary>
-    public List<ProxySourceConfig> Sources { get; set; } = new();
+    public List<ProxySourceConfig> Sources { get; set; } = [];
 
     /// <summary>
     /// Proxy rotation strategy to use when multiple proxies are available.
@@ -34,5 +34,5 @@ public class ProxySystemOptions
     /// Enables graceful degradation even if all primary sources become unavailable.
     /// Can include free third-party API proxies for resilience.
     /// </summary>
-    public List<ProxySourceConfig> FallbackChain { get; set; } = new();
+    public List<ProxySourceConfig> FallbackChain { get; set; } = [];
 }

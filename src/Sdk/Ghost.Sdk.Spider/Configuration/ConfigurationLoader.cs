@@ -112,7 +112,7 @@ public sealed class ConfigurationLoader
         out IReadOnlyList<string> errors)
     {
         configuration = null;
-        var errorList = new List<string>();
+        List<string> errorList = [];
 
         try
         {

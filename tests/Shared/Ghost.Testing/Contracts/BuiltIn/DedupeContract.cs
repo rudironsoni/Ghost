@@ -35,7 +35,7 @@ public sealed class DedupeContract : ProviderContractBase
             return Failure("No jobs returned to validate deduplication");
         }
 
-        var errors = new List<string>();
+        List<string> errors = [];
         var context = new Dictionary<string, object>
         {
             ["TotalJobs"] = jobs.Count

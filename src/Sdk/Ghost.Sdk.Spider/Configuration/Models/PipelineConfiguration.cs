@@ -13,7 +13,7 @@ public sealed class PipelineConfiguration
     /// <summary>
     /// Gets or sets pipeline stages to execute.
     /// </summary>
-    public List<PipelineStageConfiguration> Stages { get; set; } = new();
+    public List<PipelineStageConfiguration> Stages { get; set; } = [];
 
     /// <summary>
     /// Gets or sets whether to stop pipeline on stage failure.
@@ -54,7 +54,7 @@ public sealed class PipelineStageConfiguration
     /// <summary>
     /// Gets or sets stage-specific configuration.
     /// </summary>
-    public Dictionary<string, object> Configuration { get; set; } = new();
+    public Dictionary<string, object> Configuration { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the custom processor type name (for Custom type).

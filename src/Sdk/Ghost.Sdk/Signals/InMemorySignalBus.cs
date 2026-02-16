@@ -49,7 +49,7 @@ public sealed class InMemorySignalBus : ISignalBus, IAsyncDisposable
         {
             if (!_subscriptions.TryGetValue(signalType, out List<SubscriptionInfo>? subscriptions))
             {
-                subscriptions = new List<SubscriptionInfo>();
+                subscriptions = [];
                 _subscriptions[signalType] = subscriptions;
             }
 

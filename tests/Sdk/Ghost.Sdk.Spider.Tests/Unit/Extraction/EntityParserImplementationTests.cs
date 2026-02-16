@@ -433,6 +433,6 @@ public class EntityParserImplementationTests
     private sealed class ItemWithTags : EntityBase<ItemWithTags>
     {
         [ValueSelector(".tag", SelectorType.Css, TakeFirst = false)]
-        public List<string> Tags { get; set; } = new();
+        public List<string> Tags { get; set; } = [];
     }
 }

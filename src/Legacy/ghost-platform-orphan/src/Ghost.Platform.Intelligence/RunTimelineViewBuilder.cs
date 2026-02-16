@@ -37,7 +37,7 @@ public sealed class RunTimelineViewBuilder
     /// <returns>A timeline view of the run.</returns>
     public static async Task<RunTimelineView> Build(IAsyncEnumerable<EngineEvent> events)
     {
-        var entries = new List<TimelineEntry>();
+        List<TimelineEntry> entries = [];
         string? runId = null;
         string? jobId = null;
         DateTimeOffset? startedAt = null;

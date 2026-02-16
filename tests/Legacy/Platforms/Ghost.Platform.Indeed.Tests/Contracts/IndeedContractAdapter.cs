@@ -44,7 +44,7 @@ public sealed class IndeedContractAdapter : IProviderContractAdapter
         int maxPages = 10,
         CancellationToken ct = default)
     {
-        var allJobs = new List<JobListing>();
+        List<JobListing> allJobs = [];
 
         // Indeed uses cursor-based pagination
         // We'll simulate this by making multiple searches

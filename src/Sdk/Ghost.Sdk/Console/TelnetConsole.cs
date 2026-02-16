@@ -431,7 +431,7 @@ public sealed partial class TelnetConsole : ITelnetConsole, IAsyncDisposable
 
     private static string[] ParseCommandLine(string commandLine)
     {
-        var parts = new List<string>();
+        List<string> parts = [];
         var current = new StringBuilder();
         bool inQuotes = false;
 

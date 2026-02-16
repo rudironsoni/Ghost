@@ -53,7 +53,7 @@ public class StrategyRouter : IStrategyRouter
     public StrategyRouter(ILogger<StrategyRouter>? logger = null)
     {
         _strategies = new Dictionary<string, Func<StrategyContext, CancellationToken, Task<ExtractionResult>>>();
-        _metrics = new Dictionary<string, StrategyMetrics>();
+        _metrics = [];
         _logger = logger;
     }
 
@@ -149,8 +149,8 @@ public class StrategyRouter : IStrategyRouter
         ArgumentNullException.ThrowIfNull(context);
 
         DateTimeOffset chainStartTime = DateTimeOffset.UtcNow;
-        var results = new List<ExtractionResult>();
-        var aggregatedData = new Dictionary<string, object>();
+        List<ExtractionResult> results = [];
+        Dictionary<string, object> aggregatedData = [];
 
         foreach (StrategyConfiguration strategyConfig in chain.Strategies)
         {

@@ -8,7 +8,7 @@ public sealed record JobSearchResult
     /// <summary>
     /// List of job listings found during the search.
     /// </summary>
-    public IReadOnlyList<JobListing> Jobs { get; init; } = new List<JobListing>();
+    public IReadOnlyList<JobListing> Jobs { get; init; } = [];
 
     /// <summary>
     /// Indicates whether the search completed successfully.
@@ -18,7 +18,7 @@ public sealed record JobSearchResult
     /// <summary>
     /// Error information for each platform that failed during the search.
     /// </summary>
-    public IReadOnlyList<PlatformError> PlatformErrors { get; init; } = new List<PlatformError>();
+    public IReadOnlyList<PlatformError> PlatformErrors { get; init; } = [];
 
     /// <summary>
     /// Overall error message if the search failed completely.

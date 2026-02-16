@@ -123,7 +123,7 @@ public class MessageBuffer
     /// <returns>An array of all buffered messages.</returns>
     public WebSocketMessage[] Flush()
     {
-        var messages = new List<WebSocketMessage>();
+        List<WebSocketMessage> messages = [];
 
         lock (_lock)
         {
@@ -171,7 +171,7 @@ public class MessageBuffer
             }));
         }
 
-        var contentArray = new List<object>();
+        List<object> contentArray = [];
 
         foreach (WebSocketMessage message in messages)
         {

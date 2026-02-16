@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Ghost.Infrastructure.Session</RootNamespace>
-    <Description>Ghost infrastructure session orchestration for HTTP and browser sessions</Description>
+    <RootNamespace>Ghost.Platform.Storage.Session</RootNamespace>
+    <Description>Ghost Platform.Storage session orchestration for HTTP and browser sessions</Description>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>

@@ -23,7 +23,7 @@ public class StealthMiddlewareTests
     public void Constructor_WithEmptyConfiguration_ShouldUseDefaults()
     {
         // Arrange
-        var config = new Dictionary<string, object>();
+        Dictionary<string, object> config = [];
 
         // Act
         var middleware = new StealthMiddleware(config);
@@ -230,7 +230,7 @@ public class StealthMiddlewareTests
         };
 
         var middleware = new StealthMiddleware(config);
-        var userAgents = new List<string>();
+        List<string> userAgents = [];
 
         // Act - Make 6 requests
         for (int i = 0; i < 6; i++)

@@ -52,8 +52,8 @@ public sealed class JA3Randomizer
             return;
 
         // TLS 1.3 cipher IDs (4865-4867 range)
-        var tls13Ciphers = new List<int>();
-        var otherCiphers = new List<int>();
+        List<int> tls13Ciphers = [];
+        List<int> otherCiphers = [];
 
         foreach (int cipher in profile.CipherSuites)
         {
@@ -84,8 +84,8 @@ public sealed class JA3Randomizer
 
         // Extensions that should stay at the beginning
         var criticalExtensions = new HashSet<int> { 0 }; // server_name must be first
-        var critical = new List<int>();
-        var shuffleable = new List<int>();
+        List<int> critical = [];
+        List<int> shuffleable = [];
 
         foreach (int ext in profile.Extensions)
         {
@@ -112,8 +112,8 @@ public sealed class JA3Randomizer
             return;
 
         // Keep X25519 (29) first if present, shuffle the rest
-        var x25519 = new List<int>();
-        var others = new List<int>();
+        List<int> x25519 = [];
+        List<int> others = [];
 
         foreach (int curve in profile.EllipticCurves)
         {
@@ -138,7 +138,7 @@ public sealed class JA3Randomizer
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
 
         var profiles = new List<JA3Profile>(count);
-        var seenHashes = new HashSet<string>();
+        HashSet<string> seenHashes = [];
 
         // Try to generate unique profiles
         int maxAttempts = count * 10; // Prevent infinite loop

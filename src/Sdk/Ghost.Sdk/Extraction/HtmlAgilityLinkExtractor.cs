@@ -29,7 +29,7 @@ public sealed class HtmlAgilityLinkExtractor : ILinkExtractor
         doc.LoadHtml(html);
 
         IEnumerable<HtmlNode> nodes = GetTargetNodes(doc);
-        var links = new HashSet<string>();
+        HashSet<string> links = [];
 
         foreach (HtmlNode node in nodes)
         {

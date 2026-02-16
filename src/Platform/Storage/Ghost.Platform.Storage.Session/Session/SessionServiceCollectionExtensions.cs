@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace Ghost.Infrastructure.Session;
+namespace Ghost.Platform.Storage.Session;
 
 /// <summary>
 /// Extension methods for registering session services

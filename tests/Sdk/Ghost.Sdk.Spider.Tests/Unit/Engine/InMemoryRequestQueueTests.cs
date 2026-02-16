@@ -246,7 +246,7 @@ public class InMemoryRequestQueueTests
     public async Task ThreadSafety_ConcurrentEnqueue_ShouldHandleCorrectly()
     {
         // Arrange
-        var tasks = new List<Task>();
+        List<Task> tasks = [];
         var baseUrl = "https://example.com/";
 
         // Act - Enqueue 100 unique URLs concurrently

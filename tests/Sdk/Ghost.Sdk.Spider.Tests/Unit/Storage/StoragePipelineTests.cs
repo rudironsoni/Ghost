@@ -323,7 +323,7 @@ public class StoragePipelineTests
 
     private sealed class StoragePipeline : IStorage
     {
-        private readonly List<IStorage> _storages = new();
+        private readonly List<IStorage> _storages = [];
         private readonly List<Func<object, StorageContext, Task<object>>> _transformations = new();
         private readonly List<Func<object, StorageContext, Task<bool>>> _filters = new();
         private readonly List<Func<object, StorageContext, Task<ValidationResult>>> _validators = new();

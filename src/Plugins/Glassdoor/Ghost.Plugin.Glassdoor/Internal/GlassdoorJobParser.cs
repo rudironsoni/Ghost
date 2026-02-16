@@ -13,7 +13,7 @@ public static class GlassdoorJobParser
         try
         {
             using var doc = JsonDocument.Parse(json);
-            var jobs = new List<JobListing>();
+            List<JobListing> jobs = [];
 
             // Recursively search for job arrays in the JSON structure
             FindJobArrays(doc.RootElement, jobs);

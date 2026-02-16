@@ -11,8 +11,8 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Http;
-using Ghost.Infrastructure.Session;
 using Ghost.Models;
+using Ghost.Platform.Storage.Session;
 using Microsoft.Extensions.Logging;
 using LoggerMessage = Microsoft.Extensions.Logging.LoggerMessage;
 

@@ -53,12 +53,12 @@ public class StrategyAttempt
     /// <summary>
     /// Gets or sets the conditions that triggered this attempt.
     /// </summary>
-    public List<string> TriggerConditions { get; init; } = new();
+    public List<string> TriggerConditions { get; init; } = [];
 
     /// <summary>
     /// Gets or sets additional metadata about the attempt.
     /// </summary>
-    public Dictionary<string, object> Metadata { get; init; } = new();
+    public Dictionary<string, object> Metadata { get; init; } = [];
 
     /// <summary>
     /// Gets or sets a value indicating whether this attempt was a retry.

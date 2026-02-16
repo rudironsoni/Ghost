@@ -58,7 +58,7 @@ public class SimulationResult
     /// <summary>
     /// Gets or sets additional metadata about the simulation.
     /// </summary>
-    public Dictionary<string, object> Metadata { get; set; } = new();
+    public Dictionary<string, object> Metadata { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the simulated response data.

@@ -125,7 +125,7 @@ public class IndeedSearchScraper
         int maxResults,
         CancellationToken ct)
     {
-        var results = new List<JobListing>();
+        List<JobListing> results = [];
 
         await foreach (JsonElement root in _apiClient.SearchAsync(query, location, maxResults).ConfigureAwait(false))
         {
@@ -169,7 +169,7 @@ public class IndeedSearchScraper
 
             // Extract job listings from DOM
             IReadOnlyList<IElement> jobCards = await page.QuerySelectorAllAsync(".job_seen_beacon, .jobsearch-SerpJobCard", ct).ConfigureAwait(false);
-            var results = new List<JobListing>();
+            List<JobListing> results = [];
 
             foreach (IElement? card in jobCards.Take(maxResults))
             {

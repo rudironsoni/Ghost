@@ -83,7 +83,7 @@ public sealed class RetryMiddleware : IPipelineMiddleware
     /// </exception>
     public async Task InvokeAsync(PipelineContext context, PipelineDelegate continuation)
     {
-        var exceptions = new List<Exception>();
+        List<Exception> exceptions = [];
         int attempt = 0;
 
         while (attempt <= _maxRetries)

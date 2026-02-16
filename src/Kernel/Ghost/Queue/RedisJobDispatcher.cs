@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Ghost.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
@@ -98,7 +99,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
         job.RetryCount = 0;
 
         string key = GetPendingKey(job.Priority);
-        string jobJson = JsonSerializer.Serialize(job, s_jsonOptions);
+        string jobJson = JsonSerializer.Serialize(job, KernelSerializerContext.Default.Job);
 
         // Use current timestamp as score for FIFO within priority
         long score = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -134,7 +135,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
             if (!removed)
                 continue; // Another worker got it first
 
-            Job? job = JsonSerializer.Deserialize<Job>(entry.Element.ToString(), s_jsonOptions);
+            Job? job = JsonSerializer.Deserialize(entry.Element.ToString(), KernelSerializerContext.Default.Job);
             if (job == null)
                 continue;
 
@@ -143,7 +144,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
 
             // Add to active jobs
             string activeKey = GetActiveKey(workerId);
-            string jobJson = JsonSerializer.Serialize(job, s_jsonOptions);
+            string jobJson = JsonSerializer.Serialize(job, KernelSerializerContext.Default.Job);
             await _db!.HashSetAsync(activeKey, job.Id, jobJson).ConfigureAwait(false);
 
             s_jobDequeued(_logger, job.Id, workerId, null);
@@ -171,7 +172,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
 
         // Add to completed jobs
         string completedKey = GetCompletedKey();
-        string resultJson = JsonSerializer.Serialize(result, s_jsonOptions);
+        string resultJson = JsonSerializer.Serialize(result, KernelSerializerContext.Default.JobResult);
         await _db!.ListLeftPushAsync(completedKey, resultJson).ConfigureAwait(false);
 
         // Trim completed list to max size
@@ -200,7 +201,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
             RedisValue jobJson = await _db!.HashGetAsync(key, jobId).ConfigureAwait(false);
             if (!jobJson.IsNullOrEmpty)
             {
-                job = JsonSerializer.Deserialize<Job>(jobJson.ToString(), s_jsonOptions);
+                job = JsonSerializer.Deserialize(jobJson.ToString(), KernelSerializerContext.Default.Job);
                 workerId = key.ToString().Split(':').Last();
                 break;
             }
@@ -224,7 +225,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
         {
             // Move to dead letter queue
             string deadKey = GetDeadKey();
-            string jobJson = JsonSerializer.Serialize(job, s_jsonOptions);
+            string jobJson = JsonSerializer.Serialize(job, KernelSerializerContext.Default.Job);
             await _db!.ListLeftPushAsync(deadKey, jobJson).ConfigureAwait(false);
 
             s_jobMovedToDead(_logger, jobId, job.RetryCount, exception.Message, null);
@@ -237,7 +238,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
 
             // Re-enqueue with delay (using score as timestamp)
             string key = GetPendingKey(job.Priority);
-            string jobJson = JsonSerializer.Serialize(job, s_jsonOptions);
+            string jobJson = JsonSerializer.Serialize(job, KernelSerializerContext.Default.Job);
             await _db!.SortedSetAddAsync(key, jobJson, retryAt).ConfigureAwait(false);
 
             s_jobRetryScheduled(_logger, jobId, job.RetryCount, job.MaxRetries, delayMinutes, exception.Message, null);

@@ -9,7 +9,7 @@ public sealed class SessionOptions
     public GeolocationSettings? Geolocation { get; set; }
     public string? TimezoneId { get; set; }
     public string? Locale { get; set; }
-    public List<string> Permissions { get; set; } = new();
+    public List<string> Permissions { get; set; } = [];
     public string? StorageStatePath { get; set; }
 
     public record ProxySettings(string Server, string? Username = null, string? Password = null, string? Bypass = null);

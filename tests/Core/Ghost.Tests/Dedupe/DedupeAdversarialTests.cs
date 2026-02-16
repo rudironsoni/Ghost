@@ -66,7 +66,7 @@ public class DedupeAdversarialTests : IAsyncLifetime
             $"{baseUrl}/scenario/dedupe/query-reorder?y=2&x=1&z=3"
         };
 
-        var fingerprints = new List<string>();
+        List<string> fingerprints = [];
 
         // Act - Visit each URL and extract fingerprint
         foreach (var url in urls)
@@ -103,7 +103,7 @@ public class DedupeAdversarialTests : IAsyncLifetime
             $"{baseUrl}/scenario/dedupe/tracking-params?jobId=123"
         };
 
-        var fingerprints = new List<string>();
+        List<string> fingerprints = [];
 
         // Act - Visit each URL and extract fingerprint
         foreach (var url in urls)
@@ -141,7 +141,7 @@ public class DedupeAdversarialTests : IAsyncLifetime
             $"{baseUrl}/scenario/dedupe/redirect-chain?step=final"
         };
 
-        var canonicalIds = new List<string>();
+        List<string> canonicalIds = [];
 
         // Act - Visit each URL and extract canonical job ID
         foreach (var url in urls)
@@ -181,7 +181,7 @@ public class DedupeAdversarialTests : IAsyncLifetime
             $"{baseUrl}/scenario/dedupe/multiple-aliases?alias=default"
         };
 
-        var canonicalIds = new List<string>();
+        List<string> canonicalIds = [];
 
         // Act - Visit each URL and extract canonical job ID
         foreach (var url in urls)
@@ -218,8 +218,8 @@ public class DedupeAdversarialTests : IAsyncLifetime
             $"{baseUrl}/scenario/dedupe/temporal-changes?version=v3"
         };
 
-        var canonicalIds = new List<string>();
-        var titles = new List<string>();
+        List<string> canonicalIds = [];
+        List<string> titles = [];
 
         // Act - Visit each URL and extract canonical job ID and title
         foreach (var url in urls)
@@ -262,7 +262,7 @@ public class DedupeAdversarialTests : IAsyncLifetime
             $"{baseUrl}/scenario/dedupe/mixed-case-params?JoBiD=123&SoUrCe=LiNkEdIn"
         };
 
-        var fingerprints = new List<string>();
+        List<string> fingerprints = [];
 
         // Act - Visit each URL and extract fingerprint
         foreach (var url in urls)
@@ -299,7 +299,7 @@ public class DedupeAdversarialTests : IAsyncLifetime
             $"{baseUrl}/scenario/dedupe/array-params?skills=javascript&skills=python&skills=java"
         };
 
-        var fingerprints = new List<string>();
+        List<string> fingerprints = [];
 
         // Act - Visit each URL and extract fingerprint
         foreach (var url in urls)
@@ -338,7 +338,7 @@ public class DedupeAdversarialTests : IAsyncLifetime
             $"{baseUrl}/scenario/dedupe/session-tracking?jobId=456"
         };
 
-        var fingerprints = new List<string>();
+        List<string> fingerprints = [];
 
         // Act - Visit each URL and extract fingerprint
         foreach (var url in urls)
@@ -377,7 +377,7 @@ public class DedupeAdversarialTests : IAsyncLifetime
             $"{baseUrl}/scenario/dedupe/ab-test-variants?jobId=789"
         };
 
-        var fingerprints = new List<string>();
+        List<string> fingerprints = [];
 
         // Act - Visit each URL and extract fingerprint
         foreach (var url in urls)
@@ -458,7 +458,7 @@ public class DedupeAdversarialTests : IAsyncLifetime
         // Act & Assert - Test each adversarial pattern
         foreach (var testCase in testCases)
         {
-            var fingerprints = new List<string>();
+            List<string> fingerprints = [];
 
             foreach (var url in testCase.Urls)
             {

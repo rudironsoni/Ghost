@@ -66,11 +66,11 @@ public static class TestData
             RequestId = Guid.NewGuid().ToString(),
             Url = url,
             Method = method,
-            Headers = headers ?? new Dictionary<string, string>(),
+            Headers = headers ?? [],
             Body = body,
             Timeout = TimeSpan.FromSeconds(30),
             ExpectedContentType = ContentType.Unknown,
-            Metadata = new Dictionary<string, object>()
+            Metadata = []
         };
     }
 

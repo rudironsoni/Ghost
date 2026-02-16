@@ -9,10 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../src/Platforms/Ghost.Platform.Indeed/Ghost.Platform.Indeed.csproj" />
-    <ProjectReference Include="../../src/Platforms/Ghost.Platform.Glassdoor/Ghost.Platform.Glassdoor.csproj" />
-    <ProjectReference Include="../../src/Platforms/Ghost.Platform.Google/Ghost.Platform.Google.csproj" />
     <ProjectReference Include="../../src/Contracts/Ghost.Contracts.Jobs/Ghost.Contracts.Jobs.csproj" />
+    <ProjectReference Include="../../src/Contracts/Ghost.Contracts.Social/Ghost.Contracts.Social.csproj" />
+    <ProjectReference Include="../../src/Contracts/Ghost.Contracts.Inference/Ghost.Contracts.Inference.csproj" />
+    <ProjectReference Include="../../src/Contracts/Ghost.Contracts.News/Ghost.Contracts.News.csproj" />
+    <ProjectReference Include="../../src/Contracts/Ghost.Contracts.Simulation/Ghost.Contracts.Simulation.csproj" />
+    <ProjectReference Include="../../src/Kernel/Ghost/Ghost.csproj" />
   </ItemGroup>
 
   <ItemGroup>

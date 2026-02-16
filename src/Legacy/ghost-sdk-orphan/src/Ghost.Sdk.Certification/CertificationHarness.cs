@@ -27,13 +27,13 @@ public sealed class CertificationHarness : ICertificationHarness
         CertificationOptions options,
         CancellationToken ct = default)
     {
-        var results = new List<CertificationResult>();
+        List<CertificationResult> results = [];
         var timestamp = DateTimeOffset.UtcNow;
 
         foreach (var spider in manifest.Spiders)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            var metrics = new Dictionary<string, object>();
+            Dictionary<string, object> metrics = [];
             bool passed = true;
             string? failureReason = null;
 

@@ -53,7 +53,7 @@ public sealed class HealthReportService : IHealthReportService
             .OrderBy(platform => platform.Name, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-        var proxyHealth = new List<ProxyHealth>();
+        List<ProxyHealth> proxyHealth = [];
         foreach (IProxySource proxySource in _proxySources)
         {
             proxyHealth.Add(await BuildProxyHealthAsync(proxySource, ct).ConfigureAwait(false));

@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Ghost.Infrastructure.Session;
+namespace Ghost.Platform.Storage.Session;
 
 /// <summary>
 /// Configuration options for SessionOrchestrator.

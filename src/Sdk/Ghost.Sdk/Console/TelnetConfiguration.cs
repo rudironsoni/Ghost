@@ -36,7 +36,7 @@ public sealed class TelnetConfiguration
     /// <summary>
     /// Gets or sets the list of allowed IP addresses or CIDR ranges.
     /// </summary>
-    public List<string> AllowedIps { get; set; } = new();
+    public List<string> AllowedIps { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the session timeout duration.
@@ -86,5 +86,5 @@ public sealed class TelnetConfiguration
     /// <summary>
     /// Gets or sets custom commands registered by extensions.
     /// </summary>
-    public Dictionary<string, string> CustomCommands { get; set; } = new();
+    public Dictionary<string, string> CustomCommands { get; set; } = [];
 }

@@ -43,7 +43,7 @@ public class JsonPathSelector : ISelector
             if (result.Matches == null || result.Matches.Count == 0)
                 return new List<string>();
 
-            var results = new List<string>();
+            List<string> results = [];
             foreach (Node match in result.Matches)
             {
                 string? value = ExtractValue(match.Value);

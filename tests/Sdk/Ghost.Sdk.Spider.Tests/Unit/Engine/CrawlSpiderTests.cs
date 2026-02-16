@@ -506,7 +506,7 @@ public class CrawlSpiderTests
 internal sealed class TestCrawlSpider : CrawlSpider
 {
     public override string Name => "TestCrawlSpider";
-    public List<string> AllowedDomains { get; set; } = new();
+    public List<string> AllowedDomains { get; set; } = [];
 
     public TestCrawlSpider(ILinkExtractor linkExtractor) : base(linkExtractor)
     {

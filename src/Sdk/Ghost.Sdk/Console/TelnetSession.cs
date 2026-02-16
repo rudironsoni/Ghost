@@ -33,5 +33,5 @@ public sealed class TelnetSession
     /// <summary>
     /// Gets or sets the command history for this session.
     /// </summary>
-    public List<string> CommandHistory { get; set; } = new();
+    public List<string> CommandHistory { get; set; } = [];
 }

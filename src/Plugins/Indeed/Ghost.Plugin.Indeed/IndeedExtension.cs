@@ -3,8 +3,8 @@ using Ghost.Contracts;
 using Ghost.Contracts.Jobs;
 using Ghost.Hosting;
 using Ghost.Http;
-using Ghost.Infrastructure.Session;
 using Ghost.Models;
+using Ghost.Platform.Storage.Session;
 using Ghost.Plugin.Indeed.Internal;
 using Ghost.Plugin.Indeed.Jobs;
 using Microsoft.Extensions.Configuration;
@@ -43,7 +43,7 @@ public class IndeedExtension : Ghost.Hosting.IExtension
         services.AddSingleton<IndeedApiClient>(sp =>
         {
             IProxyProvider? proxyProvider = sp.GetService<IProxyProvider>();
-            ISessionOrchestrator? sessionOrchestrator = sp.GetService<Ghost.Infrastructure.Session.ISessionOrchestrator>();
+            ISessionOrchestrator? sessionOrchestrator = sp.GetService<ISessionOrchestrator>();
             ILogger<IndeedApiClient> logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<IndeedApiClient>>();
             IndeedOptions options = sp.GetRequiredService<IndeedOptions>();
 

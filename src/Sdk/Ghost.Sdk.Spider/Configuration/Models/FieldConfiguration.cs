@@ -33,12 +33,12 @@ public sealed class FieldConfiguration
     /// <summary>
     /// Gets or sets multiple selectors to try in order (fallback).
     /// </summary>
-    public List<SelectorConfiguration> FallbackSelectors { get; set; } = new();
+    public List<SelectorConfiguration> FallbackSelectors { get; set; } = [];
 
     /// <summary>
     /// Gets or sets formatters to apply to the extracted value.
     /// </summary>
-    public List<FormatterConfiguration> Formatters { get; set; } = new();
+    public List<FormatterConfiguration> Formatters { get; set; } = [];
 
     /// <summary>
     /// Gets or sets validation rules for this field.
@@ -79,10 +79,10 @@ public sealed class FieldValidationConfiguration
     /// <summary>
     /// Gets or sets allowed values (enum).
     /// </summary>
-    public List<string> AllowedValues { get; set; } = new();
+    public List<string> AllowedValues { get; set; } = [];
 
     /// <summary>
     /// Gets or sets custom validation expressions.
     /// </summary>
-    public List<string> CustomRules { get; set; } = new();
+    public List<string> CustomRules { get; set; } = [];
 }

@@ -80,7 +80,7 @@ public sealed class ContractRunner
         IProviderContractAdapter adapter,
         CancellationToken ct = default)
     {
-        var results = new List<ContractResult>();
+        List<ContractResult> results = [];
 
         foreach (IProviderContract contract in _contracts)
         {

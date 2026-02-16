@@ -110,7 +110,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
         s_logBrowserFallback(_logger, null);
         s_logSearchStarting(_logger, criteria.Query, criteria.Location, limit, null);
 
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
         string query = Uri.EscapeDataString(criteria.Query ?? string.Empty);
         string location = Uri.EscapeDataString(criteria.Location ?? string.Empty);
 
@@ -252,7 +252,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
     {
         string baseUrl = "https://www.glassdoor.com/Job/jobs.htm";
 
-        var parameters = new List<string>();
+        List<string> parameters = [];
 
         if (!string.IsNullOrEmpty(query))
         {
@@ -359,7 +359,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
 
     private async Task<List<JobListing>> ExtractJobsFromPageAsync(IPage page, string html, CancellationToken ct)
     {
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
 
         try
         {
@@ -603,7 +603,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
 
     private static List<JobListing> ExtractJobsWithRegex(string html)
     {
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
 
         if (string.IsNullOrEmpty(html))
             return jobs;
@@ -727,7 +727,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
 
     private static List<JobListing> ExtractJobsFromJsonElement(System.Text.Json.JsonElement element)
     {
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
 
         try
         {
@@ -858,7 +858,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
 
     private async Task<List<JobListing>> TryLoadMoreResultsAsync(IPage page, int remaining, CancellationToken ct)
     {
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
 
         try
         {

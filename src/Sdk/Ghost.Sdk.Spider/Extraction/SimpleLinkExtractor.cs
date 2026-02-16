@@ -32,7 +32,7 @@ public sealed class SimpleLinkExtractor : ILinkExtractor
             yield break;
         }
 
-        var seen = new HashSet<string>();
+        HashSet<string> seen = [];
 
         foreach (HtmlNode? node in nodes)
         {

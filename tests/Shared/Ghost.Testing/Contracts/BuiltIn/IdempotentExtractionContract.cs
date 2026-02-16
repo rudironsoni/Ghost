@@ -26,8 +26,8 @@ public sealed class IdempotentExtractionContract : ProviderContractBase
             Location = "remote"
         };
 
-        var errors = new List<string>();
-        var context = new Dictionary<string, object>();
+        List<string> errors = [];
+        Dictionary<string, object> context = [];
 
         try
         {
@@ -68,7 +68,7 @@ public sealed class IdempotentExtractionContract : ProviderContractBase
                 var firstRunDict = firstRun.ToDictionary(j => j.Id);
                 var secondRunDict = secondRun.ToDictionary(j => j.Id);
 
-                var inconsistentJobs = new List<string>();
+                List<string> inconsistentJobs = [];
 
                 foreach (string? id in firstIds.Intersect(secondIds))
                 {

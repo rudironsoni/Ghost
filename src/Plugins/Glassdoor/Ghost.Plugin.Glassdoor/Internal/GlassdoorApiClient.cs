@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Ghost.Http;
-using Ghost.Infrastructure.Session;
+using Ghost.Platform.Storage.Session;
 using Microsoft.Extensions.Logging;
 using Polly;
 
@@ -320,8 +320,8 @@ public sealed class GlassdoorApiClient : IDisposable
                     operationName = "JobSearchResultsQuery",
                     variables = new
                     {
-                        excludeJobListingIds = new List<int>(),
-                        filterParams = new List<object>(),
+                        excludeJobListingIds = [],
+                        filterParams = [],
                         keyword = "test",
                         numJobsToShow = 1,
                         locationType = "STATE",
@@ -390,8 +390,8 @@ public sealed class GlassdoorApiClient : IDisposable
                     operationName = "JobSearchResultsQuery",
                     variables = new
                     {
-                        excludeJobListingIds = new List<int>(),
-                        filterParams = new List<object>(),
+                        excludeJobListingIds = [],
+                        filterParams = [],
                         keyword = "test",
                         numJobsToShow = 1,
                         locationType = "STATE",
@@ -707,7 +707,7 @@ public sealed class GlassdoorApiClient : IDisposable
         try { System.IO.File.AppendAllText("logs/glassdoor_location_resolve.log", $"Resolved location '{location}' => id={resolvedLocationId}, type={resolvedLocationType}\n"); } catch { }
 
         // Build filter params (empty for basic search)
-        var filterParams = new List<object>();
+        List<object> filterParams = [];
 
         // Build payload matching JobSpy's structure
         var payloadObj = new
@@ -715,7 +715,7 @@ public sealed class GlassdoorApiClient : IDisposable
             operationName = "JobSearchResultsQuery",
             variables = new
             {
-                excludeJobListingIds = new List<int>(),
+                excludeJobListingIds = [],
                 filterParams = filterParams,
                 keyword = keyword,
                 numJobsToShow = 30,
@@ -856,7 +856,7 @@ public sealed class GlassdoorApiClient : IDisposable
 
         try
         {
-            var jobs = new List<object>();
+            List<object> jobs = [];
 
             // Look for embedded JSON data in script tags (modern Glassdoor often embeds data)
             // Pattern 1: Look for window.gdInitialState or similar
@@ -922,7 +922,7 @@ public sealed class GlassdoorApiClient : IDisposable
 
     private static List<object> ExtractJobsFromJsonElement(JsonElement element)
     {
-        var jobs = new List<object>();
+        List<object> jobs = [];
 
         try
         {
@@ -1062,7 +1062,7 @@ public sealed class GlassdoorApiClient : IDisposable
 
     private static List<object> ParseJobCardsFromHtml(string html)
     {
-        var jobs = new List<object>();
+        List<object> jobs = [];
 
         try
         {

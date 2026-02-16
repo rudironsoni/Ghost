@@ -34,7 +34,7 @@ public class ConditionEvaluatorAdditionalTests
             Url = "https://example.com",
             Timestamp = DateTime.UtcNow.AddSeconds(-5)
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -61,7 +61,7 @@ public class ConditionEvaluatorAdditionalTests
             Url = "https://example.com",
             Timestamp = DateTime.UtcNow.AddSeconds(-5)
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -88,7 +88,7 @@ public class ConditionEvaluatorAdditionalTests
             Url = "https://example.com",
             Timestamp = DateTime.UtcNow.AddSeconds(-5)
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -133,7 +133,7 @@ public class ConditionEvaluatorAdditionalTests
             new() { Type = ConditionType.Timeout }
         };
         var context = new StrategyContext { Url = "https://example.com" };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -160,7 +160,7 @@ public class ConditionEvaluatorAdditionalTests
             Url = "https://example.com",
             StatusCode = null
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -187,7 +187,7 @@ public class ConditionEvaluatorAdditionalTests
             Url = "https://example.com",
             StatusCode = 404
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -232,7 +232,7 @@ public class ConditionEvaluatorAdditionalTests
             new() { Type = ConditionType.AnyFailed }
         };
         var context = new StrategyContext { Url = "https://example.com" };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -272,7 +272,7 @@ public class ConditionEvaluatorAdditionalTests
             new() { Type = ConditionType.AllFailed }
         };
         var context = new StrategyContext { Url = "https://example.com" };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -321,7 +321,7 @@ public class ConditionEvaluatorAdditionalTests
             Url = "https://example.com",
             Content = ""
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -348,7 +348,7 @@ public class ConditionEvaluatorAdditionalTests
             Url = "https://example.com",
             Content = "some content"
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -366,7 +366,7 @@ public class ConditionEvaluatorAdditionalTests
             new() { Type = ConditionType.PreviousSuccess }
         };
         var context = new StrategyContext { Url = "https://example.com" };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -405,7 +405,7 @@ public class ConditionEvaluatorAdditionalTests
             new() { Type = ConditionType.PreviousFailed }
         };
         var context = new StrategyContext { Url = "https://example.com" };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -432,7 +432,7 @@ public class ConditionEvaluatorAdditionalTests
             Url = "https://example.com",
             RetryCount = 3
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -459,7 +459,7 @@ public class ConditionEvaluatorAdditionalTests
             Url = "https://example.com",
             RetryCount = 3
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -485,7 +485,7 @@ public class ConditionEvaluatorAdditionalTests
         {
             Url = "https://example.com"
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -516,7 +516,7 @@ public class ConditionEvaluatorAdditionalTests
                 ["paramField"] = "paramValue"
             }
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -546,7 +546,7 @@ public class ConditionEvaluatorAdditionalTests
                 ["testField"] = "anyValue"
             }
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -577,7 +577,7 @@ public class ConditionEvaluatorAdditionalTests
                 ["status"] = 201
             }
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -608,7 +608,7 @@ public class ConditionEvaluatorAdditionalTests
                 ["status"] = 200
             }
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -639,7 +639,7 @@ public class ConditionEvaluatorAdditionalTests
                 ["counter"] = 10
             }
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -670,7 +670,7 @@ public class ConditionEvaluatorAdditionalTests
                 ["counter"] = 10
             }
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -691,7 +691,7 @@ public class ConditionEvaluatorAdditionalTests
             }
         };
         var context = new StrategyContext { Url = "https://example.com" };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);
@@ -733,7 +733,7 @@ public class ConditionEvaluatorAdditionalTests
             StatusCode = 404,
             RetryCount = 3
         };
-        var attempts = new List<StrategyAttempt>();
+        List<StrategyAttempt> attempts = [];
 
         // Act
         var result = ConditionEvaluator.Evaluate(conditions, context, attempts);

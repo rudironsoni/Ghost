@@ -49,7 +49,7 @@ public sealed class RequestLineageViewBuilder
                 {
                     if (!lineageMap.TryGetValue(requestId, out var steps))
                     {
-                        steps = new List<LineageStep>();
+                        steps = [];
                         lineageMap[requestId] = steps;
                     }
 
@@ -62,7 +62,7 @@ public sealed class RequestLineageViewBuilder
             }
         }
 
-        var result = new List<RequestLineage>();
+        List<RequestLineage> result = [];
 
         foreach (var (requestId, steps) in lineageMap)
         {

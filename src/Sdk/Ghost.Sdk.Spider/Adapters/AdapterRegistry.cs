@@ -65,7 +65,7 @@ public class AdapterRegistry
             {
                 if (!_adaptersByContentType.TryGetValue(contentType, out List<Type>? adapters))
                 {
-                    adapters = new List<Type>();
+                    adapters = [];
                     _adaptersByContentType[contentType] = adapters;
                 }
 
@@ -204,7 +204,7 @@ public class AdapterRegistry
     {
         // Default heuristics based on adapter name
         string name = adapterType.Name.ToLowerInvariant();
-        var types = new List<ContentType>();
+        List<ContentType> types = [];
 
         if (name.Contains("html") || name.Contains("static"))
         {

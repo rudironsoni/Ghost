@@ -137,7 +137,7 @@ public class LinkedInIntegrationTests
         var keywords = "engineer";
         var location = "Seattle";
         var limit = 3;
-        var collectedJobs = new List<JobListing>();
+        List<JobListing> collectedJobs = [];
 
         var mockJobs = CreateMockJobListings(3, keywords, location);
 
@@ -193,7 +193,7 @@ public class LinkedInIntegrationTests
 
     private static List<JobListing> CreateMockJobListings(int count, string query, string location)
     {
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
         var random = new Random(42); // Fixed seed for reproducibility
 
         var jobTitles = new[]

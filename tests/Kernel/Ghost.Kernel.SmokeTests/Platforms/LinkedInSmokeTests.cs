@@ -27,7 +27,7 @@ public class LinkedInIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _client = _fixture.GetJobClient("linkedin");
     }
 
-    [Fact(Skip = "Infrastructure not ready")]
+    [Fact]
     public async Task Search_RealJobs_Returns_Populated_Fresh_Data()
     {
         // Arrange
@@ -70,7 +70,7 @@ public class LinkedInIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _output.WriteLine($"Source: {sampleJob.Source}");
     }
 
-    [Fact(Skip = "Infrastructure not ready")]
+    [Fact]
     public async Task Search_WithLocation_Returns_Jobs_In_Location()
     {
         // Arrange
@@ -108,7 +108,7 @@ public class LinkedInIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         }
     }
 
-    [Fact(Skip = "Infrastructure not ready")]
+    [Fact]
     public async Task GetJobDetails_ById_Returns_Valid_Data()
     {
         // Arrange

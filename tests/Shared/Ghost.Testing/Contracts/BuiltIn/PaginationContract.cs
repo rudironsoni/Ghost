@@ -26,8 +26,8 @@ public sealed class PaginationContract : ProviderContractBase
             Location = "remote"
         };
 
-        var errors = new List<string>();
-        var context = new Dictionary<string, object>();
+        List<string> errors = [];
+        Dictionary<string, object> context = [];
 
         // Test pagination with different page counts
         IReadOnlyList<JobListing> page1Jobs = await adapter.SearchWithPaginationAsync(criteria, maxPages: 1, ct).ConfigureAwait(false);

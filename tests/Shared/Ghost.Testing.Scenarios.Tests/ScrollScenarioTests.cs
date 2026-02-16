@@ -49,10 +49,10 @@ public class ScrollScenarioTests : IAsyncLifetime
         // Arrange
         using var page = await _browserFixture.Browser.NewPageAsync();
         var url = $"{_baseUrl}/scenario/scroll/auto-threshold";
-        var extractedJobs = new List<string>();
+        List<string> extractedJobs = [];
 
         // Listen for console logs to track loading
-        var consoleMessages = new List<string>();
+        List<string> consoleMessages = [];
         page.Console += (_, msg) =>
         {
             var text = msg.Text;
@@ -124,7 +124,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         // Arrange
         using var page = await _browserFixture.Browser.NewPageAsync();
         var url = $"{_baseUrl}/scenario/scroll/button-driven";
-        var extractedJobs = new List<string>();
+        List<string> extractedJobs = [];
 
         // Listen for console logs
         page.Console += (_, msg) =>
@@ -173,7 +173,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         // Arrange
         using var page = await _browserFixture.Browser.NewPageAsync();
         var url = $"{_baseUrl}/scenario/scroll/virtualized";
-        var extractedJobs = new List<string>();
+        List<string> extractedJobs = [];
 
         // Listen for console logs
         page.Console += (_, msg) =>
@@ -224,7 +224,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         // Arrange
         using var page = await _browserFixture.Browser.NewPageAsync();
         var url = $"{_baseUrl}/scenario/scroll/duplicate-chunk";
-        var extractedJobs = new List<string>();
+        List<string> extractedJobs = [];
 
         // Listen for console logs
         page.Console += (_, msg) =>

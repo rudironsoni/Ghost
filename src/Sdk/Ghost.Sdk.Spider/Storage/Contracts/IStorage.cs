@@ -105,7 +105,7 @@ public class StorageResult
     /// Gets or sets additional metadata about the operation.
     /// </summary>
     /// <value>Dictionary of metadata key-value pairs.</value>
-    public Dictionary<string, object> Metadata { get; init; } = new();
+    public Dictionary<string, object> Metadata { get; init; } = [];
 
     /// <summary>
     /// Creates a successful storage result.

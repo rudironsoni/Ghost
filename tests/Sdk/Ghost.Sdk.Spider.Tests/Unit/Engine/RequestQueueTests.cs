@@ -153,7 +153,7 @@ public class RequestQueueTests
             await queue.EnqueueAsync(CreateRequest($"https://example.com/{url}"), priority: 0);
         }
 
-        var dequeuedUrls = new List<string>();
+        List<string> dequeuedUrls = [];
         while (!queue.IsEmpty)
         {
             var request = await queue.DequeueAsync();
@@ -191,7 +191,7 @@ public class RequestQueueTests
             await queue.EnqueueAsync(CreateRequest($"https://example.com/{url}"), priority);
         }
 
-        var dequeuedRequests = new List<(string url, int expectedPriority)>();
+        List<(string url, int expectedPriority)> dequeuedRequests = [];
         while (!queue.IsEmpty)
         {
             var request = await queue.DequeueAsync();
@@ -398,8 +398,8 @@ public class RequestQueueTests
             Url = url,
             Method = "GET",
             Timeout = TimeSpan.FromSeconds(30),
-            Headers = new Dictionary<string, string>(),
-            Metadata = new Dictionary<string, object>()
+            Headers = [],
+            Metadata = []
         };
     }
 

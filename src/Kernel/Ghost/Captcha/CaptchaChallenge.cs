@@ -15,6 +15,6 @@ public sealed class CaptchaChallenge : ICaptchaChallenge
     {
         Type = type;
         PageUrl = pageUrl;
-        Parameters = new Dictionary<string, string>();
+        Parameters = [];
     }
 }

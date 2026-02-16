@@ -15,7 +15,7 @@ public class NordVpnCredentials
 {
     public required string Username { get; set; }
     public required string Password { get; set; }
-    public List<NordVpnServer> Servers { get; set; } = new();
+    public List<NordVpnServer> Servers { get; set; } = [];
 }
 
 public class NordVpnServer
@@ -52,7 +52,7 @@ public class ConfigurationNordVpnCredentialProvider : INordVpnCredentialProvider
         string? password = section["Password"];
         IConfigurationSection serversSection = section.GetSection("Servers");
 
-        var servers = new List<NordVpnServer>();
+        List<NordVpnServer> servers = [];
         if (serversSection.Exists())
         {
             foreach (IConfigurationSection child in serversSection.GetChildren())

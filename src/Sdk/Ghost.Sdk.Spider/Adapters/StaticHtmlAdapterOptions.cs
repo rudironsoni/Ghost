@@ -49,7 +49,7 @@ public class StaticHtmlAdapterOptions : AdapterOptions
     /// Cookies are automatically managed across requests when using the same adapter instance.
     /// These cookies are merged with any Set-Cookie headers from responses.
     /// </remarks>
-    public Dictionary<string, string> Cookies { get; set; } = new();
+    public Dictionary<string, string> Cookies { get; set; } = [];
 
     /// <summary>
     /// Gets or sets a value indicating whether to use HTTP/2 protocol.

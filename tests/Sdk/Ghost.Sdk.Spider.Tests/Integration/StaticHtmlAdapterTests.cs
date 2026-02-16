@@ -619,7 +619,7 @@ public class StaticHtmlAdapterTests : IDisposable
         }).ToList();
 
         // Act
-        var responses = new List<Response>();
+        List<Response> responses = [];
         foreach (var req in requests)
         {
             responses.Add(await _adapter.ExtractAsync(req));

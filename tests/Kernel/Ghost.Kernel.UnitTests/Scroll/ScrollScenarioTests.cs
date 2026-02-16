@@ -110,7 +110,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         Assert.True(finalJobs.Count >= 100, $"Expected at least 100 jobs, got {finalJobs.Count}");
 
         // Assert - Dedupe: No duplicates
-        var jobIds = new HashSet<string>();
+        HashSet<string> jobIds = [];
         foreach (IElement job in finalJobs)
         {
             string? jobId = await job.GetAttributeAsync("data-job-id");
@@ -253,7 +253,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         Assert.True(finalJobs.Count >= 100, $"Expected at least 100 jobs, got {finalJobs.Count}");
 
         // Assert - Dedupe: No duplicates
-        var jobIds = new HashSet<string>();
+        HashSet<string> jobIds = [];
         foreach (IElement job in finalJobs)
         {
             string? jobId = await job.GetAttributeAsync("data-job-id");
@@ -326,7 +326,7 @@ public class ScrollScenarioTests : IAsyncLifetime
 
         // Get initial visible items
         IReadOnlyList<IElement> initialJobs = await page.QuerySelectorAllAsync(".job");
-        var initialJobIds = new List<string>();
+        List<string> initialJobIds = [];
 
         foreach (IElement job in initialJobs)
         {
@@ -345,7 +345,7 @@ public class ScrollScenarioTests : IAsyncLifetime
 
         // Get items after scroll
         IReadOnlyList<IElement> jobsAfterScroll = await page.QuerySelectorAllAsync(".job");
-        var afterScrollJobIds = new List<string>();
+        List<string> afterScrollJobIds = [];
 
         foreach (IElement job in jobsAfterScroll)
         {
@@ -377,7 +377,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         // Act
         await page.NavigateAsync(url);
 
-        var allSeenJobIds = new HashSet<string>();
+        HashSet<string> allSeenJobIds = [];
         int[] scrollPositions = new[] { 0, 500, 1000, 2000, 4000, 6000, 8000 };
 
         foreach (int scrollPos in scrollPositions)
@@ -424,7 +424,7 @@ public class ScrollScenarioTests : IAsyncLifetime
             await Task.Delay(300);
 
             IReadOnlyList<IElement> jobs = await page.QuerySelectorAllAsync(".job");
-            var jobIds = new HashSet<string>();
+            HashSet<string> jobIds = [];
 
             foreach (IElement job in jobs)
             {

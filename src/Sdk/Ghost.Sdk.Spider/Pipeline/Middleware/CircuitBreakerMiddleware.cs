@@ -38,7 +38,7 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
     private int _successCount;
     private DateTime _lastFailureTime;
     private DateTime _stateChangedTime;
-    private readonly Queue<DateTime> _recentFailures;
+    private readonly Queue<DateTime> _recentFailures = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CircuitBreakerMiddleware"/> class.
@@ -70,7 +70,6 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
         _successCount = 0;
         _lastFailureTime = DateTime.MinValue;
         _stateChangedTime = DateTime.UtcNow;
-        _recentFailures = new Queue<DateTime>();
     }
 
     /// <summary>

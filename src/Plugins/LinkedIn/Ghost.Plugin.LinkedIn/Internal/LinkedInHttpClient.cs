@@ -71,7 +71,7 @@ public sealed class LinkedInHttpClient
     {
         ArgumentNullException.ThrowIfNull(keywords);
 
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
         string query = Uri.EscapeDataString(keywords);
         string locationEncoded = Uri.EscapeDataString(location);
 
@@ -182,7 +182,7 @@ public sealed class LinkedInHttpClient
     /// </summary>
     private List<JobListing> ParseJobListingsFromHtml(string html, string baseUrlDomain)
     {
-        var jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
 
         // Find all job cards in the HTML
         // The structure is: <li><div class="base-card ..."><a class="base-card__full-link" href="/jobs/view/1234567890/">

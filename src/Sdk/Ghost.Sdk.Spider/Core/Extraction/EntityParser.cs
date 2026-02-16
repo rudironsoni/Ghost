@@ -23,7 +23,7 @@ public class EntityParser
     public static List<T> Parse<T>(ExtractionContext context) where T : EntityBase<T>, new()
     {
         EntityMetadata metadata = EntityBase<T>.GetMetadata();
-        var entities = new List<T>();
+        List<T> entities = [];
 
         // If no entity selector is defined, treat the entire content as a single entity
         if (metadata.EntitySelector == null)
@@ -104,7 +104,7 @@ public class EntityParser
         AngleSharp.Html.Dom.IHtmlDocument document = parser.ParseDocument(content);
         IHtmlCollection<IElement> elements = document.QuerySelectorAll(expression);
 
-        var results = new List<string>();
+        List<string> results = [];
         foreach (IElement element in elements)
         {
             // Return the outer HTML to preserve structure for nested selectors
@@ -124,7 +124,7 @@ public class EntityParser
         if (nodes == null || nodes.Count == 0)
             return new List<string>();
 
-        var results = new List<string>();
+        List<string> results = [];
         foreach (HtmlNode? node in nodes)
         {
             // Return the outer HTML to preserve structure for nested selectors

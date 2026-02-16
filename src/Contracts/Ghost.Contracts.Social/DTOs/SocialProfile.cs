@@ -45,10 +45,10 @@ public sealed record SocialProfile
     /// <summary>
     /// Work experience entries for the profile.
     /// </summary>
-    public List<SocialExperience> Experience { get; init; } = new();
+    public List<SocialExperience> Experience { get; init; } = [];
 
     /// <summary>
     /// Education entries for the profile.
     /// </summary>
-    public List<SocialEducation> Education { get; init; } = new();
+    public List<SocialEducation> Education { get; init; } = [];
 }

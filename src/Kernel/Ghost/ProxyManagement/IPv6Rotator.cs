@@ -59,7 +59,7 @@ public sealed class IPv6Rotator : IDisposable
     private readonly IPv6RotatorOptions _options;
     private readonly Random _random;
     private readonly SemaphoreSlim _lock = new(1, 1);
-    private readonly HashSet<string> _activeAddresses = new();
+    private readonly HashSet<string> _activeAddresses = [];
     private readonly ILogger<IPv6Rotator> _logger;
     private bool _disposed;
 

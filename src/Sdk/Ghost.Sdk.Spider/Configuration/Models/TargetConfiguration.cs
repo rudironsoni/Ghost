@@ -8,22 +8,22 @@ public sealed class TargetConfiguration
     /// <summary>
     /// Gets or sets the starting URLs for the spider.
     /// </summary>
-    public List<string> StartUrls { get; set; } = new();
+    public List<string> StartUrls { get; set; } = [];
 
     /// <summary>
     /// Gets or sets URL patterns to include (regex or glob).
     /// </summary>
-    public List<string> AllowedPatterns { get; set; } = new();
+    public List<string> AllowedPatterns { get; set; } = [];
 
     /// <summary>
     /// Gets or sets URL patterns to exclude (regex or glob).
     /// </summary>
-    public List<string> DeniedPatterns { get; set; } = new();
+    public List<string> DeniedPatterns { get; set; } = [];
 
     /// <summary>
     /// Gets or sets allowed domains. Empty list means no domain restriction.
     /// </summary>
-    public List<string> AllowedDomains { get; set; } = new();
+    public List<string> AllowedDomains { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the maximum depth for crawling. 0 means only start URLs.
@@ -48,7 +48,7 @@ public sealed class TargetConfiguration
     /// <summary>
     /// Gets or sets custom HTTP headers to include with requests.
     /// </summary>
-    public Dictionary<string, string> Headers { get; set; } = new();
+    public Dictionary<string, string> Headers { get; set; } = [];
 
     /// <summary>
     /// Gets or sets authentication configuration.
@@ -84,7 +84,7 @@ public sealed class AuthenticationConfiguration
     /// <summary>
     /// Gets or sets cookies for Cookie authentication.
     /// </summary>
-    public Dictionary<string, string> Cookies { get; set; } = new();
+    public Dictionary<string, string> Cookies { get; set; } = [];
 
     /// <summary>
     /// Gets or sets OAuth2 configuration.
@@ -115,5 +115,5 @@ public sealed class OAuth2Configuration
     /// <summary>
     /// Gets or sets the OAuth2 scopes.
     /// </summary>
-    public List<string> Scopes { get; set; } = new();
+    public List<string> Scopes { get; set; } = [];
 }

@@ -341,7 +341,7 @@ public class GlassdoorApiClientIntegrationTests : IDisposable
             }
             """;
 
-        var requestTimes = new List<DateTime>();
+        List<DateTime> requestTimes = [];
         _httpMessageHandler.GetResponseFunc = (request, ct) =>
         {
             requestTimes.Add(DateTime.UtcNow);

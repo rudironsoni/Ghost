@@ -45,7 +45,7 @@ public sealed class StaticProxySource : IProxySource
         if (cfg == null || !cfg.Enabled || cfg.Hosts == null || cfg.Hosts.Count == 0)
             return Task.FromResult(Enumerable.Empty<ProxyInfo>());
 
-        var list = new List<ProxyInfo>();
+        List<ProxyInfo> list = [];
         foreach (string item in cfg.Hosts)
         {
             if (string.IsNullOrWhiteSpace(item))

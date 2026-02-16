@@ -37,14 +37,14 @@ public class GraphQLSchema
     /// </summary>
     /// <value>A list of all types including queries, mutations, objects, interfaces, unions, enums, and scalars.</value>
     [JsonPropertyName("types")]
-    public List<GraphQLType> Types { get; set; } = new();
+    public List<GraphQLType> Types { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the directives supported by this schema.
     /// </summary>
     /// <value>A list of directive definitions available in the schema.</value>
     [JsonPropertyName("directives")]
-    public List<GraphQLDirective> Directives { get; set; } = new();
+    public List<GraphQLDirective> Directives { get; set; } = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GraphQLSchema"/> class.
@@ -216,11 +216,11 @@ public class GraphQLDirective
     /// Gets or sets the locations where this directive can be used.
     /// </summary>
     [JsonPropertyName("locations")]
-    public List<string> Locations { get; set; } = new();
+    public List<string> Locations { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the arguments accepted by this directive.
     /// </summary>
     [JsonPropertyName("args")]
-    public List<GraphQLField> Args { get; set; } = new();
+    public List<GraphQLField> Args { get; set; } = [];
 }

@@ -48,7 +48,7 @@ public class Response
     /// <item>Last-Modified: Last modification timestamp</item>
     /// </list>
     /// </remarks>
-    public Dictionary<string, string> Headers { get; set; } = new();
+    public Dictionary<string, string> Headers { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the final URL after any redirects.
@@ -135,7 +135,7 @@ public class Response
     /// <item>"RetryCount": Number of retry attempts</item>
     /// </list>
     /// </remarks>
-    public Dictionary<string, object> Metadata { get; set; } = new();
+    public Dictionary<string, object> Metadata { get; set; } = [];
 
     /// <summary>
     /// Gets the type-safe metadata dictionary for storing spider metadata.

@@ -18,7 +18,7 @@ public static class RobotsTxtParser
         string[] lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
         UserAgentRules? currentRules = null;
-        var currentUserAgents = new List<string>();
+        List<string> currentUserAgents = [];
 
         foreach (string rawLine in lines)
         {

@@ -41,7 +41,7 @@ public class GoogleJobsScraper
 
     public async Task<List<GoogleJobsEntity>> ScrapeJobsAsync(string query, string location, int maxResults, CancellationToken ct)
     {
-        var jobs = new List<GoogleJobsEntity>();
+        List<GoogleJobsEntity> jobs = [];
 
         try
         {
@@ -155,7 +155,7 @@ public class GoogleJobsScraper
 
     private static List<GoogleJobsEntity> ExtractJobsFromHtml(HtmlDocument doc, int maxResults)
     {
-        var jobs = new List<GoogleJobsEntity>();
+        List<GoogleJobsEntity> jobs = [];
 
         // Multiple selector strategies for Google's changing layout
         string[] selectors = new[]

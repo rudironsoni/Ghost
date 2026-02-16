@@ -126,7 +126,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         var all = results.SelectMany(r => r ?? new List<JobListing>()).ToList();
 
         // dedupe by generated id
-        var map = new Dictionary<string, JobListing>();
+        Dictionary<string, JobListing> map = [];
         foreach (JobListing? job in all)
         {
             string id = _dedupe.GenerateId(job.Title ?? string.Empty, job.Company ?? string.Empty);
@@ -234,7 +234,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         var all = results.SelectMany(r => r ?? new List<JobListing>()).ToList();
 
         // dedupe by generated id
-        var map = new Dictionary<string, JobListing>();
+        Dictionary<string, JobListing> map = [];
         foreach (JobListing? job in all)
         {
             string id = _dedupe.GenerateId(job.Title ?? string.Empty, job.Company ?? string.Empty);

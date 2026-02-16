@@ -209,7 +209,7 @@ public class XSimulationValidatorTests
     public async Task ValidatePostAsync_TooManyImages_ReturnsError()
     {
         // Arrange - Create 5 temp image files
-        var tempFiles = new List<string>();
+        List<string> tempFiles = [];
         try
         {
             for (int i = 0; i < 5; i++)

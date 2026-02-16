@@ -75,7 +75,7 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
     {
         ArgumentNullException.ThrowIfNull(criteria);
 
-        var list = new List<JobListing>();
+        List<JobListing> list = [];
         JobScrapingStrategy strategy = _options.ScrapingStrategy;
         if (!string.IsNullOrEmpty(criteria.Strategy))
         {
@@ -99,7 +99,7 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
         CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(criteria);
-        var list = new List<JobListing>();
+        List<JobListing> list = [];
         await foreach (JobListing job in SearchJobsWithStrategyAsync(criteria.Query ?? string.Empty, criteria.Location ?? "", criteria.MaxResults, strategyOverride, ct).ConfigureAwait(false))
         {
             list.Add(job);
@@ -387,7 +387,7 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
     private async Task<ExtractionResult> BrowserStrategyAsync(StrategyContext context, CancellationToken ct)
     {
         DateTimeOffset startTime = DateTimeOffset.UtcNow;
-        var list = new List<JobListing>();
+        List<JobListing> list = [];
         IPage? page = null;
 
         try
@@ -490,7 +490,7 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
 
             // Deep-fetch details for each job using EntityParser
             var uniqueJobs = list.GroupBy(j => j.Id).Select(g => g.First()).ToList();
-            var detailedJobs = new List<JobListing>();
+            List<JobListing> detailedJobs = [];
             foreach (JobListing? shallow in uniqueJobs)
             {
                 ct.ThrowIfCancellationRequested();
@@ -539,7 +539,7 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
     private static List<JobListing> GenerateMockJobs(string keywords, string location, int count)
     {
         var random = new Random();
-        var mockJobs = new List<JobListing>();
+        List<JobListing> mockJobs = [];
         string[] jobTitles = new[] { "Software Engineer", "Senior Developer", "Full Stack Engineer", "DevOps Engineer", "Data Scientist" };
         string[] companies = new[] { "Tech Corp", "Innovation Labs", "Digital Solutions Inc", "Cloud Systems", "Data Dynamics" };
         string[] locations = new[] { "San Francisco, CA", "Remote", "New York, NY", "Seattle, WA", "Austin, TX" };

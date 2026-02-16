@@ -63,7 +63,7 @@ public class MetricsCollector : IMetricsCollector
 
     public MetricsSnapshot GetSnapshot()
     {
-        var platforms = new Dictionary<string, PlatformMetricsSnapshot>();
+        Dictionary<string, PlatformMetricsSnapshot> platforms = [];
         foreach ((string? platform, PlatformMetrics? metrics) in _metrics)
         {
             platforms[platform] = new PlatformMetricsSnapshot
@@ -105,7 +105,7 @@ public class PlatformMetrics
 public class MetricsSnapshot
 {
     public DateTime Timestamp { get; set; }
-    public Dictionary<string, PlatformMetricsSnapshot> Platforms { get; set; } = new();
+    public Dictionary<string, PlatformMetricsSnapshot> Platforms { get; set; } = [];
 }
 
 public class PlatformMetricsSnapshot

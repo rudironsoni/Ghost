@@ -11,7 +11,7 @@ public sealed class SchemaValidator : ISchemaValidator
         Contracts.SpiderSpec spec,
         CancellationToken ct = default)
     {
-        var errors = new List<string>();
+        List<string> errors = [];
 
         // Validate that the entry step exists
         if (!spec.Steps.ContainsKey(spec.EntryStepId))

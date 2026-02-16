@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Security;
 
-namespace Ghost.Infrastructure.Session;
+namespace Ghost.Platform.Storage.Session;
 
 /// <summary>
 /// Configuration options for RotatingProxySession

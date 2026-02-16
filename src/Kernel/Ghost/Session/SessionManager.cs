@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.Text.Json;
+using Ghost.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -141,8 +142,8 @@ public sealed class SessionManager : ISessionManager, IDisposable
                 SessionId = id,
                 Platform = platform,
                 Cookies = cookies.ToList(),
-                LocalStorage = new Dictionary<string, string>(),
-                SessionStorage = new Dictionary<string, string>(),
+                LocalStorage = [],
+                SessionStorage = [],
                 CreatedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.Add(expiry)
             };
@@ -164,7 +165,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
             }
 
             // Serialize session
-            string json = JsonSerializer.Serialize(session, JsonOptions);
+            string json = JsonSerializer.Serialize(session, KernelSerializerContext.Default.BrowserSession);
 
             // Optionally compress
             if (_options.EnableCompression)
@@ -286,7 +287,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
                 json = await DecompressAsync(json).ConfigureAwait(false);
             }
 
-            BrowserSession? session = JsonSerializer.Deserialize<BrowserSession>(json, JsonOptions);
+            BrowserSession? session = JsonSerializer.Deserialize(json, KernelSerializerContext.Default.BrowserSession);
 
             if (session == null)
             {
@@ -456,7 +457,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
         if (_redis == null) throw new InvalidOperationException("Redis not initialized");
 
         string pattern = $"ghost:session:{platform}:*";
-        var keys = new List<string>();
+        List<string> keys = [];
 
         IServer server = _redis.GetServer(_redis.GetEndPoints().First());
         await foreach (RedisKey key in server.KeysAsync(pattern: pattern).ConfigureAwait(false))
@@ -533,7 +534,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
         }
 
         string[] files = Directory.GetFiles(platformDir, "*.session");
-        var sessionIds = new List<string>();
+        List<string> sessionIds = [];
 
         foreach (string file in files)
         {

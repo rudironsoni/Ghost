@@ -46,7 +46,7 @@ public static class HealthEndpoints
         {
             Timestamp = DateTime.UtcNow,
             OverallStatus = "healthy",
-            Platforms = new Dictionary<string, PlatformHealthStatus>()
+            Platforms = []
         };
 
         // Create a logger from the injected factory so DI doesn't require ILogger directly
@@ -208,7 +208,7 @@ public class JobsHealthStatus
 {
     public string OverallStatus { get; set; } = "unknown";
     public DateTime Timestamp { get; set; }
-    public Dictionary<string, PlatformHealthStatus> Platforms { get; set; } = new();
+    public Dictionary<string, PlatformHealthStatus> Platforms { get; set; } = [];
     public string? Error { get; set; }
 }
 

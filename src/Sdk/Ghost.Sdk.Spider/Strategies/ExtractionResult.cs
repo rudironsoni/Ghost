@@ -43,12 +43,12 @@ public class ExtractionResult
     /// <summary>
     /// Gets or sets additional metadata about the extraction.
     /// </summary>
-    public Dictionary<string, object> Metadata { get; init; } = new();
+    public Dictionary<string, object> Metadata { get; init; } = [];
 
     /// <summary>
     /// Gets or sets the strategy attempts that were made.
     /// </summary>
-    public List<StrategyAttempt> Attempts { get; init; } = new();
+    public List<StrategyAttempt> Attempts { get; init; } = [];
 
     /// <summary>
     /// Gets or sets a value indicating whether this result is from a fallback strategy.

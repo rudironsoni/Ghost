@@ -26,8 +26,8 @@ public sealed class RetryBehaviorContract : ProviderContractBase
             Location = "remote"
         };
 
-        var errors = new List<string>();
-        var context = new Dictionary<string, object>();
+        List<string> errors = [];
+        Dictionary<string, object> context = [];
 
         try
         {

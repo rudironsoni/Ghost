@@ -28,17 +28,17 @@ public class StrategyContext
     /// <summary>
     /// Gets or sets the request headers.
     /// </summary>
-    public Dictionary<string, string> Headers { get; init; } = new();
+    public Dictionary<string, string> Headers { get; init; } = [];
 
     /// <summary>
     /// Gets or sets additional parameters for the extraction.
     /// </summary>
-    public Dictionary<string, object> Parameters { get; init; } = new();
+    public Dictionary<string, object> Parameters { get; init; } = [];
 
     /// <summary>
     /// Gets or sets the state that can be shared across strategy attempts.
     /// </summary>
-    public Dictionary<string, object> State { get; init; } = new();
+    public Dictionary<string, object> State { get; init; } = [];
 
     /// <summary>
     /// Gets or sets the maximum time to wait for extraction.
@@ -63,7 +63,7 @@ public class StrategyContext
     /// <summary>
     /// Gets or sets custom metadata for the context.
     /// </summary>
-    public Dictionary<string, object> Metadata { get; init; } = new();
+    public Dictionary<string, object> Metadata { get; init; } = [];
 
     /// <summary>
     /// Gets or sets the user agent string for requests.

@@ -22,7 +22,7 @@ public class MockAdapter : IContentAdapter
     public Func<Request, CancellationToken, Task<bool>>? CanHandleFunc { get; set; }
     public Func<Request, AdapterOptions, CancellationToken, Task<Response>>? ExtractFunc { get; set; }
 
-    public List<Request> ReceivedRequests { get; } = new();
+    public List<Request> ReceivedRequests { get; } = [];
 
     public Task<bool> CanHandleAsync(Request request, CancellationToken cancellationToken = default)
     {

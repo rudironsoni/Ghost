@@ -44,7 +44,7 @@ public sealed class InfoJobsContractAdapter : IProviderContractAdapter
         int maxPages = 10,
         CancellationToken ct = default)
     {
-        var allJobs = new List<JobListing>();
+        List<JobListing> allJobs = [];
 
         // InfoJobs uses page-based pagination
         // We'll simulate this by making multiple searches

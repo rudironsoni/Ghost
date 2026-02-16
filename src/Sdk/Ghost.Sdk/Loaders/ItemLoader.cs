@@ -104,7 +104,7 @@ public sealed class ItemLoader<T> : IItemLoader<T> where T : class, new()
 
         foreach ((string? field, List<FieldExtractor>? extractors) in _extractors)
         {
-            var values = new List<string>();
+            List<string> values = [];
 
             foreach (FieldExtractor extractor in extractors)
             {

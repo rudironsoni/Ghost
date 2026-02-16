@@ -33,7 +33,7 @@ public class ExtractionContext
     /// <summary>
     /// Gets or sets additional metadata about the extraction context.
     /// </summary>
-    public Dictionary<string, object> Metadata { get; init; } = new();
+    public Dictionary<string, object> Metadata { get; init; } = [];
 
     /// <summary>
     /// Gets or sets the timestamp when the extraction started.

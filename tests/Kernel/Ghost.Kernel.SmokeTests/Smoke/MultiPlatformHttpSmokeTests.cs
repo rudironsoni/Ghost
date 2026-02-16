@@ -16,18 +16,18 @@ namespace Ghost.Smoke.Tests.Smoke;
 /// </summary>
 [Trait("Category", "Smoke")]
 [Trait("Flow", "MultiPlatform")]
-public class MultiPlatformHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
+public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
 {
-    private readonly HttpSmokeTestFixture _fixture;
+    private readonly GhostWebApiFixture _fixture;
     private readonly ITestOutputHelper _output;
 
-    public MultiPlatformHttpSmokeTests(HttpSmokeTestFixture fixture, ITestOutputHelper output)
+    public MultiPlatformHttpSmokeTests(GhostWebApiFixture fixture, ITestOutputHelper output)
     {
         _fixture = fixture;
         _output = output;
     }
 
-    [Fact(Skip = "Smoke tests require running Ghost server - run manually")]
+    [Fact]
     public async Task SearchJobs_AcrossAllPlatforms_Returns_Aggregated_Results()
     {
         // Arrange
@@ -81,7 +81,7 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
             "aggregation should return results from multiple platforms");
     }
 
-    [Fact(Skip = "Smoke tests require running Ghost server - run manually")]
+    [Fact]
     public async Task SearchJobs_WithMultiplePlatforms_Returns_Deduplicated_Results()
     {
         // Arrange
@@ -125,7 +125,7 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         // but job IDs should be unique (validated by AssertNoDuplicateJobs)
     }
 
-    [Fact(Skip = "Smoke tests require running Ghost server - run manually")]
+    [Fact]
     public async Task SearchJobs_WithLocation_AcrossPlatforms_Returns_LocationAware_Results()
     {
         // Arrange
@@ -182,7 +182,7 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<HttpSmokeTestFixture>
         _output.WriteLine($"Found {remoteJobs.Count} remote jobs");
     }
 
-    [Fact(Skip = "Smoke tests require running Ghost server - run manually")]
+    [Fact]
     public async Task GetJobDetails_FromMultiplePlatforms_Returns_Valid_Data()
     {
         // Arrange

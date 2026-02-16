@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using Ghost.Serialization;
 using Microsoft.Extensions.Logging;
 
 namespace Ghost.Kernel;
@@ -89,7 +90,7 @@ public class InMemoryDeadLetterQueue : IGenericDeadLetterQueue
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var items = new List<DeadLetterItem>();
+        List<DeadLetterItem> items = [];
 
         lock (_lock)
         {

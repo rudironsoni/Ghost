@@ -21,7 +21,7 @@ public static class BrowserSessionExtensions
             return string.Empty;
         }
 
-        var lines = new List<string>();
+        List<string> lines = [];
         foreach ((string? key, string? value) in session.LocalStorage)
         {
             // Key format: "origin::name"
@@ -52,7 +52,7 @@ public static class BrowserSessionExtensions
             return string.Empty;
         }
 
-        var lines = new List<string>();
+        List<string> lines = [];
         foreach ((string? key, string? value) in session.SessionStorage)
         {
             // Key format: "origin::name"

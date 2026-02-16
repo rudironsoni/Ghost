@@ -163,7 +163,7 @@ public class CircuitBreakerTests
             HalfOpenMaxAttempts = 1
         });
 
-        var transitions = new List<CircuitState>();
+        List<CircuitState> transitions = [];
         breaker.StateChanged += (_, args) => transitions.Add(args.CurrentState);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => breaker.ExecuteAsync<int>(() => throw new InvalidOperationException()));

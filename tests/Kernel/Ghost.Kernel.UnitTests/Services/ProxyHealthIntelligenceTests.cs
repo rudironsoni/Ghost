@@ -284,7 +284,7 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
             new[] { mockSource.Object },
             options);
 
-        var results = new List<string>();
+        List<string> results = [];
         for (int i = 0; i < 10; i++)
         {
             var proxy = await intelligence.GetProxyAsync();
@@ -679,7 +679,7 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         intelligence.WhitelistProxy(whitelistedProxy);
 
         // Get proxy multiple times, whitelisted should be returned
-        var results = new List<string>();
+        List<string> results = [];
         for (int i = 0; i < 5; i++)
         {
             var result = await intelligence.GetProxyAsync();
@@ -1260,7 +1260,7 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         var proxy = CreateProxy("http://1.2.3.4:8080");
         var intelligence = CreateIntelligence();
 
-        var tasks = new List<Task>();
+        List<Task> tasks = [];
         for (int i = 0; i < 100; i++)
         {
             tasks.Add(intelligence.ReportProxyResultAsync(proxy, i % 2 == 0, TimeSpan.FromMilliseconds(i)));

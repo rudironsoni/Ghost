@@ -45,7 +45,7 @@ public sealed class IndeedContractAdapter : IProviderContractAdapter
         int maxPages = 10,
         CancellationToken ct = default)
     {
-        List<JobListing> allJobs = new List<JobListing>();
+        List<JobListing> allJobs = [];
 
         // Indeed uses offset-based pagination
         // We'll simulate this by making multiple searches with different criteria
@@ -130,7 +130,7 @@ public sealed class IndeedContractAdapter : IProviderContractAdapter
     /// </summary>
     private static List<JobListing> GenerateSyntheticJobs(int count, int pageNumber = 0)
     {
-        List<JobListing> jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
         for (int i = 0; i < count; i++)
         {
             int globalIndex = (pageNumber * count) + i;
@@ -158,7 +158,7 @@ public sealed class IndeedContractAdapter : IProviderContractAdapter
 
     private static List<JobListing> GenerateSyntheticPaginatedJobs(int maxPages, int pageSize = 4)
     {
-        List<JobListing> jobs = new List<JobListing>();
+        List<JobListing> jobs = [];
         int safePages = maxPages < 1 ? 1 : maxPages;
 
         for (int page = 0; page < safePages; page++)

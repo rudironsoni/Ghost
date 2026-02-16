@@ -38,8 +38,8 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
     /// <inheritdoc />
     public async Task<ValidationResult> ValidatePostAsync(CreatePostRequest request)
     {
-        var errors = new List<ValidationError>();
-        var warnings = new List<ValidationError>();
+        List<ValidationError> errors = [];
+        List<ValidationError> warnings = [];
 
         // Validate content is not empty
         if (string.IsNullOrWhiteSpace(request.Content))
@@ -253,7 +253,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
     /// <inheritdoc />
     public async Task<ValidationResult> ValidateSelectorsAsync(object page)
     {
-        var errors = new List<ValidationError>();
+        List<ValidationError> errors = [];
 
         if (page is not IPage browserPage)
         {
@@ -425,7 +425,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
 
         // Simulate the posting process
         IReadOnlyList<string> parts = _contentSplitter.Split(request.Content);
-        var simulatedIds = new List<string>();
+        List<string> simulatedIds = [];
 
         // Generate simulated tweet IDs
         for (int i = 0; i < parts.Count; i++)

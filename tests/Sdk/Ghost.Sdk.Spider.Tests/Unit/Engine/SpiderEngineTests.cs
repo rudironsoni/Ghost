@@ -247,7 +247,7 @@ public class SpiderEngineTests
         var lockObject = new object();
 
         // Simulate concurrent request processing
-        var tasks = new List<Task>();
+        List<Task> tasks = [];
         for (int i = 0; i < 10; i++)
         {
             tasks.Add(Task.Run(async () =>
@@ -524,7 +524,7 @@ public class SpiderEngineTests
         var extractedItems = new List<string> { "Item1", "Item2", "Item3" };
 
         // Act
-        var streamedItems = new List<string>();
+        List<string> streamedItems = [];
         await foreach (var item in SimulateAsyncStream(extractedItems))
         {
             streamedItems.Add(item);
@@ -551,7 +551,7 @@ public class SpiderEngineTests
         var items = new List<string> { "Item1", "Item2" };
 
         // Act
-        var streamedItems = new List<string>();
+        List<string> streamedItems = [];
         try
         {
             await foreach (var item in SimulateAsyncStreamWithError(items))

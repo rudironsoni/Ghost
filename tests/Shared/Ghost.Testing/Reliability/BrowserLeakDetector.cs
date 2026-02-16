@@ -37,7 +37,7 @@ public static class BrowserLeakDetector
     /// <returns>A list of processes that may represent browser leaks.</returns>
     public static List<Process> DetectLeakedProcesses()
     {
-        var leakedProcesses = new List<Process>();
+        List<Process> leakedProcesses = [];
 
         try
         {
@@ -98,7 +98,7 @@ public static class BrowserLeakDetector
     /// <returns>A set of process IDs for currently running browser processes.</returns>
     public static HashSet<int> GetBrowserProcessSnapshot()
     {
-        var snapshot = new HashSet<int>();
+        HashSet<int> snapshot = [];
         List<Process> processes = DetectLeakedProcesses();
 
         foreach (Process process in processes)

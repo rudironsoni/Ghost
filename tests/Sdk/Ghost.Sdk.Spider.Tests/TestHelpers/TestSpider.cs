@@ -14,8 +14,8 @@ public class TestSpider : SpiderBase
 
     public override string Name => "TestSpider";
 
-    public List<Response> ProcessedResponses { get; } = new();
-    public List<Exception> Errors { get; } = new();
+    public List<Response> ProcessedResponses { get; } = [];
+    public List<Exception> Errors { get; } = [];
 
     public TestSpider(List<string>? startUrls = null, Action<Response, GhostExecutionContext>? processCallback = null)
     {
@@ -53,7 +53,7 @@ public class ConfigurableTestSpider : SpiderBase
 
     public bool OnStartCalled { get; private set; }
     public bool OnCompleteCalled { get; private set; }
-    public List<Exception> ErrorsReceived { get; } = new();
+    public List<Exception> ErrorsReceived { get; } = [];
 
     public ConfigurableTestSpider(string name = "ConfigurableTestSpider", Engine.SpiderOptions? options = null)
     {

@@ -221,7 +221,7 @@ public partial class XThreadComposer
         }
 
         // Validate and set files
-        var validFiles = new List<string>();
+        List<string> validFiles = [];
         foreach (string url in mediaUrls)
         {
             if (!File.Exists(url))

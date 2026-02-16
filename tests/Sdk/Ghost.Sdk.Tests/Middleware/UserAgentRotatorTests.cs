@@ -89,7 +89,7 @@ public class UserAgentRotatorTests
         rotator.AddUserAgent(customAgent);
 
         // Assert - should eventually get the custom agent in rotation
-        var agents = new List<string>();
+        List<string> agents = [];
         for (int i = 0; i < 10; i++)
         {
             agents.Add(rotator.GetNextUserAgent());
@@ -110,7 +110,7 @@ public class UserAgentRotatorTests
         rotator.AddUserAgent(customAgent);
 
         // Assert - count occurrences in a full rotation
-        var agents = new List<string>();
+        List<string> agents = [];
         var firstAgent = rotator.GetNextUserAgent();
         agents.Add(firstAgent);
 
@@ -140,7 +140,7 @@ public class UserAgentRotatorTests
         rotator.RemoveUserAgent(agent);
 
         // Assert - should not get this agent again in next 10 rotations
-        var agents = new List<string>();
+        List<string> agents = [];
         for (int i = 0; i < 10; i++)
         {
             agents.Add(rotator.GetNextUserAgent());
@@ -154,7 +154,7 @@ public class UserAgentRotatorTests
     {
         // Arrange
         var rotator = new UserAgentRotator();
-        var agents = new List<string>();
+        List<string> agents = [];
 
         // Get all default agents
         for (int i = 0; i < 4; i++)
@@ -283,7 +283,7 @@ public class UserAgentRotatorTests
     {
         // Arrange & Act
         var rotator = new UserAgentRotator();
-        var agents = new List<string>();
+        List<string> agents = [];
 
         for (int i = 0; i < 4; i++)
         {
@@ -299,7 +299,7 @@ public class UserAgentRotatorTests
     {
         // Arrange & Act
         var rotator = new UserAgentRotator();
-        var agents = new List<string>();
+        List<string> agents = [];
 
         for (int i = 0; i < 4; i++)
         {
@@ -316,7 +316,7 @@ public class UserAgentRotatorTests
     {
         // Arrange & Act
         var rotator = new UserAgentRotator();
-        var agents = new List<string>();
+        List<string> agents = [];
 
         for (int i = 0; i < 4; i++)
         {
@@ -332,7 +332,7 @@ public class UserAgentRotatorTests
     {
         // Arrange & Act
         var rotator = new UserAgentRotator();
-        var agents = new List<string>();
+        List<string> agents = [];
 
         for (int i = 0; i < 4; i++)
         {

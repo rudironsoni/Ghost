@@ -20,7 +20,7 @@ public sealed class IndeedOptionsValidator : IValidateOptions<IndeedOptions>
         if (!options.Enabled)
             return ValidateOptionsResult.Success;
 
-        var errors = new List<string>();
+        List<string> errors = [];
 
         // Required fields when enabled
         if (string.IsNullOrWhiteSpace(options.ApiKey))
