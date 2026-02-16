@@ -12,6 +12,7 @@ public sealed class ConfigurationLoader
     /// <summary>
     /// Initializes a new instance of the <see cref="ConfigurationLoader"/> class.
     /// </summary>
+    [Obsolete("Use the constructor with ILogger parameter instead")]
     public ConfigurationLoader()
     {
         _compiler = new ConfigurationCompiler();

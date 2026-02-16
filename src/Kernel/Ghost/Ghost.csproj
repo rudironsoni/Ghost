@@ -3,6 +3,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Ghost</RootNamespace>
     <Description>Ghost - Stealth browser automation kernel</Description>
+    <!-- Suppress logging analyzer warnings - existing code uses LoggerExtensions pattern -->
+    <NoWarn>$(NoWarn);CA1848;CA1873</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Patchright" />

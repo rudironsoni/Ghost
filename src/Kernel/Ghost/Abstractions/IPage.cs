@@ -38,4 +38,11 @@ public interface IPage : IAsyncDisposable
     public Task FocusAsync(string selector, CancellationToken ct = default);
     public Task HoverAsync(string selector, CancellationToken ct = default);
     public Task PressAsync(string selector, string key, CancellationToken ct = default);
+
+    /// <summary>
+    /// Adds cookies to the browser context.
+    /// </summary>
+    /// <param name="cookies">The cookies to add.</param>
+    /// <param name="ct">Cancellation token.</param>
+    public Task AddCookiesAsync(IEnumerable<Ghost.Cookie> cookies, CancellationToken ct = default);
 }

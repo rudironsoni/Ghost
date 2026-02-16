@@ -161,4 +161,69 @@ public class ConsentFlowHandlerTests
         // Assert
         Assert.False(result);
     }
+
+    [Theory]
+    [InlineData("<script>alert(1)</script>")]
+    [InlineData("javascript:alert(1)")]
+    [InlineData("';alert(1);//")]
+    [InlineData("div[onclick='alert(1)')]")]
+    [InlineData("eval(alert(1))")]
+    [InlineData("div; alert(1)")]
+    public async Task ExecuteMultiStepFlowAsync_WithXssInStepSelector_ReturnsFalse(string maliciousSelector)
+    {
+        // Arrange
+        var handler = new ConsentFlowHandler();
+        var mockPage = new Mock<IPage>();
+
+        var config = new CMPConfig
+        {
+            Name = "test",
+            Detectors = [".test"],
+            AcceptButton = ".accept",
+            MultiStep = true,
+            Steps = [maliciousSelector]
+        };
+
+        // Act
+        bool result = await handler.ExecuteMultiStepFlowAsync(mockPage.Object, config);
+
+        // Assert - should return false due to validation failure
+        Assert.False(result);
+    }
+
+    [Theory]
+    [InlineData(".step1")]
+    [InlineData("#accept-btn")]
+    [InlineData("button[data-action='accept']")]
+    [InlineData("div.cookie-banner > button.accept")]
+    public async Task ExecuteMultiStepFlowAsync_WithValidSelector_AttemptsExecution(string validSelector)
+    {
+        // Arrange
+        var handler = new ConsentFlowHandler();
+        var mockPage = new Mock<IPage>();
+
+        // Setup element mock for valid selector
+        var mockElement = new Mock<IElement>();
+        mockElement.Setup(e => e.IsVisibleAsync()).ReturnsAsync(false);
+
+        mockPage.Setup(p => p.QuerySelectorAsync(validSelector))
+            .ReturnsAsync(mockElement.Object);
+        mockPage.Setup(p => p.QuerySelectorAsync($"pierce/{validSelector}"))
+            .ReturnsAsync((IElement?)null);
+
+        var config = new CMPConfig
+        {
+            Name = "test",
+            Detectors = [".test"],
+            AcceptButton = ".accept",
+            MultiStep = true,
+            Steps = [validSelector]
+        };
+
+        // Act
+        await handler.ExecuteMultiStepFlowAsync(mockPage.Object, config);
+
+        // Assert - should attempt to find the element
+        mockPage.Verify(p => p.QuerySelectorAsync(validSelector), Times.AtLeastOnce);
+    }
 }

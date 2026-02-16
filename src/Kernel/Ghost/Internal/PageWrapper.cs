@@ -158,6 +158,29 @@ internal sealed class PageWrapper : IPage
         _ => Microsoft.Playwright.ScreenshotType.Png
     };
 
+    public async Task AddCookiesAsync(IEnumerable<Ghost.Cookie> cookies, CancellationToken ct = default)
+    {
+        Microsoft.Playwright.Cookie[] playwrightCookies = cookies.Select(c => new Microsoft.Playwright.Cookie
+        {
+            Name = c.Name,
+            Value = c.Value,
+            Domain = c.Domain ?? string.Empty,
+            Path = c.Path ?? "/",
+            Expires = c.Expires.HasValue ? ((DateTimeOffset)c.Expires.Value).ToUnixTimeSeconds() : -1,
+            HttpOnly = c.HttpOnly,
+            Secure = c.Secure,
+            SameSite = c.SameSite?.ToLowerInvariant() switch
+            {
+                "strict" => Microsoft.Playwright.SameSiteAttribute.Strict,
+                "lax" => Microsoft.Playwright.SameSiteAttribute.Lax,
+                "none" => Microsoft.Playwright.SameSiteAttribute.None,
+                _ => null
+            }
+        }).ToArray();
+
+        await _page.Context.AddCookiesAsync(playwrightCookies).ConfigureAwait(false);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;

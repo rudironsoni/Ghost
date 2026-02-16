@@ -34,13 +34,28 @@ public sealed class LinkedInAuthenticator
     {
         if (string.IsNullOrEmpty(liAt)) throw new ArgumentNullException(nameof(liAt));
 
+        // Validate liAt cookie value to prevent injection
+        if (!IsValidCookieValue(liAt))
+        {
+            throw new ArgumentException("Invalid li_at cookie value provided.", nameof(liAt));
+        }
+
         PageOptions? pageOpts = _options.GetPageOptions();
         IPage page = await _session.NewPageAsync(pageOpts, ct: ct).ConfigureAwait(false);
         try
         {
             await page.NavigateAsync(_options.BaseUrl, ct: ct).ConfigureAwait(false);
-            // set cookie via document.cookie
-            await page.EvaluateAsync<object>($"document.cookie = 'li_at={liAt}; domain=.linkedin.com; path=/';", ct: ct).ConfigureAwait(false);
+            // set cookie using Playwright's typed cookie API instead of JavaScript evaluation
+            await page.AddCookiesAsync(new[]
+            {
+                new Cookie
+                {
+                    Name = "li_at",
+                    Value = liAt,
+                    Domain = ".linkedin.com",
+                    Path = "/"
+                }
+            }, ct).ConfigureAwait(false);
             await page.NavigateAsync($"{_options.BaseUrl}/feed/", ct: ct).ConfigureAwait(false);
 
             bool logged = await IsLoggedInAsync(page, ct).ConfigureAwait(false);
@@ -53,6 +68,62 @@ public sealed class LinkedInAuthenticator
         {
             try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
         }
+    }
+
+    /// <summary>
+    /// Validates that a cookie value is safe and does not contain injection attempts.
+    /// </summary>
+    /// <param name="cookieValue">The cookie value to validate.</param>
+    /// <returns>True if the cookie value is valid and safe; otherwise false.</returns>
+    private static bool IsValidCookieValue(string cookieValue)
+    {
+        if (string.IsNullOrEmpty(cookieValue))
+        {
+            return false;
+        }
+
+        // Check for script injection patterns
+        string[] forbiddenPatterns = new[]
+        {
+            "'",
+            "\"",
+            ";",
+            "\n",
+            "\r",
+            "<script",
+            "javascript:",
+            "onerror=",
+            "onload=",
+            "onclick=",
+            "eval(",
+            "function(",
+            "=>",
+            "${",
+            "//",
+            "/*",
+            "-->",
+            "</script>"
+        };
+
+        foreach (string pattern in forbiddenPatterns)
+        {
+            if (cookieValue.Contains(pattern))
+            {
+                return false;
+            }
+        }
+
+        // Cookie values should generally be alphanumeric with limited safe characters
+        // LinkedIn li_at cookies are typically base64url encoded
+        foreach (char c in cookieValue)
+        {
+            if (!char.IsLetterOrDigit(c) && c != '-' && c != '_' && c != '=' && c != '+')
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public async Task WarmUpAsync(IPage page, CancellationToken ct = default)
