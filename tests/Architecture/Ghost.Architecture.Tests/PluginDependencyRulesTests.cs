@@ -134,18 +134,19 @@ public sealed class PluginDependencyRulesTests
         .Except(new[] { "Ghost.Plugin.Common" }) // Common is allowed
         .ToArray();
 
-        if (otherPlugins.Length > 0)
+        // Check each plugin dependency individually since HaveDependencyOnAny doesn't exist
+        foreach (string otherPlugin in otherPlugins)
         {
             TestResult result = Types
                 .InCurrentDomain()
                 .That()
                 .ResideInNamespaceStartingWith(pluginNamespace)
                 .ShouldNot()
-                .HaveDependencyOnAny(otherPlugins)
+                .HaveDependencyOn(otherPlugin)
                 .GetResult();
 
             result.IsSuccessful.Should().BeTrue(
-                $"{pluginNamespace} should not depend on other plugins.");
+                $"{pluginNamespace} should not depend on {otherPlugin}.");
         }
     }
 
@@ -265,18 +266,19 @@ public sealed class PluginDependencyRulesTests
                 .Where(p => p != plugin)
                 .ToArray();
 
-            if (otherPlugins.Length > 0)
+            // Check each plugin dependency individually since HaveDependencyOnAny doesn't exist
+            foreach (string otherPlugin in otherPlugins)
             {
                 TestResult result = Types
                     .InCurrentDomain()
                     .That()
                     .ResideInNamespaceStartingWith(plugin)
                     .ShouldNot()
-                    .HaveDependencyOnAny(otherPlugins)
+                    .HaveDependencyOn(otherPlugin)
                     .GetResult();
 
                 result.IsSuccessful.Should().BeTrue(
-                    $"{plugin} should not depend on other plugin implementations.");
+                    $"{plugin} should not depend on {otherPlugin}.");
             }
         }
     }

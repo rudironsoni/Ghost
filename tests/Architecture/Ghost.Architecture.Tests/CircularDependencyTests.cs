@@ -1,7 +1,6 @@
 using FluentAssertions;
 using NetArchTest.Rules;
 using Xunit;
-using IExtension = Ghost.Contracts.IExtension;
 
 namespace Ghost.Architecture.Tests;
 
