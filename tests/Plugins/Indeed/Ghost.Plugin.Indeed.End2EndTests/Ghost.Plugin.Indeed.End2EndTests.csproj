@@ -20,15 +20,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Configuration" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.Options" />
-    <PackageReference Include="NSubstitute" />
     <PackageReference Include="FluentAssertions" />
-    <PackageReference Include="WireMock.Net" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,7 +29,6 @@
     <ProjectReference Include="../../../../src/Plugins/Indeed/Ghost.Plugin.Indeed/Ghost.Plugin.Indeed.csproj" />
     <ProjectReference Include="../../../../src/Plugins/Common/Ghost.Plugin.Common/Ghost.Plugin.Common.csproj" />
     <ProjectReference Include="../../../Shared/Ghost.Testing/Ghost.Testing.csproj" />
-    <ProjectReference Include="../../../Shared/Ghost.Testing.Mocking/Ghost.Testing.Mocking.csproj" />
   </ItemGroup>
 
   <ItemGroup>

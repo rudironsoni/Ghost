@@ -1,53 +1,71 @@
-#pragma warning disable CA2012 // NSubstitute uses ValueTask patterns that trigger this warning
-
 using Ghost.Contracts.Jobs;
-using Ghost.Contracts.News;
-using Ghost.Contracts.Social;
 using Ghost.Plugin.LinkedIn.Internal;
 using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Core.Extraction;
+using Ghost.Testing.Fixtures;
+using Ghost.Testing.Scenarios.Server;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NSubstitute;
-using WireMock.Net;
-using WireMock.RequestBuilders;
-using WireMock.ResponseBuilders;
-using WireMock.Server;
-using WireMock.Settings;
 using Xunit;
 
 namespace Ghost.Plugin.LinkedIn.End2EndTests.Fixtures;
 
 /// <summary>
-/// End-to-End test fixture for LinkedIn plugin.
-/// Sets up dependency injection container with mocked external services.
+/// End-to-End test fixture for LinkedIn plugin using real browser sessions.
+/// Sets up a local test server and provides real IBrowserSession from RealBrowserFixture.
 /// </summary>
-public sealed class LinkedInE2EFixture : IDisposable
+public sealed class LinkedInE2EFixture : IAsyncLifetime
 {
-    public IServiceProvider ServiceProvider { get; }
-    public WireMockServer WireMockServer { get; }
+    private readonly RealBrowserFixture _browserFixture;
+    private IServiceProvider? _serviceProvider;
+    private ScenarioServer? _scenarioServer;
+    private IBrowserSession? _browserSession;
+
+    public IServiceProvider ServiceProvider => _serviceProvider ?? throw new InvalidOperationException("Fixture not initialized");
+    public ScenarioServer ScenarioServer => _scenarioServer ?? throw new InvalidOperationException("Scenario server not initialized");
+    public string BaseUrl => _scenarioServer?.BaseUrl ?? throw new InvalidOperationException("Scenario server not initialized");
     public IConfiguration Configuration { get; }
 
-    public LinkedInE2EFixture()
+    public LinkedInE2EFixture(RealBrowserFixture browserFixture)
     {
-        WireMockServer = WireMockServer.Start(new WireMockServerSettings
-        {
-            Port = 9094,
-            UseSSL = false
-        });
-
+        _browserFixture = browserFixture;
         Configuration = new ConfigurationBuilder()
             .AddJsonFile("testsettings.json", optional: true)
             .AddEnvironmentVariables()
             .Build();
+    }
+
+    public async Task InitializeAsync()
+    {
+        // Start the scenario server for LinkedIn-like HTML responses
+        _scenarioServer = await ScenarioServer.CreateAsync().ConfigureAwait(false);
+
+        // Create browser session from kernel (proper async initialization)
+        _browserSession = await _browserFixture.CreateSessionAsync().ConfigureAwait(false);
 
         var services = new ServiceCollection();
         ConfigureServices(services);
-        ServiceProvider = services.BuildServiceProvider();
+        _serviceProvider = services.BuildServiceProvider();
+    }
 
-        SetupMockEndpoints();
+    public async Task DisposeAsync()
+    {
+        if (_serviceProvider is IAsyncDisposable asyncDisposable)
+        {
+            await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+        }
+        else if (_serviceProvider is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+
+        if (_scenarioServer != null)
+        {
+            await _scenarioServer.StopAsync().ConfigureAwait(false);
+            _scenarioServer.Dispose();
+        }
     }
 
     private void ConfigureServices(IServiceCollection services)
@@ -58,8 +76,10 @@ public sealed class LinkedInE2EFixture : IDisposable
         // Configuration
         services.Configure<LinkedInOptions>(options =>
         {
-            options.BaseUrl = $"http://localhost:{WireMockServer.Port}";
+            options.BaseUrl = BaseUrl;
             options.ScrapingStrategy = JobScrapingStrategy.Browser;
+            options.ProxyEnabled = false;
+            options.WarmUpEnabled = false;
         });
 
         services.Configure<LinkedInSessionPoolOptions>(options =>
@@ -68,124 +88,14 @@ public sealed class LinkedInE2EFixture : IDisposable
             options.MaxIdleTime = TimeSpan.FromMinutes(30);
         });
 
-        // Mock IBrowserSession
-        IBrowserSession mockBrowserSession = Substitute.For<Ghost.IBrowserSession>();
-        IPage mockPage = Substitute.For<Ghost.IPage>();
-
-        // Setup mock page behavior
-        mockPage.NavigateAsync(Arg.Any<string>(), Arg.Any<Ghost.NavigationOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.CompletedTask);
-        mockPage.WaitForLoadStateAsync(Arg.Any<Ghost.WaitOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.CompletedTask);
-        mockPage.EvaluateAsync<string>(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<CancellationToken>())
-            .Returns("LinkedIn Jobs");
-        mockPage.GetContentAsync(Arg.Any<CancellationToken>())
-            .Returns(GetMockJobSearchHtml());
-        mockPage.QuerySelectorAllAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns([]);
-        mockPage.DisposeAsync().Returns(_ => ValueTask.CompletedTask);
-
-        mockBrowserSession.NewPageAsync(Arg.Any<Ghost.PageOptions>(), Arg.Any<CancellationToken>())
-            .Returns(mockPage);
-
-        services.AddSingleton(mockBrowserSession);
-        services.AddSingleton(mockPage);
+        // Register real IBrowserSession (created in InitializeAsync)
+        services.AddSingleton(_browserSession!);
 
         // Register LinkedIn services
         services.AddSingleton<JavaScriptAdapter>();
         services.AddSingleton<EntityParser>();
         services.AddScoped<LinkedInJobClient>();
-        services.AddScoped<LinkedInSocialClient>();
-        services.AddScoped<LinkedInNewsClient>();
-    }
-
-    private void SetupMockEndpoints()
-    {
-        // Mock LinkedIn feed
-        WireMockServer
-            .Given(WireMock.RequestBuilders.Request.Create()
-                .WithPath("/feed/")
-                .UsingGet())
-            .RespondWith(WireMock.ResponseBuilders.Response.Create()
-                .WithStatusCode(System.Net.HttpStatusCode.OK)
-                .WithHeader("Content-Type", "text/html")
-                .WithBody(GetMockFeedHtml()));
-
-        // Mock LinkedIn jobs search
-        WireMockServer
-            .Given(WireMock.RequestBuilders.Request.Create()
-                .WithPath("/jobs/search")
-                .UsingGet())
-            .RespondWith(WireMock.ResponseBuilders.Response.Create()
-                .WithStatusCode(System.Net.HttpStatusCode.OK)
-                .WithHeader("Content-Type", "text/html")
-                .WithBody(GetMockJobSearchHtml()));
-    }
-
-    private static string GetMockJobSearchHtml()
-    {
-        return """
-        <!DOCTYPE html>
-        <html>
-        <head><title>LinkedIn Jobs</title></head>
-        <body>
-            <ul class="jobs-search-results__list">
-                <li class="jobs-search-results__list-item" data-id="linkedin-job-001">
-                    <div class="job-card-container">
-                        <a href="/jobs/view/linkedin-job-001" class="job-card-list__title">Software Engineer</a>
-                        <span class="job-card-container__company-name">Tech Corp</span>
-                        <span class="job-card-container__metadata-item">San Francisco, CA</span>
-                    </div>
-                </li>
-                <li class="jobs-search-results__list-item" data-id="linkedin-job-002">
-                    <div class="job-card-container">
-                        <a href="/jobs/view/linkedin-job-002" class="job-card-list__title">Senior Developer</a>
-                        <span class="job-card-container__company-name">Innovation Labs</span>
-                        <span class="job-card-container__metadata-item">Remote</span>
-                    </div>
-                </li>
-            </ul>
-        </body>
-        </html>
-        """;
-    }
-
-    private static string GetMockFeedHtml()
-    {
-        return """
-        <!DOCTYPE html>
-        <html>
-        <head><title>LinkedIn Feed</title></head>
-        <body>
-            <div class="feed-shared-update-v2">
-                <h3>Tech Industry Sees Major Growth</h3>
-                <a href="/pulse/article-001">Read more</a>
-            </div>
-            <div class="feed-shared-update-v2">
-                <h3>Remote Work Trends Continue</h3>
-                <a href="/pulse/article-002">Read more</a>
-            </div>
-        </body>
-        </html>
-        """;
-    }
-
-    public void Dispose()
-    {
-        WireMockServer?.Stop();
-        WireMockServer?.Dispose();
-
-        if (ServiceProvider is IDisposable disposable)
-        {
-            disposable.Dispose();
-        }
     }
 }
 
-/// <summary>
-/// Collection attribute for LinkedIn E2E tests.
-/// </summary>
-[CollectionDefinition("LinkedInEnd2End")]
-public class LinkedInE2EFixtures : ICollectionFixture<LinkedInE2EFixture>
-{
-}
+

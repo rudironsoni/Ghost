@@ -1,6 +1,7 @@
 using Ghost.Contracts.Inference;
 using Ghost.Plugin.Google.End2EndTests.Fixtures;
 using Ghost.Plugin.Google.Gemini;
+using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -12,13 +13,25 @@ namespace Ghost.Plugin.Google.End2EndTests;
 /// </summary>
 [Collection("GoogleEnd2End")]
 [Trait("Category", "End2End")]
-public sealed class GeminiClientE2ETests
+public sealed class GeminiClientE2ETests : IAsyncLifetime, IClassFixture<GoogleE2EFixture>
 {
     private readonly GoogleE2EFixture _fixture;
+    private readonly RealBrowserFixture _browserFixture;
 
-    public GeminiClientE2ETests(GoogleE2EFixture fixture)
+    public GeminiClientE2ETests(GoogleE2EFixture fixture, RealBrowserFixture browserFixture)
     {
         _fixture = fixture;
+        _browserFixture = browserFixture;
+    }
+
+    public async Task InitializeAsync()
+    {
+        await _fixture.InitializeAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _fixture.DisposeAsync();
     }
 
     [Fact]

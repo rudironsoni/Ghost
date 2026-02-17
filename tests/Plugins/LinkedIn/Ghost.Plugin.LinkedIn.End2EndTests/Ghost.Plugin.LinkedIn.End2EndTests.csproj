@@ -26,9 +26,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
-    <PackageReference Include="NSubstitute" />
     <PackageReference Include="FluentAssertions" />
-    <PackageReference Include="WireMock.Net" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,6 +37,7 @@
     <ProjectReference Include="../../../../src/Plugins/LinkedIn/Ghost.Plugin.LinkedIn/Ghost.Plugin.LinkedIn.csproj" />
     <ProjectReference Include="../../../../src/Platform/Storage/Ghost.Platform.Storage.Session/Ghost.Platform.Storage.Session.csproj" />
     <ProjectReference Include="../../../Shared/Ghost.Testing/Ghost.Testing.csproj" />
+    <ProjectReference Include="../../../Shared/Ghost.Testing.Scenarios/Ghost.Testing.Scenarios.csproj" />
     <ProjectReference Include="../../../Shared/Ghost.Testing.Mocking/Ghost.Testing.Mocking.csproj" />
   </ItemGroup>
 

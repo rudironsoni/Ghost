@@ -9,10 +9,11 @@ namespace Ghost.Plugin.Indeed.End2EndTests;
 
 /// <summary>
 /// End-to-End tests for Indeed Plugin DI registration and lifecycle.
+/// Uses real browser automation via RealBrowserFixture.
 /// </summary>
-[Collection("IndeedEnd2End")]
+[Collection("Browser")]
 [Trait("Category", "End2End")]
-public sealed class IndeedPluginE2ETests
+public sealed class IndeedPluginE2ETests : IClassFixture<IndeedE2EFixture>
 {
     private readonly IndeedE2EFixture _fixture;
 

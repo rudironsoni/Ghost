@@ -1,34 +1,42 @@
-using System.Net;
+using Ghost.Contracts.Jobs;
+using Ghost.Kernel;
 using Ghost.Plugin.Glassdoor.Internal;
+using Ghost.Plugin.Glassdoor.Jobs;
+using Ghost.Testing.Fixtures;
+using Ghost.Testing.Server;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using WireMock.Net;
-using WireMock.RequestBuilders;
-using WireMock.ResponseBuilders;
-using WireMock.Server;
-using WireMock.Settings;
 using Xunit;
 
 namespace Ghost.Plugin.Glassdoor.End2EndTests.Fixtures;
 
 /// <summary>
-/// End-to-End test fixture for Glassdoor plugin.
-/// Sets up dependency injection container with mocked external services.
+/// End-to-End test fixture for Glassdoor plugin using real browser automation.
+/// Uses RealBrowserFixture for browser sessions and TestScraperServer for mock endpoints.
 /// </summary>
-public sealed class GlassdoorE2EFixture : IDisposable
+public sealed class GlassdoorE2EFixture : IAsyncLifetime
 {
-    public IServiceProvider ServiceProvider { get; }
-    public WireMockServer WireMockServer { get; }
-    public IConfiguration Configuration { get; }
+    private TestScraperServer? _testServer;
+    private IBrowserSession? _browserSession;
 
-    public GlassdoorE2EFixture()
+    public IServiceProvider ServiceProvider { get; private set; } = null!;
+    public TestScraperServer TestServer => _testServer ?? throw new InvalidOperationException("Test server not initialized");
+    public RealBrowserFixture BrowserFixture { get; }
+    public IConfiguration Configuration { get; private set; } = null!;
+
+    public GlassdoorE2EFixture(RealBrowserFixture browserFixture)
     {
-        WireMockServer = WireMockServer.Start(new WireMockServerSettings
-        {
-            Port = 9091,
-            UseSSL = false
-        });
+        BrowserFixture = browserFixture;
+    }
+
+    public async Task InitializeAsync()
+    {
+        // Start the test scraper server
+        _testServer = await TestScraperServer.CreateAsync().ConfigureAwait(false);
+
+        // Create browser session from kernel (proper async initialization)
+        _browserSession = await BrowserFixture.CreateSessionAsync().ConfigureAwait(false);
 
         Configuration = new ConfigurationBuilder()
             .AddJsonFile("testsettings.json", optional: true)
@@ -38,8 +46,6 @@ public sealed class GlassdoorE2EFixture : IDisposable
         var services = new ServiceCollection();
         ConfigureServices(services);
         ServiceProvider = services.BuildServiceProvider();
-
-        SetupMockEndpoints();
     }
 
     private void ConfigureServices(IServiceCollection services)
@@ -47,21 +53,27 @@ public sealed class GlassdoorE2EFixture : IDisposable
         // Logging
         services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Debug));
 
+        // Register the browser fixture's kernel for IGhostKernel
+        services.AddSingleton(BrowserFixture.Kernel);
+
+        // Register the browser session (created during InitializeAsync)
+        services.AddSingleton(_browserSession!);
+
         // Configuration
         services.Configure<GlassdoorOptions>(options =>
         {
             options.Enabled = true;
-            options.BaseUrl = $"http://localhost:{WireMockServer.Port}";
+            options.BaseUrl = _testServer?.GetGlassdoorBaseUrl() ?? "http://localhost:8080/glassdoor";
             options.RequestTimeoutMs = 30000;
             options.MaxRetries = 3;
-            options.Strategy = JobSearchStrategy.HttpFirst;
+            options.Strategy = JobSearchStrategy.BrowserOnly;
             options.ProxyEnabled = false;
         });
 
-        // Register HTTP client with WireMock base URL
+        // Register HTTP client with test server base URL
         services.AddHttpClient<GlassdoorApiClient>(client =>
         {
-            client.BaseAddress = new Uri($"http://localhost:{WireMockServer.Port}");
+            client.BaseAddress = new Uri(_testServer?.GetGlassdoorBaseUrl() ?? "http://localhost:8080/glassdoor");
             client.Timeout = TimeSpan.FromSeconds(30);
         });
 
@@ -73,105 +85,34 @@ public sealed class GlassdoorE2EFixture : IDisposable
             return new GlassdoorApiClient(httpClient, logger);
         });
 
+        services.AddScoped<GlassdoorBrowserClient>();
+        services.AddScoped<GlassdoorSearchScraper>();
         services.AddScoped<GlassdoorJobClient>();
     }
 
-    private void SetupMockEndpoints()
+    public async Task DisposeAsync()
     {
-        // Mock Glassdoor search endpoint
-        WireMockServer
-            .Given(Request.Create()
-                .WithPath("/graph.json")
-                .UsingPost())
-            .RespondWith(Response.Create()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithHeader("Content-Type", "application/json")
-                .WithBody(GetMockSearchResponse()));
-
-        // Mock Glassdoor job details endpoint
-        WireMockServer
-            .Given(Request.Create()
-                .WithPath("/job/*")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithHeader("Content-Type", "text/html")
-                .WithBody(GetMockJobDetailsHtml()));
-    }
-
-    private static string GetMockSearchResponse()
-    {
-        return """
+        if (ServiceProvider is IAsyncDisposable asyncDisposable)
         {
-            "data": {
-                "jobSearch": {
-                    "results": [
-                        {
-                            "id": "123456",
-                            "title": "Software Engineer",
-                            "employer": {
-                                "name": "Tech Corp"
-                            },
-                            "location": {
-                                "displayName": "San Francisco, CA"
-                            },
-                            "description": "Looking for a skilled software engineer",
-                            "jobview": {
-                                "url": "/job/123456/software-engineer"
-                            }
-                        }
-                    ]
-                }
-            }
+            await asyncDisposable.DisposeAsync().ConfigureAwait(false);
         }
-        """;
-    }
-
-    private static string GetMockJobDetailsHtml()
-    {
-        return """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Software Engineer Job</title>
-            <meta name="csrf-token" content="mock-csrf-token-12345" />
-        </head>
-        <body>
-            <div class="jobContent">
-                <h1 class="jobTitle">Software Engineer</h1>
-                <div class="employerName">Tech Corp</div>
-                <div class="location">San Francisco, CA</div>
-                <div class="description">
-                    <p>We are looking for a skilled software engineer to join our team.</p>
-                    <p>Requirements:</p>
-                    <ul>
-                        <li>5+ years of experience</li>
-                        <li>Strong C# skills</li>
-                    </ul>
-                </div>
-            </div>
-        </body>
-        </html>
-        """;
-    }
-
-    public void Dispose()
-    {
-        WireMockServer?.Stop();
-        WireMockServer?.Dispose();
-
-        if (ServiceProvider is IDisposable disposable)
+        else if (ServiceProvider is IDisposable disposable)
         {
             disposable.Dispose();
+        }
+
+        if (_testServer != null)
+        {
+            await _testServer.DisposeAsync().ConfigureAwait(false);
         }
     }
 }
 
 /// <summary>
 /// Collection attribute for Glassdoor E2E tests.
-/// Ensures tests run sequentially with shared fixture.
+/// Uses Browser collection for shared RealBrowserFixture and custom fixture for test server.
 /// </summary>
 [CollectionDefinition("GlassdoorEnd2End")]
-public class GlassdoorE2EFixtures : ICollectionFixture<GlassdoorE2EFixture>
+public class GlassdoorE2EFixtures : ICollectionFixture<RealBrowserFixture>
 {
 }
