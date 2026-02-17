@@ -16,3 +16,8 @@ sync:
 dolt.mode: "server"
 
 sync-branch: "beads-sync"
+
+# Federation configuration
+federation:
+  enabled: false
+  peers: []
