@@ -13,8 +13,8 @@ using Xunit;
 namespace Ghost.Plugin.InfoJobs.End2EndTests.Fixtures;
 
 /// <summary>
-/// End-to-End test fixture for InfoJobs plugin.
-/// Sets up dependency injection container with mocked external services.
+/// End-to-End test fixture for InfoJobs plugin using mocked external services.
+/// InfoJobs uses API-based integration, not browser-based scraping.
 /// </summary>
 public sealed class InfoJobsE2EFixture : IDisposable
 {
@@ -157,7 +157,9 @@ public sealed class InfoJobsE2EFixture : IDisposable
                     "journey": {
                         "value": "Jornada completa"
                     },
-                    "creationDate": "2024-01-15T10:00:00.000+01:00"
+                    "creationDate": "2024-01-15T10:00:00.000+01:00",
+                    "updated": "2024-01-15T10:00:00.000+01:00",
+                    "link": "https://www.infojobs.net/job-001"
                 },
                 {
                     "id": "infojobs-job-002",
@@ -189,7 +191,9 @@ public sealed class InfoJobsE2EFixture : IDisposable
                     "journey": {
                         "value": "Jornada completa"
                     },
-                    "creationDate": "2024-01-14T08:00:00.000+01:00"
+                    "creationDate": "2024-01-14T08:00:00.000+01:00",
+                    "updated": "2024-01-14T08:00:00.000+01:00",
+                    "link": "https://www.infojobs.net/job-002"
                 }
             ],
             "totalResults": 2,
@@ -245,13 +249,10 @@ public sealed class InfoJobsE2EFixture : IDisposable
                 "value": "Programación"
             },
             "creationDate": "2024-01-15T10:00:00.000+01:00",
-            "updateDate": "2024-01-15T10:00:00.000+01:00",
+            "updated": "2024-01-15T10:00:00.000+01:00",
             "applications": 25,
-            "requirements": {
-                "minRequirements": "2 años de experiencia en desarrollo .NET",
-                "desiredRequirements": "Conocimiento de Azure, microservicios"
-            },
-            "responsibilities": "Desarrollo de aplicaciones web y APIs REST"
+            "link": "https://www.infojobs.net/job-001",
+            "requirementMin": "2 años de experiencia en desarrollo .NET"
         }
         """;
     }

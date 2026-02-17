@@ -3,6 +3,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <IsTestProject>false</IsTestProject>
     <IsPackable>false</IsPackable>
+    <!-- Suppress pre-existing analyzer warnings in test infrastructure -->
+    <NoWarn>$(NoWarn);CA1305;CA1822;CA1826;CA1848;CA1873;CA1862;IDE0270</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

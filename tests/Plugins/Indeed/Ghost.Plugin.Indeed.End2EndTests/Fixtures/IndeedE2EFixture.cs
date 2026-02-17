@@ -1,46 +1,63 @@
-using System.Net;
+using Ghost.Kernel;
 using Ghost.Models;
 using Ghost.Plugin.Indeed.Internal;
+using Ghost.Testing.Fixtures;
+using Ghost.Testing.Server;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using WireMock.Net;
-using WireMock.RequestBuilders;
-using WireMock.ResponseBuilders;
-using WireMock.Server;
-using WireMock.Settings;
 using Xunit;
 
 namespace Ghost.Plugin.Indeed.End2EndTests.Fixtures;
 
 /// <summary>
-/// End-to-End test fixture for Indeed plugin.
-/// Sets up dependency injection container with mocked external services.
+/// End-to-End test fixture for Indeed plugin using real browser automation.
+/// Sets up dependency injection container with real IBrowserSession from GhostKernel.
+/// Tests run against localhost TestScraperServer for realistic HTML fixtures.
 /// </summary>
-public sealed class IndeedE2EFixture : IDisposable
+public sealed class IndeedE2EFixture : IAsyncLifetime
 {
-    public IServiceProvider ServiceProvider { get; }
-    public WireMockServer WireMockServer { get; }
-    public IConfiguration Configuration { get; }
+    private readonly RealBrowserFixture _browserFixture;
+    private IBrowserSession? _session;
+    private TestScraperServer? _testServer;
 
-    public IndeedE2EFixture()
+    public IndeedE2EFixture(RealBrowserFixture browserFixture)
     {
-        WireMockServer = WireMockServer.Start(new WireMockServerSettings
+        _browserFixture = browserFixture;
+    }
+
+    public IBrowserSession Session => _session ?? throw new InvalidOperationException("Fixture not initialized");
+    public TestScraperServer TestServer => _testServer ?? throw new InvalidOperationException("Test server not initialized");
+    public IServiceProvider ServiceProvider { get; private set; } = null!;
+    public IConfiguration Configuration { get; private set; } = null!;
+    public string IndeedBaseUrl => _testServer?.GetIndeedBaseUrl() ?? throw new InvalidOperationException("Test server not initialized");
+
+    public async Task InitializeAsync()
+    {
+        try
         {
-            Port = 9093,
-            UseSSL = false
-        });
+            // Start the TestScraperServer for Indeed HTML fixtures
+            _testServer = await TestScraperServer.CreateAsync().ConfigureAwait(false);
 
-        Configuration = new ConfigurationBuilder()
-            .AddJsonFile("testsettings.json", optional: true)
-            .AddEnvironmentVariables()
-            .Build();
+            // Create a fresh session for this test class
+            _session = await _browserFixture.CreateSessionAsync().ConfigureAwait(false);
 
-        var services = new ServiceCollection();
-        ConfigureServices(services);
-        ServiceProvider = services.BuildServiceProvider();
+            // Build configuration
+            Configuration = new ConfigurationBuilder()
+                .AddJsonFile("testsettings.json", optional: true)
+                .AddEnvironmentVariables()
+                .Build();
 
-        SetupMockEndpoints();
+            // Build service provider with Indeed services
+            var services = new ServiceCollection();
+            ConfigureServices(services);
+            ServiceProvider = services.BuildServiceProvider();
+        }
+        catch
+        {
+            await DisposeAsync();
+            throw;
+        }
     }
 
     private void ConfigureServices(IServiceCollection services)
@@ -53,8 +70,8 @@ public sealed class IndeedE2EFixture : IDisposable
         {
             Enabled = true,
             Country = CountryCode.US,
-            BaseUrl = $"http://localhost:{WireMockServer.Port}",
-            ApiEndpoint = $"http://localhost:{WireMockServer.Port}/graphql",
+            BaseUrl = IndeedBaseUrl,
+            ApiEndpoint = $"{IndeedBaseUrl}/graphql",
             ApiKey = "test-api-key",
             RequestTimeoutMs = 30000,
             MaxRetries = 3,
@@ -62,12 +79,9 @@ public sealed class IndeedE2EFixture : IDisposable
         };
         services.AddSingleton(options);
 
-        // Register HTTP client
-        services.AddHttpClient<IndeedApiClient>(client =>
-        {
-            client.BaseAddress = new Uri($"http://localhost:{WireMockServer.Port}");
-            client.Timeout = TimeSpan.FromSeconds(30);
-        });
+        // Register real browser session
+        services.AddSingleton(_session!);
+        services.AddSingleton<IBrowserSession>(_session!);
 
         // Register Indeed services
         services.AddSingleton<IndeedApiClient>(sp =>
@@ -79,87 +93,28 @@ public sealed class IndeedE2EFixture : IDisposable
         services.AddScoped<IndeedJobClient>();
     }
 
-    private void SetupMockEndpoints()
+    public async Task DisposeAsync()
     {
-        // Mock Indeed GraphQL endpoint for job search
-        WireMockServer
-            .Given(Request.Create()
-                .WithPath("/graphql")
-                .UsingPost())
-            .RespondWith(Response.Create()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithHeader("Content-Type", "application/json")
-                .WithBody(GetMockGraphQLSearchResponse()));
-    }
-
-    private static string GetMockGraphQLSearchResponse()
-    {
-        return """
+        if (_session != null)
         {
-            "data": {
-                "jobSearch": {
-                    "results": [
-                        {
-                            "job": {
-                                "key": "indeed-job-001",
-                                "title": "Software Engineer",
-                                "employer": {
-                                    "name": "Tech Solutions Inc"
-                                },
-                                "location": {
-                                    "formatted": {
-                                        "long": "San Francisco, CA"
-                                    }
-                                },
-                                "description": {
-                                    "html": "<p>We are looking for a skilled software engineer</p>"
-                                }
-                            }
-                        },
-                        {
-                            "job": {
-                                "key": "indeed-job-002",
-                                "title": "Senior Developer",
-                                "employer": {
-                                    "name": "Digital Corp"
-                                },
-                                "location": {
-                                    "formatted": {
-                                        "long": "Remote"
-                                    }
-                                },
-                                "description": {
-                                    "html": "<p>Join our remote team as a senior developer</p>"
-                                }
-                            }
-                        }
-                    ],
-                    "pageInfo": {
-                        "hasNextPage": true,
-                        "nextCursor": "mock-cursor-123"
-                    }
-                }
-            }
+            await _session.DisposeAsync().ConfigureAwait(false);
         }
-        """;
-    }
 
-    public void Dispose()
-    {
-        WireMockServer?.Stop();
-        WireMockServer?.Dispose();
-
-        if (ServiceProvider is IDisposable disposable)
+        if (_testServer != null)
         {
-            disposable.Dispose();
+            await _testServer.DisposeAsync().ConfigureAwait(false);
         }
     }
 }
 
 /// <summary>
-/// Collection attribute for Indeed E2E tests.
+/// Collection attribute for Indeed E2E tests using real browser.
+/// Tests in the same collection run sequentially and share the RealBrowserFixture.
 /// </summary>
-[CollectionDefinition("IndeedEnd2End")]
-public class IndeedE2EFixtures : ICollectionFixture<IndeedE2EFixture>
+[CollectionDefinition("Browser")]
+public class IndeedE2EFixtures : ICollectionFixture<RealBrowserFixture>
 {
+    // This class has no code, and is never created. Its purpose is simply
+    // to be the place to apply [CollectionDefinition] and all the
+    // ICollectionFixture<> interfaces.
 }

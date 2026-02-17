@@ -1,32 +1,48 @@
-using Ghost.Contracts.Jobs;
-using Ghost.Contracts.News;
-using Ghost.Contracts.Social;
-using Ghost.Hosting;
-using Ghost.Kernel;
+using global::Ghost;
+using global::Ghost.Contracts.Jobs;
+using global::Ghost.Contracts.News;
+using global::Ghost.Contracts.Social;
+using global::Ghost.Hosting;
 using Ghost.Plugin.LinkedIn.End2EndTests.Fixtures;
-using Ghost.Plugin.LinkedIn.Internal;
 using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Core.Extraction;
+using Ghost.Testing.Contracts;
+using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using NSubstitute;
 using Xunit;
+
+// NSubstitute
+using NSubstitute;
 
 namespace Ghost.Plugin.LinkedIn.End2EndTests;
 
 /// <summary>
-/// End-to-End tests for LinkedIn Plugin DI registration and lifecycle.
+/// End-to-End tests for LinkedIn Plugin.
+/// Tests the complete plugin lifecycle including setup and teardown.
 /// </summary>
 [Collection("LinkedInEnd2End")]
 [Trait("Category", "End2End")]
-public sealed class LinkedInPluginE2ETests
+public sealed class LinkedInPluginE2ETests : IAsyncLifetime, IClassFixture<LinkedInE2EFixture>
 {
     private readonly LinkedInE2EFixture _fixture;
+    private readonly RealBrowserFixture _browserFixture;
 
-    public LinkedInPluginE2ETests(LinkedInE2EFixture fixture)
+    public LinkedInPluginE2ETests(LinkedInE2EFixture fixture, RealBrowserFixture browserFixture)
     {
         _fixture = fixture;
+        _browserFixture = browserFixture;
+    }
+
+    public async Task InitializeAsync()
+    {
+        await _fixture.InitializeAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _fixture.DisposeAsync();
     }
 
     [Fact]
@@ -197,9 +213,11 @@ public sealed class LinkedInPluginE2ETests
         services.AddLogging();
 
         // Mock required services
-        IGhostKernel mockKernel = Substitute.For<Ghost.Kernel.IGhostKernel>();
+#pragma warning disable CS0618 // IGhostKernel may be obsolete
+        global::Ghost.Kernel.IGhostKernel mockKernel = Substitute.For<global::Ghost.Kernel.IGhostKernel>();
+#pragma warning restore CS0618
         services.AddSingleton(mockKernel);
-        services.AddSingleton(Substitute.For<Ghost.IProxyProvider>());
+        services.AddSingleton(Substitute.For<IProxyProvider>());
 
         var plugin = new LinkedInPlugin();
 

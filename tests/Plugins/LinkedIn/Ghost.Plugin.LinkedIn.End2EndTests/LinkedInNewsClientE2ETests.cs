@@ -1,5 +1,6 @@
 using Ghost.Contracts.News;
 using Ghost.Plugin.LinkedIn.End2EndTests.Fixtures;
+using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -11,13 +12,25 @@ namespace Ghost.Plugin.LinkedIn.End2EndTests;
 /// </summary>
 [Collection("LinkedInEnd2End")]
 [Trait("Category", "End2End")]
-public sealed class LinkedInNewsClientE2ETests
+public sealed class LinkedInNewsClientE2ETests : IAsyncLifetime, IClassFixture<LinkedInE2EFixture>
 {
     private readonly LinkedInE2EFixture _fixture;
+    private readonly RealBrowserFixture _browserFixture;
 
-    public LinkedInNewsClientE2ETests(LinkedInE2EFixture fixture)
+    public LinkedInNewsClientE2ETests(LinkedInE2EFixture fixture, RealBrowserFixture browserFixture)
     {
         _fixture = fixture;
+        _browserFixture = browserFixture;
+    }
+
+    public async Task InitializeAsync()
+    {
+        await _fixture.InitializeAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _fixture.DisposeAsync();
     }
 
     [Fact]

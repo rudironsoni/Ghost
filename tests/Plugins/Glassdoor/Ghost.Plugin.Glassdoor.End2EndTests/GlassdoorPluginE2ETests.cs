@@ -1,6 +1,7 @@
 using Ghost.Contracts.Jobs;
 using Ghost.Hosting;
 using Ghost.Plugin.Glassdoor.End2EndTests.Fixtures;
+using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -12,13 +13,25 @@ namespace Ghost.Plugin.Glassdoor.End2EndTests;
 /// </summary>
 [Collection("GlassdoorEnd2End")]
 [Trait("Category", "End2End")]
-public sealed class GlassdoorPluginE2ETests
+public sealed class GlassdoorPluginE2ETests : IAsyncLifetime, IClassFixture<GlassdoorE2EFixture>
 {
     private readonly GlassdoorE2EFixture _fixture;
+    private readonly RealBrowserFixture _browserFixture;
 
-    public GlassdoorPluginE2ETests(GlassdoorE2EFixture fixture)
+    public GlassdoorPluginE2ETests(GlassdoorE2EFixture fixture, RealBrowserFixture browserFixture)
     {
         _fixture = fixture;
+        _browserFixture = browserFixture;
+    }
+
+    public async Task InitializeAsync()
+    {
+        await _fixture.InitializeAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _fixture.DisposeAsync();
     }
 
     [Fact]

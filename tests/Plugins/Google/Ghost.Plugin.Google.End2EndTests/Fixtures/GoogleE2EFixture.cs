@@ -1,249 +1,69 @@
-using System.Net;
-using Ghost.Plugin.Google.Gemini;
 using Ghost.Plugin.Google.Jobs;
 using Ghost.Plugin.Google.Jobs.Internal;
-using Microsoft.Extensions.Configuration;
+using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using WireMock.Net;
-using WireMock.RequestBuilders;
-using WireMock.ResponseBuilders;
-using WireMock.Server;
-using WireMock.Settings;
 using Xunit;
 
 namespace Ghost.Plugin.Google.End2EndTests.Fixtures;
 
 /// <summary>
-/// End-to-End test fixture for Google plugin.
-/// Sets up dependency injection container with mocked external services.
+/// Fixture for Google End-to-End tests using real browser infrastructure.
 /// </summary>
-public sealed class GoogleE2EFixture : IDisposable
+#pragma warning disable CA1001 // IAsyncLifetime handles disposal
+public sealed class GoogleE2EFixture : IAsyncLifetime
+#pragma warning restore CA1001
 {
-    public IServiceProvider ServiceProvider { get; }
-    public WireMockServer WireMockServer { get; }
-    public IConfiguration Configuration { get; }
+    private IServiceProvider? _serviceProvider;
+    private HttpClient? _httpClient;
+
+    public IServiceProvider ServiceProvider => _serviceProvider ?? throw new InvalidOperationException("Fixture not initialized");
 
     public GoogleE2EFixture()
     {
-        WireMockServer = WireMockServer.Start(new WireMockServerSettings
-        {
-            Port = 9092,
-            UseSSL = false
-        });
+    }
 
-        Configuration = new ConfigurationBuilder()
-            .AddJsonFile("testsettings.json", optional: true)
-            .AddEnvironmentVariables()
-            .Build();
-
+    public async Task InitializeAsync()
+    {
+        _httpClient = new HttpClient();
         var services = new ServiceCollection();
         ConfigureServices(services);
-        ServiceProvider = services.BuildServiceProvider();
-
-        SetupMockEndpoints();
+        _serviceProvider = services.BuildServiceProvider();
+        await Task.CompletedTask;
     }
 
-    private void ConfigureServices(IServiceCollection services)
+    public async Task DisposeAsync()
     {
-        // Logging
-        services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Debug));
+        _httpClient?.Dispose();
 
-        // Jobs configuration
-        services.Configure<GoogleJobsOptions>(options =>
+        if (_serviceProvider is IAsyncDisposable asyncDisposable)
         {
-            options.Enabled = true;
-            options.ApiKey = "test-api-key";
-            options.BaseUrl = $"http://localhost:{WireMockServer.Port}";
-            options.Strategy = JobSearchStrategy.HttpFirst;
-        });
-
-        // Gemini configuration
-        services.Configure<GeminiOptions>(options =>
-        {
-            options.Enabled = true;
-            options.ApiKey = "test-api-key";
-            options.BaseUrl = $"http://localhost:{WireMockServer.Port}/gemini";
-            options.DefaultModel = "gemini-pro";
-            options.ResponseTimeout = TimeSpan.FromMinutes(2);
-        });
-
-        // Mock IBrowserSession for Gemini
-        IBrowserSession mockBrowserSession = NSubstitute.Substitute.For<Ghost.IBrowserSession>();
-        services.AddSingleton(mockBrowserSession);
-
-        // Register Google Jobs options as singleton for client constructors
-        services.AddSingleton(sp =>
-        {
-            GoogleJobsOptions options = sp.GetRequiredService<IOptions<GoogleJobsOptions>>().Value;
-            return options;
-        });
-
-        // Register HTTP client for GoogleJobsApiClient
-        services.AddHttpClient<GoogleJobsApiClient>(client =>
-        {
-            client.BaseAddress = new Uri($"http://localhost:{WireMockServer.Port}");
-            client.Timeout = TimeSpan.FromSeconds(30);
-        });
-
-        // Register Google services
-        services.AddSingleton<GoogleJobsApiClient>(sp =>
-        {
-            HttpClient httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(GoogleJobsApiClient));
-            GoogleJobsOptions options = sp.GetRequiredService<GoogleJobsOptions>();
-            ILogger<GoogleJobsApiClient> logger = sp.GetRequiredService<ILogger<GoogleJobsApiClient>>();
-            return new GoogleJobsApiClient(httpClient, options, logger);
-        });
-
-        services.AddSingleton<GoogleJobClient>();
-        services.AddSingleton<GeminiClient>();
-    }
-
-    private void SetupMockEndpoints()
-    {
-        // Mock Google Jobs API search endpoint
-        WireMockServer
-            .Given(Request.Create()
-                .WithPath("/v1/jobs:search")
-                .UsingPost())
-            .RespondWith(Response.Create()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithHeader("Content-Type", "application/json")
-                .WithBody(GetMockJobsSearchResponse()));
-
-        // Mock Google Jobs API get job endpoint
-        WireMockServer
-            .Given(Request.Create()
-                .WithPath("/v1/jobs/*")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithHeader("Content-Type", "application/json")
-                .WithBody(GetMockJobDetailsResponse()));
-
-        // Mock Gemini API
-        WireMockServer
-            .Given(Request.Create()
-                .WithPath("/gemini/v1/models/gemini-pro:generateContent")
-                .UsingPost())
-            .RespondWith(Response.Create()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithHeader("Content-Type", "application/json")
-                .WithBody(GetMockGeminiResponse()));
-    }
-
-    private static string GetMockJobsSearchResponse()
-    {
-        return """
-        {
-            "jobs": [
-                {
-                    "name": "projects/test/jobs/job-001",
-                    "title": "Senior Software Engineer",
-                    "company": {
-                        "name": "Google",
-                        "displayName": "Google"
-                    },
-                    "location": {
-                        "displayName": "Mountain View, CA"
-                    },
-                    "description": "Join our engineering team...",
-                    "jobBenefits": ["Health insurance", "401k"],
-                    "employmentTypes": ["FULL_TIME"],
-                    "createTime": "2024-01-15T10:00:00Z"
-                },
-                {
-                    "name": "projects/test/jobs/job-002",
-                    "title": "Software Engineer",
-                    "company": {
-                        "name": "TechCorp",
-                        "displayName": "TechCorp"
-                    },
-                    "location": {
-                        "displayName": "Remote"
-                    },
-                    "description": "Build scalable systems...",
-                    "employmentTypes": ["FULL_TIME", "CONTRACT"],
-                    "createTime": "2024-01-14T08:00:00Z"
-                }
-            ],
-            "nextPageToken": "mock-next-page-token"
+            await asyncDisposable.DisposeAsync().ConfigureAwait(false);
         }
-        """;
-    }
-
-    private static string GetMockJobDetailsResponse()
-    {
-        return """
-        {
-            "name": "projects/test/jobs/job-001",
-            "title": "Senior Software Engineer",
-            "company": {
-                "name": "Google",
-                "displayName": "Google"
-            },
-            "location": {
-                "displayName": "Mountain View, CA"
-            },
-            "description": "Join our engineering team to build amazing products...",
-            "qualifications": ["Bachelor's degree in CS", "5+ years experience"],
-            "responsibilities": ["Design systems", "Write code", "Mentor engineers"],
-            "jobBenefits": ["Health insurance", "401k matching", "Free meals"],
-            "employmentTypes": ["FULL_TIME"],
-            "createTime": "2024-01-15T10:00:00Z"
-        }
-        """;
-    }
-
-    private static string GetMockGeminiResponse()
-    {
-        return """
-        {
-            "candidates": [
-                {
-                    "content": {
-                        "parts": [
-                            {
-                                "text": "This is a test response from the Gemini API."
-                            }
-                        ],
-                        "role": "model"
-                    },
-                    "finishReason": "STOP",
-                    "safetyRatings": [
-                        {
-                            "category": "HARM_CATEGORY_HARASSMENT",
-                            "probability": "NEGLIGIBLE"
-                        }
-                    ]
-                }
-            ],
-            "usageMetadata": {
-                "promptTokenCount": 10,
-                "candidatesTokenCount": 15,
-                "totalTokenCount": 25
-            }
-        }
-        """;
-    }
-
-    public void Dispose()
-    {
-        WireMockServer?.Stop();
-        WireMockServer?.Dispose();
-
-        if (ServiceProvider is IDisposable disposable)
+        else if (_serviceProvider is IDisposable disposable)
         {
             disposable.Dispose();
         }
     }
-}
 
-/// <summary>
-/// Collection attribute for Google E2E tests.
-/// </summary>
-[CollectionDefinition("GoogleEnd2End")]
-public class GoogleE2EFixtures : ICollectionFixture<GoogleE2EFixture>
-{
+    private void ConfigureServices(IServiceCollection services)
+    {
+        // Add logging
+        services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug));
+
+        // Register HttpClient
+        services.AddSingleton(_httpClient!);
+
+        // Configure Google Jobs options
+        services.Configure<GoogleJobsOptions>(options =>
+        {
+            options.Enabled = true;
+            options.Strategy = JobSearchStrategy.HttpFirst;
+        });
+
+        // Register Google Jobs services
+        services.AddSingleton<GoogleJobsApiClient>();
+        services.AddSingleton<GoogleJobClient>();
+    }
 }
