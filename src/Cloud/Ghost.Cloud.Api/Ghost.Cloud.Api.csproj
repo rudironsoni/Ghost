@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Ghost.Cloud.Api</RootNamespace>
+    <Description>Ghost Cloud API for distributed scraping platform</Description>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="Microsoft.Orleans.Server" />
+    <PackageReference Include="Microsoft.Orleans.Clustering.AdoNet" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="FluentValidation" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Ghost.Cloud.Contracts/Ghost.Cloud.Contracts.csproj" />
+    <ProjectReference Include="../Ghost.Cloud.Grains/Ghost.Cloud.Grains.csproj" />
+    <ProjectReference Include="../Ghost.Cloud.Delivery/Ghost.Cloud.Delivery.csproj" />
+    <ProjectReference Include="../Ghost.Cloud.Infrastructure/Ghost.Cloud.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

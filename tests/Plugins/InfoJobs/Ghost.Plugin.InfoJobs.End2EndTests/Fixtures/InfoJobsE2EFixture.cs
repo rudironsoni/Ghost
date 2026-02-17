@@ -54,7 +54,8 @@ public sealed class InfoJobsE2EFixture : IDisposable
             ApiKey = "test-api-key",
             ClientId = "test-client-id",
             ClientSecret = "test-client-secret",
-            BaseUrl = $"http://localhost:{WireMockServer.Port}",
+            BaseUrl = $"http://localhost:{WireMockServer.Port}/",
+            ApiEndpoint = $"http://localhost:{WireMockServer.Port}/api/",
             RequestTimeoutMs = 30000,
             MaxRetries = 3
         };
@@ -130,7 +131,7 @@ public sealed class InfoJobsE2EFixture : IDisposable
                     "id": "infojobs-job-001",
                     "title": "Desarrollador Software",
                     "description": "Buscamos desarrollador de software con experiencia",
-                    "profile": {
+                    "author": {
                         "name": "Tech Solutions Spain",
                         "corporateWebsiteUrl": "https://techsolutions.es"
                     },
@@ -162,7 +163,7 @@ public sealed class InfoJobsE2EFixture : IDisposable
                     "id": "infojobs-job-002",
                     "title": "Programador .NET",
                     "description": "Desarrollador .NET para proyecto internacional",
-                    "profile": {
+                    "author": {
                         "name": "Digital Innovators",
                         "corporateWebsiteUrl": "https://digitalinnovators.es"
                     },
@@ -205,7 +206,7 @@ public sealed class InfoJobsE2EFixture : IDisposable
             "id": "infojobs-job-001",
             "title": "Desarrollador Software",
             "description": "Buscamos desarrollador de software con experiencia en C# y .NET.\n\nRequisitos:\n- 2+ años de experiencia\n- Conocimiento de .NET Core\n- SQL Server\n\nOfrecemos:\n- Contrato indefinido\n- Salario competitivo\n- Formación continua",
-            "profile": {
+            "author": {
                 "name": "Tech Solutions Spain",
                 "description": "Empresa líder en soluciones tecnológicas",
                 "corporateWebsiteUrl": "https://techsolutions.es"

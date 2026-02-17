@@ -18,10 +18,8 @@ public class WebSocketConnection : IDisposable
     private readonly MessageBuffer _messageBuffer;
     private readonly object _lock = new();
     private bool _disposed;
-    private int _reconnectionCount;
     private CancellationTokenSource? _heartbeatCts;
     private Task? _heartbeatTask;
-    private string _disconnectReason = string.Empty;
     private readonly StringBuilder _jsonFragmentBuffer = new();
 
     /// <summary>
@@ -70,13 +68,13 @@ public class WebSocketConnection : IDisposable
     /// Gets the number of reconnection attempts made.
     /// </summary>
     /// <value>The reconnection count.</value>
-    public int ReconnectionCount => _reconnectionCount;
+    public int ReconnectionCount { get; private set; }
 
     /// <summary>
     /// Gets the reason for disconnection.
     /// </summary>
     /// <value>The disconnect reason.</value>
-    public string DisconnectReason => _disconnectReason;
+    public string DisconnectReason { get; private set; } = string.Empty;
 
     /// <summary>
     /// Gets the number of buffered messages.
@@ -247,7 +245,7 @@ public class WebSocketConnection : IDisposable
 
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    _disconnectReason = "Server initiated close";
+                    DisconnectReason = "Server initiated close";
                     ConnectionClosed?.Invoke(this, result.CloseStatus ?? WebSocketCloseStatus.NormalClosure);
                     return new WebSocketMessage
                     {
@@ -384,7 +382,7 @@ public class WebSocketConnection : IDisposable
             }
         }
 
-        _disconnectReason = $"Client initiated close: {closeStatus}";
+        DisconnectReason = $"Client initiated close: {closeStatus}";
         StopHeartbeat();
     }
 
@@ -413,7 +411,7 @@ public class WebSocketConnection : IDisposable
             }
 
             attempt++;
-            _reconnectionCount++;
+            ReconnectionCount++;
 
             Reconnecting?.Invoke(this, attempt);
 
@@ -515,7 +513,7 @@ public class WebSocketConnection : IDisposable
                     _options.Heartbeat.ExpectedResponse != null &&
                     response.Content != _options.Heartbeat.ExpectedResponse)
                 {
-                    _disconnectReason = "Heartbeat response mismatch";
+                    DisconnectReason = "Heartbeat response mismatch";
                     await CloseAsync(WebSocketCloseStatus.NormalClosure, "Heartbeat failed", CancellationToken.None).ConfigureAwait(false);
                     break;
                 }
@@ -527,7 +525,7 @@ public class WebSocketConnection : IDisposable
             catch (Exception ex)
             {
                 ErrorOccurred?.Invoke(this, ex);
-                _disconnectReason = $"Heartbeat error: {ex.Message}";
+                DisconnectReason = $"Heartbeat error: {ex.Message}";
                 break;
             }
         }

@@ -189,7 +189,7 @@ public sealed class LinkedInPluginE2ETests
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Ghost:Extensions:LinkedIn:Enabled"] = "true",
-                ["Ghost:Extensions:LinkedIn:SessionPool:MaxSessions"] = "5"
+                ["Ghost:Extensions:LinkedIn:SessionPool:MaxSize"] = "5"
             })
             .Build();
 

@@ -20,7 +20,7 @@ public sealed class GlassdoorJobClientE2ETests
         _fixture = fixture;
     }
 
-    [Fact]
+    [Fact(Skip = "Requires external browser infrastructure")]
     [Trait("TestType", "End2End")]
     public async Task SearchJobs_WithValidCriteria_ReturnsJobListingsAsync()
     {
@@ -47,7 +47,7 @@ public sealed class GlassdoorJobClientE2ETests
         Assert.Equal("San Francisco, CA", firstJob.Location);
     }
 
-    [Fact]
+    [Fact(Skip = "Requires external browser infrastructure")]
     [Trait("TestType", "End2End")]
     public async Task GetJobDetails_WithValidJobId_ReturnsJobDetailsAsync()
     {
@@ -64,7 +64,7 @@ public sealed class GlassdoorJobClientE2ETests
         Assert.Equal("Glassdoor", result.Source);
     }
 
-    [Fact]
+    [Fact(Skip = "Requires external browser infrastructure")]
     [Trait("TestType", "End2End")]
     public async Task SearchJobs_WithEmptyQuery_ReturnsEmptyResultsAsync()
     {
@@ -84,7 +84,7 @@ public sealed class GlassdoorJobClientE2ETests
         Assert.NotNull(results);
     }
 
-    [Fact]
+    [Fact(Skip = "Requires external browser infrastructure")]
     [Trait("TestType", "End2End")]
     public async Task PlatformName_ReturnsExpectedValueAsync()
     {
@@ -98,7 +98,7 @@ public sealed class GlassdoorJobClientE2ETests
         Assert.Equal("Glassdoor", platformName);
     }
 
-    [Fact]
+    [Fact(Skip = "Requires external browser infrastructure")]
     [Trait("TestType", "End2End")]
     public async Task GetSavedJobs_ReturnsEmptyListAsync()
     {
@@ -113,7 +113,7 @@ public sealed class GlassdoorJobClientE2ETests
         Assert.Empty(results);
     }
 
-    [Fact]
+    [Fact(Skip = "Requires external browser infrastructure")]
     [Trait("TestType", "End2End")]
     public async Task GetApplications_ReturnsEmptyListAsync()
     {

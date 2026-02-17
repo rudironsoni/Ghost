@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Ghost.Cloud.Delivery.UnitTests</RootNamespace>
+    <Description>Unit tests for Ghost Cloud Delivery</Description>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../src/Cloud/Ghost.Cloud.Delivery/Ghost.Cloud.Delivery.csproj" />
+    <ProjectReference Include="../../../src/Cloud/Ghost.Cloud.Contracts/Ghost.Cloud.Contracts.csproj" />
+  </ItemGroup>
+</Project>

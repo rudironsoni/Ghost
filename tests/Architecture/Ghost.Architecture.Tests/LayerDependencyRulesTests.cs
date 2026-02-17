@@ -73,13 +73,13 @@ public sealed class LayerDependencyRulesTests
     [Fact]
     public void EngineAbstractions_ShouldNotDependOn_Kernel()
     {
-        TestResult result = Types
-            .InAssembly(typeof(IGhostEngine).Assembly)
-            .ShouldNot()
-            .HaveDependencyOn("Ghost")
-            .GetResult();
+        // Use reflection-based check instead of NetArchTest
+        bool hasDependency = ArchitectureTestHelpers.HasDependencyOn(
+            "Ghost.Engine.Abstractions",
+            "Ghost");
 
-        result.IsSuccessful.Should().BeTrue();
+        hasDependency.Should().BeFalse(
+            "Engine Abstractions should not depend on Kernel to maintain proper layer separation.");
     }
 
     [Fact]
