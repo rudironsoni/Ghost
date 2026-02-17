@@ -104,6 +104,8 @@ public sealed class InfoJobsPluginE2ETests
             {
                 ["Ghost:Extensions:InfoJobs:Enabled"] = "true",
                 ["Ghost:Extensions:InfoJobs:ApiKey"] = "test-key",
+                ["Ghost:Extensions:InfoJobs:ClientId"] = "test-client-id",
+                ["Ghost:Extensions:InfoJobs:ClientSecret"] = "test-client-secret",
                 ["Ghost:Extensions:InfoJobs:BaseUrl"] = "https://api.infojobs.net"
             })
             .Build();

@@ -1,6 +1,7 @@
 using System.Net;
 using Ghost.Plugin.Google.Gemini;
 using Ghost.Plugin.Google.Jobs;
+using Ghost.Plugin.Google.Jobs.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -72,7 +73,29 @@ public sealed class GoogleE2EFixture : IDisposable
         IBrowserSession mockBrowserSession = NSubstitute.Substitute.For<Ghost.IBrowserSession>();
         services.AddSingleton(mockBrowserSession);
 
+        // Register Google Jobs options as singleton for client constructors
+        services.AddSingleton(sp =>
+        {
+            GoogleJobsOptions options = sp.GetRequiredService<IOptions<GoogleJobsOptions>>().Value;
+            return options;
+        });
+
+        // Register HTTP client for GoogleJobsApiClient
+        services.AddHttpClient<GoogleJobsApiClient>(client =>
+        {
+            client.BaseAddress = new Uri($"http://localhost:{WireMockServer.Port}");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+
         // Register Google services
+        services.AddSingleton<GoogleJobsApiClient>(sp =>
+        {
+            HttpClient httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(GoogleJobsApiClient));
+            GoogleJobsOptions options = sp.GetRequiredService<GoogleJobsOptions>();
+            ILogger<GoogleJobsApiClient> logger = sp.GetRequiredService<ILogger<GoogleJobsApiClient>>();
+            return new GoogleJobsApiClient(httpClient, options, logger);
+        });
+
         services.AddSingleton<GoogleJobClient>();
         services.AddSingleton<GeminiClient>();
     }

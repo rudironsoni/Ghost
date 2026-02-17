@@ -54,6 +54,7 @@ public sealed class IndeedE2EFixture : IDisposable
             Enabled = true,
             Country = CountryCode.US,
             BaseUrl = $"http://localhost:{WireMockServer.Port}",
+            ApiEndpoint = $"http://localhost:{WireMockServer.Port}/graphql",
             ApiKey = "test-api-key",
             RequestTimeoutMs = 30000,
             MaxRetries = 3,
@@ -80,28 +81,18 @@ public sealed class IndeedE2EFixture : IDisposable
 
     private void SetupMockEndpoints()
     {
-        // Mock Indeed search API endpoint
+        // Mock Indeed GraphQL endpoint for job search
         WireMockServer
             .Given(Request.Create()
-                .WithPath("/api/jobs/search")
-                .UsingGet())
+                .WithPath("/graphql")
+                .UsingPost())
             .RespondWith(Response.Create()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithHeader("Content-Type", "application/json")
-                .WithBody(GetMockSearchResponse()));
-
-        // Mock Indeed job details endpoint
-        WireMockServer
-            .Given(Request.Create()
-                .WithPath("/viewjob")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithHeader("Content-Type", "text/html")
-                .WithBody(GetMockJobDetailsHtml()));
+                .WithBody(GetMockGraphQLSearchResponse()));
     }
 
-    private static string GetMockSearchResponse()
+    private static string GetMockGraphQLSearchResponse()
     {
         return """
         {
@@ -109,30 +100,38 @@ public sealed class IndeedE2EFixture : IDisposable
                 "jobSearch": {
                     "results": [
                         {
-                            "id": "indeed-job-001",
-                            "title": "Software Engineer",
-                            "company": {
-                                "name": "Tech Solutions Inc"
-                            },
-                            "location": {
-                                "displayName": "San Francisco, CA"
-                            },
-                            "description": "We are looking for a skilled software engineer",
-                            "url": "https://www.indeed.com/viewjob?jk=indeed-job-001",
-                            "date": "2024-01-15T10:00:00Z"
+                            "job": {
+                                "key": "indeed-job-001",
+                                "title": "Software Engineer",
+                                "employer": {
+                                    "name": "Tech Solutions Inc"
+                                },
+                                "location": {
+                                    "formatted": {
+                                        "long": "San Francisco, CA"
+                                    }
+                                },
+                                "description": {
+                                    "html": "<p>We are looking for a skilled software engineer</p>"
+                                }
+                            }
                         },
                         {
-                            "id": "indeed-job-002",
-                            "title": "Senior Developer",
-                            "company": {
-                                "name": "Digital Corp"
-                            },
-                            "location": {
-                                "displayName": "Remote"
-                            },
-                            "description": "Join our remote team as a senior developer",
-                            "url": "https://www.indeed.com/viewjob?jk=indeed-job-002",
-                            "date": "2024-01-14T08:00:00Z"
+                            "job": {
+                                "key": "indeed-job-002",
+                                "title": "Senior Developer",
+                                "employer": {
+                                    "name": "Digital Corp"
+                                },
+                                "location": {
+                                    "formatted": {
+                                        "long": "Remote"
+                                    }
+                                },
+                                "description": {
+                                    "html": "<p>Join our remote team as a senior developer</p>"
+                                }
+                            }
                         }
                     ],
                     "pageInfo": {
@@ -142,57 +141,6 @@ public sealed class IndeedE2EFixture : IDisposable
                 }
             }
         }
-        """;
-    }
-
-    private static string GetMockJobDetailsHtml()
-    {
-        return """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Software Engineer - Tech Solutions Inc</title>
-            <script type="application/ld+json">
-            {
-                "@context": "https://schema.org",
-                "@type": "JobPosting",
-                "title": "Software Engineer",
-                "description": "We are seeking a talented Software Engineer to join our team. You will be responsible for developing high-quality applications.",
-                "hiringOrganization": {
-                    "@type": "Organization",
-                    "name": "Tech Solutions Inc"
-                },
-                "jobLocation": {
-                    "@type": "Place",
-                    "address": {
-                        "@type": "PostalAddress",
-                        "addressLocality": "San Francisco",
-                        "addressRegion": "CA"
-                    }
-                },
-                "employmentType": "FULL_TIME",
-                "datePosted": "2024-01-15"
-            }
-            </script>
-        </head>
-        <body>
-            <div class="jobsearch-JobInfoHeader">
-                <h1 class="jobsearch-JobInfoHeader-title">Software Engineer</h1>
-                <div class="jobsearch-CompanyInfo">
-                    <span class="company">Tech Solutions Inc</span>
-                    <span class="location">San Francisco, CA</span>
-                </div>
-            </div>
-            <div class="jobsearch-JobComponent-description">
-                <p>We are seeking a talented Software Engineer to join our team.</p>
-                <ul>
-                    <li>Develop high-quality applications</li>
-                    <li>Collaborate with cross-functional teams</li>
-                    <li>Mentor junior developers</li>
-                </ul>
-            </div>
-        </body>
-        </html>
         """;
     }
 

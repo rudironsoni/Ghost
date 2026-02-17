@@ -94,7 +94,7 @@ public sealed class LinkedInJobClientE2ETests
         await Assert.ThrowsAsync<NotImplementedException>(() => client.GetApplicationsAsync());
     }
 
-    [Fact]
+    [Fact(Skip = "Requires external browser infrastructure")]
     [Trait("TestType", "End2End")]
     public async Task Apply_WithValidJobId_ReturnsJobApplicationAsync()
     {

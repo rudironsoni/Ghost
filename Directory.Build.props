@@ -82,6 +82,11 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Cloud'))">
+    <GhostLayer>Cloud</GhostLayer>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
   <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Apps'))">
     <GhostLayer>Apps</GhostLayer>
     <IsPackable>false</IsPackable>
