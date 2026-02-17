@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -42,6 +42,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.WebApi", "src\Apps\Ghost.WebApi\Ghost.WebApi.csproj", "{7D613B3F-FE61-4A88-8984-A01247C2185C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Worker", "src\Apps\Ghost.Worker\Ghost.Worker.csproj", "{9B989A1A-9222-4BA5-AB5B-4E3CEC5DA58F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.LinkedInScraperHarness", "src\Apps\Ghost.LinkedInScraperHarness\Ghost.LinkedInScraperHarness.csproj", "{B2C3D4E5-F6A7-8901-BCDE-F23456789012}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Contracts.Jobs", "src\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj", "{478EB99E-04D1-47DF-A205-1754B7CD6CE6}"
 EndProject
@@ -182,14 +184,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Cloud.Delivery.UnitTests", "tests\Cloud\Ghost.Cloud.Delivery.UnitTests\Ghost.Cloud.Delivery.UnitTests.csproj", "{CLOUDTEST-0000-0000-0000-000000000003}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Cloud.Api.UnitTests", "tests\Cloud\Ghost.Cloud.Api.UnitTests\Ghost.Cloud.Api.UnitTests.csproj", "{CLOUDTEST-0000-0000-0000-000000000004}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Cloud.Contracts", "src\Cloud\Ghost.Cloud.Contracts\Ghost.Cloud.Contracts.csproj", "{CLOUD001-0000-0000-0000-000000000001}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Cloud.Grains", "src\Cloud\Ghost.Cloud.Grains\Ghost.Cloud.Grains.csproj", "{CLOUD002-0000-0000-0000-000000000002}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Cloud.Delivery", "src\Cloud\Ghost.Cloud.Delivery\Ghost.Cloud.Delivery.csproj", "{CLOUD003-0000-0000-0000-000000000003}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghost.Cloud.Api", "src\Cloud\Ghost.Cloud.Api\Ghost.Cloud.Api.csproj", "{CLOUD004-0000-0000-0000-000000000004}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -333,6 +327,18 @@ Global
 		{9B989A1A-9222-4BA5-AB5B-4E3CEC5DA58F}.Release|x64.Build.0 = Release|Any CPU
 		{9B989A1A-9222-4BA5-AB5B-4E3CEC5DA58F}.Release|x86.ActiveCfg = Release|Any CPU
 		{9B989A1A-9222-4BA5-AB5B-4E3CEC5DA58F}.Release|x86.Build.0 = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Debug|x64.Build.0 = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Debug|x86.Build.0 = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Release|x64.ActiveCfg = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Release|x64.Build.0 = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Release|x86.ActiveCfg = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Release|x86.Build.0 = Release|Any CPU
 		{478EB99E-04D1-47DF-A205-1754B7CD6CE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{478EB99E-04D1-47DF-A205-1754B7CD6CE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{478EB99E-04D1-47DF-A205-1754B7CD6CE6}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -824,6 +830,7 @@ Global
 		{DB995D58-F81A-48FF-A28B-C02F903768BA} = {EDF2BF46-81E2-A5E6-BE76-B883454BFB8E}
 		{7D613B3F-FE61-4A88-8984-A01247C2185C} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{9B989A1A-9222-4BA5-AB5B-4E3CEC5DA58F} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{478EB99E-04D1-47DF-A205-1754B7CD6CE6} = {FFBE31B8-50B9-B415-22BC-2F92C97CADA3}
 		{D5AB0AC6-0D09-4D61-837C-AC1C043E3B97} = {51B637F8-9C04-5803-F48E-8CB9352021B0}
 		{D0D6B8B0-AC35-B3FA-0B96-A9B0E4A3253E} = {0AB3BF05-4346-4AA6-1389-037BE0695223}

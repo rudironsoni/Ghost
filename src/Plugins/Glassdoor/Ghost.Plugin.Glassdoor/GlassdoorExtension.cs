@@ -17,7 +17,7 @@ public sealed class GlassdoorExtension : Ghost.Hosting.IExtension
     public string Name => "Glassdoor";
     public Version Version => new(1, 0, 0);
     public IReadOnlyList<Type> ProvidedServices => new[] { typeof(Ghost.Contracts.Jobs.IJobClient) };
-    public IReadOnlyList<Type> RequiredServices { get { Console.WriteLine("[DEBUG] GlassdoorExtension.RequiredServices called"); return Array.Empty<Type>(); } }
+    public IReadOnlyList<Type> RequiredServices => Array.Empty<Type>();
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
