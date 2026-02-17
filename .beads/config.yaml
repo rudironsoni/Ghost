@@ -7,6 +7,7 @@ dolt:
   host: 127.0.0.1
   port: 3307
   user: root
+  db: beads_Ghost
 
 # Sync mode (belt-and-suspenders = Dolt + JSONL)
 sync:
