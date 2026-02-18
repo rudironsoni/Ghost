@@ -138,6 +138,25 @@ public sealed class TestScraperServer : IAsyncDisposable
             return Results.Content(html, "text/html");
         });
 
+        // LinkedIn Guest API routes (used by LinkedInQueryBuilder and GuestJobSearch)
+        app.MapGet("/linkedin/jobs-guest/jobs/api/seeMoreJobPostings/search", (HttpContext context) =>
+        {
+            string? searchTerm = context.Request.Query["keywords"].FirstOrDefault();
+            string? location = context.Request.Query["location"].FirstOrDefault();
+            int start = int.TryParse(context.Request.Query["start"].FirstOrDefault(), out int s) ? s : 0;
+            int page = (start / 10) + 1;
+            int count = 10;
+
+            string html = fixtures.LinkedIn.GenerateSearchResultsPage(searchTerm, location, page, count);
+            return Results.Content(html, "text/html");
+        });
+
+        app.MapGet("/linkedin/jobs-guest/jobs/api/jobPosting/{id}", (string id, HttpContext context) =>
+        {
+            string html = fixtures.LinkedIn.GenerateJobDetailPage(id);
+            return Results.Content(html, "text/html");
+        });
+
         // Indeed routes
         app.MapGet("/indeed/jobs", (HttpContext context) =>
         {
@@ -241,6 +260,17 @@ public sealed class TestScraperServer : IAsyncDisposable
             return Results.Content(html, "text/html");
         });
 
+        // Glassdoor job search route matching real Glassdoor URL pattern (/Job/jobs.htm)
+        app.MapGet("/glassdoor/Job/jobs.htm", (HttpContext context) =>
+        {
+            string? searchTerm = context.Request.Query["sc.keyword"].FirstOrDefault();
+            string? location = context.Request.Query["locKeyword"].FirstOrDefault();
+            int page = int.TryParse(context.Request.Query["p"].FirstOrDefault(), out int p) ? p : 1;
+
+            string html = fixtures.Glassdoor.GenerateSearchResultsPage(searchTerm, location, page);
+            return Results.Content(html, "text/html");
+        });
+
         app.MapGet("/glassdoor/job/{id}", (string id) =>
         {
             string html = fixtures.Glassdoor.GenerateJobDetailPage(id);
@@ -288,9 +318,12 @@ public sealed class TestScraperServer : IAsyncDisposable
             sb.AppendLine("<ul>");
             sb.AppendLine("<li><b>LinkedIn:</b> /linkedin/jobs?keywords=&amp;location=&amp;page=&amp;count=</li>");
             sb.AppendLine("<li><b>LinkedIn Job:</b> /linkedin/jobs/{id}</li>");
+            sb.AppendLine("<li><b>LinkedIn Guest API:</b> /linkedin/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=&amp;location=&amp;start=</li>");
+            sb.AppendLine("<li><b>LinkedIn Guest Job:</b> /linkedin/jobs-guest/jobs/api/jobPosting/{id}</li>");
             sb.AppendLine("<li><b>Indeed:</b> /indeed/jobs?q=&amp;l=&amp;start=&amp;count=</li>");
             sb.AppendLine("<li><b>Indeed Job:</b> /indeed/viewjob?jk={id}</li>");
             sb.AppendLine("<li><b>Glassdoor:</b> /glassdoor/jobs?keyword=&amp;p=</li>");
+            sb.AppendLine("<li><b>Glassdoor (Real Pattern):</b> /glassdoor/Job/jobs.htm?sc.keyword=&amp;locT=C&amp;locKeyword=&amp;srs=</li>");
             sb.AppendLine("<li><b>Glassdoor Job:</b> /glassdoor/job/{id}</li>");
             sb.AppendLine("<li><b>Google:</b> /google/jobs?q=&amp;page=</li>");
             sb.AppendLine("<li><b>InfoJobs:</b> /infojobs/ofertas?palabra=&amp;provincia=&amp;pagina=</li>");
