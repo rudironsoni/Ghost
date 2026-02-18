@@ -46,6 +46,7 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
     private static readonly string[] s_titleSelectors = new[]
     {
         ".base-search-card__title",
+        ".job-card__title-link",   // Job Card: text is in the <a> tag inside <h3>
         ".job-card__title",
         "h3"
     };
@@ -434,6 +435,13 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
             await page.NavigateAsync(url, navOptions, ct: ct).ConfigureAwait(false);
             await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false);
 
+            // Wait for job cards to appear
+            try
+            {
+                await page.WaitForSelectorAsync(".job-card, .base-card", new WaitForSelectorOptions { Timeout = 5000 }, ct).ConfigureAwait(false);
+            }
+            catch { /* Continue even if timeout */ }
+
             string pageTitle = await page.EvaluateAsync<string>("document.title", ct: ct).ConfigureAwait(false);
             IReadOnlyList<IElement> nodes = await page.QuerySelectorAllAsync(".jobs-search-results__list-item, .jobs-search__results-list li, .base-card", ct: ct).ConfigureAwait(false);
 
@@ -449,20 +457,23 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
                 try
                 {
                     string id = Guid.NewGuid().ToString();
-                    IElement? idEl = await n.QuerySelectorAsync("[data-id], [data-entity-urn]", ct).ConfigureAwait(false);
-                    if (idEl != null)
+                    // Extract ID from the node itself, not from a child element
+                    string? dataJobId = await n.GetAttributeAsync("data-job-id", ct).ConfigureAwait(false);
+                    string? dataId = await n.GetAttributeAsync("data-id", ct).ConfigureAwait(false);
+                    string? urn = await n.GetAttributeAsync("data-entity-urn", ct).ConfigureAwait(false);
+                    
+                    if (!string.IsNullOrEmpty(dataJobId))
                     {
-                        string? dataId = await idEl.GetAttributeAsync("data-id", ct).ConfigureAwait(false);
-                        string? urn = await idEl.GetAttributeAsync("data-entity-urn", ct).ConfigureAwait(false);
-                        if (!string.IsNullOrEmpty(urn))
-                        {
-                            Match m = System.Text.RegularExpressions.Regex.Match(urn, @"\d+");
-                            if (m.Success) id = m.Value;
-                        }
-                        else if (!string.IsNullOrEmpty(dataId))
-                        {
-                            id = dataId;
-                        }
+                        id = dataJobId;
+                    }
+                    else if (!string.IsNullOrEmpty(urn))
+                    {
+                        Match m = Regex.Match(urn, @"\d+");
+                        if (m.Success) id = m.Value;
+                    }
+                    else if (!string.IsNullOrEmpty(dataId))
+                    {
+                        id = dataId;
                     }
 
                     string title = await TryGetElementTextAsync(n, s_titleSelectors, ct).ConfigureAwait(false);
