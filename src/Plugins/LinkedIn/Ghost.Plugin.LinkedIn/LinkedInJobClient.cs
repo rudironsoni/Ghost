@@ -41,6 +41,29 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
 
     private static readonly char[] s_newlineSplit = new[] { '\n', '\r' };
 
+    // CSS selector fallback arrays for robust element extraction
+    // These are tried in order until a non-empty result is found
+    private static readonly string[] s_titleSelectors = new[]
+    {
+        ".base-search-card__title",
+        ".job-card-list__title",
+        "h3"
+    };
+
+    private static readonly string[] s_companySelectors = new[]
+    {
+        ".base-search-card__subtitle",
+        ".job-card-container__company-name",
+        "h4"
+    };
+
+    private static readonly string[] s_locationSelectors = new[]
+    {
+        ".job-search-card__location",
+        ".job-card-container__metadata-item",
+        "[class*=\"location\"]"
+    };
+
     private readonly Ghost.IBrowserSession _session;
     private readonly LinkedInOptions _options;
     private readonly ILogger<LinkedInJobClient> _logger;
@@ -441,14 +464,9 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
                         }
                     }
 
-                    IElement? titleEl = await n.QuerySelectorAsync(".job-card-list__title, .base-search-card__title", ct).ConfigureAwait(false);
-                    string title = titleEl is not null ? (await titleEl.GetTextContentAsync(ct).ConfigureAwait(false))?.Trim() ?? string.Empty : string.Empty;
-
-                    IElement? companyEl = await n.QuerySelectorAsync(".job-card-container__company-name, .base-search-card__subtitle", ct).ConfigureAwait(false);
-                    string company = companyEl is not null ? (await companyEl.GetTextContentAsync(ct).ConfigureAwait(false))?.Trim() ?? string.Empty : string.Empty;
-
-                    IElement? locationEl = await n.QuerySelectorAsync(".job-card-container__metadata-item, .job-search-card__location", ct).ConfigureAwait(false);
-                    string locationText = locationEl is not null ? (await locationEl.GetTextContentAsync(ct).ConfigureAwait(false))?.Trim() ?? string.Empty : string.Empty;
+                    string title = await TryGetElementTextAsync(n, s_titleSelectors, ct).ConfigureAwait(false);
+                    string company = await TryGetElementTextAsync(n, s_companySelectors, ct).ConfigureAwait(false);
+                    string locationText = await TryGetElementTextAsync(n, s_locationSelectors, ct).ConfigureAwait(false);
 
                     string? jobUrl = null;
                     IElement? linkEl = await n.QuerySelectorAsync("a.base-card__full-link, a.job-card-list__title", ct).ConfigureAwait(false);
@@ -567,5 +585,34 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
         }
 
         return mockJobs;
+    }
+
+    /// <summary>
+    /// Tries each selector in order and returns the text content of the first matching element.
+    /// </summary>
+    private static async Task<string> TryGetElementTextAsync(IElement container, string[] selectors, CancellationToken ct)
+    {
+        foreach (string selector in selectors)
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                IElement? element = await container.QuerySelectorAsync(selector, ct).ConfigureAwait(false);
+                if (element is not null)
+                {
+                    string? text = await element.GetTextContentAsync(ct).ConfigureAwait(false);
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        return text.Trim();
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore exceptions and try the next selector
+            }
+        }
+
+        return string.Empty;
     }
 }

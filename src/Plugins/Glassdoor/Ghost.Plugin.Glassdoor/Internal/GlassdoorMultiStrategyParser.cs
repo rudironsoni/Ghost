@@ -151,9 +151,10 @@ public sealed class GlassdoorMultiStrategyParser
             bool isRemote = !string.IsNullOrWhiteSpace(entity.RemoteLabel) ||
                           (entity.Location?.Contains("Remote", StringComparison.OrdinalIgnoreCase) ?? false);
 
+            string deterministicId = entity.JobId ?? GlassdoorIdGenerator.GenerateDeterministicId(entity.Title, entity.Company, entity.Location, entity.JobUrl);
             return new JobListing
             {
-                Id = entity.JobId ?? Guid.NewGuid().ToString(),
+                Id = deterministicId,
                 Title = entity.Title ?? string.Empty,
                 Company = entity.Company ?? string.Empty,
                 Location = entity.Location,

@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Contracts.Jobs;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -47,6 +48,7 @@ public sealed class GoogleJobClient : Ghost.IJobScraper
     private static readonly Action<ILogger, Exception?> s_logSearchFailed =
         LoggerMessage.Define(LogLevel.Error, new EventId(11, nameof(SearchJobsAsync)), "Google Jobs search failed with exception");
 
+    [ActivatorUtilitiesConstructor]
     public GoogleJobClient(
         Internal.GoogleJobsApiClient api,
         ILogger<GoogleJobClient> logger,

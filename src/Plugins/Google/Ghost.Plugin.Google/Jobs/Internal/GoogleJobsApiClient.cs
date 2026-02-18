@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using Ghost.Contracts.Jobs;
 using Ghost.Http;
 using Ghost.Platform.Storage.Session;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Polly;
 
@@ -152,6 +153,7 @@ public sealed class GoogleJobsApiClient : IDisposable
     /// <summary>
     /// Modern constructor with SessionOrchestrator support for session continuity and health monitoring.
     /// </summary>
+    [ActivatorUtilitiesConstructor]
     public GoogleJobsApiClient(ISessionOrchestrator sessionOrchestrator, GoogleJobsOptions options, ILogger<GoogleJobsApiClient> logger)
     {
         _http = null;
