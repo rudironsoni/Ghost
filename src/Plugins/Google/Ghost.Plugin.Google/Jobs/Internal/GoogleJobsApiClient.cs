@@ -15,7 +15,7 @@ namespace Ghost.Plugin.Google.Jobs.Internal;
 /// This client makes direct HTTP requests to Google and parses the HTML response.
 /// Uses realistic browser headers, user-agent rotation, and consent bypass cookies.
 /// </summary>
-public sealed class GoogleJobsApiClient : IDisposable
+public class GoogleJobsApiClient : IDisposable
 {
     private readonly HttpClient? _http;
     private readonly ISessionOrchestrator? _sessionOrchestrator;
@@ -164,7 +164,7 @@ public sealed class GoogleJobsApiClient : IDisposable
         _retryPolicy = EnhancedRetryPolicy.CreatePolicy(logger, maxRetries: 3, enableJitter: true);
     }
 
-    public async Task<IReadOnlyList<JobListing>> SearchAsync(string query, string location, CancellationToken ct = default)
+    public virtual async Task<IReadOnlyList<JobListing>> SearchAsync(string query, string location, CancellationToken ct = default)
     {
         if (_sessionOrchestrator != null)
         {
