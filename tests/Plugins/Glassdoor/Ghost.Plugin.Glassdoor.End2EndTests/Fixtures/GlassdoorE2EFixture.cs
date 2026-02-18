@@ -68,6 +68,7 @@ public sealed class GlassdoorE2EFixture : IAsyncLifetime
             options.MaxRetries = 3;
             options.Strategy = JobSearchStrategy.BrowserOnly;
             options.ProxyEnabled = false;
+            options.TestMode = true; // Enable test mode for faster execution
         });
 
         // Register HTTP client with test server base URL

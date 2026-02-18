@@ -98,4 +98,11 @@ public sealed class GlassdoorOptions
     /// Default is true to provide better error information.
     /// </summary>
     public bool EnableStructuredErrors { get; set; } = true;
+
+    /// <summary>
+    /// When true, enables test mode which skips production-grade delays
+    /// (Cloudflare waits, human-like scrolling delays, etc.) for faster test execution.
+    /// Default is false for production use.
+    /// </summary>
+    public bool TestMode { get; set; }
 }
