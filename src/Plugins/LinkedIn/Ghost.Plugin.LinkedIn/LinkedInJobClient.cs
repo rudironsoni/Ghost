@@ -16,6 +16,7 @@ using Ghost.Sdk.Spider.Pipeline.Middleware;
 using Ghost.Sdk.Spider.Strategies;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Playwright;
 
 namespace Ghost.Plugin.LinkedIn;
 
@@ -438,61 +439,106 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
             // Wait for job cards to appear
             try
             {
-                await page.WaitForSelectorAsync(".job-card, .base-card", new WaitForSelectorOptions { Timeout = 5000 }, ct).ConfigureAwait(false);
+                await page.WaitForSelectorAsync(".job-card, .base-card", new WaitOptions { Timeout = 5000, State = WaitState.Visible }, ct).ConfigureAwait(false);
             }
             catch { /* Continue even if timeout */ }
 
             string pageTitle = await page.EvaluateAsync<string>("document.title", ct: ct).ConfigureAwait(false);
-            IReadOnlyList<IElement> nodes = await page.QuerySelectorAllAsync(".jobs-search-results__list-item, .jobs-search__results-list li, .base-card", ct: ct).ConfigureAwait(false);
 
-            if (nodes.Count == 0)
+            // Extract all job data using a single JavaScript evaluation
+            // This is more reliable than Playwright element handles in some scenarios
+            List<Dictionary<string, string>>? jobDataList = await page.EvaluateAsync<List<Dictionary<string, string>>>(
+                @"() => {
+                    const results = [];
+                    const containers = document.querySelectorAll('.jobs-search-results__list-item, .jobs-search__results-list li, .base-card, .job-card');
+                    for (let i = 0; i < containers.length; i++) {
+                        const container = containers[i];
+                        let id = container.getAttribute('data-job-id') || container.getAttribute('data-id');
+                        if (!id) {
+                            const urn = container.getAttribute('data-entity-urn');
+                            if (urn) {
+                                const match = urn.match(/\d+/);
+                                if (match) id = match[0];
+                            }
+                        }
+                        if (!id) continue;
+                        
+                        // Title selectors in order of preference
+                        const titleSelectors = ['.base-search-card__title', '.job-card__title-link', '.job-card__title', 'h3'];
+                        let title = '';
+                        for (let t = 0; t < titleSelectors.length; t++) {
+                            const el = container.querySelector(titleSelectors[t]);
+                            if (el) {
+                                title = (el.innerText || el.textContent || '').trim();
+                                if (title) break;
+                            }
+                        }
+                        
+                        // Company selectors
+                        const companySelectors = ['.base-search-card__subtitle', '.job-card__company-name', '.job-card-container__company-name', 'h4'];
+                        let company = '';
+                        for (let c = 0; c < companySelectors.length; c++) {
+                            const el = container.querySelector(companySelectors[c]);
+                            if (el) {
+                                company = (el.innerText || el.textContent || '').trim();
+                                if (company) break;
+                            }
+                        }
+                        
+                        // Location selectors
+                        const locationSelectors = ['.job-search-card__location', '.job-card-container__metadata-item', '.job-card__location'];
+                        let location = '';
+                        for (let l = 0; l < locationSelectors.length; l++) {
+                            const el = container.querySelector(locationSelectors[l]);
+                            if (el) {
+                                location = (el.innerText || el.textContent || '').trim();
+                                if (location) break;
+                            }
+                        }
+                        
+                        // URL from link
+                        const linkEl = container.querySelector('a.base-card__full-link, a.job-card-list__title, a.job-card__title-link, a');
+                        const url = linkEl ? linkEl.getAttribute('href') : '';
+                        
+                        const obj = {};
+                        obj['id'] = id;
+                        obj['title'] = title;
+                        obj['company'] = company;
+                        obj['location'] = location;
+                        obj['url'] = url;
+                        results.push(obj);
+                    }
+                    return results;
+                }", ct: ct).ConfigureAwait(false);
+
+            if (jobDataList == null || jobDataList.Count == 0)
             {
                 s_logZeroJobsFound(_logger, pageTitle ?? "Unknown", null);
             }
 
             int count = 0;
-            foreach (IElement n in nodes)
+            foreach (Dictionary<string, string> jobData in jobDataList ?? new List<Dictionary<string, string>>())
             {
                 if (count++ >= limit) break;
                 try
                 {
-                    string id = Guid.NewGuid().ToString();
-                    // Extract ID from the node itself, not from a child element
-                    string? dataJobId = await n.GetAttributeAsync("data-job-id", ct).ConfigureAwait(false);
-                    string? dataId = await n.GetAttributeAsync("data-id", ct).ConfigureAwait(false);
-                    string? urn = await n.GetAttributeAsync("data-entity-urn", ct).ConfigureAwait(false);
-                    
-                    if (!string.IsNullOrEmpty(dataJobId))
+                    string id = jobData.GetValueOrDefault("id") ?? Guid.NewGuid().ToString();
+                    string title = jobData.GetValueOrDefault("title") ?? string.Empty;
+                    string company = jobData.GetValueOrDefault("company") ?? string.Empty;
+                    string locationText = jobData.GetValueOrDefault("location") ?? string.Empty;
+                    string? jobUrl = jobData.GetValueOrDefault("url");
+
+                    if (string.IsNullOrEmpty(jobUrl))
                     {
-                        id = dataJobId;
-                    }
-                    else if (!string.IsNullOrEmpty(urn))
-                    {
-                        Match m = Regex.Match(urn, @"\d+");
-                        if (m.Success) id = m.Value;
-                    }
-                    else if (!string.IsNullOrEmpty(dataId))
-                    {
-                        id = dataId;
+                        jobUrl = $"/jobs/view/{id}";
                     }
 
-                    string title = await TryGetElementTextAsync(n, s_titleSelectors, ct).ConfigureAwait(false);
-                    string company = await TryGetElementTextAsync(n, s_companySelectors, ct).ConfigureAwait(false);
-                    string locationText = await TryGetElementTextAsync(n, s_locationSelectors, ct).ConfigureAwait(false);
-
-                    string? jobUrl = null;
-                    IElement? linkEl = await n.QuerySelectorAsync("a.base-card__full-link, a.job-card-list__title", ct).ConfigureAwait(false);
-                    if (linkEl != null)
+                    if (Guid.TryParse(id, out _) && !string.IsNullOrEmpty(jobUrl) && jobUrl.Contains('-'))
                     {
-                        jobUrl = await linkEl.GetAttributeAsync("href", ct).ConfigureAwait(false);
-
-                        if (Guid.TryParse(id, out _) && !string.IsNullOrEmpty(jobUrl))
+                        Match urlIdMatch = System.Text.RegularExpressions.Regex.Match(jobUrl, @"-(\d{6,})(?:\?|$)");
+                        if (urlIdMatch.Success && urlIdMatch.Groups[1].Success)
                         {
-                            Match urlIdMatch = System.Text.RegularExpressions.Regex.Match(jobUrl, @"-(\d{6,})(?:\?|$)");
-                            if (urlIdMatch.Success && urlIdMatch.Groups[1].Success)
-                            {
-                                id = urlIdMatch.Groups[1].Value;
-                            }
+                            id = urlIdMatch.Groups[1].Value;
                         }
                     }
 
@@ -599,32 +645,4 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
         return mockJobs;
     }
 
-    /// <summary>
-    /// Tries each selector in order and returns the text content of the first matching element.
-    /// </summary>
-    private static async Task<string> TryGetElementTextAsync(IElement container, string[] selectors, CancellationToken ct)
-    {
-        foreach (string selector in selectors)
-        {
-            ct.ThrowIfCancellationRequested();
-            try
-            {
-                IElement? element = await container.QuerySelectorAsync(selector, ct).ConfigureAwait(false);
-                if (element is not null)
-                {
-                    string? text = await element.GetTextContentAsync(ct).ConfigureAwait(false);
-                    if (!string.IsNullOrWhiteSpace(text))
-                    {
-                        return text.Trim();
-                    }
-                }
-            }
-            catch
-            {
-                // Ignore exceptions and try the next selector
-            }
-        }
-
-        return string.Empty;
-    }
 }

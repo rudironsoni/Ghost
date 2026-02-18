@@ -125,29 +125,35 @@ public sealed class GlassdoorSearchScraper : IDisposable
                 await page.NavigateAsync(url, ct: ct).ConfigureAwait(false);
 
                 // CRITICAL: Extended wait for Cloudflare/Datadome check (15 seconds for heavy protection)
-                s_logCloudflareWait(_logger, 15, null);
-                await Task.Delay(15000, ct).ConfigureAwait(false);
+                // In test mode, use minimal delay for faster test execution
+                int cloudflareWaitSeconds = _options.TestMode ? 1 : 15;
+                s_logCloudflareWait(_logger, cloudflareWaitSeconds, null);
+                await Task.Delay(TimeSpan.FromSeconds(cloudflareWaitSeconds), ct).ConfigureAwait(false);
 
                 // Perform VERY realistic human-like scrolling with longer delays
+                // In test mode, skip scrolling delays entirely
                 await PerformHumanLikeScrollingAsync(page, ct).ConfigureAwait(false);
 
-                // Final wait for dynamic content (5 seconds)
-                await Task.Delay(5000, ct).ConfigureAwait(false);
+                // Final wait for dynamic content (5 seconds in production, 500ms in test mode)
+                int dynamicContentWaitMs = _options.TestMode ? 500 : 5000;
+                await Task.Delay(dynamicContentWaitMs, ct).ConfigureAwait(false);
 
                 string html = await page.GetContentAsync(ct).ConfigureAwait(false);
 
                 // Handle consent dialogs
                 if (IsConsentPage(html))
                 {
-                    await _consentService.WaitAndHandleConsentAsync(page, maxWaitMs: 10000, checkIntervalMs: 500).ConfigureAwait(false);
-                    await Task.Delay(3000, ct).ConfigureAwait(false); // Extended wait after consent
+                    int consentMaxWaitMs = _options.TestMode ? 1000 : 10000;
+                    await _consentService.WaitAndHandleConsentAsync(page, maxWaitMs: consentMaxWaitMs, checkIntervalMs: 500).ConfigureAwait(false);
+                    int consentWaitMs = _options.TestMode ? 500 : 3000;
+                    await Task.Delay(consentWaitMs, ct).ConfigureAwait(false); // Extended wait after consent
                     html = await page.GetContentAsync(ct).ConfigureAwait(false);
                 }
 
                 List<JobListing> pageJobs = await ExtractJobsFromPageAsync(page, html, ct).ConfigureAwait(false);
 
                 // Check if we're still blocked and need additional wait
-                if (pageJobs.Count == 0 && IsBlockedPage(html))
+                if (pageJobs.Count == 0 && IsBlockedPage(html) && !_options.TestMode)
                 {
                     s_logCloudflareWait(_logger, 10, null);
                     await Task.Delay(10000, ct).ConfigureAwait(false);
@@ -171,9 +177,10 @@ public sealed class GlassdoorSearchScraper : IDisposable
                 }
 
                 // If still no jobs and not max attempts, increase backoff
+                // In test mode, use minimal backoff for faster test execution
                 if (jobs.Count < limit && attempt < 5)
                 {
-                    int backoffSeconds = attempt * 5; // 5s, 10s, 15s, 20s
+                    int backoffSeconds = _options.TestMode ? 1 : attempt * 5; // Test: 1s, Prod: 5s, 10s, 15s, 20s
                     await Task.Delay(TimeSpan.FromSeconds(backoffSeconds), ct).ConfigureAwait(false);
                 }
             }
@@ -188,8 +195,10 @@ public sealed class GlassdoorSearchScraper : IDisposable
                 {
                     break;
                 }
-                // Exponential backoff with jitter
-                int backoffMs = (int)(Math.Pow(2, attempt) * 1000 + Random.Shared.Next(1000, 3000));
+                // Exponential backoff with jitter (minimal in test mode)
+                int backoffMs = _options.TestMode
+                    ? 500
+                    : (int)(Math.Pow(2, attempt) * 1000 + Random.Shared.Next(1000, 3000));
                 await Task.Delay(backoffMs, ct).ConfigureAwait(false);
             }
             finally
@@ -302,6 +311,13 @@ public sealed class GlassdoorSearchScraper : IDisposable
 
     private async Task PerformHumanLikeScrollingAsync(IPage page, CancellationToken ct)
     {
+        // In test mode, perform minimal scrolling without delays
+        if (_options.TestMode)
+        {
+            await page.EvaluateAsync<object>("() => window.scrollTo({ top: 2400, behavior: 'auto' })", null, ct).ConfigureAwait(false);
+            return;
+        }
+
         // Scroll down in realistic steps with variable delays
         int[] scrollSteps = new[] { 400, 800, 1200, 1600, 2000 };
 

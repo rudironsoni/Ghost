@@ -73,8 +73,32 @@ internal sealed class ElementWrapper : IElement, Ghost.IElementHandle
     public async Task<string?> GetTextContentAsync(CancellationToken ct = default)
     {
         string? res = await _handle.TextContentAsync().ConfigureAwait(false);
+
+        // Fallback to innerText if textContent is null or empty
+        if (string.IsNullOrWhiteSpace(res))
+        {
+            try
+            {
+                res = await _handle.InnerTextAsync().ConfigureAwait(false);
+            }
+            catch { /* Ignore */ }
+        }
+
+        // Final fallback to JavaScript evaluation
+        if (string.IsNullOrWhiteSpace(res))
+        {
+            try
+            {
+                res = await _handle.EvaluateAsync<string>("() => this.innerText || this.textContent || ''").ConfigureAwait(false);
+            }
+            catch { /* Ignore */ }
+        }
+
         return res;
     }
+
+    // Internal method to access the underlying Playwright handle for advanced scenarios
+    internal Microsoft.Playwright.IElementHandle GetPlaywrightHandle() => _handle;
 
     public async Task<string?> GetInnerHtmlAsync(CancellationToken ct = default)
     {
@@ -148,7 +172,8 @@ internal sealed class ElementWrapper : IElement, Ghost.IElementHandle
     Task<string?> Ghost.IElementHandle.TextContentAsync(CancellationToken ct)
         => _handle.TextContentAsync();
 
-
+    public Task<T> EvaluateAsync<T>(string expression, CancellationToken ct = default)
+        => _handle.EvaluateAsync<T>(expression);
 
     public async ValueTask DisposeAsync()
     {
