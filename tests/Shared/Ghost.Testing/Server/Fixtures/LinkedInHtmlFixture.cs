@@ -64,6 +64,12 @@ public sealed class LinkedInHtmlFixture
         }
 
         sb.AppendLine("        </ul>");
+        sb.AppendLine("        <div class=\"jobs-search-results__list\">");
+        foreach (SampleJob job in jobs)
+        {
+            sb.AppendLine(GenerateBaseCard(job));
+        }
+        sb.AppendLine("        </div>");
         sb.AppendLine(GenerateLinkedInPagination(page, totalPages, searchTerm, location));
         sb.AppendLine("      </div>");
         sb.AppendLine("      <div class=\"jobs-search__right-rail\">");
@@ -154,6 +160,18 @@ public sealed class LinkedInHtmlFixture
         sb.AppendLine(CultureInfo.InvariantCulture, $"              <div class=\"job-card__post-date\">{job.PostedDaysAgo} days ago</div>");
         sb.AppendLine("            </div>");
         sb.AppendLine("          </li>");
+        return sb.ToString();
+    }
+
+    private string GenerateBaseCard(SampleJob job)
+    {
+        StringBuilder sb = new();
+        sb.AppendLine(CultureInfo.InvariantCulture, $"          <div class=\"base-card jobs-search-results__list-item\" data-entity-urn=\"urn:li:jobPosting:{job.Id}\" data-job-id=\"{job.Id}\">");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"            <div class=\"base-search-card__title\">{EscapeHtml(job.Title)}</div>");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"            <div class=\"base-search-card__subtitle job-card-container__company-name\">{EscapeHtml(job.Company)}</div>");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"            <div class=\"job-search-card__location job-card-container__metadata-item\">{EscapeHtml(job.Location)}</div>");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"            <a href=\"{_baseUrl}/linkedin/jobs/{job.Id}\" class=\"base-card__full-link\">{EscapeHtml(job.Title)}</a>");
+        sb.AppendLine("          </div>");
         return sb.ToString();
     }
 

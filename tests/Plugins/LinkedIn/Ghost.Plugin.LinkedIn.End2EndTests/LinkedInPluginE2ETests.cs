@@ -1,20 +1,19 @@
-using global::Ghost;
-using global::Ghost.Contracts.Jobs;
-using global::Ghost.Contracts.News;
-using global::Ghost.Contracts.Social;
-using global::Ghost.Hosting;
+// NSubstitute
 using Ghost.Plugin.LinkedIn.End2EndTests.Fixtures;
 using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Ghost.Testing.Contracts;
 using Ghost.Testing.Fixtures;
+using global::Ghost;
+using global::Ghost.Contracts.Jobs;
+using global::Ghost.Contracts.News;
+using global::Ghost.Contracts.Social;
+using global::Ghost.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Xunit;
-
-// NSubstitute
 using NSubstitute;
+using Xunit;
 
 namespace Ghost.Plugin.LinkedIn.End2EndTests;
 

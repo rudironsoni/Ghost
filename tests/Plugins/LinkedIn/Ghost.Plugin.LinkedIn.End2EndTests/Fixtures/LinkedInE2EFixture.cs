@@ -3,7 +3,7 @@ using Ghost.Plugin.LinkedIn.Internal;
 using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Ghost.Testing.Fixtures;
-using Ghost.Testing.Scenarios.Server;
+using Ghost.Testing.Server;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -20,12 +20,12 @@ public sealed class LinkedInE2EFixture : IAsyncLifetime
 {
     private readonly RealBrowserFixture _browserFixture;
     private IServiceProvider? _serviceProvider;
-    private ScenarioServer? _scenarioServer;
+    private TestScraperServer? _testScraperServer;
     private IBrowserSession? _browserSession;
 
     public IServiceProvider ServiceProvider => _serviceProvider ?? throw new InvalidOperationException("Fixture not initialized");
-    public ScenarioServer ScenarioServer => _scenarioServer ?? throw new InvalidOperationException("Scenario server not initialized");
-    public string BaseUrl => _scenarioServer?.BaseUrl ?? throw new InvalidOperationException("Scenario server not initialized");
+    public TestScraperServer TestScraperServer => _testScraperServer ?? throw new InvalidOperationException("Test scraper server not initialized");
+    public string BaseUrl => _testScraperServer?.BaseUrl ?? throw new InvalidOperationException("Test scraper server not initialized");
     public IConfiguration Configuration { get; }
 
     public LinkedInE2EFixture(RealBrowserFixture browserFixture)
@@ -39,8 +39,8 @@ public sealed class LinkedInE2EFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        // Start the scenario server for LinkedIn-like HTML responses
-        _scenarioServer = await ScenarioServer.CreateAsync().ConfigureAwait(false);
+        // Start the test scraper server for LinkedIn-like HTML responses
+        _testScraperServer = await TestScraperServer.CreateAsync().ConfigureAwait(false);
 
         // Create browser session from kernel (proper async initialization)
         _browserSession = await _browserFixture.CreateSessionAsync().ConfigureAwait(false);
@@ -61,10 +61,9 @@ public sealed class LinkedInE2EFixture : IAsyncLifetime
             disposable.Dispose();
         }
 
-        if (_scenarioServer != null)
+        if (_testScraperServer != null)
         {
-            await _scenarioServer.StopAsync().ConfigureAwait(false);
-            _scenarioServer.Dispose();
+            await _testScraperServer.DisposeAsync().ConfigureAwait(false);
         }
     }
 
@@ -76,7 +75,7 @@ public sealed class LinkedInE2EFixture : IAsyncLifetime
         // Configuration
         services.Configure<LinkedInOptions>(options =>
         {
-            options.BaseUrl = BaseUrl;
+            options.BaseUrl = _testScraperServer!.GetLinkedInBaseUrl();
             options.ScrapingStrategy = JobScrapingStrategy.Browser;
             options.ProxyEnabled = false;
             options.WarmUpEnabled = false;
@@ -95,6 +94,8 @@ public sealed class LinkedInE2EFixture : IAsyncLifetime
         services.AddSingleton<JavaScriptAdapter>();
         services.AddSingleton<EntityParser>();
         services.AddScoped<LinkedInJobClient>();
+        services.AddScoped<LinkedInNewsClient>();
+        services.AddScoped<LinkedInSocialClient>();
     }
 }
 

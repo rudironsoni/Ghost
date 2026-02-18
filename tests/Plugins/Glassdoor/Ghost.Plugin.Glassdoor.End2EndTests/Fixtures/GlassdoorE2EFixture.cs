@@ -107,12 +107,3 @@ public sealed class GlassdoorE2EFixture : IAsyncLifetime
         }
     }
 }
-
-/// <summary>
-/// Collection attribute for Glassdoor E2E tests.
-/// Uses Browser collection for shared RealBrowserFixture and custom fixture for test server.
-/// </summary>
-[CollectionDefinition("GlassdoorEnd2End")]
-public class GlassdoorE2EFixtures : ICollectionFixture<RealBrowserFixture>
-{
-}
