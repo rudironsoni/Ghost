@@ -208,9 +208,9 @@ public sealed class GlassdoorSearchScraper : IDisposable
         return jobs;
     }
 
-    private static string BuildSearchUrl(string query, string location)
+    private string BuildSearchUrl(string query, string location)
     {
-        string baseUrl = "https://www.glassdoor.com/Job/jobs.htm";
+        string baseUrl = $"{_options.BaseUrl.TrimEnd('/')}/Job/jobs.htm";
         List<string> parameters = [];
 
         if (!string.IsNullOrEmpty(query))

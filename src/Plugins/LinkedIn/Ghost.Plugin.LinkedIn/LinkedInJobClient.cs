@@ -46,13 +46,14 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
     private static readonly string[] s_titleSelectors = new[]
     {
         ".base-search-card__title",
-        ".job-card-list__title",
+        ".job-card__title",
         "h3"
     };
 
     private static readonly string[] s_companySelectors = new[]
     {
         ".base-search-card__subtitle",
+        ".job-card__company-name",
         ".job-card-container__company-name",
         "h4"
     };
@@ -484,7 +485,7 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
                         }
                     }
 
-                    if (!string.IsNullOrEmpty(title))
+                    if (!string.IsNullOrWhiteSpace(title))
                     {
                         list.Add(new JobListing
                         {
