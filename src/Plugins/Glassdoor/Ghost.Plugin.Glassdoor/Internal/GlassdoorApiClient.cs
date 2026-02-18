@@ -1020,6 +1020,7 @@ public sealed class GlassdoorApiClient : IDisposable
                 // Must have at least title to be a valid job
                 if (!string.IsNullOrEmpty(title))
                 {
+                    string deterministicId = id ?? GlassdoorIdGenerator.GenerateDeterministicId(title, company, location, link);
                     return new
                     {
                         jobview = new
@@ -1033,7 +1034,7 @@ public sealed class GlassdoorApiClient : IDisposable
                             },
                             job = new
                             {
-                                listingId = id ?? Guid.NewGuid().ToString(),
+                                listingId = deterministicId,
                                 description = description
                             }
                         }
@@ -1126,6 +1127,7 @@ public sealed class GlassdoorApiClient : IDisposable
 
                                 if (!string.IsNullOrEmpty(title))
                                 {
+                                    string deterministicId = id ?? GlassdoorIdGenerator.GenerateDeterministicId(title, company, location, null);
                                     jobs.Add(new
                                     {
                                         jobview = new
@@ -1139,7 +1141,7 @@ public sealed class GlassdoorApiClient : IDisposable
                                             },
                                             job = new
                                             {
-                                                listingId = id ?? Guid.NewGuid().ToString(),
+                                                listingId = deterministicId,
                                                 description = description
                                             }
                                         }

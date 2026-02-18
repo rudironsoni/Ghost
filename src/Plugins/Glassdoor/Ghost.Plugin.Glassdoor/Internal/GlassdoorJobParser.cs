@@ -131,8 +131,8 @@ public static class GlassdoorJobParser
             if (string.IsNullOrWhiteSpace(title))
                 return null;
 
-            // Generate ID if not present
-            id ??= Guid.NewGuid().ToString();
+            // Generate deterministic ID if not present
+            id ??= GlassdoorIdGenerator.GenerateDeterministicId(title, company, location, url);
 
             return new JobListing
             {

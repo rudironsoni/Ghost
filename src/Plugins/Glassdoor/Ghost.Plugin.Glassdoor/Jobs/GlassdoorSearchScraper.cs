@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Ghost.ConsentManagement;
 using Ghost.Contracts.Jobs;
 using Ghost.Kernel;
+using Ghost.Plugin.Glassdoor.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -586,16 +587,23 @@ public sealed class GlassdoorSearchScraper : IDisposable
                     {
                         if (jobObj is Dictionary<string, object> jobData)
                         {
+                            string? extractedId = jobData.TryGetValue("jobId", out object? jid) ? jid?.ToString() : null;
+                            string? extractedTitle = jobData.TryGetValue("title", out object? jtitle) ? jtitle?.ToString() : null;
+                            string? extractedCompany = jobData.TryGetValue("company", out object? jcompany) ? jcompany?.ToString() : null;
+                            string? extractedLocation = jobData.TryGetValue("location", out object? jloc) ? jloc?.ToString() : null;
+                            string? extractedUrl = jobData.TryGetValue("url", out object? jurl) ? jurl?.ToString() : null;
+                            string jobId = !string.IsNullOrEmpty(extractedId)
+                                ? extractedId
+                                : GlassdoorIdGenerator.GenerateDeterministicId(extractedTitle, extractedCompany, extractedLocation, extractedUrl);
+
                             var job = new JobListing
                             {
-                                Id = jobData.TryGetValue("jobId", out object? id) && !string.IsNullOrEmpty(id?.ToString())
-                                    ? id.ToString()!
-                                    : Guid.NewGuid().ToString(),
-                                Title = jobData.TryGetValue("title", out object? title) ? title?.ToString() ?? string.Empty : string.Empty,
-                                Company = jobData.TryGetValue("company", out object? company) ? company?.ToString() ?? string.Empty : string.Empty,
-                                Location = jobData.TryGetValue("location", out object? loc) ? loc?.ToString() : null,
-                                Salary = jobData.TryGetValue("salary", out object? salary) ? salary?.ToString() : null,
-                                Url = jobData.TryGetValue("url", out object? url) ? url?.ToString() : null,
+                                Id = jobId,
+                                Title = extractedTitle ?? string.Empty,
+                                Company = extractedCompany ?? string.Empty,
+                                Location = extractedLocation,
+                                Salary = jobData.TryGetValue("salary", out object? jsalary) ? jsalary?.ToString() : null,
+                                Url = extractedUrl,
                                 Source = "Glassdoor"
                             };
 
@@ -722,9 +730,12 @@ public sealed class GlassdoorSearchScraper : IDisposable
 
                             if (!string.IsNullOrEmpty(title) && !string.IsNullOrEmpty(company))
                             {
+                                string deterministicId = !string.IsNullOrEmpty(jobId)
+                                    ? jobId
+                                    : GlassdoorIdGenerator.GenerateDeterministicId(title, company, location, url);
                                 jobs.Add(new JobListing
                                 {
-                                    Id = !string.IsNullOrEmpty(jobId) ? jobId : Guid.NewGuid().ToString(),
+                                    Id = deterministicId,
                                     Title = System.Net.WebUtility.HtmlDecode(title),
                                     Company = System.Net.WebUtility.HtmlDecode(company),
                                     Location = !string.IsNullOrEmpty(location) ? System.Net.WebUtility.HtmlDecode(location) : null,
@@ -849,9 +860,10 @@ public sealed class GlassdoorSearchScraper : IDisposable
             // Must have at least title to be a valid job
             if (!string.IsNullOrEmpty(title))
             {
+                string deterministicId = id ?? GlassdoorIdGenerator.GenerateDeterministicId(title, company, location, url);
                 return new JobListing
                 {
-                    Id = id ?? Guid.NewGuid().ToString(),
+                    Id = deterministicId,
                     Title = title,
                     Company = company ?? "Unknown Company",
                     Location = location,

@@ -1,6 +1,7 @@
+using Ghost.Contracts.Jobs;
+using Ghost.Plugin.Google.Gemini;
 using Ghost.Plugin.Google.Jobs;
-using Ghost.Plugin.Google.Jobs.Internal;
-using Ghost.Testing.Fixtures;
+using Ghost.Testing.Fakes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -49,10 +50,10 @@ public sealed class GoogleE2EFixture : IAsyncLifetime
 
     private void ConfigureServices(IServiceCollection services)
     {
-        // Add logging
+        // Add logging first
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug));
 
-        // Register HttpClient
+        // Register HttpClient for direct HTTP-based API client
         services.AddSingleton(_httpClient!);
 
         // Configure Google Jobs options
@@ -62,8 +63,30 @@ public sealed class GoogleE2EFixture : IAsyncLifetime
             options.Strategy = JobSearchStrategy.HttpFirst;
         });
 
-        // Register Google Jobs services
-        services.AddSingleton<GoogleJobsApiClient>();
+        // Configure Gemini options
+        services.Configure<Gemini.GeminiOptions>(options =>
+        {
+            options.BaseUrl = "https://gemini.google.com";
+            options.DefaultModel = "gemini-1.5-flash";
+            options.ResponseTimeout = TimeSpan.FromSeconds(60);
+        });
+
+        // Register GoogleJobsApiClient using the legacy HttpClient constructor
+        services.AddSingleton<Jobs.Internal.GoogleJobsApiClient>(sp =>
+        {
+            HttpClient httpClient = sp.GetRequiredService<HttpClient>();
+            IOptions<GoogleJobsOptions> options = sp.GetRequiredService<IOptions<GoogleJobsOptions>>();
+            ILogger<Jobs.Internal.GoogleJobsApiClient> logger = sp.GetRequiredService<ILogger<Jobs.Internal.GoogleJobsApiClient>>();
+            return new Jobs.Internal.GoogleJobsApiClient(httpClient, options.Value, logger);
+        });
+
+        // Register GoogleJobClient
         services.AddSingleton<GoogleJobClient>();
+
+        // Register IBrowserSession with a fake for E2E testing
+        services.AddSingleton<IBrowserSession, FakeBrowserSession>();
+
+        // Register GeminiClient
+        services.AddSingleton<Gemini.GeminiClient>();
     }
 }
