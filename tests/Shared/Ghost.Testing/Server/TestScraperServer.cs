@@ -120,6 +120,24 @@ public sealed class TestScraperServer : IAsyncDisposable
             return Results.Content(html, "text/html");
         });
 
+        // Additional LinkedIn routes for client compatibility
+        app.MapGet("/linkedin/jobs/search", (HttpContext context) =>
+        {
+            string? searchTerm = context.Request.Query["keywords"].FirstOrDefault();
+            string? location = context.Request.Query["location"].FirstOrDefault();
+            int page = int.TryParse(context.Request.Query["page"].FirstOrDefault(), out int p) ? p : 1;
+            int count = int.TryParse(context.Request.Query["count"].FirstOrDefault(), out int c) ? c : 10;
+
+            string html = fixtures.LinkedIn.GenerateSearchResultsPage(searchTerm, location, page, count);
+            return Results.Content(html, "text/html");
+        });
+
+        app.MapGet("/linkedin/jobs/view/{id}", (string id, HttpContext context) =>
+        {
+            string html = fixtures.LinkedIn.GenerateJobDetailPage(id);
+            return Results.Content(html, "text/html");
+        });
+
         // Indeed routes
         app.MapGet("/indeed/jobs", (HttpContext context) =>
         {

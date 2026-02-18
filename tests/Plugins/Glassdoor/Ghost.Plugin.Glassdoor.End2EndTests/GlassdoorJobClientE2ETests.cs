@@ -2,6 +2,7 @@ using Ghost.Contracts.Jobs;
 using Ghost.Plugin.Glassdoor.End2EndTests.Fixtures;
 using Ghost.Testing.Contracts;
 using Ghost.Testing.Contracts.BuiltIn;
+using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
@@ -12,17 +13,34 @@ namespace Ghost.Plugin.Glassdoor.End2EndTests;
 /// End-to-End tests for Glassdoor Job Client using real browser automation.
 /// Tests run against TestScraperServer with realistic HTML fixtures.
 /// </summary>
-[Collection("Browser")]
+[Collection("GlassdoorEnd2End")]
 [Trait("Category", "End2End")]
-public sealed class GlassdoorJobClientE2ETests : IClassFixture<GlassdoorE2EFixture>
+public sealed class GlassdoorJobClientE2ETests : IAsyncLifetime
 {
-    private readonly GlassdoorE2EFixture _fixture;
+    private readonly RealBrowserFixture _browserFixture;
     private readonly ITestOutputHelper _output;
+    private GlassdoorE2EFixture? _glassdoorFixture;
+    private IServiceProvider? _serviceProvider;
 
-    public GlassdoorJobClientE2ETests(GlassdoorE2EFixture fixture, ITestOutputHelper output)
+    public GlassdoorJobClientE2ETests(RealBrowserFixture browserFixture, ITestOutputHelper output)
     {
-        _fixture = fixture;
+        _browserFixture = browserFixture;
         _output = output;
+    }
+
+    public async Task InitializeAsync()
+    {
+        _glassdoorFixture = new GlassdoorE2EFixture(_browserFixture);
+        await _glassdoorFixture.InitializeAsync().ConfigureAwait(false);
+        _serviceProvider = _glassdoorFixture.ServiceProvider;
+    }
+
+    public async Task DisposeAsync()
+    {
+        if (_glassdoorFixture != null)
+        {
+            await _glassdoorFixture.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     [Fact]
@@ -30,7 +48,7 @@ public sealed class GlassdoorJobClientE2ETests : IClassFixture<GlassdoorE2EFixtu
     public async Task SearchJobsAsync_ReturnsJobs_WhenKeywordsProvidedAsync()
     {
         // Arrange
-        GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
+        GlassdoorJobClient client = _serviceProvider!.GetRequiredService<GlassdoorJobClient>();
         var criteria = new JobSearchCriteria
         {
             Query = "Software Engineer",
@@ -63,7 +81,7 @@ public sealed class GlassdoorJobClientE2ETests : IClassFixture<GlassdoorE2EFixtu
     public async Task GetJobDetailsAsync_ReturnsCompleteJob_WhenValidUrlProvidedAsync()
     {
         // Arrange
-        GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
+        GlassdoorJobClient client = _serviceProvider!.GetRequiredService<GlassdoorJobClient>();
         string jobId = "glassdoor-job-001";
 
         // Act
@@ -80,7 +98,7 @@ public sealed class GlassdoorJobClientE2ETests : IClassFixture<GlassdoorE2EFixtu
     public async Task SearchJobsAsync_RespectsMaxResultsAsync()
     {
         // Arrange
-        GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
+        GlassdoorJobClient client = _serviceProvider!.GetRequiredService<GlassdoorJobClient>();
         var criteria = new JobSearchCriteria
         {
             Query = "Software Engineer",
@@ -102,7 +120,7 @@ public sealed class GlassdoorJobClientE2ETests : IClassFixture<GlassdoorE2EFixtu
     public async Task ApplyForJobAsync_ThrowsNotImplementedAsync()
     {
         // Arrange
-        GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
+        GlassdoorJobClient client = _serviceProvider!.GetRequiredService<GlassdoorJobClient>();
         string jobId = "glassdoor-job-001";
         var details = new ApplicationDetails
         {
@@ -121,7 +139,7 @@ public sealed class GlassdoorJobClientE2ETests : IClassFixture<GlassdoorE2EFixtu
     public async Task PlatformName_ReturnsExpectedValueAsync()
     {
         // Arrange
-        GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
+        GlassdoorJobClient client = _serviceProvider!.GetRequiredService<GlassdoorJobClient>();
 
         // Act
         string platformName = client.PlatformName;
@@ -135,7 +153,7 @@ public sealed class GlassdoorJobClientE2ETests : IClassFixture<GlassdoorE2EFixtu
     public async Task GetSavedJobs_ReturnsEmptyListAsync()
     {
         // Arrange
-        GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
+        GlassdoorJobClient client = _serviceProvider!.GetRequiredService<GlassdoorJobClient>();
 
         // Act
         IReadOnlyList<JobListing> results = await client.GetSavedJobsAsync();
@@ -150,7 +168,7 @@ public sealed class GlassdoorJobClientE2ETests : IClassFixture<GlassdoorE2EFixtu
     public async Task GetApplications_ReturnsEmptyListAsync()
     {
         // Arrange
-        GlassdoorJobClient client = _fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>();
+        GlassdoorJobClient client = _serviceProvider!.GetRequiredService<GlassdoorJobClient>();
 
         // Act
         IReadOnlyList<JobApplication> results = await client.GetApplicationsAsync();
@@ -165,7 +183,7 @@ public sealed class GlassdoorJobClientE2ETests : IClassFixture<GlassdoorE2EFixtu
     public async Task RequiredFieldsContract_ValidatesJobStructureAsync()
     {
         // Arrange
-        var adapter = new GlassdoorContractAdapter(_fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>());
+        var adapter = new GlassdoorContractAdapter(_serviceProvider!.GetRequiredService<GlassdoorJobClient>());
         var contract = new RequiredFieldsContract();
 
         // Act
@@ -191,7 +209,7 @@ public sealed class GlassdoorJobClientE2ETests : IClassFixture<GlassdoorE2EFixtu
     public async Task DedupeContract_ValidatesNoDuplicateJobsAsync()
     {
         // Arrange
-        var adapter = new GlassdoorContractAdapter(_fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>());
+        var adapter = new GlassdoorContractAdapter(_serviceProvider!.GetRequiredService<GlassdoorJobClient>());
         var contract = new DedupeContract();
 
         // Act
@@ -217,7 +235,7 @@ public sealed class GlassdoorJobClientE2ETests : IClassFixture<GlassdoorE2EFixtu
     public async Task PaginationContract_ValidatesPaginationBehaviorAsync()
     {
         // Arrange
-        var adapter = new GlassdoorContractAdapter(_fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>());
+        var adapter = new GlassdoorContractAdapter(_serviceProvider!.GetRequiredService<GlassdoorJobClient>());
         var contract = new PaginationContract();
 
         // Act
@@ -244,7 +262,7 @@ public sealed class GlassdoorJobClientE2ETests : IClassFixture<GlassdoorE2EFixtu
     public async Task RetryBehaviorContract_ValidatesRetryLogicAsync()
     {
         // Arrange
-        var adapter = new GlassdoorContractAdapter(_fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>());
+        var adapter = new GlassdoorContractAdapter(_serviceProvider!.GetRequiredService<GlassdoorJobClient>());
         var contract = new RetryBehaviorContract();
 
         // Act
@@ -271,7 +289,7 @@ public sealed class GlassdoorJobClientE2ETests : IClassFixture<GlassdoorE2EFixtu
     public async Task IdempotentExtractionContract_ValidatesConsistencyAsync()
     {
         // Arrange
-        var adapter = new GlassdoorContractAdapter(_fixture.ServiceProvider.GetRequiredService<GlassdoorJobClient>());
+        var adapter = new GlassdoorContractAdapter(_serviceProvider!.GetRequiredService<GlassdoorJobClient>());
         var contract = new IdempotentExtractionContract();
 
         // Act
