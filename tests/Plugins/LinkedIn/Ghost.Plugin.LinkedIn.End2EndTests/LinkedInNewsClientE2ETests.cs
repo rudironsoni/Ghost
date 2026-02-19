@@ -12,25 +12,28 @@ namespace Ghost.Plugin.LinkedIn.End2EndTests;
 /// </summary>
 [Collection("LinkedInEnd2End")]
 [Trait("Category", "End2End")]
-public sealed class LinkedInNewsClientE2ETests : IAsyncLifetime, IClassFixture<LinkedInE2EFixture>
+public sealed class LinkedInNewsClientE2ETests : IAsyncLifetime
 {
-    private readonly LinkedInE2EFixture _fixture;
     private readonly RealBrowserFixture _browserFixture;
+    private LinkedInE2EFixture? _fixture;
 
-    public LinkedInNewsClientE2ETests(LinkedInE2EFixture fixture, RealBrowserFixture browserFixture)
+    public LinkedInNewsClientE2ETests(RealBrowserFixture browserFixture)
     {
-        _fixture = fixture;
         _browserFixture = browserFixture;
     }
 
     public async Task InitializeAsync()
     {
-        await _fixture.InitializeAsync();
+        _fixture = new LinkedInE2EFixture(_browserFixture);
+        await _fixture.InitializeAsync().ConfigureAwait(false);
     }
 
     public async Task DisposeAsync()
     {
-        await _fixture.DisposeAsync();
+        if (_fixture != null)
+        {
+            await _fixture.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     [Fact]
@@ -38,7 +41,7 @@ public sealed class LinkedInNewsClientE2ETests : IAsyncLifetime, IClassFixture<L
     public async Task GetArticles_ReturnsArticlesAsync()
     {
         // Arrange
-        LinkedInNewsClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
+        LinkedInNewsClient client = _fixture!.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
         var filter = new NewsFilter { MaxResults = 10 };
 
         // Act
@@ -53,7 +56,7 @@ public sealed class LinkedInNewsClientE2ETests : IAsyncLifetime, IClassFixture<L
     public async Task Search_WithValidQuery_ReturnsArticlesAsync()
     {
         // Arrange
-        LinkedInNewsClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
+        LinkedInNewsClient client = _fixture!.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
         string query = "technology";
         var options = new NewsSearchOptions { MaxResults = 5 };
 
@@ -69,7 +72,7 @@ public sealed class LinkedInNewsClientE2ETests : IAsyncLifetime, IClassFixture<L
     public void PlatformName_ReturnsExpectedValue()
     {
         // Arrange
-        LinkedInNewsClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
+        LinkedInNewsClient client = _fixture!.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
 
         // Act
         string platformName = client.PlatformName;
@@ -83,7 +86,7 @@ public sealed class LinkedInNewsClientE2ETests : IAsyncLifetime, IClassFixture<L
     public async Task GetArticle_ThrowsNotImplementedExceptionAsync()
     {
         // Arrange
-        LinkedInNewsClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
+        LinkedInNewsClient client = _fixture!.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
         string articleId = "article-001";
 
         // Act & Assert

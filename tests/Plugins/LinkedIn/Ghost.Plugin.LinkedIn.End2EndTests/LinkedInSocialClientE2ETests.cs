@@ -12,25 +12,28 @@ namespace Ghost.Plugin.LinkedIn.End2EndTests;
 /// </summary>
 [Collection("LinkedInEnd2End")]
 [Trait("Category", "End2End")]
-public sealed class LinkedInSocialClientE2ETests : IAsyncLifetime, IClassFixture<LinkedInE2EFixture>
+public sealed class LinkedInSocialClientE2ETests : IAsyncLifetime
 {
-    private readonly LinkedInE2EFixture _fixture;
     private readonly RealBrowserFixture _browserFixture;
+    private LinkedInE2EFixture? _fixture;
 
-    public LinkedInSocialClientE2ETests(LinkedInE2EFixture fixture, RealBrowserFixture browserFixture)
+    public LinkedInSocialClientE2ETests(RealBrowserFixture browserFixture)
     {
-        _fixture = fixture;
         _browserFixture = browserFixture;
     }
 
     public async Task InitializeAsync()
     {
-        await _fixture.InitializeAsync();
+        _fixture = new LinkedInE2EFixture(_browserFixture);
+        await _fixture.InitializeAsync().ConfigureAwait(false);
     }
 
     public async Task DisposeAsync()
     {
-        await _fixture.DisposeAsync();
+        if (_fixture != null)
+        {
+            await _fixture.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     [Fact]
@@ -38,7 +41,7 @@ public sealed class LinkedInSocialClientE2ETests : IAsyncLifetime, IClassFixture
     public async Task GetProfile_WithValidProfileId_ReturnsProfileAsync()
     {
         // Arrange
-        LinkedInSocialClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
+        LinkedInSocialClient client = _fixture!.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
         string profileId = "john-doe";
 
         // Act
@@ -54,7 +57,7 @@ public sealed class LinkedInSocialClientE2ETests : IAsyncLifetime, IClassFixture
     public async Task SearchProfiles_WithValidCriteria_ReturnsProfilesAsync()
     {
         // Arrange
-        LinkedInSocialClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
+        LinkedInSocialClient client = _fixture!.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
         var criteria = new ProfileSearchCriteria
         {
             Query = "Software Engineer",
@@ -73,7 +76,7 @@ public sealed class LinkedInSocialClientE2ETests : IAsyncLifetime, IClassFixture
     public void PlatformName_ReturnsExpectedValue()
     {
         // Arrange
-        LinkedInSocialClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
+        LinkedInSocialClient client = _fixture!.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
 
         // Act
         string platformName = client.PlatformName;
@@ -87,7 +90,7 @@ public sealed class LinkedInSocialClientE2ETests : IAsyncLifetime, IClassFixture
     public async Task GetConnections_ReturnsConnectionsAsync()
     {
         // Arrange
-        LinkedInSocialClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
+        LinkedInSocialClient client = _fixture!.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
 
         // Act
         IReadOnlyList<SocialConnection> results = await client.GetConnectionsAsync();
@@ -101,7 +104,7 @@ public sealed class LinkedInSocialClientE2ETests : IAsyncLifetime, IClassFixture
     public async Task SendConnectionRequest_DoesNotThrowAsync()
     {
         // Arrange
-        LinkedInSocialClient client = _fixture.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
+        LinkedInSocialClient client = _fixture!.ServiceProvider.GetRequiredService<LinkedInSocialClient>();
         string profileId = "test-profile";
         string message = "Hello, I'd like to connect!";
 
