@@ -10,11 +10,11 @@ TESTS_DIR="$(dirname "$SCRIPT_DIR")"
 
 echo "Validating test traits in: $TESTS_DIR"
 
-# Canonical Category values: Unit, Integration, System, E2E
-# Non-canonical values that should fail: UnitTest, unit, integration, e2e (wrong casing)
+# Canonical Category values: Unit, Integration, System, End2End
+# Non-canonical values that should fail: UnitTest, unit, integration, end2end (wrong casing)
 
-# Find all Category trait declarations
-CATEGORY_TRAITS=$(grep -r '\[Trait("Category"' "$TESTS_DIR" --include="*.cs" || true)
+# Find all Category trait declarations in active tests (exclude legacy inventory)
+CATEGORY_TRAITS=$(grep -r '\[Trait("Category"' "$TESTS_DIR" --include="*.cs" | grep -v '/Legacy/' || true)
 
 # Check for non-canonical category values
 NON_CANONICAL_FOUND=0
@@ -47,10 +47,17 @@ if echo "$CATEGORY_TRAITS" | grep -q 'Trait("Category", "system")'; then
     NON_CANONICAL_FOUND=1
 fi
 
-# Check for wrong casing in "e2e" (should be "E2E")
-if echo "$CATEGORY_TRAITS" | grep -q 'Trait("Category", "e2e")'; then
-    echo "ERROR: Found non-canonical category value 'e2e' (should be 'E2E' all caps)"
-    echo "$CATEGORY_TRAITS" | grep 'Trait("Category", "e2e")'
+# Check for wrong casing in "end2end" (should be "End2End")
+if echo "$CATEGORY_TRAITS" | grep -q 'Trait("Category", "end2end")'; then
+    echo "ERROR: Found non-canonical category value 'end2end' (should be 'End2End' in PascalCase)"
+    echo "$CATEGORY_TRAITS" | grep 'Trait("Category", "end2end")'
+    NON_CANONICAL_FOUND=1
+fi
+
+# Check for deprecated category value "E2E" (must be "End2End")
+if echo "$CATEGORY_TRAITS" | grep -q 'Trait("Category", "E2E")'; then
+    echo "ERROR: Found deprecated category value 'E2E' (must be 'End2End')"
+    echo "$CATEGORY_TRAITS" | grep 'Trait("Category", "E2E")'
     NON_CANONICAL_FOUND=1
 fi
 
@@ -62,7 +69,7 @@ echo "$CATEGORY_TRAITS" | sed -n 's/.*Trait("Category", "\([^"]*\)").*/\1/p' | s
 if [ $NON_CANONICAL_FOUND -eq 1 ]; then
     echo ""
     echo "FAILURE: Non-canonical test category values found!"
-    echo "Canonical values are: Unit, Integration, System, E2E"
+    echo "Canonical values are: Unit, Integration, System, End2End"
     exit 1
 fi
 

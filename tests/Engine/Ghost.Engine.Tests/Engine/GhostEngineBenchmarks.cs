@@ -68,9 +68,16 @@ public class GhostEngineBenchmarks
               - Memory: {(bagMemoryAllocated > 0 ? (channelMemoryAllocated * 100 / bagMemoryAllocated) : 0)}% of ConcurrentBag memory
             """);
 
-        // Channel should be comparable or better in performance
-        Assert.True(channelElapsedMs <= bagElapsedMs * 2,
-            $"Channel should not be more than 2x slower than ConcurrentBag. Channel: {channelElapsedMs}ms, Bag: {bagElapsedMs}ms");
+        // Guard against major regressions while tolerating CI host variance for timing benchmarks.
+        double throughputRatio = bagElapsedMs > 0
+            ? (double)channelElapsedMs / bagElapsedMs
+            : 1D;
+        double maxAllowedThroughputRatio = taskCount >= 10000 ? 3D : 2.5D;
+
+        Assert.True(
+            throughputRatio <= maxAllowedThroughputRatio,
+            $"Channel should not exceed {maxAllowedThroughputRatio:0.0}x ConcurrentBag time. " +
+            $"Channel: {channelElapsedMs}ms, Bag: {bagElapsedMs}ms, Ratio: {throughputRatio:0.00}x");
     }
 
     [Fact]

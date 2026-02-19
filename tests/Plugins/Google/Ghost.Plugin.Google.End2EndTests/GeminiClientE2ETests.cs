@@ -1,6 +1,7 @@
 using Ghost.Contracts.Inference;
 using Ghost.Plugin.Google.End2EndTests.Fixtures;
 using Ghost.Plugin.Google.Gemini;
+using Ghost.Testing.End2End;
 using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -34,7 +35,7 @@ public sealed class GeminiClientE2ETests : IAsyncLifetime, IClassFixture<GoogleE
         await _fixture.DisposeAsync();
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task Complete_WithValidRequest_ReturnsInferenceResponseAsync()
     {
@@ -60,7 +61,7 @@ public sealed class GeminiClientE2ETests : IAsyncLifetime, IClassFixture<GoogleE
         Assert.Equal("Google", client.ProviderName);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void ProviderName_ReturnsExpectedValue()
     {
@@ -74,7 +75,7 @@ public sealed class GeminiClientE2ETests : IAsyncLifetime, IClassFixture<GoogleE
         Assert.Equal("Google", providerName);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task Stream_WithValidRequest_ReturnsChunksAsync()
     {

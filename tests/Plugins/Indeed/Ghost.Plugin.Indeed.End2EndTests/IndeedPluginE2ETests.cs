@@ -1,6 +1,7 @@
 using Ghost.Contracts.Jobs;
 using Ghost.Hosting;
 using Ghost.Plugin.Indeed.End2EndTests.Fixtures;
+using Ghost.Testing.End2End;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -22,7 +23,7 @@ public sealed class IndeedPluginE2ETests : IClassFixture<IndeedE2EFixture>
         _fixture = fixture;
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_Name_ReturnsExpectedValue()
     {
@@ -36,7 +37,7 @@ public sealed class IndeedPluginE2ETests : IClassFixture<IndeedE2EFixture>
         Assert.Equal("Indeed", name);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_Version_ReturnsValidVersion()
     {
@@ -52,7 +53,7 @@ public sealed class IndeedPluginE2ETests : IClassFixture<IndeedE2EFixture>
         Assert.Equal(0, version.Minor);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_ProvidedServices_ContainsIJobClient()
     {
@@ -93,7 +94,7 @@ public sealed class IndeedPluginE2ETests : IClassFixture<IndeedE2EFixture>
         Assert.NotNull(client);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void ConfigureServices_RegistersIndeedApiClient()
     {
