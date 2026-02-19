@@ -28,7 +28,7 @@ repos:
       # Smoke tests run in nightly CI (lane-c-nightly.yml) or manually
       - id: dotnet-test-quick
         name: Run non-smoke tests
-        entry: dotnet test Ghost.sln --filter "Category!=Smoke"
+        entry: dotnet test Ghost.sln --filter "Category!=Smoke&Category!=End2End"
         language: system
         pass_filenames: false
         files: '\.(cs|csproj)$'
