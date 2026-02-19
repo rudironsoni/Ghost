@@ -27,6 +27,17 @@ public sealed class GoogleJobClientE2ETests : IClassFixture<Fixtures.GoogleE2EFi
 
     [End2EndFact]
     [Trait("TestType", "End2End")]
+    public void ServiceProvider_ResolvesProductionGoogleJobsApiClient()
+    {
+        // Arrange / Act
+        GoogleJobsApiClient apiClient = _fixture.ServiceProvider.GetRequiredService<GoogleJobsApiClient>();
+
+        // Assert
+        Assert.Equal(typeof(GoogleJobsApiClient), apiClient.GetType());
+    }
+
+    [End2EndFact]
+    [Trait("TestType", "End2End")]
     public async Task SearchJobs_WithValidCriteria_ReturnsJobListingsAsync()
     {
         // Arrange
