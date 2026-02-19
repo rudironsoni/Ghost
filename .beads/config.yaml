@@ -13,7 +13,8 @@ dolt:
 sync:
   mode: belt-and-suspenders
 
-# Remote DoltHub configuration
+# Enforced DoltHub remote for shared Beads state.
+# Branches MUST use this remote configuration.
 remote:
   name: dolthub
   url: https://doltremoteapi.dolthub.com/rudironsoni/ghost
