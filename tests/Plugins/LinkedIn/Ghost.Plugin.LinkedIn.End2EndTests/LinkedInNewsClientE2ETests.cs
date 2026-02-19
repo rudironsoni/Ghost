@@ -4,6 +4,8 @@ using Ghost.Testing.End2End;
 using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace Ghost.Plugin.LinkedIn.End2EndTests;
 
@@ -16,11 +18,13 @@ namespace Ghost.Plugin.LinkedIn.End2EndTests;
 public sealed class LinkedInNewsClientE2ETests : IAsyncLifetime
 {
     private readonly RealBrowserFixture _browserFixture;
+    private readonly ITestOutputHelper _output;
     private LinkedInE2EFixture? _fixture;
 
-    public LinkedInNewsClientE2ETests(RealBrowserFixture browserFixture)
+    public LinkedInNewsClientE2ETests(RealBrowserFixture browserFixture, ITestOutputHelper output)
     {
         _browserFixture = browserFixture;
+        _output = output;
     }
 
     public async Task InitializeAsync()
@@ -44,9 +48,18 @@ public sealed class LinkedInNewsClientE2ETests : IAsyncLifetime
         // Arrange
         LinkedInNewsClient client = _fixture!.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
         var filter = new NewsFilter { MaxResults = 10 };
+        using CancellationTokenSource cancellationTokenSource = new(TimeSpan.FromSeconds(20));
 
         // Act
-        IReadOnlyList<NewsArticle> results = await client.GetArticlesAsync(filter);
+        IReadOnlyList<NewsArticle> results;
+        try
+        {
+            results = await client.GetArticlesAsync(filter, cancellationTokenSource.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            throw new XunitException("GetArticlesAsync timed out after 20 seconds.");
+        }
 
         // Assert
         Assert.NotNull(results);
@@ -60,9 +73,18 @@ public sealed class LinkedInNewsClientE2ETests : IAsyncLifetime
         LinkedInNewsClient client = _fixture!.ServiceProvider.GetRequiredService<LinkedInNewsClient>();
         string query = "technology";
         var options = new NewsSearchOptions { MaxResults = 5 };
+        using CancellationTokenSource cancellationTokenSource = new(TimeSpan.FromSeconds(20));
 
         // Act
-        IReadOnlyList<NewsArticle> results = await client.SearchAsync(query, options);
+        IReadOnlyList<NewsArticle> results;
+        try
+        {
+            results = await client.SearchAsync(query, options, cancellationTokenSource.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            throw new XunitException("SearchAsync timed out after 20 seconds.");
+        }
 
         // Assert
         Assert.NotNull(results);

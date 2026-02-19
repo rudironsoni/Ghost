@@ -31,4 +31,7 @@ internal static partial class LinkedInLoggerExtensions
 
     [LoggerMessage(EventId = 9, Level = LogLevel.Debug, Message = "Failed to parse an education item")]
     public static partial void LogEducationItemParseFailed(this ILogger logger, Exception exception);
+
+    [LoggerMessage(EventId = 10, Level = LogLevel.Debug, Message = "SendConnectionRequestAsync: connect button not found for profile {ProfileId}; skipping invitation flow")]
+    public static partial void LogConnectButtonNotFound(this ILogger logger, string profileId);
 }
