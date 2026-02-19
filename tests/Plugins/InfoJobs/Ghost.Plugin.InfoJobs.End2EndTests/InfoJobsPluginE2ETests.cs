@@ -1,6 +1,7 @@
 using Ghost.Contracts.Jobs;
 using Ghost.Hosting;
 using Ghost.Plugin.InfoJobs.End2EndTests.Fixtures;
+using Ghost.Testing.End2End;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -22,7 +23,7 @@ public sealed class InfoJobsPluginE2ETests
         _fixture = fixture;
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_Name_ReturnsExpectedValue()
     {
@@ -36,7 +37,7 @@ public sealed class InfoJobsPluginE2ETests
         Assert.Equal("InfoJobs", name);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_Version_ReturnsValidVersion()
     {
@@ -52,7 +53,7 @@ public sealed class InfoJobsPluginE2ETests
         Assert.Equal(0, version.Minor);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_ProvidedServices_ContainsIJobClient()
     {
@@ -66,7 +67,7 @@ public sealed class InfoJobsPluginE2ETests
         Assert.Contains(typeof(IJobClient), providedServices);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void ConfigureServices_RegistersInfoJobClient()
     {
@@ -94,7 +95,7 @@ public sealed class InfoJobsPluginE2ETests
         Assert.NotNull(client);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void ConfigureServices_RegistersInfoJobsOptions()
     {
@@ -125,7 +126,7 @@ public sealed class InfoJobsPluginE2ETests
         Assert.Equal("test-key", options.Value.ApiKey);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void ConfigureServices_RegistersPluginCapabilities()
     {
@@ -154,7 +155,7 @@ public sealed class InfoJobsPluginE2ETests
         Assert.False(capabilities.SupportsNews);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void ConfigureServices_RegistersReadinessCheck()
     {

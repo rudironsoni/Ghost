@@ -4,6 +4,7 @@ using Ghost.Hosting;
 using Ghost.Plugin.Google.End2EndTests.Fixtures;
 using Ghost.Plugin.Google.Gemini;
 using Ghost.Plugin.Google.Jobs;
+using Ghost.Testing.End2End;
 using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,7 +38,7 @@ public sealed class GooglePluginE2ETests : IAsyncLifetime, IClassFixture<GoogleE
         await _fixture.DisposeAsync();
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_Name_ReturnsExpectedValue()
     {
@@ -51,7 +52,7 @@ public sealed class GooglePluginE2ETests : IAsyncLifetime, IClassFixture<GoogleE
         Assert.Equal("Google", name);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_Version_ReturnsValidVersion()
     {
@@ -67,7 +68,7 @@ public sealed class GooglePluginE2ETests : IAsyncLifetime, IClassFixture<GoogleE
         Assert.Equal(0, version.Minor);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_ProvidedServices_ContainsExpectedTypes()
     {
@@ -113,7 +114,7 @@ public sealed class GooglePluginE2ETests : IAsyncLifetime, IClassFixture<GoogleE
         Assert.NotNull(client);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void ConfigureServices_RegistersGeminiClient()
     {

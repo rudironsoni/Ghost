@@ -2,6 +2,7 @@ using System.Globalization;
 using Ghost.Contracts.Jobs;
 using Ghost.Kernel;
 using Ghost.Plugin.Indeed.End2EndTests.Fixtures;
+using Ghost.Testing.End2End;
 using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -35,7 +36,7 @@ public sealed class IndeedJobClientE2ETests : IClassFixture<IndeedE2EFixture>, I
 
     #region Required Fields Contract Tests
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobsAsync_ReturnsJobs_WithAllRequiredFieldsAsync()
     {
@@ -65,7 +66,7 @@ public sealed class IndeedJobClientE2ETests : IClassFixture<IndeedE2EFixture>, I
         }
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobsAsync_ReturnsJobs_WithSourceSetToIndeedAsync()
     {
@@ -91,7 +92,7 @@ public sealed class IndeedJobClientE2ETests : IClassFixture<IndeedE2EFixture>, I
         _output.WriteLine($"All {results.Count} jobs have Source='Indeed'");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobsAsync_RespectsMaxResultsAsync()
     {
@@ -120,7 +121,7 @@ public sealed class IndeedJobClientE2ETests : IClassFixture<IndeedE2EFixture>, I
 
     #region Data Quality Contract Tests
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobsAsync_ReturnsJobs_WithValidUrlsAsync()
     {
@@ -149,7 +150,7 @@ public sealed class IndeedJobClientE2ETests : IClassFixture<IndeedE2EFixture>, I
         _output.WriteLine($"Validated URLs for {results.Count} jobs");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobsAsync_ReturnsJobs_WithReasonablePostedDatesAsync()
     {
@@ -181,7 +182,7 @@ public sealed class IndeedJobClientE2ETests : IClassFixture<IndeedE2EFixture>, I
         _output.WriteLine($"Validated posted dates for {results.Count} jobs");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobsAsync_ReturnsJobs_WithNonEmptyTextFieldsAsync()
     {
@@ -223,7 +224,7 @@ public sealed class IndeedJobClientE2ETests : IClassFixture<IndeedE2EFixture>, I
 
     #region GetJobDetails Tests
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetJobDetailsAsync_ReturnsJob_WhenValidJobIdProvidedAsync()
     {
@@ -246,7 +247,7 @@ public sealed class IndeedJobClientE2ETests : IClassFixture<IndeedE2EFixture>, I
 
     #region Browser Integration Tests
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task BrowserSession_CanNavigateToIndeedSearchPageAsync()
     {
@@ -273,7 +274,7 @@ public sealed class IndeedJobClientE2ETests : IClassFixture<IndeedE2EFixture>, I
         }
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task BrowserSession_CanExtractJobElementsFromPageAsync()
     {
@@ -311,7 +312,7 @@ public sealed class IndeedJobClientE2ETests : IClassFixture<IndeedE2EFixture>, I
 
     #region Platform Integration Tests
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void PlatformName_ReturnsExpectedValue()
     {
@@ -326,7 +327,7 @@ public sealed class IndeedJobClientE2ETests : IClassFixture<IndeedE2EFixture>, I
         _output.WriteLine($"Platform name: {platformName}");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task ServiceProvider_ResolvesIndeedJobClientAsync()
     {

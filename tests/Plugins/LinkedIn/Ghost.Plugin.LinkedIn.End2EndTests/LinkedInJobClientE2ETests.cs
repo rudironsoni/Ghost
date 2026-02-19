@@ -3,6 +3,7 @@ using Ghost.Contracts.Jobs;
 using Ghost.Plugin.LinkedIn.End2EndTests.Fixtures;
 using Ghost.Testing.Contracts;
 using Ghost.Testing.Contracts.BuiltIn;
+using Ghost.Testing.End2End;
 using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -44,7 +45,7 @@ public sealed class LinkedInJobClientE2ETests : IAsyncLifetime
         }
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobsAsync_ReturnsJobs_WhenKeywordsProvidedAsync()
     {
@@ -77,7 +78,7 @@ public sealed class LinkedInJobClientE2ETests : IAsyncLifetime
         await ValidateDataQualityAsync(results);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetJobDetailsAsync_ReturnsCompleteJob_WhenValidUrlProvidedAsync()
     {
@@ -111,7 +112,7 @@ public sealed class LinkedInJobClientE2ETests : IAsyncLifetime
         _output.WriteLine($"Job details - ID: {result.Id}, Title: {result.Title}, Company: {result.Company}");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobsAsync_RespectsMaxResultsAsync()
     {
@@ -153,7 +154,7 @@ public sealed class LinkedInJobClientE2ETests : IAsyncLifetime
         await Assert.ThrowsAsync<NotImplementedException>(() => client.ApplyAsync(jobId, details));
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task PlatformName_ReturnsLinkedInAsync()
     {
@@ -167,7 +168,7 @@ public sealed class LinkedInJobClientE2ETests : IAsyncLifetime
         Assert.Equal("LinkedIn", platformName);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobsAsync_RequiredFieldsContract_PassesAsync()
     {
@@ -192,7 +193,7 @@ public sealed class LinkedInJobClientE2ETests : IAsyncLifetime
         _output.WriteLine($"RequiredFieldsContract passed. Context: {System.Text.Json.JsonSerializer.Serialize(contractResult.Context)}");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetSavedJobsAsync_ThrowsNotImplementedExceptionAsync()
     {
@@ -203,7 +204,7 @@ public sealed class LinkedInJobClientE2ETests : IAsyncLifetime
         await Assert.ThrowsAsync<NotImplementedException>(() => client.GetSavedJobsAsync());
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetApplicationsAsync_ThrowsNotImplementedExceptionAsync()
     {

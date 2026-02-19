@@ -13,7 +13,7 @@ namespace Ghost.Tests.Scroll;
 /// virtualized DOM replacements, and duplicate chunk replay.
 /// </summary>
 [Collection("Browser")]
-[Trait("Category", "E2E")]
+[Trait("Category", "End2End")]
 public class ScrollScenarioTests : IAsyncLifetime
 {
     private readonly ITestOutputHelper _output;
