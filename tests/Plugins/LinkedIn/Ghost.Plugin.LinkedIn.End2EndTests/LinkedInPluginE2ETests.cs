@@ -24,30 +24,8 @@ namespace Ghost.Plugin.LinkedIn.End2EndTests;
 /// </summary>
 [Collection("LinkedInEnd2End")]
 [Trait("Category", "End2End")]
-public sealed class LinkedInPluginE2ETests : IAsyncLifetime
+public sealed class LinkedInPluginE2ETests
 {
-    private readonly RealBrowserFixture _browserFixture;
-    private LinkedInE2EFixture? _fixture;
-
-    public LinkedInPluginE2ETests(RealBrowserFixture browserFixture)
-    {
-        _browserFixture = browserFixture;
-    }
-
-    public async Task InitializeAsync()
-    {
-        _fixture = new LinkedInE2EFixture(_browserFixture);
-        await _fixture.InitializeAsync().ConfigureAwait(false);
-    }
-
-    public async Task DisposeAsync()
-    {
-        if (_fixture != null)
-        {
-            await _fixture.DisposeAsync().ConfigureAwait(false);
-        }
-    }
-
     [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_Name_ReturnsExpectedValue()
@@ -112,8 +90,7 @@ public sealed class LinkedInPluginE2ETests : IAsyncLifetime
     [Trait("TestType", "End2End")]
     public void Plugin_Name_FromFixture_ReturnsExpectedValue()
     {
-        // Arrange - use _fixture to verify it was initialized
-        Assert.NotNull(_fixture);
+        // Arrange
         var plugin = new LinkedInPlugin();
 
         // Act

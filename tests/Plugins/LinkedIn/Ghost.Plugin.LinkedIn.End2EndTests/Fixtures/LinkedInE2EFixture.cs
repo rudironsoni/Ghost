@@ -61,9 +61,16 @@ public sealed class LinkedInE2EFixture : IAsyncLifetime
             disposable.Dispose();
         }
 
+        if (_browserSession != null)
+        {
+            await _browserSession.DisposeAsync().ConfigureAwait(false);
+            _browserSession = null;
+        }
+
         if (_testScraperServer != null)
         {
             await _testScraperServer.DisposeAsync().ConfigureAwait(false);
+            _testScraperServer = null;
         }
     }
 
@@ -98,5 +105,4 @@ public sealed class LinkedInE2EFixture : IAsyncLifetime
         services.AddScoped<LinkedInSocialClient>();
     }
 }
-
 
