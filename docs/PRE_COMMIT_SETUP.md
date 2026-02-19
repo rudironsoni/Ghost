@@ -8,7 +8,7 @@ The pre-commit hooks run three main checks:
 
 1. **Code Formatting** - Ensures your C# code matches `.editorconfig` rules
 2. **Build Validation** - Compiles the solution with warnings treated as errors
-3. **Quick Unit Tests** - Runs unit tests (excludes Integration and E2E tests for speed)
+3. **Quick Non-Smoke Tests** - Runs fast deterministic checks (excludes `Smoke` and `End2End`)
 
 Plus standard file hygiene checks:
 - Trailing whitespace removal
@@ -22,7 +22,7 @@ Plus standard file hygiene checks:
 ### Prerequisites
 
 - Python 3.8 or higher (check with `python3 --version`)
-- .NET 9 SDK installed
+- .NET 10 SDK installed
 - Git repository initialized
 
 ### Step 1: Install pre-commit
@@ -170,7 +170,7 @@ git commit
 
 **Solution:** Run tests manually to see details:
 ```bash
-dotnet test Ghost.sln --filter "FullyQualifiedName!~Integration&FullyQualifiedName!~E2E"
+dotnet test Ghost.sln --filter "Category!=Smoke&Category!=End2End"
 ```
 
 Fix the failing tests before committing.
@@ -229,7 +229,7 @@ Temporarily disable a hook by commenting it out in `.pre-commit-config.yaml`:
 Pre-commit hooks match CI validation:
 - ✅ Same format check (`dotnet format --verify-no-changes`)
 - ✅ Same build command (Release + warnings as errors)
-- ✅ Same test filter (excludes Integration/E2E)
+- ✅ Same test filter (excludes Smoke/End2End)
 
 **Goal:** If pre-commit passes locally, CI should pass too.
 

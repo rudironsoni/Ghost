@@ -32,7 +32,7 @@ Tests are now organized into **four execution lanes** with distinct parallelizat
 | **A** | Unit | **High** | Unlimited | ❌ None | ❌ None | Pure logic, in-memory |
 | **B** | Integration | **Medium** | 4 | ⚠️ Isolated per test | ⚠️ Mocked only | WireMock, in-process |
 | **C** | System | **Controlled** | 4 | ⚠️ Collection fixtures | ⚠️ Synthetic browser | Playwright + mock server |
-| **D** | E2E | **Sequential** | 1 | ⚠️ Provider state | ⚠️ Live APIs | Live provider tests |
+| **D** | End2End | **Sequential** | 1 | ⚠️ Provider state | ⚠️ Live APIs | Live provider tests |
 
 ### Lane A: Unit (High Parallel)
 
@@ -54,7 +54,7 @@ Tests are now organized into **four execution lanes** with distinct parallelizat
 - `tests/Unit/**/*.Unit.Tests`
 - `tests/Contracts/**/*.Tests`
 - `tests/Core/Ghost.Tests`
-- `tests/Platforms/**/*.Tests` (not Integration/E2E)
+- `tests/Platforms/**/*.Tests` (not Integration/End2End)
 - `tests/Hosting/**/*.Tests`
 
 **Requirements:**
@@ -176,7 +176,7 @@ public class SystemTests
 
 ---
 
-### Lane D: E2E (Sequential)
+### Lane D: End2End (Sequential)
 
 **Characteristics:**
 - Live provider API tests
@@ -194,8 +194,8 @@ public class SystemTests
 ```
 
 **Test Projects:**
-- `tests/Platforms/**/*.E2E`
-- `tests/E2E/**/*.E2E.Tests`
+- `tests/Plugins/**/*.End2EndTests`
+- `tests/End2End/**/*.End2End.Tests`
 
 **Requirements:**
 - ⚠️ Live API credentials required
@@ -204,7 +204,7 @@ public class SystemTests
 - ⚠️ Non-blocking CI by default (manual trigger or nightly)
 
 **CI Strategy:**
-- **PR Gate:** ❌ Excluded (use `--filter "Category!=E2E"`)
+- **PR Gate:** ❌ Excluded (use `--filter "Category!=End2End"`)
 - **Merge Gate:** ❌ Excluded
 - **Nightly/Manual:** ✅ Enabled
 
@@ -247,20 +247,20 @@ Each test project contains an `xunit.runner.json` file with lane-specific settin
 ### PR Gate (Deterministic, Fast)
 
 ```bash
-dotnet test Ghost.sln --no-build --filter "Category!=E2E" --settings Ghost.runsettings
+dotnet test Ghost.sln --no-build --filter "Category!=End2End" --settings Ghost.runsettings
 ```
 
 **Includes:**
 - ✅ Lane A (Unit)
 - ✅ Lane B (Integration)
 - ✅ Lane C (System)
-- ❌ Lane D (E2E)
+- ❌ Lane D (End2End)
 
 **Expected Duration:** < 5 minutes (with parallelization)
 
 ### Merge Gate (Comprehensive)
 
-Same as PR gate. E2E tests are optional and non-blocking.
+Same as PR gate. End2End tests are optional and non-blocking.
 
 ### Nightly/Manual (Full Suite)
 
@@ -298,14 +298,14 @@ dotnet test Ghost.sln --no-build --settings Ghost.runsettings
 - ✅ Lane A (Unit) runs with full parallelism
 - ✅ Lane B (Integration) runs with controlled parallelism (4 threads)
 - ✅ Lane C (System) runs with collection-level isolation
-- ✅ Lane D (E2E) runs sequentially
+- ✅ Lane D (End2End) runs sequentially
 - ✅ No mutable shared state in parallel lanes
 - ✅ Deterministic runs in PR lanes (Unit + Integration)
 - ✅ AGENTS verification passes:
   - `dotnet format Ghost.sln --verify-no-changes`
   - `dotnet restore Ghost.sln`
   - `dotnet build Ghost.sln --no-restore --warnaserror`
-  - `dotnet test Ghost.sln --no-build --filter "Category!=E2E"`
+  - `dotnet test Ghost.sln --no-build --filter "Category!=End2End"`
 
 ---
 
@@ -345,7 +345,7 @@ git push
 
 ### Verification After Rollback
 ```bash
-dotnet test Ghost.sln --no-build --filter "Category!=E2E"
+dotnet test Ghost.sln --no-build --filter "Category!=End2End"
 ```
 
 ---

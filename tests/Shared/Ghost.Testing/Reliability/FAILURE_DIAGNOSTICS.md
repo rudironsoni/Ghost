@@ -192,7 +192,7 @@ Add artifact upload on failure:
 
 ```yaml
 - name: Run Tests
-  run: dotnet test --no-build --filter "Category!=E2E"
+  run: dotnet test --no-build --filter "Category!=End2End"
 
 - name: Upload Test Diagnostics
   if: failure()
@@ -206,7 +206,7 @@ Add artifact upload on failure:
 ### Azure Pipelines
 
 ```yaml
-- script: dotnet test --no-build --filter "Category!=E2E"
+- script: dotnet test --no-build --filter "Category!=End2End"
   displayName: 'Run Tests'
 
 - task: PublishBuildArtifacts@1

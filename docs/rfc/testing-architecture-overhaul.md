@@ -52,7 +52,7 @@ The current CI configuration has several issues:
 | Unit | Hermetic tests with no external I/O | Pure functions, logic tests | A |
 | Integration | Tests with mocked dependencies | WireMock-based integration tests | A, B |
 | System | Tests with synthetic browser + mock server | End-to-end scenarios with controlled environment | B |
-| E2E | Tests with live providers | Real external APIs, real browsers | C |
+| End2End | Tests with live providers | Real external APIs, real browsers | C |
 
 ### Capability Traits
 
@@ -68,7 +68,7 @@ The current CI configuration has several issues:
 1. **Unit Tests**: Must be hermetic (no network, file system, or external dependencies)
 2. **Integration Tests**: Must use mocked dependencies (WireMock.NET or synthetic server)
 3. **System Tests**: Use synthetic browser + mock server for deterministic behavior
-4. **E2E Tests**: Only for live provider smoke tests and critical path validation
+4. **End2End Tests**: Only for live provider smoke tests and critical path validation
 
 ## Test Topology
 
@@ -86,7 +86,7 @@ Ghost/
     ├── Unit/                    # Unit tests
     ├── Integration/             # Integration tests (mocked)
     ├── System/                  # System tests (synthetic)
-    └── E2E/                     # E2E tests (live)
+    └── End2End/                 # End2End tests (live)
 ```
 
 ### Migration from Current to Target State
@@ -171,7 +171,7 @@ Category=System AND Capability=RequiresSyntheticServer
 #### Lane C - Nightly/Live (Non-blocking)
 
 **Scope:**
-- E2E tests with live providers
+- End2End tests with live providers
 - Real external APIs
 - Non-blocking for PR/merge by default
 - Can be triggered manually
@@ -185,7 +185,7 @@ Category=System AND Capability=RequiresSyntheticServer
 
 **Test Filter:**
 ```
-Category=E2E OR Capability=RequiresProviderLive
+Category=End2End OR Capability=RequiresProviderLive
 ```
 
 **Parallelism:** Low (sequential or limited parallelism)
@@ -347,7 +347,7 @@ public interface IGoogleJobsContract
 3. IP blocking
 4. User agent detection
 
-**Lane:** C (E2E tests with live providers)
+**Lane:** C (End2End tests with live providers)
 
 ## CI Lane Governance
 
@@ -389,7 +389,7 @@ public interface IGoogleJobsContract
 - Failure signals provider drift
 
 **Jobs:**
-- E2E Tests (Live Providers)
+- End2End Tests (Live Providers)
 - Live Provider Tests
 - Performance Benchmarks
 - Stability Tests
@@ -557,7 +557,7 @@ dotnet test Ghost.sln --filter "Category=Integration&Capability=RequiresSyntheti
 
 **Lane C (Nightly/Live):**
 ```bash
-dotnet test Ghost.sln --filter "Category=E2E"
+dotnet test Ghost.sln --filter "Category=End2End"
 dotnet test Ghost.sln --filter "Capability=RequiresProviderLive"
 ```
 
