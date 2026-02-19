@@ -13,7 +13,10 @@ dolt:
 sync:
   mode: belt-and-suspenders
 
-dolt.mode: "server"
+# Remote DoltHub configuration
+remote:
+  name: dolthub
+  url: https://doltremoteapi.dolthub.com/rudironsoni/ghost
 
 sync-branch: "beads-sync"
 
