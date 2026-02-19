@@ -3,6 +3,7 @@ using Ghost.Plugin.LinkedIn.End2EndTests.Fixtures;
 using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Ghost.Testing.Contracts;
+using Ghost.Testing.End2End;
 using Ghost.Testing.Fixtures;
 using global::Ghost;
 using global::Ghost.Contracts.Jobs;
@@ -47,7 +48,7 @@ public sealed class LinkedInPluginE2ETests : IAsyncLifetime
         }
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_Name_ReturnsExpectedValue()
     {
@@ -61,7 +62,7 @@ public sealed class LinkedInPluginE2ETests : IAsyncLifetime
         Assert.Equal("LinkedIn", name);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_Version_ReturnsValidVersion()
     {
@@ -77,7 +78,7 @@ public sealed class LinkedInPluginE2ETests : IAsyncLifetime
         Assert.Equal(0, version.Minor);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_ProvidedServices_ContainsExpectedTypes()
     {
@@ -93,7 +94,7 @@ public sealed class LinkedInPluginE2ETests : IAsyncLifetime
         Assert.Contains(typeof(INewsClient), providedServices);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_RequiredServices_ContainsIBrowserSession()
     {
@@ -107,7 +108,7 @@ public sealed class LinkedInPluginE2ETests : IAsyncLifetime
         Assert.Contains(typeof(Ghost.IBrowserSession), requiredServices);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_Name_FromFixture_ReturnsExpectedValue()
     {
@@ -122,7 +123,7 @@ public sealed class LinkedInPluginE2ETests : IAsyncLifetime
         Assert.Equal("LinkedIn", name);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void ConfigureServices_RegistersLinkedInJobClient()
     {
@@ -154,7 +155,7 @@ public sealed class LinkedInPluginE2ETests : IAsyncLifetime
         Assert.NotNull(client);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void ConfigureServices_RegistersLinkedInSocialClient()
     {
@@ -184,7 +185,7 @@ public sealed class LinkedInPluginE2ETests : IAsyncLifetime
         Assert.NotNull(client);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void ConfigureServices_RegistersLinkedInNewsClient()
     {
@@ -213,7 +214,7 @@ public sealed class LinkedInPluginE2ETests : IAsyncLifetime
         Assert.NotNull(client);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void ConfigureServices_RegistersSessionPool()
     {

@@ -1,6 +1,7 @@
 using Ghost.Contracts.Jobs;
 using Ghost.Plugin.Google.Jobs;
 using Ghost.Plugin.Google.Jobs.Internal;
+using Ghost.Testing.End2End;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -24,7 +25,7 @@ public sealed class GoogleJobClientE2ETests : IClassFixture<Fixtures.GoogleE2EFi
         _output = output;
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobs_WithValidCriteria_ReturnsJobListingsAsync()
     {
@@ -65,7 +66,7 @@ public sealed class GoogleJobClientE2ETests : IClassFixture<Fixtures.GoogleE2EFi
         }
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetJobDetails_WithValidJobId_ReturnsJobDetailsAsync()
     {
@@ -87,7 +88,7 @@ public sealed class GoogleJobClientE2ETests : IClassFixture<Fixtures.GoogleE2EFi
         Assert.False(string.IsNullOrWhiteSpace(result.Source), "Job must have a source");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void PlatformName_ReturnsExpectedValue()
     {
@@ -101,7 +102,7 @@ public sealed class GoogleJobClientE2ETests : IClassFixture<Fixtures.GoogleE2EFi
         Assert.Equal("Google", platformName);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobs_WithEmptyQuery_ReturnsResultsAsync()
     {
@@ -122,7 +123,7 @@ public sealed class GoogleJobClientE2ETests : IClassFixture<Fixtures.GoogleE2EFi
         _output.WriteLine($"Empty query returned {results.Count} jobs");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobs_RespectsMaxResultsAsync()
     {
@@ -143,7 +144,7 @@ public sealed class GoogleJobClientE2ETests : IClassFixture<Fixtures.GoogleE2EFi
         _output.WriteLine($"Requested {criteria.MaxResults} results, got {results.Count}");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetSavedJobs_ThrowsNotImplementedExceptionAsync()
     {
@@ -154,7 +155,7 @@ public sealed class GoogleJobClientE2ETests : IClassFixture<Fixtures.GoogleE2EFi
         await Assert.ThrowsAsync<NotImplementedException>(() => client.GetSavedJobsAsync());
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetApplications_ThrowsNotImplementedExceptionAsync()
     {
@@ -165,7 +166,7 @@ public sealed class GoogleJobClientE2ETests : IClassFixture<Fixtures.GoogleE2EFi
         await Assert.ThrowsAsync<NotImplementedException>(() => client.GetApplicationsAsync());
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task AllJobsHaveRequiredFields_ValidatesRequiredFieldsContractAsync()
     {

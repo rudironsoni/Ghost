@@ -13,7 +13,7 @@ namespace Ghost.Tests.Consent;
 /// region-specific consent (GDPR, CCPA, LGPD), and stateful consent persistence.
 /// </summary>
 [Collection("Browser")]
-[Trait("Category", "E2E")]
+[Trait("Category", "End2End")]
 public class ConsentScenarioTests : IAsyncLifetime
 {
     private readonly ITestOutputHelper _output;

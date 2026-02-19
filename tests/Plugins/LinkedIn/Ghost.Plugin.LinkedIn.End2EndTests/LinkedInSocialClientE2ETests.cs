@@ -1,5 +1,6 @@
 using Ghost.Contracts.Social;
 using Ghost.Plugin.LinkedIn.End2EndTests.Fixtures;
+using Ghost.Testing.End2End;
 using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -36,7 +37,7 @@ public sealed class LinkedInSocialClientE2ETests : IAsyncLifetime
         }
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetProfile_WithValidProfileId_ReturnsProfileAsync()
     {
@@ -52,7 +53,7 @@ public sealed class LinkedInSocialClientE2ETests : IAsyncLifetime
         Assert.Equal("LinkedIn", client.PlatformName);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchProfiles_WithValidCriteria_ReturnsProfilesAsync()
     {
@@ -71,7 +72,7 @@ public sealed class LinkedInSocialClientE2ETests : IAsyncLifetime
         Assert.NotNull(results);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void PlatformName_ReturnsExpectedValue()
     {
@@ -85,7 +86,7 @@ public sealed class LinkedInSocialClientE2ETests : IAsyncLifetime
         Assert.Equal("LinkedIn", platformName);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetConnections_ReturnsConnectionsAsync()
     {
@@ -99,7 +100,7 @@ public sealed class LinkedInSocialClientE2ETests : IAsyncLifetime
         Assert.NotNull(results);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SendConnectionRequest_DoesNotThrowAsync()
     {

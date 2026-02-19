@@ -1,5 +1,6 @@
 using Ghost.Contracts.News;
 using Ghost.Plugin.LinkedIn.End2EndTests.Fixtures;
+using Ghost.Testing.End2End;
 using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -36,7 +37,7 @@ public sealed class LinkedInNewsClientE2ETests : IAsyncLifetime
         }
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetArticles_ReturnsArticlesAsync()
     {
@@ -51,7 +52,7 @@ public sealed class LinkedInNewsClientE2ETests : IAsyncLifetime
         Assert.NotNull(results);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task Search_WithValidQuery_ReturnsArticlesAsync()
     {
@@ -67,7 +68,7 @@ public sealed class LinkedInNewsClientE2ETests : IAsyncLifetime
         Assert.NotNull(results);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void PlatformName_ReturnsExpectedValue()
     {
@@ -81,7 +82,7 @@ public sealed class LinkedInNewsClientE2ETests : IAsyncLifetime
         Assert.Equal("LinkedIn", platformName);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetArticle_ThrowsNotImplementedExceptionAsync()
     {

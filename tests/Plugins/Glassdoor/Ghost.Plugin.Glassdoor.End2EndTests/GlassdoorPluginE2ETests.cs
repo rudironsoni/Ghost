@@ -1,6 +1,7 @@
 using Ghost.Contracts.Jobs;
 using Ghost.Hosting;
 using Ghost.Plugin.Glassdoor.End2EndTests.Fixtures;
+using Ghost.Testing.End2End;
 using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,7 +35,7 @@ public sealed class GlassdoorPluginE2ETests : IAsyncLifetime, IClassFixture<Glas
         await _fixture.DisposeAsync();
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_Name_ReturnsExpectedValue()
     {
@@ -48,7 +49,7 @@ public sealed class GlassdoorPluginE2ETests : IAsyncLifetime, IClassFixture<Glas
         Assert.Equal("Glassdoor", name);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_Version_ReturnsValidVersion()
     {
@@ -64,7 +65,7 @@ public sealed class GlassdoorPluginE2ETests : IAsyncLifetime, IClassFixture<Glas
         Assert.Equal(0, version.Minor);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void Plugin_ProvidesIJobClient()
     {
@@ -104,7 +105,7 @@ public sealed class GlassdoorPluginE2ETests : IAsyncLifetime, IClassFixture<Glas
         Assert.NotNull(client);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void ConfigureServices_RegistersGlassdoorApiClient()
     {

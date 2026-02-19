@@ -2,6 +2,7 @@ using Ghost.Contracts.Jobs;
 using Ghost.Plugin.Glassdoor.End2EndTests.Fixtures;
 using Ghost.Testing.Contracts;
 using Ghost.Testing.Contracts.BuiltIn;
+using Ghost.Testing.End2End;
 using Ghost.Testing.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -43,7 +44,7 @@ public sealed class GlassdoorJobClientE2ETests : IAsyncLifetime
         }
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobsAsync_ReturnsJobs_WhenKeywordsProvidedAsync()
     {
@@ -76,7 +77,7 @@ public sealed class GlassdoorJobClientE2ETests : IAsyncLifetime
         }
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetJobDetailsAsync_ReturnsCompleteJob_WhenValidUrlProvidedAsync()
     {
@@ -93,7 +94,7 @@ public sealed class GlassdoorJobClientE2ETests : IAsyncLifetime
         Assert.Equal("Glassdoor", result.Source);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobsAsync_RespectsMaxResultsAsync()
     {
@@ -115,7 +116,7 @@ public sealed class GlassdoorJobClientE2ETests : IAsyncLifetime
         _output.WriteLine($"Requested 5 jobs, received {results.Count}");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task ApplyForJobAsync_ThrowsNotImplementedAsync()
     {
@@ -134,7 +135,7 @@ public sealed class GlassdoorJobClientE2ETests : IAsyncLifetime
             client.ApplyAsync(jobId, details));
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task PlatformName_ReturnsExpectedValueAsync()
     {
@@ -148,7 +149,7 @@ public sealed class GlassdoorJobClientE2ETests : IAsyncLifetime
         Assert.Equal("Glassdoor", platformName);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetSavedJobs_ReturnsEmptyListAsync()
     {
@@ -163,7 +164,7 @@ public sealed class GlassdoorJobClientE2ETests : IAsyncLifetime
         Assert.Empty(results);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetApplications_ReturnsEmptyListAsync()
     {
@@ -178,7 +179,7 @@ public sealed class GlassdoorJobClientE2ETests : IAsyncLifetime
         Assert.Empty(results);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "ContractValidation")]
     public async Task RequiredFieldsContract_ValidatesJobStructureAsync()
     {
@@ -204,7 +205,7 @@ public sealed class GlassdoorJobClientE2ETests : IAsyncLifetime
         Assert.True(result.Passed, $"Required fields contract failed: {string.Join(", ", result.Errors)}");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "ContractValidation")]
     public async Task DedupeContract_ValidatesNoDuplicateJobsAsync()
     {
@@ -230,7 +231,7 @@ public sealed class GlassdoorJobClientE2ETests : IAsyncLifetime
         Assert.True(result.Passed, $"Dedupe contract failed: {string.Join(", ", result.Errors)}");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "ContractValidation")]
     public async Task PaginationContract_ValidatesPaginationBehaviorAsync()
     {
@@ -257,7 +258,7 @@ public sealed class GlassdoorJobClientE2ETests : IAsyncLifetime
         _output.WriteLine($"Pagination contract result: {(result.Passed ? "PASS" : "FAIL")}");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "ContractValidation")]
     public async Task RetryBehaviorContract_ValidatesRetryLogicAsync()
     {
@@ -284,7 +285,7 @@ public sealed class GlassdoorJobClientE2ETests : IAsyncLifetime
         _output.WriteLine($"Retry behavior contract result: {(result.Passed ? "PASS" : "FAIL")}");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "ContractValidation")]
     public async Task IdempotentExtractionContract_ValidatesConsistencyAsync()
     {

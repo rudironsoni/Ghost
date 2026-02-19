@@ -1,5 +1,6 @@
 using Ghost.Contracts.Jobs;
 using Ghost.Plugin.InfoJobs.End2EndTests.Fixtures;
+using Ghost.Testing.End2End;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
@@ -23,7 +24,7 @@ public sealed class InfoJobClientE2ETests
         _output = output;
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobs_WithValidCriteria_ReturnsJobListingsAsync()
     {
@@ -58,7 +59,7 @@ public sealed class InfoJobClientE2ETests
         _output.WriteLine($"Found {results.Count} jobs from InfoJobs");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetJobDetails_WithValidJobId_ReturnsJobDetailsAsync()
     {
@@ -80,7 +81,7 @@ public sealed class InfoJobClientE2ETests
         Assert.False(string.IsNullOrWhiteSpace(result.Source), "Job must have a source");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public void PlatformName_ReturnsExpectedValue()
     {
@@ -94,7 +95,7 @@ public sealed class InfoJobClientE2ETests
         Assert.Equal("InfoJobs", platformName);
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobs_WithEmptyQuery_ReturnsResultsAsync()
     {
@@ -115,7 +116,7 @@ public sealed class InfoJobClientE2ETests
         _output.WriteLine($"Empty query returned {results.Count} jobs");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task SearchJobs_RespectsMaxResultsAsync()
     {
@@ -136,7 +137,7 @@ public sealed class InfoJobClientE2ETests
         _output.WriteLine($"Requested {criteria.MaxResults} results, got {results.Count}");
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetSavedJobs_ThrowsNotImplementedExceptionAsync()
     {
@@ -147,7 +148,7 @@ public sealed class InfoJobClientE2ETests
         await Assert.ThrowsAsync<NotImplementedException>(() => client.GetSavedJobsAsync());
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task GetApplications_ThrowsNotImplementedExceptionAsync()
     {
@@ -158,7 +159,7 @@ public sealed class InfoJobClientE2ETests
         await Assert.ThrowsAsync<NotImplementedException>(() => client.GetApplicationsAsync());
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task Apply_ThrowsNotImplementedExceptionAsync()
     {
@@ -175,7 +176,7 @@ public sealed class InfoJobClientE2ETests
         await Assert.ThrowsAsync<NotImplementedException>(() => client.ApplyAsync(jobId, details));
     }
 
-    [Fact]
+    [End2EndFact]
     [Trait("TestType", "End2End")]
     public async Task AllJobsHaveRequiredFields_ValidatesRequiredFieldsContractAsync()
     {
