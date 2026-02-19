@@ -102,9 +102,16 @@ public sealed class GlassdoorE2EFixture : IAsyncLifetime
             disposable.Dispose();
         }
 
+        if (_browserSession != null)
+        {
+            await _browserSession.DisposeAsync().ConfigureAwait(false);
+            _browserSession = null;
+        }
+
         if (_testServer != null)
         {
             await _testServer.DisposeAsync().ConfigureAwait(false);
+            _testServer = null;
         }
     }
 }

@@ -1,6 +1,7 @@
 using Ghost.Plugin.Google.Gemini;
 using Ghost.Plugin.Google.Jobs;
 using Ghost.Plugin.Google.Jobs.Internal;
+using Ghost.Testing.External.Http;
 using Ghost.Testing.Fakes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -27,7 +28,13 @@ public sealed class GoogleE2EFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _httpClient = new HttpClient();
+        var cassetteStore = new CassetteStore(ResolveCassetteDirectory());
+        CassetteMode mode = CassetteModeResolver.FromEnvironment();
+        var cassetteHandler = new CassetteDelegatingHandler(cassetteStore, mode)
+        {
+            InnerHandler = new HttpClientHandler()
+        };
+        _httpClient = new HttpClient(cassetteHandler, disposeHandler: true);
         var services = new ServiceCollection();
         ConfigureServices(services);
         _serviceProvider = services.BuildServiceProvider();
@@ -87,5 +94,16 @@ public sealed class GoogleE2EFixture : IAsyncLifetime
 
         // Register GeminiClient
         services.AddSingleton<Gemini.GeminiClient>();
+    }
+
+    private static string ResolveCassetteDirectory()
+    {
+        string? configuredDirectory = Environment.GetEnvironmentVariable("GHOST_CASSETTE_DIR");
+        if (!string.IsNullOrWhiteSpace(configuredDirectory))
+        {
+            return configuredDirectory;
+        }
+
+        return Path.Combine(AppContext.BaseDirectory, "Cassettes", "Recordings");
     }
 }

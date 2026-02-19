@@ -546,12 +546,29 @@ public sealed class LinkedInSocialClient : ISocialClient
         try
         {
             await page.NavigateAsync($"{_options.BaseUrl}/in/{profileId}", ct: ct).ConfigureAwait(false);
-            IElement connectBtn = await page.WaitForSelectorAsync("button[data-control-name='connect']", ct: ct).ConfigureAwait(false);
-            if (connectBtn != null) await connectBtn.HumanClickAsync(ct: ct).ConfigureAwait(false);
+            IElement connectButton;
+            try
+            {
+                connectButton = await page.WaitForSelectorAsync(
+                    "button[data-control-name='connect']",
+                    new WaitOptions { Timeout = 5_000, State = WaitState.Visible },
+                    ct).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                _logger.LogConnectButtonNotFound(profileId);
+                return;
+            }
+
+            await connectButton.HumanClickAsync(ct: ct).ConfigureAwait(false);
 
             if (!string.IsNullOrEmpty(message))
             {
-                await page.TypeAsync("textarea[name='message']", message, ct: ct).ConfigureAwait(false);
+                IElement? messageBox = await page.QuerySelectorAsync("textarea[name='message']", ct: ct).ConfigureAwait(false);
+                if (messageBox != null)
+                {
+                    await page.TypeAsync("textarea[name='message']", message, ct: ct).ConfigureAwait(false);
+                }
             }
             IElement? sendBtn = await page.QuerySelectorAsync("button[data-control-name='send_invite']", ct: ct).ConfigureAwait(false);
             if (sendBtn != null) await sendBtn.HumanClickAsync(ct: ct).ConfigureAwait(false);
