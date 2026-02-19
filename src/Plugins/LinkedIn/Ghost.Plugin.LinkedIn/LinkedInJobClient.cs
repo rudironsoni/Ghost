@@ -200,17 +200,44 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
 
             string html = await page.GetContentAsync(ct).ConfigureAwait(false);
 
-            // Extract using EntityParser with LinkedInJobEntity from Entities namespace
-            var context = new ExtractionContext
+            // Use manual extraction instead of EntityParser for reliability
+            LinkedInJobEntity? entity = null;
+            try
             {
-                Content = html ?? string.Empty,
-                SourceUrl = url,
-                Timestamp = DateTime.UtcNow
-            };
+                AngleSharp.Html.Parser.HtmlParser parser = new AngleSharp.Html.Parser.HtmlParser();
+                AngleSharp.Html.Dom.IHtmlDocument doc = parser.ParseDocument(html ?? string.Empty);
+                AngleSharp.Dom.IElement? bodyEl = doc.QuerySelector("body");
 
-            LinkedInJobEntity? entity = EntityParser.ParseSingle<LinkedInJobEntity>(context);
+                if (bodyEl != null)
+                {
+                    entity = new LinkedInJobEntity
+                    {
+                        SourceUrl = url,
+                        ExtractedAt = DateTime.UtcNow
+                    };
 
-            if (entity == null || !entity.Validate())
+                    // Extract properties using CSS selectors
+                    AngleSharp.Dom.IElement? titleEl = bodyEl.QuerySelector(".job-title, .top-card-layout__title, h1");
+                    AngleSharp.Dom.IElement? companyEl = bodyEl.QuerySelector(".company-name, .topcard__org-name-link");
+                    AngleSharp.Dom.IElement? locationEl = bodyEl.QuerySelector(".location, .topcard__flavor--bullet");
+                    AngleSharp.Dom.IElement? descriptionEl = bodyEl.QuerySelector("[data-test-id='job-description'], .job-description");
+                    AngleSharp.Dom.IElement? salaryEl = bodyEl.QuerySelector("[data-test-id='salary'], .salary");
+
+                    entity.Title = titleEl?.TextContent?.Trim();
+                    entity.Company = companyEl?.TextContent?.Trim();
+                    entity.Location = locationEl?.TextContent?.Trim();
+                    entity.Description = descriptionEl?.TextContent?.Trim();
+                    entity.Salary = salaryEl?.TextContent?.Trim();
+                    entity.Url = url;
+                    entity.JobId = jobId;
+                }
+            }
+            catch
+            {
+                // Ignore extraction errors
+            }
+
+            if (entity == null || string.IsNullOrWhiteSpace(entity.Title))
             {
                 return new JobListing { Id = jobId, Url = url, Source = "LinkedIn" };
             }
@@ -446,70 +473,90 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
             string pageTitle = await page.EvaluateAsync<string>("document.title", ct: ct).ConfigureAwait(false);
 
             // Extract all job data using a single JavaScript evaluation
-            // This is more reliable than Playwright element handles in some scenarios
-            List<Dictionary<string, string>>? jobDataList = await page.EvaluateAsync<List<Dictionary<string, string>>>(
+            // Return JSON string to avoid deserialization issues
+            List<Dictionary<string, string>>? jobDataList = null;
+            try
+            {
+                string? jsonResult = await page.EvaluateAsync<string>(
                 @"() => {
-                    const results = [];
-                    const containers = document.querySelectorAll('.jobs-search-results__list-item, .jobs-search__results-list li, .base-card, .job-card');
-                    for (let i = 0; i < containers.length; i++) {
-                        const container = containers[i];
-                        let id = container.getAttribute('data-job-id') || container.getAttribute('data-id');
-                        if (!id) {
-                            const urn = container.getAttribute('data-entity-urn');
-                            if (urn) {
-                                const match = urn.match(/\d+/);
-                                if (match) id = match[0];
+                    try {
+                        const results = [];
+                        const containers = document.querySelectorAll('.jobs-search-results__list-item, .jobs-search__results-list li, .base-card, .job-card');
+                        for (let i = 0; i < containers.length; i++) {
+                            const container = containers[i];
+                            let id = container.getAttribute('data-job-id') || container.getAttribute('data-id');
+                            if (!id) {
+                                const urn = container.getAttribute('data-entity-urn');
+                                if (urn) {
+                                    const match = urn.match(/\d+/);
+                                    if (match) id = match[0];
+                                }
                             }
-                        }
-                        if (!id) continue;
-                        
-                        // Title selectors in order of preference
-                        const titleSelectors = ['.base-search-card__title', '.job-card__title-link', '.job-card__title', 'h3'];
-                        let title = '';
-                        for (let t = 0; t < titleSelectors.length; t++) {
-                            const el = container.querySelector(titleSelectors[t]);
-                            if (el) {
-                                title = (el.innerText || el.textContent || '').trim();
-                                if (title) break;
+                            if (!id) continue;
+
+                            // Title selectors in order of preference
+                            const titleSelectors = ['.base-search-card__title', '.job-card__title-link', '.job-card__title', 'h3'];
+                            let title = '';
+                            for (let t = 0; t < titleSelectors.length; t++) {
+                                const el = container.querySelector(titleSelectors[t]);
+                                if (el) {
+                                    title = (el.innerText || el.textContent || '').trim();
+                                    if (title) break;
+                                }
                             }
-                        }
-                        
-                        // Company selectors
-                        const companySelectors = ['.base-search-card__subtitle', '.job-card__company-name', '.job-card-container__company-name', 'h4'];
-                        let company = '';
-                        for (let c = 0; c < companySelectors.length; c++) {
-                            const el = container.querySelector(companySelectors[c]);
-                            if (el) {
-                                company = (el.innerText || el.textContent || '').trim();
-                                if (company) break;
+
+                            // Company selectors
+                            const companySelectors = ['.base-search-card__subtitle', '.job-card__company-name', '.job-card-container__company-name', 'h4'];
+                            let company = '';
+                            for (let c = 0; c < companySelectors.length; c++) {
+                                const el = container.querySelector(companySelectors[c]);
+                                if (el) {
+                                    company = (el.innerText || el.textContent || '').trim();
+                                    if (company) break;
+                                }
                             }
-                        }
-                        
-                        // Location selectors
-                        const locationSelectors = ['.job-search-card__location', '.job-card-container__metadata-item', '.job-card__location'];
-                        let location = '';
-                        for (let l = 0; l < locationSelectors.length; l++) {
-                            const el = container.querySelector(locationSelectors[l]);
-                            if (el) {
-                                location = (el.innerText || el.textContent || '').trim();
-                                if (location) break;
+
+                            // Location selectors
+                            const locationSelectors = ['.job-search-card__location', '.job-card-container__metadata-item', '.job-card__location'];
+                            let location = '';
+                            for (let l = 0; l < locationSelectors.length; l++) {
+                                const el = container.querySelector(locationSelectors[l]);
+                                if (el) {
+                                    location = (el.innerText || el.textContent || '').trim();
+                                    if (location) break;
+                                }
                             }
+
+                            // URL from link
+                            const linkEl = container.querySelector('a.base-card__full-link, a.job-card-list__title, a.job-card__title-link, a');
+                            const url = linkEl ? linkEl.getAttribute('href') : '';
+
+                            results.push({id: id, title: title, company: company, location: location, url: url});
                         }
-                        
-                        // URL from link
-                        const linkEl = container.querySelector('a.base-card__full-link, a.job-card-list__title, a.job-card__title-link, a');
-                        const url = linkEl ? linkEl.getAttribute('href') : '';
-                        
-                        const obj = {};
-                        obj['id'] = id;
-                        obj['title'] = title;
-                        obj['company'] = company;
-                        obj['location'] = location;
-                        obj['url'] = url;
-                        results.push(obj);
+                        return JSON.stringify(results);
+                    } catch (e) {
+                        return JSON.stringify({error: e.message});
                     }
-                    return results;
                 }", ct: ct).ConfigureAwait(false);
+
+                if (!string.IsNullOrEmpty(jsonResult))
+                {
+                    if (jsonResult.Contains("\"error\""))
+                    {
+                        LinkedInLog.LogJavaScriptError(_logger, jsonResult);
+                        jobDataList = new List<Dictionary<string, string>>();
+                    }
+                    else
+                    {
+                        jobDataList = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, string>>>(jsonResult);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LinkedInLog.LogJavaScriptExtractionFailed(_logger, ex.Message, ex);
+                jobDataList = new List<Dictionary<string, string>>();
+            }
 
             if (jobDataList == null || jobDataList.Count == 0)
             {
@@ -581,7 +628,15 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
                     s_logDeepFetchFailed(_logger, shallow.Id, ex);
                 }
 
-                detailedJobs.Add(deepJob ?? shallow);
+                // Only use deep fetch result if it has valid data, otherwise keep shallow data
+                if (deepJob is not null && !string.IsNullOrWhiteSpace(deepJob.Title) && !string.IsNullOrWhiteSpace(deepJob.Company))
+                {
+                    detailedJobs.Add(deepJob);
+                }
+                else
+                {
+                    detailedJobs.Add(shallow);
+                }
             }
 
             return new ExtractionResult
