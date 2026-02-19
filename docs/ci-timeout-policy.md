@@ -23,10 +23,10 @@ Workflow: `.github/workflows/lane-b-merge-gate.yml`
 ## Lane C (Nightly)
 Workflow: `.github/workflows/lane-c-nightly.yml`
 
-- E2E timeout budget: 90 minutes
+- End2End timeout budget: 90 minutes
 - Live provider timeout budget: 60 minutes
 - Intended filters:
-  - `Category=E2E`
+  - `Category=End2End`
   - `Capability=RequiresProviderLive`
 
 ## Policy Rules
