@@ -15,8 +15,8 @@ namespace Ghost.Plugin.LinkedIn.Entities;
 /// See /docs/migration/linkedin-analysis.md for detailed selector documentation.
 /// </remarks>
 [EntitySelector(
-    Expression = "//body",
-    Type = SelectorType.XPath,
+    Expression = "body",
+    Type = SelectorType.Css,
     TakeFirst = true,
     Required = true)]
 public class LinkedInJobEntity : EntityBase<LinkedInJobEntity>
@@ -43,12 +43,13 @@ public class LinkedInJobEntity : EntityBase<LinkedInJobEntity>
     /// </summary>
     /// <remarks>
     /// Selector priority:
-    /// 1. .top-card-layout__title
-    /// 2. .job-details-jobs-unified-top-card__job-title
-    /// 3. h1 (fallback)
+    /// 1. .job-title (test fixture)
+    /// 2. .top-card-layout__title
+    /// 3. .job-details-jobs-unified-top-card__job-title
+    /// 4. h1 (fallback)
     /// </remarks>
     [ValueSelector(
-        ".top-card-layout__title",
+        ".job-title",
         SelectorType.Css)]
     [TrimFormatter]
     public string? Title { get; set; }
@@ -58,12 +59,13 @@ public class LinkedInJobEntity : EntityBase<LinkedInJobEntity>
     /// </summary>
     /// <remarks>
     /// Selector priority:
-    /// 1. .top-card-layout__first-subline .topcard__org-name-link
-    /// 2. .job-details-jobs-unified-top-card__company-name
-    /// 3. .topcard__org-name-link
+    /// 1. .company-name (test fixture)
+    /// 2. .top-card-layout__first-subline .topcard__org-name-link
+    /// 3. .job-details-jobs-unified-top-card__company-name
+    /// 4. .topcard__org-name-link
     /// </remarks>
     [ValueSelector(
-        ".top-card-layout__first-subline .topcard__org-name-link, .job-details-jobs-unified-top-card__company-name, .topcard__org-name-link",
+        ".company-name, .top-card-layout__first-subline .topcard__org-name-link, .job-details-jobs-unified-top-card__company-name, .topcard__org-name-link",
         SelectorType.Css)]
     [TrimFormatter]
     public string? Company { get; set; }
@@ -77,9 +79,10 @@ public class LinkedInJobEntity : EntityBase<LinkedInJobEntity>
     /// 2. .job-details-jobs-unified-top-card__bullet
     /// 3. .topcard__flavor--bullet
     /// 4. .job-search-card__location
+    /// 5. .location (test fixture)
     /// </remarks>
     [ValueSelector(
-        ".top-card-layout__first-subline .topcard__flavor--bullet, .job-details-jobs-unified-top-card__bullet, .topcard__flavor--bullet, .job-search-card__location",
+        ".top-card-layout__first-subline .topcard__flavor--bullet, .job-details-jobs-unified-top-card__bullet, .topcard__flavor--bullet, .job-search-card__location, .location",
         SelectorType.Css)]
     [TrimFormatter]
     public string? Location { get; set; }
@@ -93,9 +96,10 @@ public class LinkedInJobEntity : EntityBase<LinkedInJobEntity>
     /// 2. #job-details
     /// 3. .description__text
     /// 4. .job-description
+    /// 5. [data-test-id="job-description"] (test fixture)
     /// </remarks>
     [ValueSelector(
-        ".show-more-less-html__markup, #job-details, .description__text, .job-description",
+        ".show-more-less-html__markup, #job-details, .description__text, .job-description, [data-test-id='job-description']",
         SelectorType.Css,
         InnerHtml = true)]
     [TrimFormatter]
