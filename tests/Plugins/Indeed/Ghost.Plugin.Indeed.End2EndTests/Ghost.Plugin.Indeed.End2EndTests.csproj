@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <RootNamespace>Ghost.Plugin.Indeed.E2E</RootNamespace>
+    <RootNamespace>Ghost.Plugin.Indeed.End2End</RootNamespace>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
 

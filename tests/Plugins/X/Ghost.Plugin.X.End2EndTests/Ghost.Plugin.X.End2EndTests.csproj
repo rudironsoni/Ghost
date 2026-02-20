@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <RootNamespace>Ghost.Plugin.X.E2E</RootNamespace>
+    <RootNamespace>Ghost.Plugin.X.End2End</RootNamespace>
 
   </PropertyGroup>
 
