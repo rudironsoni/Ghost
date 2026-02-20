@@ -30,12 +30,6 @@ public class TenantResolutionMiddleware
             }
         }
 
-        // If no tenant ID found, use empty Guid (for development/testing)
-        if (!context.Items.ContainsKey("TenantId"))
-        {
-            context.Items["TenantId"] = Guid.Empty;
-        }
-
         await _next(context).ConfigureAwait(false);
     }
 }
@@ -53,6 +47,19 @@ public static class TenantResolutionMiddlewareExtensions
         {
             return tenantId;
         }
-        return Guid.Empty;
+
+        throw new InvalidOperationException("TenantId was not resolved for this request.");
+    }
+
+    public static bool TryGetTenantId(this HttpContext context, out Guid tenantId)
+    {
+        if (context.Items.TryGetValue("TenantId", out object? value) && value is Guid resolvedTenantId)
+        {
+            tenantId = resolvedTenantId;
+            return true;
+        }
+
+        tenantId = Guid.Empty;
+        return false;
     }
 }
