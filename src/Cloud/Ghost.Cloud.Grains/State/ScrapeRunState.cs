@@ -18,6 +18,7 @@ public sealed class ScrapeRunState
     [Id(9)] public DateTimeOffset? CompletedAt { get; set; }
     [Id(10)] public string? ErrorMessage { get; set; }
     [Id(11)] public DeliveryConfig? DeliveryConfig { get; set; }
+    [Id(12)] public string? ErrorCode { get; set; }
 
     public void Apply(ScrapeRunEvent @event)
     {
@@ -41,10 +42,13 @@ public sealed class ScrapeRunState
                 break;
             case ScrapeRunCompleted:
                 Status = "Completed";
+                ErrorCode = null;
+                ErrorMessage = null;
                 CompletedAt = DateTimeOffset.UtcNow;
                 break;
             case ScrapeRunFailed e:
                 Status = "Failed";
+                ErrorCode = e.ErrorCode;
                 ErrorMessage = e.ErrorMessage;
                 CompletedAt = DateTimeOffset.UtcNow;
                 break;
