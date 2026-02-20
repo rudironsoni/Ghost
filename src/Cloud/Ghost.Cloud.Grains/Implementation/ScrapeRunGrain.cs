@@ -23,15 +23,8 @@ public sealed class ScrapeRunGrain : JournaledGrain<ScrapeRunState, ScrapeRunEve
         if (tenantId == Guid.Empty)
         {
             CloudGrainsTelemetry.RecordRunTriggerFailure("TENANT_REQUIRED", request.RequestedMode);
-            activity?.SetStatus(ActivityStatusCode.Error, "Tenant ID is required.");
-            RaiseEvent(new ScrapeRunFailed(
-                this.GetPrimaryKeyString(),
-                "TENANT_REQUIRED",
-                "Tenant ID is required for run authorization.",
-                false,
-                DateTimeOffset.UtcNow));
-
-            return MapToStatus(State);
+            activity?.SetStatus(ActivityStatusCode.Error, "TenantId must be a non-empty GUID.");
+            throw new ArgumentException("TenantId must be a non-empty GUID.", nameof(request));
         }
 
         ITenantGrain tenantGrain = GrainFactory.GetGrain<ITenantGrain>(tenantId);

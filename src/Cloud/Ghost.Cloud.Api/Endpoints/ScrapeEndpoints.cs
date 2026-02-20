@@ -31,13 +31,14 @@ public static class ScrapeEndpoints
             activity?.SetTag("ghost.mode", "async");
             CloudApiTelemetry.RecordRunTriggerRequest("async");
 
-            if (!context.TryGetTenantId(out Guid tenantId))
+            if (!context.TryGetTenantId(out Guid? tenantId))
             {
                 CloudApiTelemetry.RecordRunTriggerFailure("TENANT_REQUIRED", "async");
                 activity?.SetStatus(ActivityStatusCode.Error, "Tenant ID is required.");
                 return Results.BadRequest(new { Error = "Tenant ID is required." });
             }
-            activity?.SetTag("ghost.tenant.id", tenantId);
+            Guid resolvedTenantId = tenantId ?? throw new InvalidOperationException("Tenant ID resolution failed.");
+            activity?.SetTag("ghost.tenant.id", resolvedTenantId);
 
             IEndpointGrain endpointGrain = clusterClient.GetGrain<IEndpointGrain>(endpointId);
 
@@ -72,7 +73,7 @@ public static class ScrapeEndpoints
                 Delivery = request.Delivery,
                 IdempotencyKey = idempotencyKey,
                 RequestedMode = "async",
-                TenantId = tenantId
+                TenantId = resolvedTenantId
             }).ConfigureAwait(false);
 
             if (status.Status == "Failed")
@@ -106,13 +107,14 @@ public static class ScrapeEndpoints
             activity?.SetTag("ghost.mode", "sync");
             CloudApiTelemetry.RecordRunTriggerRequest("sync");
 
-            if (!context.TryGetTenantId(out Guid tenantId))
+            if (!context.TryGetTenantId(out Guid? tenantId))
             {
                 CloudApiTelemetry.RecordRunTriggerFailure("TENANT_REQUIRED", "sync");
                 activity?.SetStatus(ActivityStatusCode.Error, "Tenant ID is required.");
                 return Results.BadRequest(new { Error = "Tenant ID is required." });
             }
-            activity?.SetTag("ghost.tenant.id", tenantId);
+            Guid resolvedTenantId = tenantId ?? throw new InvalidOperationException("Tenant ID resolution failed.");
+            activity?.SetTag("ghost.tenant.id", resolvedTenantId);
 
             IEndpointGrain endpointGrain = clusterClient.GetGrain<IEndpointGrain>(endpointId);
 
@@ -145,7 +147,7 @@ public static class ScrapeEndpoints
                 EndpointId = endpointId,
                 Input = request.Input,
                 RequestedMode = "sync",
-                TenantId = tenantId
+                TenantId = resolvedTenantId
             }).ConfigureAwait(false);
 
             if (status.Status == "Failed")

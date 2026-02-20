@@ -6,7 +6,7 @@ public sealed record ScheduledRunRequest
     [Id(0)] public string RunId { get; init; } = string.Empty;
     [Id(1)] public DateTimeOffset ScheduledTime { get; init; }
     [Id(2)] public string EndpointId { get; init; } = string.Empty;
-    [Id(3)] public Guid TenantId { get; init; }
+    [Id(3)] public required Guid TenantId { get; init; }
     [Id(4)] public JsonElement Input { get; init; }
     [Id(5)] public string RequestedMode { get; init; } = "canary";
     [Id(6)] public string RunKind { get; init; } = "canary";
@@ -19,7 +19,7 @@ public sealed record ScheduledRunInfo
     [Id(1)] public DateTimeOffset ScheduledTime { get; init; }
     [Id(2)] public string Status { get; init; } = "Pending";
     [Id(3)] public string EndpointId { get; init; } = string.Empty;
-    [Id(4)] public Guid TenantId { get; init; }
+    [Id(4)] public required Guid TenantId { get; init; }
     [Id(5)] public JsonElement Input { get; init; }
     [Id(6)] public string RequestedMode { get; init; } = "canary";
     [Id(7)] public string RunKind { get; init; } = "canary";

@@ -56,7 +56,7 @@ public static class TenantResolutionMiddlewareExtensions
         throw new InvalidOperationException("TenantId was not resolved for this request.");
     }
 
-    public static bool TryGetTenantId(this HttpContext context, out Guid tenantId)
+    public static bool TryGetTenantId(this HttpContext context, out Guid? tenantId)
     {
         if (context.Items.TryGetValue("TenantId", out object? value) &&
             value is Guid resolvedTenantId &&
@@ -66,7 +66,7 @@ public static class TenantResolutionMiddlewareExtensions
             return true;
         }
 
-        tenantId = Guid.Empty;
+        tenantId = null;
         return false;
     }
 }
