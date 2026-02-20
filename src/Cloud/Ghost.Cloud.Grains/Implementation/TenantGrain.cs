@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Ghost.Cloud.Contracts.Runs;
 using Ghost.Cloud.Grains.Interfaces;
+using Ghost.Cloud.Grains.Observability;
 using Ghost.Cloud.Grains.State;
 using Orleans.Runtime;
 
@@ -17,6 +19,10 @@ public sealed class TenantGrain : Grain, ITenantGrain
 
     public async Task<RunAuthorizationDecision> AuthorizeRunAsync(string runId, string endpointId)
     {
+        using Activity? activity = CloudGrainsTelemetry.ActivitySource.StartActivity("CloudGrains.Tenant.AuthorizeRun");
+        activity?.SetTag("ghost.run.id", runId);
+        activity?.SetTag("ghost.endpoint.id", endpointId);
+
         bool stateChanged = CheckAndResetDailyLimit();
 
         if (_state.State.ActiveRuns.Contains(runId, StringComparer.Ordinal))
@@ -25,6 +31,9 @@ public sealed class TenantGrain : Grain, ITenantGrain
                 isAuthorized: true,
                 code: "ALREADY_AUTHORIZED",
                 message: "Run was already authorized and is currently active.");
+            CloudGrainsTelemetry.RecordAuthorizationDecision(idempotentDecision.Code, idempotentDecision.IsAuthorized);
+            activity?.SetTag("ghost.authorization.code", idempotentDecision.Code);
+            activity?.SetStatus(ActivityStatusCode.Ok);
             AppendAudit(runId, endpointId, idempotentDecision);
             await _state.WriteStateAsync().ConfigureAwait(false);
             return idempotentDecision;
@@ -36,6 +45,9 @@ public sealed class TenantGrain : Grain, ITenantGrain
                 isAuthorized: false,
                 code: "DAILY_QUOTA_EXCEEDED",
                 message: "Tenant daily run limit has been reached.");
+            CloudGrainsTelemetry.RecordAuthorizationDecision(quotaDecision.Code, quotaDecision.IsAuthorized);
+            activity?.SetTag("ghost.authorization.code", quotaDecision.Code);
+            activity?.SetStatus(ActivityStatusCode.Error, quotaDecision.Message);
             AppendAudit(runId, endpointId, quotaDecision);
             await _state.WriteStateAsync().ConfigureAwait(false);
             return quotaDecision;
@@ -47,6 +59,9 @@ public sealed class TenantGrain : Grain, ITenantGrain
                 isAuthorized: false,
                 code: "MAX_CONCURRENT_RUNS_EXCEEDED",
                 message: "Tenant max concurrent run limit has been reached.");
+            CloudGrainsTelemetry.RecordAuthorizationDecision(concurrentDecision.Code, concurrentDecision.IsAuthorized);
+            activity?.SetTag("ghost.authorization.code", concurrentDecision.Code);
+            activity?.SetStatus(ActivityStatusCode.Error, concurrentDecision.Message);
             AppendAudit(runId, endpointId, concurrentDecision);
             await _state.WriteStateAsync().ConfigureAwait(false);
             return concurrentDecision;
@@ -58,6 +73,9 @@ public sealed class TenantGrain : Grain, ITenantGrain
             isAuthorized: true,
             code: "AUTHORIZED",
             message: "Run authorized for execution.");
+        CloudGrainsTelemetry.RecordAuthorizationDecision(authorizedDecision.Code, authorizedDecision.IsAuthorized);
+        activity?.SetTag("ghost.authorization.code", authorizedDecision.Code);
+        activity?.SetStatus(ActivityStatusCode.Ok);
         AppendAudit(runId, endpointId, authorizedDecision);
         stateChanged = true;
 

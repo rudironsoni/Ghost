@@ -1,11 +1,13 @@
 using Ghost.Cloud.Api.Canaries;
 using Ghost.Cloud.Api.Endpoints;
 using Ghost.Cloud.Api.Middleware;
+using Ghost.Cloud.Api.Observability;
 using Ghost.Cloud.Grains.Implementation;
 using Ghost.Cloud.Grains.Interfaces;
 using Ghost.Cloud.Infrastructure.EventStore;
 using Ghost.Cloud.Infrastructure.Idempotency;
 using Ghost.Cloud.Infrastructure.Persistence;
+using Microsoft.Extensions.Logging;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +28,16 @@ builder.Services.AddSingleton<IArtifactQueries>(new PostgreSqlReadStore(connecti
 builder.Services.AddSingleton<IEndpointQueries>(new PostgreSqlReadStore(connectionString));
 builder.Services.AddSingleton<IAssuranceCanaryRunner, AssuranceCanaryRunner>();
 builder.Services.AddHostedService<ScheduledCanaryDispatcher>();
+builder.Services.AddCloudObservability(builder.Configuration);
+builder.Logging.Configure(options =>
+{
+    options.ActivityTrackingOptions =
+        ActivityTrackingOptions.TraceId |
+        ActivityTrackingOptions.SpanId |
+        ActivityTrackingOptions.ParentId |
+        ActivityTrackingOptions.Baggage |
+        ActivityTrackingOptions.Tags;
+});
 
 // Add Orleans
 builder.Host.UseOrleans((context, siloBuilder) =>
