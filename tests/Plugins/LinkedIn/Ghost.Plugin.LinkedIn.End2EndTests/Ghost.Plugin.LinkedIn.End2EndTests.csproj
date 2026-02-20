@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <RootNamespace>Ghost.Plugin.LinkedIn.E2E</RootNamespace>
+    <RootNamespace>Ghost.Plugin.LinkedIn.End2End</RootNamespace>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
 

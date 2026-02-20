@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <RootNamespace>Ghost.Plugin.Glassdoor.E2E</RootNamespace>
+    <RootNamespace>Ghost.Plugin.Glassdoor.End2End</RootNamespace>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
 
