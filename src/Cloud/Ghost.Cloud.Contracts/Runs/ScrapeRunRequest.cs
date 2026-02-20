@@ -10,4 +10,5 @@ public sealed record ScrapeRunRequest
     [Id(2)] public DeliveryConfig? Delivery { get; init; }
     [Id(3)] public string? IdempotencyKey { get; init; }
     [Id(4)] public string RequestedMode { get; init; } = "async";
+    [Id(5)] public Guid TenantId { get; init; }
 }
