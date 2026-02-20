@@ -45,8 +45,8 @@ public sealed class TenantResolutionMiddlewareTests
 
         await middleware.InvokeAsync(context);
 
-        context.TryGetTenantId(out Guid tenantId).Should().BeFalse();
-        tenantId.Should().Be(Guid.Empty);
+        context.TryGetTenantId(out Guid? tenantId).Should().BeFalse();
+        tenantId.Should().BeNull();
         context.Invoking(httpContext => httpContext.GetTenantId())
             .Should()
             .Throw<InvalidOperationException>()
@@ -62,8 +62,8 @@ public sealed class TenantResolutionMiddlewareTests
 
         await middleware.InvokeAsync(context);
 
-        context.TryGetTenantId(out Guid tenantId).Should().BeFalse();
-        tenantId.Should().Be(Guid.Empty);
+        context.TryGetTenantId(out Guid? tenantId).Should().BeFalse();
+        tenantId.Should().BeNull();
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public sealed class TenantResolutionMiddlewareTests
 
         await middleware.InvokeAsync(context);
 
-        context.TryGetTenantId(out Guid tenantId).Should().BeFalse();
-        tenantId.Should().Be(Guid.Empty);
+        context.TryGetTenantId(out Guid? tenantId).Should().BeFalse();
+        tenantId.Should().BeNull();
     }
 }

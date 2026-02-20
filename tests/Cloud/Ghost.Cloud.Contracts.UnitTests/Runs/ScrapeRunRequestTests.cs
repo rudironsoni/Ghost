@@ -8,11 +8,14 @@ public class ScrapeRunRequestTests
     [Fact]
     public void ScrapeRunRequest_DefaultValues_AreSet()
     {
-        var request = new ScrapeRunRequest();
+        var request = new ScrapeRunRequest
+        {
+            TenantId = Guid.NewGuid()
+        };
 
         request.EndpointId.Should().BeEmpty();
         request.RequestedMode.Should().Be("async");
-        request.TenantId.Should().Be(Guid.Empty);
+        request.TenantId.Should().NotBe(Guid.Empty);
     }
 
     [Fact]

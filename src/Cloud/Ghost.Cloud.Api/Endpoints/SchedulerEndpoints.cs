@@ -21,10 +21,11 @@ public static class SchedulerEndpoints
             [FromServices] IClusterClient clusterClient,
             CancellationToken ct) =>
         {
-            if (!context.TryGetTenantId(out Guid tenantId))
+            if (!context.TryGetTenantId(out Guid? tenantId))
             {
                 return Results.BadRequest(new { Error = "Tenant ID is required." });
             }
+            Guid resolvedTenantId = tenantId ?? throw new InvalidOperationException("Tenant ID resolution failed.");
 
             if (string.IsNullOrWhiteSpace(request.EndpointId))
             {
@@ -40,7 +41,7 @@ public static class SchedulerEndpoints
             {
                 RunId = runId,
                 EndpointId = request.EndpointId,
-                TenantId = tenantId,
+                TenantId = resolvedTenantId,
                 Input = request.Input,
                 ScheduledTime = request.ScheduledTime,
                 RequestedMode = "canary",
