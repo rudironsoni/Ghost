@@ -59,6 +59,30 @@ data:
       - record: ghost:memory_usage:percent
         expr: (process_resident_memory_bytes / node_memory_MemTotal_bytes) * 100
 
+      # Cloud canary SLO metrics
+      - record: ghost:canary_success_ratio:30m
+        expr: |
+          sum(rate(ghost_canary_runs_total{status="success"}[30m])) by (provider) /
+          clamp_min(sum(rate(ghost_canary_runs_total[30m])) by (provider), 0.0001)
+
+      - record: ghost:canary_duration_p95:30m
+        expr: histogram_quantile(0.95, sum(rate(ghost_canary_duration_seconds_bucket[30m])) by (provider, le))
+
+      # Data quality SLO metrics
+      - record: ghost:data_quality_completeness_ratio:30m
+        expr: avg_over_time(ghost_data_quality_completeness_ratio[30m])
+
+      - record: ghost:data_quality_duplicate_ratio:30m
+        expr: avg_over_time(ghost_data_quality_duplicate_ratio[30m])
+
+      - record: ghost:data_quality_volume_ratio:24h
+        expr: |
+          sum(increase(ghost_data_quality_records_total[24h])) by (provider) /
+          clamp_min(
+            sum(avg_over_time(increase(ghost_data_quality_records_total[24h])[14d:24h])) by (provider),
+            1
+          )
+
     - name: infrastructure_recording_rules
       interval: 30s
       rules:
@@ -187,3 +211,71 @@ data:
         annotations:
           summary: "Ghost application is down"
           description: "Instance {{ $labels.instance }} has been down for 2+ minutes"
+
+      # Cloud canary SLO burn alerts
+      - alert: CanarySloBurnRateFast
+        expr: ghost:canary_success_ratio:30m < 0.97
+        for: 10m
+        labels:
+          severity: critical
+          component: cloud-canary
+        annotations:
+          summary: "Canary SLO fast burn detected"
+          description: "Canary success ratio is {{ $value | humanizePercentage }} for provider {{ $labels.provider }}."
+          runbook_url: "infrastructure/docs/runbooks/cloud-canary-data-quality-alerts.md"
+
+      - alert: CanarySloBurnRateSlow
+        expr: ghost:canary_success_ratio:30m < 0.99
+        for: 1h
+        labels:
+          severity: warning
+          component: cloud-canary
+        annotations:
+          summary: "Canary SLO slow burn detected"
+          description: "Canary success ratio stayed below SLO for provider {{ $labels.provider }}."
+          runbook_url: "infrastructure/docs/runbooks/cloud-canary-data-quality-alerts.md"
+
+      - alert: CanaryDurationSloBreach
+        expr: ghost:canary_duration_p95:30m > 120
+        for: 20m
+        labels:
+          severity: warning
+          component: cloud-canary
+        annotations:
+          summary: "Canary duration SLO breach"
+          description: "Canary p95 duration is {{ $value }}s for provider {{ $labels.provider }}."
+          runbook_url: "infrastructure/docs/runbooks/cloud-canary-data-quality-alerts.md"
+
+      # Data quality regression alerts
+      - alert: DataQualityCompletenessRegression
+        expr: ghost:data_quality_completeness_ratio:30m < 0.95
+        for: 15m
+        labels:
+          severity: critical
+          component: data-quality
+        annotations:
+          summary: "Data completeness regression"
+          description: "Completeness ratio dropped to {{ $value | humanizePercentage }}."
+          runbook_url: "infrastructure/docs/runbooks/cloud-canary-data-quality-alerts.md"
+
+      - alert: DataQualityDuplicateSpike
+        expr: ghost:data_quality_duplicate_ratio:30m > 0.03
+        for: 15m
+        labels:
+          severity: warning
+          component: data-quality
+        annotations:
+          summary: "Data duplicate ratio spike"
+          description: "Duplicate ratio is {{ $value | humanizePercentage }}."
+          runbook_url: "infrastructure/docs/runbooks/cloud-canary-data-quality-alerts.md"
+
+      - alert: DataQualityVolumeDrop
+        expr: ghost:data_quality_volume_ratio:24h < 0.70
+        for: 30m
+        labels:
+          severity: critical
+          component: data-quality
+        annotations:
+          summary: "Data volume dropped vs baseline"
+          description: "Data volume ratio is {{ $value | humanizePercentage }} for provider {{ $labels.provider }}."
+          runbook_url: "infrastructure/docs/runbooks/cloud-canary-data-quality-alerts.md"

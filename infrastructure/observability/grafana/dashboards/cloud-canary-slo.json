@@ -1,0 +1,116 @@
+{
+  "dashboard": {
+    "title": "Cloud Canary and Data Quality SLOs",
+    "tags": ["cloud", "canary", "slo", "data-quality"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Canary Success Ratio (30m)",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+        "targets": [
+          {
+            "expr": "ghost:canary_success_ratio:30m * 100",
+            "legendFormat": "{{provider}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          { "format": "percent", "min": 0, "max": 100 },
+          { "format": "short" }
+        ],
+        "thresholds": [
+          { "value": 99, "op": "lt", "fill": true, "line": true, "colorMode": "critical" }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Canary Duration p95 (30m)",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+        "targets": [
+          {
+            "expr": "ghost:canary_duration_p95:30m",
+            "legendFormat": "{{provider}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          { "format": "s" },
+          { "format": "short" }
+        ],
+        "thresholds": [
+          { "value": 120, "op": "gt", "fill": true, "line": true, "colorMode": "critical" }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Data Completeness Ratio",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+        "targets": [
+          {
+            "expr": "ghost:data_quality_completeness_ratio:30m * 100",
+            "legendFormat": "{{provider}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          { "format": "percent", "min": 0, "max": 100 },
+          { "format": "short" }
+        ],
+        "thresholds": [
+          { "value": 95, "op": "lt", "fill": true, "line": true, "colorMode": "critical" }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Data Duplicate Ratio",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+        "targets": [
+          {
+            "expr": "ghost:data_quality_duplicate_ratio:30m * 100",
+            "legendFormat": "{{provider}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          { "format": "percent", "min": 0, "max": 100 },
+          { "format": "short" }
+        ],
+        "thresholds": [
+          { "value": 3, "op": "gt", "fill": true, "line": true, "colorMode": "critical" }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Data Volume Ratio vs Baseline",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+        "targets": [
+          {
+            "expr": "ghost:data_quality_volume_ratio:24h * 100",
+            "legendFormat": "{{provider}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          { "format": "percent", "min": 0, "max": 200 },
+          { "format": "short" }
+        ],
+        "thresholds": [
+          { "value": 70, "op": "lt", "fill": true, "line": true, "colorMode": "critical" }
+        ]
+      }
+    ]
+  }
+}
