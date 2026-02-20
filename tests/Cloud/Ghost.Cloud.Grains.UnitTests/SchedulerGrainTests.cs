@@ -32,6 +32,27 @@ public sealed class SchedulerGrainTests
     }
 
     [Fact]
+    public async Task ScheduleRunAsync_WithEmptyTenantId_ThrowsAndDoesNotPersistAsync()
+    {
+        SchedulerState schedulerState = new();
+        IPersistentState<SchedulerState> persistentState = CreatePersistentState(schedulerState);
+        SchedulerGrain grain = new(persistentState);
+
+        Func<Task> act = () => grain.ScheduleRunAsync(new ScheduledRunRequest
+        {
+            RunId = "run-empty-tenant",
+            EndpointId = "endpoint-1",
+            TenantId = Guid.Empty,
+            ScheduledTime = DateTimeOffset.UtcNow.AddMinutes(1),
+            RunKind = "canary",
+            RequestedMode = "canary"
+        });
+
+        await act.Should().ThrowAsync<ArgumentException>();
+        await persistentState.DidNotReceive().WriteStateAsync();
+    }
+
+    [Fact]
     public async Task GetDueRunsAsync_ReturnsDueRunsAndMarksDispatchingAsync()
     {
         DateTimeOffset now = DateTimeOffset.UtcNow;

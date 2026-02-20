@@ -17,6 +17,10 @@ public sealed class SchedulerGrain : Grain, ISchedulerGrain
     public Task ScheduleRunAsync(ScheduledRunRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
+        if (request.TenantId == Guid.Empty)
+        {
+            throw new ArgumentException("TenantId must be a non-empty GUID.", nameof(request));
+        }
 
         var scheduledRun = new ScheduledRun
         {

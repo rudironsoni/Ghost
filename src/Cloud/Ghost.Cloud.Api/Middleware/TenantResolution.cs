@@ -16,7 +16,8 @@ public class TenantResolutionMiddleware
     {
         // Try to get tenant ID from header first
         if (context.Request.Headers.TryGetValue(TenantIdHeader, out Microsoft.Extensions.Primitives.StringValues headerValue) &&
-            Guid.TryParse(headerValue.ToString(), out Guid tenantId))
+            Guid.TryParse(headerValue.ToString(), out Guid tenantId) &&
+            tenantId != Guid.Empty)
         {
             context.Items["TenantId"] = tenantId;
         }
@@ -24,7 +25,9 @@ public class TenantResolutionMiddleware
         else if (context.User.Identity?.IsAuthenticated == true)
         {
             Claim? tenantClaim = context.User.FindFirst("tenant_id");
-            if (tenantClaim != null && Guid.TryParse(tenantClaim.Value, out tenantId))
+            if (tenantClaim != null &&
+                Guid.TryParse(tenantClaim.Value, out tenantId) &&
+                tenantId != Guid.Empty)
             {
                 context.Items["TenantId"] = tenantId;
             }
@@ -43,7 +46,9 @@ public static class TenantResolutionMiddlewareExtensions
 
     public static Guid GetTenantId(this HttpContext context)
     {
-        if (context.Items.TryGetValue("TenantId", out object? value) && value is Guid tenantId)
+        if (context.Items.TryGetValue("TenantId", out object? value) &&
+            value is Guid tenantId &&
+            tenantId != Guid.Empty)
         {
             return tenantId;
         }
@@ -53,7 +58,9 @@ public static class TenantResolutionMiddlewareExtensions
 
     public static bool TryGetTenantId(this HttpContext context, out Guid tenantId)
     {
-        if (context.Items.TryGetValue("TenantId", out object? value) && value is Guid resolvedTenantId)
+        if (context.Items.TryGetValue("TenantId", out object? value) &&
+            value is Guid resolvedTenantId &&
+            resolvedTenantId != Guid.Empty)
         {
             tenantId = resolvedTenantId;
             return true;
