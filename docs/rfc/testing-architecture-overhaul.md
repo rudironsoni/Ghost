@@ -545,7 +545,7 @@ public interface IGoogleJobsContract
 
 **Lane A (PR Blocking):**
 ```bash
-dotnet test Ghost.sln --filter "Category=Unit|Category=UnitTest"
+dotnet test Ghost.sln --filter "Category=Unit"
 dotnet test Ghost.sln --filter "Category=Integration&Capability=RequiresMockServer"
 ```
 
