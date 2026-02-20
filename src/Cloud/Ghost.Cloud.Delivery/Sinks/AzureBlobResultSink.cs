@@ -1,4 +1,5 @@
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Ghost.Cloud.Contracts.Delivery;
 using Ghost.Cloud.Delivery.Formatters;
 
@@ -9,7 +10,7 @@ public sealed class AzureBlobResultSink : IResultSink, IDisposable
     private readonly BlobContainerClient _containerClient;
     private readonly string _prefix;
     private readonly IResultFormatter _formatter;
-    private int _batchNumber;
+    private readonly SinkWriteTracker _writeTracker = new();
     private bool _disposed;
 
     public string Type => "azure";
@@ -52,18 +53,44 @@ public sealed class AzureBlobResultSink : IResultSink, IDisposable
 
     public async Task<SinkResult> WriteBatchAsync(List<JsonElement> items, string? cursor, CancellationToken ct)
     {
-        string blobName = $"{_prefix}/batch_{_batchNumber:D4}.{_formatter.Extension}";
         byte[] data = _formatter.FormatData(items);
+        SinkWritePlan writePlan = SinkWritePlanner.Create(_prefix, _formatter.Extension, cursor, data);
 
-        BlobClient blobClient = _containerClient.GetBlobClient(blobName);
+        if (!_writeTracker.TryStart(writePlan))
+        {
+            return new SinkResult
+            {
+                Success = true,
+                Cursor = cursor,
+                BytesWritten = 0
+            };
+        }
+
+        BlobClient blobClient = _containerClient.GetBlobClient(writePlan.ObjectName);
         using var stream = new MemoryStream(data);
 
-        await blobClient.UploadAsync(stream, new Azure.Storage.Blobs.Models.BlobHttpHeaders
+        var uploadOptions = new BlobUploadOptions
         {
-            ContentType = _formatter.ContentType
-        }, cancellationToken: ct).ConfigureAwait(false);
+            HttpHeaders = new BlobHttpHeaders
+            {
+                ContentType = _formatter.ContentType
+            },
+            Metadata = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["ghost-integrity-sha256"] = writePlan.IntegritySha256,
+                ["ghost-idempotency-key"] = writePlan.IdempotencyKey
+            }
+        };
 
-        _batchNumber++;
+        try
+        {
+            await blobClient.UploadAsync(stream, uploadOptions, ct).ConfigureAwait(false);
+        }
+        catch
+        {
+            _writeTracker.MarkFailed(writePlan);
+            throw;
+        }
 
         return new SinkResult
         {

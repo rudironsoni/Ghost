@@ -12,7 +12,7 @@ public sealed class S3ResultSink : IResultSink, IDisposable
     private readonly string _bucket;
     private readonly string _prefix;
     private readonly IResultFormatter _formatter;
-    private int _batchNumber;
+    private readonly SinkWriteTracker _writeTracker = new();
     private bool _disposed;
 
     public string Type => "s3";
@@ -46,19 +46,38 @@ public sealed class S3ResultSink : IResultSink, IDisposable
 
     public async Task<SinkResult> WriteBatchAsync(List<JsonElement> items, string? cursor, CancellationToken ct)
     {
-        string key = $"{_prefix}/batch_{_batchNumber:D4}.{_formatter.Extension}";
         byte[] data = _formatter.FormatData(items);
+        SinkWritePlan writePlan = SinkWritePlanner.Create(_prefix, _formatter.Extension, cursor, data);
+
+        if (!_writeTracker.TryStart(writePlan))
+        {
+            return new SinkResult
+            {
+                Success = true,
+                Cursor = cursor,
+                BytesWritten = 0
+            };
+        }
 
         var request = new PutObjectRequest
         {
             BucketName = _bucket,
-            Key = key,
+            Key = writePlan.ObjectName,
             InputStream = new MemoryStream(data),
             ContentType = _formatter.ContentType
         };
+        request.Metadata["ghost-integrity-sha256"] = writePlan.IntegritySha256;
+        request.Metadata["ghost-idempotency-key"] = writePlan.IdempotencyKey;
 
-        await _client.PutObjectAsync(request, ct).ConfigureAwait(false);
-        _batchNumber++;
+        try
+        {
+            await _client.PutObjectAsync(request, ct).ConfigureAwait(false);
+        }
+        catch
+        {
+            _writeTracker.MarkFailed(writePlan);
+            throw;
+        }
 
         return new SinkResult
         {
