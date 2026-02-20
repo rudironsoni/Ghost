@@ -91,8 +91,8 @@ Use this catalog as the single source of truth for required command sequences.
 - `FORMAT_CHANGED`: `dotnet format Ghost.sln --verify-no-changes --include <changed-files>`
 - `RESTORE`: `dotnet restore Ghost.sln`
 - `BUILD`: `dotnet build Ghost.sln --no-restore --warnaserror`
-- `TEST_FAST`: `dotnet test Ghost.sln --no-build --filter "Category!=Smoke&Category!=End2End"`
-- `TEST_FAST_FALLBACK`: `dotnet test Ghost.sln --filter "Category!=Smoke&Category!=End2End"`
+- `TEST_FAST`: `dotnet test Ghost.sln --no-build --filter "Category!=Smoke&Category!=End2End&Capability!=RequiresProviderLive"`
+- `TEST_FAST_FALLBACK`: `dotnet test Ghost.sln --filter "Category!=Smoke&Category!=End2End&Capability!=RequiresProviderLive"`
 - `TEST_FULL`: `GHOST_E2E=1 dotnet test Ghost.sln --no-build`
 - `TEST_FULL_FALLBACK`: `GHOST_E2E=1 dotnet test Ghost.sln`
 - `TEST_HANG_DIAG`: `dotnet test <target> --blame-hang --logger "trx;LogFileName=test-results.trx"`

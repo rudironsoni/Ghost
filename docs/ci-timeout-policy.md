@@ -8,7 +8,7 @@ Workflow: `.github/workflows/lane-a-pr-blocking.yml`
 - Unit tests timeout budget: 15 minutes
 - Mocked integration tests timeout budget: 20 minutes
 - Intended filters:
-  - `Category=Unit|Category=UnitTest`
+  - `Category=Unit`
   - `Category=Integration&Capability=RequiresMockServer`
 
 ## Lane B (Merge Gate)

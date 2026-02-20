@@ -204,7 +204,7 @@ public class SystemTests
 - ⚠️ Non-blocking CI by default (manual trigger or nightly)
 
 **CI Strategy:**
-- **PR Gate:** ❌ Excluded (use `--filter "Category!=End2End"`)
+- **PR Gate:** ❌ Excluded (use `--filter "Category!=End2End&Capability!=RequiresProviderLive"`)
 - **Merge Gate:** ❌ Excluded
 - **Nightly/Manual:** ✅ Enabled
 
@@ -247,7 +247,7 @@ Each test project contains an `xunit.runner.json` file with lane-specific settin
 ### PR Gate (Deterministic, Fast)
 
 ```bash
-dotnet test Ghost.sln --no-build --filter "Category!=End2End" --settings Ghost.runsettings
+dotnet test Ghost.sln --no-build --filter "Category!=End2End&Capability!=RequiresProviderLive" --settings Ghost.runsettings
 ```
 
 **Includes:**
@@ -305,7 +305,7 @@ dotnet test Ghost.sln --no-build --settings Ghost.runsettings
   - `dotnet format Ghost.sln --verify-no-changes`
   - `dotnet restore Ghost.sln`
   - `dotnet build Ghost.sln --no-restore --warnaserror`
-  - `dotnet test Ghost.sln --no-build --filter "Category!=End2End"`
+  - `dotnet test Ghost.sln --no-build --filter "Category!=End2End&Capability!=RequiresProviderLive"`
 
 ---
 
@@ -345,7 +345,7 @@ git push
 
 ### Verification After Rollback
 ```bash
-dotnet test Ghost.sln --no-build --filter "Category!=End2End"
+dotnet test Ghost.sln --no-build --filter "Category!=End2End&Capability!=RequiresProviderLive"
 ```
 
 ---

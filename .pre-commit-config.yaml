@@ -23,12 +23,11 @@ repos:
         files: '\.(cs|csproj|sln)$'
         stages: [pre-commit]
 
-      # Run non-smoke tests (fast, deterministic)
-      # Smoke tests are excluded - they require Ghost.WebApi running and external services
-      # Smoke tests run in nightly CI (lane-c-nightly.yml) or manually
+      # Run deterministic PR-lane tests only.
+      # Excludes Smoke, End2End, and explicit live-provider capability tests.
       - id: dotnet-test-quick
         name: Run non-smoke tests
-        entry: dotnet test Ghost.sln --filter "Category!=Smoke&Category!=End2End"
+        entry: dotnet test Ghost.sln --filter "Category!=Smoke&Category!=End2End&Capability!=RequiresProviderLive"
         language: system
         pass_filenames: false
         files: '\.(cs|csproj)$'

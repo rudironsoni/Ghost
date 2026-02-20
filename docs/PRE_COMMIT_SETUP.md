@@ -170,7 +170,7 @@ git commit
 
 **Solution:** Run tests manually to see details:
 ```bash
-dotnet test Ghost.sln --filter "Category!=Smoke&Category!=End2End"
+dotnet test Ghost.sln --filter "Category!=Smoke&Category!=End2End&Capability!=RequiresProviderLive"
 ```
 
 Fix the failing tests before committing.
@@ -229,7 +229,7 @@ Temporarily disable a hook by commenting it out in `.pre-commit-config.yaml`:
 Pre-commit hooks match CI validation:
 - ✅ Same format check (`dotnet format --verify-no-changes`)
 - ✅ Same build command (Release + warnings as errors)
-- ✅ Same test filter (excludes Smoke/End2End)
+- ✅ Same test filter (excludes Smoke/End2End/live-provider capability lane)
 
 **Goal:** If pre-commit passes locally, CI should pass too.
 
