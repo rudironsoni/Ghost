@@ -62,7 +62,7 @@ public static class ScrapeEndpoints
 
             if (status.Status == "Failed")
             {
-                return Results.BadRequest(new { Error = status.ErrorMessage });
+                return Results.BadRequest(new { Error = status.ErrorMessage, ErrorCode = status.ErrorCode });
             }
 
             return Results.Accepted($"/v1/runs/{runId}", new TriggerScrapeResponse
@@ -118,7 +118,7 @@ public static class ScrapeEndpoints
 
             if (status.Status == "Failed")
             {
-                return Results.BadRequest(new { Error = status.ErrorMessage });
+                return Results.BadRequest(new { Error = status.ErrorMessage, ErrorCode = status.ErrorCode });
             }
 
             return Results.Accepted($"/v1/runs/{runId}", new TriggerScrapeResponse

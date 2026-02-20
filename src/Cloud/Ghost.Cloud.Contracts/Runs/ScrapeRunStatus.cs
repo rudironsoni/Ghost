@@ -13,4 +13,5 @@ public sealed record ScrapeRunStatus
     [Id(7)] public string? ErrorMessage { get; init; }
     [Id(8)] public string? ResultLocation { get; init; }
     [Id(9)] public DeliveryProgress DeliveryProgress { get; init; } = new();
+    [Id(10)] public string? ErrorCode { get; init; }
 }

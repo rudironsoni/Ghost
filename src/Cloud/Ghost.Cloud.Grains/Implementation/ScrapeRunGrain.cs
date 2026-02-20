@@ -25,13 +25,15 @@ public sealed class ScrapeRunGrain : JournaledGrain<ScrapeRunState, ScrapeRunEve
 
         ITenantGrain tenantGrain = GrainFactory.GetGrain<ITenantGrain>(tenantId);
 
-        bool authorized = await tenantGrain.AuthorizeRunAsync(this.GetPrimaryKeyString(), request.EndpointId).ConfigureAwait(false);
-        if (!authorized)
+        RunAuthorizationDecision authorizationDecision = await tenantGrain
+            .AuthorizeRunAsync(this.GetPrimaryKeyString(), request.EndpointId)
+            .ConfigureAwait(false);
+        if (!authorizationDecision.IsAuthorized)
         {
             RaiseEvent(new ScrapeRunFailed(
                 this.GetPrimaryKeyString(),
-                "QUOTA_EXCEEDED",
-                "Tenant has exceeded quota for this endpoint",
+                authorizationDecision.Code,
+                authorizationDecision.Message,
                 false,
                 DateTimeOffset.UtcNow));
             return MapToStatus(State);
@@ -133,6 +135,7 @@ public sealed class ScrapeRunGrain : JournaledGrain<ScrapeRunState, ScrapeRunEve
         ItemsDelivered = state.ItemsDiscovered,
         StartedAt = state.StartedAt,
         CompletedAt = state.CompletedAt,
-        ErrorMessage = state.ErrorMessage
+        ErrorMessage = state.ErrorMessage,
+        ErrorCode = state.ErrorCode
     };
 }

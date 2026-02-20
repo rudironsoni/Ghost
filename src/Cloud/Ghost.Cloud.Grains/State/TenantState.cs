@@ -1,3 +1,5 @@
+using Ghost.Cloud.Contracts.Runs;
+
 namespace Ghost.Cloud.Grains.State;
 
 [GenerateSerializer]
@@ -10,4 +12,5 @@ public sealed class TenantState
     [Id(4)] public int CurrentRunCount { get; set; }
     [Id(5)] public DateTimeOffset LastResetDate { get; set; } = DateTimeOffset.UtcNow;
     [Id(6)] public List<string> ActiveRuns { get; set; } = new();
+    [Id(7)] public List<RunAuthorizationAuditEntry> AuthorizationAudit { get; set; } = new();
 }
