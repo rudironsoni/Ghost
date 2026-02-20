@@ -17,6 +17,7 @@ namespace Ghost.Plugin.Google.End2EndTests;
 /// </summary>
 [Collection("GoogleEnd2End")]
 [Trait("Category", "End2End")]
+[Trait("Capability", "RequiresProviderLive")]
 public sealed class GooglePluginE2ETests : IAsyncLifetime, IClassFixture<GoogleE2EFixture>
 {
     private readonly GoogleE2EFixture _fixture;

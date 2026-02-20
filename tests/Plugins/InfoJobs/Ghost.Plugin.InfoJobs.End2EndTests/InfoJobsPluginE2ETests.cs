@@ -14,6 +14,7 @@ namespace Ghost.Plugin.InfoJobs.End2EndTests;
 /// </summary>
 [Collection("InfoJobsEnd2End")]
 [Trait("Category", "End2End")]
+[Trait("Capability", "RequiresProviderLive")]
 public sealed class InfoJobsPluginE2ETests
 {
     private readonly InfoJobsE2EFixture _fixture;

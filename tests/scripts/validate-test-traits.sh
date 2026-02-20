@@ -61,15 +61,42 @@ if echo "$CATEGORY_TRAITS" | grep -q 'Trait("Category", "E2E")'; then
     NON_CANONICAL_FOUND=1
 fi
 
+# End2End lane ownership: every End2End test file must declare a lane capability trait.
+END2END_FILES=$(grep -rl '\[Trait("Category", "End2End")' "$TESTS_DIR" --include="*.cs" | grep -v '/Legacy/' || true)
+if [ -n "$END2END_FILES" ]; then
+    while IFS= read -r file; do
+        if [ -z "$file" ]; then
+            continue
+        fi
+
+        if ! grep -Eq '\[Trait\("Capability", "(RequiresProviderLive|RequiresSyntheticServer)"\)\]' "$file"; then
+            echo "ERROR: End2End test file missing required lane capability trait:"
+            echo "  $file"
+            echo "  Required: [Trait(\"Capability\", \"RequiresProviderLive\")] or [Trait(\"Capability\", \"RequiresSyntheticServer\")]"
+            NON_CANONICAL_FOUND=1
+        fi
+    done <<< "$END2END_FILES"
+fi
+
 # List all unique category values found
 echo ""
 echo "Category values found in codebase:"
 echo "$CATEGORY_TRAITS" | sed -n 's/.*Trait("Category", "\([^"]*\)").*/\1/p' | sort | uniq -c
 
+CAPABILITY_TRAITS=$(grep -r '\[Trait("Capability"' "$TESTS_DIR" --include="*.cs" | grep -v '/Legacy/' || true)
+echo ""
+echo "Capability values found in codebase:"
+if [ -n "$CAPABILITY_TRAITS" ]; then
+    echo "$CAPABILITY_TRAITS" | sed -n 's/.*Trait("Capability", "\([^"]*\)").*/\1/p' | sort | uniq -c
+else
+    echo "  (none)"
+fi
+
 if [ $NON_CANONICAL_FOUND -eq 1 ]; then
     echo ""
     echo "FAILURE: Non-canonical test category values found!"
     echo "Canonical values are: Unit, Integration, System, End2End"
+    echo "End2End files must include lane capability: RequiresProviderLive or RequiresSyntheticServer"
     exit 1
 fi
 
