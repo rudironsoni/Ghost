@@ -16,7 +16,7 @@ namespace Ghost.Platform.Google.Tests.Contracts;
 /// <summary>
 /// Contract tests for Google provider.
 /// </summary>
-[Trait("Category", "E2E")]
+[Trait("Category", "End2End")]
 public class GoogleProviderContractTests : ProviderContractTests<GoogleContractAdapter>
 {
     private readonly ITestOutputHelper _output;

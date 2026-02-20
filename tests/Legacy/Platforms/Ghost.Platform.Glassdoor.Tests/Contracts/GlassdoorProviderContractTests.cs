@@ -15,7 +15,7 @@ namespace Ghost.Plugin.Glassdoor.Tests.Contracts;
 /// <summary>
 /// Contract tests for Glassdoor provider.
 /// </summary>
-[Trait("Category", "E2E")]
+[Trait("Category", "End2End")]
 public class GlassdoorProviderContractTests : ProviderContractTests<GlassdoorContractAdapter>
 {
     private readonly ITestOutputHelper _output;
@@ -48,7 +48,7 @@ public class GlassdoorProviderContractTests : ProviderContractTests<GlassdoorCon
         // Note: GlassdoorJobClient requires browser dependencies (GhostKernel, GlassdoorBrowserClient, GlassdoorSearchScraper)
         // Since GhostKernel doesn't have a default constructor and can't be mocked by NSubstitute,
         // we can't create a full GlassdoorJobClient for unit testing.
-        // This test is marked as E2E and will be skipped in non-E2E test runs.
+        // This test is marked as End2End and will be skipped in non-End2End test runs.
         // For now, we'll create a partial mock that will fail at runtime if actually executed.
         var jobClient = Substitute.For<Ghost.Abstractions.IJobScraper>();
         jobClient.PlatformName.Returns("Glassdoor");
