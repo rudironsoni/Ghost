@@ -5,6 +5,15 @@
 repos:
   - repo: local
     hooks:
+      # Test trait governance check (taxonomy + lane capability ownership)
+      - id: validate-test-traits
+        name: Validate test trait taxonomy and capabilities
+        entry: tests/scripts/validate-test-traits.sh
+        language: system
+        pass_filenames: false
+        files: '\.cs$'
+        stages: [pre-commit]
+
       # C# code formatting check
       - id: dotnet-format-check
         name: Check C# formatting

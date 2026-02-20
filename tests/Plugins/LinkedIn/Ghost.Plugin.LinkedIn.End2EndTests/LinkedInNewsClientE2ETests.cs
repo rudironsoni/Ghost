@@ -15,6 +15,7 @@ namespace Ghost.Plugin.LinkedIn.End2EndTests;
 /// </summary>
 [Collection("LinkedInEnd2End")]
 [Trait("Category", "End2End")]
+[Trait("Capability", "RequiresProviderLive")]
 public sealed class LinkedInNewsClientE2ETests : IAsyncLifetime
 {
     private readonly RealBrowserFixture _browserFixture;
