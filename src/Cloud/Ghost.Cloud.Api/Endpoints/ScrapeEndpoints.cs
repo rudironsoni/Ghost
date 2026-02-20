@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using Ghost.Cloud.Api.Middleware;
+using Ghost.Cloud.Api.Observability;
 using Ghost.Cloud.Contracts.Delivery;
 using Ghost.Cloud.Contracts.Endpoints;
 using Ghost.Cloud.Contracts.Runs;
@@ -24,10 +26,18 @@ public static class ScrapeEndpoints
             HttpContext context,
             CancellationToken ct) =>
         {
+            using Activity? activity = CloudApiTelemetry.ActivitySource.StartActivity("CloudApi.Endpoint.TriggerAsync");
+            activity?.SetTag("ghost.endpoint.id", endpointId);
+            activity?.SetTag("ghost.mode", "async");
+            CloudApiTelemetry.RecordRunTriggerRequest("async");
+
             if (!context.TryGetTenantId(out Guid tenantId))
             {
+                CloudApiTelemetry.RecordRunTriggerFailure("TENANT_REQUIRED", "async");
+                activity?.SetStatus(ActivityStatusCode.Error, "Tenant ID is required.");
                 return Results.BadRequest(new { Error = "Tenant ID is required." });
             }
+            activity?.SetTag("ghost.tenant.id", tenantId);
 
             IEndpointGrain endpointGrain = clusterClient.GetGrain<IEndpointGrain>(endpointId);
 
@@ -38,16 +48,21 @@ public static class ScrapeEndpoints
             }
             catch
             {
+                CloudApiTelemetry.RecordRunTriggerFailure("ENDPOINT_NOT_FOUND", "async");
+                activity?.SetStatus(ActivityStatusCode.Error, "Endpoint not found.");
                 return Results.NotFound(new { Error = "Endpoint not found" });
             }
 
             // Validate input against schema
             if (!await validator.ValidateAsync(manifest.InputSchema, request.Input).ConfigureAwait(false))
             {
+                CloudApiTelemetry.RecordRunTriggerFailure("INPUT_VALIDATION_FAILED", "async");
+                activity?.SetStatus(ActivityStatusCode.Error, "Input validation failed.");
                 return Results.BadRequest(new { Error = "Input validation failed" });
             }
 
             string runId = GenerateRunId(idempotencyKey);
+            activity?.SetTag("ghost.run.id", runId);
 
             IScrapeRunGrain runGrain = clusterClient.GetGrain<IScrapeRunGrain>(runId);
             ScrapeRunStatus status = await runGrain.TriggerAsync(new ScrapeRunRequest
@@ -62,8 +77,12 @@ public static class ScrapeEndpoints
 
             if (status.Status == "Failed")
             {
+                CloudApiTelemetry.RecordRunTriggerFailure(status.ErrorCode ?? "RUN_FAILED", "async");
+                activity?.SetStatus(ActivityStatusCode.Error, status.ErrorMessage);
                 return Results.BadRequest(new { Error = status.ErrorMessage, ErrorCode = status.ErrorCode });
             }
+
+            activity?.SetStatus(ActivityStatusCode.Ok);
 
             return Results.Accepted($"/v1/runs/{runId}", new TriggerScrapeResponse
             {
@@ -82,10 +101,18 @@ public static class ScrapeEndpoints
             HttpContext context,
             CancellationToken ct) =>
         {
+            using Activity? activity = CloudApiTelemetry.ActivitySource.StartActivity("CloudApi.Endpoint.ScrapeSync");
+            activity?.SetTag("ghost.endpoint.id", endpointId);
+            activity?.SetTag("ghost.mode", "sync");
+            CloudApiTelemetry.RecordRunTriggerRequest("sync");
+
             if (!context.TryGetTenantId(out Guid tenantId))
             {
+                CloudApiTelemetry.RecordRunTriggerFailure("TENANT_REQUIRED", "sync");
+                activity?.SetStatus(ActivityStatusCode.Error, "Tenant ID is required.");
                 return Results.BadRequest(new { Error = "Tenant ID is required." });
             }
+            activity?.SetTag("ghost.tenant.id", tenantId);
 
             IEndpointGrain endpointGrain = clusterClient.GetGrain<IEndpointGrain>(endpointId);
 
@@ -96,16 +123,21 @@ public static class ScrapeEndpoints
             }
             catch
             {
+                CloudApiTelemetry.RecordRunTriggerFailure("ENDPOINT_NOT_FOUND", "sync");
+                activity?.SetStatus(ActivityStatusCode.Error, "Endpoint not found.");
                 return Results.NotFound(new { Error = "Endpoint not found" });
             }
 
             // Validate input against schema
             if (!await validator.ValidateAsync(manifest.InputSchema, request.Input).ConfigureAwait(false))
             {
+                CloudApiTelemetry.RecordRunTriggerFailure("INPUT_VALIDATION_FAILED", "sync");
+                activity?.SetStatus(ActivityStatusCode.Error, "Input validation failed.");
                 return Results.BadRequest(new { Error = "Input validation failed" });
             }
 
             string runId = GenerateRunId(null);
+            activity?.SetTag("ghost.run.id", runId);
             IScrapeRunGrain runGrain = clusterClient.GetGrain<IScrapeRunGrain>(runId);
 
             ScrapeRunStatus status = await runGrain.TriggerAsync(new ScrapeRunRequest
@@ -118,8 +150,12 @@ public static class ScrapeEndpoints
 
             if (status.Status == "Failed")
             {
+                CloudApiTelemetry.RecordRunTriggerFailure(status.ErrorCode ?? "RUN_FAILED", "sync");
+                activity?.SetStatus(ActivityStatusCode.Error, status.ErrorMessage);
                 return Results.BadRequest(new { Error = status.ErrorMessage, ErrorCode = status.ErrorCode });
             }
+
+            activity?.SetStatus(ActivityStatusCode.Ok);
 
             return Results.Accepted($"/v1/runs/{runId}", new TriggerScrapeResponse
             {
