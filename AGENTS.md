@@ -118,7 +118,7 @@ Forbidden test flags:
 3. `TEST_FAST`
 4. If `--no-build` artifacts are unavailable, run `TEST_FAST_FALLBACK`.
 
-Fast loop purpose: reduce feedback latency while excluding `Smoke`, `End2End`, and legacy `E2E` categories.
+Fast loop purpose: reduce feedback latency while excluding `Smoke`, `End2End`, and `RequiresProviderLive` capability lanes.
 
 #### Final Blocking Gate (before close/push)
 
@@ -235,6 +235,6 @@ If push fails, resolve and retry until success or report `NOT VERIFIED: <reason>
 ### 8.3 Phase 2 Follow-Up Scope (Tracked Separately)
 
 1. `.pre-commit` and AGENTS command parity.
-2. Lane/capability trait normalization (`E2E` vs `End2End`).
+2. Lane/capability trait normalization (canonical `End2End` taxonomy and capability ownership).
 3. Stale docs cleanup and canonical policy link updates.
 4. Optional policy-lint check to prevent AGENTS drift.
