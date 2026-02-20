@@ -1,3 +1,4 @@
+using Ghost.Cloud.Api.Canaries;
 using Ghost.Cloud.Api.Endpoints;
 using Ghost.Cloud.Api.Middleware;
 using Ghost.Cloud.Grains.Implementation;
@@ -23,6 +24,8 @@ builder.Services.AddSingleton<IIdempotencyService>(new PostgreSqlIdempotencyServ
 builder.Services.AddSingleton<IScrapeRunQueries>(new PostgreSqlReadStore(connectionString));
 builder.Services.AddSingleton<IArtifactQueries>(new PostgreSqlReadStore(connectionString));
 builder.Services.AddSingleton<IEndpointQueries>(new PostgreSqlReadStore(connectionString));
+builder.Services.AddSingleton<IAssuranceCanaryRunner, AssuranceCanaryRunner>();
+builder.Services.AddHostedService<ScheduledCanaryDispatcher>();
 
 // Add Orleans
 builder.Host.UseOrleans((context, siloBuilder) =>
@@ -57,5 +60,6 @@ app.UseSchemaValidation();
 
 app.MapScrapeEndpoints();
 app.MapRunEndpoints();
+app.MapSchedulerEndpoints();
 
 app.Run();
