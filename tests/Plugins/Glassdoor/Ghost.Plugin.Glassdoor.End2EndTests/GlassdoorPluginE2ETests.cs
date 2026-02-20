@@ -14,6 +14,7 @@ namespace Ghost.Plugin.Glassdoor.End2EndTests;
 /// </summary>
 [Collection("GlassdoorEnd2End")]
 [Trait("Category", "End2End")]
+[Trait("Capability", "RequiresProviderLive")]
 public sealed class GlassdoorPluginE2ETests : IAsyncLifetime, IClassFixture<GlassdoorE2EFixture>
 {
     private readonly GlassdoorE2EFixture _fixture;

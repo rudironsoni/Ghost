@@ -14,6 +14,7 @@ namespace Ghost.Tests.Consent;
 /// </summary>
 [Collection("Browser")]
 [Trait("Category", "End2End")]
+[Trait("Capability", "RequiresSyntheticServer")]
 public class ConsentScenarioTests : IAsyncLifetime
 {
     private readonly ITestOutputHelper _output;

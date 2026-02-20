@@ -14,6 +14,7 @@ namespace Ghost.Plugin.Google.End2EndTests;
 /// Tests validate actual data extraction from Google Jobs.
 /// </summary>
 [Trait("Category", "End2End")]
+[Trait("Capability", "RequiresProviderLive")]
 public sealed class GoogleJobClientE2ETests : IClassFixture<Fixtures.GoogleE2EFixture>
 {
     private readonly Fixtures.GoogleE2EFixture _fixture;

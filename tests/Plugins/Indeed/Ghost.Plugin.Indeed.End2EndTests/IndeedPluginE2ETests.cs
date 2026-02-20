@@ -14,6 +14,7 @@ namespace Ghost.Plugin.Indeed.End2EndTests;
 /// </summary>
 [Collection("Browser")]
 [Trait("Category", "End2End")]
+[Trait("Capability", "RequiresProviderLive")]
 public sealed class IndeedPluginE2ETests : IClassFixture<IndeedE2EFixture>
 {
     private readonly IndeedE2EFixture _fixture;

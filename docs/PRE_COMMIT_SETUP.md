@@ -4,11 +4,12 @@ This document explains how to set up and use pre-commit hooks for the Ghost proj
 
 ## What Gets Validated
 
-The pre-commit hooks run three main checks:
+The pre-commit hooks run four main checks:
 
-1. **Code Formatting** - Ensures your C# code matches `.editorconfig` rules
-2. **Build Validation** - Compiles the solution with warnings treated as errors
-3. **Quick Non-Smoke Tests** - Runs fast deterministic checks (excludes `Smoke` and `End2End`)
+1. **Trait Governance** - Enforces canonical test taxonomy and End2End lane capability ownership
+2. **Code Formatting** - Ensures your C# code matches `.editorconfig` rules
+3. **Build Validation** - Compiles the solution with warnings treated as errors
+4. **Quick Non-Smoke Tests** - Runs fast deterministic checks (excludes `Smoke`, `End2End`, and `RequiresProviderLive`)
 
 Plus standard file hygiene checks:
 - Trailing whitespace removal
@@ -91,6 +92,7 @@ pre-commit run --all-files
 pre-commit run dotnet-format-check
 pre-commit run dotnet-build
 pre-commit run dotnet-test-quick
+pre-commit run validate-test-traits
 ```
 
 ### Skipping Hooks (Emergency Only)
@@ -227,6 +229,7 @@ Temporarily disable a hook by commenting it out in `.pre-commit-config.yaml`:
 ## CI/CD Integration
 
 Pre-commit hooks match CI validation:
+- ✅ Same trait governance check (`tests/scripts/validate-test-traits.sh`)
 - ✅ Same format check (`dotnet format --verify-no-changes`)
 - ✅ Same build command (`dotnet build Ghost.sln --no-restore --warnaserror`)
 - ✅ Same test filter (excludes Smoke/End2End/live-provider capability lane)

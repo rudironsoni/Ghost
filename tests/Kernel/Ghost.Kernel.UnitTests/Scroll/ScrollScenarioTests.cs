@@ -14,6 +14,7 @@ namespace Ghost.Tests.Scroll;
 /// </summary>
 [Collection("Browser")]
 [Trait("Category", "End2End")]
+[Trait("Capability", "RequiresSyntheticServer")]
 public class ScrollScenarioTests : IAsyncLifetime
 {
     private readonly ITestOutputHelper _output;
