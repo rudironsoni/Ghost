@@ -1,11 +1,13 @@
+using Ghost.Platform.Storage.Session;
 using Ghost.Plugin.Google.Gemini;
 using Ghost.Plugin.Google.Jobs;
 using Ghost.Plugin.Google.Jobs.Internal;
+using Ghost.Pool;
 using Ghost.Testing.External.Http;
-using Ghost.Testing.Fakes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NSubstitute;
 using Xunit;
 
 namespace Ghost.Plugin.Google.End2EndTests.Fixtures;
@@ -55,19 +57,16 @@ public sealed class GoogleE2EFixture : IAsyncLifetime
         }
     }
 
-    private void ConfigureServices(IServiceCollection services)
+    private static void ConfigureServices(IServiceCollection services)
     {
         // Add logging first
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug));
 
-        // Register HttpClient for direct HTTP-based API client
-        services.AddSingleton(_httpClient!);
-
-        // Configure Google Jobs options
+        // Configure Google Jobs options - use BrowserFirst strategy (production default)
         services.Configure<GoogleJobsOptions>(options =>
         {
             options.Enabled = true;
-            options.Strategy = JobSearchStrategy.HttpFirst;
+            options.Strategy = JobSearchStrategy.BrowserFirst;
         });
 
         // Configure Gemini options
@@ -78,19 +77,27 @@ public sealed class GoogleE2EFixture : IAsyncLifetime
             options.ResponseTimeout = TimeSpan.FromSeconds(60);
         });
 
-        // Register production GoogleJobsApiClient so E2E uses the same codepath as runtime.
-        services.AddSingleton<Jobs.Internal.GoogleJobsApiClient>(sp =>
+        // Register SessionOrchestrator dependencies required for production codepath
+        services.AddSingleton<Ghost.IProxyProvider>(Ghost.Proxy.StaticProxyProvider.Empty);
+
+        // Register a minimal browser pool mock - Google E2E tests rely on HTTP via cassettes
+        services.AddSingleton<ITieredBrowserPool>(Substitute.For<ITieredBrowserPool>());
+
+        // Register SessionOrchestrator - this enables the production codepath for GoogleJobsApiClient
+        services.AddSessionOrchestrator(options =>
         {
-            ILogger<Jobs.Internal.GoogleJobsApiClient> logger = sp.GetRequiredService<ILogger<Jobs.Internal.GoogleJobsApiClient>>();
-            GoogleJobsOptions options = sp.GetRequiredService<IOptions<GoogleJobsOptions>>().Value;
-            return new Jobs.Internal.GoogleJobsApiClient(sp.GetRequiredService<HttpClient>(), options, logger);
+            options.MaxConcurrentHttpSessions = 10;
+            options.MaxConcurrentBrowserSessions = 5;
+            options.DefaultSessionTtl = TimeSpan.FromMinutes(30);
+            options.EnableAutoRecycling = false;
         });
+
+        // Register GoogleJobsApiClient via DI - uses [ActivatorUtilitiesConstructor] with ISessionOrchestrator
+        // This ensures E2E tests use the same production codepath as runtime
+        services.AddSingleton<Jobs.Internal.GoogleJobsApiClient>();
 
         // Register GoogleJobClient
         services.AddSingleton<GoogleJobClient>();
-
-        // Register IBrowserSession with a fake for E2E testing
-        services.AddSingleton<IBrowserSession, FakeBrowserSession>();
 
         // Register GeminiClient
         services.AddSingleton<Gemini.GeminiClient>();

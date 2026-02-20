@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 using FluentAssertions;
+using NetArchTest.Rules;
 using Xunit;
 
 namespace Ghost.Architecture.Tests;
@@ -107,6 +108,117 @@ public sealed class KernelSdkPluginIsolationTests
             .Select(name => name!)
             .ToArray();
     }
+
+    #region NetArchTest Namespace Dependency Rules
+
+    [Fact]
+    public void KernelTypes_ShouldNotDependOn_PluginNamespaces()
+    {
+        // FW-001 enforcement: Kernel must not depend on any plugin implementations
+        TestResult result = Types
+            .InAssembly(typeof(global::Ghost.Cookie).Assembly)
+            .That()
+            .ResideInNamespace("Ghost")
+            .ShouldNot()
+            .HaveDependencyOn("Ghost.Plugin")
+            .GetResult();
+
+        result.IsSuccessful.Should().BeTrue(
+            "Kernel types should not have dependencies on Ghost.Plugin namespaces. " +
+            "This violates FW-001: Kernel/SDK must not reference plugin implementations.");
+    }
+
+    [Theory]
+    [InlineData("Ghost.Sdk")]
+    [InlineData("Ghost.Sdk.Spider")]
+    public void SdkTypes_ShouldNotDependOn_PluginNamespaces(string sdkNamespace)
+    {
+        // FW-001 enforcement: SDK must not depend on any plugin implementations
+        TestResult result = Types
+            .InCurrentDomain()
+            .That()
+            .ResideInNamespaceStartingWith(sdkNamespace)
+            .ShouldNot()
+            .HaveDependencyOn("Ghost.Plugin")
+            .GetResult();
+
+        result.IsSuccessful.Should().BeTrue(
+            $"SDK types in namespace '{sdkNamespace}' should not have dependencies on Ghost.Plugin namespaces. " +
+            "This violates FW-001: Kernel/SDK must not reference plugin implementations.");
+    }
+
+    [Fact]
+    public void Kernel_ShouldNotDependOn_AnySpecificPlugin()
+    {
+        // Check each major plugin individually for clear error messages
+        string[] plugins = new[]
+        {
+            "Ghost.Plugin.Google",
+            "Ghost.Plugin.Indeed",
+            "Ghost.Plugin.LinkedIn",
+            "Ghost.Plugin.Glassdoor",
+            "Ghost.Plugin.X",
+            "Ghost.Plugin.Anthropic",
+            "Ghost.Plugin.OpenAI",
+            "Ghost.Plugin.InfoJobs"
+        };
+
+        foreach (string plugin in plugins)
+        {
+            TestResult result = Types
+                .InAssembly(typeof(global::Ghost.Cookie).Assembly)
+                .That()
+                .ResideInNamespace("Ghost")
+                .ShouldNot()
+                .HaveDependencyOn(plugin)
+                .GetResult();
+
+            result.IsSuccessful.Should().BeTrue(
+                $"Kernel should not depend on {plugin}. " +
+                "This violates FW-001 architectural boundary.");
+        }
+    }
+
+    [Fact]
+    public void Sdk_ShouldNotDependOn_AnySpecificPlugin()
+    {
+        // Check SDK assemblies against each major plugin
+        Assembly[] sdkAssemblies =
+        {
+            typeof(Ghost.Sdk.Console.TelnetConfiguration).Assembly,
+            typeof(Ghost.Sdk.Spider.Engine.Spider).Assembly
+        };
+
+        string[] plugins = new[]
+        {
+            "Ghost.Plugin.Google",
+            "Ghost.Plugin.Indeed",
+            "Ghost.Plugin.LinkedIn",
+            "Ghost.Plugin.Glassdoor",
+            "Ghost.Plugin.X",
+            "Ghost.Plugin.Anthropic",
+            "Ghost.Plugin.OpenAI",
+            "Ghost.Plugin.InfoJobs"
+        };
+
+        foreach (Assembly sdkAssembly in sdkAssemblies)
+        {
+            foreach (string plugin in plugins)
+            {
+                TestResult result = Types
+                    .InAssembly(sdkAssembly)
+                    .ShouldNot()
+                    .HaveDependencyOn(plugin)
+                    .GetResult();
+
+                result.IsSuccessful.Should().BeTrue(
+                    $"SDK assembly '{sdkAssembly.GetName().Name}' should not depend on {plugin}. " +
+                    "This violates FW-001 architectural boundary.");
+            }
+        }
+    }
+
+    #endregion
 
     private static string GetRepositoryRoot([CallerFilePath] string sourceFilePath = "")
     {

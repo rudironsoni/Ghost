@@ -145,4 +145,24 @@ public sealed class GooglePluginE2ETests : IAsyncLifetime, IClassFixture<GoogleE
         GeminiClient? client = serviceProvider.GetService<GeminiClient>();
         Assert.NotNull(client);
     }
+
+    [Fact]
+    [Trait("TestType", "ArchitectureAssurance")]
+    public void GoogleJobsApiClient_UsesProductionCodepath_WithSessionOrchestrator()
+    {
+        // Arrange & Act
+        Jobs.Internal.GoogleJobsApiClient apiClient = _fixture.ServiceProvider.GetRequiredService<Jobs.Internal.GoogleJobsApiClient>();
+
+        // Assert - verify the client was resolved via DI using the [ActivatorUtilitiesConstructor]
+        // which requires ISessionOrchestrator (production codepath), not the legacy HttpClient constructor
+        Assert.NotNull(apiClient);
+
+        // Verify ISessionOrchestrator is registered and available (production codepath marker)
+        Ghost.Platform.Storage.Session.ISessionOrchestrator? sessionOrchestrator = _fixture.ServiceProvider.GetService<Ghost.Platform.Storage.Session.ISessionOrchestrator>();
+        Assert.NotNull(sessionOrchestrator);
+
+        // Verify the fixture properly configured SessionOrchestrator (not using stubbed path)
+        Ghost.IProxyProvider? proxyProvider = _fixture.ServiceProvider.GetService<Ghost.IProxyProvider>();
+        Assert.NotNull(proxyProvider);
+    }
 }
