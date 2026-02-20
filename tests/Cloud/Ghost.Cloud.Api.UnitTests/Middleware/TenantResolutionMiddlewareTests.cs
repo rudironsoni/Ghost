@@ -52,4 +52,33 @@ public sealed class TenantResolutionMiddlewareTests
             .Throw<InvalidOperationException>()
             .WithMessage("*TenantId was not resolved*");
     }
+
+    [Fact]
+    public async Task InvokeAsync_WithEmptyTenantHeader_DoesNotResolveTenantAsync()
+    {
+        DefaultHttpContext context = new();
+        context.Request.Headers["X-Tenant-Id"] = Guid.Empty.ToString();
+        var middleware = new TenantResolutionMiddleware(_ => Task.CompletedTask);
+
+        await middleware.InvokeAsync(context);
+
+        context.TryGetTenantId(out Guid tenantId).Should().BeFalse();
+        tenantId.Should().Be(Guid.Empty);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_WithAuthenticatedEmptyTenantClaim_DoesNotResolveTenantAsync()
+    {
+        DefaultHttpContext context = new();
+        var claimsIdentity = new ClaimsIdentity(
+            new[] { new Claim("tenant_id", Guid.Empty.ToString()) },
+            authenticationType: "TestAuth");
+        context.User = new ClaimsPrincipal(claimsIdentity);
+        var middleware = new TenantResolutionMiddleware(_ => Task.CompletedTask);
+
+        await middleware.InvokeAsync(context);
+
+        context.TryGetTenantId(out Guid tenantId).Should().BeFalse();
+        tenantId.Should().Be(Guid.Empty);
+    }
 }

@@ -138,8 +138,8 @@ public class GhostEngineTests
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
 
         // Act & Assert
-        // Should throw TaskCanceledException when cancelled
-        await Assert.ThrowsAsync<TaskCanceledException>(() =>
+        // Cancellation can surface as OperationCanceledException or derived types.
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             engine.RunAsync(spider, context, cts.Token));
     }
 
