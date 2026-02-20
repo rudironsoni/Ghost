@@ -24,6 +24,11 @@ public static class ScrapeEndpoints
             HttpContext context,
             CancellationToken ct) =>
         {
+            if (!context.TryGetTenantId(out Guid tenantId))
+            {
+                return Results.BadRequest(new { Error = "Tenant ID is required." });
+            }
+
             IEndpointGrain endpointGrain = clusterClient.GetGrain<IEndpointGrain>(endpointId);
 
             EndpointManifest manifest;
@@ -51,7 +56,8 @@ public static class ScrapeEndpoints
                 Input = request.Input,
                 Delivery = request.Delivery,
                 IdempotencyKey = idempotencyKey,
-                RequestedMode = "async"
+                RequestedMode = "async",
+                TenantId = tenantId
             }).ConfigureAwait(false);
 
             if (status.Status == "Failed")
@@ -76,6 +82,11 @@ public static class ScrapeEndpoints
             HttpContext context,
             CancellationToken ct) =>
         {
+            if (!context.TryGetTenantId(out Guid tenantId))
+            {
+                return Results.BadRequest(new { Error = "Tenant ID is required." });
+            }
+
             IEndpointGrain endpointGrain = clusterClient.GetGrain<IEndpointGrain>(endpointId);
 
             EndpointManifest manifest;
@@ -101,7 +112,8 @@ public static class ScrapeEndpoints
             {
                 EndpointId = endpointId,
                 Input = request.Input,
-                RequestedMode = "sync"
+                RequestedMode = "sync",
+                TenantId = tenantId
             }).ConfigureAwait(false);
 
             if (status.Status == "Failed")

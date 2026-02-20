@@ -12,6 +12,7 @@ public class ScrapeRunRequestTests
 
         request.EndpointId.Should().BeEmpty();
         request.RequestedMode.Should().Be("async");
+        request.TenantId.Should().Be(Guid.Empty);
     }
 
     [Fact]
@@ -22,6 +23,7 @@ public class ScrapeRunRequestTests
             EndpointId = "test-endpoint",
             Input = JsonDocument.Parse("{}").RootElement,
             RequestedMode = "sync",
+            TenantId = Guid.NewGuid(),
             Delivery = new DeliveryConfig
             {
                 Format = "json",
@@ -31,6 +33,7 @@ public class ScrapeRunRequestTests
 
         request.EndpointId.Should().Be("test-endpoint");
         request.RequestedMode.Should().Be("sync");
+        request.TenantId.Should().NotBe(Guid.Empty);
         request.Delivery.Should().NotBeNull();
         request.Delivery!.Format.Should().Be("json");
     }

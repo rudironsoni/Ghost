@@ -10,7 +10,19 @@ public sealed class ScrapeRunGrain : JournaledGrain<ScrapeRunState, ScrapeRunEve
 {
     public async Task<ScrapeRunStatus> TriggerAsync(ScrapeRunRequest request)
     {
-        Guid tenantId = GetTenantIdFromContext();
+        Guid tenantId = request.TenantId;
+        if (tenantId == Guid.Empty)
+        {
+            RaiseEvent(new ScrapeRunFailed(
+                this.GetPrimaryKeyString(),
+                "TENANT_REQUIRED",
+                "Tenant ID is required for run authorization.",
+                false,
+                DateTimeOffset.UtcNow));
+
+            return MapToStatus(State);
+        }
+
         ITenantGrain tenantGrain = GrainFactory.GetGrain<ITenantGrain>(tenantId);
 
         bool authorized = await tenantGrain.AuthorizeRunAsync(this.GetPrimaryKeyString(), request.EndpointId).ConfigureAwait(false);
@@ -123,6 +135,4 @@ public sealed class ScrapeRunGrain : JournaledGrain<ScrapeRunState, ScrapeRunEve
         CompletedAt = state.CompletedAt,
         ErrorMessage = state.ErrorMessage
     };
-
-    private static Guid GetTenantIdFromContext() => Guid.Empty;
 }
