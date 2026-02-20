@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using Ghost.Cloud.Contracts.Events;
 using Ghost.Cloud.Contracts.Runs;
 using Ghost.Cloud.Grains.Interfaces;
+using Ghost.Cloud.Grains.Observability;
 using Ghost.Cloud.Grains.State;
 using Orleans.EventSourcing;
 
@@ -10,9 +12,18 @@ public sealed class ScrapeRunGrain : JournaledGrain<ScrapeRunState, ScrapeRunEve
 {
     public async Task<ScrapeRunStatus> TriggerAsync(ScrapeRunRequest request)
     {
+        using Activity? activity = CloudGrainsTelemetry.ActivitySource.StartActivity("CloudGrains.ScrapeRun.Trigger");
+        activity?.SetTag("ghost.run.id", this.GetPrimaryKeyString());
+        activity?.SetTag("ghost.endpoint.id", request.EndpointId);
+        activity?.SetTag("ghost.mode", request.RequestedMode);
+        CloudGrainsTelemetry.RecordRunTrigger(request.RequestedMode);
+
         Guid tenantId = request.TenantId;
+        activity?.SetTag("ghost.tenant.id", tenantId);
         if (tenantId == Guid.Empty)
         {
+            CloudGrainsTelemetry.RecordRunTriggerFailure("TENANT_REQUIRED", request.RequestedMode);
+            activity?.SetStatus(ActivityStatusCode.Error, "Tenant ID is required.");
             RaiseEvent(new ScrapeRunFailed(
                 this.GetPrimaryKeyString(),
                 "TENANT_REQUIRED",
@@ -30,6 +41,9 @@ public sealed class ScrapeRunGrain : JournaledGrain<ScrapeRunState, ScrapeRunEve
             .ConfigureAwait(false);
         if (!authorizationDecision.IsAuthorized)
         {
+            CloudGrainsTelemetry.RecordRunTriggerFailure(authorizationDecision.Code, request.RequestedMode);
+            activity?.SetTag("ghost.authorization.code", authorizationDecision.Code);
+            activity?.SetStatus(ActivityStatusCode.Error, authorizationDecision.Message);
             RaiseEvent(new ScrapeRunFailed(
                 this.GetPrimaryKeyString(),
                 authorizationDecision.Code,
@@ -46,6 +60,7 @@ public sealed class ScrapeRunGrain : JournaledGrain<ScrapeRunState, ScrapeRunEve
             request.RequestedMode,
             DateTimeOffset.UtcNow));
 
+        activity?.SetStatus(ActivityStatusCode.Ok);
         State.DeliveryConfig = request.Delivery;
         return MapToStatus(State);
     }
@@ -84,11 +99,25 @@ public sealed class ScrapeRunGrain : JournaledGrain<ScrapeRunState, ScrapeRunEve
 
     public Task CompleteAsync(int itemsDiscovered, int artifactsCaptured)
     {
+        using Activity? activity = CloudGrainsTelemetry.ActivitySource.StartActivity("CloudGrains.ScrapeRun.Complete");
+        activity?.SetTag("ghost.run.id", this.GetPrimaryKeyString());
+        activity?.SetTag("ghost.items.discovered", itemsDiscovered);
+        activity?.SetTag("ghost.artifacts.captured", artifactsCaptured);
+
         RaiseEvent(new ScrapeRunCompleted(
             this.GetPrimaryKeyString(),
             itemsDiscovered,
             artifactsCaptured,
             DateTimeOffset.UtcNow));
+
+        if (State.StartedAt != DateTimeOffset.MinValue)
+        {
+            double durationSeconds = (DateTimeOffset.UtcNow - State.StartedAt).TotalSeconds;
+            CloudGrainsTelemetry.RecordRunDuration(durationSeconds, "completed");
+            activity?.SetTag("ghost.run.duration.seconds", durationSeconds);
+        }
+
+        activity?.SetStatus(ActivityStatusCode.Ok);
 
         _ = Task.Run(async () =>
         {
@@ -104,12 +133,26 @@ public sealed class ScrapeRunGrain : JournaledGrain<ScrapeRunState, ScrapeRunEve
 
     public Task FailAsync(string errorCode, string errorMessage, bool retryable)
     {
+        using Activity? activity = CloudGrainsTelemetry.ActivitySource.StartActivity("CloudGrains.ScrapeRun.Fail");
+        activity?.SetTag("ghost.run.id", this.GetPrimaryKeyString());
+        activity?.SetTag("ghost.error.code", errorCode);
+        activity?.SetTag("ghost.retryable", retryable);
+        activity?.SetStatus(ActivityStatusCode.Error, errorMessage);
+        CloudGrainsTelemetry.RecordRunTriggerFailure(errorCode, "runtime");
+
         RaiseEvent(new ScrapeRunFailed(
             this.GetPrimaryKeyString(),
             errorCode,
             errorMessage,
             retryable,
             DateTimeOffset.UtcNow));
+
+        if (State.StartedAt != DateTimeOffset.MinValue)
+        {
+            double durationSeconds = (DateTimeOffset.UtcNow - State.StartedAt).TotalSeconds;
+            CloudGrainsTelemetry.RecordRunDuration(durationSeconds, "failed");
+        }
+
         return Task.CompletedTask;
     }
 

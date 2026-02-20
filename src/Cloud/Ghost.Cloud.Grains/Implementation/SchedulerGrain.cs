@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using Ghost.Cloud.Contracts.Events;
 using Ghost.Cloud.Contracts.Runs;
 using Ghost.Cloud.Grains.Interfaces;
+using Ghost.Cloud.Grains.Observability;
 using Ghost.Cloud.Grains.State;
 
 namespace Ghost.Cloud.Grains.Implementation;
@@ -16,9 +18,16 @@ public sealed class SchedulerGrain : Grain, ISchedulerGrain
 
     public Task ScheduleRunAsync(ScheduledRunRequest request)
     {
+        using Activity? activity = CloudGrainsTelemetry.ActivitySource.StartActivity("CloudGrains.Scheduler.ScheduleRun");
+        activity?.SetTag("ghost.run.id", request.RunId);
+        activity?.SetTag("ghost.endpoint.id", request.EndpointId);
+        activity?.SetTag("ghost.run.kind", request.RunKind);
+
         ArgumentNullException.ThrowIfNull(request);
         if (request.TenantId == Guid.Empty)
         {
+            CloudGrainsTelemetry.RecordScheduledOperation("schedule", "rejected");
+            activity?.SetStatus(ActivityStatusCode.Error, "TenantId must be a non-empty GUID.");
             throw new ArgumentException("TenantId must be a non-empty GUID.", nameof(request));
         }
 
@@ -36,18 +45,27 @@ public sealed class SchedulerGrain : Grain, ISchedulerGrain
         };
 
         _state.State.ScheduledRuns[request.RunId] = scheduledRun;
+        CloudGrainsTelemetry.RecordScheduledOperation("schedule", "accepted");
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return _state.WriteStateAsync();
     }
 
     public Task CancelScheduledRunAsync(string runId)
     {
+        using Activity? activity = CloudGrainsTelemetry.ActivitySource.StartActivity("CloudGrains.Scheduler.CancelRun");
+        activity?.SetTag("ghost.run.id", runId);
+
         if (_state.State.ScheduledRuns.TryGetValue(runId, out ScheduledRun? run))
         {
             run.Status = "Cancelled";
             run.UpdatedAt = DateTimeOffset.UtcNow;
+            CloudGrainsTelemetry.RecordScheduledOperation("cancel", "updated");
+            activity?.SetStatus(ActivityStatusCode.Ok);
             return _state.WriteStateAsync();
         }
 
+        CloudGrainsTelemetry.RecordScheduledOperation("cancel", "not_found");
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return Task.CompletedTask;
     }
 
@@ -63,6 +81,9 @@ public sealed class SchedulerGrain : Grain, ISchedulerGrain
 
     public async Task<List<ScheduledRunInfo>> GetDueRunsAsync(DateTimeOffset asOfUtc, int maxCount)
     {
+        using Activity? activity = CloudGrainsTelemetry.ActivitySource.StartActivity("CloudGrains.Scheduler.GetDueRuns");
+        activity?.SetTag("ghost.max.count", maxCount);
+
         List<ScheduledRun> dueRuns = _state.State.ScheduledRuns
             .Values
             .Where(run => run.Status == "Pending" && run.ScheduledTime <= asOfUtc)
@@ -78,16 +99,26 @@ public sealed class SchedulerGrain : Grain, ISchedulerGrain
 
         if (dueRuns.Count > 0)
         {
+            CloudGrainsTelemetry.RecordScheduledOperation("due_runs", "dispatching");
             await _state.WriteStateAsync().ConfigureAwait(false);
         }
 
+        activity?.SetTag("ghost.due.count", dueRuns.Count);
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return dueRuns.Select(run => run.ToInfo()).ToList();
     }
 
     public Task MarkRunStatusAsync(string runId, string status, string? classification, string? diagnosticsUri)
     {
+        using Activity? activity = CloudGrainsTelemetry.ActivitySource.StartActivity("CloudGrains.Scheduler.MarkRunStatus");
+        activity?.SetTag("ghost.run.id", runId);
+        activity?.SetTag("ghost.status", status);
+        activity?.SetTag("ghost.classification", classification);
+
         if (!_state.State.ScheduledRuns.TryGetValue(runId, out ScheduledRun? run))
         {
+            CloudGrainsTelemetry.RecordScheduledOperation("mark_status", "not_found");
+            activity?.SetStatus(ActivityStatusCode.Ok);
             return Task.CompletedTask;
         }
 
@@ -95,6 +126,8 @@ public sealed class SchedulerGrain : Grain, ISchedulerGrain
         run.Classification = classification;
         run.DiagnosticsUri = diagnosticsUri;
         run.UpdatedAt = DateTimeOffset.UtcNow;
+        CloudGrainsTelemetry.RecordScheduledOperation("mark_status", status);
+        activity?.SetStatus(ActivityStatusCode.Ok);
 
         return _state.WriteStateAsync();
     }

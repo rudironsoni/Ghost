@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using Ghost.Cloud.Api.Observability;
 using Ghost.Cloud.Contracts.Runs;
 using Ghost.Cloud.Grains.Interfaces;
 
@@ -50,15 +52,18 @@ public sealed class ScheduledCanaryDispatcher : BackgroundService
 
     public async Task DispatchDueCanariesOnceAsync(CancellationToken cancellationToken)
     {
+        using Activity? activity = CloudApiTelemetry.ActivitySource.StartActivity("CloudApi.Canary.DispatchDue");
         ISchedulerGrain scheduler = _clusterClient.GetGrain<ISchedulerGrain>(SchedulerGrainKey);
         List<ScheduledRunInfo> dueRuns = await scheduler
             .GetDueRunsAsync(DateTimeOffset.UtcNow, maxCount: 20)
             .ConfigureAwait(false);
+        activity?.SetTag("ghost.canary.due.count", dueRuns.Count);
 
         foreach (ScheduledRunInfo scheduledRun in dueRuns)
         {
             if (!string.Equals(scheduledRun.RunKind, "canary", StringComparison.OrdinalIgnoreCase))
             {
+                CloudApiTelemetry.RecordCanaryDispatch(scheduledRun.EndpointId, "skipped");
                 await scheduler
                     .MarkRunStatusAsync(
                         scheduledRun.RunId,
@@ -78,6 +83,13 @@ public sealed class ScheduledCanaryDispatcher : BackgroundService
         ISchedulerGrain scheduler,
         CancellationToken cancellationToken)
     {
+        using Activity? activity = CloudApiTelemetry.ActivitySource.StartActivity("CloudApi.Canary.ExecuteRun");
+        activity?.SetTag("ghost.run.id", scheduledRun.RunId);
+        activity?.SetTag("ghost.endpoint.id", scheduledRun.EndpointId);
+        activity?.SetTag("ghost.run.kind", scheduledRun.RunKind);
+        activity?.SetTag("ghost.tenant.id", scheduledRun.TenantId);
+        Stopwatch stopwatch = Stopwatch.StartNew();
+
         IScrapeRunGrain runGrain = _clusterClient.GetGrain<IScrapeRunGrain>(scheduledRun.RunId);
 
         try
@@ -92,6 +104,9 @@ public sealed class ScheduledCanaryDispatcher : BackgroundService
 
             if (string.Equals(status.Status, "Failed", StringComparison.OrdinalIgnoreCase))
             {
+                CloudApiTelemetry.RecordCanaryDispatchFailure(scheduledRun.EndpointId, "TriggerFailed");
+                CloudApiTelemetry.RecordCanaryDispatch(scheduledRun.EndpointId, "failed");
+                activity?.SetStatus(ActivityStatusCode.Error, "Run trigger failed.");
                 await scheduler
                     .MarkRunStatusAsync(
                         scheduledRun.RunId,
@@ -107,6 +122,7 @@ public sealed class ScheduledCanaryDispatcher : BackgroundService
 
             if (outcome.Success)
             {
+                CloudApiTelemetry.RecordCanaryDispatch(scheduledRun.EndpointId, "completed");
                 await runGrain
                     .CompleteAsync(outcome.ItemsDiscovered, outcome.ArtifactsCaptured)
                     .ConfigureAwait(false);
@@ -117,9 +133,16 @@ public sealed class ScheduledCanaryDispatcher : BackgroundService
                         outcome.Classification,
                         outcome.DiagnosticsUri)
                     .ConfigureAwait(false);
+                activity?.SetStatus(ActivityStatusCode.Ok);
                 return;
             }
 
+            CloudApiTelemetry.RecordCanaryDispatchFailure(
+                scheduledRun.EndpointId,
+                outcome.Classification);
+            CloudApiTelemetry.RecordCanaryDispatch(scheduledRun.EndpointId, "failed");
+            activity?.SetTag("ghost.canary.classification", outcome.Classification);
+            activity?.SetStatus(ActivityStatusCode.Error, outcome.ErrorMessage ?? "Canary run failed.");
             await runGrain
                 .FailAsync(
                     outcome.Classification,
@@ -136,6 +159,9 @@ public sealed class ScheduledCanaryDispatcher : BackgroundService
         }
         catch (Exception ex)
         {
+            CloudApiTelemetry.RecordCanaryDispatchFailure(scheduledRun.EndpointId, "DispatchError");
+            CloudApiTelemetry.RecordCanaryDispatch(scheduledRun.EndpointId, "failed");
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             await runGrain
                 .FailAsync("DispatchError", ex.Message, retryable: true)
                 .ConfigureAwait(false);
@@ -147,6 +173,12 @@ public sealed class ScheduledCanaryDispatcher : BackgroundService
                     null)
                 .ConfigureAwait(false);
             LogDispatchRunFailed(_logger, scheduledRun.RunId, ex);
+        }
+        finally
+        {
+            stopwatch.Stop();
+            CloudApiTelemetry.RecordCanaryDuration(scheduledRun.EndpointId, stopwatch.Elapsed.TotalSeconds);
+            activity?.SetTag("ghost.canary.duration.seconds", stopwatch.Elapsed.TotalSeconds);
         }
     }
 }
