@@ -159,4 +159,4 @@ kubectl apply -k ../../platform/services
 
 - **Issues:** GitHub Issues
 - **Documentation:** See `docs/` directory
-- **Runbooks:** See `docs/runbooks/`
+- **Runbooks:** See `docs/runbooks/` (including `cloud-canary-data-quality-alerts.md` for SLO alert response)
