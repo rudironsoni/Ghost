@@ -9,9 +9,9 @@ dolt:
   user: root
   db: beads_Ghost
 
-# Sync mode (belt-and-suspenders = Dolt + JSONL)
+# Sync mode (dolt-native keeps Dolt as source-of-truth with JSONL export)
 sync:
-  mode: belt-and-suspenders
+  mode: dolt-native
 
 # Enforced DoltHub remote for shared Beads state.
 # Branches MUST use this remote configuration.
