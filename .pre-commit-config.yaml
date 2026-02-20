@@ -17,7 +17,7 @@ repos:
       # Build the solution (catches compilation errors)
       - id: dotnet-build
         name: Build solution
-        entry: dotnet build Ghost.sln --configuration Release --no-restore --warnaserror
+        entry: dotnet build Ghost.sln --no-restore --warnaserror
         language: system
         pass_filenames: false
         files: '\.(cs|csproj|sln)$'
@@ -27,7 +27,7 @@ repos:
       # Excludes Smoke, End2End, and explicit live-provider capability tests.
       - id: dotnet-test-quick
         name: Run non-smoke tests
-        entry: dotnet test Ghost.sln --filter "Category!=Smoke&Category!=End2End&Capability!=RequiresProviderLive"
+        entry: dotnet test Ghost.sln --no-build --filter "Category!=Smoke&Category!=End2End&Capability!=RequiresProviderLive"
         language: system
         pass_filenames: false
         files: '\.(cs|csproj)$'
