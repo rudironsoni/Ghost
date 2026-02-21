@@ -1,5 +1,6 @@
 using Ghost.Cloud.Contracts.Delivery;
 using Ghost.Cloud.Contracts.Events;
+using Ghost.Cloud.Contracts.Runs;
 
 namespace Ghost.Cloud.Grains.State;
 
@@ -20,6 +21,12 @@ public sealed class ScrapeRunState
     [Id(11)] public DeliveryConfig? DeliveryConfig { get; set; }
     [Id(12)] public string? ErrorCode { get; set; }
 
+    // CL-004: Run metadata for canary/replay/refresh
+    [Id(13)] public string RunKind { get; set; } = "canary";
+    [Id(14)] public CanaryMetadata? CanaryMetadata { get; set; }
+    [Id(15)] public ReplayMetadata? ReplayMetadata { get; set; }
+    [Id(16)] public CassetteRefreshMetadata? CassetteRefreshMetadata { get; set; }
+
     public void Apply(ScrapeRunEvent @event)
     {
         switch (@event)
@@ -30,6 +37,11 @@ public sealed class ScrapeRunState
                 TenantId = e.TenantId;
                 Mode = e.Mode;
                 Status = "Pending";
+                // CL-004: Capture run metadata from triggered event
+                RunKind = e.RunKind;
+                CanaryMetadata = e.CanaryMetadata;
+                ReplayMetadata = e.ReplayMetadata;
+                CassetteRefreshMetadata = e.CassetteRefreshMetadata;
                 break;
             case ScrapeRunStarted:
                 Status = "Running";
