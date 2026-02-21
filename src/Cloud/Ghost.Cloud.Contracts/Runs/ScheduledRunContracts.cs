@@ -41,6 +41,11 @@ public sealed record ScheduledRunRequest
     // CL-003: Recurring schedule support
     [Id(7)] public ScheduleType ScheduleType { get; init; } = ScheduleType.OneTime;
     [Id(8)] public RecurringSchedule? RecurringSchedule { get; init; }
+
+    // CL-004/CL-005: Run metadata
+    [Id(9)] public CanaryMetadata? CanaryMetadata { get; init; }
+    [Id(10)] public ReplayMetadata? ReplayMetadata { get; init; }
+    [Id(11)] public CassetteRefreshMetadata? CassetteRefreshMetadata { get; init; }
 }
 
 /// <summary>
