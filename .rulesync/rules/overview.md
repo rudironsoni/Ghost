@@ -1,3 +1,10 @@
+---
+root: true
+targets:
+  - '*'
+globs:
+  - '**/*'
+---
 # Project Overview
 
 ## General Guidelines
