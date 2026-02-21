@@ -12,7 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="../../../../src/Plugins/LinkedIn/Ghost.Plugin.LinkedIn/Ghost.Plugin.LinkedIn.csproj" />
     <ProjectReference Include="../../../../src/Sdk/Ghost.Sdk.Spider/Ghost.Sdk.Spider.csproj" />
-    <ProjectReference Include="../../Shared/Ghost.Testing/Ghost.Testing.csproj" />
+    <ProjectReference Include="../../../Shared/Ghost.Testing/Ghost.Testing.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit" />
