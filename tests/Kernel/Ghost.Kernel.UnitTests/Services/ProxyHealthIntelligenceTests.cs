@@ -387,7 +387,7 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
 
         var options = Options.Create(new ProxySystemOptions
         {
-            FallbackChain = null
+            FallbackChain = []
         });
 
         var intelligence = CreateIntelligence(
@@ -583,7 +583,7 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
     #region Blacklist Tests
 
     [Fact]
-    public void BlacklistProxy_AddsToBlacklist()
+    public async Task BlacklistProxy_AddsToBlacklistAsync()
     {
         var proxy = CreateProxy("http://1.2.3.4:8080");
         var mockSource = CreateMockSource(new[] { proxy });
@@ -592,7 +592,7 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         intelligence.BlacklistProxy(proxy);
 
         // After blacklisting, GetProxyAsync should return null
-        var result = intelligence.GetProxyAsync().Result;
+        var result = await intelligence.GetProxyAsync();
         result.Should().BeNull();
     }
 
@@ -605,7 +605,7 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
     }
 
     [Fact]
-    public void RemoveFromBlacklist_RemovesFromBlacklist()
+    public async Task RemoveFromBlacklist_RemovesFromBlacklistAsync()
     {
         var proxy = CreateProxy("http://1.2.3.4:8080");
         var mockSource = CreateMockSource(new[] { proxy });
@@ -615,7 +615,7 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         intelligence.RemoveFromBlacklist(proxy);
 
         // After removing from blacklist, GetProxyAsync should return the proxy
-        var result = intelligence.GetProxyAsync().Result;
+        var result = await intelligence.GetProxyAsync();
         result.Should().NotBeNull();
     }
 
@@ -628,7 +628,7 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
     }
 
     [Fact]
-    public void BlacklistProxy_Duplicate_DoesNotThrow()
+    public async Task BlacklistProxy_Duplicate_DoesNotThrowAsync()
     {
         var proxy = CreateProxy("http://1.2.3.4:8080");
         var intelligence = CreateIntelligence();
@@ -637,7 +637,7 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         intelligence.BlacklistProxy(proxy);
 
         // Should not throw
-        var result = intelligence.GetProxyAsync().Result;
+        var result = await intelligence.GetProxyAsync();
         result.Should().BeNull();
     }
 
@@ -646,7 +646,7 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
     #region Whitelist Tests
 
     [Fact]
-    public void WhitelistProxy_AddsToWhitelist()
+    public async Task WhitelistProxy_AddsToWhitelistAsync()
     {
         var proxy = CreateProxy("http://1.2.3.4:8080");
         var mockSource = CreateMockSource(new[] { proxy });
@@ -655,7 +655,7 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
         intelligence.WhitelistProxy(proxy);
 
         // Proxy should still be retrievable
-        var result = intelligence.GetProxyAsync().Result;
+        var result = await intelligence.GetProxyAsync();
         result.Should().NotBeNull();
     }
 
@@ -1038,7 +1038,7 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
     }
 
     [Fact]
-    public void Dispose_WithBackgroundHealthCheck_StopsCleanly()
+    public async Task Dispose_WithBackgroundHealthCheck_StopsCleanlyAsync()
     {
         var options = Options.Create(new ProxySystemOptions
         {
@@ -1053,7 +1053,7 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
             options);
 
         // Initialize by getting a proxy
-        intelligence.GetProxyAsync().Wait();
+        await intelligence.GetProxyAsync();
 
         // Dispose should not throw
         intelligence.Dispose();
@@ -1212,15 +1212,15 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
     }
 
     [Fact]
-    public void GetProxyKey_WithCredentials_IncludesUsername()
+    public async Task GetProxyKey_WithCredentials_IncludesUsernameAsync()
     {
         var proxy1 = CreateProxy("http://1.2.3.4:8080", "user1", "pass1");
         var proxy2 = CreateProxy("http://1.2.3.4:8080", "user2", "pass2");
 
         // These should have different keys because they have different usernames
         var intelligence = CreateIntelligence();
-        intelligence.ReportProxyResultAsync(proxy1, true, TimeSpan.Zero).Wait();
-        intelligence.ReportProxyResultAsync(proxy2, true, TimeSpan.Zero).Wait();
+        await intelligence.ReportProxyResultAsync(proxy1, true, TimeSpan.Zero);
+        await intelligence.ReportProxyResultAsync(proxy2, true, TimeSpan.Zero);
 
         var metrics = intelligence.GetAllMetrics();
         metrics.Should().HaveCount(2);
@@ -1319,12 +1319,12 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
     #region Edge Case Tests
 
     [Fact]
-    public void GetMetrics_ProxyWithSpecialCharactersInServer_ReturnsCorrectly()
+    public async Task GetMetrics_ProxyWithSpecialCharactersInServer_ReturnsCorrectlyAsync()
     {
         var proxy = CreateProxy("http://user:pass@1.2.3.4:8080/path");
         var intelligence = CreateIntelligence();
 
-        intelligence.ReportProxyResultAsync(proxy, true, TimeSpan.Zero).Wait();
+        await intelligence.ReportProxyResultAsync(proxy, true, TimeSpan.Zero);
 
         var metrics = intelligence.GetMetrics(proxy);
         metrics.Should().NotBeNull();

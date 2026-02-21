@@ -240,11 +240,6 @@ public class ProxyBlacklistManagerTests
 
     private static ProxyInfo CreateTestProxy(string server)
     {
-        return new ProxyInfo
-        {
-            Server = server,
-            Username = null,
-            Password = null
-        };
+        return new ProxyInfo(server, null, null);
     }
 }

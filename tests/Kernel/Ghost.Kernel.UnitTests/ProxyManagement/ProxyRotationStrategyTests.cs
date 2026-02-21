@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Ghost.Kernel.UnitTests.ProxyManagement;
 
-public class ProxyRotationStrategyTests
+public sealed class ProxyRotationStrategyTests
 {
     private readonly ProxyHealthTracker _healthTracker;
     private readonly ProxyRotationStrategy _strategy;
@@ -61,7 +61,7 @@ public class ProxyRotationStrategyTests
     }
 
     [Fact]
-    public void SelectByPerformance_ReturnsBestPerformingProxy()
+    public async Task SelectByPerformance_ReturnsBestPerformingProxyAsync()
     {
         ProxyInfo proxy1 = CreateTestProxy("http://test1:8080");
         ProxyInfo proxy2 = CreateTestProxy("http://test2:8080");
@@ -69,16 +69,16 @@ public class ProxyRotationStrategyTests
         List<ProxyInfo> proxies = [proxy1, proxy2, proxy3];
 
         // Setup: proxy2 has best success rate
-        _healthTracker.RecordResultAsync(proxy1, true, TimeSpan.FromMilliseconds(100)).Wait();
-        _healthTracker.RecordResultAsync(proxy1, false, TimeSpan.FromMilliseconds(100)).Wait();
+        await _healthTracker.RecordResultAsync(proxy1, true, TimeSpan.FromMilliseconds(100));
+        await _healthTracker.RecordResultAsync(proxy1, false, TimeSpan.FromMilliseconds(100));
         // proxy1: 50% success
 
-        _healthTracker.RecordResultAsync(proxy2, true, TimeSpan.FromMilliseconds(100)).Wait();
-        _healthTracker.RecordResultAsync(proxy2, true, TimeSpan.FromMilliseconds(100)).Wait();
+        await _healthTracker.RecordResultAsync(proxy2, true, TimeSpan.FromMilliseconds(100));
+        await _healthTracker.RecordResultAsync(proxy2, true, TimeSpan.FromMilliseconds(100));
         // proxy2: 100% success
 
-        _healthTracker.RecordResultAsync(proxy3, false, TimeSpan.FromMilliseconds(100)).Wait();
-        _healthTracker.RecordResultAsync(proxy3, false, TimeSpan.FromMilliseconds(100)).Wait();
+        await _healthTracker.RecordResultAsync(proxy3, false, TimeSpan.FromMilliseconds(100));
+        await _healthTracker.RecordResultAsync(proxy3, false, TimeSpan.FromMilliseconds(100));
         // proxy3: 0% success
 
         ProxyInfo? result = _strategy.SelectByPerformance(proxies);
@@ -94,13 +94,13 @@ public class ProxyRotationStrategyTests
         ProxyInfo proxy3 = CreateTestProxy("http://test3:8080");
         List<ProxyInfo> proxies = [proxy1, proxy2, proxy3];
 
-        ProxyInfo? result = _strategy.SelectRandom(proxies);
+        ProxyInfo? result = ProxyRotationStrategy.SelectRandom(proxies);
 
         Assert.Contains(result, proxies);
     }
 
     [Fact]
-    public void SelectLeastUsed_ReturnsProxyWithFewestRequests()
+    public async Task SelectLeastUsed_ReturnsProxyWithFewestRequestsAsync()
     {
         ProxyInfo proxy1 = CreateTestProxy("http://test1:8080");
         ProxyInfo proxy2 = CreateTestProxy("http://test2:8080");
@@ -108,13 +108,13 @@ public class ProxyRotationStrategyTests
         List<ProxyInfo> proxies = [proxy1, proxy2, proxy3];
 
         // Setup: proxy2 has fewest requests
-        _healthTracker.RecordResultAsync(proxy1, true, TimeSpan.FromMilliseconds(100)).Wait();
-        _healthTracker.RecordResultAsync(proxy1, true, TimeSpan.FromMilliseconds(100)).Wait();
+        await _healthTracker.RecordResultAsync(proxy1, true, TimeSpan.FromMilliseconds(100));
+        await _healthTracker.RecordResultAsync(proxy1, true, TimeSpan.FromMilliseconds(100));
         // proxy1: 2 requests
 
         // proxy2: 0 requests
 
-        _healthTracker.RecordResultAsync(proxy3, true, TimeSpan.FromMilliseconds(100)).Wait();
+        await _healthTracker.RecordResultAsync(proxy3, true, TimeSpan.FromMilliseconds(100));
         // proxy3: 1 request
 
         ProxyInfo? result = _strategy.SelectLeastUsed(proxies);
@@ -184,7 +184,7 @@ public class ProxyRotationStrategyTests
     }
 
     [Fact]
-    public void GetHealthyProxies_ExcludesUnhealthy()
+    public async Task GetHealthyProxies_ExcludesUnhealthyAsync()
     {
         ProxyInfo proxy1 = CreateTestProxy("http://test1:8080");
         ProxyInfo proxy2 = CreateTestProxy("http://test2:8080");
@@ -198,9 +198,9 @@ public class ProxyRotationStrategyTests
         var blacklistManager = new ProxyBlacklistManager();
 
         // Make proxy1 unhealthy (below 50% success rate)
-        _healthTracker.RecordResultAsync(proxy1, false, TimeSpan.FromMilliseconds(100)).Wait();
-        _healthTracker.RecordResultAsync(proxy1, false, TimeSpan.FromMilliseconds(100)).Wait();
-        _healthTracker.RecordResultAsync(proxy1, true, TimeSpan.FromMilliseconds(100)).Wait();
+        await _healthTracker.RecordResultAsync(proxy1, false, TimeSpan.FromMilliseconds(100));
+        await _healthTracker.RecordResultAsync(proxy1, false, TimeSpan.FromMilliseconds(100));
+        await _healthTracker.RecordResultAsync(proxy1, true, TimeSpan.FromMilliseconds(100));
         // 33% success rate
 
         List<ProxyInfo> healthy = _strategy.GetHealthyProxies(proxyPool, blacklistManager);
@@ -249,11 +249,6 @@ public class ProxyRotationStrategyTests
 
     private static ProxyInfo CreateTestProxy(string server)
     {
-        return new ProxyInfo
-        {
-            Server = server,
-            Username = null,
-            Password = null
-        };
+        return new ProxyInfo(server, null, null);
     }
 }
