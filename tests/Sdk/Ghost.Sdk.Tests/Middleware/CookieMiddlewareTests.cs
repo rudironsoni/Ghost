@@ -388,10 +388,10 @@ public sealed class CookieMiddlewareTests : IDisposable
             Value = "abc123",
             Domain = domain,
             Path = "/api",
-            Expires = 1735689600, // Unix timestamp
+            Expires = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteAttribute.Strict
+            SameSite = "Strict"
         };
 
         // Act
@@ -409,10 +409,10 @@ public sealed class CookieMiddlewareTests : IDisposable
         restored.Value.Should().Be("abc123");
         restored.Domain.Should().Be(domain);
         restored.Path.Should().Be("/api");
-        restored.Expires.Should().Be(1735689600);
+        restored.Expires.Should().Be(new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc));
         restored.HttpOnly.Should().BeTrue();
         restored.Secure.Should().BeTrue();
-        restored.SameSite.Should().Be(SameSiteAttribute.Strict);
+        restored.SameSite.Should().Be("Strict");
     }
 
     [Trait("Category", "Unit")]
@@ -442,10 +442,10 @@ public sealed class CookieMiddlewareTests : IDisposable
             Value = value,
             Domain = domain,
             Path = "/",
-            Expires = -1,
+            Expires = null,
             HttpOnly = false,
             Secure = false,
-            SameSite = SameSiteAttribute.None
+            SameSite = "None"
         };
     }
 }

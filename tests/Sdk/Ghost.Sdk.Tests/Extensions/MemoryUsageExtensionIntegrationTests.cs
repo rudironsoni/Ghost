@@ -89,7 +89,7 @@ public class MemoryUsageExtensionIntegrationTests
 
         // Assert
         // After GC, memory should be same or less (GC may not always reduce immediately)
-        memoryAfter.Should().BeLessThanOrEqualTo(memoryBefore * 1.1); // Allow 10% tolerance
+        memoryAfter.Should().BeLessThanOrEqualTo((long)(memoryBefore * 1.1)); // Allow 10% tolerance
     }
 
     [Fact]
@@ -156,7 +156,7 @@ public class MemoryUsageExtensionIntegrationTests
                 for (var i = 0; i < 10; i++)
                 {
                     await extension.CheckMemoryAsync();
-                    _ = extension.GetStats();
+                    extension.GetStats();
                 }
             }))
             .ToArray();

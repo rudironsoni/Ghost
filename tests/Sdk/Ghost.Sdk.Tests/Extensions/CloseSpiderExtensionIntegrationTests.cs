@@ -186,7 +186,7 @@ public class CloseSpiderExtensionIntegrationTests
         var condition2 = new MaxPagesCondition(50);
         var condition3 = new MaxDurationCondition(TimeSpan.FromMinutes(5));
 
-        var conditions = new[] { condition1, condition2, condition3 };
+        ICloseCondition[] conditions = new ICloseCondition[] { condition1, condition2, condition3 };
         var extension = new CloseSpiderExtension(conditions);
 
         // Act
