@@ -39,6 +39,14 @@ public record ScrapeRunReadModel
     public string? ErrorMessage { get; init; }
     public DeliveryConfig? DeliveryConfig { get; init; }
     public string? ResultLocation { get; init; }
+
+    // CL-M3: Classification, retry, and diagnostics fields for run lifecycle querying
+    public string? Classification { get; init; }
+    public string? ErrorCode { get; init; }
+    public bool IsRetryable { get; init; }
+    public int RetryCount { get; init; }
+    public string? DiagnosticsUri { get; init; }
+    public DateTimeOffset? LastRetryAt { get; init; }
 }
 
 public record ScrapeResultReadModel
@@ -97,8 +105,9 @@ public sealed class PostgreSqlReadStore : IScrapeRunQueries, IArtifactQueries, I
             const string sql = """
                 SELECT RunId, EndpointId, TenantId, Status, Mode, WorkerId,
                        ItemsDiscovered, ItemsDelivered, ArtifactsCaptured,
-                       StartedAt, CompletedAt, ErrorMessage,
-                       DeliveryConfig, ResultLocation
+                       StartedAt, CompletedAt, ErrorMessage, ErrorCode,
+                       Classification, IsRetryable, RetryCount, DiagnosticsUri,
+                       LastRetryAt, DeliveryConfig, ResultLocation
                 FROM ScrapeRunReadModels
                 WHERE RunId = @RunId
                 """;
@@ -137,8 +146,9 @@ public sealed class PostgreSqlReadStore : IScrapeRunQueries, IArtifactQueries, I
             const string sql = """
                 SELECT RunId, EndpointId, TenantId, Status, Mode, WorkerId,
                        ItemsDiscovered, ItemsDelivered, ArtifactsCaptured,
-                       StartedAt, CompletedAt, ErrorMessage,
-                       DeliveryConfig, ResultLocation
+                       StartedAt, CompletedAt, ErrorMessage, ErrorCode,
+                       Classification, IsRetryable, RetryCount, DiagnosticsUri,
+                       LastRetryAt, DeliveryConfig, ResultLocation
                 FROM ScrapeRunReadModels
                 WHERE TenantId = @TenantId
                 ORDER BY StartedAt DESC
@@ -436,8 +446,14 @@ public sealed class PostgreSqlReadStore : IScrapeRunQueries, IArtifactQueries, I
             StartedAt = reader.GetDateTime(9),
             CompletedAt = reader.IsDBNull(10) ? null : reader.GetDateTime(10),
             ErrorMessage = reader.IsDBNull(11) ? null : reader.GetString(11),
-            DeliveryConfig = reader.IsDBNull(12) ? null : JsonSerializer.Deserialize<DeliveryConfig>(reader.GetString(12)),
-            ResultLocation = reader.IsDBNull(13) ? null : reader.GetString(13)
+            ErrorCode = reader.IsDBNull(12) ? null : reader.GetString(12),
+            Classification = reader.IsDBNull(13) ? null : reader.GetString(13),
+            IsRetryable = !reader.IsDBNull(14) && reader.GetBoolean(14),
+            RetryCount = reader.IsDBNull(15) ? 0 : reader.GetInt32(15),
+            DiagnosticsUri = reader.IsDBNull(16) ? null : reader.GetString(16),
+            LastRetryAt = reader.IsDBNull(17) ? null : reader.GetDateTime(17),
+            DeliveryConfig = reader.IsDBNull(18) ? null : JsonSerializer.Deserialize<DeliveryConfig>(reader.GetString(18)),
+            ResultLocation = reader.IsDBNull(19) ? null : reader.GetString(19)
         };
     }
 
