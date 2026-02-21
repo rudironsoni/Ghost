@@ -116,6 +116,201 @@ public sealed class SchedulerGrainTests
         await persistentState.Received(1).WriteStateAsync();
     }
 
+    // CL-003: Recurring schedule and RunKind validation tests
+
+    [Theory]
+    [InlineData("canary")]
+    [InlineData("cassette-refresh")]
+    [InlineData("replay")]
+    [InlineData("Canary")]  // Case insensitive
+    [InlineData("Cassette-Refresh")]
+    public async Task ScheduleRunAsync_Accepts_ValidRunKinds(string runKind)
+    {
+        SchedulerState schedulerState = new();
+        IPersistentState<SchedulerState> persistentState = CreatePersistentState(schedulerState);
+        SchedulerGrain grain = new(persistentState);
+
+        await grain.ScheduleRunAsync(new ScheduledRunRequest
+        {
+            RunId = $"run-{runKind}",
+            EndpointId = "endpoint-1",
+            TenantId = Guid.NewGuid(),
+            ScheduledTime = DateTimeOffset.UtcNow.AddMinutes(5),
+            RunKind = runKind,
+            RequestedMode = runKind
+        });
+
+        ScheduledRun scheduledRun = schedulerState.ScheduledRuns[$"run-{runKind}"];
+        scheduledRun.RunKind.Should().Be(runKind);
+        await persistentState.Received(1).WriteStateAsync();
+    }
+
+    [Fact]
+    public async Task ScheduleRunAsync_Rejects_InvalidRunKind()
+    {
+        SchedulerState schedulerState = new();
+        IPersistentState<SchedulerState> persistentState = CreatePersistentState(schedulerState);
+        SchedulerGrain grain = new(persistentState);
+
+        Func<Task> act = () => grain.ScheduleRunAsync(new ScheduledRunRequest
+        {
+            RunId = "run-invalid",
+            EndpointId = "endpoint-1",
+            TenantId = Guid.NewGuid(),
+            ScheduledTime = DateTimeOffset.UtcNow.AddMinutes(5),
+            RunKind = "invalid-kind",
+            RequestedMode = "canary"
+        });
+
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("*Invalid RunKind*");
+        await persistentState.DidNotReceive().WriteStateAsync();
+    }
+
+    [Fact]
+    public async Task ScheduleRunAsync_PersistsRecurringScheduleConfiguration()
+    {
+        SchedulerState schedulerState = new();
+        IPersistentState<SchedulerState> persistentState = CreatePersistentState(schedulerState);
+        SchedulerGrain grain = new(persistentState);
+
+        RecurringSchedule recurringSchedule = new()
+        {
+            CronExpression = "0 0 * * *",
+            TimeZoneId = "UTC",
+            MaxOccurrences = 10
+        };
+
+        await grain.ScheduleRunAsync(new ScheduledRunRequest
+        {
+            RunId = "recurring-run",
+            EndpointId = "endpoint-1",
+            TenantId = Guid.NewGuid(),
+            ScheduledTime = DateTimeOffset.UtcNow.AddMinutes(5),
+            RunKind = "canary",
+            RequestedMode = "canary",
+            ScheduleType = ScheduleType.Recurring,
+            RecurringSchedule = recurringSchedule
+        });
+
+        ScheduledRun scheduledRun = schedulerState.ScheduledRuns["recurring-run"];
+        scheduledRun.ScheduleType.Should().Be(ScheduleType.Recurring);
+        scheduledRun.RecurringSchedule.Should().NotBeNull();
+        scheduledRun.RecurringSchedule!.CronExpression.Should().Be("0 0 * * *");
+        scheduledRun.RecurringSchedule.TimeZoneId.Should().Be("UTC");
+        scheduledRun.RecurringSchedule.MaxOccurrences.Should().Be(10);
+        scheduledRun.OccurrenceCount.Should().Be(0);
+        await persistentState.Received(1).WriteStateAsync();
+    }
+
+    [Fact]
+    public async Task ScheduleRunAsync_Rejects_EmptyCronExpression()
+    {
+        SchedulerState schedulerState = new();
+        IPersistentState<SchedulerState> persistentState = CreatePersistentState(schedulerState);
+        SchedulerGrain grain = new(persistentState);
+
+        Func<Task> act = () => grain.ScheduleRunAsync(new ScheduledRunRequest
+        {
+            RunId = "run-empty-cron",
+            EndpointId = "endpoint-1",
+            TenantId = Guid.NewGuid(),
+            ScheduledTime = DateTimeOffset.UtcNow.AddMinutes(5),
+            RunKind = "canary",
+            RequestedMode = "canary",
+            ScheduleType = ScheduleType.Recurring,
+            RecurringSchedule = new RecurringSchedule
+            {
+                CronExpression = "",
+                TimeZoneId = "UTC"
+            }
+        });
+
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("*CronExpression is required*");
+        await persistentState.DidNotReceive().WriteStateAsync();
+    }
+
+    [Fact]
+    public async Task ScheduleRunAsync_Rejects_InvalidCronExpressionFormat()
+    {
+        SchedulerState schedulerState = new();
+        IPersistentState<SchedulerState> persistentState = CreatePersistentState(schedulerState);
+        SchedulerGrain grain = new(persistentState);
+
+        Func<Task> act = () => grain.ScheduleRunAsync(new ScheduledRunRequest
+        {
+            RunId = "run-invalid-cron",
+            EndpointId = "endpoint-1",
+            TenantId = Guid.NewGuid(),
+            ScheduledTime = DateTimeOffset.UtcNow.AddMinutes(5),
+            RunKind = "canary",
+            RequestedMode = "canary",
+            ScheduleType = ScheduleType.Recurring,
+            RecurringSchedule = new RecurringSchedule
+            {
+                CronExpression = "invalid",  // Only 1 field, needs 5
+                TimeZoneId = "UTC"
+            }
+        });
+
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("*CronExpression must have 5 fields*");
+        await persistentState.DidNotReceive().WriteStateAsync();
+    }
+
+    [Fact]
+    public async Task ScheduleRunAsync_Rejects_InvalidTimeZone()
+    {
+        SchedulerState schedulerState = new();
+        IPersistentState<SchedulerState> persistentState = CreatePersistentState(schedulerState);
+        SchedulerGrain grain = new(persistentState);
+
+        Func<Task> act = () => grain.ScheduleRunAsync(new ScheduledRunRequest
+        {
+            RunId = "run-invalid-tz",
+            EndpointId = "endpoint-1",
+            TenantId = Guid.NewGuid(),
+            ScheduledTime = DateTimeOffset.UtcNow.AddMinutes(5),
+            RunKind = "canary",
+            RequestedMode = "canary",
+            ScheduleType = ScheduleType.Recurring,
+            RecurringSchedule = new RecurringSchedule
+            {
+                CronExpression = "0 0 * * *",
+                TimeZoneId = "Invalid/TimeZone"
+            }
+        });
+
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("*Invalid TimeZoneId*");
+        await persistentState.DidNotReceive().WriteStateAsync();
+    }
+
+    [Fact]
+    public async Task ScheduleRunAsync_Rejects_InvalidMaxOccurrences()
+    {
+        SchedulerState schedulerState = new();
+        IPersistentState<SchedulerState> persistentState = CreatePersistentState(schedulerState);
+        SchedulerGrain grain = new(persistentState);
+
+        Func<Task> act = () => grain.ScheduleRunAsync(new ScheduledRunRequest
+        {
+            RunId = "run-invalid-max",
+            EndpointId = "endpoint-1",
+            TenantId = Guid.NewGuid(),
+            ScheduledTime = DateTimeOffset.UtcNow.AddMinutes(5),
+            RunKind = "canary",
+            RequestedMode = "canary",
+            ScheduleType = ScheduleType.Recurring,
+            RecurringSchedule = new RecurringSchedule
+            {
+                CronExpression = "0 0 * * *",
+                TimeZoneId = "UTC",
+                MaxOccurrences = 0
+            }
+        });
+
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("*MaxOccurrences must be greater than 0*");
+        await persistentState.DidNotReceive().WriteStateAsync();
+    }
+
     private static IPersistentState<SchedulerState> CreatePersistentState(SchedulerState state)
     {
         IPersistentState<SchedulerState> persistentState = Substitute.For<IPersistentState<SchedulerState>>();

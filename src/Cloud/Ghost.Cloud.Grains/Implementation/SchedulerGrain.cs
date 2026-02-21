@@ -7,6 +7,9 @@ using Ghost.Cloud.Grains.State;
 
 namespace Ghost.Cloud.Grains.Implementation;
 
+/// <summary>
+/// Scheduler grain for managing scheduled runs with support for one-time and recurring schedules.
+/// </summary>
 public sealed class SchedulerGrain : Grain, ISchedulerGrain
 {
     private readonly IPersistentState<SchedulerState> _state;
@@ -22,6 +25,7 @@ public sealed class SchedulerGrain : Grain, ISchedulerGrain
         activity?.SetTag("ghost.run.id", request.RunId);
         activity?.SetTag("ghost.endpoint.id", request.EndpointId);
         activity?.SetTag("ghost.run.kind", request.RunKind);
+        activity?.SetTag("ghost.schedule.type", request.ScheduleType.ToString());
 
         ArgumentNullException.ThrowIfNull(request);
         if (request.TenantId == Guid.Empty)
@@ -29,6 +33,25 @@ public sealed class SchedulerGrain : Grain, ISchedulerGrain
             CloudGrainsTelemetry.RecordScheduledOperation("schedule", "rejected");
             activity?.SetStatus(ActivityStatusCode.Error, "TenantId must be a non-empty GUID.");
             throw new ArgumentException("TenantId must be a non-empty GUID.", nameof(request));
+        }
+
+        // CL-003: Validate RunKind
+        if (!IsValidRunKind(request.RunKind))
+        {
+            CloudGrainsTelemetry.RecordScheduledOperation("schedule", "rejected");
+            activity?.SetStatus(ActivityStatusCode.Error, $"Invalid RunKind: {request.RunKind}");
+            throw new ArgumentException($"Invalid RunKind: {request.RunKind}. Valid values are: canary, cassette-refresh, replay", nameof(request));
+        }
+
+        // CL-003: Validate recurring schedule if provided
+        if (request.ScheduleType == ScheduleType.Recurring && request.RecurringSchedule is not null)
+        {
+            if (!TryValidateRecurringSchedule(request.RecurringSchedule, out string? validationError))
+            {
+                CloudGrainsTelemetry.RecordScheduledOperation("schedule", "rejected");
+                activity?.SetStatus(ActivityStatusCode.Error, validationError);
+                throw new ArgumentException(validationError, nameof(request));
+            }
         }
 
         var scheduledRun = new ScheduledRun
@@ -41,6 +64,10 @@ public sealed class SchedulerGrain : Grain, ISchedulerGrain
             Input = request.Input,
             RequestedMode = request.RequestedMode,
             RunKind = request.RunKind,
+            // CL-003: Store recurring schedule configuration
+            ScheduleType = request.ScheduleType,
+            RecurringSchedule = request.RecurringSchedule,
+            OccurrenceCount = 0,
             UpdatedAt = DateTimeOffset.UtcNow
         };
 
@@ -48,6 +75,58 @@ public sealed class SchedulerGrain : Grain, ISchedulerGrain
         CloudGrainsTelemetry.RecordScheduledOperation("schedule", "accepted");
         activity?.SetStatus(ActivityStatusCode.Ok);
         return _state.WriteStateAsync();
+    }
+
+    /// <summary>
+    /// Validates that the run kind is one of the supported values.
+    /// </summary>
+    private static bool IsValidRunKind(string runKind)
+    {
+        return runKind.Equals("canary", StringComparison.OrdinalIgnoreCase) ||
+               runKind.Equals("cassette-refresh", StringComparison.OrdinalIgnoreCase) ||
+               runKind.Equals("replay", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Validates a recurring schedule configuration.
+    /// </summary>
+    private static bool TryValidateRecurringSchedule(RecurringSchedule schedule, out string? error)
+    {
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(schedule.CronExpression))
+        {
+            error = "CronExpression is required for recurring schedules.";
+            return false;
+        }
+
+        // Basic cron validation (should have 5 fields: minute hour day month dayOfWeek)
+        string[] parts = schedule.CronExpression.Split(' ');
+        if (parts.Length != 5)
+        {
+            error = "CronExpression must have 5 fields (minute hour day month dayOfWeek).";
+            return false;
+        }
+
+        // Validate time zone
+        try
+        {
+            _ = TimeZoneInfo.FindSystemTimeZoneById(schedule.TimeZoneId);
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            error = $"Invalid TimeZoneId: {schedule.TimeZoneId}";
+            return false;
+        }
+
+        // Validate max occurrences
+        if (schedule.MaxOccurrences.HasValue && schedule.MaxOccurrences.Value <= 0)
+        {
+            error = "MaxOccurrences must be greater than 0.";
+            return false;
+        }
+
+        return true;
     }
 
     public Task CancelScheduledRunAsync(string runId)
@@ -154,6 +233,12 @@ public sealed class ScheduledRun
     [Id(9)] public string? DiagnosticsUri { get; set; }
     [Id(10)] public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 
+    // CL-003: Recurring schedule support
+    [Id(11)] public ScheduleType ScheduleType { get; set; } = ScheduleType.OneTime;
+    [Id(12)] public RecurringSchedule? RecurringSchedule { get; set; }
+    [Id(13)] public int OccurrenceCount { get; set; }
+    [Id(14)] public string? ParentScheduleId { get; set; }
+
     public ScheduledRunInfo ToInfo() => new()
     {
         RunId = RunId,
@@ -166,6 +251,9 @@ public sealed class ScheduledRun
         RunKind = RunKind,
         Classification = Classification,
         DiagnosticsUri = DiagnosticsUri,
-        UpdatedAt = UpdatedAt
+        UpdatedAt = UpdatedAt,
+        ScheduleType = ScheduleType,
+        RecurringSchedule = RecurringSchedule,
+        OccurrenceCount = OccurrenceCount
     };
 }
