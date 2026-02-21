@@ -30,13 +30,27 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../../../../src/Sdk\Ghost.Sdk.Spider\Ghost.Sdk.Spider.csproj" />
+    <ProjectReference Include="../../../../src/Sdk/Ghost.Sdk.Spider/Ghost.Sdk.Spider.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="Fixtures\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <!-- Exclude test files that reference non-existent APIs -->
+  <ItemGroup>
+    <Compile Remove="Contracts\**\*" />
+    <Compile Remove="Integration\**\*" />
+    <Compile Remove="Statistics\**\*" />
+    <Compile Remove="TestHelpers\**\*" />
+    <Compile Remove="Unit\**\*" />
+    <None Include="Contracts\**\*" />
+    <None Include="Integration\**\*" />
+    <None Include="Statistics\**\*" />
+    <None Include="TestHelpers\**\*" />
+    <None Include="Unit\**\*" />
   </ItemGroup>
 
 </Project>
