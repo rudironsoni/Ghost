@@ -51,7 +51,12 @@ public sealed class ScrapeRunGrain : JournaledGrain<ScrapeRunState, ScrapeRunEve
             request.EndpointId,
             tenantId,
             request.RequestedMode,
-            DateTimeOffset.UtcNow));
+            DateTimeOffset.UtcNow,
+            // CL-004: Include run metadata
+            request.RunKind,
+            request.CanaryMetadata,
+            request.ReplayMetadata,
+            request.CassetteRefreshMetadata));
 
         activity?.SetStatus(ActivityStatusCode.Ok);
         State.DeliveryConfig = request.Delivery;
@@ -172,6 +177,11 @@ public sealed class ScrapeRunGrain : JournaledGrain<ScrapeRunState, ScrapeRunEve
         StartedAt = state.StartedAt,
         CompletedAt = state.CompletedAt,
         ErrorMessage = state.ErrorMessage,
-        ErrorCode = state.ErrorCode
+        ErrorCode = state.ErrorCode,
+        // CL-004: Include run metadata in status
+        RunKind = state.RunKind,
+        CanaryMetadata = state.CanaryMetadata,
+        ReplayMetadata = state.ReplayMetadata,
+        CassetteRefreshMetadata = state.CassetteRefreshMetadata
     };
 }

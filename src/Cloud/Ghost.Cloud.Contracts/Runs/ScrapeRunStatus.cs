@@ -14,4 +14,10 @@ public sealed record ScrapeRunStatus
     [Id(8)] public string? ResultLocation { get; init; }
     [Id(9)] public DeliveryProgress DeliveryProgress { get; init; } = new();
     [Id(10)] public string? ErrorCode { get; init; }
+
+    // CL-004: Run metadata for canary/replay/refresh
+    [Id(11)] public string RunKind { get; init; } = "canary";
+    [Id(12)] public CanaryMetadata? CanaryMetadata { get; init; }
+    [Id(13)] public ReplayMetadata? ReplayMetadata { get; init; }
+    [Id(14)] public CassetteRefreshMetadata? CassetteRefreshMetadata { get; init; }
 }

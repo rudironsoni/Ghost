@@ -1,3 +1,5 @@
+using Ghost.Cloud.Contracts.Runs;
+
 namespace Ghost.Cloud.Contracts.Events;
 
 [GenerateSerializer]
@@ -9,7 +11,12 @@ public record ScrapeRunTriggered(
     [property: Id(1)] string EndpointId,
     [property: Id(2)] Guid TenantId,
     [property: Id(3)] string Mode,
-    [property: Id(4)] DateTimeOffset Timestamp
+    [property: Id(4)] DateTimeOffset Timestamp,
+    // CL-004: Run metadata for canary/replay/refresh
+    [property: Id(5)] string RunKind = "canary",
+    [property: Id(6)] CanaryMetadata? CanaryMetadata = null,
+    [property: Id(7)] ReplayMetadata? ReplayMetadata = null,
+    [property: Id(8)] CassetteRefreshMetadata? CassetteRefreshMetadata = null
 ) : ScrapeRunEvent;
 
 [GenerateSerializer]
