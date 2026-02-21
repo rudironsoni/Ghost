@@ -7,6 +7,10 @@ using Ghost.Cloud.Grains.Interfaces;
 using Ghost.Cloud.Infrastructure.EventStore;
 using Ghost.Cloud.Infrastructure.Idempotency;
 using Ghost.Cloud.Infrastructure.Persistence;
+using Ghost.Engine.Abstractions.Downloader;
+using Ghost.Engine.Abstractions.Engine;
+using Ghost.Engine.Downloader;
+using Ghost.Engine.Engine;
 using Microsoft.Extensions.Logging;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -26,6 +30,37 @@ builder.Services.AddSingleton<IIdempotencyService>(new PostgreSqlIdempotencyServ
 builder.Services.AddSingleton<IScrapeRunQueries>(new PostgreSqlReadStore(connectionString));
 builder.Services.AddSingleton<IArtifactQueries>(new PostgreSqlReadStore(connectionString));
 builder.Services.AddSingleton<IEndpointQueries>(new PostgreSqlReadStore(connectionString));
+
+// Add Ghost Engine services for canary execution
+builder.Services.AddSingleton<IDownloader>(sp =>
+{
+    // Use FakeDownloader for development/testing
+    // In production, this would be a real HTTP downloader
+    ILogger<FakeDownloader> logger = sp.GetRequiredService<ILogger<FakeDownloader>>();
+    return new FakeDownloader(request => new Ghost.Engine.Abstractions.Transport.GhostResponse(
+        Url: request.Url,
+        StatusCode: 200,
+        Headers: new Dictionary<string, string>
+        {
+            ["Content-Type"] = "text/html",
+            ["X-Ghost-Canary"] = "true"
+        },
+        Content: $"<html><body><h1>Canary Health Check</h1><p>Endpoint validated at {DateTimeOffset.UtcNow:O}</p></body></html>",
+        ReceivedAtUtc: DateTimeOffset.UtcNow));
+});
+
+builder.Services.AddSingleton<IGhostEngine>(sp =>
+{
+    IDownloader downloader = sp.GetRequiredService<IDownloader>();
+    return new GhostEngine(
+        options: new GhostEngineOptions
+        {
+            MaxInFlight = 5,
+            MaxPendingItems = 100
+        },
+        downloader: downloader);
+});
+
 builder.Services.AddSingleton<IAssuranceCanaryRunner, AssuranceCanaryRunner>();
 builder.Services.AddHostedService<ScheduledCanaryDispatcher>();
 builder.Services.AddCloudObservability(builder.Configuration);

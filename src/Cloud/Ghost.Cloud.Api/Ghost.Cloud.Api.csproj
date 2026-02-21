@@ -27,5 +27,7 @@
     <ProjectReference Include="../Ghost.Cloud.Grains/Ghost.Cloud.Grains.csproj" />
     <ProjectReference Include="../Ghost.Cloud.Delivery/Ghost.Cloud.Delivery.csproj" />
     <ProjectReference Include="../Ghost.Cloud.Infrastructure/Ghost.Cloud.Infrastructure.csproj" />
+    <ProjectReference Include="../../Engine/Ghost.Engine.Abstractions/Ghost.Engine.Abstractions.csproj" />
+    <ProjectReference Include="../../Engine/Ghost.Engine/Ghost.Engine.csproj" />
   </ItemGroup>
 </Project>
