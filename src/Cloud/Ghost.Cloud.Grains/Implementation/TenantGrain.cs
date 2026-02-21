@@ -25,7 +25,7 @@ public sealed class TenantGrain : Grain, ITenantGrain
         activity?.SetTag("ghost.tenant.id", _state.State.TenantId);
 
         // CL-002: Deterministic quota check with validation
-        bool stateChanged = CheckAndResetDailyLimit();
+        CheckAndResetDailyLimit();
 
         // Validate inputs first for deterministic failure
         if (string.IsNullOrWhiteSpace(runId))
@@ -121,12 +121,7 @@ public sealed class TenantGrain : Grain, ITenantGrain
         activity?.SetTag("ghost.run.count", _state.State.CurrentRunCount);
         activity?.SetStatus(ActivityStatusCode.Ok);
         await AppendAuditAsync(runId, endpointId, authorizedDecision).ConfigureAwait(false);
-        stateChanged = true;
-
-        if (stateChanged)
-        {
-            await _state.WriteStateAsync().ConfigureAwait(false);
-        }
+        await _state.WriteStateAsync().ConfigureAwait(false);
 
         return authorizedDecision;
     }
