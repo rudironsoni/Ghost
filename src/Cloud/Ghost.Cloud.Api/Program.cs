@@ -30,6 +30,7 @@ builder.Services.AddSingleton<IIdempotencyService>(new PostgreSqlIdempotencyServ
 builder.Services.AddSingleton<IScrapeRunQueries>(new PostgreSqlReadStore(connectionString));
 builder.Services.AddSingleton<IArtifactQueries>(new PostgreSqlReadStore(connectionString));
 builder.Services.AddSingleton<IEndpointQueries>(new PostgreSqlReadStore(connectionString));
+builder.Services.AddSingleton<ICanaryQueries>(new PostgreSqlReadStore(connectionString));
 
 // Add Ghost Engine services for canary execution
 builder.Services.AddSingleton<IDownloader>(sp =>
@@ -108,5 +109,6 @@ app.UseSchemaValidation();
 app.MapScrapeEndpoints();
 app.MapRunEndpoints();
 app.MapSchedulerEndpoints();
+app.MapCanaryEndpoints();
 
 app.Run();
