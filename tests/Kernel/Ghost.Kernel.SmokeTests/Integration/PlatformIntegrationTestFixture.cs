@@ -133,13 +133,16 @@ public class PlatformIntegrationTestFixture : IAsyncLifetime
         }
     }
 
-    public Task DisposeAsync()
+    public async Task DisposeAsync()
     {
-        if (ServiceProvider is IDisposable disposable)
+        if (ServiceProvider is IAsyncDisposable asyncDisposable)
+        {
+            await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+        }
+        else if (ServiceProvider is IDisposable disposable)
         {
             disposable.Dispose();
         }
-        return Task.CompletedTask;
     }
 
     /// <summary>

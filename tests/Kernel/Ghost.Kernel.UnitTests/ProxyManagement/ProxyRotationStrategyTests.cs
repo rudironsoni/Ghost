@@ -54,10 +54,10 @@ public sealed class ProxyRotationStrategyTests
         ProxyInfo? result3 = _strategy.SelectRoundRobin(proxies);
         ProxyInfo? result4 = _strategy.SelectRoundRobin(proxies); // Should cycle back
 
-        Assert.Equal(proxy1, result1);
-        Assert.Equal(proxy2, result2);
-        Assert.Equal(proxy3, result3);
-        Assert.Equal(proxy1, result4);
+        Assert.Equal(proxy2, result1); // Interlocked.Increment starts at 1
+        Assert.Equal(proxy3, result2);
+        Assert.Equal(proxy1, result3);
+        Assert.Equal(proxy2, result4);
     }
 
     [Fact]
@@ -243,8 +243,8 @@ public sealed class ProxyRotationStrategyTests
         ProxyInfo? result1 = _strategy.SelectProxy(proxies);
         ProxyInfo? result2 = _strategy.SelectProxy(proxies);
 
-        Assert.Equal(proxy1, result1);
-        Assert.Equal(proxy2, result2);
+        Assert.Equal(proxy2, result1); // Interlocked.Increment starts at 1
+        Assert.Equal(proxy1, result2);
     }
 
     private static ProxyInfo CreateTestProxy(string server)
