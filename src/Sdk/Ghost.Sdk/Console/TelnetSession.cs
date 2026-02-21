@@ -13,7 +13,7 @@ public sealed class TelnetSession
     /// <summary>
     /// Gets or sets when the session was established.
     /// </summary>
-    public DateTimeOffset ConnectedAt { get; set; }
+    public DateTimeOffset ConnectedAt { get; set; } = DateTimeOffset.UtcNow;
 
     /// <summary>
     /// Gets or sets when the last command was executed.
