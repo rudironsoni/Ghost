@@ -12,20 +12,18 @@ public class PeriodicStatsLoggingIntegrationTests
 {
     private readonly ITestOutputHelper _output;
     private readonly ILogger<PeriodicStatsLogging> _logger;
-    private readonly ILogger<StatsCollector> _statsLogger;
 
     public PeriodicStatsLoggingIntegrationTests(ITestOutputHelper output)
     {
         _output = output;
         _logger = new TestLogger<PeriodicStatsLogging>(output);
-        _statsLogger = new TestLogger<StatsCollector>(output);
     }
 
     [Fact]
     public async Task PeriodicStatsLogging_WithRealStatsCollector_LogsPeriodicUpdates()
     {
         // Arrange
-        var statsCollector = new StatsCollector(_statsLogger);
+        var statsCollector = new StatsCollector();
         var extension = new PeriodicStatsLogging(statsCollector, _logger)
         {
             Interval = TimeSpan.FromMilliseconds(100)
@@ -61,7 +59,7 @@ public class PeriodicStatsLoggingIntegrationTests
     public async Task PeriodicStatsLogging_WithMultipleSpiders_TracksCorrectSpider()
     {
         // Arrange
-        var statsCollector = new StatsCollector(_statsLogger);
+        var statsCollector = new StatsCollector();
         var extension = new PeriodicStatsLogging(statsCollector, _logger)
         {
             Interval = TimeSpan.FromMilliseconds(100)
@@ -91,7 +89,7 @@ public class PeriodicStatsLoggingIntegrationTests
     public async Task PeriodicStatsLogging_WithChangingStats_LogsUpdatedValues()
     {
         // Arrange
-        var statsCollector = new StatsCollector(_statsLogger);
+        var statsCollector = new StatsCollector();
         var extension = new PeriodicStatsLogging(statsCollector, _logger)
         {
             Interval = TimeSpan.FromMilliseconds(100)
@@ -126,7 +124,7 @@ public class PeriodicStatsLoggingIntegrationTests
     public async Task PeriodicStatsLogging_WithErrors_LogsErrorCount()
     {
         // Arrange
-        var statsCollector = new StatsCollector(_statsLogger);
+        var statsCollector = new StatsCollector();
         var extension = new PeriodicStatsLogging(statsCollector, _logger)
         {
             Interval = TimeSpan.FromMilliseconds(100)
@@ -156,7 +154,7 @@ public class PeriodicStatsLoggingIntegrationTests
     public async Task PeriodicStatsLogging_WithHighThroughput_HandlesLoad()
     {
         // Arrange
-        var statsCollector = new StatsCollector(_statsLogger);
+        var statsCollector = new StatsCollector();
         var extension = new PeriodicStatsLogging(statsCollector, _logger)
         {
             Interval = TimeSpan.FromMilliseconds(100)
@@ -192,7 +190,7 @@ public class PeriodicStatsLoggingIntegrationTests
     public async Task PeriodicStatsLogging_SwitchingSpiders_LogsCorrectSpider()
     {
         // Arrange
-        var statsCollector = new StatsCollector(_statsLogger);
+        var statsCollector = new StatsCollector();
         var extension = new PeriodicStatsLogging(statsCollector, _logger)
         {
             Interval = TimeSpan.FromMilliseconds(100)
@@ -222,7 +220,7 @@ public class PeriodicStatsLoggingIntegrationTests
     public void PeriodicStatsLogging_Dispose_CleansUpResources()
     {
         // Arrange
-        var statsCollector = new StatsCollector(_statsLogger);
+        var statsCollector = new StatsCollector();
         var extension = new PeriodicStatsLogging(statsCollector, _logger);
 
         // Act

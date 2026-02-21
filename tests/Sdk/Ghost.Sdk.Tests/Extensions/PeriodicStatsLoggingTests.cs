@@ -162,7 +162,7 @@ public class PeriodicStatsLoggingTests
         extension.StopLogging();
 
         // Assert
-        _statsCollector.Received(AtLeast.Once()).GetStats("test-spider");
+        _statsCollector.Received().GetStats("test-spider");
     }
 
     [Fact]
@@ -192,7 +192,7 @@ public class PeriodicStatsLoggingTests
         extension.StopLogging();
 
         // Assert - verify logger was called (exact matching would require ILogger mock inspection)
-        _statsCollector.Received(AtLeast.Once()).GetStats("test-spider");
+        _statsCollector.Received().GetStats("test-spider");
     }
 
     [Fact]
@@ -236,7 +236,7 @@ public class PeriodicStatsLoggingTests
         extension.StopLogging();
 
         // Assert - should have called GetStats for spider-2
-        _statsCollector.Received(AtLeast.Once()).GetStats("spider-2");
+        _statsCollector.Received().GetStats("spider-2");
     }
 
     [Fact]
@@ -321,7 +321,7 @@ public class PeriodicStatsLoggingTests
         extension.StopLogging();
 
         // Assert
-        _statsCollector.Received(AtLeast.Once()).GetStats("empty-spider");
+        _statsCollector.Received().GetStats("empty-spider");
     }
 
     [Fact]
