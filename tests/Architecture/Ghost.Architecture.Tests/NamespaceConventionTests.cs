@@ -1,5 +1,4 @@
 using FluentAssertions;
-using NetArchTest.Rules;
 using Xunit;
 
 namespace Ghost.Architecture.Tests;
@@ -18,14 +17,15 @@ public sealed class NamespaceConventionTests
     [Fact]
     public void Contracts_TypesShouldBeIn_ContractsNamespace()
     {
-        TestResult result = Types
-            .InAssembly(typeof(Ghost.Contracts.IExtension).Assembly)
-            .Should()
-            .ResideInNamespaceStartingWith("Ghost.Contracts")
-            .GetResult();
+        Type[] types = typeof(Ghost.Contracts.IExtension).Assembly.GetTypes()
+            .Where(t => !IsCompilerGeneratedType(t))
+            .ToArray();
 
-        result.IsSuccessful.Should().BeTrue(
-            "All types in Ghost.Contracts assembly should be in Ghost.Contracts namespace or sub-namespace.");
+        foreach (Type type in types)
+        {
+            type.Namespace?.StartsWith("Ghost.Contracts", StringComparison.Ordinal).Should().BeTrue(
+                $"Type {type.FullName} should be in Ghost.Contracts namespace or sub-namespace.");
+        }
     }
 
     /// <summary>
@@ -34,14 +34,15 @@ public sealed class NamespaceConventionTests
     [Fact]
     public void ContractsJobs_TypesShouldBeIn_CorrectNamespace()
     {
-        TestResult result = Types
-            .InAssembly(typeof(Ghost.Contracts.Jobs.IJobClient).Assembly)
-            .Should()
-            .ResideInNamespaceStartingWith("Ghost.Contracts.Jobs")
-            .GetResult();
+        Type[] types = typeof(Ghost.Contracts.Jobs.IJobClient).Assembly.GetTypes()
+            .Where(t => !IsCompilerGeneratedType(t))
+            .ToArray();
 
-        result.IsSuccessful.Should().BeTrue(
-            "All types in Ghost.Contracts.Jobs assembly should be in correct namespace.");
+        foreach (Type type in types)
+        {
+            type.Namespace?.StartsWith("Ghost.Contracts.Jobs", StringComparison.Ordinal).Should().BeTrue(
+                $"Type {type.FullName} should be in Ghost.Contracts.Jobs namespace or sub-namespace.");
+        }
     }
 
     /// <summary>
@@ -59,18 +60,25 @@ public sealed class NamespaceConventionTests
     [InlineData("Ghost.Plugin.Common")]
     public void Plugin_TypesShouldBeIn_PluginNamespace(string pluginNamespace)
     {
-        TestResult result = Types
-            .InCurrentDomain()
-            .That()
-            .ResideInNamespaceStartingWith(pluginNamespace)
-            .Should()
-            .ResideInNamespaceStartingWith(pluginNamespace)
-            .GetResult();
+        // Get the plugin assembly
+        System.Reflection.Assembly? pluginAssembly = GetPluginAssembly(pluginNamespace);
+        if (pluginAssembly == null)
+        {
+            return; // Plugin not available, skip test
+        }
 
-        // This test verifies that all types in a plugin namespace follow the convention
+        Type[] types = pluginAssembly.GetTypes()
+            .Where(t => !IsCompilerGeneratedType(t))
+            .Where(t => t.Namespace?.StartsWith(pluginNamespace, StringComparison.Ordinal) == true)
+            .ToArray();
+
         // If types exist, they should be in the correct namespace
-        result.IsSuccessful.Should().BeTrue(
-            $"All types in {pluginNamespace} should be in the correct namespace.");
+        // This test verifies namespace consistency
+        foreach (Type type in types)
+        {
+            type.Namespace?.StartsWith(pluginNamespace, StringComparison.Ordinal).Should().BeTrue(
+                $"Type {type.FullName} should be in {pluginNamespace} namespace.");
+        }
     }
 
     /// <summary>
@@ -95,29 +103,24 @@ public sealed class NamespaceConventionTests
 
         foreach (string plugin in pluginsWithInternalSubfolder)
         {
-            // Check for types in Internal namespace
-            TestResult internalNamespaceResult = Types
-                .InCurrentDomain()
-                .That()
-                .ResideInNamespace($"{plugin}.Internal")
-                .Should()
-                .ResideInNamespace($"{plugin}.Internal")
-                .GetResult();
-
-            // If there are internal types, they should be in .Internal namespace
-            // This is an informational test
-            if (internalNamespaceResult.IsSuccessful && (internalNamespaceResult.FailingTypeNames?.Any() == false))
+            System.Reflection.Assembly? pluginAssembly = GetPluginAssembly(plugin);
+            if (pluginAssembly == null)
             {
-                // Verify internal types are not public (or are at least internal)
-                TestResult visibilityResult = Types
-                    .InCurrentDomain()
-                    .That()
-                    .ResideInNamespace($"{plugin}.Internal")
-                    .Should()
-                    .NotBePublic()
-                    .GetResult();
+                continue;
+            }
 
-                // Log but don't fail - some internal types might need to be public
+            // Check for types in Internal namespace
+            Type[] internalTypes = pluginAssembly.GetTypes()
+                .Where(t => t.Namespace?.Equals($"{plugin}.Internal", StringComparison.Ordinal) == true)
+                .ToArray();
+
+            // Verify internal types are not public (or are at least internal)
+            foreach (Type internalType in internalTypes)
+            {
+                if (internalType.IsPublic)
+                {
+                    // Log but don't fail - some internal types might need to be public for DI
+                }
             }
         }
     }
@@ -133,37 +136,28 @@ public sealed class NamespaceConventionTests
     [Fact]
     public void DtoTypes_ShouldBeIn_DtoNamespace()
     {
-        // All Data Transfer Objects should be in .DTOs or .Dto namespace
-        string[] dtoPatterns = new[] { ".DTOs.", ".Dto.", ".DTOs", ".Dto" };
-
         // Get types from Contracts that appear to be DTOs (end with Dto or have Dto in name)
-        IEnumerable<Type> potentialDtoTypes = Types
-            .InCurrentDomain()
-            .That()
-            .ResideInNamespaceStartingWith("Ghost.Contracts")
-            .And()
-            .HaveNameEndingWith("Dto")
-            .Or()
-            .HaveNameEndingWith("DTO")
-            .Or()
-            .HaveNameEndingWith("Options")
-            .Or()
-            .HaveNameEndingWith("Criteria")
-            .Or()
-            .HaveNameEndingWith("Filter")
-            .Or()
-            .HaveNameEndingWith("Result")
-            .GetTypes();
+        Type[] potentialDtoTypes = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(a => a.GetTypes())
+            .Where(t => t.Namespace?.StartsWith("Ghost.Contracts", StringComparison.Ordinal) == true)
+            .Where(t => t.Name.EndsWith("Dto", StringComparison.Ordinal) ||
+                       t.Name.EndsWith("DTO", StringComparison.Ordinal) ||
+                       t.Name.EndsWith("Options", StringComparison.Ordinal) ||
+                       t.Name.EndsWith("Criteria", StringComparison.Ordinal) ||
+                       t.Name.EndsWith("Filter", StringComparison.Ordinal) ||
+                       t.Name.EndsWith("Result", StringComparison.Ordinal))
+            .Where(t => !IsCompilerGeneratedType(t))
+            .ToArray();
 
         foreach (Type dtoType in potentialDtoTypes)
         {
             // Verify DTOs are in proper namespace
             string namespaceName = dtoType.Namespace ?? "";
-            bool isInDtoNamespace = namespaceName.Contains(".DTOs") ||
-                                   namespaceName.Contains(".Dto") ||
-                                   namespaceName.Contains(".Data");
+            bool isInDtoNamespace = namespaceName.Contains(".DTOs", StringComparison.Ordinal) ||
+                                   namespaceName.Contains(".Dto", StringComparison.Ordinal) ||
+                                   namespaceName.Contains(".Data", StringComparison.Ordinal);
 
-            if (!isInDtoNamespace && !namespaceName.EndsWith(".Contracts") && !namespaceName.EndsWith(".Jobs"))
+            if (!isInDtoNamespace && !namespaceName.EndsWith(".Contracts", StringComparison.Ordinal) && !namespaceName.EndsWith(".Jobs", StringComparison.Ordinal))
             {
                 // Log warning but don't fail - not all DTOs follow this convention yet
             }
@@ -190,12 +184,16 @@ public sealed class NamespaceConventionTests
 
         foreach (string plugin in plugins)
         {
+            System.Reflection.Assembly? pluginAssembly = GetPluginAssembly(plugin);
+            if (pluginAssembly == null)
+            {
+                continue;
+            }
+
             // Check that Internal namespace types don't have public visibility
-            IEnumerable<Type> internalTypes = Types
-                .InCurrentDomain()
-                .That()
-                .ResideInNamespace($"{plugin}.Internal")
-                .GetTypes();
+            Type[] internalTypes = pluginAssembly.GetTypes()
+                .Where(t => t.Namespace?.Equals($"{plugin}.Internal", StringComparison.Ordinal) == true)
+                .ToArray();
 
             // Internal types should ideally be internal or private
             // but some might need to be public for DI registration
@@ -213,16 +211,18 @@ public sealed class NamespaceConventionTests
     [Fact]
     public void ContractsAssembly_ShouldHaveTypesIn_ContractsNamespace()
     {
-        TestResult result = Types
-            .InAssembly(typeof(Ghost.Contracts.IExtension).Assembly)
-            .Should()
-            .ResideInNamespace("Ghost.Contracts")
-            .Or()
-            .ResideInNamespaceStartingWith("Ghost.Contracts.")
-            .GetResult();
+        Type[] types = typeof(Ghost.Contracts.IExtension).Assembly.GetTypes()
+            .Where(t => !IsCompilerGeneratedType(t))
+            .ToArray();
 
-        result.IsSuccessful.Should().BeTrue(
-            "All types in Ghost.Contracts assembly should be in Ghost.Contracts namespace.");
+        foreach (Type type in types)
+        {
+            bool isInCorrectNamespace = type.Namespace?.Equals("Ghost.Contracts", StringComparison.Ordinal) == true ||
+                                       type.Namespace?.StartsWith("Ghost.Contracts.", StringComparison.Ordinal) == true;
+
+            isInCorrectNamespace.Should().BeTrue(
+                $"All types in Ghost.Contracts assembly should be in Ghost.Contracts namespace. Type: {type.FullName}");
+        }
     }
 
     /// <summary>
@@ -240,13 +240,12 @@ public sealed class NamespaceConventionTests
 
         foreach (System.Reflection.Assembly assembly in assembliesToCheck)
         {
-            IEnumerable<Type> globalTypes = ArchitectureTestHelpers.GetTypesInGlobalNamespace(assembly);
+            Type[] globalTypes = assembly.GetTypes()
+                .Where(t => string.IsNullOrEmpty(t.Namespace))
+                .Where(t => !IsCompilerGeneratedType(t))
+                .ToArray();
 
-            // Filter out compiler-generated types (they often have < or > in name or special attributes)
-            IEnumerable<Type> realGlobalTypes = globalTypes
-                .Where(t => !IsCompilerGeneratedType(t));
-
-            realGlobalTypes.Should().BeEmpty(
+            globalTypes.Should().BeEmpty(
                 $"All types in {assembly.GetName().Name} should be in a Ghost namespace.");
         }
     }
@@ -310,28 +309,103 @@ public sealed class NamespaceConventionTests
         {
             string currentNamespace = contractNamespaces[i];
             string[] otherContractNamespaces = contractNamespaces
-                .TakeWhile((_, index) => index != i && index != 0) // Skip current and base Contracts
+                .Where((_, index) => index != i && index != 0) // Skip current and base Contracts
                 .Where(l => l != currentNamespace)
                 .ToArray();
 
             if (otherContractNamespaces.Length > 0 && currentNamespace != "Ghost.Contracts")
             {
-                // Check each dependency individually since HaveDependencyOnAny doesn't exist
+                // Check each dependency individually
                 foreach (string otherNamespace in otherContractNamespaces)
                 {
-                    TestResult result = Types
-                        .InCurrentDomain()
-                        .That()
-                        .ResideInNamespaceStartingWith(currentNamespace)
-                        .ShouldNot()
-                        .HaveDependencyOn(otherNamespace)
-                        .GetResult();
+                    bool hasDependency = HasNamespaceDependency(
+                        currentNamespace,
+                        otherNamespace);
 
-                    result.IsSuccessful.Should().BeTrue(
+                    hasDependency.Should().BeFalse(
                         $"{currentNamespace} should not depend on {otherNamespace}.");
                 }
             }
         }
+    }
+
+    private static bool HasNamespaceDependency(string sourceNamespace, string targetNamespace)
+    {
+        Type[] sourceTypes = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(a => a.GetTypes())
+            .Where(t => t.Namespace?.StartsWith(sourceNamespace, StringComparison.Ordinal) == true
+                     && !t.Namespace.StartsWith(targetNamespace, StringComparison.Ordinal))
+            .Where(t => !IsCompilerGeneratedType(t))
+            .ToArray();
+
+        foreach (Type type in sourceTypes)
+        {
+            Type[] referencedTypes = GetReferencedTypes(type);
+            if (referencedTypes.Any(rt => rt.Namespace?.StartsWith(targetNamespace, StringComparison.Ordinal) == true))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static Type[] GetReferencedTypes(Type type)
+    {
+        HashSet<Type> referencedTypes = new();
+
+        // Check base type
+        if (type.BaseType != null && type.BaseType != typeof(object))
+        {
+            referencedTypes.Add(type.BaseType);
+        }
+
+        // Check interfaces
+        foreach (Type interfaceType in type.GetInterfaces())
+        {
+            referencedTypes.Add(interfaceType);
+        }
+
+        // Check properties
+        foreach (System.Reflection.PropertyInfo property in type.GetProperties(
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static))
+        {
+            referencedTypes.Add(property.PropertyType);
+        }
+
+        // Check fields
+        foreach (System.Reflection.FieldInfo field in type.GetFields(
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static))
+        {
+            referencedTypes.Add(field.FieldType);
+        }
+
+        // Check methods
+        foreach (System.Reflection.MethodInfo method in type.GetMethods(
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static))
+        {
+            referencedTypes.Add(method.ReturnType);
+            foreach (System.Reflection.ParameterInfo parameter in method.GetParameters())
+            {
+                referencedTypes.Add(parameter.ParameterType);
+            }
+        }
+
+        // Check constructors
+        foreach (System.Reflection.ConstructorInfo constructor in type.GetConstructors(
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance))
+        {
+            foreach (System.Reflection.ParameterInfo parameter in constructor.GetParameters())
+            {
+                referencedTypes.Add(parameter.ParameterType);
+            }
+        }
+
+        return referencedTypes.Where(t => t != null).ToArray();
     }
 
     #endregion
@@ -359,14 +433,16 @@ public sealed class NamespaceConventionTests
 
         foreach (string plugin in plugins)
         {
-            // Get public types that don't end with expected suffixes
-            IEnumerable<Type> publicTypes = Types
-                .InCurrentDomain()
-                .That()
-                .ResideInNamespaceStartingWith(plugin)
-                .And()
-                .ArePublic()
-                .GetTypes();
+            System.Reflection.Assembly? pluginAssembly = GetPluginAssembly(plugin);
+            if (pluginAssembly == null)
+            {
+                continue;
+            }
+
+            Type[] publicTypes = pluginAssembly.GetTypes()
+                .Where(t => t.IsPublic)
+                .Where(t => t.Namespace?.StartsWith(plugin, StringComparison.Ordinal) == true)
+                .ToArray();
 
             foreach (Type type in publicTypes)
             {
@@ -394,6 +470,21 @@ public sealed class NamespaceConventionTests
                 // Log non-conforming types but don't fail
                 // This is for informational purposes
             }
+        }
+    }
+
+    private static System.Reflection.Assembly? GetPluginAssembly(string pluginNamespace)
+    {
+        string pluginName = pluginNamespace.Split('.').Last();
+        try
+        {
+            // Try to get the assembly from the current domain
+            return AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(a => a.GetName().Name?.Equals($"Ghost.Plugin.{pluginName}", StringComparison.OrdinalIgnoreCase) == true);
+        }
+        catch
+        {
+            return null;
         }
     }
 

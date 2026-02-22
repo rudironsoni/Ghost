@@ -2,7 +2,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 using FluentAssertions;
-using NetArchTest.Rules;
 using Xunit;
 
 namespace Ghost.Architecture.Tests;
@@ -15,10 +14,22 @@ public sealed class KernelSdkPluginIsolationTests
 {
     private const string KernelProjectPath = "src/Kernel/Ghost/Ghost.csproj";
 
-    private static readonly string[] SdkProjectPaths =
+    private static readonly string[] SdkProjectPaths = new[]
     {
         "src/Sdk/Ghost.Sdk/Ghost.Sdk.csproj",
         "src/Sdk/Ghost.Sdk.Spider/Ghost.Sdk.Spider.csproj"
+    };
+
+    private static readonly string[] AllPlugins = new[]
+    {
+        "Ghost.Plugin.Google",
+        "Ghost.Plugin.Indeed",
+        "Ghost.Plugin.LinkedIn",
+        "Ghost.Plugin.Glassdoor",
+        "Ghost.Plugin.X",
+        "Ghost.Plugin.Anthropic",
+        "Ghost.Plugin.OpenAI",
+        "Ghost.Plugin.InfoJobs"
     };
 
     [Fact]
@@ -56,7 +67,7 @@ public sealed class KernelSdkPluginIsolationTests
     [Fact]
     public void SdkAssemblies_ShouldNotReference_PluginAssemblies()
     {
-        Assembly[] sdkAssemblies =
+        Assembly[] sdkAssemblies = new[]
         {
             typeof(Ghost.Sdk.Console.TelnetConfiguration).Assembly,
             typeof(Ghost.Sdk.Spider.Engine.Spider).Assembly
@@ -109,21 +120,36 @@ public sealed class KernelSdkPluginIsolationTests
             .ToArray();
     }
 
-    #region NetArchTest Namespace Dependency Rules
+    #region Namespace Dependency Rules
 
     [Fact]
     public void KernelTypes_ShouldNotDependOn_PluginNamespaces()
     {
         // FW-001 enforcement: Kernel must not depend on any plugin implementations
-        TestResult result = Types
-            .InAssembly(typeof(global::Ghost.Cookie).Assembly)
-            .That()
-            .ResideInNamespace("Ghost")
-            .ShouldNot()
-            .HaveDependencyOn("Ghost.Plugin")
-            .GetResult();
+        // Use reflection-based check
+        Assembly kernelAssembly = typeof(global::Ghost.Cookie).Assembly;
 
-        result.IsSuccessful.Should().BeTrue(
+        Type[] kernelTypes = kernelAssembly.GetTypes()
+            .Where(t => t.Namespace?.StartsWith("Ghost", StringComparison.Ordinal) == true
+                     && !t.Namespace.StartsWith("Ghost.Plugin", StringComparison.Ordinal))
+            .ToArray();
+
+        // Check each type's dependencies
+        List<string> violations = new();
+        foreach (Type type in kernelTypes)
+        {
+            // Check if type references any plugin types
+            Type[] referencedTypes = GetReferencedTypes(type);
+            foreach (Type referencedType in referencedTypes)
+            {
+                if (referencedType.Namespace?.StartsWith("Ghost.Plugin", StringComparison.Ordinal) == true)
+                {
+                    violations.Add($"{type.FullName} depends on {referencedType.FullName}");
+                }
+            }
+        }
+
+        violations.Should().BeEmpty(
             "Kernel types should not have dependencies on Ghost.Plugin namespaces. " +
             "This violates FW-001: Kernel/SDK must not reference plugin implementations.");
     }
@@ -134,15 +160,33 @@ public sealed class KernelSdkPluginIsolationTests
     public void SdkTypes_ShouldNotDependOn_PluginNamespaces(string sdkNamespace)
     {
         // FW-001 enforcement: SDK must not depend on any plugin implementations
-        TestResult result = Types
-            .InCurrentDomain()
-            .That()
-            .ResideInNamespaceStartingWith(sdkNamespace)
-            .ShouldNot()
-            .HaveDependencyOn("Ghost.Plugin")
-            .GetResult();
+        Assembly[] sdkAssemblies = new[]
+        {
+            typeof(Ghost.Sdk.Console.TelnetConfiguration).Assembly,
+            typeof(Ghost.Sdk.Spider.Engine.Spider).Assembly
+        };
 
-        result.IsSuccessful.Should().BeTrue(
+        List<string> violations = new();
+        foreach (Assembly assembly in sdkAssemblies)
+        {
+            Type[] sdkTypes = assembly.GetTypes()
+                .Where(t => t.Namespace?.StartsWith(sdkNamespace, StringComparison.Ordinal) == true)
+                .ToArray();
+
+            foreach (Type type in sdkTypes)
+            {
+                Type[] referencedTypes = GetReferencedTypes(type);
+                foreach (Type referencedType in referencedTypes)
+                {
+                    if (referencedType.Namespace?.StartsWith("Ghost.Plugin", StringComparison.Ordinal) == true)
+                    {
+                        violations.Add($"{type.FullName} depends on {referencedType.FullName}");
+                    }
+                }
+            }
+        }
+
+        violations.Should().BeEmpty(
             $"SDK types in namespace '{sdkNamespace}' should not have dependencies on Ghost.Plugin namespaces. " +
             "This violates FW-001: Kernel/SDK must not reference plugin implementations.");
     }
@@ -151,29 +195,17 @@ public sealed class KernelSdkPluginIsolationTests
     public void Kernel_ShouldNotDependOn_AnySpecificPlugin()
     {
         // Check each major plugin individually for clear error messages
-        string[] plugins = new[]
-        {
-            "Ghost.Plugin.Google",
-            "Ghost.Plugin.Indeed",
-            "Ghost.Plugin.LinkedIn",
-            "Ghost.Plugin.Glassdoor",
-            "Ghost.Plugin.X",
-            "Ghost.Plugin.Anthropic",
-            "Ghost.Plugin.OpenAI",
-            "Ghost.Plugin.InfoJobs"
-        };
+        Assembly kernelAssembly = typeof(global::Ghost.Cookie).Assembly;
 
-        foreach (string plugin in plugins)
+        foreach (string plugin in AllPlugins)
         {
-            TestResult result = Types
-                .InAssembly(typeof(global::Ghost.Cookie).Assembly)
-                .That()
-                .ResideInNamespace("Ghost")
-                .ShouldNot()
-                .HaveDependencyOn(plugin)
-                .GetResult();
+            Type[] violatingTypes = kernelAssembly.GetTypes()
+                .Where(t => t.Namespace?.StartsWith("Ghost", StringComparison.Ordinal) == true
+                         && !t.Namespace.StartsWith("Ghost.Plugin", StringComparison.Ordinal))
+                .Where(t => GetReferencedTypes(t).Any(rt => rt.Namespace?.StartsWith(plugin, StringComparison.Ordinal) == true))
+                .ToArray();
 
-            result.IsSuccessful.Should().BeTrue(
+            violatingTypes.Should().BeEmpty(
                 $"Kernel should not depend on {plugin}. " +
                 "This violates FW-001 architectural boundary.");
         }
@@ -183,35 +215,21 @@ public sealed class KernelSdkPluginIsolationTests
     public void Sdk_ShouldNotDependOn_AnySpecificPlugin()
     {
         // Check SDK assemblies against each major plugin
-        Assembly[] sdkAssemblies =
+        Assembly[] sdkAssemblies = new[]
         {
             typeof(Ghost.Sdk.Console.TelnetConfiguration).Assembly,
             typeof(Ghost.Sdk.Spider.Engine.Spider).Assembly
         };
 
-        string[] plugins = new[]
-        {
-            "Ghost.Plugin.Google",
-            "Ghost.Plugin.Indeed",
-            "Ghost.Plugin.LinkedIn",
-            "Ghost.Plugin.Glassdoor",
-            "Ghost.Plugin.X",
-            "Ghost.Plugin.Anthropic",
-            "Ghost.Plugin.OpenAI",
-            "Ghost.Plugin.InfoJobs"
-        };
-
         foreach (Assembly sdkAssembly in sdkAssemblies)
         {
-            foreach (string plugin in plugins)
+            foreach (string plugin in AllPlugins)
             {
-                TestResult result = Types
-                    .InAssembly(sdkAssembly)
-                    .ShouldNot()
-                    .HaveDependencyOn(plugin)
-                    .GetResult();
+                Type[] violatingTypes = sdkAssembly.GetTypes()
+                    .Where(t => GetReferencedTypes(t).Any(rt => rt.Namespace?.StartsWith(plugin, StringComparison.Ordinal) == true))
+                    .ToArray();
 
-                result.IsSuccessful.Should().BeTrue(
+                violatingTypes.Should().BeEmpty(
                     $"SDK assembly '{sdkAssembly.GetName().Name}' should not depend on {plugin}. " +
                     "This violates FW-001 architectural boundary.");
             }
@@ -219,6 +237,56 @@ public sealed class KernelSdkPluginIsolationTests
     }
 
     #endregion
+
+    private static Type[] GetReferencedTypes(Type type)
+    {
+        HashSet<Type> referencedTypes = new();
+
+        // Check base type
+        if (type.BaseType != null && type.BaseType != typeof(object))
+        {
+            referencedTypes.Add(type.BaseType);
+        }
+
+        // Check interfaces
+        foreach (Type interfaceType in type.GetInterfaces())
+        {
+            referencedTypes.Add(interfaceType);
+        }
+
+        // Check properties
+        foreach (PropertyInfo property in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+        {
+            referencedTypes.Add(property.PropertyType);
+        }
+
+        // Check fields
+        foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+        {
+            referencedTypes.Add(field.FieldType);
+        }
+
+        // Check methods
+        foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+        {
+            referencedTypes.Add(method.ReturnType);
+            foreach (ParameterInfo parameter in method.GetParameters())
+            {
+                referencedTypes.Add(parameter.ParameterType);
+            }
+        }
+
+        // Check constructors
+        foreach (ConstructorInfo constructor in type.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+        {
+            foreach (ParameterInfo parameter in constructor.GetParameters())
+            {
+                referencedTypes.Add(parameter.ParameterType);
+            }
+        }
+
+        return referencedTypes.Where(t => t != null).ToArray();
+    }
 
     private static string GetRepositoryRoot([CallerFilePath] string sourceFilePath = "")
     {

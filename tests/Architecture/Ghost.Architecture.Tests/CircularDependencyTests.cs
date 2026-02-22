@@ -1,245 +1,79 @@
-using FluentAssertions;
+using ArchUnitNET.Domain;
+using ArchUnitNET.Loader;
+using ArchUnitNET.Fluent;
+using ArchUnitNET.xUnit;
+using static ArchUnitNET.Fluent.ArchRuleDefinition;
 using Xunit;
 
 namespace Ghost.Architecture.Tests;
 
-/// <summary>
-/// Tests for detecting circular dependencies between layers and components.
-/// Circular dependencies indicate architectural issues that should be resolved.
-/// </summary>
 public sealed class CircularDependencyTests
 {
-    #region Layer Circular Dependency Tests
+    private static readonly ArchUnitNET.Domain.Architecture Arch = new ArchLoader()
+        .LoadAssemblies(
+            typeof(Ghost.Contracts.IExtension).Assembly,
+            typeof(Ghost.Engine.Abstractions.Engine.IGhostEngine).Assembly,
+            typeof(Ghost.Kernel.GhostKernel).Assembly,
+            typeof(Ghost.Hosting.IExtension).Assembly,
+            typeof(Ghost.Sdk.Throttling.AutoThrottle).Assembly
+        )
+        .Build();
 
-    /// <summary>
-    /// Note: This test is skipped because the reflection-based dependency detection
-    /// may detect legitimate generic type constraints that create false positives.
-    /// </summary>
-    [Fact(Skip = "Reflection-based detection may have false positives from generic constraints")]
-    public void Contracts_ShouldNotHaveCircularDependencies()
-    {
-        // Contracts layer should be the foundation and not depend on any other Ghost layer
-        string[] forbiddenDependencies = new[]
-        {
-            "Ghost",
-            "Ghost.Hosting",
-            "Ghost.Engine",
-            "Ghost.Plugin",
-            "Ghost.Sdk"
-        };
-
-        foreach (string dependency in forbiddenDependencies)
-        {
-            bool hasDependency = ArchitectureTestHelpers.HasDependencyOn("Ghost.Contracts", dependency);
-            hasDependency.Should().BeFalse(
-                $"Contracts layer should not depend on {dependency} to avoid circular dependencies.");
-        }
-    }
-
-    /// <summary>
-    /// Note: This test is skipped because it relies on AppDomain.CurrentDomain.GetAssemblies()
-    /// which returns different assemblies depending on test execution order.
-    /// The reflection-based detection is inherently non-deterministic in a shared test environment.
-    /// </summary>
-    [Fact(Skip = "Flaky: AppDomain state varies based on test execution order")]
+    [Fact]
     public void EngineAbstractions_ShouldNotDependOn_Kernel()
     {
-        // Engine Abstractions should not depend on Kernel
-        // If they did, and Kernel depends on Engine, we have a circular dependency
-        bool hasDependency = ArchitectureTestHelpers.HasDependencyOn("Ghost.Engine.Abstractions", "Ghost");
-
-        hasDependency.Should().BeFalse(
-            "Engine Abstractions should not depend on Kernel to prevent circular dependencies.");
+        Types().That().ResideInNamespace("Ghost.Engine.Abstractions..")
+            .Should().NotDependOnAny(
+                Types().That().ResideInNamespace("Ghost")
+                    .And().DoNotResideInNamespace("Ghost.Contracts..")
+                    .And().DoNotResideInNamespace("Ghost.Engine.."))
+            .Because("Engine Abstractions should not depend on Kernel to prevent circular dependencies")
+            .WithoutRequiringPositiveResults()
+            .Check(Arch);
     }
 
-    /// <summary>
-    /// Note: This test is skipped because it relies on AppDomain.CurrentDomain.GetAssemblies()
-    /// which returns different assemblies depending on test execution order.
-    /// The reflection-based detection is inherently non-deterministic in a shared test environment.
-    /// </summary>
-    [Fact(Skip = "Flaky: AppDomain state varies based on test execution order")]
+    [Fact]
     public void Kernel_ShouldNotDependOn_Hosting()
     {
-        // Kernel should not depend on Hosting
-        // If it did, and Hosting depends on Kernel (which it does), we'd have a circular dependency
-        bool hasDependency = ArchitectureTestHelpers.HasDependencyOn("Ghost", "Ghost.Hosting");
-
-        hasDependency.Should().BeFalse(
-            "Kernel should not depend on Hosting to prevent circular dependencies.");
+        Types().That().ResideInNamespace("Ghost")
+            .And().DoNotResideInNamespace("Ghost.Contracts..")
+            .And().DoNotResideInNamespace("Ghost.Engine..")
+            .And().DoNotResideInNamespace("Ghost.Hosting..")
+            .And().DoNotResideInNamespace("Ghost.Sdk..")
+            .Should().NotDependOnAny(
+                Types().That().ResideInNamespace("Ghost.Hosting.."))
+            .Because("Kernel should not depend on Hosting to prevent circular dependencies")
+            .WithoutRequiringPositiveResults()
+            .Check(Arch);
     }
 
     [Fact]
-    public void Sdk_ShouldNotDependOn_Platform()
-    {
-        // SDK should not depend on Platform implementation details
-        // Note: This test may have false positives due to compiler-generated types
-        // The check is lenient to account for generated code patterns
-        bool hasDependency = ArchitectureTestHelpers.HasDependencyOn("Ghost.Sdk", "Ghost.Infrastructure");
-
-        // Log but don't strictly enforce - generated code may create false dependencies
-        if (hasDependency)
-        {
-            IEnumerable<string> violatingTypes = ArchitectureTestHelpers.GetTypesWithDependencyOn("Ghost.Infrastructure")
-                .Where(t => t.StartsWith("Ghost.Sdk", StringComparison.Ordinal));
-
-            // Only fail if there are real non-generated types with dependencies
-            IEnumerable<string> realViolations = violatingTypes
-                .Where(t => !t.Contains('<') && !t.Contains('>') && !t.Contains("__"));
-
-            realViolations.Should().BeEmpty(
-                "SDK should not depend on Platform infrastructure to prevent circular dependencies.");
-        }
-    }
-
-    #endregion
-
-    #region Component-Level Circular Dependency Detection
-
-    /// <summary>
-    /// Verifies that the dependency graph from Contracts is acyclic.
-    /// Note: This test is skipped because the reflection-based dependency detection
-    /// may detect legitimate generic type constraints or compiler-generated code patterns
-    /// that create false positives. The actual architecture is correct.
-    /// </summary>
-    [Fact(Skip = "Reflection-based detection may have false positives from generic constraints")]
-    public void ContractsLayer_ShouldHaveNoIncomingDependenciesFromLowerLayers()
-    {
-        // This test verifies that no lower layers (Kernel, Hosting, Plugins)
-        // create types that Contracts depends on
-        string[] lowerLayers = new[] { "Ghost", "Ghost.Hosting", "Ghost.Engine", "Ghost.Plugin", "Ghost.Sdk" };
-
-        foreach (string lowerLayer in lowerLayers)
-        {
-            bool hasDependency = ArchitectureTestHelpers.HasDependencyOn("Ghost.Contracts", lowerLayer);
-            hasDependency.Should().BeFalse(
-                $"Contracts should not depend on {lowerLayer} to maintain acyclic dependency graph.");
-        }
-    }
-
-    /// <summary>
-    /// Tests that Engine layer maintains proper dependency direction.
-    /// </summary>
-    [Fact]
-    public void Engine_ShouldNotCreateCircularDependencyWith_Hosting()
-    {
-        // Engine.Hosting depends on Engine
-        // Engine should NOT depend on Engine.Hosting or Hosting
-        bool hasDependency = ArchitectureTestHelpers.HasDependencyOn("Ghost.Engine", "Ghost.Engine.Hosting");
-
-        hasDependency.Should().BeFalse(
-            "Engine should not depend on Engine.Hosting to prevent circular dependencies.");
-    }
-
-    [Fact]
-    public void EngineHosting_ShouldNotCreateCircularDependencyWith_Kernel()
-    {
-        // Engine.Hosting depends on Engine and Abstractions
-        // It should NOT depend back on Kernel if Kernel depends on Engine
-        // (Note: Currently Kernel does not depend on Engine, but this is a preventive test)
-
-        // This test checks if Engine.Hosting has any direct dependencies on Ghost (Kernel)
-        // We allow indirect dependencies through Ghost.Engine.Abstractions
-        bool hasDirectKernelDependency = ArchitectureTestHelpers.HasDependencyOn("Ghost.Engine.Hosting", "Ghost");
-
-        // Engine.Hosting may legitimately need some kernel types for configuration
-        // The important thing is that there's no circular dependency chain
-        // This is logged as informational rather than a strict failure
-        if (hasDirectKernelDependency)
-        {
-            IEnumerable<string> violations = ArchitectureTestHelpers.GetTypesWithDependencyOn("Ghost")
-                .Where(t => t.StartsWith("Ghost.Engine.Hosting", StringComparison.Ordinal));
-
-            // Only fail if there are clear violations (non-generated types)
-            violations.Where(t => !t.Contains('<') && !t.Contains('>')).Should().NotBeEmpty(
-                "Engine.Hosting should minimize direct dependencies on Kernel.");
-        }
-    }
-
-    #endregion
-
-    #region Cross-Assembly Circular Dependency Tests
-
-    /// <summary>
-    /// Detects potential circular dependencies by verifying that
-    /// assemblies that depend on Contracts don't have Contracts depending back.
-    /// Note: This test is skipped because the reflection-based dependency detection
-    /// may detect legitimate generic type constraints that create false positives.
-    /// </summary>
-    [Fact(Skip = "Reflection-based detection may have false positives from generic constraints")]
-    public void Contracts_ShouldNotDependOn_AnyImplementingAssemblies()
-    {
-        string[] implementingAssemblies = new[]
-        {
-            "Ghost",
-            "Ghost.Hosting",
-            "Ghost.Engine",
-            "Ghost.Engine.Hosting",
-            "Ghost.Plugin.Indeed",
-            "Ghost.Plugin.LinkedIn",
-            "Ghost.Plugin.Google",
-            "Ghost.Plugin.Glassdoor",
-            "Ghost.Plugin.Anthropic",
-            "Ghost.Plugin.OpenAI",
-            "Ghost.Plugin.X",
-            "Ghost.Plugin.InfoJobs"
-        };
-
-        foreach (string assembly in implementingAssemblies)
-        {
-            bool hasDependency = ArchitectureTestHelpers.HasDependencyOn("Ghost.Contracts", assembly);
-            hasDependency.Should().BeFalse(
-                $"Contracts should not depend on {assembly}.");
-        }
-    }
-
-    #endregion
-
-    #region Dependency Cycle Detection Helper
-
-    /// <summary>
-    /// Verifies the expected dependency chain: Contracts <- Kernel <- Hosting <- Plugins
-    /// No reverse dependencies should exist.
-    /// Note: This test is skipped because it relies on AppDomain.CurrentDomain.GetAssemblies()
-    /// which returns different assemblies depending on test execution order.
-    /// The reflection-based detection is inherently non-deterministic in a shared test environment.
-    /// </summary>
-    [Fact(Skip = "Flaky: AppDomain state varies based on test execution order")]
     public void DependencyDirection_ShouldFollow_LayerHierarchy()
     {
-        // Define expected dependency hierarchy (higher layers depend on lower layers)
-        Dictionary<string, string[]> layers = new Dictionary<string, string[]>
-        {
-            { "Ghost.Contracts", Array.Empty<string>() }, // Bottom layer - no dependencies
-            { "Ghost.Engine.Abstractions", new[] { "Ghost.Contracts" } },
-            { "Ghost.Engine", new[] { "Ghost.Engine.Abstractions" } },
-            { "Ghost.Engine.Hosting", new[] { "Ghost.Engine", "Ghost.Engine.Abstractions" } },
-            { "Ghost", new[] { "Ghost.Contracts" } }, // Kernel
-            { "Ghost.Hosting", new[] { "Ghost", "Ghost.Contracts", "Ghost.Engine.Hosting" } },
-            { "Ghost.Sdk", new[] { "Ghost", "Ghost.Contracts", "Ghost.Hosting" } },
-            // Plugins depend on Contracts, Kernel, Hosting, Sdk but NOT on other plugins
-        };
+        Types().That().ResideInNamespace("Ghost.Contracts..")
+            .Should().NotDependOnAny(
+                Types().That().ResideInNamespace("Ghost.")
+                    .And().DoNotResideInNamespace("Ghost.Contracts.."))
+            .WithoutRequiringPositiveResults()
+            .Check(Arch);
 
-        // Verify no reverse dependencies exist
-        foreach (KeyValuePair<string, string[]> layerEntry in layers)
-        {
-            string layer = layerEntry.Key;
-            string[] expectedDependencies = layerEntry.Value;
+        Types().That().ResideInNamespace("Ghost.Engine.Abstractions..")
+            .Should().NotDependOnAny(
+                Types().That().ResideInNamespace("Ghost.")
+                    .And().DoNotResideInNamespace("Ghost.Contracts..")
+                    .And().DoNotResideInNamespace("Ghost.Engine.Abstractions.."))
+            .WithoutRequiringPositiveResults()
+            .Check(Arch);
 
-            // Check that layer does NOT depend on layers above it
-            List<string> higherLayers = layers.Keys
-                .TakeWhile(l => l != layer)
-                .Where(l => !expectedDependencies.Contains(l))
-                .ToList();
-
-            foreach (string higherLayer in higherLayers)
-            {
-                bool hasDependency = ArchitectureTestHelpers.HasDependencyOn(layer, higherLayer);
-                hasDependency.Should().BeFalse(
-                    $"Layer {layer} should not depend on higher layer {higherLayer}. " +
-                    "This would create a circular dependency.");
-            }
-        }
+        Types().That().ResideInNamespace("Ghost")
+            .And().DoNotResideInNamespace("Ghost.Contracts..")
+            .And().DoNotResideInNamespace("Ghost.Engine..")
+            .And().DoNotResideInNamespace("Ghost.Hosting..")
+            .And().DoNotResideInNamespace("Ghost.Sdk..")
+            .Should().NotDependOnAny(
+                Types().That().ResideInNamespace("Ghost.Hosting..")
+                    .Or().ResideInNamespace("Ghost.Sdk.."))
+            .WithoutRequiringPositiveResults()
+            .Check(Arch);
     }
-
-    #endregion
 }
