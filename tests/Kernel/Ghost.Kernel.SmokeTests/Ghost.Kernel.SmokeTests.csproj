@@ -7,7 +7,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
-    <NoWarn>$(NoWarn);CA1711;IDE0031;CA1822</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
