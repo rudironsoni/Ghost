@@ -310,7 +310,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
 
         holdSignals[0].SetResult();
 
-        using var extraSession = await extraTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await using var extraSession = await extraTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
         Assert.NotNull(extraSession);
 
         foreach (var tcs in holdSignals.Skip(1))

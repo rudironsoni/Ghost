@@ -58,10 +58,13 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
     [Fact]
     public void Constructor_NullSources_ThrowsArgumentNullException()
     {
-        Action act = () => new ProxyHealthIntelligence(
-            null!,
-            Options.Create(new ProxySystemOptions()),
-            NullLogger<ProxyHealthIntelligence>.Instance);
+        Action act = () =>
+        {
+            _ = new ProxyHealthIntelligence(
+                null!,
+                Options.Create(new ProxySystemOptions()),
+                NullLogger<ProxyHealthIntelligence>.Instance);
+        };
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("sources");
     }
@@ -69,10 +72,13 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
     [Fact]
     public void Constructor_NullOptions_ThrowsArgumentNullException()
     {
-        Action act = () => new ProxyHealthIntelligence(
-            new List<IProxySource>(),
-            null!,
-            NullLogger<ProxyHealthIntelligence>.Instance);
+        Action act = () =>
+        {
+            _ = new ProxyHealthIntelligence(
+                new List<IProxySource>(),
+                null!,
+                NullLogger<ProxyHealthIntelligence>.Instance);
+        };
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("options");
     }
@@ -80,10 +86,13 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
     [Fact]
     public void Constructor_NullLogger_ThrowsArgumentNullException()
     {
-        Action act = () => new ProxyHealthIntelligence(
-            new List<IProxySource>(),
-            Options.Create(new ProxySystemOptions()),
-            null!);
+        Action act = () =>
+        {
+            _ = new ProxyHealthIntelligence(
+                new List<IProxySource>(),
+                Options.Create(new ProxySystemOptions()),
+                null!);
+        };
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
     }

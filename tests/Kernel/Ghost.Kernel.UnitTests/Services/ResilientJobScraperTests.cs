@@ -32,11 +32,14 @@ public sealed class ResilientJobScraperTests
     [Fact]
     public void Constructor_NullInnerScraper_ThrowsArgumentNullException()
     {
-        Action act = () => new ResilientJobScraper(
-            null!,
-            Mock.Of<ICircuitBreaker>(),
-            Mock.Of<IGenericDeadLetterQueue>(),
-            NullLogger<ResilientJobScraper>.Instance);
+        Action act = () =>
+        {
+            _ = new ResilientJobScraper(
+                null!,
+                Mock.Of<ICircuitBreaker>(),
+                Mock.Of<IGenericDeadLetterQueue>(),
+                NullLogger<ResilientJobScraper>.Instance);
+        };
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("innerScraper");
     }
@@ -44,11 +47,14 @@ public sealed class ResilientJobScraperTests
     [Fact]
     public void Constructor_NullCircuitBreaker_ThrowsArgumentNullException()
     {
-        Action act = () => new ResilientJobScraper(
-            Mock.Of<IJobScraper>(),
-            null!,
-            Mock.Of<IGenericDeadLetterQueue>(),
-            NullLogger<ResilientJobScraper>.Instance);
+        Action act = () =>
+        {
+            _ = new ResilientJobScraper(
+                Mock.Of<IJobScraper>(),
+                null!,
+                Mock.Of<IGenericDeadLetterQueue>(),
+                NullLogger<ResilientJobScraper>.Instance);
+        };
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("circuitBreaker");
     }
@@ -56,11 +62,14 @@ public sealed class ResilientJobScraperTests
     [Fact]
     public void Constructor_NullDeadLetterQueue_ThrowsArgumentNullException()
     {
-        Action act = () => new ResilientJobScraper(
-            Mock.Of<IJobScraper>(),
-            Mock.Of<ICircuitBreaker>(),
-            null!,
-            NullLogger<ResilientJobScraper>.Instance);
+        Action act = () =>
+        {
+            _ = new ResilientJobScraper(
+                Mock.Of<IJobScraper>(),
+                Mock.Of<ICircuitBreaker>(),
+                null!,
+                NullLogger<ResilientJobScraper>.Instance);
+        };
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("deadLetterQueue");
     }
