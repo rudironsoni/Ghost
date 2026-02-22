@@ -51,7 +51,8 @@ public class TieredBrowserPoolTests : IAsyncLifetime
 
             _pool = new TieredBrowserPool(_kernel, options, NullLogger<TieredBrowserPool>.Instance);
 
-            await Task.Delay(2000);
+            // Wait for pool to be ready using health state
+            await WaitForPoolReadyAsync(_pool, TimeSpan.FromSeconds(10));
         }
         catch
         {
@@ -274,32 +275,95 @@ public class TieredBrowserPoolTests : IAsyncLifetime
     [Fact]
     public async Task PoolRespectsConcurrentLimitForColdTier()
     {
-        int maxConcurrent = 20;
+        int maxConcurrent = 5; // Smaller for faster test
         var options = new TieredBrowserPoolOptions
         {
             Cold = new ColdPoolOptions { MaximumConcurrent = maxConcurrent }
         };
 
         await using TieredBrowserPool pool = new TieredBrowserPool(_kernel!, options);
-        Task[] tasks = Enumerable.Range(0, maxConcurrent + 5)
-            .Select(async _ =>
+
+        var holdSignals = Enumerable.Range(0, maxConcurrent)
+            .Select(_ => new TaskCompletionSource())
+            .ToList();
+
+        var acquisitionTasks = holdSignals.Select(async tcs =>
+        {
+            IBrowserSession session = await pool.AcquireBrowserAsync(Tier.Cold);
+            await tcs.Task;
+            await pool.ReturnBrowserAsync(session);
+        }).ToArray();
+
+        var health = await WaitForHealthStateAsync(pool, h => h.Cold.InUse == maxConcurrent);
+        Assert.Equal(maxConcurrent, health.Cold.InUse);
+
+        var extraTcs = new TaskCompletionSource<IBrowserSession>();
+        var extraTask = Task.Run(async () =>
+        {
+            var session = await pool.AcquireBrowserAsync(Tier.Cold);
+            extraTcs.SetResult(session);
+            await pool.ReturnBrowserAsync(session);
+        });
+
+        await Task.Yield();
+        Assert.False(extraTask.IsCompleted, "Extra acquisition should be blocked");
+
+        holdSignals[0].SetResult();
+
+        using var extraSession = await extraTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        Assert.NotNull(extraSession);
+
+        foreach (var tcs in holdSignals.Skip(1))
+        {
+            tcs.SetResult();
+        }
+
+        await Task.WhenAll(acquisitionTasks).WaitAsync(TimeSpan.FromSeconds(5));
+    }
+
+    private static async Task WaitForPoolReadyAsync(
+        TieredBrowserPool pool,
+        TimeSpan timeout)
+    {
+        using var cts = new CancellationTokenSource(timeout);
+        var deadline = DateTime.UtcNow.Add(timeout);
+
+        while (DateTime.UtcNow < deadline)
+        {
+            var health = await pool.GetHealthAsync();
+            if (health.Hot.Total >= 2 && health.Warm.Total >= 3)
             {
-                IBrowserSession session = await pool.AcquireBrowserAsync(Tier.Cold);
+                return;
+            }
 
-                try
-                {
-                    await Task.Delay(100);
-                }
-                finally
-                {
-                    await pool.ReturnBrowserAsync(session);
-                }
-            })
-            .ToArray();
+            cts.Token.ThrowIfCancellationRequested();
+            await Task.Yield();
+        }
 
-        await Task.WhenAll(tasks);
+        throw new TimeoutException("Pool did not initialize within timeout");
+    }
 
-        PoolHealth health = await pool.GetHealthAsync();
-        Assert.True(health.Cold.InUse <= maxConcurrent);
+    private static async Task<PoolHealth> WaitForHealthStateAsync(
+        TieredBrowserPool pool,
+        Func<PoolHealth, bool> predicate,
+        TimeSpan? timeout = null)
+    {
+        timeout ??= TimeSpan.FromSeconds(5);
+        using var cts = new CancellationTokenSource(timeout.Value);
+        var deadline = DateTime.UtcNow.Add(timeout.Value);
+
+        while (DateTime.UtcNow < deadline)
+        {
+            var health = await pool.GetHealthAsync();
+            if (predicate(health))
+            {
+                return health;
+            }
+
+            cts.Token.ThrowIfCancellationRequested();
+            await Task.Yield();
+        }
+
+        throw new TimeoutException("Health state not achieved within timeout");
     }
 }
