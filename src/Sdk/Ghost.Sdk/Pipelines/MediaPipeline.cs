@@ -297,6 +297,10 @@ public class MediaPipeline : IMediaPipeline
             throw new InvalidOperationException("Filename contains only invalid characters.");
         }
 
+        // Sanitize Windows reserved device names by appending underscore
+        // Windows reserves: CON, PRN, AUX, NUL, COM1-9, LPT1-9
+        result = SanitizeWindowsReservedName(result);
+
         // Final validation - ensure the result is just a filename
         if (result != Path.GetFileName(result))
         {
@@ -304,6 +308,68 @@ public class MediaPipeline : IMediaPipeline
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Sanitizes Windows reserved device names by appending an underscore.
+    /// Windows reserves certain names that cannot be used as filenames: CON, PRN, AUX, NUL, COM1-9, LPT1-9.
+    /// See: https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#naming-conventions
+    /// </summary>
+    /// <param name="fileName">The filename to check (may include extension).</param>
+    /// <returns>The filename with underscore appended if it matches a reserved name.</returns>
+    private static string SanitizeWindowsReservedName(string fileName)
+    {
+        // Get the name without extension for comparison
+        string nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+        string extension = Path.GetExtension(fileName);
+
+        // Check if the name matches any Windows reserved device name (case-insensitive)
+        if (IsWindowsReservedName(nameWithoutExtension))
+        {
+            return nameWithoutExtension + "_" + extension;
+        }
+
+        return fileName;
+    }
+
+    /// <summary>
+    /// Checks if a filename (without extension) is a Windows reserved device name.
+    /// </summary>
+    /// <param name="name">The filename without extension.</param>
+    /// <returns>True if the name is reserved on Windows.</returns>
+    private static bool IsWindowsReservedName(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+        {
+            return false;
+        }
+
+        // Use case-insensitive comparison
+        string upperName = name.ToUpperInvariant();
+
+        // Check standard reserved names
+        switch (upperName)
+        {
+            case "CON":
+            case "PRN":
+            case "AUX":
+            case "NUL":
+                return true;
+        }
+
+        // Check COM1-COM9 and LPT1-LPT9
+        if (upperName.Length == 4)
+        {
+            if (upperName.StartsWith("COM", StringComparison.Ordinal) ||
+                upperName.StartsWith("LPT", StringComparison.Ordinal))
+            {
+                // Check if last character is digit 1-9
+                char lastChar = upperName[3];
+                return lastChar >= '1' && lastChar <= '9';
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

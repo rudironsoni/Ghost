@@ -801,16 +801,8 @@ public class MediaPipelineTests : IDisposable
     [InlineData("nul", "nul_")]
     [InlineData("com1", "com1_")]
     [InlineData("lpt1", "lpt1_")]
-    #pragma warning disable xUnit1026 // Theory method parameter 'expectedName' documents intended sanitization behavior
     public async Task ProcessAsync_WithReservedWindowsNames_SanitizesCorrectly(string reservedName, string expectedName)
-    #pragma warning restore xUnit1026
     {
-        // Note: expectedName documents the intended sanitization behavior but is not currently used
-        // The MediaPipeline should sanitize Windows reserved names by appending "_"
-        // e.g., "con" -> "con_", "aux" -> "aux_", etc.
-        // TODO: Implement Windows reserved name sanitization in MediaPipeline
-        _ = expectedName; // Suppress xUnit1026 warning - parameter intentionally documented but not yet used
-
         // Arrange
         var testContent = "Test file content"u8.ToArray();
         var mockHandler = CreateMockHttpHandler(HttpStatusCode.OK, testContent, "text/plain");
@@ -827,11 +819,10 @@ public class MediaPipelineTests : IDisposable
         // Act
         var result = await pipeline.ProcessAsync(request);
 
-        // Assert - file should exist
+        // Assert - file should exist with sanitized name
         File.Exists(result.LocalPath).Should().BeTrue();
         result.LocalPath.Should().StartWith(Path.GetFullPath(_testOutputPath));
-        // TODO: Verify sanitized name once sanitization is implemented
-        // Path.GetFileName(result.LocalPath).Should().Be(expectedName);
+        Path.GetFileName(result.LocalPath).Should().Be(expectedName);
     }
 
     [Theory]
