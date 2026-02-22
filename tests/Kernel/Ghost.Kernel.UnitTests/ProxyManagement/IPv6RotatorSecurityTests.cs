@@ -29,7 +29,10 @@ public class IPv6RotatorSecurityTests
         };
 
         // Act
-        Action act = () => new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        Action act = () =>
+        {
+            _ = new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        };
 
         // Assert
         act.Should().NotThrow();
@@ -60,7 +63,10 @@ public class IPv6RotatorSecurityTests
         };
 
         // Act
-        Action act = () => new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        Action act = () =>
+        {
+            _ = new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        };
 
         // Assert - Should throw for security reasons
         act.Should().Throw<ArgumentException>();
@@ -83,7 +89,10 @@ public class IPv6RotatorSecurityTests
         };
 
         // Act
-        Action act = () => new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        Action act = () =>
+        {
+            _ = new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        };
 
         // Assert
         act.Should().NotThrow();
@@ -110,7 +119,10 @@ public class IPv6RotatorSecurityTests
         };
 
         // Act
-        Action act = () => new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        Action act = () =>
+        {
+            _ = new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        };
 
         // Assert - Should throw for security reasons
         act.Should().Throw<ArgumentException>();
@@ -131,7 +143,10 @@ public class IPv6RotatorSecurityTests
         };
 
         // Act
-        Action act = () => new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        Action act = () =>
+        {
+            _ = new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        };
 
         // Assert - Should throw because whitespace can be used for argument injection
         act.Should().Throw<ArgumentException>();
@@ -150,7 +165,10 @@ public class IPv6RotatorSecurityTests
         };
 
         // Act
-        Action act = () => new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        Action act = () =>
+        {
+            _ = new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        };
 
         // Assert - Should throw for security reasons
         act.Should().Throw<ArgumentException>();
@@ -172,7 +190,10 @@ public class IPv6RotatorSecurityTests
         };
 
         // Act
-        Action act = () => new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        Action act = () =>
+        {
+            _ = new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        };
 
         // Assert - Should throw because overly long input could be used for buffer overflow attacks
         act.Should().Throw<ArgumentException>();
@@ -190,9 +211,12 @@ public class IPv6RotatorSecurityTests
         };
 
         // Act
-        Action act = () => new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        Action act = () =>
+        {
+            _ = new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        };
 
-        // Assert - Should succeed as it's a valid length
+        // Assert
         act.Should().NotThrow();
     }
 
@@ -393,7 +417,10 @@ public class IPv6RotatorSecurityTests
         };
 
         // Act
-        Action act = () => new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        Action act = () =>
+        {
+            _ = new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        };
 
         // Assert
         act.Should().Throw<ArgumentException>();
@@ -410,7 +437,10 @@ public class IPv6RotatorSecurityTests
         };
 
         // Act
-        Action act = () => new IPv6Rotator(options, null!);
+        Action act = () =>
+        {
+            _ = new IPv6Rotator(options, null!);
+        };
 
         // Assert
         act.Should().Throw<ArgumentNullException>();
@@ -420,7 +450,10 @@ public class IPv6RotatorSecurityTests
     public void Constructor_WithNullOptions_ShouldThrowArgumentNullException()
     {
         // Act
-        Action act = () => new IPv6Rotator(null!, NullLogger<IPv6Rotator>.Instance);
+        Action act = () =>
+        {
+            _ = new IPv6Rotator(null!, NullLogger<IPv6Rotator>.Instance);
+        };
 
         // Assert
         act.Should().Throw<ArgumentNullException>();
@@ -447,7 +480,10 @@ public class IPv6RotatorSecurityTests
         };
 
         // Act
-        Action act = () => new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        Action act = () =>
+        {
+            _ = new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        };
 
         // Assert
         act.Should().Throw<ArgumentException>();
@@ -468,7 +504,10 @@ public class IPv6RotatorSecurityTests
         };
 
         // Act
-        Action act = () => new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        Action act = () =>
+        {
+            _ = new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
+        };
 
         // Assert
         act.Should().Throw<ArgumentException>();

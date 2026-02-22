@@ -416,7 +416,7 @@ public sealed class ConsentManagerServiceTests
     public async Task HandleConsentAsync_ClickThrowsException_FallsBackToEvaluate()
     {
         var mockButton = CreateMockElement(isVisible: true, isEnabled: true);
-        mockButton.Setup(x => x.ClickAsync()).ThrowsAsync(new Exception("Click failed"));
+        mockButton.Setup(x => x.ClickAsync()).ThrowsAsync(new InvalidOperationException("Click failed"));
 
         var mockPage = CreateMockPage();
         mockPage.SetupSequence(x => x.QuerySelectorAsync(It.IsAny<string>()))
@@ -437,7 +437,7 @@ public sealed class ConsentManagerServiceTests
     public async Task HandleConsentAsync_ClickAndEvaluateFail_StillReturnsTrue()
     {
         var mockButton = CreateMockElement(isVisible: true, isEnabled: true);
-        mockButton.Setup(x => x.ClickAsync()).ThrowsAsync(new Exception("Click failed"));
+        mockButton.Setup(x => x.ClickAsync()).ThrowsAsync(new InvalidOperationException("Click failed"));
 
         var mockPage = CreateMockPage();
         mockPage.SetupSequence(x => x.QuerySelectorAsync(It.IsAny<string>()))
@@ -516,7 +516,7 @@ public sealed class ConsentManagerServiceTests
             .ReturnsAsync(mockFrame.Object);
 
         mockPage.Setup(x => x.EvaluateAsync<bool>(It.IsAny<string>()))
-            .ThrowsAsync(new Exception("Evaluate failed"));
+            .ThrowsAsync(new InvalidOperationException("Evaluate failed"));
 
         var service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
@@ -533,7 +533,7 @@ public sealed class ConsentManagerServiceTests
     {
         var mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
-            .ThrowsAsync(new Exception("Selector error"));
+            .ThrowsAsync(new InvalidOperationException("Selector error"));
 
         var service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
@@ -547,7 +547,7 @@ public sealed class ConsentManagerServiceTests
         var mockPage = CreateMockPage();
 
         var mockFailingElement = new Mock<IElement>();
-        mockFailingElement.Setup(x => x.IsVisibleAsync()).ThrowsAsync(new Exception("Visibility check failed"));
+        mockFailingElement.Setup(x => x.IsVisibleAsync()).ThrowsAsync(new InvalidOperationException("Visibility check failed"));
 
         mockPage.SetupSequence(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync(mockFailingElement.Object)
@@ -566,7 +566,7 @@ public sealed class ConsentManagerServiceTests
 
         var mockFailingElement = new Mock<IElement>();
         mockFailingElement.Setup(x => x.IsVisibleAsync()).ReturnsAsync(true);
-        mockFailingElement.Setup(x => x.IsEnabledAsync()).ThrowsAsync(new Exception("Enabled check failed"));
+        mockFailingElement.Setup(x => x.IsEnabledAsync()).ThrowsAsync(new InvalidOperationException("Enabled check failed"));
 
         mockPage.SetupSequence(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync(mockFailingElement.Object)
@@ -591,7 +591,7 @@ public sealed class ConsentManagerServiceTests
             {
                 callCount++;
                 if (callCount == 1) return mockButton.Object;
-                throw new Exception("Query failed");
+                throw new InvalidOperationException("Query failed");
             });
 
         var service = CreateService();
@@ -859,6 +859,7 @@ public sealed class ConsentManagerServiceTests
     #region Logging Tests
 
     [Fact]
+#pragma warning disable CA1873 // Justification: Test mock verification - intentional evaluation
     public async Task HandleConsentAsync_LogsDebugMessages()
     {
         var mockLogger = new Mock<ILogger<ConsentManagerService>>();
@@ -879,8 +880,10 @@ public sealed class ConsentManagerServiceTests
             It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)),
             Times.AtLeastOnce);
     }
+#pragma warning restore CA1873
 
     [Fact]
+#pragma warning disable CA1873 // Justification: Test mock verification - intentional evaluation
     public async Task HandleConsentAsync_Detected_LogsInfoMessage()
     {
         var mockLogger = new Mock<ILogger<ConsentManagerService>>();
@@ -905,8 +908,10 @@ public sealed class ConsentManagerServiceTests
             It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)),
             Times.AtLeastOnce);
     }
+#pragma warning restore CA1873
 
     [Fact]
+#pragma warning disable CA1873 // Justification: Test mock verification - intentional evaluation
     public async Task HandleConsentAsync_WarningBannerStillPresent_LogsWarning()
     {
         var mockLogger = new Mock<ILogger<ConsentManagerService>>();
@@ -931,6 +936,7 @@ public sealed class ConsentManagerServiceTests
             It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)),
             Times.AtLeastOnce);
     }
+#pragma warning restore CA1873
 
     #endregion
 }

@@ -70,7 +70,10 @@ public sealed class FreeProxyScraperTests : IDisposable
     [Fact]
     public void Constructor_NullHttpClient_ThrowsArgumentNullException()
     {
-        Action act = () => new FreeProxyScraper(null!, NullLogger<FreeProxyScraper>.Instance);
+        Action act = () =>
+        {
+            _ = new FreeProxyScraper(null!, NullLogger<FreeProxyScraper>.Instance);
+        };
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("httpClient");
     }
@@ -81,7 +84,10 @@ public sealed class FreeProxyScraperTests : IDisposable
         var mockHandler = CreateMockHandler();
         var httpClient = CreateMockHttpClient(mockHandler);
 
-        Action act = () => new FreeProxyScraper(httpClient, null!);
+        Action act = () =>
+        {
+            _ = new FreeProxyScraper(httpClient, null!);
+        };
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
     }
@@ -616,6 +622,7 @@ public sealed class FreeProxyScraperTests : IDisposable
     #region Logging Tests
 
     [Fact]
+#pragma warning disable CA1873 // Justification: Test mock verification - intentional evaluation
     public async Task FetchProxiesAsync_Success_LogsScrapedCount()
     {
         var mockLogger = new Mock<ILogger<FreeProxyScraper>>();
@@ -641,6 +648,7 @@ public sealed class FreeProxyScraperTests : IDisposable
             It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)),
             Times.AtLeastOnce);
     }
+#pragma warning restore CA1873
 
     [Fact]
     public async Task FetchProxiesAsync_Failure_HandlesGracefully()
