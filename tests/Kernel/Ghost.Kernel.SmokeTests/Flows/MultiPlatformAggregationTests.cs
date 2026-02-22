@@ -6,6 +6,7 @@ using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Smoke.Tests.Assertions;
 using Ghost.Smoke.Tests.Integration;
+using Ghost.Testing.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
@@ -31,7 +32,7 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
         _serviceProvider = fixture.ServiceProvider;
     }
 
-    [Fact(Skip = "Depends on external platform integrations that are disabled in tests")]
+    [ConditionalFact("MultiPlatform")]
     public async Task AggregateSearch_AllPlatforms_Returns_DiverseResults()
     {
         // Arrange
@@ -103,7 +104,7 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
             "there should be good diversity in job titles (not all duplicates)");
     }
 
-    [Fact(Skip = "Depends on external platform integrations that are disabled in tests")]
+    [ConditionalFact("MultiPlatform")]
     public async Task PlatformCoverage_Verifies_AllPlatforms_Are_Healthy()
     {
         // Arrange
@@ -249,7 +250,7 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
         // as some platforms might be temporarily unavailable or rate-limited
     }
 
-    [Fact(Skip = "Depends on external platform integrations that are disabled in tests")]
+    [ConditionalFact("MultiPlatform")]
     public async Task DataDiversity_AcrossPlatforms_Has_DifferentJobs()
     {
         // Arrange
