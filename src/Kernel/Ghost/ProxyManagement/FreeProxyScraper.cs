@@ -35,8 +35,10 @@ public class FreeProxyScraper : IProxySource
 
     public FreeProxyScraper(HttpClient httpClient, ILogger<FreeProxyScraper> logger)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(httpClient);
+        ArgumentNullException.ThrowIfNull(logger);
+        _httpClient = httpClient;
+        _logger = logger;
     }
 
     /// <summary>
@@ -179,8 +181,11 @@ public class FreeProxyScraper : IProxySource
             {
                 foreach (ProxyScanProxy proxy in proxyArray)
                 {
-                    string server = $"http://{proxy.Ip}:{proxy.Port}";
-                    proxies.Add(new ProxyInfo(server, null, null));
+                    if (!string.IsNullOrWhiteSpace(proxy.Ip) && !string.IsNullOrWhiteSpace(proxy.Port))
+                    {
+                        string server = $"http://{proxy.Ip}:{proxy.Port}";
+                        proxies.Add(new ProxyInfo(server, null, null));
+                    }
                 }
             }
 

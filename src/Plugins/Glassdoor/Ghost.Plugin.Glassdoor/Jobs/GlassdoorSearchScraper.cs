@@ -72,8 +72,10 @@ public sealed class GlassdoorSearchScraper : IDisposable
         ILogger<GlassdoorSearchScraper> logger,
         IProxyProvider? proxyProvider = null)
     {
-        _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(kernel);
+        ArgumentNullException.ThrowIfNull(options);
+        _kernel = kernel;
+        _options = options.Value;
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GlassdoorSearchScraper>.Instance;
         _proxyProvider = proxyProvider;
         _consentService = new ConsentManagerService(null);

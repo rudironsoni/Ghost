@@ -55,7 +55,8 @@ public sealed class ProxyHealthChecker
     /// </summary>
     public ProxyHealthChecker(HttpClient httpClient, ILogger<ProxyHealthChecker>? logger = null)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        ArgumentNullException.ThrowIfNull(httpClient);
+        _httpClient = httpClient;
         _logger = logger ?? NullLogger<ProxyHealthChecker>.Instance;
     }
 

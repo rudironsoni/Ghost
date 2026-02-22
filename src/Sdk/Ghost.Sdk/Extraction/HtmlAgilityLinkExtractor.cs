@@ -17,6 +17,7 @@ public sealed class HtmlAgilityLinkExtractor : ILinkExtractor
 
     public IEnumerable<string> ExtractLinks(string html, string baseUrl)
     {
+        // Eager validation (before yield to ensure exceptions are thrown immediately)
         ArgumentNullException.ThrowIfNull(html);
         ArgumentNullException.ThrowIfNull(baseUrl);
 
@@ -25,6 +26,11 @@ public sealed class HtmlAgilityLinkExtractor : ILinkExtractor
             throw new ArgumentException("Base URL must be a valid absolute URI.", nameof(baseUrl));
         }
 
+        return ExtractLinksIterator(html, baseUri);
+    }
+
+    private IEnumerable<string> ExtractLinksIterator(string html, Uri baseUri)
+    {
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
@@ -117,12 +123,17 @@ public sealed class HtmlAgilityLinkExtractor : ILinkExtractor
 
         try
         {
-            if (Uri.TryCreate(href, UriKind.Absolute, out Uri? uri))
+            // Check if href is already an absolute URI with http/https scheme
+            // Note: On Unix/Linux, paths starting with "/" are treated as absolute file URIs,
+            // so we need to explicitly check for http/https schemes
+            if (Uri.TryCreate(href, UriKind.Absolute, out Uri? uri) &&
+                (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
             {
                 absoluteUrl = uri.AbsoluteUri;
                 return true;
             }
 
+            // Resolve relative URI against base URI
             if (Uri.TryCreate(baseUri, href, out uri))
             {
                 absoluteUrl = uri.AbsoluteUri;

@@ -142,7 +142,7 @@ public class FakePageHermeticTests
         var page = new FakePage();
 
         // Act
-        Func<Task> act = async () => await page.DisposeAsync().ConfigureAwait(false);
+        Func<Task> act = async () => await page.DisposeAsync();
 
         // Assert
         await act.Should().NotThrowAsync();

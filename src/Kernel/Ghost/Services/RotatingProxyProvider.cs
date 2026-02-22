@@ -39,8 +39,10 @@ public class RotatingProxyProvider : IProxyProvider
 
     public RotatingProxyProvider(IEnumerable<IProxySource> sources, ILogger<RotatingProxyProvider> logger)
     {
-        _sources = sources ?? throw new ArgumentNullException(nameof(sources));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(sources);
+        ArgumentNullException.ThrowIfNull(logger);
+        _sources = sources;
+        _logger = logger;
     }
 
     public async Task<ProxyInfo?> GetProxyAsync(string countryCode, CancellationToken token = default)

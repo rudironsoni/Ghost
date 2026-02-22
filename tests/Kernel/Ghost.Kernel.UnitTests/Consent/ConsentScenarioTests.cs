@@ -29,7 +29,7 @@ public class ConsentScenarioTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _scenarioServer = await ScenarioServer.CreateAsync().ConfigureAwait(false);
+        _scenarioServer = await ScenarioServer.CreateAsync();
         _output.WriteLine($"Scenario server started at {_scenarioServer.BaseUrl}");
     }
 
@@ -37,7 +37,7 @@ public class ConsentScenarioTests : IAsyncLifetime
     {
         if (_scenarioServer != null)
         {
-            await _scenarioServer.StopAsync().ConfigureAwait(false);
+            await _scenarioServer.StopAsync();
             _scenarioServer.Dispose();
         }
     }
@@ -56,14 +56,14 @@ public class ConsentScenarioTests : IAsyncLifetime
 
     private static async Task NavigateWithCleanConsentAsync(IPage page, string url)
     {
-        await page.NavigateAsync(url).ConfigureAwait(false);
-        await ClearConsentCookiesAsync(page).ConfigureAwait(false);
-        await page.ReloadAsync().ConfigureAwait(false);
+        await page.NavigateAsync(url);
+        await ClearConsentCookiesAsync(page);
+        await page.ReloadAsync();
     }
 
     private static async Task AssertSelectorVisibleAsync(IPage page, string selector)
     {
-        bool exists = await page.QuerySelectorAsync(selector).ConfigureAwait(false) is not null;
+        bool exists = await page.QuerySelectorAsync(selector) is not null;
         bool isVisible = await page.EvaluateAsync<bool>("""
             (sel) => {
                 const el = document.querySelector(sel);
@@ -71,12 +71,12 @@ public class ConsentScenarioTests : IAsyncLifetime
                 const style = window.getComputedStyle(el);
                 return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
             }
-            """, selector).ConfigureAwait(false);
+            """, selector);
 
         if (!exists || !isVisible)
         {
-            string cookies = await page.EvaluateAsync<string>("document.cookie").ConfigureAwait(false);
-            string content = await page.GetContentAsync().ConfigureAwait(false);
+            string cookies = await page.EvaluateAsync<string>("document.cookie");
+            string content = await page.GetContentAsync();
             string snippet = content.Length > 600 ? content[..600] : content;
             Assert.Fail($"Selector '{selector}' exists={exists} visible={isVisible} url={page.Url} cookies='{cookies}' content='{snippet}'");
         }
@@ -95,17 +95,17 @@ public class ConsentScenarioTests : IAsyncLifetime
                     const style = window.getComputedStyle(el);
                     return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
                 }
-                """, selector).ConfigureAwait(false);
+                """, selector);
 
             if (isVisible)
             {
                 return;
             }
 
-            await Task.Delay(100).ConfigureAwait(false);
+            await Task.Delay(100);
         }
 
-        string cookies = await page.EvaluateAsync<string>("document.cookie").ConfigureAwait(false);
+        string cookies = await page.EvaluateAsync<string>("document.cookie");
         Assert.Fail($"Timed out waiting for selector '{selector}' to be visible. url={page.Url} cookies='{cookies}'");
     }
 
@@ -122,17 +122,17 @@ public class ConsentScenarioTests : IAsyncLifetime
                     const style = window.getComputedStyle(el);
                     return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
                 }
-                """, selector).ConfigureAwait(false);
+                """, selector);
 
             if (!isVisible)
             {
                 return;
             }
 
-            await Task.Delay(100).ConfigureAwait(false);
+            await Task.Delay(100);
         }
 
-        string cookies = await page.EvaluateAsync<string>("document.cookie").ConfigureAwait(false);
+        string cookies = await page.EvaluateAsync<string>("document.cookie");
         Assert.Fail($"Timed out waiting for selector '{selector}' to be hidden. url={page.Url} cookies='{cookies}'");
     }
 

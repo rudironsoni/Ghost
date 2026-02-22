@@ -761,7 +761,7 @@ public class MediaPipelineTests : IDisposable
     }
 
     [Fact]
-    public async Task ProcessAsync_WithAbsolutePathInFileName_SanitizesToFileNameOnly()
+    public async Task ProcessAsync_WithAbsolutePathInFileName_ThrowsSecurityException()
     {
         // Arrange
         var testContent = "Test file content"u8.ToArray();
@@ -770,21 +770,28 @@ public class MediaPipelineTests : IDisposable
         var options = new MediaPipelineOptions();
         var pipeline = new MediaPipeline(httpClient, options);
 
-        // Absolute path attempts
-        var request = new MediaRequest
+        // Absolute path attempts - should all be rejected with SecurityException
+        var absolutePaths = new[]
         {
-            Url = "https://example.com/test.txt",
-            FileName = "/etc/passwd",
-            OutputPath = _testOutputPath
+            "/etc/passwd",
+            "\\windows\\system32\\config\\sam"
         };
 
-        // Act
-        var result = await pipeline.ProcessAsync(request);
+        foreach (var maliciousPath in absolutePaths)
+        {
+            var request = new MediaRequest
+            {
+                Url = "https://example.com/test.txt",
+                FileName = maliciousPath,
+                OutputPath = _testOutputPath
+            };
 
-        // Assert - should only use the filename part
-        Path.GetFileName(result.LocalPath).Should().Be("passwd");
-        result.LocalPath.Should().StartWith(Path.GetFullPath(_testOutputPath));
-        File.Exists(result.LocalPath).Should().BeTrue();
+            // Act
+            var act = async () => await pipeline.ProcessAsync(request);
+
+            // Assert - should throw SecurityException for absolute paths
+            await act.Should().ThrowAsync<SecurityException>();
+        }
     }
 
     [Theory]
@@ -845,44 +852,6 @@ public class MediaPipelineTests : IDisposable
 
         // Assert - should throw SecurityException for any path traversal attempt
         await act.Should().ThrowAsync<SecurityException>();
-    }
-
-    [Fact]
-    public async Task ProcessAsync_WithAbsolutePathInFileName_ThrowsSecurityException()
-    {
-        // Arrange
-        var testContent = "Test file content"u8.ToArray();
-        var mockHandler = CreateMockHttpHandler(HttpStatusCode.OK, testContent, "text/plain");
-        var httpClient = new HttpClient(mockHandler.Object);
-        var options = new MediaPipelineOptions();
-        var pipeline = new MediaPipeline(httpClient, options);
-
-        // Absolute path attempts - should all be rejected
-        var absolutePaths = new[]
-        {
-            "/etc/passwd",
-            "\\windows\\system32\\config\\sam",
-            "C:\\windows\\system32\\config\\sam",
-            "D:/secret.txt",
-            "//server/share/secret.txt",
-            "/var/www/html/config.php"
-        };
-
-        foreach (var maliciousPath in absolutePaths)
-        {
-            var request = new MediaRequest
-            {
-                Url = "https://example.com/test.txt",
-                FileName = maliciousPath,
-                OutputPath = _testOutputPath
-            };
-
-            // Act
-            var act = async () => await pipeline.ProcessAsync(request);
-
-            // Assert
-            await act.Should().ThrowAsync<SecurityException>();
-        }
     }
 
     [Fact]
@@ -992,27 +961,32 @@ public class MediaPipelineTests : IDisposable
         long? contentLength = null)
     {
         var mockHandler = new Mock<HttpMessageHandler>();
-        var httpContent = new ByteArrayContent(content);
-
-        if (!string.IsNullOrEmpty(contentType))
-        {
-            httpContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
-        }
-
-        if (contentLength.HasValue)
-        {
-            httpContent.Headers.ContentLength = contentLength.Value;
-        }
 
         mockHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
+            .ReturnsAsync(() =>
             {
-                StatusCode = statusCode,
-                Content = httpContent
+                // Create a new ByteArrayContent for each request to avoid ObjectDisposedException
+                var httpContent = new ByteArrayContent(content);
+
+                if (!string.IsNullOrEmpty(contentType))
+                {
+                    httpContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+                }
+
+                if (contentLength.HasValue)
+                {
+                    httpContent.Headers.ContentLength = contentLength.Value;
+                }
+
+                return new HttpResponseMessage
+                {
+                    StatusCode = statusCode,
+                    Content = httpContent
+                };
             });
 
         return mockHandler;

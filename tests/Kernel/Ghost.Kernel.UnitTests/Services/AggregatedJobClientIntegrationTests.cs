@@ -266,7 +266,7 @@ public class AggregatedJobClientIntegrationTests
 
         // Act
         cts.Cancel();
-        Func<Task> act = async () => await client.SearchJobsAsync(criteria, cts.Token).ConfigureAwait(false);
+        Func<Task> act = async () => await client.SearchJobsAsync(criteria, cts.Token);
 
         // Assert
         await act.Should().ThrowAsync<OperationCanceledException>();
@@ -329,7 +329,7 @@ public class AggregatedJobClientIntegrationTests
         mockScraper1.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
             .Returns(Task.Run(async () =>
             {
-                await Task.Delay(200).ConfigureAwait(false);
+                await Task.Delay(200);
                 return new List<JobListing>
                 {
                     new() { Id = "1", Title = "Software Engineer", Company = "Company A", Source = "Google" }
@@ -341,7 +341,7 @@ public class AggregatedJobClientIntegrationTests
         mockScraper2.Setup(s => s.SearchJobsAsync(It.IsAny<JobSearchCriteria>(), It.IsAny<CancellationToken>()))
             .Returns(Task.Run(async () =>
             {
-                await Task.Delay(200).ConfigureAwait(false);
+                await Task.Delay(200);
                 return new List<JobListing>
                 {
                     new() { Id = "2", Title = "Data Scientist", Company = "Company B", Source = "Glassdoor" }

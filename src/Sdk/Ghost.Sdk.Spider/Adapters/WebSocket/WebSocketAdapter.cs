@@ -60,7 +60,8 @@ public class WebSocketAdapter : IContentAdapter, IDisposable
     /// <param name="logger">Optional logger for diagnostic information.</param>
     public WebSocketAdapter(WebSocketAdapterOptions options, ILogger<WebSocketAdapter>? logger = null)
     {
-        _defaultOptions = options ?? throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(options);
+        _defaultOptions = options;
         _logger = logger;
     }
 

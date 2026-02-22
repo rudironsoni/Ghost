@@ -32,9 +32,12 @@ public class ApiProxySource : IProxySource
 
     public ApiProxySource(HttpClient http, ProxySourceConfig config, ILogger<ApiProxySource> logger)
     {
-        _http = http ?? throw new ArgumentNullException(nameof(http));
-        _config = config ?? throw new ArgumentNullException(nameof(config));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(http);
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentNullException.ThrowIfNull(logger);
+        _http = http;
+        _config = config;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<ProxyInfo>> FetchProxiesAsync(CancellationToken ct)

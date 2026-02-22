@@ -28,7 +28,7 @@ public sealed class DedupeContract : ProviderContractBase
         };
 
         // Get jobs from multiple pages to test deduplication
-        IReadOnlyList<JobListing> jobs = await adapter.SearchWithPaginationAsync(criteria, maxPages: 3, ct).ConfigureAwait(false);
+        IReadOnlyList<JobListing> jobs = await adapter.SearchWithPaginationAsync(criteria, maxPages: 3, ct);
 
         if (jobs.Count == 0)
         {

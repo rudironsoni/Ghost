@@ -142,10 +142,12 @@ public class GoogleJobsApiClient : IDisposable
     /// </summary>
     public GoogleJobsApiClient(HttpClient http, GoogleJobsOptions options, ILogger<GoogleJobsApiClient> logger)
     {
-        _http = http ?? throw new ArgumentNullException(nameof(http));
+        ArgumentNullException.ThrowIfNull(http);
+        ArgumentNullException.ThrowIfNull(logger);
+        _http = http;
         _sessionOrchestrator = null;
         _options = options ?? new GoogleJobsOptions();
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
         _cookieContainer = new CookieContainer();
         _retryPolicy = EnhancedRetryPolicy.CreatePolicy(logger, maxRetries: 3, enableJitter: true);
     }
@@ -156,10 +158,12 @@ public class GoogleJobsApiClient : IDisposable
     [ActivatorUtilitiesConstructor]
     public GoogleJobsApiClient(ISessionOrchestrator sessionOrchestrator, GoogleJobsOptions options, ILogger<GoogleJobsApiClient> logger)
     {
+        ArgumentNullException.ThrowIfNull(sessionOrchestrator);
+        ArgumentNullException.ThrowIfNull(logger);
         _http = null;
-        _sessionOrchestrator = sessionOrchestrator ?? throw new ArgumentNullException(nameof(sessionOrchestrator));
+        _sessionOrchestrator = sessionOrchestrator;
         _options = options ?? new GoogleJobsOptions();
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
         _cookieContainer = new CookieContainer();
         _retryPolicy = EnhancedRetryPolicy.CreatePolicy(logger, maxRetries: 3, enableJitter: true);
     }

@@ -48,7 +48,8 @@ public abstract class ReliabilityTestBase : IAsyncLifetime, IDisposable
     /// <param name="output">The test output helper for logging.</param>
     protected ReliabilityTestBase(ITestOutputHelper output)
     {
-        Output = output ?? throw new ArgumentNullException(nameof(output));
+        ArgumentNullException.ThrowIfNull(output);
+        Output = output;
     }
 
     /// <summary>
@@ -81,7 +82,7 @@ public abstract class ReliabilityTestBase : IAsyncLifetime, IDisposable
     {
         if (_diagnostics != null)
         {
-            await _diagnostics.DisposeAsync().ConfigureAwait(false);
+            await _diagnostics.DisposeAsync();
         }
 
         Dispose();
@@ -132,7 +133,7 @@ public abstract class ReliabilityTestBase : IAsyncLifetime, IDisposable
             return string.Empty;
         }
 
-        return await _diagnostics.CaptureFailureAsync(page, exception).ConfigureAwait(false);
+        return await _diagnostics.CaptureFailureAsync(page, exception);
     }
 
     /// <summary>

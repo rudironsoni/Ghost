@@ -70,9 +70,12 @@ public sealed class GeographicProxySelector : IDisposable
         ILogger<GeographicProxySelector> logger,
         IOptions<GeographicTargetingOptions> options)
     {
-        _healthIntelligence = healthIntelligence ?? throw new ArgumentNullException(nameof(healthIntelligence));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(healthIntelligence);
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(options);
+        _healthIntelligence = healthIntelligence;
+        _logger = logger;
+        _options = options.Value;
         _countryRegionMapping = new CountryRegionMapping(_options);
     }
 

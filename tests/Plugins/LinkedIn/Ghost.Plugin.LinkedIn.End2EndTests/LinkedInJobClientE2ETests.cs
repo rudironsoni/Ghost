@@ -34,7 +34,7 @@ public sealed class LinkedInJobClientE2ETests : IAsyncLifetime
     public async Task InitializeAsync()
     {
         _linkedInFixture = new LinkedInE2EFixture(_browserFixture);
-        await _linkedInFixture.InitializeAsync().ConfigureAwait(false);
+        await _linkedInFixture.InitializeAsync();
         _serviceProvider = _linkedInFixture.ServiceProvider;
     }
 
@@ -42,7 +42,7 @@ public sealed class LinkedInJobClientE2ETests : IAsyncLifetime
     {
         if (_linkedInFixture != null)
         {
-            await _linkedInFixture.DisposeAsync().ConfigureAwait(false);
+            await _linkedInFixture.DisposeAsync();
         }
     }
 
@@ -332,7 +332,7 @@ public sealed class LinkedInJobClientE2ETests : IAsyncLifetime
             CancellationToken ct = default)
         {
             // LinkedIn client doesn't support pagination directly, return all results
-            IReadOnlyList<JobListing> results = await _client.SearchJobsAsync(criteria, ct).ConfigureAwait(false);
+            IReadOnlyList<JobListing> results = await _client.SearchJobsAsync(criteria, ct);
             return results;
         }
 
@@ -356,8 +356,8 @@ public sealed class LinkedInJobClientE2ETests : IAsyncLifetime
             JobSearchCriteria criteria,
             CancellationToken ct = default)
         {
-            IReadOnlyList<JobListing> first = await _client.SearchJobsAsync(criteria, ct).ConfigureAwait(false);
-            IReadOnlyList<JobListing> second = await _client.SearchJobsAsync(criteria, ct).ConfigureAwait(false);
+            IReadOnlyList<JobListing> first = await _client.SearchJobsAsync(criteria, ct);
+            IReadOnlyList<JobListing> second = await _client.SearchJobsAsync(criteria, ct);
             return (first, second);
         }
     }

@@ -84,7 +84,7 @@ public sealed class ContractRunner
 
         foreach (IProviderContract contract in _contracts)
         {
-            ContractResult result = await contract.ExecuteAsync(adapter, ct).ConfigureAwait(false);
+            ContractResult result = await contract.ExecuteAsync(adapter, ct);
             results.Add(result);
         }
 

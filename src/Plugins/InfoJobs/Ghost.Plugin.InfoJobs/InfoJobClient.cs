@@ -13,8 +13,10 @@ public sealed class InfoJobClient : Ghost.IJobScraper
 
     public InfoJobClient(Internal.InfoJobsApiClient api, ILogger<InfoJobClient> logger)
     {
-        _api = api ?? throw new ArgumentNullException(nameof(api));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(api);
+        ArgumentNullException.ThrowIfNull(logger);
+        _api = api;
+        _logger = logger;
     }
 
     public string PlatformName => "InfoJobs";

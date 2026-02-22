@@ -45,7 +45,7 @@ public sealed class CassetteStore
 
         await using FileStream stream = File.OpenRead(path);
         return await JsonSerializer.DeserializeAsync<CassetteEnvelope>(stream, SerializerOptions, cancellationToken)
-            .ConfigureAwait(false);
+            ;
     }
 
     public async Task WriteAsync(string key, CassetteEnvelope envelope, CancellationToken cancellationToken = default)
@@ -57,7 +57,7 @@ public sealed class CassetteStore
 
         await using (FileStream stream = File.Create(tempPath))
         {
-            await JsonSerializer.SerializeAsync(stream, envelope, SerializerOptions, cancellationToken).ConfigureAwait(false);
+            await JsonSerializer.SerializeAsync(stream, envelope, SerializerOptions, cancellationToken);
         }
 
         File.Move(tempPath, path, overwrite: true);

@@ -92,7 +92,7 @@ public class ConsentManagerService
         // CookieFirst
         new ConsentManagerDefinition(
             "cookiefirst",
-            new[] { "[data-cookiefirst-action], #cookiefirst, '#cf-root'" },
+            new[] { "[data-cookiefirst-action]", "#cookiefirst", "#cf-root" },
             new[] { "[data-cookiefirst-action='accept']", "#cf-accept", "[data-cf-action='accept']" }
         ),
 
@@ -106,7 +106,7 @@ public class ConsentManagerService
         // Generic - accept all buttons (fallback)
         new ConsentManagerDefinition(
             "generic-accept",
-            new[] { ".cookie-banner", "#cookie-banner", "[class*='cookie-consent']", "[id*='cookie-consent']" },
+            new[] { ".cookie-banner", "#cookie-banner", "[class*='cookie-consent']", "[id*='cookie-consent']", "[class*='accept-all']", "[id*='accept-all']" },
             new[] {
                 "button[class*='accept']:not([class*='reject']):not([class*='decline'])",
                 "button[id*='accept']:not([id*='reject']):not([id*='decline'])",
@@ -142,15 +142,17 @@ public class ConsentManagerService
     /// <returns>True if consent was handled, false otherwise</returns>
     public async Task<bool> HandleConsentAsync(IPage page, int timeoutMs = 5000)
     {
+        ArgumentNullException.ThrowIfNull(page);
+
         _logger.LogDebug("Checking for consent banners...");
 
         foreach (ConsentManagerDefinition manager in ConsentManagers)
         {
             try
             {
-                // Check if this consent manager is present
-                bool detected = await DetectConsentManagerAsync(page, manager, timeoutMs).ConfigureAwait(false);
-                if (!detected)
+                // Check if this consent manager is present and get the detected element
+                IElement? detectedElement = await DetectConsentManagerAsync(page, manager, timeoutMs).ConfigureAwait(false);
+                if (detectedElement == null)
                     continue;
 
                 if (_logger.IsEnabled(LogLevel.Information))
@@ -159,7 +161,7 @@ public class ConsentManagerService
                 }
 
                 // Try to accept/click the consent
-                bool handled = await AcceptConsentAsync(page, manager, timeoutMs).ConfigureAwait(false);
+                bool handled = await AcceptConsentAsync(page, manager, detectedElement, timeoutMs).ConfigureAwait(false);
                 if (handled)
                 {
                     if (_logger.IsEnabled(LogLevel.Information))
@@ -171,8 +173,8 @@ public class ConsentManagerService
                     await Task.Delay(1000).ConfigureAwait(false);
 
                     // Check if banner is actually gone
-                    bool stillPresent = await DetectConsentManagerAsync(page, manager, 1000).ConfigureAwait(false);
-                    if (!stillPresent)
+                    IElement? stillPresent = await DetectConsentManagerAsync(page, manager, 1000).ConfigureAwait(false);
+                    if (stillPresent == null)
                     {
                         if (_logger.IsEnabled(LogLevel.Information))
                         {
@@ -205,7 +207,8 @@ public class ConsentManagerService
     /// <summary>
     /// Checks if a specific consent manager is present on the page
     /// </summary>
-    private async Task<bool> DetectConsentManagerAsync(IPage page, ConsentManagerDefinition manager, int timeoutMs)
+    /// <returns>The detected element if found and visible, null otherwise</returns>
+    private async Task<IElement?> DetectConsentManagerAsync(IPage page, ConsentManagerDefinition manager, int timeoutMs)
     {
         foreach (string selector in manager.DetectionSelectors)
         {
@@ -221,7 +224,7 @@ public class ConsentManagerService
                         {
                             _logger.LogDebug("Found iframe consent manager: {Selector}", selector);
                         }
-                        return true;
+                        return frame;
                     }
                 }
                 else
@@ -238,7 +241,7 @@ public class ConsentManagerService
                             {
                                 _logger.LogDebug("Found consent element: {Selector}", selector);
                             }
-                            return true;
+                            return element;
                         }
                     }
                 }
@@ -249,14 +252,15 @@ public class ConsentManagerService
             }
         }
 
-        return false;
+        return null;
     }
 
     /// <summary>
     /// Attempts to click the accept/agree button for a consent manager
     /// </summary>
-    private async Task<bool> AcceptConsentAsync(IPage page, ConsentManagerDefinition manager, int timeoutMs)
+    private async Task<bool> AcceptConsentAsync(IPage page, ConsentManagerDefinition manager, IElement? detectedElement, int timeoutMs)
     {
+        // First try the acceptance selectors
         foreach (string selector in manager.AcceptanceSelectors)
         {
             try
@@ -317,6 +321,44 @@ public class ConsentManagerService
                 if (_logger.IsEnabled(LogLevel.Debug))
                 {
                     _logger.LogDebug(ex, "Failed to click selector {Selector}", selector);
+                }
+            }
+        }
+
+        // If no acceptance button found, try clicking the detected element itself
+        // This handles cases where the detection selector returns the button directly
+        if (detectedElement != null && !manager.IsIframe)
+        {
+            try
+            {
+                bool isVisible = await detectedElement.IsVisibleAsync().ConfigureAwait(false);
+                bool isEnabled = await detectedElement.IsEnabledAsync().ConfigureAwait(false);
+
+                if (isVisible && isEnabled)
+                {
+                    if (_logger.IsEnabled(LogLevel.Debug))
+                    {
+                        _logger.LogDebug("Clicking detected element as fallback");
+                    }
+
+                    try
+                    {
+                        await detectedElement.ClickAsync().ConfigureAwait(false);
+                        return true;
+                    }
+                    catch
+                    {
+                        // Try to click via JavaScript as fallback
+                        await page.EvaluateAsync<object>("document.querySelector('button')?.click()").ConfigureAwait(false);
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug(ex, "Failed to click detected element as fallback");
                 }
             }
         }

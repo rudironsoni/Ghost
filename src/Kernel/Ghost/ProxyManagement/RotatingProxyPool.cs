@@ -36,9 +36,12 @@ public sealed class RotatingProxyPool : IDisposable
         FreeProxyHealthChecker healthChecker,
         ILogger<RotatingProxyPool> logger)
     {
-        _scraper = scraper ?? throw new ArgumentNullException(nameof(scraper));
-        _healthChecker = healthChecker ?? throw new ArgumentNullException(nameof(healthChecker));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(scraper);
+        ArgumentNullException.ThrowIfNull(healthChecker);
+        ArgumentNullException.ThrowIfNull(logger);
+        _scraper = scraper;
+        _healthChecker = healthChecker;
+        _logger = logger;
     }
 
     /// <summary>

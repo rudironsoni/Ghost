@@ -48,8 +48,10 @@ public sealed class LinkedInSessionPool : IDisposable
         LinkedInSessionPoolOptions options,
         ILogger<LinkedInSessionPool> logger)
     {
-        _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(kernel);
+        ArgumentNullException.ThrowIfNull(options);
+        _kernel = kernel;
+        _options = options;
         _logger = logger ?? NullLogger<LinkedInSessionPool>.Instance;
         _proxyProvider = NullProxyProvider.Instance;
         _linkedInOptions = new LinkedInOptions();

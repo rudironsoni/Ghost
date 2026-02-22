@@ -12,6 +12,9 @@
     <WarningsNotAsErrors>CA1866;CA1310;CA1822;CA1707;CA1826;CA2201</WarningsNotAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Ghost.Plugin.LinkedIn.UnitTests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\..\Kernel\Ghost\Ghost.csproj" />
     <ProjectReference Include="..\..\..\Platform\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
     <ProjectReference Include="..\..\..\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />

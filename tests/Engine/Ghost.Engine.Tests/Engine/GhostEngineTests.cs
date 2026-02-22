@@ -181,14 +181,14 @@ public class GhostEngineTests
         {
             for (int i = 0; i < 5; i++)
             {
-                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(10, cancellationToken);
                 yield return new GhostRequest($"http://example.com/{i}", "GET", new Dictionary<string, string>(), null, null);
             }
         }
 
         public async Task<SpiderOutput> ParseAsync(GhostResponse response, GhostEngineContext context, CancellationToken cancellationToken = default)
         {
-            await Task.Delay(50, cancellationToken).ConfigureAwait(false); // Simulate slow processing
+            await Task.Delay(50, cancellationToken); // Simulate slow processing
             return new SpiderOutput(EmptyRequests, EmptyItems);
         }
     }
@@ -204,7 +204,7 @@ public class GhostEngineTests
             while (!cancellationToken.IsCancellationRequested)
             {
                 yield return new GhostRequest($"http://example.com/{Interlocked.Increment(ref _counter)}", "GET", new Dictionary<string, string>(), null, null);
-                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(10, cancellationToken);
             }
         }
 
@@ -251,7 +251,7 @@ public class GhostEngineTests
                 Interlocked.CompareExchange(ref _counter.MaxInFlightObserved, current, max);
             }
 
-            await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(50, cancellationToken);
 
             Interlocked.Decrement(ref _counter.InFlightCount);
 

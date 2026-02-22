@@ -15,8 +15,18 @@ using Xunit;
 
 namespace Ghost.Kernel.UnitTests.Services;
 
-public sealed class FreeProxyScraperTests
+public sealed class FreeProxyScraperTests : IDisposable
 {
+    private readonly CancellationTokenSource _cts = new(TimeSpan.FromSeconds(30));
+
+    public void Dispose()
+    {
+        _cts.Cancel();
+        _cts.Dispose();
+    }
+
+    private CancellationToken CancellationToken => _cts.Token;
+
     private static Mock<HttpMessageHandler> CreateMockHandler()
     {
         return new Mock<HttpMessageHandler>();
@@ -119,7 +129,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         // proxy-list.download returns 3 (2 from http + 1 from https)
@@ -145,7 +155,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         // 1.2.3.4:8080 (deduplicated), 5.6.7.8:3128, 9.10.11.12:8080
@@ -174,7 +184,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(2);
@@ -195,7 +205,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
 
         proxies.Should().BeEmpty();
     }
@@ -214,7 +224,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
 
         proxies.Should().BeEmpty();
     }
@@ -233,7 +243,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(2);
@@ -255,7 +265,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
 
         proxies.Should().BeEmpty();
     }
@@ -274,7 +284,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(1);
@@ -295,7 +305,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(2);
@@ -320,7 +330,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(2);
@@ -342,7 +352,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
 
         proxies.Should().BeEmpty();
     }
@@ -361,7 +371,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
 
         proxies.Should().BeEmpty();
     }
@@ -380,7 +390,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
 
         proxies.Should().BeEmpty();
     }
@@ -400,7 +410,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(1);
@@ -422,7 +432,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(1);
@@ -467,7 +477,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        Func<Task> act = async () => await scraper.FetchProxiesAsync(CancellationToken.None);
+        Func<Task> act = async () => await scraper.FetchProxiesAsync(CancellationToken);
         var exception = await act.Should().ThrowAsync<OperationCanceledException>();
         exception.Which.Message.Should().Be("User cancelled");
     }
@@ -500,7 +510,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(1);
@@ -526,7 +536,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(1);
@@ -551,7 +561,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(1);
@@ -575,7 +585,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(2);
@@ -595,7 +605,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(2);
@@ -609,6 +619,7 @@ public sealed class FreeProxyScraperTests
     public async Task FetchProxiesAsync_Success_LogsScrapedCount()
     {
         var mockLogger = new Mock<ILogger<FreeProxyScraper>>();
+        mockLogger.Setup(x => x.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
         var mockHandler = CreateMockHandler();
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
@@ -620,7 +631,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, mockLogger.Object);
 
-        await scraper.FetchProxiesAsync(CancellationToken.None);
+        await scraper.FetchProxiesAsync(CancellationToken);
 
         mockLogger.Verify(x => x.Log(
             LogLevel.Information,
@@ -648,7 +659,7 @@ public sealed class FreeProxyScraperTests
         var scraper = new FreeProxyScraper(httpClient, mockLogger.Object);
 
         // Should complete without throwing
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
 
         proxies.Should().BeEmpty();
     }
@@ -671,7 +682,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(1);
@@ -694,7 +705,7 @@ public sealed class FreeProxyScraperTests
         var httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken.None);
+        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(4);

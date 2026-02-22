@@ -37,10 +37,10 @@ public sealed class IndeedE2EFixture : IAsyncLifetime
         try
         {
             // Start the TestScraperServer for Indeed HTML fixtures
-            _testServer = await TestScraperServer.CreateAsync().ConfigureAwait(false);
+            _testServer = await TestScraperServer.CreateAsync();
 
             // Create a fresh session for this test class
-            _session = await _browserFixture.CreateSessionAsync().ConfigureAwait(false);
+            _session = await _browserFixture.CreateSessionAsync();
 
             // Build configuration
             Configuration = new ConfigurationBuilder()
@@ -97,12 +97,12 @@ public sealed class IndeedE2EFixture : IAsyncLifetime
     {
         if (_session != null)
         {
-            await _session.DisposeAsync().ConfigureAwait(false);
+            await _session.DisposeAsync();
         }
 
         if (_testServer != null)
         {
-            await _testServer.DisposeAsync().ConfigureAwait(false);
+            await _testServer.DisposeAsync();
         }
     }
 }

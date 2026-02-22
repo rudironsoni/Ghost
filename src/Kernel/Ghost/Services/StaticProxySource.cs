@@ -35,8 +35,10 @@ public sealed class StaticProxySource : IProxySource
 
     public StaticProxySource(ProxySourceConfig config, ILogger<StaticProxySource> logger)
     {
-        _config = config ?? throw new ArgumentNullException(nameof(config));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentNullException.ThrowIfNull(logger);
+        _config = config;
+        _logger = logger;
     }
 
     public Task<IEnumerable<ProxyInfo>> FetchProxiesAsync(CancellationToken ct)

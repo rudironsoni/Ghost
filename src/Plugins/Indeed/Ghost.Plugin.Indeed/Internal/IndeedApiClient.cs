@@ -125,12 +125,13 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         HttpMessageHandler? handler,
         TimeProvider timeProvider)
     {
+        ArgumentNullException.ThrowIfNull(logger);
         _proxyProvider = proxyProvider;
         _sessionOrchestrator = sessionOrchestrator;
         _country = options.Country;
         _apiKey = options.ApiKey;
         _apiEndpoint = options.ApiEndpoint;
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
         _timeProvider = timeProvider ?? TimeProvider.System;
 
         _baseHeaders = BuildBaseHeaders(_country, _apiKey, out string? contentTypeHeader);

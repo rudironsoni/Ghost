@@ -116,8 +116,10 @@ public class WebSocketConnection : IDisposable
     /// <exception cref="ArgumentNullException">Thrown when url or options is null.</exception>
     public WebSocketConnection(string url, WebSocketAdapterOptions options)
     {
-        Url = url ?? throw new ArgumentNullException(nameof(url));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(url);
+        ArgumentNullException.ThrowIfNull(options);
+        Url = url;
+        _options = options;
         _webSocket = new ClientWebSocket();
         _messageBuffer = new MessageBuffer(options.BufferSize);
 

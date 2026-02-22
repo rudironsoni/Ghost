@@ -16,8 +16,10 @@ public sealed class GhostBuilder
 
     internal GhostBuilder(IServiceCollection services, IConfiguration configuration)
     {
-        _services = services ?? throw new ArgumentNullException(nameof(services));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+        _services = services;
+        _configuration = configuration;
     }
 
     /// <summary>

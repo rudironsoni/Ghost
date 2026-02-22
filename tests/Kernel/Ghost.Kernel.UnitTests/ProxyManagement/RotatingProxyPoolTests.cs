@@ -55,7 +55,7 @@ public sealed class RotatingProxyPoolTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await pool.ReportProxyResultAsync(null!, true, TimeSpan.Zero).ConfigureAwait(false));
+            async () => await pool.ReportProxyResultAsync(null!, true, TimeSpan.Zero));
     }
 
     [Fact]

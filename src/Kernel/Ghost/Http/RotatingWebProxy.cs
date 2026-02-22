@@ -19,7 +19,8 @@ public sealed class RotatingWebProxy : IWebProxy, IDisposable
 
     public RotatingWebProxy(IProxyProvider provider, TimeSpan? cacheDuration = null)
     {
-        _provider = provider ?? throw new ArgumentNullException(nameof(provider));
+        ArgumentNullException.ThrowIfNull(provider);
+        _provider = provider;
         _cacheDuration = cacheDuration ?? TimeSpan.FromMinutes(5);
 
         // Start background refresh timer - fire-and-forget is intentional

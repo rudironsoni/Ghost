@@ -103,6 +103,6 @@ public sealed class FreeProxyScraperTests
 
         // Act & Assert
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            async () => await scraper.FetchProxiesAsync(cts.Token).ConfigureAwait(false));
+            async () => await scraper.FetchProxiesAsync(cts.Token));
     }
 }

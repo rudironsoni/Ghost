@@ -32,7 +32,7 @@ public sealed class ConsentComplianceContract : ProviderContractBase
         try
         {
             // Test consent flow handling
-            IReadOnlyList<JobListing> jobs = await adapter.TestConsentFlowAsync(criteria, ct).ConfigureAwait(false);
+            IReadOnlyList<JobListing> jobs = await adapter.TestConsentFlowAsync(criteria, ct);
 
             context["JobsReturned"] = jobs.Count;
 

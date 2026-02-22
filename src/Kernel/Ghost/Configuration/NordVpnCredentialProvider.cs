@@ -36,8 +36,10 @@ public class ConfigurationNordVpnCredentialProvider : INordVpnCredentialProvider
         IConfiguration configuration,
         ILogger<ConfigurationNordVpnCredentialProvider> logger)
     {
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(logger);
+        _configuration = configuration;
+        _logger = logger;
     }
 
     public NordVpnCredentials? GetCredentials()

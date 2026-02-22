@@ -21,7 +21,8 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
 
     public AggregatedJobClient(IEnumerable<IJobScraper> scrapers, IDeduplicationService dedupe, ILogger<AggregatedJobClient> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(logger);
+        _logger = logger;
         // materialize the incoming enumerable so we can inspect it reliably at runtime
         _scrapers = (scrapers ?? Enumerable.Empty<IJobScraper>()).ToList();
         _dedupe = dedupe;

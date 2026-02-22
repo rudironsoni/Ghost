@@ -14,7 +14,7 @@ namespace Ghost.Smoke.Tests.Smoke;
 /// Test fixture that runs the Ghost WebAPI in-memory using WebApplicationFactory.
 /// This eliminates the need for a manually started server for smoke tests.
 /// </summary>
-public sealed class GhostWebApiFixture : WebApplicationFactory<object>, IAsyncLifetime
+public sealed class GhostWebApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private HttpClient? _httpClient;
 
@@ -124,9 +124,9 @@ public sealed class GhostWebApiFixture : WebApplicationFactory<object>, IAsyncLi
     public async Task<TResponse?> GetAsync<TResponse>(string requestUri, ITestOutputHelper? output = null)
     {
         output?.WriteLine($"GET {requestUri}");
-        HttpResponseMessage response = await HttpClient.GetAsync(requestUri).ConfigureAwait(false);
+        HttpResponseMessage response = await HttpClient.GetAsync(requestUri);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<TResponse>().ConfigureAwait(false);
+        return await response.Content.ReadFromJsonAsync<TResponse>();
     }
 
     /// <summary>
@@ -146,9 +146,9 @@ public sealed class GhostWebApiFixture : WebApplicationFactory<object>, IAsyncLi
         ITestOutputHelper? output = null)
     {
         output?.WriteLine($"POST {requestUri}");
-        HttpResponseMessage response = await HttpClient.PostAsJsonAsync(requestUri, request).ConfigureAwait(false);
+        HttpResponseMessage response = await HttpClient.PostAsJsonAsync(requestUri, request);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<TResponse>().ConfigureAwait(false);
+        return await response.Content.ReadFromJsonAsync<TResponse>();
     }
 
     /// <summary>

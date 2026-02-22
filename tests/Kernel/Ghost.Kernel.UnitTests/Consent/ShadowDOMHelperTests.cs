@@ -16,7 +16,7 @@ public class ShadowDOMHelperTests
         // Act & Assert
 #pragma warning disable CS8604 // Possible null reference argument
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await ShadowDOMHelper.FindInShadowDOMAsync(page, ".test").ConfigureAwait(false));
+            async () => await ShadowDOMHelper.FindInShadowDOMAsync(page, ".test"));
 #pragma warning restore CS8604
     }
 
@@ -29,7 +29,7 @@ public class ShadowDOMHelperTests
         // Act & Assert
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await ShadowDOMHelper.FindInShadowDOMAsync(mockPage.Object, null).ConfigureAwait(false));
+            async () => await ShadowDOMHelper.FindInShadowDOMAsync(mockPage.Object, null));
 #pragma warning restore CS8625
     }
 
@@ -42,7 +42,7 @@ public class ShadowDOMHelperTests
         // Act & Assert
 #pragma warning disable CS8604 // Possible null reference argument
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await ShadowDOMHelper.ClickInShadowDOMAsync(page, ".test").ConfigureAwait(false));
+            async () => await ShadowDOMHelper.ClickInShadowDOMAsync(page, ".test"));
 #pragma warning restore CS8604
     }
 
@@ -55,7 +55,7 @@ public class ShadowDOMHelperTests
         // Act & Assert
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await ShadowDOMHelper.ClickInShadowDOMAsync(mockPage.Object, null).ConfigureAwait(false));
+            async () => await ShadowDOMHelper.ClickInShadowDOMAsync(mockPage.Object, null));
 #pragma warning restore CS8625
     }
 
@@ -68,7 +68,7 @@ public class ShadowDOMHelperTests
         // Act & Assert
 #pragma warning disable CS8604 // Possible null reference argument
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await ShadowDOMHelper.GetShadowRootCountAsync(page).ConfigureAwait(false));
+            async () => await ShadowDOMHelper.GetShadowRootCountAsync(page));
 #pragma warning restore CS8604
     }
 
@@ -138,7 +138,7 @@ public class ShadowDOMHelperTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            async () => await ShadowDOMHelper.FindInShadowDOMAsync(mockPage.Object, maliciousSelector).ConfigureAwait(false));
+            async () => await ShadowDOMHelper.FindInShadowDOMAsync(mockPage.Object, maliciousSelector));
     }
 
     [Theory]
@@ -154,7 +154,7 @@ public class ShadowDOMHelperTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            async () => await ShadowDOMHelper.ClickInShadowDOMAsync(mockPage.Object, maliciousSelector).ConfigureAwait(false));
+            async () => await ShadowDOMHelper.ClickInShadowDOMAsync(mockPage.Object, maliciousSelector));
     }
 
     [Theory]

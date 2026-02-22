@@ -147,7 +147,7 @@ public class GhostKernelHermeticTests
         IPage page = await session.NewPageAsync();
 
         // Act - Should not throw
-        Func<Task> act = async () => await page.ClickAsync("button").ConfigureAwait(false);
+        Func<Task> act = async () => await page.ClickAsync("button");
 
         // Assert
         await act.Should().NotThrowAsync();
@@ -164,7 +164,7 @@ public class GhostKernelHermeticTests
         IPage page = await session.NewPageAsync();
 
         // Act - Should not throw
-        Func<Task> act = async () => await page.TypeAsync("input", "test text").ConfigureAwait(false);
+        Func<Task> act = async () => await page.TypeAsync("input", "test text");
 
         // Assert
         await act.Should().NotThrowAsync();
@@ -181,7 +181,7 @@ public class GhostKernelHermeticTests
         IPage page = await session.NewPageAsync();
 
         // Act - Should not throw
-        Func<Task> act = async () => await page.FillAsync("input", "test value").ConfigureAwait(false);
+        Func<Task> act = async () => await page.FillAsync("input", "test value");
 
         // Assert
         await act.Should().NotThrowAsync();

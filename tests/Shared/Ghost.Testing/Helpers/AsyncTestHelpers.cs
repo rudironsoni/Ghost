@@ -19,12 +19,12 @@ public static class AsyncTestHelpers
 
         while (DateTime.UtcNow < deadline)
         {
-            if (await condition().ConfigureAwait(false))
+            if (await condition())
             {
                 return true;
             }
 
-            await Task.Delay(interval.Value).ConfigureAwait(false);
+            await Task.Delay(interval.Value);
         }
 
         return false;
@@ -36,7 +36,7 @@ public static class AsyncTestHelpers
     public static async Task<T> WithTimeoutAsync<T>(Task<T> task, TimeSpan timeout)
     {
         using var cts = new CancellationTokenSource(timeout);
-        Task completedTask = await Task.WhenAny(task, Task.Delay(timeout, cts.Token)).ConfigureAwait(false);
+        Task completedTask = await Task.WhenAny(task, Task.Delay(timeout, cts.Token));
 
         if (completedTask != task)
         {
@@ -44,7 +44,7 @@ public static class AsyncTestHelpers
         }
 
         cts.Cancel();
-        return await task.ConfigureAwait(false);
+        return await task;
     }
 
     /// <summary>
@@ -63,7 +63,7 @@ public static class AsyncTestHelpers
         {
             try
             {
-                return await operation().ConfigureAwait(false);
+                return await operation();
             }
             catch (Exception ex)
             {
@@ -77,7 +77,7 @@ public static class AsyncTestHelpers
 
                 var delay = TimeSpan.FromMilliseconds(
                     initialDelay.Value.TotalMilliseconds * Math.Pow(2, attempts - 1));
-                await Task.Delay(delay).ConfigureAwait(false);
+                await Task.Delay(delay);
             }
         }
 

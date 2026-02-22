@@ -98,9 +98,11 @@ public class MemoryFileHybridCache : IScrapeCache, IDisposable
         string diskCachePath,
         ILogger<MemoryFileHybridCache> logger)
     {
-        _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
+        ArgumentNullException.ThrowIfNull(memoryCache);
+        ArgumentNullException.ThrowIfNull(logger);
+        _memoryCache = memoryCache;
         _diskCachePath = diskCachePath ?? "/var/ghost/cache";
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
         _locks = new ConcurrentDictionary<string, SemaphoreSlim>();
         _stats = new CacheStatistics();
 

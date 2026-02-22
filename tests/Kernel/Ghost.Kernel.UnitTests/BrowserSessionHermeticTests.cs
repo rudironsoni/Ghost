@@ -114,7 +114,7 @@ public class BrowserSessionHermeticTests
         var session = new FakeBrowserSession();
 
         // Act - Should not throw
-        Func<Task> act = async () => await session.SaveStorageStateAsync("/tmp/state.json").ConfigureAwait(false);
+        Func<Task> act = async () => await session.SaveStorageStateAsync("/tmp/state.json");
 
         // Assert
         await act.Should().NotThrowAsync();

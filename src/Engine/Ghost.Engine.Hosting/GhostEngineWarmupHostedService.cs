@@ -11,8 +11,10 @@ internal sealed class GhostEngineWarmupHostedService : IHostedService
 
     public GhostEngineWarmupHostedService(IGhostEngine engine, IRequestScheduler scheduler)
     {
-        _engine = engine ?? throw new ArgumentNullException(nameof(engine));
-        _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
+        ArgumentNullException.ThrowIfNull(engine);
+        ArgumentNullException.ThrowIfNull(scheduler);
+        _engine = engine;
+        _scheduler = scheduler;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)

@@ -78,9 +78,12 @@ public class AdapterFactory
         IServiceProvider serviceProvider,
         ILogger<AdapterFactory> logger)
     {
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(registry);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        ArgumentNullException.ThrowIfNull(logger);
+        _registry = registry;
+        _serviceProvider = serviceProvider;
+        _logger = logger;
     }
 
     /// <summary>

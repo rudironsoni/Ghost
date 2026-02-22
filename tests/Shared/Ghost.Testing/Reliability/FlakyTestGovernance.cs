@@ -115,8 +115,8 @@ public sealed class QuarantineExpiredException : Exception
 /// </summary>
 public sealed class FlakyTestTracker
 {
-    private static readonly ConcurrentDictionary<string, TestStabilityMetrics> _metrics = new();
-    private static readonly string _metricsFilePath = Path.Combine(
+    private readonly ConcurrentDictionary<string, TestStabilityMetrics> _metrics = new();
+    private readonly string _metricsFilePath = Path.Combine(
         Path.GetTempPath(),
         "Ghost.Testing",
         "flaky-test-metrics.json");
@@ -142,7 +142,7 @@ public sealed class FlakyTestTracker
     /// <param name="testName">The fully qualified test name.</param>
     /// <param name="passed">Whether the test passed.</param>
     /// <param name="executionTimeMs">The test execution time in milliseconds.</param>
-    public static void RecordExecution(string testName, bool passed, long executionTimeMs)
+    public void RecordExecution(string testName, bool passed, long executionTimeMs)
     {
         TestStabilityMetrics metrics = _metrics.GetOrAdd(testName, _ => new TestStabilityMetrics { TestName = testName });
 
@@ -185,7 +185,7 @@ public sealed class FlakyTestTracker
     /// </summary>
     /// <param name="testName">The fully qualified test name.</param>
     /// <returns>The stability metrics, or null if not found.</returns>
-    public static TestStabilityMetrics? GetMetrics(string testName)
+    public TestStabilityMetrics? GetMetrics(string testName)
     {
         return _metrics.TryGetValue(testName, out TestStabilityMetrics? metrics) ? metrics : null;
     }
@@ -194,7 +194,7 @@ public sealed class FlakyTestTracker
     /// Gets all metrics.
     /// </summary>
     /// <returns>All test stability metrics.</returns>
-    public static IReadOnlyDictionary<string, TestStabilityMetrics> GetAllMetrics()
+    public IReadOnlyDictionary<string, TestStabilityMetrics> GetAllMetrics()
     {
         return _metrics.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
     }
@@ -205,7 +205,7 @@ public sealed class FlakyTestTracker
     /// <param name="minExecutions">Minimum executions required for analysis (default: 10).</param>
     /// <param name="flakeThreshold">Flake threshold (default: 0.1 for 10% failure rate).</param>
     /// <returns>List of potentially flaky tests.</returns>
-    public static List<FlakyTestCandidate> DetectFlakyTests(int minExecutions = 10, double flakeThreshold = 0.1)
+    public List<FlakyTestCandidate> DetectFlakyTests(int minExecutions = 10, double flakeThreshold = 0.1)
     {
         List<FlakyTestCandidate> candidates = [];
 
@@ -253,7 +253,7 @@ public sealed class FlakyTestTracker
     /// </summary>
     /// <param name="windowDays">The window in days (default: 14).</param>
     /// <returns>The flake rate as a percentage.</returns>
-    public static double CalculateFlakeRate(int windowDays = FlakeBudgetWindowDays)
+    public double CalculateFlakeRate(int windowDays = FlakeBudgetWindowDays)
     {
         DateTime cutoffDate = DateTime.UtcNow.AddDays(-windowDays);
         int totalExecutions = 0;
@@ -281,7 +281,7 @@ public sealed class FlakyTestTracker
     /// Checks if the flake budget has been exceeded.
     /// </summary>
     /// <returns>True if the flake budget is exceeded, false otherwise.</returns>
-    public static bool IsFlakeBudgetExceeded()
+    public bool IsFlakeBudgetExceeded()
     {
         double flakeRate = CalculateFlakeRate();
         return flakeRate > FlakeBudgetTarget;
@@ -291,7 +291,7 @@ public sealed class FlakyTestTracker
     /// Generates a flake report.
     /// </summary>
     /// <returns>The flake report.</returns>
-    public static FlakeReport GenerateReport()
+    public FlakeReport GenerateReport()
     {
         List<FlakyTestCandidate> flakyTests = DetectFlakyTests();
         double flakeRate = CalculateFlakeRate();
@@ -312,7 +312,7 @@ public sealed class FlakyTestTracker
     /// <summary>
     /// Loads metrics from disk.
     /// </summary>
-    public static void LoadMetrics()
+    public void LoadMetrics()
     {
         try
         {
@@ -339,7 +339,7 @@ public sealed class FlakyTestTracker
     /// <summary>
     /// Saves metrics to disk.
     /// </summary>
-    private static void SaveMetrics()
+    private void SaveMetrics()
     {
         try
         {
@@ -361,7 +361,7 @@ public sealed class FlakyTestTracker
     /// <summary>
     /// Clears all metrics.
     /// </summary>
-    public static void ClearMetrics()
+    public void ClearMetrics()
     {
         _metrics.Clear();
         SaveMetrics();

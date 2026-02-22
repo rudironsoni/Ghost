@@ -28,7 +28,7 @@ public sealed class JsonFeedExporter : IFeedExporter
         _options = options ?? new JsonSerializerOptions
         {
             WriteIndented = false,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNamingPolicy = null,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
     }

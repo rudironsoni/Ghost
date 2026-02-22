@@ -25,7 +25,7 @@ public sealed class RequiredFieldsContract : ProviderContractBase
             Location = "remote"
         };
 
-        IReadOnlyList<JobListing> jobs = await adapter.GetJobsAsync(criteria, ct).ConfigureAwait(false);
+        IReadOnlyList<JobListing> jobs = await adapter.GetJobsAsync(criteria, ct);
 
         if (jobs.Count == 0)
         {

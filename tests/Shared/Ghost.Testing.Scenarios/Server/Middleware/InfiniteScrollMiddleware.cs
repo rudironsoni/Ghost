@@ -34,6 +34,6 @@ public sealed class InfiniteScrollMiddleware
             }
         }
 
-        await _next(context).ConfigureAwait(false);
+        await _next(context);
     }
 }

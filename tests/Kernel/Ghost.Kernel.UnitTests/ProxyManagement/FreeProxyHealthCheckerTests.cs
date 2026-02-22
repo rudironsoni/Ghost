@@ -19,7 +19,7 @@ public sealed class FreeProxyHealthCheckerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await checker.CheckHealthAsync(null!, CancellationToken.None).ConfigureAwait(false));
+            async () => await checker.CheckHealthAsync(null!, CancellationToken.None));
     }
 
     [Fact]

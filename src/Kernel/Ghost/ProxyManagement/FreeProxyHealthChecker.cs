@@ -34,7 +34,8 @@ public sealed class FreeProxyHealthChecker
 
     public FreeProxyHealthChecker(ILogger<FreeProxyHealthChecker> logger, TimeSpan timeout, double minimumSuccessRate)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(logger);
+        _logger = logger;
         _timeout = timeout;
         _minimumSuccessRate = minimumSuccessRate;
     }

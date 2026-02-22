@@ -18,7 +18,8 @@ public class CssSelector : ISelector
     /// <param name="attribute">The attribute name to extract. If null, extracts text content.</param>
     public CssSelector(string expression, string? attribute = null)
     {
-        Expression = expression ?? throw new ArgumentNullException(nameof(expression));
+        ArgumentNullException.ThrowIfNull(expression);
+        Expression = expression;
         Attribute = attribute;
         _parser = new HtmlParser();
     }

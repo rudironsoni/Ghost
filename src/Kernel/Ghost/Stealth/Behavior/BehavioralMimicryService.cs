@@ -16,7 +16,8 @@ public sealed partial class BehavioralMimicryService
     /// </summary>
     public BehavioralMimicryService(ILogger<BehavioralMimicryService> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(logger);
+        _logger = logger;
         Mouse = new MouseMimicry();
         Scroll = new ScrollMimicry();
         Timing = new TimingMimicry();

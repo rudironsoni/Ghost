@@ -76,8 +76,10 @@ public class StaticHtmlAdapter : IContentAdapter
         StaticHtmlAdapterOptions options,
         ILogger<StaticHtmlAdapter>? logger = null)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _defaultOptions = options ?? throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(httpClient);
+        ArgumentNullException.ThrowIfNull(options);
+        _httpClient = httpClient;
+        _defaultOptions = options;
         _logger = logger;
 
         ConfigureHttpClient(options);

@@ -27,7 +27,8 @@ public class Socks5Bridge : IDisposable
 
     public Socks5Bridge(string upstreamHost, int upstreamPort, string? username, string? password)
     {
-        _upstreamHost = upstreamHost ?? throw new ArgumentNullException(nameof(upstreamHost));
+        ArgumentNullException.ThrowIfNull(upstreamHost);
+        _upstreamHost = upstreamHost;
         _upstreamPort = upstreamPort;
         _username = username;
         _password = password;

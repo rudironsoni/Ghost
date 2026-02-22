@@ -17,7 +17,8 @@ public partial class XAuthenticator
         IOptions<XOptions> options,
         ILogger<XAuthenticator> logger)
     {
-        _session = session ?? throw new ArgumentNullException(nameof(session));
+        ArgumentNullException.ThrowIfNull(session);
+        _session = session;
         _options = options?.Value ?? new XOptions();
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<XAuthenticator>.Instance;
     }

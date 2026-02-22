@@ -37,9 +37,12 @@ public sealed class SessionOrchestrator : ISessionOrchestrator, IAsyncDisposable
         IOptions<SessionOrchestratorOptions> options,
         ILogger<SessionOrchestrator>? logger = null)
     {
-        _proxyProvider = proxyProvider ?? throw new ArgumentNullException(nameof(proxyProvider));
-        _browserPool = browserPool ?? throw new ArgumentNullException(nameof(browserPool));
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(proxyProvider);
+        ArgumentNullException.ThrowIfNull(browserPool);
+        ArgumentNullException.ThrowIfNull(options);
+        _proxyProvider = proxyProvider;
+        _browserPool = browserPool;
+        _options = options.Value;
         _logger = logger ?? NullLogger<SessionOrchestrator>.Instance;
 
         _options.Validate();
