@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Smoke.Tests.Assertions;
+using Ghost.Testing.Attributes;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -27,7 +28,7 @@ public class InfoJobsIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _client = _fixture.GetJobClient("infojobs");
     }
 
-    [Fact(Skip = "InfoJobs plugin not migrated to new structure")]
+    [ConditionalFact("InfoJobs")]
     public async Task Search_RealJobs_Returns_Populated_Fresh_Data()
     {
         // Arrange
@@ -70,7 +71,7 @@ public class InfoJobsIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _output.WriteLine($"Source: {sampleJob.Source}");
     }
 
-    [Fact(Skip = "InfoJobs plugin not migrated to new structure")]
+    [ConditionalFact("InfoJobs")]
     public async Task Search_WithLocation_Returns_Jobs_In_Location()
     {
         // Arrange
@@ -108,7 +109,7 @@ public class InfoJobsIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         }
     }
 
-    [Fact(Skip = "InfoJobs plugin not migrated to new structure")]
+    [ConditionalFact("InfoJobs")]
     public async Task GetJobDetails_ById_Returns_Valid_Data()
     {
         // Arrange

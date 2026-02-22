@@ -6,6 +6,7 @@ using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Smoke.Tests.Assertions;
 using Ghost.Smoke.Tests.Integration;
+using Ghost.Testing.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
@@ -31,7 +32,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _serviceProvider = fixture.ServiceProvider;
     }
 
-    [Fact(Skip = "Depends on external platform integrations that are disabled in tests")]
+    [ConditionalFact("MultiPlatform")]
     public async Task SearchAndGetDetails_Flow_ValidatesDataConsistency()
     {
         // Arrange
@@ -120,7 +121,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _output.WriteLine($"  - Salary: {jobDetails.Salary ?? "Not specified"}");
     }
 
-    [Fact(Skip = "Depends on external platform integrations that are disabled in tests")]
+    [ConditionalFact("MultiPlatform")]
     public async Task Search_WithFilters_Returns_RelevantResults()
     {
         // Arrange
@@ -193,7 +194,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         }
     }
 
-    [Fact(Skip = "Depends on external platform integrations that are disabled in tests")]
+    [ConditionalFact("MultiPlatform")]
     public async Task Search_AllPlatforms_AggregatesRealData()
     {
         // Arrange
@@ -271,7 +272,7 @@ public class EndToEndIntegrationTests : IClassFixture<PlatformIntegrationTestFix
         _output.WriteLine($"Fresh jobs (within 90 days): {freshJobs}/{results.Count}");
     }
 
-    [Fact(Skip = "Depends on external platform integrations that are disabled in tests")]
+    [ConditionalFact("MultiPlatform")]
     public async Task GetJobDetails_ByPlatformId_Returns_ValidData()
     {
         // Arrange

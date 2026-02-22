@@ -33,6 +33,9 @@
     <!-- Kernel references -->
     <ProjectReference Include="../../../src/Kernel/Ghost/Ghost.csproj" />
 
+    <!-- Testing shared library -->
+    <ProjectReference Include="../../Shared/Ghost.Testing/Ghost.Testing.csproj" />
+
     <!-- WebAPI for integration testing -->
     <ProjectReference Include="../../../src/Apps/Ghost.WebApi/Ghost.WebApi.csproj" />
   </ItemGroup>

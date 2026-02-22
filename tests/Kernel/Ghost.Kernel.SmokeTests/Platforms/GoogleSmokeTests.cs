@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Smoke.Tests.Assertions;
+using Ghost.Testing.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
@@ -29,7 +30,7 @@ public class GoogleIntegrationTests : IClassFixture<PlatformIntegrationTestFixtu
         _client = _fixture.ServiceProvider.GetRequiredService<IJobClient>();
     }
 
-    [Fact(Skip = "Google Jobs integration unstable in test environment")]
+    [ConditionalFact("Google")]
     public async Task Search_RealJobs_Returns_Populated_Fresh_Data()
     {
         // Arrange
@@ -72,7 +73,7 @@ public class GoogleIntegrationTests : IClassFixture<PlatformIntegrationTestFixtu
         _output.WriteLine($"Source: {sampleJob.Source}");
     }
 
-    [Fact(Skip = "Google Jobs integration unstable in test environment")]
+    [ConditionalFact("Google")]
     public async Task Search_WithLocation_Returns_Jobs_In_Location()
     {
         // Arrange
@@ -110,7 +111,7 @@ public class GoogleIntegrationTests : IClassFixture<PlatformIntegrationTestFixtu
         }
     }
 
-    [Fact(Skip = "Google Jobs integration unstable in test environment")]
+    [ConditionalFact("Google")]
     public async Task GetJobDetails_ById_Returns_Valid_Data()
     {
         // Arrange

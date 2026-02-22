@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Smoke.Tests.Assertions;
+using Ghost.Testing.Attributes;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -27,7 +28,7 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         _output = output;
     }
 
-    [Fact(Skip = "Depends on external platform integrations that are disabled in tests")]
+    [ConditionalFact("MultiPlatform")]
     public async Task SearchJobs_AcrossAllPlatforms_Returns_Aggregated_Results()
     {
         // Arrange
@@ -81,7 +82,7 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
             "aggregation should return results from multiple platforms");
     }
 
-    [Fact(Skip = "Depends on external platform integrations that are disabled in tests")]
+    [ConditionalFact("MultiPlatform")]
     public async Task SearchJobs_WithMultiplePlatforms_Returns_Deduplicated_Results()
     {
         // Arrange
@@ -125,7 +126,7 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         // but job IDs should be unique (validated by AssertNoDuplicateJobs)
     }
 
-    [Fact(Skip = "Depends on external platform integrations that are disabled in tests")]
+    [ConditionalFact("MultiPlatform")]
     public async Task SearchJobs_WithLocation_AcrossPlatforms_Returns_LocationAware_Results()
     {
         // Arrange
@@ -182,7 +183,7 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         _output.WriteLine($"Found {remoteJobs.Count} remote jobs");
     }
 
-    [Fact(Skip = "Depends on external platform integrations that are disabled in tests")]
+    [ConditionalFact("MultiPlatform")]
     public async Task GetJobDetails_FromMultiplePlatforms_Returns_Valid_Data()
     {
         // Arrange

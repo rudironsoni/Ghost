@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Smoke.Tests.Assertions;
+using Ghost.Testing.Attributes;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -27,7 +28,7 @@ public class GlassdoorIntegrationTests : IClassFixture<PlatformIntegrationTestFi
         _client = _fixture.GetJobClient("glassdoor");
     }
 
-    [Fact(Skip = "Glassdoor returns relative URLs - plugin needs URL resolution fix")]
+    [ConditionalFact("Glassdoor")]
     public async Task Search_RealJobs_Returns_Populated_Fresh_Data()
     {
         // Arrange
@@ -70,7 +71,7 @@ public class GlassdoorIntegrationTests : IClassFixture<PlatformIntegrationTestFi
         _output.WriteLine($"Source: {sampleJob.Source}");
     }
 
-    [Fact(Skip = "Glassdoor returns relative URLs - plugin needs URL resolution fix")]
+    [ConditionalFact("Glassdoor")]
     public async Task Search_WithLocation_Returns_Jobs_In_Location()
     {
         // Arrange
@@ -108,7 +109,7 @@ public class GlassdoorIntegrationTests : IClassFixture<PlatformIntegrationTestFi
         }
     }
 
-    [Fact(Skip = "Glassdoor returns relative URLs - plugin needs URL resolution fix")]
+    [ConditionalFact("Glassdoor")]
     public async Task GetJobDetails_ById_Returns_Valid_Data()
     {
         // Arrange
