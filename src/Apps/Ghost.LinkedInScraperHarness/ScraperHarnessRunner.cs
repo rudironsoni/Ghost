@@ -24,8 +24,10 @@ public sealed class ScraperHarnessRunner : IHostedService
         IServiceProvider serviceProvider,
         IOptions<ScraperHarnessOptions> options)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        _logger = logger;
+        _serviceProvider = serviceProvider;
         _options = options?.Value ?? new ScraperHarnessOptions();
     }
 

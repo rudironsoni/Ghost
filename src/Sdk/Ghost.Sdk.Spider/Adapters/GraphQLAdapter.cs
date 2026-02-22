@@ -53,7 +53,8 @@ public class GraphQLAdapter : IContentAdapter
     /// <param name="logger">Optional logger for diagnostic information.</param>
     public GraphQLAdapter(HttpClient httpClient, ILogger<GraphQLAdapter>? logger = null)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        ArgumentNullException.ThrowIfNull(httpClient);
+        _httpClient = httpClient;
         _logger = logger;
     }
 

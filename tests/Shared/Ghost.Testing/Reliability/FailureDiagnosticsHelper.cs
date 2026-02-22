@@ -126,8 +126,8 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
 
         try
         {
-            byte[] screenshotBytes = await page.ScreenshotAsync().ConfigureAwait(false);
-            await File.WriteAllBytesAsync(path, screenshotBytes).ConfigureAwait(false);
+            byte[] screenshotBytes = await page.ScreenshotAsync();
+            await File.WriteAllBytesAsync(path, screenshotBytes);
 
             var artifact = new DiagnosticArtifact
             {
@@ -166,8 +166,8 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
 
         try
         {
-            string html = await page.GetContentAsync().ConfigureAwait(false);
-            await File.WriteAllTextAsync(path, html, Encoding.UTF8).ConfigureAwait(false);
+            string html = await page.GetContentAsync();
+            await File.WriteAllTextAsync(path, html, Encoding.UTF8);
 
             var artifact = new DiagnosticArtifact
             {
@@ -219,8 +219,8 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
                 })();
             ";
 
-            string logs = await page.EvaluateAsync<string>(logsScript).ConfigureAwait(false);
-            await File.WriteAllTextAsync(path, logs, Encoding.UTF8).ConfigureAwait(false);
+            string logs = await page.EvaluateAsync<string>(logsScript);
+            await File.WriteAllTextAsync(path, logs, Encoding.UTF8);
 
             var artifact = new DiagnosticArtifact
             {
@@ -259,7 +259,7 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
 
         try
         {
-            string? title = await page.GetTitleAsync().ConfigureAwait(false);
+            string? title = await page.GetTitleAsync();
             var metadata = new
             {
                 Url = page.Url,
@@ -272,7 +272,7 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
             };
 
             string json = JsonSerializer.Serialize(metadata, s_jsonOptions);
-            await File.WriteAllTextAsync(path, json, Encoding.UTF8).ConfigureAwait(false);
+            await File.WriteAllTextAsync(path, json, Encoding.UTF8);
 
             var artifact = new DiagnosticArtifact
             {
@@ -405,7 +405,7 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
                 exceptionText += $"\nInner Exception:\n{exception.InnerException}";
             }
 
-            await File.WriteAllTextAsync(exceptionPath, exceptionText, Encoding.UTF8).ConfigureAwait(false);
+            await File.WriteAllTextAsync(exceptionPath, exceptionText, Encoding.UTF8);
             _capturedArtifacts.Add(new DiagnosticArtifact
             {
                 Type = ArtifactType.Exception,
@@ -418,10 +418,10 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
         // Capture browser artifacts if page is available
         if (page != null)
         {
-            await CaptureScreenshotAsync(page).ConfigureAwait(false);
-            await CaptureDomSnapshotAsync(page).ConfigureAwait(false);
-            await CaptureConsoleLogsAsync(page).ConfigureAwait(false);
-            await CapturePageMetadataAsync(page).ConfigureAwait(false);
+            await CaptureScreenshotAsync(page);
+            await CaptureDomSnapshotAsync(page);
+            await CaptureConsoleLogsAsync(page);
+            await CapturePageMetadataAsync(page);
         }
 
         // Capture timeline
@@ -430,7 +430,7 @@ public sealed class FailureDiagnosticsHelper : IAsyncDisposable
         // Generate summary
         string summaryPath = Path.Combine(_diagnosticsRoot, "diagnostics-summary.txt");
         string summary = GenerateSummary();
-        await File.WriteAllTextAsync(summaryPath, summary, Encoding.UTF8).ConfigureAwait(false);
+        await File.WriteAllTextAsync(summaryPath, summary, Encoding.UTF8);
 
         AddTimelineEvent("DiagnosticsComplete", $"All artifacts captured to {_diagnosticsRoot}");
         Output.WriteLine($"[Diagnostics] Failure diagnostics captured to: {_diagnosticsRoot}");

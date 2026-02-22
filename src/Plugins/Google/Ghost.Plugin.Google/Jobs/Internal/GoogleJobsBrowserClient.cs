@@ -66,8 +66,10 @@ public sealed class GoogleJobsBrowserClient
         IOptions<GoogleJobsOptions> options,
         ILogger<GoogleJobsBrowserClient> logger)
     {
-        _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(kernel);
+        ArgumentNullException.ThrowIfNull(options);
+        _kernel = kernel;
+        _options = options;
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GoogleJobsBrowserClient>.Instance;
     }
 

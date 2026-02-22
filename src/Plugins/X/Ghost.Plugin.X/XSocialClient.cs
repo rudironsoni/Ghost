@@ -24,11 +24,14 @@ public partial class XSocialClient : ISocialClient
         XThreadComposer threadComposer,
         XSimulationValidator? simulationValidator = null)
     {
-        _session = session ?? throw new ArgumentNullException(nameof(session));
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(authenticator);
+        ArgumentNullException.ThrowIfNull(threadComposer);
+        _session = session;
         _options = options?.Value ?? new XOptions();
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<XSocialClient>.Instance;
-        _authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
-        _threadComposer = threadComposer ?? throw new ArgumentNullException(nameof(threadComposer));
+        _authenticator = authenticator;
+        _threadComposer = threadComposer;
         _simulationValidator = simulationValidator;
     }
 

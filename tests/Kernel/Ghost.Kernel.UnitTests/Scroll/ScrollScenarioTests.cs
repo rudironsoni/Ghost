@@ -29,7 +29,7 @@ public class ScrollScenarioTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _scenarioServer = await ScenarioServer.CreateAsync().ConfigureAwait(false);
+        _scenarioServer = await ScenarioServer.CreateAsync();
         _output.WriteLine($"Scenario server started at {_scenarioServer.BaseUrl}");
     }
 
@@ -37,7 +37,7 @@ public class ScrollScenarioTests : IAsyncLifetime
     {
         if (_scenarioServer != null)
         {
-            await _scenarioServer.StopAsync().ConfigureAwait(false);
+            await _scenarioServer.StopAsync();
             _scenarioServer.Dispose();
         }
     }

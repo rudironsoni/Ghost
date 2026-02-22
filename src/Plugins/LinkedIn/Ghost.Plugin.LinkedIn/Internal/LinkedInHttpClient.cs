@@ -45,10 +45,12 @@ public sealed class LinkedInHttpClient
         ILogger<LinkedInHttpClient> logger,
         ICountryDomainProvider countryProvider)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        ArgumentNullException.ThrowIfNull(httpClient);
+        ArgumentNullException.ThrowIfNull(countryProvider);
+        _httpClient = httpClient;
         _options = options?.Value ?? new LinkedInOptions();
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<LinkedInHttpClient>.Instance;
-        _countryProvider = countryProvider ?? throw new ArgumentNullException(nameof(countryProvider));
+        _countryProvider = countryProvider;
 
         // Configure default headers to mimic a real browser
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");

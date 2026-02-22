@@ -174,7 +174,18 @@ internal sealed class PathRule
         // Handle wildcard patterns
         if (Pattern.Contains('*'))
         {
-            string regex = "^" + System.Text.RegularExpressions.Regex.Escape(Pattern).Replace("\\*", ".*") + ".*";
+            // Check if pattern ends with $ (end anchor)
+            bool endsWithAnchor = Pattern.EndsWith('$');
+            string patternToConvert = endsWithAnchor ? Pattern[..^1] : Pattern;
+
+            string regex = "^" + System.Text.RegularExpressions.Regex.Escape(patternToConvert).Replace("\\*", ".*");
+
+            // If pattern didn't end with $, allow any suffix
+            if (!endsWithAnchor)
+            {
+                regex += ".*";
+            }
+
             return System.Text.RegularExpressions.Regex.IsMatch(path, regex);
         }
 

@@ -40,8 +40,16 @@ public class RobotsMiddleware : IRobotsMiddleware
         ArgumentNullException.ThrowIfNull(url);
         ArgumentNullException.ThrowIfNull(userAgent);
 
+        // Relative URLs cannot be checked - require absolute URL with http/https scheme
         if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
             return false;
+
+        // Must be http or https scheme (not file:// etc.)
+        if (!string.Equals(uri.Scheme, "http", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(uri.Scheme, "https", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
 
         string baseUrl = $"{uri.Scheme}://{uri.Host}";
 
@@ -90,8 +98,16 @@ public class RobotsMiddleware : IRobotsMiddleware
             }
             else
             {
-                // No robots.txt or error - allow all by default
-                _robotsCache[baseUrl] = new RobotsTxt();
+                // No robots.txt or error - respect AllowOnError option
+                var robotsTxt = new RobotsTxt();
+                if (!_options.AllowOnError)
+                {
+                    // When AllowOnError is false, add a disallow all rule
+                    var rules = new UserAgentRules();
+                    rules.AddDisallow("/");
+                    robotsTxt.AddRules("*", rules);
+                }
+                _robotsCache[baseUrl] = robotsTxt;
             }
         }
         catch (TaskCanceledException)

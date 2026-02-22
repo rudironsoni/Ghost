@@ -82,7 +82,7 @@ public sealed class AbstractionsContractSmokeTests
             GhostEngineContext context,
             [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            await Task.CompletedTask.ConfigureAwait(false);
+            await Task.CompletedTask;
             yield return new GhostRequest("https://example.test", "GET", new Dictionary<string, string>(), null, null);
         }
 

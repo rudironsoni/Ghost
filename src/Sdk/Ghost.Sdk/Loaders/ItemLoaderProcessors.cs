@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace Ghost.Sdk.Loaders;
 
@@ -21,7 +22,19 @@ public static partial class ItemLoaderProcessors
     public static Func<string, string> Join(string separator)
     {
         ArgumentNullException.ThrowIfNull(separator);
-        return s => s?.Replace(",", separator) ?? string.Empty;
+        return s =>
+        {
+            if (string.IsNullOrWhiteSpace(s))
+            {
+                return string.Empty;
+            }
+
+            // Split by comma, trim each value, filter empty ones, then join with separator
+            IEnumerable<string> values = s.Split(',')
+                .Select(v => v.Trim())
+                .Where(v => !string.IsNullOrEmpty(v));
+            return string.Join(separator, values);
+        };
     }
 
     /// <summary>

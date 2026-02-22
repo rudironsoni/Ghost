@@ -13,8 +13,10 @@ public class GhostKernelHostedService : IHostedService
 
     public GhostKernelHostedService(GhostKernel kernel, IHostApplicationLifetime lifetime)
     {
-        _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
-        _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
+        ArgumentNullException.ThrowIfNull(kernel);
+        ArgumentNullException.ThrowIfNull(lifetime);
+        _kernel = kernel;
+        _lifetime = lifetime;
 
         // Register for application stopping as a fail-safe shutdown hook
         _lifetime.ApplicationStopping.Register(OnStopping);

@@ -13,7 +13,8 @@ internal sealed class JsonLdParser
 
     public JsonLdParser(IJsonLdExtractor extractor)
     {
-        _extractor = extractor ?? throw new ArgumentNullException(nameof(extractor));
+        ArgumentNullException.ThrowIfNull(extractor);
+        _extractor = extractor;
     }
 
     public JobListing? Parse(string html, string jobId, string url)

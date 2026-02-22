@@ -25,7 +25,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
                 Headless = true,
                 EnableStealth = false,
                 MaxConcurrentSessions = 50
-            }).ConfigureAwait(false);
+            });
 
             var options = new TieredBrowserPoolOptions
             {
@@ -51,11 +51,11 @@ public class TieredBrowserPoolTests : IAsyncLifetime
 
             _pool = new TieredBrowserPool(_kernel, options, NullLogger<TieredBrowserPool>.Instance);
 
-            await Task.Delay(2000).ConfigureAwait(false);
+            await Task.Delay(2000);
         }
         catch
         {
-            await DisposeAsync().ConfigureAwait(false);
+            await DisposeAsync();
             throw;
         }
     }
@@ -63,10 +63,10 @@ public class TieredBrowserPoolTests : IAsyncLifetime
     public async Task DisposeAsync()
     {
         if (_pool != null)
-            await _pool.DisposeAsync().ConfigureAwait(false);
+            await _pool.DisposeAsync();
 
         if (_kernel != null)
-            await _kernel.DisposeAsync().ConfigureAwait(false);
+            await _kernel.DisposeAsync();
     }
 
     [Fact]
@@ -183,7 +183,7 @@ public class TieredBrowserPoolTests : IAsyncLifetime
     {
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
         {
-            await _pool!.ReturnBrowserAsync(null!).ConfigureAwait(false);
+            await _pool!.ReturnBrowserAsync(null!);
         });
     }
 
@@ -284,15 +284,15 @@ public class TieredBrowserPoolTests : IAsyncLifetime
         Task[] tasks = Enumerable.Range(0, maxConcurrent + 5)
             .Select(async _ =>
             {
-                IBrowserSession session = await pool.AcquireBrowserAsync(Tier.Cold).ConfigureAwait(false);
+                IBrowserSession session = await pool.AcquireBrowserAsync(Tier.Cold);
 
                 try
                 {
-                    await Task.Delay(100).ConfigureAwait(false);
+                    await Task.Delay(100);
                 }
                 finally
                 {
-                    await pool.ReturnBrowserAsync(session).ConfigureAwait(false);
+                    await pool.ReturnBrowserAsync(session);
                 }
             })
             .ToArray();

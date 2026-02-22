@@ -29,8 +29,10 @@ internal class HttpRequestBuilder
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="request"/> or <paramref name="options"/> is null.</exception>
     public HttpRequestBuilder(Request request, StaticHtmlAdapterOptions options)
     {
-        _request = request ?? throw new ArgumentNullException(nameof(request));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(options);
+        _request = request;
+        _options = options;
     }
 
     /// <summary>

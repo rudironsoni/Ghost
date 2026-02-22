@@ -62,8 +62,10 @@ public class WebhookStorage : IStorage
     /// <param name="logger">Optional logger for diagnostic information.</param>
     public WebhookStorage(HttpClient httpClient, string webhookUrl, ILogger<WebhookStorage>? logger = null)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _webhookUrl = webhookUrl ?? throw new ArgumentNullException(nameof(webhookUrl));
+        ArgumentNullException.ThrowIfNull(httpClient);
+        ArgumentNullException.ThrowIfNull(webhookUrl);
+        _httpClient = httpClient;
+        _webhookUrl = webhookUrl;
         _logger = logger;
 
         _jsonSettings = new JsonSerializerSettings

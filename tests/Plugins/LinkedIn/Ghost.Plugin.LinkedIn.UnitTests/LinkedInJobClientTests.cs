@@ -6,6 +6,7 @@ using Ghost.Contracts.Jobs;
 using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
@@ -73,7 +74,7 @@ public class LinkedInJobClientTests
             ScrapingStrategy = JobScrapingStrategy.BrowserPage
         };
 
-        var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), null!, new JavaScriptAdapter(), new EntityParser());
+        var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), NullLogger<LinkedInJobClient>.Instance, new JavaScriptAdapter(), new EntityParser());
 
         // Act
         await client.GetJobDetailsAsync("123");
@@ -120,7 +121,7 @@ public class LinkedInJobClientTests
             .ReturnsAsync(htmlContent);
 
         var opts = new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.BrowserPage };
-        var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), null!, new JavaScriptAdapter(), new EntityParser());
+        var client = new LinkedInJobClient(mockSession.Object, Options.Create(opts), NullLogger<LinkedInJobClient>.Instance, new JavaScriptAdapter(), new EntityParser());
 
         // Act
         JobListing result = await client.GetJobDetailsAsync("123");

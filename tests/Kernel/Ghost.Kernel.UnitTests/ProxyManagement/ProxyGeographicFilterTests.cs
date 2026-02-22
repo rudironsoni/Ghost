@@ -18,7 +18,7 @@ public sealed class ProxyGeographicFilterTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            async () => await filter.GetGeolocationAsync(null!, CancellationToken.None).ConfigureAwait(false));
+            async () => await filter.GetGeolocationAsync(null!, CancellationToken.None));
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public sealed class ProxyGeographicFilterTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            async () => await filter.GetGeolocationAsync(string.Empty, CancellationToken.None).ConfigureAwait(false));
+            async () => await filter.GetGeolocationAsync(string.Empty, CancellationToken.None));
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public sealed class ProxyGeographicFilterTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await filter.EnrichProxiesAsync(null!, CancellationToken.None).ConfigureAwait(false));
+            async () => await filter.EnrichProxiesAsync(null!, CancellationToken.None));
     }
 
     [Fact]

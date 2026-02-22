@@ -14,7 +14,8 @@ public class XPathSelector : ISelector
     /// <param name="attribute">The attribute name to extract. If null, extracts text content.</param>
     public XPathSelector(string expression, string? attribute = null)
     {
-        Expression = expression ?? throw new ArgumentNullException(nameof(expression));
+        ArgumentNullException.ThrowIfNull(expression);
+        Expression = expression;
         Attribute = attribute;
     }
 

@@ -57,8 +57,10 @@ public class IndeedSearchScraper
         IBrowserSession? browserSession = null,
         IndeedOptions? options = null)
     {
-        _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(apiClient);
+        ArgumentNullException.ThrowIfNull(logger);
+        _apiClient = apiClient;
+        _logger = logger;
         _browserSession = browserSession;
         _options = options ?? new IndeedOptions();
     }

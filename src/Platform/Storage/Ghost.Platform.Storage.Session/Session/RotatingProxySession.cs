@@ -28,8 +28,10 @@ public class RotatingProxySession : IDisposable
 
     public RotatingProxySession(IProxyProvider proxyProvider, HttpClient httpClient, RotatingProxySessionOptions? options = null)
     {
-        _proxyProvider = proxyProvider ?? throw new ArgumentNullException(nameof(proxyProvider));
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        ArgumentNullException.ThrowIfNull(proxyProvider);
+        ArgumentNullException.ThrowIfNull(httpClient);
+        _proxyProvider = proxyProvider;
+        _httpClient = httpClient;
         _options = options ?? new RotatingProxySessionOptions();
 
         // Initialize proxy pool

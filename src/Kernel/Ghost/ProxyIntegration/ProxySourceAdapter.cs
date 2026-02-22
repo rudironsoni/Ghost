@@ -48,8 +48,10 @@ public sealed class ProxySourceAdapter : IProxySource
 
     public ProxySourceAdapter(Ghost.Kernel.ProxySourceConfig config, ILogger<ProxySourceAdapter> logger, HttpClient? httpClient = null)
     {
-        _config = config ?? throw new ArgumentNullException(nameof(config));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentNullException.ThrowIfNull(logger);
+        _config = config;
+        _logger = logger;
         _httpClient = httpClient;
 
         _adaptedSource = new Lazy<IProxySource>(() =>

@@ -39,8 +39,10 @@ public sealed class ProxyGeographicFilter : IDisposable
 
     public ProxyGeographicFilter(HttpClient httpClient, ILogger<ProxyGeographicFilter> logger)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(httpClient);
+        ArgumentNullException.ThrowIfNull(logger);
+        _httpClient = httpClient;
+        _logger = logger;
 
         // Rate limit to 45 requests per minute (ip-api.com free tier limit)
         _rateLimitSemaphore = new SemaphoreSlim(45, 45);

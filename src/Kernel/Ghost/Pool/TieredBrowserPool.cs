@@ -40,7 +40,8 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
         TieredBrowserPoolOptions? options = null,
         ILogger<TieredBrowserPool>? logger = null)
     {
-        _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
+        ArgumentNullException.ThrowIfNull(kernel);
+        _kernel = kernel;
         _options = options ?? new TieredBrowserPoolOptions();
         _logger = logger ?? NullLogger<TieredBrowserPool>.Instance;
 

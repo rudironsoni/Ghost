@@ -35,8 +35,10 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
 
     public HttpConnectionPool(HttpConnectionPoolOptions options, ILogger<HttpConnectionPool> logger)
     {
-        _options = options ?? throw new ArgumentNullException(nameof(options));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(logger);
+        _options = options;
+        _logger = logger;
     }
 
     public async Task<HttpClient> AcquireAsync(CancellationToken cancellationToken = default)

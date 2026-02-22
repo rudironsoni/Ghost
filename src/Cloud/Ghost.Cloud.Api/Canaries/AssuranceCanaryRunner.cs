@@ -99,10 +99,14 @@ public sealed class AssuranceCanaryRunner : IAssuranceCanaryRunner
         IDownloader downloader,
         ILogger<AssuranceCanaryRunner> logger)
     {
-        _clusterClient = clusterClient ?? throw new ArgumentNullException(nameof(clusterClient));
-        _engine = engine ?? throw new ArgumentNullException(nameof(engine));
-        _downloader = downloader ?? throw new ArgumentNullException(nameof(downloader));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(clusterClient);
+        ArgumentNullException.ThrowIfNull(engine);
+        ArgumentNullException.ThrowIfNull(downloader);
+        ArgumentNullException.ThrowIfNull(logger);
+        _clusterClient = clusterClient;
+        _engine = engine;
+        _downloader = downloader;
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -359,10 +363,13 @@ internal sealed class CanarySpider : ISpider
         IDownloader downloader,
         CancellationToken cancellationToken)
     {
-        EndpointId = endpointId ?? throw new ArgumentNullException(nameof(endpointId));
-        Manifest = manifest ?? throw new ArgumentNullException(nameof(manifest));
+        ArgumentNullException.ThrowIfNull(endpointId);
+        ArgumentNullException.ThrowIfNull(manifest);
+        ArgumentNullException.ThrowIfNull(downloader);
+        EndpointId = endpointId;
+        Manifest = manifest;
         Input = input;
-        _downloader = downloader ?? throw new ArgumentNullException(nameof(downloader));
+        _downloader = downloader;
         _cancellationToken = cancellationToken;
     }
 

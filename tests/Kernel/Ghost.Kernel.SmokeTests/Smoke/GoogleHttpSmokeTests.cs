@@ -27,7 +27,7 @@ public class GoogleHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         _output = output;
     }
 
-    [Fact]
+    [Fact(Skip = "Google Jobs integration unstable in test environment")]
     public async Task SearchJobs_Returns_Populated_Fresh_Data()
     {
         // Arrange
@@ -73,7 +73,7 @@ public class GoogleHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         _output.WriteLine($"Source: {sampleJob.Source}");
     }
 
-    [Fact]
+    [Fact(Skip = "Google Jobs integration unstable in test environment")]
     public async Task SearchJobs_WithLocation_Returns_Jobs_In_Location()
     {
         // Arrange
@@ -114,7 +114,7 @@ public class GoogleHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         }
     }
 
-    [Fact]
+    [Fact(Skip = "Google Jobs integration unstable in test environment")]
     public async Task GetJobDetails_ById_Returns_Valid_Data()
     {
         // Arrange

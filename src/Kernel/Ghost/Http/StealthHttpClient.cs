@@ -15,7 +15,8 @@ public class StealthHttpClient
 
     public StealthHttpClient(HttpClient client, RateLimitOptions? options = null, ILogger<StealthHttpClient>? logger = null)
     {
-        _client = client ?? throw new ArgumentNullException(nameof(client));
+        ArgumentNullException.ThrowIfNull(client);
+        _client = client;
         _options = options ?? new RateLimitOptions();
         _logger = logger;
     }

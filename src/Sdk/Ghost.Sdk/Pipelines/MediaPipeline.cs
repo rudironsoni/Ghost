@@ -188,8 +188,8 @@ public class MediaPipeline : IMediaPipeline
             return true;
         }
 
-        // Check for null byte injection
-        if (path.Contains('\0'))
+        // Check for null byte injection (both raw and URL-encoded)
+        if (path.Contains('\0') || path.Contains("%00", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
@@ -206,17 +206,20 @@ public class MediaPipeline : IMediaPipeline
             var uri = new Uri(url);
             string path = uri.AbsolutePath;
 
-            // Path.GetFileName removes directory components from the URL path
-            fileName = Path.GetFileName(path);
+            // URL-decode the path first to handle encoded characters
+            path = Uri.UnescapeDataString(path);
 
-            // URL-decode the filename to handle encoded characters
-            fileName = Uri.UnescapeDataString(fileName);
+            // Path.GetFileName removes directory components from the URL path
+            // This is called AFTER decoding to properly handle encoded traversal sequences
+            fileName = Path.GetFileName(path);
         }
         catch (UriFormatException)
         {
             // If URL parsing fails, try to extract last path segment
             int lastSlash = url.LastIndexOf('/');
             fileName = lastSlash >= 0 ? url[(lastSlash + 1)..] : url;
+            // URL-decode the extracted filename
+            fileName = Uri.UnescapeDataString(fileName);
         }
 
         if (string.IsNullOrWhiteSpace(fileName))

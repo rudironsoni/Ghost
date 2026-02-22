@@ -38,7 +38,7 @@ public class LinkedInAuthenticatorSecurityTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            async () => await authenticator.LoginWithCookieAsync(maliciousCookie, CancellationToken.None).ConfigureAwait(false));
+            async () => await authenticator.LoginWithCookieAsync(maliciousCookie, CancellationToken.None));
     }
 
     [Theory]
@@ -90,7 +90,7 @@ public class LinkedInAuthenticatorSecurityTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await authenticator.LoginWithCookieAsync(null!, CancellationToken.None).ConfigureAwait(false));
+            async () => await authenticator.LoginWithCookieAsync(null!, CancellationToken.None));
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public class LinkedInAuthenticatorSecurityTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await authenticator.LoginWithCookieAsync(string.Empty, CancellationToken.None).ConfigureAwait(false));
+            async () => await authenticator.LoginWithCookieAsync(string.Empty, CancellationToken.None));
     }
 
     [Theory]

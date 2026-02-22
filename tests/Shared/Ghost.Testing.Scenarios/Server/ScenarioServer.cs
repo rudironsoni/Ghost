@@ -13,6 +13,7 @@ namespace Ghost.Testing.Scenarios.Server;
 /// </summary>
 public sealed class ScenarioServer : IDisposable
 {
+    private static readonly object _portLock = new();
     private readonly IHost _host;
     private bool _disposed;
 
@@ -68,7 +69,7 @@ public sealed class ScenarioServer : IDisposable
         registry.RegisterRoutes(app);
 
         // Start the server
-        await app.StartAsync(cancellationToken).ConfigureAwait(false);
+        await app.StartAsync(cancellationToken);
 
         ILogger<ScenarioServer> logger = app.Services.GetRequiredService<ILogger<ScenarioServer>>();
         if (logger.IsEnabled(LogLevel.Information))
@@ -80,15 +81,18 @@ public sealed class ScenarioServer : IDisposable
     }
 
     /// <summary>
-    /// Gets an available TCP port.
+    /// Gets an available TCP port. Uses a lock to prevent race conditions.
     /// </summary>
     private static int GetAvailablePort()
     {
-        using var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
-        listener.Start();
-        int port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
-        listener.Stop();
-        return port;
+        lock (_portLock)
+        {
+            using var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+            listener.Start();
+            int port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+            listener.Stop();
+            return port;
+        }
     }
 
     /// <summary>
@@ -101,7 +105,7 @@ public sealed class ScenarioServer : IDisposable
             return;
         }
 
-        await _host.StopAsync(cancellationToken).ConfigureAwait(false);
+        await _host.StopAsync(cancellationToken);
     }
 
     public void Dispose()

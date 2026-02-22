@@ -44,7 +44,8 @@ public sealed class GlassdoorApiClient : IDisposable
     /// </summary>
     public GlassdoorApiClient(HttpClient http, ILogger<GlassdoorApiClient>? logger = null)
     {
-        _http = http ?? throw new ArgumentNullException(nameof(http));
+        ArgumentNullException.ThrowIfNull(http);
+        _http = http;
         _sessionOrchestrator = null;
         _logger = logger;
         _retryPolicy = EnhancedRetryPolicy.CreatePolicy(logger, maxRetries: 4, enableJitter: true);
@@ -55,8 +56,9 @@ public sealed class GlassdoorApiClient : IDisposable
     /// </summary>
     public GlassdoorApiClient(ISessionOrchestrator sessionOrchestrator, ILogger<GlassdoorApiClient>? logger = null)
     {
+        ArgumentNullException.ThrowIfNull(sessionOrchestrator);
         _http = null;
-        _sessionOrchestrator = sessionOrchestrator ?? throw new ArgumentNullException(nameof(sessionOrchestrator));
+        _sessionOrchestrator = sessionOrchestrator;
         _logger = logger;
         _retryPolicy = EnhancedRetryPolicy.CreatePolicy(logger, maxRetries: 4, enableJitter: true);
     }

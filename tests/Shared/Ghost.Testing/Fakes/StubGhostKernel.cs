@@ -17,7 +17,7 @@ public sealed class StubGhostKernel : IGhostKernel
     {
         foreach (IBrowserSession session in _sessions)
         {
-            await session.DisposeAsync().ConfigureAwait(false);
+            await session.DisposeAsync();
         }
         _sessions.Clear();
     }

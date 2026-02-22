@@ -180,8 +180,18 @@ public class RedirectMiddleware : IRedirectMiddleware
     /// </remarks>
     private static string ResolveUrl(string baseUrl, string location)
     {
-        if (Uri.TryCreate(location, UriKind.Absolute, out _))
-            return location;
+        // Check if location is a true absolute URL (has scheme like http:// or https://)
+        // Uri.TryCreate with UriKind.Absolute returns true for "/path" on .NET,
+        // so we need to check for scheme explicitly
+        if (Uri.TryCreate(location, UriKind.Absolute, out Uri? locationUri) && !string.IsNullOrEmpty(locationUri.Scheme))
+        {
+            // Only treat as absolute if it has a scheme (http/https/etc)
+            if (locationUri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                return location;
+            }
+        }
+
         return new Uri(new Uri(baseUrl), location).ToString();
     }
 

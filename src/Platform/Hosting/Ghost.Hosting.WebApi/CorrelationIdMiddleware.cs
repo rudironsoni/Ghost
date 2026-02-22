@@ -18,8 +18,10 @@ public sealed class CorrelationIdMiddleware
     /// </summary>
     public CorrelationIdMiddleware(RequestDelegate next, ILogger<CorrelationIdMiddleware> logger)
     {
-        _next = next ?? throw new ArgumentNullException(nameof(next));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(next);
+        ArgumentNullException.ThrowIfNull(logger);
+        _next = next;
+        _logger = logger;
     }
 
     /// <summary>

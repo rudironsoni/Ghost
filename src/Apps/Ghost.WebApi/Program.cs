@@ -188,3 +188,6 @@ app.MapRedisQueueMetricsEndpoint();
 app.MapHealthChecks("/health");
 
 app.Run();
+
+// Expose Program class for integration testing with WebApplicationFactory
+public partial class Program { }

@@ -137,7 +137,7 @@ public class PlatformIntegrationTestFixture : IAsyncLifetime
     {
         if (ServiceProvider is IAsyncDisposable asyncDisposable)
         {
-            await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+            await asyncDisposable.DisposeAsync();
         }
         else if (ServiceProvider is IDisposable disposable)
         {

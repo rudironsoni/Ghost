@@ -352,20 +352,20 @@ public sealed class ProxyManagerTests
     public async Task ReportFailureAsync_ConcurrentCalls_ShouldBeThreadSafe()
     {
         // Arrange
-        var options = new ProxyOptions { MaxFailures = 100 };
+        var options = new ProxyOptions { MaxFailures = 30 };
         var manager = new ProxyManager(options);
         manager.AddProxy("proxy.example.com", 8080);
 
         var proxy = await manager.GetNextProxyAsync();
 
-        // Act - Report failures concurrently
+        // Act - Report failures concurrently (more than MaxFailures)
         var tasks = Enumerable.Range(0, 50)
             .Select(_ => manager.ReportFailureAsync(proxy!))
             .ToArray();
 
         await Task.WhenAll(tasks);
 
-        // Should still be excluded after MaxFailures
+        // Should be excluded after exceeding MaxFailures
         var nextProxy = await manager.GetNextProxyAsync();
 
         // Assert - Proxy should be excluded

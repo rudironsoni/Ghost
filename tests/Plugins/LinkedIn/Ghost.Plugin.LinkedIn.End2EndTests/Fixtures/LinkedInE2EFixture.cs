@@ -40,10 +40,10 @@ public sealed class LinkedInE2EFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         // Start the test scraper server for LinkedIn-like HTML responses
-        _testScraperServer = await TestScraperServer.CreateAsync().ConfigureAwait(false);
+        _testScraperServer = await TestScraperServer.CreateAsync();
 
         // Create browser session from kernel (proper async initialization)
-        _browserSession = await _browserFixture.CreateSessionAsync().ConfigureAwait(false);
+        _browserSession = await _browserFixture.CreateSessionAsync();
 
         var services = new ServiceCollection();
         ConfigureServices(services);
@@ -54,7 +54,7 @@ public sealed class LinkedInE2EFixture : IAsyncLifetime
     {
         if (_serviceProvider is IAsyncDisposable asyncDisposable)
         {
-            await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+            await asyncDisposable.DisposeAsync();
         }
         else if (_serviceProvider is IDisposable disposable)
         {
@@ -63,13 +63,13 @@ public sealed class LinkedInE2EFixture : IAsyncLifetime
 
         if (_browserSession != null)
         {
-            await _browserSession.DisposeAsync().ConfigureAwait(false);
+            await _browserSession.DisposeAsync();
             _browserSession = null;
         }
 
         if (_testScraperServer != null)
         {
-            await _testScraperServer.DisposeAsync().ConfigureAwait(false);
+            await _testScraperServer.DisposeAsync();
             _testScraperServer = null;
         }
     }

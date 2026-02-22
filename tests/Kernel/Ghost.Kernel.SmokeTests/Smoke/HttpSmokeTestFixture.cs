@@ -61,9 +61,9 @@ public sealed class HttpSmokeTestFixture : IAsyncLifetime, IDisposable
     public async Task<TResponse?> GetAsync<TResponse>(string requestUri, ITestOutputHelper? output = null)
     {
         output?.WriteLine($"GET {requestUri}");
-        HttpResponseMessage response = await HttpClient.GetAsync(requestUri).ConfigureAwait(false);
+        HttpResponseMessage response = await HttpClient.GetAsync(requestUri);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<TResponse>().ConfigureAwait(false);
+        return await response.Content.ReadFromJsonAsync<TResponse>();
     }
 
     /// <summary>
@@ -83,9 +83,9 @@ public sealed class HttpSmokeTestFixture : IAsyncLifetime, IDisposable
         ITestOutputHelper? output = null)
     {
         output?.WriteLine($"POST {requestUri}");
-        HttpResponseMessage response = await HttpClient.PostAsJsonAsync(requestUri, request).ConfigureAwait(false);
+        HttpResponseMessage response = await HttpClient.PostAsJsonAsync(requestUri, request);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<TResponse>().ConfigureAwait(false);
+        return await response.Content.ReadFromJsonAsync<TResponse>();
     }
 
     /// <summary>

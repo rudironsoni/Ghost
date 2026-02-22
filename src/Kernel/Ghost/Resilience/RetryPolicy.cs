@@ -26,7 +26,11 @@ public sealed class RetryPolicy : IRetryPolicy
     public RetryPolicyOptions Options
     {
         get;
-        set => field = value ?? throw new ArgumentNullException(nameof(value));
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            field = value;
+        }
     } = new();
 
     /// <inheritdoc />

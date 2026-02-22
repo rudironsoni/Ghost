@@ -18,8 +18,10 @@ public sealed class ClickMimicry
     /// <param name="timingMimicry">Timing mimicry service.</param>
     public ClickMimicry(MouseMimicry mouseMimicry, TimingMimicry timingMimicry)
     {
-        _mouseMimicry = mouseMimicry ?? throw new ArgumentNullException(nameof(mouseMimicry));
-        _timingMimicry = timingMimicry ?? throw new ArgumentNullException(nameof(timingMimicry));
+        ArgumentNullException.ThrowIfNull(mouseMimicry);
+        ArgumentNullException.ThrowIfNull(timingMimicry);
+        _mouseMimicry = mouseMimicry;
+        _timingMimicry = timingMimicry;
     }
 
     /// <summary>

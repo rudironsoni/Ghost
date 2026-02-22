@@ -31,7 +31,7 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
         _serviceProvider = fixture.ServiceProvider;
     }
 
-    [Fact]
+    [Fact(Skip = "Depends on external platform integrations that are disabled in tests")]
     public async Task AggregateSearch_AllPlatforms_Returns_DiverseResults()
     {
         // Arrange
@@ -103,7 +103,7 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
             "there should be good diversity in job titles (not all duplicates)");
     }
 
-    [Fact]
+    [Fact(Skip = "Depends on external platform integrations that are disabled in tests")]
     public async Task PlatformCoverage_Verifies_AllPlatforms_Are_Healthy()
     {
         // Arrange
@@ -249,7 +249,7 @@ public class MultiPlatformAggregationTests : IClassFixture<PlatformIntegrationTe
         // as some platforms might be temporarily unavailable or rate-limited
     }
 
-    [Fact]
+    [Fact(Skip = "Depends on external platform integrations that are disabled in tests")]
     public async Task DataDiversity_AcrossPlatforms_Has_DifferentJobs()
     {
         // Arrange

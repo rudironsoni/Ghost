@@ -62,7 +62,7 @@ public sealed class HealthReportServiceTests
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
 
-        Func<Task<HealthReport>> act = async () => await sut.BuildReportAsync(cts.Token).ConfigureAwait(false);
+        Func<Task<HealthReport>> act = async () => await sut.BuildReportAsync(cts.Token);
 
         await act.Should().ThrowAsync<OperationCanceledException>();
     }

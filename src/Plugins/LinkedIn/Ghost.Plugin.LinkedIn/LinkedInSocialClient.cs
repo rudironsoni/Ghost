@@ -20,10 +20,11 @@ public sealed class LinkedInSocialClient : ISocialClient
     public LinkedInSocialClient(Ghost.IBrowserSession session, IOptions<LinkedInOptions> options, ILogger<LinkedInSocialClient> logger, Internal.LinkedInAuthenticator authenticator)
     {
         ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(authenticator);
         _session = session;
         _options = options?.Value ?? new LinkedInOptions();
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<LinkedInSocialClient>.Instance;
-        _authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
+        _authenticator = authenticator;
     }
 
     // Back-compat constructor used by existing tests/consumers that don't provide an authenticator

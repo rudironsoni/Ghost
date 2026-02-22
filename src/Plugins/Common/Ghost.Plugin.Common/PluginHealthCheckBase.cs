@@ -13,7 +13,8 @@ public abstract class PluginHealthCheckBase : IPluginReadinessCheck
 
     protected PluginHealthCheckBase(ILogger logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(logger);
+        _logger = logger;
     }
 
     public async Task<ReadinessCheckResult> CheckAsync(CancellationToken cancellationToken = default)

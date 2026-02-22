@@ -41,8 +41,10 @@ public sealed class ProxyHealthChecker : IDisposable
         ILogger? logger,
         HttpClient? healthCheckClient = null)
     {
-        _healthTracker = healthTracker ?? throw new ArgumentNullException(nameof(healthTracker));
-        _blacklistManager = blacklistManager ?? throw new ArgumentNullException(nameof(blacklistManager));
+        ArgumentNullException.ThrowIfNull(healthTracker);
+        ArgumentNullException.ThrowIfNull(blacklistManager);
+        _healthTracker = healthTracker;
+        _blacklistManager = blacklistManager;
         _logger = logger;
         _healthCheckClient = healthCheckClient ?? new HttpClient
         {

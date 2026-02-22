@@ -33,7 +33,7 @@ public sealed class GlassdoorJobClientE2ETests : IAsyncLifetime
     public async Task InitializeAsync()
     {
         _glassdoorFixture = new GlassdoorE2EFixture(_browserFixture);
-        await _glassdoorFixture.InitializeAsync().ConfigureAwait(false);
+        await _glassdoorFixture.InitializeAsync();
         _serviceProvider = _glassdoorFixture.ServiceProvider;
     }
 
@@ -41,7 +41,7 @@ public sealed class GlassdoorJobClientE2ETests : IAsyncLifetime
     {
         if (_glassdoorFixture != null)
         {
-            await _glassdoorFixture.DisposeAsync().ConfigureAwait(false);
+            await _glassdoorFixture.DisposeAsync();
         }
     }
 

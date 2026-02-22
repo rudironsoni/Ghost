@@ -32,7 +32,7 @@ public sealed class IdempotentExtractionContract : ProviderContractBase
         try
         {
             // Test idempotency by running the same extraction twice
-            (IReadOnlyList<JobListing>? firstRun, IReadOnlyList<JobListing>? secondRun) = await adapter.TestIdempotencyAsync(criteria, ct).ConfigureAwait(false);
+            (IReadOnlyList<JobListing>? firstRun, IReadOnlyList<JobListing>? secondRun) = await adapter.TestIdempotencyAsync(criteria, ct);
 
             context["FirstRunCount"] = firstRun.Count;
             context["SecondRunCount"] = secondRun.Count;

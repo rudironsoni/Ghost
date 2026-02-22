@@ -96,8 +96,10 @@ public sealed class GlassdoorBrowserClient : IDisposable
         ILogger<GlassdoorBrowserClient> logger,
         IProxyProvider? proxyProvider = null)
     {
-        _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(kernel);
+        ArgumentNullException.ThrowIfNull(options);
+        _kernel = kernel;
+        _options = options;
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GlassdoorBrowserClient>.Instance;
         _proxyProvider = proxyProvider;
         _consentService = new ConsentManagerService(null);

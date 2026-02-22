@@ -35,9 +35,12 @@ public class ResilientJobScraper : IJobScraper
         IGenericDeadLetterQueue deadLetterQueue,
         ILogger<ResilientJobScraper> logger)
     {
-        _innerScraper = innerScraper ?? throw new ArgumentNullException(nameof(innerScraper));
-        _circuitBreaker = circuitBreaker ?? throw new ArgumentNullException(nameof(circuitBreaker));
-        _deadLetterQueue = deadLetterQueue ?? throw new ArgumentNullException(nameof(deadLetterQueue));
+        ArgumentNullException.ThrowIfNull(innerScraper);
+        ArgumentNullException.ThrowIfNull(circuitBreaker);
+        ArgumentNullException.ThrowIfNull(deadLetterQueue);
+        _innerScraper = innerScraper;
+        _circuitBreaker = circuitBreaker;
+        _deadLetterQueue = deadLetterQueue;
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<ResilientJobScraper>.Instance;
     }
 

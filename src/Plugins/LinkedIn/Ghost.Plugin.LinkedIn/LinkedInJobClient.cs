@@ -14,6 +14,7 @@ using Ghost.Sdk.Spider.Core.Extraction;
 using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Middleware;
 using Ghost.Sdk.Spider.Strategies;
+using Ghost.Sdk.Spider.Strategies.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
@@ -72,8 +73,11 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
     private readonly ILogger<LinkedInJobClient> _logger;
     private readonly JavaScriptAdapter _jsAdapter;
     private readonly EntityParser _entityParser;
-    private readonly StrategyRouter _strategyRouter;
+    private readonly IStrategyRouter _strategyRouter;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LinkedInJobClient"/> class.
+    /// </summary>
     public LinkedInJobClient(
         Ghost.IBrowserSession session,
         IOptions<LinkedInOptions> options,
@@ -82,17 +86,50 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
         EntityParser entityParser)
     {
         ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(jsAdapter);
+        ArgumentNullException.ThrowIfNull(entityParser);
+
         _session = session;
-        _options = options?.Value ?? new LinkedInOptions();
-        _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<LinkedInJobClient>.Instance;
-        _jsAdapter = jsAdapter ?? throw new ArgumentNullException(nameof(jsAdapter));
-        _entityParser = entityParser ?? throw new ArgumentNullException(nameof(entityParser));
+        _options = options.Value;
+        _logger = logger;
+        _jsAdapter = jsAdapter;
+        _entityParser = entityParser;
 
         // Initialize Spider StrategyRouter
-        _strategyRouter = new StrategyRouter(null);
+        var strategyRouter = new StrategyRouter(null);
 
         // Register strategies: Browser only (GuestApi removed as per migration requirement)
-        _strategyRouter.RegisterStrategy("Browser", BrowserStrategyAsync);
+        strategyRouter.RegisterStrategy("Browser", BrowserStrategyAsync);
+
+        _strategyRouter = strategyRouter;
+    }
+
+    /// <summary>
+    /// Test constructor that allows injecting a custom strategy router.
+    /// </summary>
+    internal LinkedInJobClient(
+        Ghost.IBrowserSession session,
+        IOptions<LinkedInOptions> options,
+        ILogger<LinkedInJobClient> logger,
+        JavaScriptAdapter jsAdapter,
+        EntityParser entityParser,
+        IStrategyRouter strategyRouter)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(jsAdapter);
+        ArgumentNullException.ThrowIfNull(entityParser);
+        ArgumentNullException.ThrowIfNull(strategyRouter);
+
+        _session = session;
+        _options = options.Value;
+        _logger = logger;
+        _jsAdapter = jsAdapter;
+        _entityParser = entityParser;
+        _strategyRouter = strategyRouter;
     }
 
     public string PlatformName => "LinkedIn";
@@ -222,12 +259,14 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
                     AngleSharp.Dom.IElement? locationEl = bodyEl.QuerySelector(".location, .topcard__flavor--bullet");
                     AngleSharp.Dom.IElement? descriptionEl = bodyEl.QuerySelector("[data-test-id='job-description'], .job-description");
                     AngleSharp.Dom.IElement? salaryEl = bodyEl.QuerySelector("[data-test-id='salary'], .salary");
+                    AngleSharp.Dom.IElement? easyApplyEl = bodyEl.QuerySelector(".jobs-apply-button--top-card button, .jobs-s-apply button");
 
                     entity.Title = titleEl?.TextContent?.Trim();
                     entity.Company = companyEl?.TextContent?.Trim();
                     entity.Location = locationEl?.TextContent?.Trim();
                     entity.Description = descriptionEl?.TextContent?.Trim();
                     entity.Salary = salaryEl?.TextContent?.Trim();
+                    entity.EasyApplyButton = easyApplyEl?.TextContent?.Trim();
                     entity.Url = url;
                     entity.JobId = jobId;
                 }

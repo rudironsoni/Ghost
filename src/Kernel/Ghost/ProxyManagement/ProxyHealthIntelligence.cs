@@ -23,6 +23,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
     private readonly IEnumerable<IProxySource>? _fallbackSources;
     private readonly ILogger<ProxyHealthIntelligence> _logger;
     private readonly ProxySystemOptions _options;
+    private readonly HttpClient? _healthCheckClient;
 
     private readonly ConcurrentDictionary<string, ProxyInfo> _proxyPool = new();
     private readonly SemaphoreSlim _initLock = new(1, 1);
@@ -53,9 +54,13 @@ public sealed class ProxyHealthIntelligence : IDisposable
         ILogger<ProxyHealthIntelligence> logger,
         HttpClient? healthCheckClient)
     {
-        _sources = sources ?? throw new ArgumentNullException(nameof(sources));
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(sources);
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(logger);
+        _sources = sources;
+        _options = options.Value;
+        _logger = logger;
+        _healthCheckClient = healthCheckClient;
 
         if (_options.FallbackChain?.Count > 0)
         {
@@ -65,11 +70,11 @@ public sealed class ProxyHealthIntelligence : IDisposable
         // Initialize extracted components
         HealthTracker = new ProxyHealthTracker(logger);
         RotationStrategy = new ProxyRotationStrategy(HealthTracker, logger);
-        BlacklistManager = new ProxyBlacklistManager((ILogger<ProxyBlacklistManager>?)logger);
+        BlacklistManager = new ProxyBlacklistManager(logger);
 
         if (_options.HealthCheckIntervalSeconds > 0)
         {
-            HealthChecker = new ProxyHealthChecker(HealthTracker, BlacklistManager, (ILogger<ProxyHealthChecker>?)logger, healthCheckClient);
+            HealthChecker = new ProxyHealthChecker(HealthTracker, BlacklistManager, logger, healthCheckClient);
         }
     }
 
@@ -241,6 +246,7 @@ public sealed class ProxyHealthIntelligence : IDisposable
     public void Dispose()
     {
         HealthChecker?.Dispose();
+        _healthCheckClient?.Dispose();
         _initLock?.Dispose();
     }
 }

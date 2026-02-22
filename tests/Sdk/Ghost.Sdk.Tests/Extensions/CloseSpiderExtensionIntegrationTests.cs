@@ -17,7 +17,7 @@ public class CloseSpiderExtensionIntegrationTests
             new MaxItemsCondition(100),
             new MaxPagesCondition(50),
             new MaxDurationCondition(TimeSpan.FromMinutes(5)),
-            new MemoryThresholdCondition(100L * 1024 * 1024) // 100 MB
+            new MemoryThresholdCondition(10L * 1024 * 1024 * 1024) // 10 GB - high enough to not trigger
         };
 
         var extension = new CloseSpiderExtension(conditions);

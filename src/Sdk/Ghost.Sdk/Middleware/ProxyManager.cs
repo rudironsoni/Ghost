@@ -80,7 +80,7 @@ public class ProxyManager : IProxyManager
         {
             // Reset failure count on success
             Interlocked.Exchange(ref info.FailureCount, 0);
-            info.LastFailure = null;
+            Interlocked.Exchange(ref info.LastFailureTicks, 0);
         }
 
         return Task.CompletedTask;
@@ -105,7 +105,7 @@ public class ProxyManager : IProxyManager
         if (_proxies.TryGetValue(key, out ProxyInfo? info))
         {
             Interlocked.Increment(ref info.FailureCount);
-            info.LastFailure = DateTime.UtcNow;
+            Interlocked.Exchange(ref info.LastFailureTicks, DateTime.UtcNow.Ticks);
         }
 
         return Task.CompletedTask;
@@ -155,14 +155,16 @@ public class ProxyManager : IProxyManager
         }
 
         // Check if retry period has elapsed
-        if (info.LastFailure.HasValue)
+        long lastFailureTicks = Interlocked.Read(ref info.LastFailureTicks);
+        if (lastFailureTicks > 0)
         {
-            TimeSpan timeSinceFailure = DateTime.UtcNow - info.LastFailure.Value;
+            DateTime lastFailure = new DateTime(lastFailureTicks, DateTimeKind.Utc);
+            TimeSpan timeSinceFailure = DateTime.UtcNow - lastFailure;
             if (timeSinceFailure >= _options.RetryAfter)
             {
                 // Reset failure count after retry period
                 Interlocked.Exchange(ref info.FailureCount, 0);
-                info.LastFailure = null;
+                Interlocked.Exchange(ref info.LastFailureTicks, 0);
                 return true;
             }
         }
@@ -199,8 +201,8 @@ public class ProxyManager : IProxyManager
         public long FailureCount;
 
         /// <summary>
-        /// Gets or sets the timestamp of the last failure.
+        /// Gets or sets the UTC ticks of the last failure (0 if no failure).
         /// </summary>
-        public DateTime? LastFailure { get; set; }
+        public long LastFailureTicks;
     }
 }

@@ -37,6 +37,6 @@ public sealed class PaginationMiddleware
             }
         }
 
-        await _next(context).ConfigureAwait(false);
+        await _next(context);
     }
 }

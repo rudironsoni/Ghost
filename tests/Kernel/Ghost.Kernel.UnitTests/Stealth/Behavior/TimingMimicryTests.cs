@@ -73,7 +73,7 @@ public class TimingMimicryTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            async () => await timing.CustomDelayAsync(100, 50).ConfigureAwait(false));
+            async () => await timing.CustomDelayAsync(100, 50));
     }
 
     [Fact]
@@ -84,6 +84,6 @@ public class TimingMimicryTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            async () => await timing.CustomDelayAsync(-1, 100).ConfigureAwait(false));
+            async () => await timing.CustomDelayAsync(-1, 100));
     }
 }

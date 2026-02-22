@@ -49,7 +49,7 @@ public sealed class GoogleE2EFixture : IAsyncLifetime
 
         if (_serviceProvider is IAsyncDisposable asyncDisposable)
         {
-            await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+            await asyncDisposable.DisposeAsync();
         }
         else if (_serviceProvider is IDisposable disposable)
         {
@@ -63,11 +63,18 @@ public sealed class GoogleE2EFixture : IAsyncLifetime
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug));
 
         // Configure Google Jobs options - use BrowserFirst strategy (production default)
+        var googleJobsOptions = new GoogleJobsOptions
+        {
+            Enabled = true,
+            Strategy = JobSearchStrategy.BrowserFirst
+        };
         services.Configure<GoogleJobsOptions>(options =>
         {
-            options.Enabled = true;
-            options.Strategy = JobSearchStrategy.BrowserFirst;
+            options.Enabled = googleJobsOptions.Enabled;
+            options.Strategy = googleJobsOptions.Strategy;
         });
+        // Also register as singleton for direct injection (required by GoogleJobsApiClient constructor)
+        services.AddSingleton(googleJobsOptions);
 
         // Configure Gemini options
         services.Configure<Gemini.GeminiOptions>(options =>

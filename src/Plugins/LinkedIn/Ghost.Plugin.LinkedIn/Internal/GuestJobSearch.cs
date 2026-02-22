@@ -103,10 +103,13 @@ public sealed class GuestJobSearch : IGuestJobSearch
         ICountryDomainProvider countryProvider,
         LinkedInSessionPool sessionPool)
     {
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(countryProvider);
+        ArgumentNullException.ThrowIfNull(sessionPool);
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GuestJobSearch>.Instance;
-        _options = options ?? throw new ArgumentNullException(nameof(options));
-        _countryProvider = countryProvider ?? throw new ArgumentNullException(nameof(countryProvider));
-        _sessionPool = sessionPool ?? throw new ArgumentNullException(nameof(sessionPool));
+        _options = options;
+        _countryProvider = countryProvider;
+        _sessionPool = sessionPool;
     }
 
     public async Task<IReadOnlyList<string>> SearchAsync(JobSearchCriteria criteria, int limit, CancellationToken ct)

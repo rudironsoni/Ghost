@@ -12,7 +12,8 @@ public class SessionFactory
 
     public SessionFactory(IProxyProvider proxyProvider, RotatingProxySessionOptions? defaultOptions = null)
     {
-        _proxyProvider = proxyProvider ?? throw new ArgumentNullException(nameof(proxyProvider));
+        ArgumentNullException.ThrowIfNull(proxyProvider);
+        _proxyProvider = proxyProvider;
         _defaultOptions = defaultOptions ?? new RotatingProxySessionOptions();
     }
 

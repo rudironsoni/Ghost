@@ -19,7 +19,7 @@ public class RetryPolicyTests
             UseJitter = false
         });
 
-        int result = await policy.ExecuteAsync(async () => await Task.FromResult(42).ConfigureAwait(false), _ => true);
+        int result = await policy.ExecuteAsync(async () => await Task.FromResult(42), _ => true);
 
         result.Should().Be(42);
         policy.CurrentAttempt.Should().Be(0);
@@ -45,7 +45,7 @@ public class RetryPolicyTests
                 throw new HttpRequestException("transient");
             }
 
-            return await Task.FromResult(7).ConfigureAwait(false);
+            return await Task.FromResult(7);
         }, RetryableErrorClassifier.IsRetryable);
 
         result.Should().Be(7);
@@ -68,7 +68,7 @@ public class RetryPolicyTests
         {
             attempts++;
             throw new HttpRequestException("transient");
-        }, RetryableErrorClassifier.IsRetryable).ConfigureAwait(false);
+        }, RetryableErrorClassifier.IsRetryable);
 
         await act.Should().ThrowAsync<HttpRequestException>();
         attempts.Should().Be(3);
@@ -90,7 +90,7 @@ public class RetryPolicyTests
         {
             attempts++;
             throw new InvalidOperationException("parse error");
-        }, RetryableErrorClassifier.IsRetryable).ConfigureAwait(false);
+        }, RetryableErrorClassifier.IsRetryable);
 
         await act.Should().ThrowAsync<InvalidOperationException>();
         attempts.Should().Be(1);
@@ -112,7 +112,7 @@ public class RetryPolicyTests
         {
             attempts++;
             throw new HttpRequestException("transient");
-        }, RetryableErrorClassifier.IsRetryable).ConfigureAwait(false);
+        }, RetryableErrorClassifier.IsRetryable);
 
         await act.Should().ThrowAsync<HttpRequestException>();
         attempts.Should().Be(1);
@@ -135,7 +135,7 @@ public class RetryPolicyTests
             await policy.ExecuteAsync(async () =>
             {
                 throw new HttpRequestException("transient");
-            }, RetryableErrorClassifier.IsRetryable).ConfigureAwait(false));
+            }, RetryableErrorClassifier.IsRetryable));
 
         stopwatch.Stop();
 
@@ -156,7 +156,7 @@ public class RetryPolicyTests
         Func<Task> act = async () => await policy.ExecuteAsync(async () =>
         {
             throw new HttpRequestException("transient");
-        }, RetryableErrorClassifier.IsRetryable).ConfigureAwait(false);
+        }, RetryableErrorClassifier.IsRetryable);
 
         await act.Should().ThrowAsync<ArgumentOutOfRangeException>();
     }
@@ -177,7 +177,7 @@ public class RetryPolicyTests
         {
             attempts++;
             throw new HttpRequestException("transient");
-        }).ConfigureAwait(false);
+        });
 
         await act.Should().ThrowAsync<HttpRequestException>();
         attempts.Should().Be(2);
@@ -199,7 +199,7 @@ public class RetryPolicyTests
         {
             attempts++;
             return await Task.FromResult(new HttpResponseMessage(
-                attempts == 1 ? System.Net.HttpStatusCode.ServiceUnavailable : System.Net.HttpStatusCode.OK)).ConfigureAwait(false);
+                attempts == 1 ? System.Net.HttpStatusCode.ServiceUnavailable : System.Net.HttpStatusCode.OK));
         });
 
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
@@ -221,7 +221,7 @@ public class RetryPolicyTests
         HttpResponseMessage response = await policy.ExecuteHttpAsync(async () =>
         {
             attempts++;
-            return await Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest)).ConfigureAwait(false);
+            return await Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest));
         });
 
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -239,7 +239,7 @@ public class RetryPolicyTests
             UseJitter = false
         });
 
-        Func<Task<HttpResponseMessage>> act = async () => await policy.ExecuteHttpAsync(async () => await Task.FromResult<HttpResponseMessage>(null!).ConfigureAwait(false)).ConfigureAwait(false);
+        Func<Task<HttpResponseMessage>> act = async () => await policy.ExecuteHttpAsync(async () => await Task.FromResult<HttpResponseMessage>(null!));
 
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
@@ -255,7 +255,7 @@ public class RetryPolicyTests
             UseJitter = false
         });
 
-        await policy.ExecuteAsync(async () => await Task.FromResult(3).ConfigureAwait(false), _ => true);
+        await policy.ExecuteAsync(async () => await Task.FromResult(3), _ => true);
 
         policy.CurrentAttempt.Should().Be(0);
     }
@@ -273,7 +273,7 @@ public class RetryPolicyTests
 
         int outerAttempt = await policy.ExecuteAsync(async () =>
         {
-            await policy.ExecuteAsync(async () => await Task.FromResult(1).ConfigureAwait(false), _ => false).ConfigureAwait(false);
+            await policy.ExecuteAsync(async () => await Task.FromResult(1), _ => false);
             return policy.CurrentAttempt;
         }, _ => false);
 
@@ -291,7 +291,7 @@ public class RetryPolicyTests
             UseJitter = false
         });
 
-        Func<Task<int>> act = async () => await policy.ExecuteAsync(async () => await Task.FromResult(1).ConfigureAwait(false), _ => true).ConfigureAwait(false);
+        Func<Task<int>> act = async () => await policy.ExecuteAsync(async () => await Task.FromResult(1), _ => true);
 
         await act.Should().ThrowAsync<ArgumentOutOfRangeException>();
     }
@@ -302,7 +302,7 @@ public class RetryPolicyTests
         var policy = new RetryPolicy();
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => policy.ExecuteAsync<int>(null!, _ => true));
-        await Assert.ThrowsAsync<ArgumentNullException>(() => policy.ExecuteAsync(async () => await Task.FromResult(1).ConfigureAwait(false), null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => policy.ExecuteAsync(async () => await Task.FromResult(1), null!));
     }
 
     [Fact]
@@ -321,7 +321,7 @@ public class RetryPolicyTests
         {
             attempts++;
             throw new HttpRequestException("transient");
-        }, _ => false).ConfigureAwait(false);
+        }, _ => false);
 
         await act.Should().ThrowAsync<HttpRequestException>();
         attempts.Should().Be(1);
@@ -344,7 +344,7 @@ public class RetryPolicyTests
             await policy.ExecuteAsync(async () =>
             {
                 throw new HttpRequestException("transient");
-            }, RetryableErrorClassifier.IsRetryable).ConfigureAwait(false));
+            }, RetryableErrorClassifier.IsRetryable));
 
         stopwatch.Stop();
 

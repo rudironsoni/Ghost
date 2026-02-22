@@ -51,7 +51,8 @@ public class InMemoryDeadLetterQueue : IGenericDeadLetterQueue
 
     public InMemoryDeadLetterQueue(ILogger<InMemoryDeadLetterQueue> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(logger);
+        _logger = logger;
     }
 
     public Task EnqueueAsync<T>(T item, string reason, Exception? exception = null, CancellationToken cancellationToken = default)

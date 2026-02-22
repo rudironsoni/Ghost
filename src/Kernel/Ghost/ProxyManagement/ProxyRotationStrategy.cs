@@ -30,7 +30,8 @@ public sealed class ProxyRotationStrategy
 
     public ProxyRotationStrategy(ProxyHealthTracker healthTracker, ILogger? logger = null)
     {
-        _healthTracker = healthTracker ?? throw new ArgumentNullException(nameof(healthTracker));
+        ArgumentNullException.ThrowIfNull(healthTracker);
+        _healthTracker = healthTracker;
         _logger = logger;
     }
 

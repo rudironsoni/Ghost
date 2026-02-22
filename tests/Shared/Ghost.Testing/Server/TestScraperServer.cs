@@ -20,6 +20,7 @@ namespace Ghost.Testing.Server;
 /// </summary>
 public sealed class TestScraperServer : IAsyncDisposable
 {
+    private static readonly object _portLock = new();
     private readonly IHost _host;
     private readonly ILogger<TestScraperServer> _logger;
     private bool _disposed;
@@ -89,7 +90,7 @@ public sealed class TestScraperServer : IAsyncDisposable
         ConfigureRoutes(app, fixtures);
 
         // Start the server
-        await app.StartAsync(cancellationToken).ConfigureAwait(false);
+        await app.StartAsync(cancellationToken);
 
         ILogger<TestScraperServer> logger = app.Services.GetRequiredService<ILogger<TestScraperServer>>();
         logger.LogInformation("TestScraperServer started at {BaseUrl}", baseUrl);
@@ -336,15 +337,18 @@ public sealed class TestScraperServer : IAsyncDisposable
     }
 
     /// <summary>
-    /// Gets an available TCP port.
+    /// Gets an available TCP port. Uses a lock to prevent race conditions.
     /// </summary>
     private static int GetAvailablePort()
     {
-        using TcpListener listener = new(IPAddress.Loopback, 0);
-        listener.Start();
-        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
-        listener.Stop();
-        return port;
+        lock (_portLock)
+        {
+            using TcpListener listener = new(IPAddress.Loopback, 0);
+            listener.Start();
+            int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+            listener.Stop();
+            return port;
+        }
     }
 
     /// <summary>
@@ -382,7 +386,7 @@ public sealed class TestScraperServer : IAsyncDisposable
             return;
         }
 
-        await _host.StopAsync(cancellationToken).ConfigureAwait(false);
+        await _host.StopAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -394,7 +398,7 @@ public sealed class TestScraperServer : IAsyncDisposable
         }
 
         _disposed = true;
-        await _host.StopAsync().ConfigureAwait(false);
+        await _host.StopAsync();
         _host.Dispose();
         _logger.LogInformation("TestScraperServer disposed");
     }

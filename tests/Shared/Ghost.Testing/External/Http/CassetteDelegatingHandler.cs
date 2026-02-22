@@ -15,8 +15,10 @@ public sealed class CassetteDelegatingHandler : DelegatingHandler
 
     public CassetteDelegatingHandler(CassetteStore store, Func<CassetteMode> modeResolver)
     {
-        _store = store ?? throw new ArgumentNullException(nameof(store));
-        _modeResolver = modeResolver ?? throw new ArgumentNullException(nameof(modeResolver));
+        ArgumentNullException.ThrowIfNull(store);
+        ArgumentNullException.ThrowIfNull(modeResolver);
+        _store = store;
+        _modeResolver = modeResolver;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(
@@ -34,9 +36,9 @@ public sealed class CassetteDelegatingHandler : DelegatingHandler
 
         return mode switch
         {
-            CassetteMode.Replay => await ReplayAsync(request, cancellationToken).ConfigureAwait(false),
-            CassetteMode.Record => await RecordAsync(request, cancellationToken).ConfigureAwait(false),
-            CassetteMode.Passthrough => await base.SendAsync(request, cancellationToken).ConfigureAwait(false),
+            CassetteMode.Replay => await ReplayAsync(request, cancellationToken),
+            CassetteMode.Record => await RecordAsync(request, cancellationToken),
+            CassetteMode.Passthrough => await base.SendAsync(request, cancellationToken),
             _ => throw new InvalidOperationException($"Unsupported cassette mode '{mode}'.")
         };
     }
@@ -44,7 +46,7 @@ public sealed class CassetteDelegatingHandler : DelegatingHandler
     private async Task<HttpResponseMessage> ReplayAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         string key = _store.BuildKey(request.Method, request.RequestUri!);
-        CassetteEnvelope? cassette = await _store.ReadAsync(key, cancellationToken).ConfigureAwait(false);
+        CassetteEnvelope? cassette = await _store.ReadAsync(key, cancellationToken);
 
         if (cassette is null)
         {
@@ -76,11 +78,11 @@ public sealed class CassetteDelegatingHandler : DelegatingHandler
             throw new InvalidOperationException("Record mode requires an inner HTTP handler.");
         }
 
-        HttpResponseMessage response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        HttpResponseMessage response = await base.SendAsync(request, cancellationToken);
 
         byte[] responseBody = response.Content is null
             ? []
-            : await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+            : await response.Content.ReadAsByteArrayAsync(cancellationToken);
 
         string key = _store.BuildKey(request.Method, request.RequestUri!);
         CassetteEnvelope envelope = new()
@@ -102,7 +104,7 @@ public sealed class CassetteDelegatingHandler : DelegatingHandler
             }
         };
 
-        await _store.WriteAsync(key, envelope, cancellationToken).ConfigureAwait(false);
+        await _store.WriteAsync(key, envelope, cancellationToken);
 
         if (response.Content is not null)
         {

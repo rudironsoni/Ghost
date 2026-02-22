@@ -90,7 +90,7 @@ public sealed class ConsentManagerServiceTests
         var service = CreateService();
 
         Func<Task> act = async () => await service.HandleConsentAsync(null!);
-        await act.Should().ThrowAsync<NullReferenceException>();
+        await act.Should().ThrowAsync<ArgumentNullException>();
     }
 
     #endregion
@@ -254,9 +254,10 @@ public sealed class ConsentManagerServiceTests
 
         var mockPage = CreateMockPage();
         // CookieBot selectors are checked after other selectors
-        // Just mock the CookieBot detection and acceptance
-        mockPage.Setup(x => x.QuerySelectorAsync("#CybotCookiebotDialog"))
-            .ReturnsAsync(mockButton.Object);
+        // First return the button for detection/click, then null to indicate banner disappeared
+        mockPage.SetupSequence(x => x.QuerySelectorAsync("#CybotCookiebotDialog"))
+            .ReturnsAsync(mockButton.Object)
+            .ReturnsAsync((IElement?)null);
 
         var service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
@@ -462,8 +463,21 @@ public sealed class ConsentManagerServiceTests
         var mockFrame = new Mock<IElement>();
 
         var mockPage = CreateMockPage();
-        mockPage.Setup(x => x.QuerySelectorAsync(It.Is<string>(s => s.Contains("iframe"))))
-            .ReturnsAsync(mockFrame.Object);
+        // Use callback to return frame on first call to any iframe selector, null on subsequent calls
+        int iframeCallCount = 0;
+        mockPage.Setup(x => x.QuerySelectorAsync(It.Is<string>(s =>
+            s.Contains("iframe[src*='consent'") ||
+            s.Contains("iframe[src*='cookie'") ||
+            s.Contains("iframe[src*='gdpr'"))))
+            .ReturnsAsync(() =>
+            {
+                iframeCallCount++;
+                return iframeCallCount == 1 ? mockFrame.Object : null;
+            });
+
+        // All other selectors return null
+        mockPage.Setup(x => x.QuerySelectorAsync(It.Is<string>(s => !s.Contains("iframe"))))
+            .ReturnsAsync((IElement?)null);
 
         mockPage.Setup(x => x.EvaluateAsync<bool>(It.IsAny<string>()))
             .ReturnsAsync(true);
@@ -676,8 +690,10 @@ public sealed class ConsentManagerServiceTests
         mockElement.Setup(x => x.ClickAsync()).Returns(Task.CompletedTask);
 
         var mockPage = CreateMockPage();
-        mockPage.Setup(x => x.QuerySelectorAsync(selector))
-            .ReturnsAsync(mockElement.Object);
+        // First return the element for detection/click, then null to indicate banner disappeared
+        mockPage.SetupSequence(x => x.QuerySelectorAsync(selector))
+            .ReturnsAsync(mockElement.Object)
+            .ReturnsAsync((IElement?)null);
 
         mockPage.Setup(x => x.QuerySelectorAsync(It.Is<string>(s => s != selector)))
             .ReturnsAsync((IElement?)null);
@@ -695,8 +711,10 @@ public sealed class ConsentManagerServiceTests
         mockButton.Setup(x => x.ClickAsync()).Returns(Task.CompletedTask);
 
         var mockPage = CreateMockPage();
-        mockPage.Setup(x => x.QuerySelectorAsync("[class*='accept-all']"))
-            .ReturnsAsync(mockButton.Object);
+        // First return the button for detection/click, then null to indicate banner disappeared
+        mockPage.SetupSequence(x => x.QuerySelectorAsync("[class*='accept-all']"))
+            .ReturnsAsync(mockButton.Object)
+            .ReturnsAsync((IElement?)null);
 
         mockPage.Setup(x => x.QuerySelectorAsync(It.Is<string>(s => s != "[class*='accept-all']")))
             .ReturnsAsync((IElement?)null);
@@ -768,9 +786,10 @@ public sealed class ConsentManagerServiceTests
         var mockPage = CreateMockPage();
         var verificationList = new System.Collections.Generic.List<string>();
 
+        // Use callback to track calls and return null to simulate no banner found
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
-            .ReturnsAsync((IElement?)null)
-            .Callback<string>(selector => verificationList.Add(selector));
+            .Callback<string, CancellationToken>((selector, _) => verificationList.Add(selector))
+            .ReturnsAsync((IElement?)null);
 
         var service = CreateService();
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 10);

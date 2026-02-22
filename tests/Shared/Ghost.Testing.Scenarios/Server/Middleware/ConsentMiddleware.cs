@@ -37,6 +37,6 @@ public sealed class ConsentMiddleware
             _logger.LogDebug("Request has consent cookie");
         }
 
-        await _next(context).ConfigureAwait(false);
+        await _next(context);
     }
 }

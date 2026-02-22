@@ -49,10 +49,10 @@ public static class PlaywrightDiagnosticsExtensions
                 Screenshots = true,
                 Snapshots = true,
                 Sources = true
-            }).ConfigureAwait(false);
+            });
 
             // Stop tracing and save to file
-            await context.Tracing.StopAsync(new TracingStopOptions { Path = path }).ConfigureAwait(false);
+            await context.Tracing.StopAsync(new TracingStopOptions { Path = path });
 
             var artifact = new DiagnosticArtifact
             {
@@ -104,7 +104,7 @@ public static class PlaywrightDiagnosticsExtensions
                 Screenshots = true,
                 Snapshots = true,
                 Sources = true
-            }).ConfigureAwait(false);
+            });
 
             diagnostics.AddTimelineEvent("TraceStarted", "Playwright tracing started");
             diagnostics.Output?.WriteLine($"[Diagnostics] Playwright tracing started");
@@ -145,7 +145,7 @@ public static class PlaywrightDiagnosticsExtensions
             }
 
             IBrowserContext context = playwrightPage.Context;
-            await context.Tracing.StopAsync(new TracingStopOptions { Path = path }).ConfigureAwait(false);
+            await context.Tracing.StopAsync(new TracingStopOptions { Path = path });
 
             var artifact = new DiagnosticArtifact
             {
@@ -211,7 +211,7 @@ public static class PlaywrightDiagnosticsExtensions
             };
 
             string harJson = JsonSerializer.Serialize(harContent, s_jsonOptions);
-            await File.WriteAllTextAsync(path, harJson, Encoding.UTF8).ConfigureAwait(false);
+            await File.WriteAllTextAsync(path, harJson, Encoding.UTF8);
 
             var artifact = new DiagnosticArtifact
             {
@@ -277,9 +277,9 @@ public static class PlaywrightDiagnosticsExtensions
         ArgumentNullException.ThrowIfNull(diagnostics);
 
         // Stop and save trace
-        await page.StopTracingAsync(diagnostics).ConfigureAwait(false);
+        await page.StopTracingAsync(diagnostics);
 
         // Capture HAR
-        await page.CaptureHarAsync(diagnostics).ConfigureAwait(false);
+        await page.CaptureHarAsync(diagnostics);
     }
 }

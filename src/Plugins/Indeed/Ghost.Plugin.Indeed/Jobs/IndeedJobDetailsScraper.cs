@@ -41,8 +41,10 @@ public class IndeedJobDetailsScraper
         IJsonLdExtractor? jsonLdExtractor = null,
         IndeedOptions? options = null)
     {
-        _browserSession = browserSession ?? throw new ArgumentNullException(nameof(browserSession));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(browserSession);
+        ArgumentNullException.ThrowIfNull(logger);
+        _browserSession = browserSession;
+        _logger = logger;
         _jsonLdExtractor = jsonLdExtractor;
         _options = options ?? new IndeedOptions();
     }

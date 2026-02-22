@@ -69,7 +69,7 @@ public class GhostKernelTests
         // We use a short timeout to verify it blocks
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
         await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-            await kernel.NewSessionAsync(ct: cts.Token).ConfigureAwait(false));
+            await kernel.NewSessionAsync(ct: cts.Token));
 
         // 3. Dispose first session
         await session1.DisposeAsync();

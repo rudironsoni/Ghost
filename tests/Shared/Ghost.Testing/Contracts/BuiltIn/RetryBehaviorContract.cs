@@ -36,7 +36,7 @@ public sealed class RetryBehaviorContract : ProviderContractBase
                 .Select(_ => adapter.TestRetryBehaviorAsync(criteria, ct))
                 .ToList();
 
-            IReadOnlyList<JobListing>[] results = await Task.WhenAll(tasks).ConfigureAwait(false);
+            IReadOnlyList<JobListing>[] results = await Task.WhenAll(tasks);
 
             context["RequestCount"] = results.Length;
             context["SuccessfulRequests"] = results.Count(r => r.Count > 0);

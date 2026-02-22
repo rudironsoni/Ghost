@@ -81,8 +81,10 @@ public class ExecutionContext
     /// <param name="options">The spider options.</param>
     public ExecutionContext(string spiderName, SpiderOptions options)
     {
-        SpiderName = spiderName ?? throw new ArgumentNullException(nameof(spiderName));
-        Options = options ?? throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(spiderName);
+        ArgumentNullException.ThrowIfNull(options);
+        SpiderName = spiderName;
+        Options = options;
         StartedAt = DateTimeOffset.UtcNow;
         State = new System.Collections.Concurrent.ConcurrentDictionary<string, object>();
     }

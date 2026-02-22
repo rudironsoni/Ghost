@@ -54,7 +54,8 @@ public sealed class GoogleJobClient : Ghost.IJobScraper
         ILogger<GoogleJobClient> logger,
         IOptions<GoogleJobsOptions> options)
     {
-        _api = api ?? throw new ArgumentNullException(nameof(api));
+        ArgumentNullException.ThrowIfNull(api);
+        _api = api;
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GoogleJobClient>.Instance;
         _options = options?.Value ?? new GoogleJobsOptions();
     }
@@ -66,9 +67,12 @@ public sealed class GoogleJobClient : Ghost.IJobScraper
         ILogger<GoogleJobClient> logger,
         IOptions<GoogleJobsOptions> options)
     {
-        _api = api ?? throw new ArgumentNullException(nameof(api));
-        _browserClient = browserClient ?? throw new ArgumentNullException(nameof(browserClient));
-        _scraper = scraper ?? throw new ArgumentNullException(nameof(scraper));
+        ArgumentNullException.ThrowIfNull(api);
+        ArgumentNullException.ThrowIfNull(browserClient);
+        ArgumentNullException.ThrowIfNull(scraper);
+        _api = api;
+        _browserClient = browserClient;
+        _scraper = scraper;
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GoogleJobClient>.Instance;
         _options = options?.Value ?? new GoogleJobsOptions();
     }

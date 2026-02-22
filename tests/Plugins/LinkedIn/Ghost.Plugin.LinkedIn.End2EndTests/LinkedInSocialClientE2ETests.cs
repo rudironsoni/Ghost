@@ -27,14 +27,14 @@ public sealed class LinkedInSocialClientE2ETests : IAsyncLifetime
     public async Task InitializeAsync()
     {
         _fixture = new LinkedInE2EFixture(_browserFixture);
-        await _fixture.InitializeAsync().ConfigureAwait(false);
+        await _fixture.InitializeAsync();
     }
 
     public async Task DisposeAsync()
     {
         if (_fixture != null)
         {
-            await _fixture.DisposeAsync().ConfigureAwait(false);
+            await _fixture.DisposeAsync();
         }
     }
 

@@ -33,10 +33,10 @@ public sealed class GlassdoorE2EFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         // Start the test scraper server
-        _testServer = await TestScraperServer.CreateAsync().ConfigureAwait(false);
+        _testServer = await TestScraperServer.CreateAsync();
 
         // Create browser session from kernel (proper async initialization)
-        _browserSession = await BrowserFixture.CreateSessionAsync().ConfigureAwait(false);
+        _browserSession = await BrowserFixture.CreateSessionAsync();
 
         Configuration = new ConfigurationBuilder()
             .AddJsonFile("testsettings.json", optional: true)
@@ -95,7 +95,7 @@ public sealed class GlassdoorE2EFixture : IAsyncLifetime
     {
         if (ServiceProvider is IAsyncDisposable asyncDisposable)
         {
-            await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+            await asyncDisposable.DisposeAsync();
         }
         else if (ServiceProvider is IDisposable disposable)
         {
@@ -104,13 +104,13 @@ public sealed class GlassdoorE2EFixture : IAsyncLifetime
 
         if (_browserSession != null)
         {
-            await _browserSession.DisposeAsync().ConfigureAwait(false);
+            await _browserSession.DisposeAsync();
             _browserSession = null;
         }
 
         if (_testServer != null)
         {
-            await _testServer.DisposeAsync().ConfigureAwait(false);
+            await _testServer.DisposeAsync();
             _testServer = null;
         }
     }

@@ -124,7 +124,7 @@ public class FakeElementHermeticTests
         var element = new FakeElement();
 
         // Act
-        Func<Task> act = async () => await element.ClickAsync().ConfigureAwait(false);
+        Func<Task> act = async () => await element.ClickAsync();
 
         // Assert
         await act.Should().NotThrowAsync();
@@ -137,7 +137,7 @@ public class FakeElementHermeticTests
         var element = new FakeElement();
 
         // Act
-        Func<Task> act = async () => await element.TypeAsync("test input").ConfigureAwait(false);
+        Func<Task> act = async () => await element.TypeAsync("test input");
 
         // Assert
         await act.Should().NotThrowAsync();
@@ -150,7 +150,7 @@ public class FakeElementHermeticTests
         var element = new FakeElement();
 
         // Act
-        Func<Task> act = async () => await element.FillAsync("test value").ConfigureAwait(false);
+        Func<Task> act = async () => await element.FillAsync("test value");
 
         // Assert
         await act.Should().NotThrowAsync();
@@ -196,7 +196,7 @@ public class FakeElementHermeticTests
         var element = new FakeElement();
 
         // Act
-        Func<Task> act = async () => await element.DisposeAsync().ConfigureAwait(false);
+        Func<Task> act = async () => await element.DisposeAsync();
 
         // Assert
         await act.Should().NotThrowAsync();

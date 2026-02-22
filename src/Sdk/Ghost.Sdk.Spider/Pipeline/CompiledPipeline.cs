@@ -52,8 +52,10 @@ public sealed class CompiledPipeline
     /// </exception>
     internal CompiledPipeline(PipelineDelegate pipeline, IReadOnlyList<string> middlewareNames)
     {
-        _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
-        MiddlewareNames = middlewareNames ?? throw new ArgumentNullException(nameof(middlewareNames));
+        ArgumentNullException.ThrowIfNull(pipeline);
+        ArgumentNullException.ThrowIfNull(middlewareNames);
+        _pipeline = pipeline;
+        MiddlewareNames = middlewareNames;
     }
 
     /// <summary>

@@ -39,9 +39,11 @@ public sealed class InfoJobsApiClient
 
     public InfoJobsApiClient(HttpClient http, InfoJobsOptions options, ILogger<InfoJobsApiClient> logger)
     {
-        _http = http ?? throw new ArgumentNullException(nameof(http));
+        ArgumentNullException.ThrowIfNull(http);
+        ArgumentNullException.ThrowIfNull(logger);
+        _http = http;
         _options = options ?? new InfoJobsOptions();
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
 
         // Log warning if credentials are missing
         if (string.IsNullOrEmpty(_options.ClientId) || string.IsNullOrEmpty(_options.ClientSecret))

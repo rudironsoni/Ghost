@@ -14,7 +14,8 @@ internal sealed class DeferredBrowserSession : Ghost.IBrowserSession
 
     public DeferredBrowserSession(Ghost.Kernel.IGhostKernel kernel)
     {
-        _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
+        ArgumentNullException.ThrowIfNull(kernel);
+        _kernel = kernel;
     }
 
     public string SessionId => _session?.SessionId ?? string.Empty;
