@@ -21,7 +21,7 @@ public sealed class GhostWebApiFixture : WebApplicationFactory<Program>, IAsyncL
     /// <summary>
     /// Gets the base URL for the test server (always http://localhost for TestServer).
     /// </summary>
-    public string BaseUrl => "http://localhost";
+    public static string BaseUrl => "http://localhost";
 
     /// <summary>
     /// Gets the configured HttpClient for making requests to the test server.
@@ -97,11 +97,8 @@ public sealed class GhostWebApiFixture : WebApplicationFactory<Program>, IAsyncL
 
     public override async ValueTask DisposeAsync()
     {
-        if (_httpClient is not null)
-        {
-            _httpClient.Dispose();
-            _httpClient = null;
-        }
+        _httpClient?.Dispose();
+        _httpClient = null;
         await base.DisposeAsync();
     }
 
@@ -164,7 +161,9 @@ public sealed class GhostWebApiFixture : WebApplicationFactory<Program>, IAsyncL
 /// Collection definition for HTTP smoke tests using the GhostWebApiFixture.
 /// </summary>
 [CollectionDefinition("GhostWebApiSmokeTests")]
+#pragma warning disable CA1711 // Identifiers should not have incorrect suffix
 public class GhostWebApiSmokeTestCollection : ICollectionFixture<GhostWebApiFixture>
+#pragma warning restore CA1711 // Identifiers should not have incorrect suffix
 {
     // This class has no code, and is never created. Its purpose is simply
     // to be the place to apply [CollectionDefinition] and all the
