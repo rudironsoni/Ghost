@@ -4,7 +4,6 @@
     <IsPackable>false</IsPackable>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
     <!-- Suppress style warnings in test code -->
-    <NoWarn>$(NoWarn);IDE0008;CA1310;CA1860;CA1861;CA2252</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,7 +14,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="FluentAssertions" />
-    <PackageReference Include="NetArchTest.Rules" />
+    <PackageReference Include="TngTech.ArchUnitNET.xUnit" />
     <PackageReference Include="coverlet.collector">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
