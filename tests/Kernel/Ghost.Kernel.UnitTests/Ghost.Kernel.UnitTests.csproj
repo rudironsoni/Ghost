@@ -8,11 +8,11 @@
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="/home/rrj/src/github/rudironsoni/Ghost/src/Kernel/Ghost/Ghost.csproj" />
-    <ProjectReference Include="/home/rrj/src/github/rudironsoni/Ghost/src/Sdk/Ghost.Sdk/Ghost.Sdk.csproj" />
-    <ProjectReference Include="/home/rrj/src/github/rudironsoni/Ghost/src/Sdk/Ghost.Sdk.Spider/Ghost.Sdk.Spider.csproj" />
-    <ProjectReference Include="/home/rrj/src/github/rudironsoni/Ghost/tests/Shared/Ghost.Testing/Ghost.Testing.csproj" />
-    <ProjectReference Include="/home/rrj/src/github/rudironsoni/Ghost/tests/Shared/Ghost.Testing.Scenarios/Ghost.Testing.Scenarios.csproj" />
+    <ProjectReference Include="../../../src/Kernel/Ghost/Ghost.csproj" />
+    <ProjectReference Include="../../../src/Sdk/Ghost.Sdk/Ghost.Sdk.csproj" />
+    <ProjectReference Include="../../../src/Sdk/Ghost.Sdk.Spider/Ghost.Sdk.Spider.csproj" />
+    <ProjectReference Include="../../Shared/Ghost.Testing/Ghost.Testing.csproj" />
+    <ProjectReference Include="../../Shared/Ghost.Testing.Scenarios/Ghost.Testing.Scenarios.csproj" />
   </ItemGroup>
 
   <ItemGroup>
