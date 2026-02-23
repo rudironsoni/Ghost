@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Ghost.Sdk.Middleware;
+using Microsoft.Extensions.Time.Testing;
 using Microsoft.Playwright;
 using Moq;
 using Xunit;
@@ -14,10 +15,11 @@ public sealed class CacheEntryTests
     {
         // Arrange
         var response = CreateMockResponse(200, "OK");
-        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(5);
+        var fakeTimeProvider = new FakeTimeProvider();
+        var expiresAt = fakeTimeProvider.GetUtcNow().AddMinutes(5);
 
         // Act
-        var entry = new CacheEntry(response, expiresAt);
+        var entry = new CacheEntry(response, expiresAt, fakeTimeProvider);
 
         // Assert
         entry.Response.Should().Be(response);
@@ -29,10 +31,11 @@ public sealed class CacheEntryTests
     public void Constructor_WithNullResponse_ThrowsArgumentNullException()
     {
         // Arrange
-        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(5);
+        var fakeTimeProvider = new FakeTimeProvider();
+        var expiresAt = fakeTimeProvider.GetUtcNow().AddMinutes(5);
 
         // Act
-        var act = () => new CacheEntry(null!, expiresAt);
+        var act = () => new CacheEntry(null!, expiresAt, fakeTimeProvider);
 
         // Assert
         act.Should().Throw<ArgumentNullException>();
@@ -43,9 +46,10 @@ public sealed class CacheEntryTests
     public void IsExpired_BeforeExpirationTime_ReturnsFalse()
     {
         // Arrange
+        var fakeTimeProvider = new FakeTimeProvider();
         var response = CreateMockResponse(200, "OK");
-        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(5);
-        var entry = new CacheEntry(response, expiresAt);
+        var expiresAt = fakeTimeProvider.GetUtcNow().AddMinutes(5);
+        var entry = new CacheEntry(response, expiresAt, fakeTimeProvider);
 
         // Act
         var isExpired = entry.IsExpired;
@@ -56,15 +60,16 @@ public sealed class CacheEntryTests
 
     [Trait("Category", "Unit")]
     [Fact]
-    public async Task IsExpired_AfterExpirationTime_ReturnsTrue()
+    public void IsExpired_AfterExpirationTime_ReturnsTrue()
     {
         // Arrange
+        var fakeTimeProvider = new FakeTimeProvider();
         var response = CreateMockResponse(200, "OK");
-        var expiresAt = DateTimeOffset.UtcNow.AddMilliseconds(100);
-        var entry = new CacheEntry(response, expiresAt);
+        var expiresAt = fakeTimeProvider.GetUtcNow().AddMilliseconds(100);
+        var entry = new CacheEntry(response, expiresAt, fakeTimeProvider);
 
         // Act
-        await Task.Delay(150); // Wait for expiration
+        fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(150));
         var isExpired = entry.IsExpired;
 
         // Assert
@@ -76,9 +81,10 @@ public sealed class CacheEntryTests
     public void IsExpired_AtExactExpirationTime_ReturnsTrue()
     {
         // Arrange
+        var fakeTimeProvider = new FakeTimeProvider();
         var response = CreateMockResponse(200, "OK");
-        var expiresAt = DateTimeOffset.UtcNow.AddMilliseconds(-1); // Already expired
-        var entry = new CacheEntry(response, expiresAt);
+        var expiresAt = fakeTimeProvider.GetUtcNow().AddMilliseconds(-1); // Already expired
+        var entry = new CacheEntry(response, expiresAt, fakeTimeProvider);
 
         // Act
         var isExpired = entry.IsExpired;
@@ -92,9 +98,10 @@ public sealed class CacheEntryTests
     public void Response_ReturnsCorrectResponse()
     {
         // Arrange
+        var fakeTimeProvider = new FakeTimeProvider();
         var response = CreateMockResponse(404, "Not Found");
-        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(5);
-        var entry = new CacheEntry(response, expiresAt);
+        var expiresAt = fakeTimeProvider.GetUtcNow().AddMinutes(5);
+        var entry = new CacheEntry(response, expiresAt, fakeTimeProvider);
 
         // Act & Assert
         entry.Response.Status.Should().Be(404);

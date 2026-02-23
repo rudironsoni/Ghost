@@ -15,6 +15,7 @@ public class Socks5Bridge : IDisposable
     private readonly int _upstreamPort;
     private readonly string? _username;
     private readonly string? _password;
+    private readonly TimeProvider _timeProvider;
 
     private TcpListener? _listener;
     private CancellationTokenSource? _cts;
@@ -25,13 +26,14 @@ public class Socks5Bridge : IDisposable
 
     public int Port { get; private set; }
 
-    public Socks5Bridge(string upstreamHost, int upstreamPort, string? username, string? password)
+    public Socks5Bridge(string upstreamHost, int upstreamPort, string? username, string? password, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(upstreamHost);
         _upstreamHost = upstreamHost;
         _upstreamPort = upstreamPort;
         _username = username;
         _password = password;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     public void Start()
@@ -163,7 +165,7 @@ public class Socks5Bridge : IDisposable
             catch (Exception)
             {
                 // swallow and continue
-                await Task.Delay(100, ct).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromMilliseconds(100), _timeProvider, ct).ConfigureAwait(false);
                 continue;
             }
 

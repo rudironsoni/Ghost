@@ -1,5 +1,6 @@
 using System.Globalization;
 using Ghost.Kernel;
+using Ghost.Testing.Attributes;
 using Ghost.Testing.Fixtures;
 using Ghost.Testing.Scenarios.Server;
 using Xunit;
@@ -42,6 +43,58 @@ public class ScrollScenarioTests : IAsyncLifetime
         }
     }
 
+    /// <summary>
+    /// Waits for the loading indicator to be hidden, indicating fetch is complete.
+    /// </summary>
+    private static async Task WaitForLoadingCompleteAsync(IPage page, CancellationToken ct = default)
+    {
+        await page.WaitForSelectorAsync("#loading", new WaitOptions { State = WaitState.Hidden }, ct);
+    }
+
+    /// <summary>
+    /// Waits for the load more button to be enabled (not disabled).
+    /// </summary>
+    private static async Task WaitForButtonEnabledAsync(IPage page, CancellationToken ct = default)
+    {
+        await WaitForConditionAsync(page, "() => !document.getElementById('load-more-btn')?.disabled", ct);
+    }
+
+    /// <summary>
+    /// Waits for the job count to be at least the specified minimum.
+    /// </summary>
+    private static async Task WaitForJobCountAsync(IPage page, int minCount, CancellationToken ct = default)
+    {
+        await WaitForConditionAsync(
+            page,
+            $"() => document.querySelectorAll('.job').length >= {minCount}",
+            ct);
+    }
+
+    /// <summary>
+    /// Polls for a JavaScript condition to return true using Playwright's EvaluateAsync.
+    /// </summary>
+    [SlopwatchSuppress("SW004", "Browser integration test requires real delays for polling JavaScript conditions")]
+    private static async Task WaitForConditionAsync(IPage page, string script, CancellationToken ct = default)
+    {
+        int timeout = 30_000;
+        int interval = 50;
+        int elapsed = 0;
+
+        while (elapsed < timeout)
+        {
+            bool result = await page.EvaluateAsync<bool>(script, null, ct);
+            if (result)
+            {
+                return;
+            }
+
+            await Task.Delay(interval, ct);
+            elapsed += interval;
+        }
+
+        throw new TimeoutException($"Condition did not become true within {timeout}ms: {script}");
+    }
+
     [Fact]
     public async Task AutoThreshold_ScrollTriggersFetch_LoadsMoreItems()
     {
@@ -60,7 +113,7 @@ public class ScrollScenarioTests : IAsyncLifetime
 
         // Scroll to trigger auto-fetch
         await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)");
-        await Task.Delay(500); // Wait for fetch to complete
+        await WaitForLoadingCompleteAsync(page); // Wait for fetch to complete
 
         // Assert - More items should be loaded
         IReadOnlyList<IElement> jobsAfterScroll = await page.QuerySelectorAllAsync(".job");
@@ -89,7 +142,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         while (scrollCount < maxScrolls)
         {
             await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)");
-            await Task.Delay(500);
+            await WaitForLoadingCompleteAsync(page);
 
             IReadOnlyList<IElement> currentJobs = await page.QuerySelectorAllAsync(".job");
             int currentCount = currentJobs.Count;
@@ -141,7 +194,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         for (int i = 0; i < 20; i++)
         {
             await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)");
-            await Task.Delay(500);
+            await WaitForLoadingCompleteAsync(page);
 
             IReadOnlyList<IElement> currentJobs = await page.QuerySelectorAllAsync(".job");
             int currentCount = currentJobs.Count;
@@ -194,7 +247,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         Assert.NotNull(loadMoreButton);
 
         await loadMoreButton.ClickAsync();
-        await Task.Delay(500); // Wait for fetch to complete
+        await WaitForButtonEnabledAsync(page); // Wait for fetch to complete
 
         // Assert - More items should be loaded
         IReadOnlyList<IElement> jobsAfterClick = await page.QuerySelectorAllAsync(".job");
@@ -237,12 +290,12 @@ public class ScrollScenarioTests : IAsyncLifetime
             string? isDisabledAttr = await loadMoreBtn.GetAttributeAsync("disabled");
             if (isDisabledAttr != null)
             {
-                await Task.Delay(500); // Wait for loading to complete
+                await WaitForButtonEnabledAsync(page); // Wait for loading to complete
                 continue;
             }
 
             await loadMoreBtn.ClickAsync();
-            await Task.Delay(500);
+            await WaitForButtonEnabledAsync(page);
             clickCount++;
 
             IReadOnlyList<IElement> currentJobs = await page.QuerySelectorAllAsync(".job");
@@ -296,12 +349,12 @@ public class ScrollScenarioTests : IAsyncLifetime
             string? isDisabledAttr = await loadMoreBtn.GetAttributeAsync("disabled");
             if (isDisabledAttr != null)
             {
-                await Task.Delay(500); // Wait for loading to complete
+                await WaitForButtonEnabledAsync(page); // Wait for loading to complete
                 continue;
             }
 
             await loadMoreBtn.ClickAsync();
-            await Task.Delay(500);
+            await WaitForButtonEnabledAsync(page);
         }
 
         // Assert - Termination: Button should show "No More Jobs"
@@ -342,7 +395,7 @@ public class ScrollScenarioTests : IAsyncLifetime
 
         // Scroll down
         await page.EvaluateAsync<string>("document.getElementById('viewport').scrollTop = 500");
-        await Task.Delay(300);
+        await WaitForConditionAsync(page, "() => document.querySelectorAll('.job').length > 0");
 
         // Get items after scroll
         IReadOnlyList<IElement> jobsAfterScroll = await page.QuerySelectorAllAsync(".job");
@@ -384,7 +437,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         foreach (int scrollPos in scrollPositions)
         {
             await page.EvaluateAsync<string>($"document.getElementById('viewport').scrollTop = {scrollPos}");
-            await Task.Delay(300);
+            await WaitForConditionAsync(page, "() => document.querySelectorAll('.job').length > 0");
 
             IReadOnlyList<IElement> jobs = await page.QuerySelectorAllAsync(".job");
             foreach (IElement job in jobs)
@@ -422,7 +475,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         foreach (int scrollPos in scrollPositions)
         {
             await page.EvaluateAsync<string>($"document.getElementById('viewport').scrollTop = {scrollPos}");
-            await Task.Delay(300);
+            await WaitForConditionAsync(page, "() => document.querySelectorAll('.job').length > 0");
 
             IReadOnlyList<IElement> jobs = await page.QuerySelectorAllAsync(".job");
             HashSet<string> jobIds = [];
@@ -475,7 +528,7 @@ public class ScrollScenarioTests : IAsyncLifetime
             }
 
             await loadMoreBtn.ClickAsync();
-            await Task.Delay(500);
+            await WaitForButtonEnabledAsync(page);
 
             string total = await page.EvaluateAsync<string>("document.getElementById('total-count').textContent");
             string unique = await page.EvaluateAsync<string>("document.getElementById('unique-count').textContent");
@@ -516,7 +569,7 @@ public class ScrollScenarioTests : IAsyncLifetime
             }
 
             await loadMoreBtn.ClickAsync();
-            await Task.Delay(500);
+            await WaitForButtonEnabledAsync(page);
         }
 
         // Assert - Duplicate items should be highlighted
@@ -553,7 +606,7 @@ public class ScrollScenarioTests : IAsyncLifetime
             }
 
             await loadMoreBtn.ClickAsync();
-            await Task.Delay(500);
+            await WaitForButtonEnabledAsync(page);
         }
 
         // Assert - Completeness: All unique items should be extracted

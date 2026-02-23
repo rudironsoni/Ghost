@@ -17,6 +17,7 @@ public sealed class ProxyHealthChecker : IDisposable
     private readonly ILogger? _logger;
     private readonly HttpClient _healthCheckClient;
     private readonly CancellationTokenSource _healthCheckCts = new();
+    private readonly TimeProvider _timeProvider;
     private Task? _healthCheckTask;
     private bool _disposed;
 
@@ -39,7 +40,8 @@ public sealed class ProxyHealthChecker : IDisposable
         ProxyHealthTracker healthTracker,
         ProxyBlacklistManager blacklistManager,
         ILogger? logger,
-        HttpClient? healthCheckClient = null)
+        HttpClient? healthCheckClient = null,
+        TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(healthTracker);
         ArgumentNullException.ThrowIfNull(blacklistManager);
@@ -50,6 +52,7 @@ public sealed class ProxyHealthChecker : IDisposable
         {
             Timeout = TimeSpan.FromSeconds(10)
         };
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <summary>
@@ -192,7 +195,7 @@ public sealed class ProxyHealthChecker : IDisposable
         {
             try
             {
-                await Task.Delay(interval, token).ConfigureAwait(false);
+                await Task.Delay(interval, _timeProvider, token).ConfigureAwait(false);
 
                 foreach (KeyValuePair<string, ProxyInfo> kvp in proxyPool)
                 {

@@ -1,3 +1,4 @@
+using System.Threading;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,10 +18,12 @@ namespace Ghost.ConsentManagement;
 public class ConsentManagerService
 {
     private readonly ILogger<ConsentManagerService> _logger;
+    private readonly TimeProvider _timeProvider;
 
-    public ConsentManagerService(ILogger<ConsentManagerService>? logger = null)
+    public ConsentManagerService(ILogger<ConsentManagerService>? logger = null, TimeProvider? timeProvider = null)
     {
         _logger = logger ?? NullLogger<ConsentManagerService>.Instance;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <summary>
@@ -170,7 +173,7 @@ public class ConsentManagerService
                     }
 
                     // Wait a moment for the banner to disappear and page to settle
-                    await Task.Delay(1000).ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromMilliseconds(1000), _timeProvider, CancellationToken.None).ConfigureAwait(false);
 
                     // Check if banner is actually gone
                     IElement? stillPresent = await DetectConsentManagerAsync(page, manager, 1000).ConfigureAwait(false);
@@ -371,15 +374,15 @@ public class ConsentManagerService
     /// </summary>
     public async Task<bool> WaitAndHandleConsentAsync(IPage page, int maxWaitMs = 10000, int checkIntervalMs = 500)
     {
-        DateTime startTime = DateTime.UtcNow;
+        DateTime startTime = _timeProvider.GetUtcNow().DateTime;
 
-        while ((DateTime.UtcNow - startTime).TotalMilliseconds < maxWaitMs)
+        while ((_timeProvider.GetUtcNow().DateTime - startTime).TotalMilliseconds < maxWaitMs)
         {
             bool handled = await HandleConsentAsync(page, checkIntervalMs).ConfigureAwait(false);
             if (handled)
                 return true;
 
-            await Task.Delay(checkIntervalMs).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMilliseconds(checkIntervalMs), _timeProvider, CancellationToken.None).ConfigureAwait(false);
         }
 
         _logger.LogWarning("Consent banner not detected within {MaxWaitMs}ms", maxWaitMs);

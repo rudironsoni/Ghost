@@ -13,6 +13,7 @@ public class ExecutionContext
     private int _requestsSucceeded;
     private int _requestsFailed;
     private int _itemsExtracted;
+    private readonly TimeProvider _timeProvider;
 
     /// <summary>
     /// Gets the spider name.
@@ -80,12 +81,24 @@ public class ExecutionContext
     /// <param name="spiderName">The spider name.</param>
     /// <param name="options">The spider options.</param>
     public ExecutionContext(string spiderName, SpiderOptions options)
+        : this(spiderName, options, TimeProvider.System)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ExecutionContext"/> class.
+    /// </summary>
+    /// <param name="spiderName">The spider name.</param>
+    /// <param name="options">The spider options.</param>
+    /// <param name="timeProvider">The time provider for time-based operations.</param>
+    public ExecutionContext(string spiderName, SpiderOptions options, TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(spiderName);
         ArgumentNullException.ThrowIfNull(options);
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         SpiderName = spiderName;
         Options = options;
-        StartedAt = DateTimeOffset.UtcNow;
+        StartedAt = _timeProvider.GetUtcNow();
         State = new System.Collections.Concurrent.ConcurrentDictionary<string, object>();
     }
 
@@ -141,7 +154,7 @@ public class ExecutionContext
     /// <returns>Dictionary of statistics.</returns>
     public Dictionary<string, object> GetStatistics()
     {
-        TimeSpan elapsed = DateTimeOffset.UtcNow - StartedAt;
+        TimeSpan elapsed = _timeProvider.GetUtcNow() - StartedAt;
         double requestsPerSecond = elapsed.TotalSeconds > 0 ? _requestsProcessed / elapsed.TotalSeconds : 0;
 
         return new Dictionary<string, object>

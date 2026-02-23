@@ -564,6 +564,7 @@ public class GraphQLAdapterExtractTests : IDisposable
     }
 
     [Fact]
+    [SlopwatchSuppress("SW004", "Testing HTTP timeout behavior requires simulating slow response")]
     public async Task ExtractAsync_WithTimeout_ShouldRespectRequestTimeout()
     {
         // Arrange
@@ -580,7 +581,7 @@ public class GraphQLAdapterExtractTests : IDisposable
                 ItExpr.IsAny<CancellationToken>())
             .Returns(async (HttpRequestMessage req, CancellationToken ct) =>
             {
-                await Task.Delay(100, ct); // Delay longer than timeout
+                await Task.Delay(50, ct); // Delay longer than timeout (50ms > 10ms)
                 return new HttpResponseMessage(HttpStatusCode.OK);
             });
 

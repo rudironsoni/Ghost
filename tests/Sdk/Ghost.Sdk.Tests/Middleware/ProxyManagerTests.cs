@@ -1,6 +1,7 @@
 using System.Net;
 using FluentAssertions;
 using Ghost.Sdk.Middleware;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace Ghost.Sdk.Tests.Middleware;
@@ -292,10 +293,12 @@ public sealed class ProxyManagerTests
     public async Task GetNextProxyAsync_AfterRetryPeriod_ShouldRecoverFailedProxy()
     {
         // Arrange
+        var timeProvider = new FakeTimeProvider();
         var options = new ProxyOptions
         {
             MaxFailures = 1,
-            RetryAfter = TimeSpan.FromMilliseconds(100)
+            RetryAfter = TimeSpan.FromMinutes(5),
+            TimeProvider = timeProvider
         };
         var manager = new ProxyManager(options);
         manager.AddProxy("proxy.example.com", 8080);
@@ -309,8 +312,8 @@ public sealed class ProxyManagerTests
         // Should return null immediately
         var nullProxy = await manager.GetNextProxyAsync();
 
-        // Wait for retry period
-        await Task.Delay(150);
+        // Advance time past the retry period
+        timeProvider.Advance(TimeSpan.FromMinutes(6));
 
         // Should recover after retry period
         var recoveredProxy = await manager.GetNextProxyAsync();

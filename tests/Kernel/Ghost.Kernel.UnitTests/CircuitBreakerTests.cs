@@ -1,4 +1,5 @@
 using Ghost.Resilience;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace Ghost.Kernel.Tests;
@@ -51,15 +52,17 @@ public class CircuitBreakerTests
     [Fact]
     public async Task ExecuteAsyncTransitionsToHalfOpenAfterTimeout()
     {
+        var fakeTimeProvider = new FakeTimeProvider();
         var breaker = new CircuitBreaker("Test", new CircuitBreakerOptions
         {
             FailureThreshold = 1,
             Timeout = TimeSpan.FromMilliseconds(20),
-            HalfOpenMaxAttempts = 1
+            HalfOpenMaxAttempts = 1,
+            TimeProvider = fakeTimeProvider
         });
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => breaker.ExecuteAsync<int>(() => throw new InvalidOperationException()));
-        await Task.Delay(30);
+        fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(30));
 
         var result = await breaker.ExecuteAsync(() => Task.FromResult(7));
         Assert.Equal(7, result);
@@ -69,15 +72,17 @@ public class CircuitBreakerTests
     [Fact]
     public async Task ExecuteAsyncHalfOpenFailureReopensCircuit()
     {
+        var fakeTimeProvider = new FakeTimeProvider();
         var breaker = new CircuitBreaker("Test", new CircuitBreakerOptions
         {
             FailureThreshold = 1,
             Timeout = TimeSpan.FromMilliseconds(20),
-            HalfOpenMaxAttempts = 2
+            HalfOpenMaxAttempts = 2,
+            TimeProvider = fakeTimeProvider
         });
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => breaker.ExecuteAsync<int>(() => throw new InvalidOperationException()));
-        await Task.Delay(30);
+        fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(30));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => breaker.ExecuteAsync<int>(() => throw new InvalidOperationException()));
         Assert.Equal(CircuitState.Open, breaker.State);
@@ -86,15 +91,17 @@ public class CircuitBreakerTests
     [Fact]
     public async Task ExecuteAsyncHalfOpenRespectsAttemptLimit()
     {
+        var fakeTimeProvider = new FakeTimeProvider();
         var breaker = new CircuitBreaker("Test", new CircuitBreakerOptions
         {
             FailureThreshold = 1,
             Timeout = TimeSpan.FromMilliseconds(20),
-            HalfOpenMaxAttempts = 1
+            HalfOpenMaxAttempts = 1,
+            TimeProvider = fakeTimeProvider
         });
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => breaker.ExecuteAsync<int>(() => throw new InvalidOperationException()));
-        await Task.Delay(30);
+        fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(30));
 
         var gate = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
         var firstAttempt = breaker.ExecuteAsync(() => gate.Task);
@@ -156,18 +163,20 @@ public class CircuitBreakerTests
     [Fact]
     public async Task StateChangedRaisesOnOpenAndClose()
     {
+        var fakeTimeProvider = new FakeTimeProvider();
         var breaker = new CircuitBreaker("Test", new CircuitBreakerOptions
         {
             FailureThreshold = 1,
             Timeout = TimeSpan.FromMilliseconds(20),
-            HalfOpenMaxAttempts = 1
+            HalfOpenMaxAttempts = 1,
+            TimeProvider = fakeTimeProvider
         });
 
         List<CircuitState> transitions = [];
         breaker.StateChanged += (_, args) => transitions.Add(args.CurrentState);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => breaker.ExecuteAsync<int>(() => throw new InvalidOperationException()));
-        await Task.Delay(30);
+        fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(30));
         await breaker.ExecuteAsync(() => Task.FromResult(1));
 
         Assert.Contains(CircuitState.Open, transitions);

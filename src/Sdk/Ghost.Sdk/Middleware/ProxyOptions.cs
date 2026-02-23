@@ -34,4 +34,16 @@ public class ProxyOptions
     /// have recovered from transient failures.
     /// </remarks>
     public TimeSpan RetryAfter { get; set; } = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Gets or sets the time provider for time-based operations.
+    /// </summary>
+    /// <value>
+    /// The time provider. Defaults to <see cref="TimeProvider.System"/>.
+    /// </value>
+    /// <remarks>
+    /// This property allows for testability by enabling the use of a fake time provider
+    /// in unit tests to control time-based behavior.
+    /// </remarks>
+    public TimeProvider TimeProvider { get; set; } = TimeProvider.System;
 }

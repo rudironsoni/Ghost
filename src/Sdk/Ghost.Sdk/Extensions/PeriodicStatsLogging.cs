@@ -15,7 +15,8 @@ public sealed partial class PeriodicStatsLogging : IPeriodicStatsLogging, IDispo
 {
     private readonly IStatsCollector _statsCollector;
     private readonly ILogger<PeriodicStatsLogging> _logger;
-    private Timer? _timer;
+    private readonly TimeProvider _timeProvider;
+    private ITimer? _timer;
     private string? _currentSpiderId;
     private bool _disposed;
 
@@ -28,12 +29,28 @@ public sealed partial class PeriodicStatsLogging : IPeriodicStatsLogging, IDispo
     /// Thrown when <paramref name="statsCollector"/> or <paramref name="logger"/> is null.
     /// </exception>
     public PeriodicStatsLogging(IStatsCollector statsCollector, ILogger<PeriodicStatsLogging> logger)
+        : this(statsCollector, logger, TimeProvider.System)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PeriodicStatsLogging"/> class.
+    /// </summary>
+    /// <param name="statsCollector">The stats collector to query for metrics.</param>
+    /// <param name="logger">The logger instance for diagnostic output.</param>
+    /// <param name="timeProvider">The time provider for timer operations.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="statsCollector"/>, <paramref name="logger"/>, or <paramref name="timeProvider"/> is null.
+    /// </exception>
+    public PeriodicStatsLogging(IStatsCollector statsCollector, ILogger<PeriodicStatsLogging> logger, TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(statsCollector);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(timeProvider);
 
         _statsCollector = statsCollector;
         _logger = logger;
+        _timeProvider = timeProvider;
     }
 
     /// <inheritdoc/>
@@ -51,8 +68,8 @@ public sealed partial class PeriodicStatsLogging : IPeriodicStatsLogging, IDispo
         // Dispose existing timer if any
         _timer?.Dispose();
 
-        // Create new timer with the current interval
-        _timer = new Timer(LogStatsCallback, null, Interval, Interval);
+        // Create new timer with the current interval using TimeProvider
+        _timer = _timeProvider.CreateTimer(LogStatsCallback, null, Interval, Interval);
 
         LogStartedPeriodicLogging(spiderId, Interval.TotalSeconds);
     }
@@ -62,7 +79,6 @@ public sealed partial class PeriodicStatsLogging : IPeriodicStatsLogging, IDispo
     {
         if (_timer != null)
         {
-            _timer.Change(Timeout.Infinite, Timeout.Infinite);
             _timer.Dispose();
             _timer = null;
 

@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Ghost.Sdk.Statistics;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace Ghost.Sdk.Tests.Statistics;
@@ -333,18 +334,19 @@ public class StatsCollectorTests
     public void SpiderStats_RequestsPerSecond_CalculatesCorrectly()
     {
         // Arrange
-        var collector = new StatsCollector();
+        var timeProvider = new FakeTimeProvider();
+        var collector = new StatsCollector(timeProvider);
         var spiderId = "spider-1";
         collector.RecordRequest(spiderId);
 
-        // Act - Simulate some time passing
-        Thread.Sleep(1000); // Sleep for 1 second
+        // Act - Simulate some time passing using FakeTimeProvider
+        timeProvider.Advance(TimeSpan.FromSeconds(1)); // Advance 1 second
         collector.RecordResponse(spiderId, 200, TimeSpan.FromMilliseconds(100));
         var stats = collector.GetStats(spiderId);
 
         // Assert
         stats.RequestsPerSecond.Should().BeGreaterThan(0);
-        stats.RequestsPerSecond.Should().BeLessOrEqualTo(1.1); // ~1 request in ~1 second
+        stats.RequestsPerSecond.Should().BeApproximately(1.0, 0.1); // ~1 request in ~1 second
     }
 
     [Fact]

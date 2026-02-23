@@ -11,6 +11,7 @@ public sealed class InMemoryHttpCache : IHttpCache, IDisposable
 {
     private readonly ConcurrentDictionary<string, CacheEntry> _cache = new();
     private readonly HttpCacheOptions _options;
+    private readonly TimeProvider _timeProvider;
     private readonly Timer _cleanupTimer;
     private bool _disposed;
 
@@ -22,6 +23,7 @@ public sealed class InMemoryHttpCache : IHttpCache, IDisposable
     {
         ArgumentNullException.ThrowIfNull(options);
         _options = options;
+        _timeProvider = options.TimeProvider ?? TimeProvider.System;
         _cleanupTimer = new Timer(CleanupExpiredEntries, null, _options.CleanupInterval, _options.CleanupInterval);
     }
 
@@ -53,9 +55,9 @@ public sealed class InMemoryHttpCache : IHttpCache, IDisposable
 
         string key = GetCacheKey(request);
         TimeSpan effectiveTtl = ttl ?? _options.DefaultTtl;
-        DateTimeOffset expiresAt = DateTimeOffset.UtcNow + effectiveTtl;
+        DateTimeOffset expiresAt = _timeProvider.GetUtcNow() + effectiveTtl;
 
-        _cache[key] = new CacheEntry(response, expiresAt);
+        _cache[key] = new CacheEntry(response, expiresAt, _timeProvider);
 
         // Enforce max cache size by removing oldest entries if needed
         EnforceMaxCacheSize();

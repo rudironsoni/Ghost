@@ -12,6 +12,7 @@ public sealed class RedisQueueMetricsService : BackgroundService
     private readonly IJobDispatcher _dispatcher;
     private readonly ILogger<RedisQueueMetricsService> _logger;
     private readonly TimeSpan _pollInterval = TimeSpan.FromSeconds(15);
+    private readonly TimeProvider _timeProvider;
     private static readonly Action<ILogger, int, int, int, int, Exception?> s_metricsUpdated =
         LoggerMessage.Define<int, int, int, int>(
             LogLevel.Debug,
@@ -38,13 +39,15 @@ public sealed class RedisQueueMetricsService : BackgroundService
 
     public RedisQueueMetricsService(
         IJobDispatcher dispatcher,
-        ILogger<RedisQueueMetricsService> logger)
+        ILogger<RedisQueueMetricsService> logger,
+        TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(dispatcher);
         ArgumentNullException.ThrowIfNull(logger);
 
         _dispatcher = dispatcher;
         _logger = logger;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <summary>
@@ -70,7 +73,7 @@ public sealed class RedisQueueMetricsService : BackgroundService
     /// <summary>
     /// Gets the timestamp of the last metrics update.
     /// </summary>
-    public DateTime LastUpdate { get; private set; } = DateTime.UtcNow;
+    public DateTime LastUpdate { get; private set; }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -81,7 +84,7 @@ public sealed class RedisQueueMetricsService : BackgroundService
             try
             {
                 await UpdateMetricsAsync(stoppingToken).ConfigureAwait(false);
-                await Task.Delay(_pollInterval, stoppingToken).ConfigureAwait(false);
+                await Task.Delay(_pollInterval, _timeProvider, stoppingToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -91,7 +94,7 @@ public sealed class RedisQueueMetricsService : BackgroundService
             catch (Exception ex)
             {
                 s_metricsPollError(_logger, ex);
-                await Task.Delay(_pollInterval, stoppingToken).ConfigureAwait(false);
+                await Task.Delay(_pollInterval, _timeProvider, stoppingToken).ConfigureAwait(false);
             }
         }
 
@@ -104,7 +107,7 @@ public sealed class RedisQueueMetricsService : BackgroundService
         ActiveCount = await _dispatcher.GetActiveCountAsync(cancellationToken).ConfigureAwait(false);
         CompletedCount = await _dispatcher.GetCompletedCountAsync(cancellationToken).ConfigureAwait(false);
         DeadCount = await _dispatcher.GetDeadCountAsync(cancellationToken).ConfigureAwait(false);
-        LastUpdate = DateTime.UtcNow;
+        LastUpdate = _timeProvider.GetUtcNow().DateTime;
 
         s_metricsUpdated(_logger, PendingCount, ActiveCount, CompletedCount, DeadCount, null);
     }

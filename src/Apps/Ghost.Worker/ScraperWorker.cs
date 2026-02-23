@@ -13,6 +13,7 @@ public sealed partial class ScraperWorker : BackgroundService
     private readonly IConnectionMultiplexer _redis;
     private readonly IServiceProvider _serviceProvider;
     private readonly WorkerConfiguration _config;
+    private readonly TimeProvider _timeProvider;
 
     // LoggerMessage delegates for high-performance logging
     [LoggerMessage(Level = LogLevel.Information, Message = "Ghost Worker {WorkerId} starting on node {NodeName} with max concurrency {MaxConcurrency}")]
@@ -46,12 +47,14 @@ public sealed partial class ScraperWorker : BackgroundService
         ILogger<ScraperWorker> logger,
         IConnectionMultiplexer redis,
         IServiceProvider serviceProvider,
-        WorkerConfiguration config)
+        WorkerConfiguration config,
+        TimeProvider? timeProvider = null)
     {
         _logger = logger;
         _redis = redis;
         _serviceProvider = serviceProvider;
         _config = config;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -88,7 +91,7 @@ public sealed partial class ScraperWorker : BackgroundService
 
                 if (jobJson.IsNullOrEmpty)
                 {
-                    await Task.Delay(_config.PollIntervalMs, stoppingToken).ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromMilliseconds(_config.PollIntervalMs), _timeProvider, stoppingToken).ConfigureAwait(false);
                     continue;
                 }
 
@@ -101,14 +104,14 @@ public sealed partial class ScraperWorker : BackgroundService
             catch (Exception ex)
             {
                 LogUnhandledJobError(ex);
-                await Task.Delay(1000, stoppingToken).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromMilliseconds(1000), _timeProvider, stoppingToken).ConfigureAwait(false);
             }
         }
     }
 
     private async Task ProcessJobAsync(string jobJson, CancellationToken cancellationToken)
     {
-        DateTimeOffset startTime = DateTimeOffset.UtcNow;
+        DateTimeOffset startTime = new DateTimeOffset(_timeProvider.GetUtcNow().DateTime, TimeSpan.Zero);
         string jobId = "unknown";
 
         try
@@ -146,12 +149,12 @@ public sealed partial class ScraperWorker : BackgroundService
             // Update job status to completed
             await UpdateJobStatusAsync(jobRequest.JobId, JobStatus.Completed, cancellationToken).ConfigureAwait(false);
 
-            TimeSpan duration = DateTimeOffset.UtcNow - startTime;
+            TimeSpan duration = new DateTimeOffset(_timeProvider.GetUtcNow().DateTime, TimeSpan.Zero) - startTime;
             LogJobCompleted(jobRequest.JobId, duration.TotalMilliseconds, results.Count);
         }
         catch (Exception ex)
         {
-            TimeSpan duration = DateTimeOffset.UtcNow - startTime;
+            TimeSpan duration = new DateTimeOffset(_timeProvider.GetUtcNow().DateTime, TimeSpan.Zero) - startTime;
             LogJobFailed(ex, jobId, duration.TotalMilliseconds);
 
             // Update job status to failed
@@ -195,7 +198,7 @@ public sealed partial class ScraperWorker : BackgroundService
         {
             JobId = jobId,
             Status = status.ToString(),
-            UpdatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = new DateTimeOffset(_timeProvider.GetUtcNow().DateTime, TimeSpan.Zero),
             ErrorMessage = errorMessage
         };
 

@@ -14,4 +14,9 @@ public class DnsCacheOptions
     /// Gets or sets the maximum number of entries to keep in the cache.
     /// </summary>
     public int MaxEntries { get; set; } = 1000;
+
+    /// <summary>
+    /// Gets or sets the time provider for cache operations.
+    /// </summary>
+    public TimeProvider TimeProvider { get; set; } = TimeProvider.System;
 }

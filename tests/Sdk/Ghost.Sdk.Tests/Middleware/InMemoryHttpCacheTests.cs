@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Ghost.Sdk.Middleware;
+using Microsoft.Extensions.Time.Testing;
 using Microsoft.Playwright;
 using Moq;
 using Xunit;
@@ -65,14 +66,23 @@ public sealed class InMemoryHttpCacheTests : IDisposable
     public async Task TryGetAsync_WithExpiredEntry_ReturnsFalse()
     {
         // Arrange
+        var fakeTimeProvider = new FakeTimeProvider();
+        var options = new HttpCacheOptions
+        {
+            DefaultTtl = TimeSpan.FromMinutes(5),
+            CleanupInterval = TimeSpan.FromSeconds(30),
+            MaxCacheSize = 100 * 1024 * 1024,
+            TimeProvider = fakeTimeProvider
+        };
+        using var cache = new InMemoryHttpCache(options);
         var request = CreateMockRequest("GET", "https://example.com");
         var response = CreateMockResponse(200, "OK");
         var shortTtl = TimeSpan.FromMilliseconds(100);
 
         // Act
-        await _cache.SetAsync(request, response, shortTtl);
-        await Task.Delay(200); // Wait for expiration
-        var result = await _cache.TryGetAsync(request, out var cachedResponse);
+        await cache.SetAsync(request, response, shortTtl);
+        fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(200));
+        var result = await cache.TryGetAsync(request, out var cachedResponse);
 
         // Assert
         result.Should().BeFalse();
@@ -151,17 +161,26 @@ public sealed class InMemoryHttpCacheTests : IDisposable
     public async Task SetAsync_WithCustomTtl_UsesProvidedTtl()
     {
         // Arrange
+        var fakeTimeProvider = new FakeTimeProvider();
+        var options = new HttpCacheOptions
+        {
+            DefaultTtl = TimeSpan.FromMinutes(5),
+            CleanupInterval = TimeSpan.FromSeconds(30),
+            MaxCacheSize = 100 * 1024 * 1024,
+            TimeProvider = fakeTimeProvider
+        };
+        using var cache = new InMemoryHttpCache(options);
         var request = CreateMockRequest("GET", "https://example.com");
         var response = CreateMockResponse(200, "OK");
         var customTtl = TimeSpan.FromMilliseconds(150);
 
         // Act
-        await _cache.SetAsync(request, response, customTtl);
-        await Task.Delay(100); // Should still be cached
-        var result1 = await _cache.TryGetAsync(request, out var cachedResponse1);
+        await cache.SetAsync(request, response, customTtl);
+        fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(100));
+        var result1 = await cache.TryGetAsync(request, out var cachedResponse1);
 
-        await Task.Delay(100); // Should be expired now
-        var result2 = await _cache.TryGetAsync(request, out var cachedResponse2);
+        fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(100));
+        var result2 = await cache.TryGetAsync(request, out var cachedResponse2);
 
         // Assert
         result1.Should().BeTrue();

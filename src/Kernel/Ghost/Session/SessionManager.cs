@@ -127,6 +127,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
 
         string id = sessionId ?? Guid.NewGuid().ToString();
         TimeSpan expiry = ttl ?? _options.DefaultTtl;
+        TimeProvider timeProvider = _options.TimeProvider;
 
         try
         {
@@ -137,6 +138,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
             string storageState = await context.StorageStateAsync().ConfigureAwait(false);
             StorageStateJson? storageStateJson = JsonSerializer.Deserialize<StorageStateJson>(storageState);
 
+            DateTimeOffset now = timeProvider.GetUtcNow();
             var session = new BrowserSession
             {
                 SessionId = id,
@@ -144,8 +146,8 @@ public sealed class SessionManager : ISessionManager, IDisposable
                 Cookies = cookies.ToList(),
                 LocalStorage = [],
                 SessionStorage = [],
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.Add(expiry)
+                CreatedAt = now.UtcDateTime,
+                ExpiresAt = now.Add(expiry).UtcDateTime
             };
 
             // Extract localStorage and sessionStorage from origins
@@ -295,8 +297,8 @@ public sealed class SessionManager : ISessionManager, IDisposable
                 return null;
             }
 
-            // Check if expired
-            if (session.IsExpired())
+            // Check if expired using the configured time provider
+            if (session.IsExpired(_options.TimeProvider))
             {
                 _logSessionExpired(_logger, session.SessionId, platform, null);
                 await DeleteSessionAsync(platform, session.SessionId, ct).ConfigureAwait(false);
@@ -381,7 +383,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
                     foreach (string sessionId in sessions)
                     {
                         BrowserSession? session = await LoadSessionAsync(platform, sessionId, ct).ConfigureAwait(false);
-                        if (session?.IsExpired() == true)
+                        if (session?.IsExpired(_options.TimeProvider) == true)
                         {
                             await DeleteSessionAsync(platform, sessionId, ct).ConfigureAwait(false);
                             count++;

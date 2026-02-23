@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.WebSocket;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 using System.Net.WebSockets;
 
@@ -199,14 +200,15 @@ public class MessageBufferTests
     }
 
     [Fact]
-    public async Task ShouldFlush_WithMaxWaitTimeExceeded_ShouldReturnTrue()
+    public void ShouldFlush_WithMaxWaitTimeExceeded_ShouldReturnTrue()
     {
         // Arrange
-        var buffer = new MessageBuffer(maxMessageCount: 100, maxWaitTime: TimeSpan.FromMilliseconds(10));
+        var timeProvider = new FakeTimeProvider();
+        var buffer = new MessageBuffer(maxMessageCount: 100, maxWaitTime: TimeSpan.FromMilliseconds(10), timeProvider);
         buffer.Add(WebSocketMessage.CreateText("test"));
 
-        // Act
-        await Task.Delay(15); // Wait for timeout to be exceeded
+        // Act - Advance time using FakeTimeProvider
+        timeProvider.Advance(TimeSpan.FromMilliseconds(15));
         var shouldFlush = buffer.ShouldFlush;
 
         // Assert
@@ -517,14 +519,15 @@ public class MessageBufferTests
     }
 
     [Fact]
-    public async Task Add_FirstMessage_ShouldResetTimestamp()
+    public void Add_FirstMessage_ShouldResetTimestamp()
     {
         // Arrange
-        var buffer = new MessageBuffer(maxMessageCount: 100, maxWaitTime: TimeSpan.FromMilliseconds(50));
+        var timeProvider = new FakeTimeProvider();
+        var buffer = new MessageBuffer(maxMessageCount: 100, maxWaitTime: TimeSpan.FromMilliseconds(50), timeProvider);
 
         // Act
         buffer.Add(WebSocketMessage.CreateText("test1"));
-        await Task.Delay(20);
+        timeProvider.Advance(TimeSpan.FromMilliseconds(20));
         buffer.Flush(); // Clear buffer
 
         buffer.Add(WebSocketMessage.CreateText("test2")); // Should reset timestamp

@@ -7,7 +7,18 @@ namespace Ghost.Stealth.Behavior;
 /// </summary>
 public sealed class ScrollMimicry
 {
-    private readonly Random _random = new();
+    private readonly Random _random;
+    private readonly TimeProvider _timeProvider;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ScrollMimicry"/> class.
+    /// </summary>
+    /// <param name="timeProvider">Optional time provider for testability.</param>
+    public ScrollMimicry(TimeProvider? timeProvider = null)
+    {
+        _random = new Random();
+        _timeProvider = timeProvider ?? TimeProvider.System;
+    }
 
     /// <summary>
     /// Scrolls the page in a human-like manner with variable speed and timing.
@@ -49,7 +60,7 @@ public sealed class ScrollMimicry
             // Variable delay between steps (20-100ms) for natural rhythm
             if (i < steps - 1)
             {
-                await Task.Delay(_random.Next(20, 101), cancellationToken).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromMilliseconds(_random.Next(20, 101)), _timeProvider, cancellationToken).ConfigureAwait(false);
             }
         }
     }

@@ -7,7 +7,18 @@ namespace Ghost.Stealth.Behavior;
 /// </summary>
 public sealed class MouseMimicry
 {
-    private readonly Random _random = new();
+    private readonly Random _random;
+    private readonly TimeProvider _timeProvider;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MouseMimicry"/> class.
+    /// </summary>
+    /// <param name="timeProvider">Optional time provider for testability.</param>
+    public MouseMimicry(TimeProvider? timeProvider = null)
+    {
+        _random = new Random();
+        _timeProvider = timeProvider ?? TimeProvider.System;
+    }
 
     /// <summary>
     /// Moves the mouse to the target position using a Bezier curve path.
@@ -52,7 +63,7 @@ public sealed class MouseMimicry
             // Variable delay between steps (5-20ms) for human-like speed variance
             if (i < steps)
             {
-                await Task.Delay(_random.Next(5, 21), cancellationToken).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromMilliseconds(_random.Next(5, 21)), _timeProvider, cancellationToken).ConfigureAwait(false);
             }
         }
     }

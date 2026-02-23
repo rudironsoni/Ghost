@@ -39,6 +39,11 @@ public sealed class SessionManagerOptions
     /// Whether to compress session data before storage.
     /// </summary>
     public bool EnableCompression { get; set; } = true;
+
+    /// <summary>
+    /// Time provider for time-based operations. Defaults to <see cref="TimeProvider.System"/>.
+    /// </summary>
+    public TimeProvider TimeProvider { get; set; } = TimeProvider.System;
 }
 
 /// <summary>

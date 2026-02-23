@@ -350,10 +350,7 @@ public class StorageSinksTests
         };
 
         // Act
-        var startTime = DateTimeOffset.UtcNow;
-        await Task.Delay(10); // Simulate work
         var result = await storage.StoreAsync(new { Id = 1 }, context);
-        var endTime = DateTimeOffset.UtcNow;
 
         // Assert
         result.Duration.Should().BeGreaterThan(TimeSpan.Zero);

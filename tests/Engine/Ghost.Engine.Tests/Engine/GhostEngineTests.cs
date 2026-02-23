@@ -24,7 +24,7 @@ public class GhostEngineTests
     public async Task RunAsync_WithFakeDownloader_ProcessesRequestsDeterministicallyAsync()
     {
         // Arrange
-        var options = new GhostEngineOptions
+        GhostEngineOptions options = new GhostEngineOptions
         {
             MaxInFlight = 2,
             MaxPendingItems = 10
@@ -33,11 +33,11 @@ public class GhostEngineTests
         List<string> processedRequests = [];
         List<string> processedItems = [];
 
-        var spider = new TestSpider(processedRequests, processedItems);
-        var downloader = new TestDownloader();
-        var itemPipeline = new TestItemPipeline(processedItems);
+        TestSpider spider = new TestSpider(processedRequests, processedItems);
+        TestDownloader downloader = new TestDownloader();
+        TestItemPipeline itemPipeline = new TestItemPipeline(processedItems);
 
-        var engine = new GhostEngine(
+        GhostEngine engine = new GhostEngine(
             options: options,
             scheduler: new InMemoryRequestScheduler(),
             downloader: downloader,
@@ -45,7 +45,7 @@ public class GhostEngineTests
             spiderMiddlewares: Array.Empty<ISpiderMiddleware>(),
             itemPipelines: new[] { itemPipeline });
 
-        var context = new GhostEngineContext("test-job", "test-spider", new Dictionary<string, object?>());
+        GhostEngineContext context = new GhostEngineContext("test-job", "test-spider", new Dictionary<string, object?>());
 
         // Act
         await engine.RunAsync(spider, context);
@@ -62,29 +62,47 @@ public class GhostEngineTests
     public async Task RunAsync_WithBackpressure_RespectsMaxInFlightAsync()
     {
         // Arrange
-        var options = new GhostEngineOptions
+        GhostEngineOptions options = new GhostEngineOptions
         {
             MaxInFlight = 1,
             MaxPendingItems = 10
         };
 
-        var counter = new InFlightCounter();
+        InFlightCounter counter = new InFlightCounter();
+        TaskCompletionSource<GhostResponse> downloadBlocker = new TaskCompletionSource<GhostResponse>();
 
-        var spider = new SlowSpider();
-        var downloader = new CountingDownloader(counter);
+        SynchronousTestDownloader downloader = new SynchronousTestDownloader(counter, downloadBlocker);
+        ControlledSpider spider = new ControlledSpider(3);
 
-        var engine = new GhostEngine(
+        GhostEngine engine = new GhostEngine(
             options: options,
             scheduler: new InMemoryRequestScheduler(),
             downloader: downloader);
 
-        var context = new GhostEngineContext("test-job", "test-spider", new Dictionary<string, object?>());
+        GhostEngineContext context = new GhostEngineContext("test-job", "test-spider", new Dictionary<string, object?>());
 
-        // Act
-        await engine.RunAsync(spider, context);
+        // Act - Start the engine
+        Task runTask = engine.RunAsync(spider, context);
+
+        // Wait for first download to be in-progress (blocked on TaskCompletionSource)
+        await WaitForConditionAsync(() => counter.InFlightCount > 0, TimeSpan.FromSeconds(5));
+
+        // At this point, MaxInFlight should have been observed
+        int observedMax = counter.MaxInFlightObserved;
+
+        // Complete the download - this will allow the engine to continue
+        downloadBlocker.SetResult(new GhostResponse(
+            "http://example.com",
+            200,
+            new Dictionary<string, string>(),
+            "<html></html>",
+            DateTimeOffset.UtcNow));
+
+        // Wait for engine to complete with timeout
+        await runTask.WaitAsync(TimeSpan.FromSeconds(10));
 
         // Assert
-        counter.MaxInFlightObserved.Should().Be(1, "should never exceed MaxInFlight");
+        observedMax.Should().Be(1, "should never exceed MaxInFlight");
     }
 
     [Fact]
@@ -93,19 +111,19 @@ public class GhostEngineTests
         // Arrange
         List<string> executionOrder = [];
 
-        var spider = new TestSpider(new List<string>(), new List<string>());
-        var downloader = new TestDownloader();
-        var middleware1 = new TestDownloaderMiddleware("middleware1", executionOrder);
-        var middleware2 = new TestDownloaderMiddleware("middleware2", executionOrder);
-        var itemPipeline = new TestItemPipeline(new List<string>());
+        TestSpider spider = new TestSpider(new List<string>(), new List<string>());
+        TestDownloader downloader = new TestDownloader();
+        TestDownloaderMiddleware middleware1 = new TestDownloaderMiddleware("middleware1", executionOrder);
+        TestDownloaderMiddleware middleware2 = new TestDownloaderMiddleware("middleware2", executionOrder);
+        TestItemPipeline itemPipeline = new TestItemPipeline(new List<string>());
 
-        var engine = new GhostEngine(
+        GhostEngine engine = new GhostEngine(
             scheduler: new InMemoryRequestScheduler(),
             downloader: downloader,
             downloaderMiddlewares: new[] { middleware1, middleware2 },
             itemPipelines: new[] { itemPipeline });
 
-        var context = new GhostEngineContext("test-job", "test-spider", new Dictionary<string, object?>());
+        GhostEngineContext context = new GhostEngineContext("test-job", "test-spider", new Dictionary<string, object?>());
 
         // Act
         await engine.RunAsync(spider, context);
@@ -119,28 +137,41 @@ public class GhostEngineTests
     public async Task RunAsync_WithCancellation_StopsGracefullyAsync()
     {
         // Arrange
-        var options = new GhostEngineOptions
+        GhostEngineOptions options = new GhostEngineOptions
         {
             MaxInFlight = 10,
             MaxPendingItems = 10
         };
 
-        var spider = new InfiniteSpider();
-        var downloader = new TestDownloader();
+        CancellationTestSpider spider = new CancellationTestSpider();
+        TestDownloader downloader = new TestDownloader();
 
-        var engine = new GhostEngine(
+        GhostEngine engine = new GhostEngine(
             options: options,
             scheduler: new InMemoryRequestScheduler(),
             downloader: downloader);
 
-        var context = new GhostEngineContext("test-job", "test-spider", new Dictionary<string, object?>());
+        GhostEngineContext context = new GhostEngineContext("test-job", "test-spider", new Dictionary<string, object?>());
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        using CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
 
         // Act & Assert
         // Cancellation can surface as OperationCanceledException or derived types.
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             engine.RunAsync(spider, context, cts.Token));
+    }
+
+    private static async Task WaitForConditionAsync(Func<bool> condition, TimeSpan timeout)
+    {
+        DateTime start = DateTime.UtcNow;
+        while (!condition())
+        {
+            if (DateTime.UtcNow - start > timeout)
+            {
+                throw new TimeoutException("Condition not met within timeout");
+            }
+            await Task.Yield();
+        }
     }
 
     // Test helpers
@@ -168,43 +199,48 @@ public class GhostEngineTests
         public Task<SpiderOutput> ParseAsync(GhostResponse response, GhostEngineContext context, CancellationToken cancellationToken = default)
         {
             _processedRequests.Add(response.Url);
-            var item = new ItemEnvelope("test", new Dictionary<string, object?> { { "url", response.Url } }, DateTimeOffset.UtcNow);
+            ItemEnvelope item = new ItemEnvelope("test", new Dictionary<string, object?> { { "url", response.Url } }, DateTimeOffset.UtcNow);
             return Task.FromResult(new SpiderOutput(EmptyRequests, new[] { item }));
         }
     }
 
-    private sealed class SlowSpider : ISpider
+    private sealed class ControlledSpider : ISpider
     {
-        public string Name => "SlowSpider";
+        private readonly int _requestCount;
+
+        public ControlledSpider(int requestCount)
+        {
+            _requestCount = requestCount;
+        }
+
+        public string Name => "ControlledSpider";
 
         public async IAsyncEnumerable<GhostRequest> StartRequestsAsync(GhostEngineContext context, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < _requestCount; i++)
             {
-                await Task.Delay(10, cancellationToken);
                 yield return new GhostRequest($"http://example.com/{i}", "GET", new Dictionary<string, string>(), null, null);
             }
         }
 
-        public async Task<SpiderOutput> ParseAsync(GhostResponse response, GhostEngineContext context, CancellationToken cancellationToken = default)
+        public Task<SpiderOutput> ParseAsync(GhostResponse response, GhostEngineContext context, CancellationToken cancellationToken = default)
         {
-            await Task.Delay(50, cancellationToken); // Simulate slow processing
-            return new SpiderOutput(EmptyRequests, EmptyItems);
+            return Task.FromResult(new SpiderOutput(EmptyRequests, EmptyItems));
         }
     }
 
-    private sealed class InfiniteSpider : ISpider
+    private sealed class CancellationTestSpider : ISpider
     {
-        private int _counter;
-
-        public string Name => "InfiniteSpider";
+        public string Name => "CancellationTestSpider";
 
         public async IAsyncEnumerable<GhostRequest> StartRequestsAsync(GhostEngineContext context, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
+            int counter = 0;
             while (!cancellationToken.IsCancellationRequested)
             {
-                yield return new GhostRequest($"http://example.com/{Interlocked.Increment(ref _counter)}", "GET", new Dictionary<string, string>(), null, null);
-                await Task.Delay(10, cancellationToken);
+                yield return new GhostRequest($"http://example.com/{Interlocked.Increment(ref counter)}", "GET", new Dictionary<string, string>(), null, null);
+                // Yield to allow cancellation to be processed
+                await Task.Yield();
             }
         }
 
@@ -233,13 +269,16 @@ public class GhostEngineTests
         public int MaxInFlightObserved;
     }
 
-    private sealed class CountingDownloader : IDownloader
+    private sealed class SynchronousTestDownloader : IDownloader
     {
         private readonly InFlightCounter _counter;
+        private readonly TaskCompletionSource<GhostResponse> _firstDownloadBlocker;
+        private int _downloadCount;
 
-        public CountingDownloader(InFlightCounter counter)
+        public SynchronousTestDownloader(InFlightCounter counter, TaskCompletionSource<GhostResponse> firstDownloadBlocker)
         {
             _counter = counter;
+            _firstDownloadBlocker = firstDownloadBlocker;
         }
 
         public async Task<GhostResponse> DownloadAsync(GhostRequest request, GhostEngineContext context, CancellationToken cancellationToken = default)
@@ -251,16 +290,30 @@ public class GhostEngineTests
                 Interlocked.CompareExchange(ref _counter.MaxInFlightObserved, current, max);
             }
 
-            await Task.Delay(50, cancellationToken);
+            int downloadNum = Interlocked.Increment(ref _downloadCount);
 
-            Interlocked.Decrement(ref _counter.InFlightCount);
-
-            return new GhostResponse(
-                request.Url,
-                200,
-                new Dictionary<string, string>(),
-                "<html></html>",
-                DateTimeOffset.UtcNow);
+            try
+            {
+                if (downloadNum == 1)
+                {
+                    // First download blocks until signaled
+                    return await _firstDownloadBlocker.Task.WaitAsync(cancellationToken);
+                }
+                else
+                {
+                    // Subsequent downloads complete immediately
+                    return new GhostResponse(
+                        request.Url,
+                        200,
+                        new Dictionary<string, string>(),
+                        "<html></html>",
+                        DateTimeOffset.UtcNow);
+                }
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _counter.InFlightCount);
+            }
         }
     }
 

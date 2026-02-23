@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Engine;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 using System.Collections.Concurrent;
 using System.Globalization;
@@ -422,17 +423,19 @@ public class ExecutionContextTests
     }
 
     [Fact]
-    public async Task GetStatistics_WithDelay_ShouldShowElapsedTime()
+    public void GetStatistics_WithDelay_ShouldShowElapsedTime()
     {
         // Arrange
-        await Task.Delay(100);
+        var timeProvider = new FakeTimeProvider();
+        var context = new SpiderExecutionContext("TestSpider", _options, timeProvider);
 
-        // Act
-        var stats = _context.GetStatistics();
+        // Act - Advance time using FakeTimeProvider
+        timeProvider.Advance(TimeSpan.FromMilliseconds(100));
+        var stats = context.GetStatistics();
 
         // Assert
         stats.Should().ContainKey("ElapsedSeconds");
-        Convert.ToDouble(stats["ElapsedSeconds"], CultureInfo.InvariantCulture).Should().BeGreaterOrEqualTo(0.09); // Allow 10% tolerance for timing precision
+        Convert.ToDouble(stats["ElapsedSeconds"], CultureInfo.InvariantCulture).Should().BeApproximately(0.1, 0.01);
     }
 
     [Fact]
@@ -557,18 +560,20 @@ public class ExecutionContextTests
     }
 
     [Fact]
-    public async Task Context_LongRunningExecution_ShouldTrackDuration()
+    public void Context_LongRunningExecution_ShouldTrackDuration()
     {
         // Arrange
-        var startTime = _context.StartedAt;
+        var timeProvider = new FakeTimeProvider();
+        var context = new SpiderExecutionContext("TestSpider", _options, timeProvider);
+        var startTime = context.StartedAt;
 
-        // Act
-        await Task.Delay(200);
-        var stats = _context.GetStatistics();
+        // Act - Advance time using FakeTimeProvider
+        timeProvider.Advance(TimeSpan.FromMilliseconds(200));
+        var stats = context.GetStatistics();
 
         // Assert
         var elapsed = Convert.ToDouble(stats["ElapsedSeconds"], CultureInfo.InvariantCulture);
-        elapsed.Should().BeGreaterOrEqualTo(0.2);
+        elapsed.Should().BeApproximately(0.2, 0.01);
     }
 
     #endregion

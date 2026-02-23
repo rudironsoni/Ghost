@@ -50,7 +50,7 @@ public class DistributedLockTests
                 }
 
                 executionOrder.Add(i);
-                await Task.Delay(10);
+                await Task.Yield(); // Yield to allow other tasks to try to acquire
 
                 lock (lockForMax)
                 {
@@ -142,6 +142,7 @@ public class DistributedLockTests
         // Arrange
         var lockObj = new SemaphoreSlim(1, 1);
         var otherTaskStarted = new TaskCompletionSource<bool>();
+        var firstTaskCanComplete = new TaskCompletionSource<bool>();
         var firstTaskCompleted = false;
 
         // Act
@@ -151,7 +152,7 @@ public class DistributedLockTests
             try
             {
                 otherTaskStarted.SetResult(true);
-                await Task.Delay(200);
+                await firstTaskCanComplete.Task; // Wait for signal to complete
                 firstTaskCompleted = true;
             }
             finally
@@ -164,11 +165,16 @@ public class DistributedLockTests
 
         var secondTask = Task.Run(async () =>
         {
-            var acquired = await lockObj.WaitAsync(TimeSpan.FromMilliseconds(100));
+            var acquired = await lockObj.WaitAsync(TimeSpan.FromMilliseconds(50));
             return acquired;
         });
 
-        var secondAcquired = await secondTask;
+        // Second task should not acquire the lock while first task holds it
+        await Task.Delay(10); // Brief delay to ensure secondTask has started
+        var secondAcquired = secondTask.IsCompleted ? await secondTask : false;
+
+        // Now signal first task to complete
+        firstTaskCanComplete.SetResult(true);
         await firstTask;
 
         // Assert

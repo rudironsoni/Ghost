@@ -1,3 +1,4 @@
+using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
@@ -13,16 +14,19 @@ public class ConsentFlowHandler
 {
     private readonly ILogger<ConsentFlowHandler> _logger;
     private readonly int _stepDelayMs;
+    private readonly TimeProvider _timeProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConsentFlowHandler"/> class.
     /// </summary>
     /// <param name="logger">Optional logger instance.</param>
     /// <param name="stepDelayMs">Delay between steps in milliseconds (default: 500).</param>
-    public ConsentFlowHandler(ILogger<ConsentFlowHandler>? logger = null, int stepDelayMs = 500)
+    /// <param name="timeProvider">Optional time provider for testability.</param>
+    public ConsentFlowHandler(ILogger<ConsentFlowHandler>? logger = null, int stepDelayMs = 500, TimeProvider? timeProvider = null)
     {
         _logger = logger ?? NullLogger<ConsentFlowHandler>.Instance;
         _stepDelayMs = stepDelayMs;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <summary>
@@ -73,7 +77,7 @@ public class ConsentFlowHandler
             // Wait between steps
             if (i < config.Steps.Length - 1)
             {
-                await Task.Delay(_stepDelayMs).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromMilliseconds(_stepDelayMs), _timeProvider, CancellationToken.None).ConfigureAwait(false);
             }
         }
 

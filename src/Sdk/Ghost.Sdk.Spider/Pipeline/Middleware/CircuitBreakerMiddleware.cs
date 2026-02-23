@@ -31,6 +31,7 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
     private readonly int _successThreshold;
     private readonly TimeSpan _timeout;
     private readonly TimeSpan _samplingDuration;
+    private readonly TimeProvider _timeProvider;
     private readonly object _lock = new();
 
     private CircuitState _state;
@@ -46,8 +47,20 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
     /// <param name="configuration">The middleware configuration dictionary.</param>
     /// <exception cref="ArgumentNullException">Thrown when configuration is null.</exception>
     public CircuitBreakerMiddleware(Dictionary<string, object> configuration)
+        : this(configuration, TimeProvider.System)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CircuitBreakerMiddleware"/> class with a custom time provider.
+    /// </summary>
+    /// <param name="configuration">The middleware configuration dictionary.</param>
+    /// <param name="timeProvider">The time provider for time-based operations.</param>
+    /// <exception cref="ArgumentNullException">Thrown when configuration is null.</exception>
+    public CircuitBreakerMiddleware(Dictionary<string, object> configuration, TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(timeProvider);
 
         _failureThreshold = configuration.TryGetValue("FailureThreshold", out object? ft) && ft is int failureThreshold
             ? failureThreshold
@@ -65,11 +78,12 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
             ? TimeSpan.FromSeconds(samplingDuration)
             : TimeSpan.FromSeconds(30);
 
+        _timeProvider = timeProvider;
         _state = CircuitState.Closed;
         _failureCount = 0;
         _successCount = 0;
         _lastFailureTime = DateTime.MinValue;
-        _stateChangedTime = DateTime.UtcNow;
+        _stateChangedTime = _timeProvider.GetUtcNow().UtcDateTime;
     }
 
     /// <summary>
@@ -125,14 +139,14 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
         if (_state == CircuitState.Open)
         {
             // Check if timeout has elapsed to transition to half-open
-            if (DateTime.UtcNow - _stateChangedTime >= _timeout)
+            if (_timeProvider.GetUtcNow().UtcDateTime - _stateChangedTime >= _timeout)
             {
                 TransitionTo(CircuitState.HalfOpen);
             }
         }
 
         // Clean up old failures outside the sampling window
-        DateTime cutoff = DateTime.UtcNow - _samplingDuration;
+        DateTime cutoff = _timeProvider.GetUtcNow().UtcDateTime - _samplingDuration;
         while (_recentFailures.Count > 0 && _recentFailures.Peek() < cutoff)
         {
             _recentFailures.Dequeue();
@@ -168,7 +182,7 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
     /// </summary>
     private void OnFailure()
     {
-        _lastFailureTime = DateTime.UtcNow;
+        _lastFailureTime = _timeProvider.GetUtcNow().UtcDateTime;
         _recentFailures.Enqueue(_lastFailureTime);
         _failureCount++;
 
@@ -198,7 +212,7 @@ public sealed class CircuitBreakerMiddleware : IPipelineMiddleware
             return;
 
         _state = newState;
-        _stateChangedTime = DateTime.UtcNow;
+        _stateChangedTime = _timeProvider.GetUtcNow().UtcDateTime;
 
         // Reset counters based on new state
         switch (newState)

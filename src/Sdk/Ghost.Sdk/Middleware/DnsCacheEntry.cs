@@ -7,6 +7,8 @@ namespace Ghost.Sdk.Middleware;
 /// </summary>
 internal sealed class DnsCacheEntry
 {
+    private readonly TimeProvider _timeProvider;
+
     /// <summary>
     /// Gets the cached IP addresses for the hostname.
     /// </summary>
@@ -20,17 +22,20 @@ internal sealed class DnsCacheEntry
     /// <summary>
     /// Gets a value indicating whether this DNS cache entry has expired.
     /// </summary>
-    public bool IsExpired => DateTimeOffset.UtcNow > ExpiresAt;
+    public bool IsExpired => _timeProvider.GetUtcNow() >= ExpiresAt;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DnsCacheEntry"/> class.
     /// </summary>
     /// <param name="addresses">The IP addresses to cache.</param>
     /// <param name="expiresAt">The expiration timestamp.</param>
-    public DnsCacheEntry(IPAddress[] addresses, DateTimeOffset expiresAt)
+    /// <param name="timeProvider">The time provider for expiration checks.</param>
+    public DnsCacheEntry(IPAddress[] addresses, DateTimeOffset expiresAt, TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(addresses);
+        ArgumentNullException.ThrowIfNull(timeProvider);
         Addresses = addresses;
         ExpiresAt = expiresAt;
+        _timeProvider = timeProvider;
     }
 }
