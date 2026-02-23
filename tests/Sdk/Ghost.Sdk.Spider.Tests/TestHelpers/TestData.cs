@@ -111,19 +111,19 @@ public static class TestData
 
     public static string GetFixturePath(string filename)
     {
-        var baseDir = AppContext.BaseDirectory;
+        string baseDir = AppContext.BaseDirectory;
         return Path.Combine(baseDir, "Fixtures", filename);
     }
 
     public static async Task<string> ReadFixtureAsync(string filename)
     {
-        var path = GetFixturePath(filename);
+        string path = GetFixturePath(filename);
         return await File.ReadAllTextAsync(path);
     }
 
     public static string ReadFixture(string filename)
     {
-        var path = GetFixturePath(filename);
+        string path = GetFixturePath(filename);
         return File.ReadAllText(path);
     }
 }
