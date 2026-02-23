@@ -1,3 +1,4 @@
+using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 
@@ -12,6 +13,7 @@ public sealed class NopeCHAProvider : ICaptchaProvider
     private readonly ILogger<NopeCHAProvider> _logger;
     private readonly string? _extensionPath;
     private readonly TimeSpan _timeout;
+    private readonly TimeProvider _timeProvider;
 
     public string Name => "NopeCHA";
 
@@ -28,11 +30,13 @@ public sealed class NopeCHAProvider : ICaptchaProvider
     public NopeCHAProvider(
         ILogger<NopeCHAProvider> logger,
         string? extensionPath = null,
-        TimeSpan? timeout = null)
+        TimeSpan? timeout = null,
+        TimeProvider? timeProvider = null)
     {
         _logger = logger;
         _extensionPath = extensionPath;
         _timeout = timeout ?? TimeSpan.FromSeconds(60);
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     public bool CanSolve(CaptchaType type)
@@ -72,7 +76,7 @@ public sealed class NopeCHAProvider : ICaptchaProvider
         // - Configuring NopeCHA API key (free tier)
         // - Monitoring DOM for solution token
 
-        await Task.Delay(1000, cancellationToken).ConfigureAwait(false); // Simulate solving delay
+        await Task.Delay(TimeSpan.FromMilliseconds(1000), _timeProvider, cancellationToken).ConfigureAwait(false); // Simulate solving delay
 
         throw new NotImplementedException(
             "NopeCHA integration requires browser extension setup. " +

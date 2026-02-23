@@ -5,6 +5,25 @@ namespace Ghost.Sdk.Spider.Contracts;
 /// </summary>
 public class SpiderContext
 {
+    private readonly TimeProvider _timeProvider;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SpiderContext"/> class.
+    /// </summary>
+    public SpiderContext() : this(TimeProvider.System)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SpiderContext"/> class.
+    /// </summary>
+    /// <param name="timeProvider">The time provider for time-based operations.</param>
+    public SpiderContext(TimeProvider timeProvider)
+    {
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+        StartTime = _timeProvider.GetUtcNow();
+    }
+
     /// <summary>
     /// Gets or sets the unique identifier of the spider.
     /// </summary>
@@ -38,5 +57,5 @@ public class SpiderContext
     /// <summary>
     /// Gets the duration of spider execution from start time to now.
     /// </summary>
-    public TimeSpan Duration => DateTimeOffset.UtcNow - StartTime;
+    public TimeSpan Duration => _timeProvider.GetUtcNow() - StartTime;
 }

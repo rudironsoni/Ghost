@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Ghost.Sdk.Extensions;
 using Ghost.Sdk.Spider.Contracts;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace Ghost.Sdk.Tests.Extensions;
@@ -108,22 +109,22 @@ public class CloseSpiderExtensionIntegrationTests
     }
 
     [Fact]
-    public async Task MaxDurationCondition_RealWorldScenario_TracksTimeCorrectly()
+    public async Task MaxDurationCondition_RealWorldScenario_MeasuresElapsedTime()
     {
         // Arrange
-        var maxDuration = TimeSpan.FromSeconds(2);
+        var maxDuration = TimeSpan.FromMilliseconds(100);
         var condition = new MaxDurationCondition(maxDuration);
-        var context = new SpiderContext
+        var timeProvider = new FakeTimeProvider();
+        var context = new SpiderContext(timeProvider)
         {
-            SpiderId = "test-spider",
-            StartTime = DateTimeOffset.UtcNow
+            SpiderId = "test-spider"
         };
 
         // Act & Assert - Initially should not close
         (await condition.IsMetAsync(context)).Should().BeFalse("should not close immediately");
 
-        // Wait for duration to exceed
-        await Task.Delay(maxDuration.Add(TimeSpan.FromMilliseconds(500)));
+        // Advance time using FakeTimeProvider
+        timeProvider.Advance(maxDuration.Add(TimeSpan.FromMilliseconds(50)));
 
         // Should now trigger close
         (await condition.IsMetAsync(context)).Should().BeTrue("should close after duration exceeded");

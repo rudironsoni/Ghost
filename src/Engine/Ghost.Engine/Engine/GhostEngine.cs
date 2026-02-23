@@ -68,7 +68,7 @@ public sealed class GhostEngine : IGhostEngine
                 // Check unified backpressure (in-flight count is now managed by channel bounds)
                 if (IsUnderBackpressure())
                 {
-                    await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromMilliseconds(10), _options.TimeProvider, cancellationToken).ConfigureAwait(false);
                     continue;
                 }
 
@@ -82,7 +82,7 @@ public sealed class GhostEngine : IGhostEngine
                         break;
                     }
 
-                    await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromMilliseconds(10), _options.TimeProvider, cancellationToken).ConfigureAwait(false);
                     continue;
                 }
 

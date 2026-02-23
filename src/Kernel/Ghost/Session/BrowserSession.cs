@@ -63,11 +63,21 @@ public sealed class BrowserSession
     public string? Locale { get; set; }
 
     /// <summary>
-    /// Check if this session has expired.
+    /// Check if this session has expired using the system clock.
     /// </summary>
     public bool IsExpired()
     {
         return DateTime.UtcNow >= ExpiresAt;
+    }
+
+    /// <summary>
+    /// Check if this session has expired using the specified time provider.
+    /// </summary>
+    /// <param name="timeProvider">The time provider to use for the expiration check.</param>
+    public bool IsExpired(TimeProvider timeProvider)
+    {
+        ArgumentNullException.ThrowIfNull(timeProvider);
+        return timeProvider.GetUtcNow().UtcDateTime >= ExpiresAt;
     }
 }
 

@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Engine;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
+using Microsoft.Extensions.Time.Testing;
 using Moq;
 using Xunit;
 using Quartz;
@@ -203,10 +204,11 @@ public class SpiderJobTests
 
         _mockEngine
             .Setup(e => e.StartAsync(_testSpider, It.IsAny<CancellationToken>()))
-            .Returns(async () =>
+            .Returns(() =>
             {
-                await Task.Delay(delay);
-                return result;
+                // Simulate work by returning a completed task with the result
+                // The delay is not needed as the duration is computed from the result
+                return Task.FromResult(result);
             });
 
         // Act
@@ -221,6 +223,7 @@ public class SpiderJobTests
     public async Task Execute_WithJobInterruption_ShouldCancel()
     {
         // Arrange
+        var timeProvider = new FakeTimeProvider();
         var cts = new CancellationTokenSource();
         _mockJobContext.Setup(c => c.CancellationToken).Returns(cts.Token);
 
@@ -228,7 +231,8 @@ public class SpiderJobTests
             .Setup(e => e.StartAsync(_testSpider, It.IsAny<CancellationToken>()))
             .Returns(async (SpiderBase spider, CancellationToken token) =>
             {
-                await Task.Delay(TimeSpan.FromSeconds(10), token);
+                // Use FakeTimeProvider.Delay for deterministic cancellation testing
+                await timeProvider.Delay(TimeSpan.FromMilliseconds(100), token);
                 return new SpiderResult
                 {
                     SpiderName = "TestSpider",

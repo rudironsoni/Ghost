@@ -6,6 +6,7 @@ namespace Ghost.Resilience;
 public sealed class CircuitBreaker : ICircuitBreaker
 {
     private readonly CircuitBreakerOptions _options;
+    private readonly TimeProvider _timeProvider;
     private readonly object _lock = new();
     private CircuitState _state;
     private DateTime _stateEnteredAt;
@@ -39,8 +40,9 @@ public sealed class CircuitBreaker : ICircuitBreaker
 
         Platform = platform;
         _options = options;
+        _timeProvider = options.TimeProvider ?? TimeProvider.System;
         _state = CircuitState.Closed;
-        _stateEnteredAt = DateTime.UtcNow;
+        _stateEnteredAt = _timeProvider.GetUtcNow().UtcDateTime;
         _lastFailure = DateTime.MinValue;
     }
 
@@ -108,7 +110,7 @@ public sealed class CircuitBreaker : ICircuitBreaker
                 FailureCount = _failureCount,
                 SuccessCount = _successCount,
                 LastFailure = _lastFailure,
-                TimeInCurrentState = DateTime.UtcNow - _stateEnteredAt
+                TimeInCurrentState = _timeProvider.GetUtcNow().UtcDateTime - _stateEnteredAt
             };
         }
     }
@@ -157,7 +159,7 @@ public sealed class CircuitBreaker : ICircuitBreaker
         {
             if (_state == CircuitState.Open)
             {
-                TimeSpan elapsed = DateTime.UtcNow - _stateEnteredAt;
+                TimeSpan elapsed = _timeProvider.GetUtcNow().UtcDateTime - _stateEnteredAt;
                 if (elapsed >= _options.Timeout)
                 {
                     args = TransitionTo(CircuitState.HalfOpen);
@@ -215,7 +217,7 @@ public sealed class CircuitBreaker : ICircuitBreaker
         lock (_lock)
         {
             _failureCount++;
-            _lastFailure = DateTime.UtcNow;
+            _lastFailure = _timeProvider.GetUtcNow().UtcDateTime;
 
             if (_state == CircuitState.HalfOpen)
             {
@@ -241,7 +243,7 @@ public sealed class CircuitBreaker : ICircuitBreaker
 
         CircuitState previous = _state;
         _state = newState;
-        _stateEnteredAt = DateTime.UtcNow;
+        _stateEnteredAt = _timeProvider.GetUtcNow().UtcDateTime;
 
         if (newState == CircuitState.Closed)
         {

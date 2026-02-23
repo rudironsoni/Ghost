@@ -35,13 +35,15 @@ public sealed class RetryMiddleware : IPipelineMiddleware
     private readonly bool _useJitter;
     private readonly bool _retryOnTimeout;
     private readonly Random _random;
+    private readonly TimeProvider _timeProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RetryMiddleware"/> class.
     /// </summary>
     /// <param name="configuration">The middleware configuration dictionary.</param>
+    /// <param name="timeProvider">Optional time provider for testability.</param>
     /// <exception cref="ArgumentNullException">Thrown when configuration is null.</exception>
-    public RetryMiddleware(Dictionary<string, object> configuration)
+    public RetryMiddleware(Dictionary<string, object> configuration, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
@@ -70,6 +72,7 @@ public sealed class RetryMiddleware : IPipelineMiddleware
             : true;
 
         _random = new Random();
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <summary>
@@ -127,7 +130,7 @@ public sealed class RetryMiddleware : IPipelineMiddleware
                 int delay = CalculateDelay(attempt);
 
                 // Wait before retrying
-                await Task.Delay(delay, context.CancellationToken).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromMilliseconds(delay), _timeProvider, context.CancellationToken).ConfigureAwait(false);
 
                 // Increment retry counter in state box if available
                 context.StateBox?.IncrementRetryCount();

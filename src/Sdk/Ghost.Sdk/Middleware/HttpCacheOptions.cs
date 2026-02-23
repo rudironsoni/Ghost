@@ -19,4 +19,9 @@ public class HttpCacheOptions
     /// Interval for cleaning up expired cache entries.
     /// </summary>
     public TimeSpan CleanupInterval { get; set; } = TimeSpan.FromMinutes(1);
+
+    /// <summary>
+    /// Gets or sets the time provider for cache operations.
+    /// </summary>
+    public TimeProvider TimeProvider { get; set; } = TimeProvider.System;
 }

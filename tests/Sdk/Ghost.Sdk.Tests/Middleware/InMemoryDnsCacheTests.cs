@@ -1,6 +1,7 @@
 using System.Net;
 using FluentAssertions;
 using Ghost.Sdk.Middleware;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace Ghost.Sdk.Tests.Middleware;
@@ -64,12 +65,17 @@ public sealed class InMemoryDnsCacheTests : IDisposable
     {
         // Arrange
         const string hostname = "localhost";
-        var shortTtlOptions = new DnsCacheOptions { Ttl = TimeSpan.FromMilliseconds(100) };
+        var fakeTimeProvider = new FakeTimeProvider();
+        var shortTtlOptions = new DnsCacheOptions
+        {
+            Ttl = TimeSpan.FromMilliseconds(100),
+            TimeProvider = fakeTimeProvider
+        };
         using var shortCache = new InMemoryDnsCache(shortTtlOptions);
 
         // Act
         var addresses1 = await shortCache.ResolveAsync(hostname);
-        await Task.Delay(200); // Wait for expiration
+        fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(200));
         var addresses2 = await shortCache.ResolveAsync(hostname);
 
         // Assert
@@ -247,18 +253,20 @@ public sealed class InMemoryDnsCacheTests : IDisposable
     public async Task ResolveAsync_WithMaxEntriesExceeded_RemovesOldestEntries()
     {
         // Arrange
+        var fakeTimeProvider = new FakeTimeProvider();
         var limitedOptions = new DnsCacheOptions
         {
             MaxEntries = 2,
-            Ttl = TimeSpan.FromMinutes(10)
+            Ttl = TimeSpan.FromMinutes(10),
+            TimeProvider = fakeTimeProvider
         };
         using var limitedCache = new InMemoryDnsCache(limitedOptions);
 
         // Act - Add 3 entries when max is 2
         await limitedCache.ResolveAsync("localhost");
-        await Task.Delay(10); // Ensure different timestamps
+        fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(10));
         await limitedCache.ResolveAsync("127.0.0.1");
-        await Task.Delay(10);
+        fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(10));
         await limitedCache.ResolveAsync("::1");
 
         // Assert - All should still resolve (even if evicted from cache)

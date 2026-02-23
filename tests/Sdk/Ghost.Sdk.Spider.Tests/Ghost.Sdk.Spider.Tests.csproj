@@ -7,6 +7,7 @@
     <IsPackable>false</IsPackable>
     <LangVersion>preview</LangVersion>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
+    <NoWarn>$(NoWarn);IDE0008;IDE0051</NoWarn>
 
   </PropertyGroup>
 
@@ -27,10 +28,12 @@
     <PackageReference Include="WireMock.Net" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../../src/Sdk/Ghost.Sdk.Spider/Ghost.Sdk.Spider.csproj" />
+    <ProjectReference Include="../../Shared/Ghost.Testing/Ghost.Testing.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,6 +54,14 @@
     <None Include="Statistics\**\*" />
     <None Include="TestHelpers\**\*" />
     <None Include="Unit\**\*" />
+  </ItemGroup>
+
+  <!-- Include CircuitBreaker Middleware tests (they compile and work) -->
+  <ItemGroup>
+    <Compile Include="Unit\Pipeline\Middleware\CircuitBreakerMiddlewareTests.cs" />
+    <Compile Include="Unit\Pipeline\Middleware\CircuitBreakerMiddlewareFullTests.cs" />
+    <Compile Include="Unit\Engine\SpiderEngineTests.cs" />
+    <Compile Include="TestHelpers\**\*.cs" />
   </ItemGroup>
 
 </Project>

@@ -25,6 +25,23 @@ public sealed class StatsCollector : IStatsCollector
     private readonly ConcurrentDictionary<string, SpiderStats> _stats = new();
     private readonly ConcurrentDictionary<string, List<TimeSpan>> _latencies = new();
     private readonly ConcurrentDictionary<string, object> _latencyLocks = new();
+    private readonly TimeProvider _timeProvider;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StatsCollector"/> class.
+    /// </summary>
+    public StatsCollector() : this(TimeProvider.System)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StatsCollector"/> class.
+    /// </summary>
+    /// <param name="timeProvider">The time provider for time-based operations.</param>
+    public StatsCollector(TimeProvider timeProvider)
+    {
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+    }
 
     /// <summary>
     /// Records that a request was initiated by the spider.
@@ -42,7 +59,7 @@ public sealed class StatsCollector : IStatsCollector
         SpiderStats stats = _stats.GetOrAdd(spiderId, _ => new SpiderStats
         {
             SpiderId = spiderId,
-            StartTime = DateTimeOffset.UtcNow
+            StartTime = _timeProvider.GetUtcNow()
         });
 
         StatsCounters counters = _counters.GetOrAdd(spiderId, _ => new StatsCounters());
@@ -93,7 +110,7 @@ public sealed class StatsCollector : IStatsCollector
         }
 
         // Update total duration
-        stats.TotalDuration = DateTimeOffset.UtcNow - stats.StartTime;
+        stats.TotalDuration = _timeProvider.GetUtcNow() - stats.StartTime;
     }
 
     /// <summary>

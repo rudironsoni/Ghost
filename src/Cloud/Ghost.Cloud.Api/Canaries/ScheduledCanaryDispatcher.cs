@@ -22,15 +22,18 @@ public sealed class ScheduledCanaryDispatcher : BackgroundService
     private readonly IClusterClient _clusterClient;
     private readonly IAssuranceCanaryRunner _canaryRunner;
     private readonly ILogger<ScheduledCanaryDispatcher> _logger;
+    private readonly TimeProvider _timeProvider;
 
     public ScheduledCanaryDispatcher(
         IClusterClient clusterClient,
         IAssuranceCanaryRunner canaryRunner,
-        ILogger<ScheduledCanaryDispatcher> logger)
+        ILogger<ScheduledCanaryDispatcher> logger,
+        TimeProvider? timeProvider = null)
     {
         _clusterClient = clusterClient;
         _canaryRunner = canaryRunner;
         _logger = logger;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -46,7 +49,7 @@ public sealed class ScheduledCanaryDispatcher : BackgroundService
                 LogDispatchLoopFailed(_logger, ex);
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromSeconds(15), _timeProvider, stoppingToken).ConfigureAwait(false);
         }
     }
 
@@ -55,7 +58,7 @@ public sealed class ScheduledCanaryDispatcher : BackgroundService
         using Activity? activity = CloudApiTelemetry.ActivitySource.StartActivity("CloudApi.Canary.DispatchDue");
         ISchedulerGrain scheduler = _clusterClient.GetGrain<ISchedulerGrain>(SchedulerGrainKey);
         List<ScheduledRunInfo> dueRuns = await scheduler
-            .GetDueRunsAsync(DateTimeOffset.UtcNow, maxCount: 20)
+            .GetDueRunsAsync(_timeProvider.GetUtcNow(), maxCount: 20)
             .ConfigureAwait(false);
         activity?.SetTag("ghost.canary.due.count", dueRuns.Count);
 

@@ -17,6 +17,7 @@ public class WebSocketConnection : IDisposable
     private readonly WebSocketAdapterOptions _options;
     private readonly MessageBuffer _messageBuffer;
     private readonly object _lock = new();
+    private readonly TimeProvider _timeProvider;
     private bool _disposed;
     private CancellationTokenSource? _heartbeatCts;
     private Task? _heartbeatTask;
@@ -113,13 +114,15 @@ public class WebSocketConnection : IDisposable
     /// </summary>
     /// <param name="url">The WebSocket server URL.</param>
     /// <param name="options">The adapter options.</param>
+    /// <param name="timeProvider">Optional time provider for testability.</param>
     /// <exception cref="ArgumentNullException">Thrown when url or options is null.</exception>
-    public WebSocketConnection(string url, WebSocketAdapterOptions options)
+    public WebSocketConnection(string url, WebSocketAdapterOptions options, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(url);
         ArgumentNullException.ThrowIfNull(options);
         Url = url;
         _options = options;
+        _timeProvider = timeProvider ?? TimeProvider.System;
         _webSocket = new ClientWebSocket();
         _messageBuffer = new MessageBuffer(options.BufferSize);
 
@@ -155,7 +158,7 @@ public class WebSocketConnection : IDisposable
         var uri = new Uri(Url);
         await _webSocket.ConnectAsync(uri, cts.Token).ConfigureAwait(false);
 
-        ConnectedAt = DateTimeOffset.UtcNow;
+        ConnectedAt = _timeProvider.GetUtcNow();
 
         if (_options.Heartbeat.Enabled)
         {
@@ -447,7 +450,7 @@ public class WebSocketConnection : IDisposable
                 }
 
                 TimeSpan delay = policy.CalculateDelay(attempt - 1);
-                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(delay, _timeProvider, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -493,7 +496,7 @@ public class WebSocketConnection : IDisposable
         {
             try
             {
-                await Task.Delay(_options.Heartbeat.Interval, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(_options.Heartbeat.Interval, _timeProvider, cancellationToken).ConfigureAwait(false);
 
                 if (!IsConnected)
                     break;

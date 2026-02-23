@@ -18,6 +18,51 @@ public class MessageBuffer
     private readonly TimeSpan _maxWaitTime;
     private DateTimeOffset _firstMessageTime;
     private readonly object _lock = new();
+    private readonly TimeProvider _timeProvider;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MessageBuffer"/> class.
+    /// </summary>
+    /// <param name="maxMessageCount">
+    /// The maximum number of messages to buffer before flushing.
+    /// Set to 0 for no count limit.
+    /// </param>
+    /// <param name="maxWaitTime">
+    /// The maximum time to wait before flushing messages.
+    /// Set to <see cref="TimeSpan.Zero"/> for no time limit.
+    /// </param>
+    public MessageBuffer(int maxMessageCount = 100, TimeSpan maxWaitTime = default)
+        : this(maxMessageCount, maxWaitTime, TimeProvider.System)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MessageBuffer"/> class.
+    /// </summary>
+    /// <param name="maxMessageCount">
+    /// The maximum number of messages to buffer before flushing.
+    /// Set to 0 for no count limit.
+    /// </param>
+    /// <param name="maxWaitTime">
+    /// The maximum time to wait before flushing messages.
+    /// Set to <see cref="TimeSpan.Zero"/> for no time limit.
+    /// </param>
+    /// <param name="timeProvider">The time provider for time-based operations.</param>
+    /// <exception cref="ArgumentException">
+    /// Thrown when both maxMessageCount and maxWaitTime are zero or negative.
+    /// </exception>
+    public MessageBuffer(int maxMessageCount, TimeSpan maxWaitTime, TimeProvider timeProvider)
+    {
+        if (maxMessageCount <= 0 && maxWaitTime <= TimeSpan.Zero)
+        {
+            throw new ArgumentException("Either maxMessageCount or maxWaitTime must be greater than zero.");
+        }
+
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+        _maxMessageCount = maxMessageCount;
+        _maxWaitTime = maxWaitTime == default ? TimeSpan.Zero : maxWaitTime;
+        _firstMessageTime = _timeProvider.GetUtcNow();
+    }
 
     /// <summary>
     /// Gets the current number of messages in the buffer.
@@ -54,38 +99,12 @@ public class MessageBuffer
 
             if (_maxWaitTime > TimeSpan.Zero)
             {
-                TimeSpan elapsed = DateTimeOffset.UtcNow - _firstMessageTime;
+                TimeSpan elapsed = _timeProvider.GetUtcNow() - _firstMessageTime;
                 return elapsed >= _maxWaitTime;
             }
 
             return false;
         }
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MessageBuffer"/> class.
-    /// </summary>
-    /// <param name="maxMessageCount">
-    /// The maximum number of messages to buffer before flushing.
-    /// Set to 0 for no count limit.
-    /// </param>
-    /// <param name="maxWaitTime">
-    /// The maximum time to wait before flushing messages.
-    /// Set to <see cref="TimeSpan.Zero"/> for no time limit.
-    /// </param>
-    /// <exception cref="ArgumentException">
-    /// Thrown when both maxMessageCount and maxWaitTime are zero or negative.
-    /// </exception>
-    public MessageBuffer(int maxMessageCount = 100, TimeSpan maxWaitTime = default)
-    {
-        if (maxMessageCount <= 0 && maxWaitTime <= TimeSpan.Zero)
-        {
-            throw new ArgumentException("Either maxMessageCount or maxWaitTime must be greater than zero.");
-        }
-
-        _maxMessageCount = maxMessageCount;
-        _maxWaitTime = maxWaitTime == default ? TimeSpan.Zero : maxWaitTime;
-        _firstMessageTime = DateTimeOffset.UtcNow;
     }
 
     /// <summary>
@@ -101,7 +120,7 @@ public class MessageBuffer
         {
             if (_messages.IsEmpty)
             {
-                _firstMessageTime = DateTimeOffset.UtcNow;
+                _firstMessageTime = _timeProvider.GetUtcNow();
             }
 
             _messages.Enqueue(message);
@@ -132,7 +151,7 @@ public class MessageBuffer
                 messages.Add(message);
             }
 
-            _firstMessageTime = DateTimeOffset.UtcNow;
+            _firstMessageTime = _timeProvider.GetUtcNow();
         }
 
         return messages.ToArray();
@@ -225,7 +244,7 @@ public class MessageBuffer
                 // Drain the queue
             }
 
-            _firstMessageTime = DateTimeOffset.UtcNow;
+            _firstMessageTime = _timeProvider.GetUtcNow();
         }
     }
 
@@ -237,7 +256,7 @@ public class MessageBuffer
     {
         WebSocketMessage[] messages = Peek();
         long totalSize = messages.Sum(m => (long)m.Size);
-        TimeSpan age = IsEmpty ? TimeSpan.Zero : DateTimeOffset.UtcNow - _firstMessageTime;
+        TimeSpan age = IsEmpty ? TimeSpan.Zero : _timeProvider.GetUtcNow() - _firstMessageTime;
 
         return (messages.Length, totalSize, age);
     }

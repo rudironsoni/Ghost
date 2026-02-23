@@ -105,7 +105,7 @@ public class ProxyManager : IProxyManager
         if (_proxies.TryGetValue(key, out ProxyInfo? info))
         {
             Interlocked.Increment(ref info.FailureCount);
-            Interlocked.Exchange(ref info.LastFailureTicks, DateTime.UtcNow.Ticks);
+            Interlocked.Exchange(ref info.LastFailureTicks, _options.TimeProvider.GetUtcNow().Ticks);
         }
 
         return Task.CompletedTask;
@@ -159,7 +159,7 @@ public class ProxyManager : IProxyManager
         if (lastFailureTicks > 0)
         {
             DateTime lastFailure = new DateTime(lastFailureTicks, DateTimeKind.Utc);
-            TimeSpan timeSinceFailure = DateTime.UtcNow - lastFailure;
+            TimeSpan timeSinceFailure = _options.TimeProvider.GetUtcNow() - lastFailure;
             if (timeSinceFailure >= _options.RetryAfter)
             {
                 // Reset failure count after retry period

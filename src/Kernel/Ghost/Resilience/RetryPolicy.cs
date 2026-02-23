@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace Ghost.Resilience;
 
@@ -12,14 +13,17 @@ namespace Ghost.Resilience;
 public sealed class RetryPolicy : IRetryPolicy
 {
     private readonly AsyncLocal<int> _currentAttempt = new();
+    private readonly TimeProvider _timeProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RetryPolicy"/> class.
     /// </summary>
     /// <param name="options">Optional options override.</param>
-    public RetryPolicy(RetryPolicyOptions? options = null)
+    /// <param name="timeProvider">Optional time provider for testability.</param>
+    public RetryPolicy(RetryPolicyOptions? options = null, TimeProvider? timeProvider = null)
     {
         Options = options ?? new RetryPolicyOptions();
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <inheritdoc />
@@ -66,7 +70,7 @@ public sealed class RetryPolicy : IRetryPolicy
                 {
                     TimeSpan delay = CalculateDelay(_currentAttempt.Value, options);
                     _currentAttempt.Value++;
-                    await Task.Delay(delay).ConfigureAwait(false);
+                    await Task.Delay(delay, _timeProvider, CancellationToken.None).ConfigureAwait(false);
                 }
             }
         }
@@ -122,7 +126,7 @@ public sealed class RetryPolicy : IRetryPolicy
                 {
                     TimeSpan delay = CalculateDelay(_currentAttempt.Value, options);
                     _currentAttempt.Value++;
-                    await Task.Delay(delay).ConfigureAwait(false);
+                    await Task.Delay(delay, _timeProvider, CancellationToken.None).ConfigureAwait(false);
                     continue;
                 }
 
@@ -133,7 +137,7 @@ public sealed class RetryPolicy : IRetryPolicy
                     response.Dispose();
                     TimeSpan delay = CalculateDelay(_currentAttempt.Value, options);
                     _currentAttempt.Value++;
-                    await Task.Delay(delay).ConfigureAwait(false);
+                    await Task.Delay(delay, _timeProvider, CancellationToken.None).ConfigureAwait(false);
                     continue;
                 }
 

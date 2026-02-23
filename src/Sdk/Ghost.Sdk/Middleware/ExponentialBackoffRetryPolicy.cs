@@ -12,16 +12,19 @@ namespace Ghost.Sdk.Middleware;
 public class ExponentialBackoffRetryPolicy : IRetryPolicy
 {
     private readonly RetryOptions _options;
+    private readonly TimeProvider _timeProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ExponentialBackoffRetryPolicy"/> class.
     /// </summary>
     /// <param name="options">Configuration options for retry behavior.</param>
+    /// <param name="timeProvider">Optional time provider for testability.</param>
     /// <exception cref="ArgumentNullException">Thrown when options is null.</exception>
-    public ExponentialBackoffRetryPolicy(RetryOptions options)
+    public ExponentialBackoffRetryPolicy(RetryOptions options, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         _options = options;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <summary>
@@ -57,7 +60,7 @@ public class ExponentialBackoffRetryPolicy : IRetryPolicy
             catch (Exception ex) when (IsRetryable(ex, ct) && attempt < _options.MaxRetries)
             {
                 attempt++;
-                await Task.Delay(delay, ct).ConfigureAwait(false);
+                await Task.Delay(delay, _timeProvider, ct).ConfigureAwait(false);
 
                 // Calculate next delay with exponential backoff
                 delay = TimeSpan.FromMilliseconds(

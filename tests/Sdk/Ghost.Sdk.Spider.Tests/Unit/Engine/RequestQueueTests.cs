@@ -332,13 +332,13 @@ public class RequestQueueTests
 
         // Act
         await queue.EnqueueAsync(CreateRequest(url));
-        await Task.Delay(TimeSpan.FromSeconds(1)); // Simulate time passing
-
-        // In real implementation, check if expired items are cleaned up
+        // Note: This test validates the mock behavior - in real Redis implementation,
+        // items would expire after the expiration time. The MockDistributedQueue
+        // simulates the queue behavior without actual expiration for unit testing.
         var contains = await queue.ContainsAsync(url);
 
         // Assert
-        contains.Should().BeTrue(); // Still exists (not enough time passed)
+        contains.Should().BeTrue(); // Item exists in queue
     }
 
     #endregion

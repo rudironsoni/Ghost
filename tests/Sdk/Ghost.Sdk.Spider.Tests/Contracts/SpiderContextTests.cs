@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Contracts;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Contracts;
@@ -132,15 +133,13 @@ public class SpiderContextTests
     public void Duration_UpdatesOverTime()
     {
         // Arrange
-        var context = new SpiderContext
-        {
-            StartTime = DateTimeOffset.UtcNow
-        };
+        var timeProvider = new FakeTimeProvider();
+        var context = new SpiderContext(timeProvider);
 
         var firstDuration = context.Duration;
-        Thread.Sleep(100); // Wait a bit
 
-        // Act
+        // Act - Advance time using FakeTimeProvider
+        timeProvider.Advance(TimeSpan.FromMilliseconds(100));
         var secondDuration = context.Duration;
 
         // Assert

@@ -9,16 +9,19 @@ public class StealthHttpClient
     private readonly HttpClient _client;
     private readonly RateLimitOptions _options;
     private readonly ILogger<StealthHttpClient>? _logger;
-    private readonly Random _rng = new();
+    private readonly Random _rng;
+    private readonly TimeProvider _timeProvider;
     private static readonly Action<ILogger<StealthHttpClient>, Exception?> _logJitterCancelled =
         LoggerMessage.Define(LogLevel.Debug, new EventId(1, "JitterCancelled"), "Jitter delay cancelled");
 
-    public StealthHttpClient(HttpClient client, RateLimitOptions? options = null, ILogger<StealthHttpClient>? logger = null)
+    public StealthHttpClient(HttpClient client, RateLimitOptions? options = null, ILogger<StealthHttpClient>? logger = null, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(client);
         _client = client;
         _options = options ?? new RateLimitOptions();
         _logger = logger;
+        _rng = new Random();
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     public async Task<HttpResponseMessage> GetAsync(string uri, CancellationToken ct = default)
@@ -56,7 +59,7 @@ public class StealthHttpClient
         int delay = _rng.Next(_options.DelayMinMs, _options.DelayMaxMs + 1);
         try
         {
-            await Task.Delay(delay, ct).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMilliseconds(delay), _timeProvider, ct).ConfigureAwait(false);
         }
         catch (TaskCanceledException)
         {

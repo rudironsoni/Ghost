@@ -3,6 +3,7 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Ghost.Sdk.Spider.Pipeline.Middleware;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline.Middleware;
@@ -30,6 +31,7 @@ public class CircuitBreakerMiddlewareFullTests
     public async Task InvokeAsync_WithSamplingWindow_ShouldTrackRecentFailures()
     {
         // Arrange - Use dictionary config like other tests
+        var fakeTimeProvider = new FakeTimeProvider();
         var config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 3,
@@ -37,7 +39,7 @@ public class CircuitBreakerMiddlewareFullTests
             ["Timeout"] = 5
         };
 
-        var middleware = new CircuitBreakerMiddleware(config);
+        var middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
         var context = CreateContext();
 
         // Fail twice within sampling window
@@ -52,8 +54,8 @@ public class CircuitBreakerMiddlewareFullTests
             catch { /* Expected */ }
         }
 
-        // Wait for sampling window to fully expire (with buffer)
-        await Task.Delay(1500);
+        // Simulate sampling window expiration
+        fakeTimeProvider.Advance(TimeSpan.FromSeconds(1.5));
 
         // Add two more failures - still shouldn't open circuit since old ones expired
         for (int i = 0; i < 2; i++)
@@ -144,6 +146,7 @@ public class CircuitBreakerMiddlewareFullTests
     public async Task InvokeAsync_HalfOpenWithPartialSuccesses_ShouldRequireAllSuccesses()
     {
         // Arrange
+        var fakeTimeProvider = new FakeTimeProvider();
         var config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 2,
@@ -151,7 +154,7 @@ public class CircuitBreakerMiddlewareFullTests
             ["Timeout"] = 1,
             ["SamplingDuration"] = 10
         };
-        var middleware = new CircuitBreakerMiddleware(config);
+        var middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
         var context = CreateContext();
 
         // Open the circuit
@@ -164,8 +167,8 @@ public class CircuitBreakerMiddlewareFullTests
             catch { /* Expected */ }
         }
 
-        // Wait for half-open
-        await Task.Delay(1500);
+        // Simulate timeout for half-open
+        fakeTimeProvider.Advance(TimeSpan.FromSeconds(1.5));
 
         // Only 2 successes (need 3)
         await middleware.InvokeAsync(context, _ => Task.CompletedTask);
@@ -264,6 +267,7 @@ public class CircuitBreakerMiddlewareFullTests
     public async Task InvokeAsync_CircuitOpensAndReopens_ShouldCycleCorrectly()
     {
         // Arrange
+        var fakeTimeProvider = new FakeTimeProvider();
         var config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 2,
@@ -271,7 +275,7 @@ public class CircuitBreakerMiddlewareFullTests
             ["Timeout"] = 1,
             ["SamplingDuration"] = 10
         };
-        var middleware = new CircuitBreakerMiddleware(config);
+        var middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
         var context = CreateContext();
 
         // Open circuit
@@ -284,8 +288,8 @@ public class CircuitBreakerMiddlewareFullTests
         var act1 = async () => await middleware.InvokeAsync(context, _ => Task.CompletedTask);
         await act1.Should().ThrowAsync<InvalidOperationException>();
 
-        // Wait and close with success
-        await Task.Delay(1500);
+        // Simulate timeout and close with success
+        fakeTimeProvider.Advance(TimeSpan.FromSeconds(1.5));
         await middleware.InvokeAsync(context, _ => Task.CompletedTask);
 
         // Circuit should be closed now

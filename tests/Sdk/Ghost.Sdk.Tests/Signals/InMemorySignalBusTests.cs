@@ -86,9 +86,11 @@ public sealed class InMemorySignalBusTests : IAsyncLifetime
     {
         // Arrange
         List<SpiderStartedSignal> receivedSignals = [];
+        var tcs = new TaskCompletionSource();
         var subscription = _signalBus.Subscribe<SpiderStartedSignal>(async (signal, ct) =>
         {
             receivedSignals.Add(signal);
+            tcs.SetResult();
             await Task.CompletedTask;
         });
 
@@ -96,13 +98,14 @@ public sealed class InMemorySignalBusTests : IAsyncLifetime
 
         // Act - emit before unsubscribe
         await _signalBus.EmitAsync(signal1);
-        await Task.Delay(100); // Give time for processing
+        await tcs.Task.WaitAsync(TimeSpan.FromSeconds(1));
 
         subscription.Dispose();
 
         var signal2 = new SpiderStartedSignal("spider-2", DateTimeOffset.UtcNow);
         await _signalBus.EmitAsync(signal2);
-        await Task.Delay(100); // Give time for processing
+        // Small delay to allow any potential processing (should not process since unsubscribed)
+        await Task.Yield();
 
         // Assert - should only receive first signal
         receivedSignals.Should().ContainSingle();

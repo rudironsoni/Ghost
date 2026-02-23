@@ -1,3 +1,4 @@
+using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
@@ -19,17 +20,20 @@ public class ConsentHandler : IConsentHandler
     private readonly ILogger<ConsentHandler> _logger;
     private readonly int _timeoutMs;
     private readonly ConsentFlowHandler _flowHandler;
+    private readonly TimeProvider _timeProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConsentHandler"/> class.
     /// </summary>
     /// <param name="logger">Optional logger instance.</param>
     /// <param name="timeoutMs">Timeout in milliseconds for consent operations (default: 5000).</param>
-    public ConsentHandler(ILogger<ConsentHandler>? logger = null, int timeoutMs = 5000)
+    /// <param name="timeProvider">Optional time provider for testability.</param>
+    public ConsentHandler(ILogger<ConsentHandler>? logger = null, int timeoutMs = 5000, TimeProvider? timeProvider = null)
     {
         _logger = logger ?? NullLogger<ConsentHandler>.Instance;
         _timeoutMs = timeoutMs;
-        _flowHandler = new ConsentFlowHandler();
+        _timeProvider = timeProvider ?? TimeProvider.System;
+        _flowHandler = new ConsentFlowHandler(timeProvider: _timeProvider);
     }
 
     /// <inheritdoc/>
@@ -100,7 +104,7 @@ public class ConsentHandler : IConsentHandler
                 }
 
                 // Wait for banner to disappear
-                await Task.Delay(1000).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromMilliseconds(1000), _timeProvider, CancellationToken.None).ConfigureAwait(false);
 
                 // Verify banner is gone
                 bool stillPresent = await DetectCMPInternalAsync(page, config).ConfigureAwait(false);

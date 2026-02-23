@@ -19,6 +19,7 @@ public sealed class TokenBucketRateLimiter
     private readonly object _lock = new();
     private readonly int _capacity;
     private readonly double _tokensPerSecond;
+    private readonly TimeProvider _timeProvider;
     private double _tokens;
     private DateTime _lastRefill;
 
@@ -27,10 +28,11 @@ public sealed class TokenBucketRateLimiter
     /// </summary>
     /// <param name="capacity">The maximum number of tokens the bucket can hold (burst size).</param>
     /// <param name="tokensPerSecond">The rate at which tokens are added to the bucket.</param>
+    /// <param name="timeProvider">Optional time provider for testability.</param>
     /// <exception cref="ArgumentException">
     /// Thrown when capacity or tokensPerSecond is less than or equal to zero.
     /// </exception>
-    public TokenBucketRateLimiter(int capacity, double tokensPerSecond)
+    public TokenBucketRateLimiter(int capacity, double tokensPerSecond, TimeProvider? timeProvider = null)
     {
         if (capacity <= 0)
             throw new ArgumentException("Capacity must be greater than zero.", nameof(capacity));
@@ -39,8 +41,9 @@ public sealed class TokenBucketRateLimiter
 
         _capacity = capacity;
         _tokensPerSecond = tokensPerSecond;
+        _timeProvider = timeProvider ?? TimeProvider.System;
         _tokens = capacity;
-        _lastRefill = DateTime.UtcNow;
+        _lastRefill = _timeProvider.GetUtcNow().DateTime;
     }
 
     /// <summary>
@@ -109,7 +112,7 @@ public sealed class TokenBucketRateLimiter
             }
 
             // Wait outside the lock to avoid blocking other threads
-            await Task.Delay(waitTime, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(waitTime, _timeProvider, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -119,7 +122,7 @@ public sealed class TokenBucketRateLimiter
     /// </summary>
     private void RefillTokens()
     {
-        DateTime now = DateTime.UtcNow;
+        DateTime now = _timeProvider.GetUtcNow().DateTime;
         double elapsed = (now - _lastRefill).TotalSeconds;
 
         if (elapsed > 0)
@@ -138,7 +141,7 @@ public sealed class TokenBucketRateLimiter
         lock (_lock)
         {
             _tokens = _capacity;
-            _lastRefill = DateTime.UtcNow;
+            _lastRefill = _timeProvider.GetUtcNow().DateTime;
         }
     }
 }

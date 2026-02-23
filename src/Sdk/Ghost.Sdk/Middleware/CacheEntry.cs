@@ -7,6 +7,8 @@ namespace Ghost.Sdk.Middleware;
 /// </summary>
 internal sealed class CacheEntry
 {
+    private readonly TimeProvider _timeProvider;
+
     /// <summary>
     /// Gets the cached HTTP response.
     /// </summary>
@@ -20,17 +22,20 @@ internal sealed class CacheEntry
     /// <summary>
     /// Gets a value indicating whether this cache entry has expired.
     /// </summary>
-    public bool IsExpired => DateTimeOffset.UtcNow > ExpiresAt;
+    public bool IsExpired => _timeProvider.GetUtcNow() >= ExpiresAt;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CacheEntry"/> class.
     /// </summary>
     /// <param name="response">The HTTP response to cache.</param>
     /// <param name="expiresAt">The expiration timestamp.</param>
-    public CacheEntry(IResponse response, DateTimeOffset expiresAt)
+    /// <param name="timeProvider">The time provider for expiration checks.</param>
+    public CacheEntry(IResponse response, DateTimeOffset expiresAt, TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(response);
+        ArgumentNullException.ThrowIfNull(timeProvider);
         Response = response;
         ExpiresAt = expiresAt;
+        _timeProvider = timeProvider;
     }
 }

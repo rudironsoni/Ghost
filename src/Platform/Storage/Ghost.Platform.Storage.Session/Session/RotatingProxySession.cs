@@ -18,21 +18,23 @@ public class RotatingProxySession : IDisposable
     private readonly RotatingProxySessionOptions _options;
     private readonly HttpClient _httpClient;
     private readonly List<ProxyInfo> _proxyPool;
+    private readonly TimeProvider _timeProvider;
     private int _currentProxyIndex;
     private bool _disposed;
 
-    public RotatingProxySession(IProxyProvider proxyProvider, RotatingProxySessionOptions? options = null)
-        : this(proxyProvider, CreateDefaultHttpClient(options ?? new RotatingProxySessionOptions()), options)
+    public RotatingProxySession(IProxyProvider proxyProvider, RotatingProxySessionOptions? options = null, TimeProvider? timeProvider = null)
+        : this(proxyProvider, CreateDefaultHttpClient(options ?? new RotatingProxySessionOptions()), options, timeProvider)
     {
     }
 
-    public RotatingProxySession(IProxyProvider proxyProvider, HttpClient httpClient, RotatingProxySessionOptions? options = null)
+    public RotatingProxySession(IProxyProvider proxyProvider, HttpClient httpClient, RotatingProxySessionOptions? options = null, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(proxyProvider);
         ArgumentNullException.ThrowIfNull(httpClient);
         _proxyProvider = proxyProvider;
         _httpClient = httpClient;
         _options = options ?? new RotatingProxySessionOptions();
+        _timeProvider = timeProvider ?? TimeProvider.System;
 
         // Initialize proxy pool
         _proxyPool = [];
@@ -172,7 +174,7 @@ public class RotatingProxySession : IDisposable
         {
             var random = new Random();
             int delay = random.Next(_options.JitterMinMs, _options.JitterMaxMs + 1);
-            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMilliseconds(delay), _timeProvider, cancellationToken).ConfigureAwait(false);
         }
     }
 

@@ -2,6 +2,7 @@ using FluentAssertions;
 using Ghost.Sdk.Extensions;
 using Ghost.Sdk.Statistics;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -12,19 +13,21 @@ public class PeriodicStatsLoggingIntegrationTests
 {
     private readonly ITestOutputHelper _output;
     private readonly ILogger<PeriodicStatsLogging> _logger;
+    private readonly FakeTimeProvider _timeProvider;
 
     public PeriodicStatsLoggingIntegrationTests(ITestOutputHelper output)
     {
         _output = output;
         _logger = new TestLogger<PeriodicStatsLogging>(output);
+        _timeProvider = new FakeTimeProvider();
     }
 
     [Fact]
-    public async Task PeriodicStatsLogging_WithRealStatsCollector_LogsPeriodicUpdates()
+    public void PeriodicStatsLogging_WithRealStatsCollector_LogsPeriodicUpdates()
     {
         // Arrange
         var statsCollector = new StatsCollector();
-        var extension = new PeriodicStatsLogging(statsCollector, _logger)
+        var extension = new PeriodicStatsLogging(statsCollector, _logger, _timeProvider)
         {
             Interval = TimeSpan.FromMilliseconds(100)
         };
@@ -38,14 +41,14 @@ public class PeriodicStatsLoggingIntegrationTests
 
         // Act
         extension.StartLogging(spiderId);
-        await Task.Delay(250); // Wait for multiple timer ticks
+        _timeProvider.Advance(TimeSpan.FromMilliseconds(250)); // Advance for multiple timer ticks
 
         // Add more activity
         statsCollector.RecordRequest(spiderId);
         statsCollector.RecordResponse(spiderId, 200, TimeSpan.FromMilliseconds(75));
         statsCollector.RecordItem(spiderId, "product");
 
-        await Task.Delay(150); // Wait for another tick
+        _timeProvider.Advance(TimeSpan.FromMilliseconds(150)); // Advance for another tick
         extension.StopLogging();
 
         // Assert
@@ -56,11 +59,11 @@ public class PeriodicStatsLoggingIntegrationTests
     }
 
     [Fact]
-    public async Task PeriodicStatsLogging_WithMultipleSpiders_TracksCorrectSpider()
+    public void PeriodicStatsLogging_WithMultipleSpiders_TracksCorrectSpider()
     {
         // Arrange
         var statsCollector = new StatsCollector();
-        var extension = new PeriodicStatsLogging(statsCollector, _logger)
+        var extension = new PeriodicStatsLogging(statsCollector, _logger, _timeProvider)
         {
             Interval = TimeSpan.FromMilliseconds(100)
         };
@@ -72,7 +75,7 @@ public class PeriodicStatsLoggingIntegrationTests
 
         // Act - log only spider-1
         extension.StartLogging("spider-1");
-        await Task.Delay(150);
+        _timeProvider.Advance(TimeSpan.FromMilliseconds(150));
         extension.StopLogging();
 
         // Assert
@@ -86,11 +89,11 @@ public class PeriodicStatsLoggingIntegrationTests
     }
 
     [Fact]
-    public async Task PeriodicStatsLogging_WithChangingStats_LogsUpdatedValues()
+    public void PeriodicStatsLogging_WithChangingStats_LogsUpdatedValues()
     {
         // Arrange
         var statsCollector = new StatsCollector();
-        var extension = new PeriodicStatsLogging(statsCollector, _logger)
+        var extension = new PeriodicStatsLogging(statsCollector, _logger, _timeProvider)
         {
             Interval = TimeSpan.FromMilliseconds(100)
         };
@@ -106,10 +109,10 @@ public class PeriodicStatsLoggingIntegrationTests
             statsCollector.RecordRequest(spiderId);
             statsCollector.RecordResponse(spiderId, 200, TimeSpan.FromMilliseconds(50 + i * 10));
             statsCollector.RecordItem(spiderId, "item");
-            await Task.Delay(50);
+            _timeProvider.Advance(TimeSpan.FromMilliseconds(50));
         }
 
-        await Task.Delay(100); // Final wait for last log
+        _timeProvider.Advance(TimeSpan.FromMilliseconds(100)); // Final advance for last log
         extension.StopLogging();
 
         // Assert
@@ -121,11 +124,11 @@ public class PeriodicStatsLoggingIntegrationTests
     }
 
     [Fact]
-    public async Task PeriodicStatsLogging_WithErrors_LogsErrorCount()
+    public void PeriodicStatsLogging_WithErrors_LogsErrorCount()
     {
         // Arrange
         var statsCollector = new StatsCollector();
-        var extension = new PeriodicStatsLogging(statsCollector, _logger)
+        var extension = new PeriodicStatsLogging(statsCollector, _logger, _timeProvider)
         {
             Interval = TimeSpan.FromMilliseconds(100)
         };
@@ -140,7 +143,7 @@ public class PeriodicStatsLoggingIntegrationTests
         statsCollector.RecordRequest(spiderId);
         statsCollector.RecordResponse(spiderId, 200, TimeSpan.FromMilliseconds(50));
 
-        await Task.Delay(150);
+        _timeProvider.Advance(TimeSpan.FromMilliseconds(150));
         extension.StopLogging();
 
         // Assert
@@ -151,11 +154,11 @@ public class PeriodicStatsLoggingIntegrationTests
     }
 
     [Fact]
-    public async Task PeriodicStatsLogging_WithHighThroughput_HandlesLoad()
+    public void PeriodicStatsLogging_WithHighThroughput_HandlesLoad()
     {
         // Arrange
         var statsCollector = new StatsCollector();
-        var extension = new PeriodicStatsLogging(statsCollector, _logger)
+        var extension = new PeriodicStatsLogging(statsCollector, _logger, _timeProvider)
         {
             Interval = TimeSpan.FromMilliseconds(100)
         };
@@ -166,16 +169,15 @@ public class PeriodicStatsLoggingIntegrationTests
         extension.StartLogging(spiderId);
 
         // Simulate high request rate
-        var tasks = Enumerable.Range(0, 100).Select(async i =>
+        for (int i = 0; i < 100; i++)
         {
             statsCollector.RecordRequest(spiderId);
-            await Task.Delay(10);
+            _timeProvider.Advance(TimeSpan.FromMilliseconds(10));
             statsCollector.RecordResponse(spiderId, 200, TimeSpan.FromMilliseconds(25));
             statsCollector.RecordItem(spiderId, "item");
-        });
+        }
 
-        await Task.WhenAll(tasks);
-        await Task.Delay(150); // Wait for final log
+        _timeProvider.Advance(TimeSpan.FromMilliseconds(150)); // Advance for final log
         extension.StopLogging();
 
         // Assert
@@ -187,11 +189,11 @@ public class PeriodicStatsLoggingIntegrationTests
     }
 
     [Fact]
-    public async Task PeriodicStatsLogging_SwitchingSpiders_LogsCorrectSpider()
+    public void PeriodicStatsLogging_SwitchingSpiders_LogsCorrectSpider()
     {
         // Arrange
         var statsCollector = new StatsCollector();
-        var extension = new PeriodicStatsLogging(statsCollector, _logger)
+        var extension = new PeriodicStatsLogging(statsCollector, _logger, _timeProvider)
         {
             Interval = TimeSpan.FromMilliseconds(100)
         };
@@ -199,12 +201,12 @@ public class PeriodicStatsLoggingIntegrationTests
         // Act - Start with spider-1
         statsCollector.RecordRequest("spider-1");
         extension.StartLogging("spider-1");
-        await Task.Delay(150);
+        _timeProvider.Advance(TimeSpan.FromMilliseconds(150));
 
         // Switch to spider-2
         statsCollector.RecordRequest("spider-2");
         extension.StartLogging("spider-2");
-        await Task.Delay(150);
+        _timeProvider.Advance(TimeSpan.FromMilliseconds(150));
 
         extension.StopLogging();
 
@@ -221,7 +223,7 @@ public class PeriodicStatsLoggingIntegrationTests
     {
         // Arrange
         var statsCollector = new StatsCollector();
-        var extension = new PeriodicStatsLogging(statsCollector, _logger);
+        var extension = new PeriodicStatsLogging(statsCollector, _logger, _timeProvider);
 
         // Act
         extension.StartLogging("test-spider");

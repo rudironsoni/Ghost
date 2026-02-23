@@ -10,6 +10,7 @@ public sealed class InMemoryDnsCache : IDnsCache, IDisposable
 {
     private readonly ConcurrentDictionary<string, DnsCacheEntry> _cache = new();
     private readonly DnsCacheOptions _options;
+    private readonly TimeProvider _timeProvider;
     private readonly Timer _cleanupTimer;
     private bool _disposed;
 
@@ -21,6 +22,7 @@ public sealed class InMemoryDnsCache : IDnsCache, IDisposable
     {
         ArgumentNullException.ThrowIfNull(options);
         _options = options;
+        _timeProvider = options.TimeProvider ?? TimeProvider.System;
         _cleanupTimer = new Timer(CleanupExpiredEntries, null, _options.Ttl, _options.Ttl);
     }
 
@@ -44,8 +46,8 @@ public sealed class InMemoryDnsCache : IDnsCache, IDisposable
         IPAddress[] addresses = await Dns.GetHostAddressesAsync(hostname, ct).ConfigureAwait(false);
 
         // Store in cache
-        DateTimeOffset expiresAt = DateTimeOffset.UtcNow.Add(_options.Ttl);
-        _cache[hostname] = new DnsCacheEntry(addresses, expiresAt);
+        DateTimeOffset expiresAt = _timeProvider.GetUtcNow().Add(_options.Ttl);
+        _cache[hostname] = new DnsCacheEntry(addresses, expiresAt, _timeProvider);
 
         // Enforce max entries limit
         EnforceMaxEntries();

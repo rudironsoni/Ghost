@@ -1,8 +1,11 @@
+using System.Threading;
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Engine;
 using Ghost.Sdk.Spider.Engine.Queue;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
+using Ghost.Testing.Attributes;
+using Microsoft.Extensions.Time.Testing;
 using Moq;
 using Xunit;
 using SpiderExecutionContext = Ghost.Sdk.Spider.Engine.ExecutionContext;
@@ -238,45 +241,48 @@ public class SpiderEngineTests
     [Fact]
     public async Task Engine_WithMaxConcurrency_ShouldRespectLimit()
     {
-        // Arrange
-        var options = new SpiderOptions { MaxConcurrency = 3 };
-        var spider = new TestSpider();
+        // Arrange - Use a semaphore to control and verify concurrency limits
+        SpiderOptions options = new SpiderOptions { MaxConcurrency = 3 };
+        TestSpider spider = new TestSpider();
 
-        var concurrentCount = 0;
-        var maxConcurrentObserved = 0;
-        var lockObject = new object();
+        int concurrentCount = 0;
+        int maxConcurrentObserved = 0;
+        object lockObject = new object();
+        SemaphoreSlim semaphore = new SemaphoreSlim(options.MaxConcurrency);
+        List<Task> tasks = new List<Task>();
 
-        // Simulate concurrent request processing
-        List<Task> tasks = [];
+        // Act - Start tasks that respect the semaphore limit
         for (int i = 0; i < 10; i++)
         {
             tasks.Add(Task.Run(async () =>
             {
-                lock (lockObject)
+                await semaphore.WaitAsync();
+                try
                 {
-                    concurrentCount++;
-                    maxConcurrentObserved = Math.Max(maxConcurrentObserved, concurrentCount);
+                    lock (lockObject)
+                    {
+                        concurrentCount++;
+                        maxConcurrentObserved = Math.Max(maxConcurrentObserved, concurrentCount);
+                    }
+
+                    // Small yield to allow other tasks to try to enter
+                    await Task.Yield();
+
+                    lock (lockObject)
+                    {
+                        concurrentCount--;
+                    }
                 }
-
-                await Task.Delay(50); // Simulate work
-
-                lock (lockObject)
+                finally
                 {
-                    concurrentCount--;
+                    semaphore.Release();
                 }
             }));
-
-            // Control concurrency
-            if (tasks.Count >= options.MaxConcurrency)
-            {
-                await Task.WhenAny(tasks);
-                tasks.RemoveAll(t => t.IsCompleted);
-            }
         }
 
         await Task.WhenAll(tasks);
 
-        // Assert
+        // Assert - Max concurrency should be limited by the semaphore
         maxConcurrentObserved.Should().BeLessOrEqualTo(options.MaxConcurrency);
     }
 
@@ -539,7 +545,7 @@ public class SpiderEngineTests
     {
         foreach (var item in items)
         {
-            await Task.Delay(10); // Simulate async work
+            await Task.Yield(); // Simulate async work
             yield return item;
         }
     }
@@ -572,7 +578,7 @@ public class SpiderEngineTests
     {
         foreach (var item in items)
         {
-            await Task.Delay(10);
+            await Task.Yield();
             yield return item;
         }
         throw new InvalidOperationException("Stream error");
@@ -583,24 +589,37 @@ public class SpiderEngineTests
     #region Spider Options Tests
 
     [Fact]
+    [SlopwatchSuppress("SW004", "Test uses FakeTimeProvider for deterministic time-based throttling verification")]
     public async Task Engine_WithRequestDelay_ShouldThrottle()
     {
-        // Arrange
-        var options = new SpiderOptions { RequestDelay = TimeSpan.FromMilliseconds(100) };
-        var spider = new ConfigurableTestSpider(options: options);
+        // Arrange - Use TimeProvider for deterministic throttling test
+        FakeTimeProvider timeProvider = new FakeTimeProvider();
+        SpiderOptions options = new SpiderOptions { RequestDelay = TimeSpan.FromMilliseconds(100) };
+        ConfigurableTestSpider spider = new ConfigurableTestSpider(options: options);
 
-        var startTime = DateTimeOffset.UtcNow;
+        DateTimeOffset startTime = timeProvider.GetUtcNow();
 
         // Simulate processing 3 requests with delay
+        // Advance time in background while delays are pending
+        Task advanceTask = Task.Run(async () =>
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                await Task.Delay(10); // Small real delay
+                timeProvider.Advance(TimeSpan.FromMilliseconds(100));
+            }
+        });
+
         for (int i = 0; i < 3; i++)
         {
-            await Task.Delay(options.RequestDelay);
+            await Task.Delay(options.RequestDelay, timeProvider, CancellationToken.None);
         }
 
-        var elapsed = DateTimeOffset.UtcNow - startTime;
+        await advanceTask;
+        TimeSpan elapsed = timeProvider.GetUtcNow() - startTime;
 
-        // Assert - Allow for some timing variance
-        elapsed.Should().BeGreaterOrEqualTo(TimeSpan.FromMilliseconds(290));
+        // Assert - Total delay should be 300ms (3 x 100ms)
+        elapsed.Should().Be(TimeSpan.FromMilliseconds(300));
     }
 
     [Fact]

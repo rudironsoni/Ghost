@@ -19,4 +19,10 @@ public class CircuitBreakerOptions
     /// Gets or sets the maximum number of attempts allowed while half-open.
     /// </summary>
     public int HalfOpenMaxAttempts { get; set; } = 3;
+
+    /// <summary>
+    /// Gets or sets the time provider for time-based operations.
+    /// Defaults to <see cref="TimeProvider.System"/>.
+    /// </summary>
+    public TimeProvider TimeProvider { get; set; } = TimeProvider.System;
 }

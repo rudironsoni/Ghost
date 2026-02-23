@@ -1,5 +1,6 @@
 using Ghost.Session;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
 using Microsoft.Playwright;
 using Moq;
 using Xunit;
@@ -98,13 +99,15 @@ public sealed class SessionManagerTests
     public async Task LoadSessionAsync_WithExpiredSession_ReturnsNull()
     {
         // Arrange
+        var timeProvider = new FakeTimeProvider();
         IOptions<SessionManagerOptions> options = Options.Create(new SessionManagerOptions
         {
             Backend = SessionStorageBackend.FileSystem,
             StoragePath = Path.Combine(Path.GetTempPath(), $"ghost-test-{Guid.NewGuid()}"),
             EnableEncryption = false,
             EnableCompression = false,
-            DefaultTtl = TimeSpan.FromMilliseconds(1) // Expire immediately
+            DefaultTtl = TimeSpan.FromMinutes(30),
+            TimeProvider = timeProvider
         });
 
         var manager = new SessionManager(options);
@@ -115,8 +118,8 @@ public sealed class SessionManagerTests
 
         string sessionId = await manager.SaveSessionAsync(mockContext.Object, "TestPlatform");
 
-        // Wait for session to expire
-        await Task.Delay(10);
+        // Advance time past the session expiration
+        timeProvider.Advance(TimeSpan.FromMinutes(31));
 
         // Act
         BrowserSession? session = await manager.LoadSessionAsync("TestPlatform", sessionId);
