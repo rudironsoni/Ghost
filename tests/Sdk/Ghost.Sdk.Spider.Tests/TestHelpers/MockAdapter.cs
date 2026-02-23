@@ -90,7 +90,7 @@ public static class MockAdapterFactory
         int statusCode = 200,
         string name = "MockAdapter")
     {
-        var mock = CreateMockAdapter(name);
+        Mock<IContentAdapter> mock = CreateMockAdapter(name);
 
         mock.Setup(a => a.CanHandleAsync(It.IsAny<Request>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);

@@ -10,15 +10,11 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline.Middleware;
 
 public class CircuitBreakerMiddlewareTests
 {
-    private const int DefaultFailureThreshold = 5;
-    private const int DefaultSuccessThreshold = 2;
-    private const int DefaultTimeout = 60;
-
     [Fact]
     public void Constructor_WithNullConfiguration_ShouldThrow()
     {
         // Act
-        var act = () => new CircuitBreakerMiddleware(null!);
+        Action act = () => _ = new CircuitBreakerMiddleware(null!);
 
         // Assert
         act.Should().Throw<ArgumentNullException>();
@@ -28,7 +24,7 @@ public class CircuitBreakerMiddlewareTests
     public void Constructor_WithEmptyConfiguration_ShouldUseDefaults()
     {
         // Arrange & Act
-        var middleware = new CircuitBreakerMiddleware(new Dictionary<string, object>());
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(new Dictionary<string, object>());
 
         // Assert
         middleware.Should().NotBeNull();
@@ -38,9 +34,9 @@ public class CircuitBreakerMiddlewareTests
     public async Task InvokeAsync_WhenCircuitClosed_ShouldExecuteNext()
     {
         // Arrange
-        var middleware = new CircuitBreakerMiddleware(new Dictionary<string, object>());
-        var context = CreateContext();
-        var nextCalled = false;
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(new Dictionary<string, object>());
+        PipelineContext context = CreateContext();
+        bool nextCalled = false;
         PipelineDelegate next = _ =>
         {
             nextCalled = true;
@@ -58,14 +54,14 @@ public class CircuitBreakerMiddlewareTests
     public async Task InvokeAsync_AfterMultipleFailures_ShouldOpenCircuit()
     {
         // Arrange
-        var fakeTimeProvider = new FakeTimeProvider();
-        var config = new Dictionary<string, object>
+        FakeTimeProvider fakeTimeProvider = new FakeTimeProvider();
+        Dictionary<string, object> config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 3,
             ["Timeout"] = 1 // 1 second timeout
         };
-        var middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
-        var context = CreateContext();
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
+        PipelineContext context = CreateContext();
 
         PipelineDelegate failingNext = _ => throw new InvalidOperationException("Simulated failure");
 
@@ -86,7 +82,7 @@ public class CircuitBreakerMiddlewareTests
         fakeTimeProvider.Advance(TimeSpan.FromSeconds(1.5));
 
         // Should allow one request through (half-open state)
-        var nextCalled = false;
+        bool nextCalled = false;
         PipelineDelegate successNext = _ =>
         {
             nextCalled = true;
@@ -103,16 +99,16 @@ public class CircuitBreakerMiddlewareTests
     public async Task InvokeAsync_InHalfOpenState_AfterSuccesses_ShouldCloseCircuit()
     {
         // Arrange
-        var fakeTimeProvider = new FakeTimeProvider();
-        var config = new Dictionary<string, object>
+        FakeTimeProvider fakeTimeProvider = new FakeTimeProvider();
+        Dictionary<string, object> config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 2,
             ["SuccessThreshold"] = 2,
             ["Timeout"] = 1,
             ["SamplingDuration"] = 10
         };
-        var middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
-        var context = CreateContext();
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
+        PipelineContext context = CreateContext();
 
         PipelineDelegate failingNext = _ => throw new InvalidOperationException("Simulated failure");
         PipelineDelegate successNext = _ => Task.CompletedTask;
@@ -138,7 +134,7 @@ public class CircuitBreakerMiddlewareTests
         await middleware.InvokeAsync(context, successNext);
 
         // Circuit should now be closed - this should succeed
-        var finalCallSucceeded = false;
+        bool finalCallSucceeded = false;
         await middleware.InvokeAsync(context, _ =>
         {
             finalCallSucceeded = true;
@@ -153,16 +149,16 @@ public class CircuitBreakerMiddlewareTests
     public async Task InvokeAsync_InHalfOpenState_OnFailure_ShouldReopenCircuit()
     {
         // Arrange
-        var fakeTimeProvider = new FakeTimeProvider();
-        var config = new Dictionary<string, object>
+        FakeTimeProvider fakeTimeProvider = new FakeTimeProvider();
+        Dictionary<string, object> config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 2,
             ["SuccessThreshold"] = 2,
             ["Timeout"] = 1,
             ["SamplingDuration"] = 10
         };
-        var middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
-        var context = CreateContext();
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
+        PipelineContext context = CreateContext();
 
         PipelineDelegate failingNext = _ => throw new InvalidOperationException("Simulated failure");
 
@@ -193,7 +189,7 @@ public class CircuitBreakerMiddlewareTests
         }
 
         // Circuit should be open again
-        var act = async () => await middleware.InvokeAsync(context, _ => Task.CompletedTask);
+        Func<Task> act = async () => await middleware.InvokeAsync(context, _ => Task.CompletedTask);
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*Circuit breaker is open*");
     }
@@ -202,15 +198,15 @@ public class CircuitBreakerMiddlewareTests
     public async Task InvokeAsync_WithCustomThresholds_ShouldRespectConfiguration()
     {
         // Arrange
-        var config = new Dictionary<string, object>
+        Dictionary<string, object> config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 1, // Open after just 1 failure
             ["SuccessThreshold"] = 1,
             ["Timeout"] = 1,
             ["SamplingDuration"] = 10
         };
-        var middleware = new CircuitBreakerMiddleware(config);
-        var context = CreateContext();
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config);
+        PipelineContext context = CreateContext();
 
         PipelineDelegate failingNext = _ => throw new InvalidOperationException("Simulated failure");
 
@@ -225,7 +221,7 @@ public class CircuitBreakerMiddlewareTests
         }
 
         // Assert - Circuit should be open
-        var act = async () => await middleware.InvokeAsync(context, _ => Task.CompletedTask);
+        Func<Task> act = async () => await middleware.InvokeAsync(context, _ => Task.CompletedTask);
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*Circuit breaker is open*");
     }
@@ -234,15 +230,15 @@ public class CircuitBreakerMiddlewareTests
     public async Task InvokeAsync_WithSamplingWindow_ShouldForgetOldFailures()
     {
         // Arrange
-        var fakeTimeProvider = new FakeTimeProvider();
-        var config = new Dictionary<string, object>
+        FakeTimeProvider fakeTimeProvider = new FakeTimeProvider();
+        Dictionary<string, object> config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 3,
             ["SamplingDuration"] = 1, // 1 second sampling window
             ["Timeout"] = 60
         };
-        var middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
-        var context = CreateContext();
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
+        PipelineContext context = CreateContext();
 
         PipelineDelegate failingNext = _ => throw new InvalidOperationException("Simulated failure");
         PipelineDelegate successNext = _ => Task.CompletedTask;
@@ -272,13 +268,13 @@ public class CircuitBreakerMiddlewareTests
     public async Task InvokeAsync_InClosedState_OnSuccess_ShouldResetFailureCount()
     {
         // Arrange
-        var config = new Dictionary<string, object>
+        Dictionary<string, object> config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 5,
             ["SamplingDuration"] = 30
         };
-        var middleware = new CircuitBreakerMiddleware(config);
-        var context = CreateContext();
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config);
+        PipelineContext context = CreateContext();
 
         PipelineDelegate failingNext = _ => throw new InvalidOperationException("Simulated failure");
         PipelineDelegate successNext = _ => Task.CompletedTask;

@@ -1,4 +1,5 @@
 using FluentAssertions;
+using FluentAssertions.Specialized;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
@@ -17,11 +18,11 @@ public class CircuitBreakerMiddlewareFullTests
     public void Constructor_WithTimeSpanTimeout_ShouldInitialize()
     {
         // Arrange & Act
-        var config = new Dictionary<string, object>
+        Dictionary<string, object> config = new Dictionary<string, object>
         {
             ["Timeout"] = 120
         };
-        var middleware = new CircuitBreakerMiddleware(config);
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config);
 
         // Assert
         middleware.Should().NotBeNull();
@@ -31,16 +32,16 @@ public class CircuitBreakerMiddlewareFullTests
     public async Task InvokeAsync_WithSamplingWindow_ShouldTrackRecentFailures()
     {
         // Arrange - Use dictionary config like other tests
-        var fakeTimeProvider = new FakeTimeProvider();
-        var config = new Dictionary<string, object>
+        FakeTimeProvider fakeTimeProvider = new FakeTimeProvider();
+        Dictionary<string, object> config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 3,
             ["SamplingDuration"] = 1, // 1 second sampling window
             ["Timeout"] = 5
         };
 
-        var middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
-        var context = CreateContext();
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
+        PipelineContext context = CreateContext();
 
         // Fail twice within sampling window
         PipelineDelegate failingNext = _ => throw new HttpRequestException("Test failure");
@@ -68,7 +69,7 @@ public class CircuitBreakerMiddlewareFullTests
         }
 
         // Circuit should still be closed (only 2 failures in current window)
-        var nextCalled = false;
+        bool nextCalled = false;
         await middleware.InvokeAsync(context, _ =>
         {
             nextCalled = true;
@@ -83,13 +84,13 @@ public class CircuitBreakerMiddlewareFullTests
     public async Task InvokeAsync_MultipleConcurrentRequests_ShouldHandleCorrectly()
     {
         // Arrange
-        var config = new Dictionary<string, object>
+        Dictionary<string, object> config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 5,
             ["Timeout"] = 2
         };
-        var middleware = new CircuitBreakerMiddleware(config);
-        var successCount = 0;
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config);
+        int successCount = 0;
         PipelineDelegate next = _ =>
         {
             Interlocked.Increment(ref successCount);
@@ -97,7 +98,7 @@ public class CircuitBreakerMiddlewareFullTests
         };
 
         // Act - Run multiple concurrent requests
-        var tasks = Enumerable.Range(0, 10).Select(_ =>
+        IEnumerable<Task> tasks = Enumerable.Range(0, 10).Select(_ =>
             middleware.InvokeAsync(CreateContext(), next));
         await Task.WhenAll(tasks);
 
@@ -109,13 +110,13 @@ public class CircuitBreakerMiddlewareFullTests
     public async Task InvokeAsync_SuccessAfterPartialFailures_ShouldResetCounter()
     {
         // Arrange
-        var config = new Dictionary<string, object>
+        Dictionary<string, object> config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 5,
             ["SamplingDuration"] = 30
         };
-        var middleware = new CircuitBreakerMiddleware(config);
-        var context = CreateContext();
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config);
+        PipelineContext context = CreateContext();
 
         // Act - Cause some failures then success
         for (int i = 0; i < 3; i++)
@@ -131,7 +132,7 @@ public class CircuitBreakerMiddlewareFullTests
         await middleware.InvokeAsync(context, _ => Task.CompletedTask);
 
         // Should be able to continue normally
-        var finalCallSucceeded = false;
+        bool finalCallSucceeded = false;
         await middleware.InvokeAsync(context, _ =>
         {
             finalCallSucceeded = true;
@@ -146,16 +147,16 @@ public class CircuitBreakerMiddlewareFullTests
     public async Task InvokeAsync_HalfOpenWithPartialSuccesses_ShouldRequireAllSuccesses()
     {
         // Arrange
-        var fakeTimeProvider = new FakeTimeProvider();
-        var config = new Dictionary<string, object>
+        FakeTimeProvider fakeTimeProvider = new FakeTimeProvider();
+        Dictionary<string, object> config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 2,
             ["SuccessThreshold"] = 3,
             ["Timeout"] = 1,
             ["SamplingDuration"] = 10
         };
-        var middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
-        var context = CreateContext();
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
+        PipelineContext context = CreateContext();
 
         // Open the circuit
         for (int i = 0; i < 2; i++)
@@ -175,7 +176,7 @@ public class CircuitBreakerMiddlewareFullTests
         await middleware.InvokeAsync(context, _ => Task.CompletedTask);
 
         // Circuit should still be half-open, allowing more requests
-        var nextCalled = false;
+        bool nextCalled = false;
         await middleware.InvokeAsync(context, _ =>
         {
             nextCalled = true;
@@ -191,12 +192,12 @@ public class CircuitBreakerMiddlewareFullTests
     {
         // Arrange
         Dictionary<string, object> config = [];
-        var middleware = new CircuitBreakerMiddleware(config);
-        var context = CreateContext();
-        var originalException = new InvalidOperationException("Original error");
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config);
+        PipelineContext context = CreateContext();
+        InvalidOperationException originalException = new InvalidOperationException("Original error");
 
         // Act
-        var act = async () => await middleware.InvokeAsync(context, _ => throw originalException);
+        Func<Task> act = async () => await middleware.InvokeAsync(context, _ => throw originalException);
 
         // Assert
         await act.Should().ThrowAsync<InvalidOperationException>()
@@ -207,14 +208,14 @@ public class CircuitBreakerMiddlewareFullTests
     public async Task InvokeAsync_RapidFailuresWithinSamplingWindow_ShouldOpenCircuit()
     {
         // Arrange
-        var config = new Dictionary<string, object>
+        Dictionary<string, object> config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 3,
             ["SamplingDuration"] = 5,
             ["Timeout"] = 2
         };
-        var middleware = new CircuitBreakerMiddleware(config);
-        var context = CreateContext();
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config);
+        PipelineContext context = CreateContext();
 
         // Act - Rapid failures
         for (int i = 0; i < 3; i++)
@@ -227,7 +228,7 @@ public class CircuitBreakerMiddlewareFullTests
         }
 
         // Assert - Circuit should be open
-        var act = async () => await middleware.InvokeAsync(context, _ => Task.CompletedTask);
+        Func<Task> act = async () => await middleware.InvokeAsync(context, _ => Task.CompletedTask);
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*Circuit breaker is open*");
     }
@@ -236,13 +237,13 @@ public class CircuitBreakerMiddlewareFullTests
     public async Task InvokeAsync_MixedSuccessAndFailure_ShouldTrackCorrectly()
     {
         // Arrange
-        var config = new Dictionary<string, object>
+        Dictionary<string, object> config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 4,
             ["SamplingDuration"] = 10
         };
-        var middleware = new CircuitBreakerMiddleware(config);
-        var context = CreateContext();
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config);
+        PipelineContext context = CreateContext();
 
         // Act - Mix successes and failures
         await middleware.InvokeAsync(context, _ => Task.CompletedTask);
@@ -252,7 +253,7 @@ public class CircuitBreakerMiddlewareFullTests
         try { await middleware.InvokeAsync(context, _ => throw new InvalidOperationException("F3")); } catch { }
 
         // Circuit should still be closed (only 3 failures, need 4)
-        var finalCallSucceeded = false;
+        bool finalCallSucceeded = false;
         await middleware.InvokeAsync(context, _ =>
         {
             finalCallSucceeded = true;
@@ -267,16 +268,16 @@ public class CircuitBreakerMiddlewareFullTests
     public async Task InvokeAsync_CircuitOpensAndReopens_ShouldCycleCorrectly()
     {
         // Arrange
-        var fakeTimeProvider = new FakeTimeProvider();
-        var config = new Dictionary<string, object>
+        FakeTimeProvider fakeTimeProvider = new FakeTimeProvider();
+        Dictionary<string, object> config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 2,
             ["SuccessThreshold"] = 1,
             ["Timeout"] = 1,
             ["SamplingDuration"] = 10
         };
-        var middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
-        var context = CreateContext();
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config, fakeTimeProvider);
+        PipelineContext context = CreateContext();
 
         // Open circuit
         for (int i = 0; i < 2; i++)
@@ -285,7 +286,7 @@ public class CircuitBreakerMiddlewareFullTests
         }
 
         // Verify open
-        var act1 = async () => await middleware.InvokeAsync(context, _ => Task.CompletedTask);
+        Func<Task> act1 = async () => await middleware.InvokeAsync(context, _ => Task.CompletedTask);
         await act1.Should().ThrowAsync<InvalidOperationException>();
 
         // Simulate timeout and close with success
@@ -293,7 +294,7 @@ public class CircuitBreakerMiddlewareFullTests
         await middleware.InvokeAsync(context, _ => Task.CompletedTask);
 
         // Circuit should be closed now
-        var finalSuccess = false;
+        bool finalSuccess = false;
         await middleware.InvokeAsync(context, _ =>
         {
             finalSuccess = true;
@@ -308,13 +309,13 @@ public class CircuitBreakerMiddlewareFullTests
     public async Task InvokeAsync_LastFailureTimeIsTracked_ShouldIncludeInErrorMessage()
     {
         // Arrange
-        var config = new Dictionary<string, object>
+        Dictionary<string, object> config = new Dictionary<string, object>
         {
             ["FailureThreshold"] = 1,
             ["Timeout"] = 60
         };
-        var middleware = new CircuitBreakerMiddleware(config);
-        var context = CreateContext();
+        CircuitBreakerMiddleware middleware = new CircuitBreakerMiddleware(config);
+        PipelineContext context = CreateContext();
 
         // Open circuit
         try
@@ -324,10 +325,10 @@ public class CircuitBreakerMiddlewareFullTests
         catch { /* Expected */ }
 
         // Act
-        var act = async () => await middleware.InvokeAsync(context, _ => Task.CompletedTask);
+        Func<Task> act = async () => await middleware.InvokeAsync(context, _ => Task.CompletedTask);
 
         // Assert - Error message should contain timestamp
-        var exception = await act.Should().ThrowAsync<InvalidOperationException>();
+        ExceptionAssertions<InvalidOperationException> exception = await act.Should().ThrowAsync<InvalidOperationException>();
         exception.Which.Message.Should().Contain("Last failure:");
     }
 

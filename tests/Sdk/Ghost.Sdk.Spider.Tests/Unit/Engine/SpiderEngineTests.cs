@@ -52,7 +52,7 @@ public class SpiderEngineTests
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _mockEngine.Object.StartAsync(_testSpider);
+        SpiderResult result = await _mockEngine.Object.StartAsync(_testSpider);
 
         // Assert
         result.Should().NotBeNull();
@@ -70,7 +70,7 @@ public class SpiderEngineTests
             .ThrowsAsync(new ArgumentNullException(nameof(Spider)));
 
         // Act
-        var act = async () => await _mockEngine.Object.StartAsync(null!);
+        Func<Task<SpiderResult>> act = async () => await _mockEngine.Object.StartAsync(null!);
 
         // Assert
         await act.Should().ThrowAsync<ArgumentNullException>();
@@ -88,7 +88,7 @@ public class SpiderEngineTests
             .ReturnsAsync(failedResult);
 
         // Act
-        var result = await _mockEngine.Object.StartAsync(_testSpider);
+        SpiderResult result = await _mockEngine.Object.StartAsync(_testSpider);
 
         // Assert
         result.Should().NotBeNull();
@@ -109,7 +109,7 @@ public class SpiderEngineTests
             .ThrowsAsync(new OperationCanceledException());
 
         // Act
-        var act = async () => await _mockEngine.Object.StartAsync(_testSpider, cts.Token);
+        Func<Task<SpiderResult>> act = async () => await _mockEngine.Object.StartAsync(_testSpider, cts.Token);
 
         // Assert
         await act.Should().ThrowAsync<OperationCanceledException>();
@@ -171,14 +171,14 @@ public class SpiderEngineTests
     public async Task Engine_ShouldEnqueueStartUrls()
     {
         // Arrange
-        var startUrls = new[] { "https://example.com/1", "https://example.com/2", "https://example.com/3" };
+        string[] startUrls = new[] { "https://example.com/1", "https://example.com/2", "https://example.com/3" };
         var spider = new TestSpider(startUrls.ToList());
 
         _mockQueue.Setup(q => q.EnqueueAsync(It.IsAny<Request>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        foreach (var url in startUrls)
+        foreach (string? url in startUrls)
         {
             var request = new Request
             {
@@ -210,7 +210,7 @@ public class SpiderEngineTests
             .ReturnsAsync(request);
 
         // Act
-        var dequeuedRequest = await _mockQueue.Object.DequeueAsync();
+        Request? dequeuedRequest = await _mockQueue.Object.DequeueAsync();
 
         // Assert
         dequeuedRequest.Should().NotBeNull();
@@ -227,7 +227,7 @@ public class SpiderEngineTests
         _mockQueue.Setup(q => q.IsEmpty).Returns(true);
 
         // Act
-        var request = await _mockQueue.Object.DequeueAsync();
+        Request? request = await _mockQueue.Object.DequeueAsync();
 
         // Assert
         request.Should().BeNull();
@@ -290,7 +290,7 @@ public class SpiderEngineTests
     public async Task Engine_WithParallelRequests_ShouldHandleConcurrency()
     {
         // Arrange
-        var requestCount = 5;
+        int requestCount = 5;
         var requests = Enumerable.Range(1, requestCount)
             .Select(i => new Request
             {
@@ -302,7 +302,7 @@ public class SpiderEngineTests
             .ToList();
 
         // Act
-        var tasks = requests.Select(r => Task.Run(() =>
+        IEnumerable<Task<Response>> tasks = requests.Select(r => Task.Run(() =>
         {
             // Simulate request processing
             return new Response(new ContentResult
@@ -321,7 +321,7 @@ public class SpiderEngineTests
             };
         }));
 
-        var responses = await Task.WhenAll(tasks);
+        Response[] responses = await Task.WhenAll(tasks);
 
         // Assert
         responses.Should().HaveCount(requestCount);
@@ -351,7 +351,7 @@ public class SpiderEngineTests
             .ReturnsAsync(result);
 
         // Act
-        var executionResult = await _mockEngine.Object.StartAsync(_testSpider);
+        SpiderResult executionResult = await _mockEngine.Object.StartAsync(_testSpider);
 
         // Assert
         executionResult.RequestsFailed.Should().Be(1);
@@ -379,7 +379,7 @@ public class SpiderEngineTests
             .ReturnsAsync(result);
 
         // Act
-        var executionResult = await _mockEngine.Object.StartAsync(spider);
+        SpiderResult executionResult = await _mockEngine.Object.StartAsync(spider);
 
         // Assert
         executionResult.RequestsProcessed.Should().Be(10);
@@ -398,7 +398,7 @@ public class SpiderEngineTests
             .ReturnsAsync(result);
 
         // Act
-        var executionResult = await _mockEngine.Object.StartAsync(configurableSpider);
+        SpiderResult executionResult = await _mockEngine.Object.StartAsync(configurableSpider);
 
         // Assert
         executionResult.Success.Should().BeFalse();
@@ -433,7 +433,7 @@ public class SpiderEngineTests
             .ThrowsAsync(new TimeoutException("Stop timeout exceeded"));
 
         // Act
-        var act = async () => await _mockEngine.Object.StopAsync(timeout);
+        Func<Task> act = async () => await _mockEngine.Object.StopAsync(timeout);
 
         // Assert
         await act.Should().ThrowAsync<TimeoutException>();
@@ -480,7 +480,7 @@ public class SpiderEngineTests
         _mockEngine.Setup(e => e.GetCurrentContext()).Returns(context);
 
         // Act
-        var retrievedContext = _mockEngine.Object.GetCurrentContext();
+        SpiderExecutionContext? retrievedContext = _mockEngine.Object.GetCurrentContext();
 
         // Assert
         retrievedContext.Should().NotBeNull();
@@ -499,7 +499,7 @@ public class SpiderEngineTests
         _mockEngine.Setup(e => e.GetCurrentContext()).Returns(context);
 
         // Act
-        var result = _mockEngine.Object.GetCurrentContext();
+        SpiderExecutionContext? result = _mockEngine.Object.GetCurrentContext();
 
         // Assert
         result.Should().NotBeNull();
@@ -513,7 +513,7 @@ public class SpiderEngineTests
         _mockEngine.Setup(e => e.GetCurrentContext()).Returns((SpiderExecutionContext?)null);
 
         // Act
-        var result = _mockEngine.Object.GetCurrentContext();
+        SpiderExecutionContext? result = _mockEngine.Object.GetCurrentContext();
 
         // Assert
         result.Should().BeNull();
@@ -531,7 +531,7 @@ public class SpiderEngineTests
 
         // Act
         List<string> streamedItems = [];
-        await foreach (var item in SimulateAsyncStream(extractedItems))
+        await foreach (string item in SimulateAsyncStream(extractedItems))
         {
             streamedItems.Add(item);
         }
@@ -543,7 +543,7 @@ public class SpiderEngineTests
 
     private static async IAsyncEnumerable<string> SimulateAsyncStream(List<string> items)
     {
-        foreach (var item in items)
+        foreach (string item in items)
         {
             await Task.Yield(); // Simulate async work
             yield return item;
@@ -560,7 +560,7 @@ public class SpiderEngineTests
         List<string> streamedItems = [];
         try
         {
-            await foreach (var item in SimulateAsyncStreamWithError(items))
+            await foreach (string item in SimulateAsyncStreamWithError(items))
             {
                 streamedItems.Add(item);
             }
@@ -576,7 +576,7 @@ public class SpiderEngineTests
 
     private static async IAsyncEnumerable<string> SimulateAsyncStreamWithError(List<string> items)
     {
-        foreach (var item in items)
+        foreach (string item in items)
         {
             await Task.Yield();
             yield return item;
@@ -643,8 +643,8 @@ public class SpiderEngineTests
         var context = new SpiderExecutionContext("TestSpider", new SpiderOptions());
 
         // Act
-        var shouldFollowAllowed = spider.ShouldFollowUrl("https://example.com/page", context);
-        var shouldFollowDisallowed = spider.ShouldFollowUrl("https://other.com/page", context);
+        bool shouldFollowAllowed = spider.ShouldFollowUrl("https://example.com/page", context);
+        bool shouldFollowDisallowed = spider.ShouldFollowUrl("https://other.com/page", context);
 
         // Assert
         shouldFollowAllowed.Should().BeTrue();
@@ -678,7 +678,7 @@ public class SpiderEngineTests
             .ReturnsAsync(result);
 
         // Act
-        var executionResult = await _mockEngine.Object.StartAsync(_testSpider);
+        SpiderResult executionResult = await _mockEngine.Object.StartAsync(_testSpider);
 
         // Assert
         executionResult.Statistics.Should().ContainKey("avgResponseTime");
