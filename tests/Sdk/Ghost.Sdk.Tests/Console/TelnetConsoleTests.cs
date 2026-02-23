@@ -1,7 +1,7 @@
 using FluentAssertions;
+using Ghost.Sdk.Console;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Ghost.Sdk.Console;
 using Xunit;
 
 namespace Ghost.Sdk.Tests.Console;

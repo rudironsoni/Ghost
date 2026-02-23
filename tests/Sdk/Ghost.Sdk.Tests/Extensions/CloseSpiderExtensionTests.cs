@@ -29,7 +29,7 @@ public class CloseSpiderExtensionTests
         // Arrange
         var condition1 = new Mock<ICloseCondition>();
         var condition2 = new Mock<ICloseCondition>();
-        
+
         condition1.Setup(c => c.IsMetAsync(It.IsAny<SpiderContext>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         condition2.Setup(c => c.IsMetAsync(It.IsAny<SpiderContext>(), It.IsAny<CancellationToken>()))
@@ -51,7 +51,7 @@ public class CloseSpiderExtensionTests
         // Arrange
         var condition1 = new Mock<ICloseCondition>();
         var condition2 = new Mock<ICloseCondition>();
-        
+
         condition1.Setup(c => c.IsMetAsync(It.IsAny<SpiderContext>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         condition2.Setup(c => c.IsMetAsync(It.IsAny<SpiderContext>(), It.IsAny<CancellationToken>()))
@@ -74,7 +74,7 @@ public class CloseSpiderExtensionTests
         var condition1 = new Mock<ICloseCondition>();
         var condition2 = new Mock<ICloseCondition>();
         var condition3 = new Mock<ICloseCondition>();
-        
+
         condition1.Setup(c => c.IsMetAsync(It.IsAny<SpiderContext>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         condition2.Setup(c => c.IsMetAsync(It.IsAny<SpiderContext>(), It.IsAny<CancellationToken>()))

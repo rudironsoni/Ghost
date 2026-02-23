@@ -222,13 +222,13 @@ public class ExponentialBackoffRetryPolicyTests
         {
             attemptCount++;
             await Task.CompletedTask;
-            
+
             // Fail on first two attempts, succeed on third
             if (attemptCount < 3)
             {
                 throw new HttpRequestException("Transient error");
             }
-            
+
             return expectedResult;
         });
 

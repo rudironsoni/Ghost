@@ -1,9 +1,9 @@
 using ArchUnitNET.Domain;
-using ArchUnitNET.Loader;
 using ArchUnitNET.Fluent;
+using ArchUnitNET.Loader;
 using ArchUnitNET.xUnit;
-using static ArchUnitNET.Fluent.ArchRuleDefinition;
 using Xunit;
+using static ArchUnitNET.Fluent.ArchRuleDefinition;
 
 namespace Ghost.Architecture.Tests;
 

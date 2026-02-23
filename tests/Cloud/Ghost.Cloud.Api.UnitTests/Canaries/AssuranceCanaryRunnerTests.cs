@@ -76,7 +76,7 @@ public sealed class AssuranceCanaryRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_ReturnsSuccess_WhenCanarySucceeds()
+    public async Task RunAsync_ReturnsSuccess_WhenCanarySucceedsAsync()
     {
         // Arrange
         ScheduledRunInfo scheduledRun = CreateScheduledRun();
@@ -99,7 +99,7 @@ public sealed class AssuranceCanaryRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_ReturnsFailure_WithConfigurationError_WhenInputValidationFails()
+    public async Task RunAsync_ReturnsFailure_WithConfigurationError_WhenInputValidationFailsAsync()
     {
         // Arrange
         ScheduledRunInfo scheduledRun = CreateScheduledRun();
@@ -121,7 +121,7 @@ public sealed class AssuranceCanaryRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_ReturnsFailure_WithTimeout_WhenOperationIsCancelled()
+    public async Task RunAsync_ReturnsFailure_WithTimeout_WhenOperationIsCancelledAsync()
     {
         // Arrange
         ScheduledRunInfo scheduledRun = CreateScheduledRun();
@@ -144,7 +144,7 @@ public sealed class AssuranceCanaryRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_ReturnsFailure_WithRateLimited_WhenHttp429Received()
+    public async Task RunAsync_ReturnsFailure_WithRateLimited_WhenHttp429ReceivedAsync()
     {
         // Arrange
         ScheduledRunInfo scheduledRun = CreateScheduledRun();
@@ -166,7 +166,7 @@ public sealed class AssuranceCanaryRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_ReturnsFailure_WithEndpointError_WhenHttp5xxReceived()
+    public async Task RunAsync_ReturnsFailure_WithEndpointError_WhenHttp5xxReceivedAsync()
     {
         // Arrange
         ScheduledRunInfo scheduledRun = CreateScheduledRun();
@@ -188,7 +188,7 @@ public sealed class AssuranceCanaryRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_ReturnsFailure_WithNetworkError_WhenHttp4xxReceived()
+    public async Task RunAsync_ReturnsFailure_WithNetworkError_WhenHttp4xxReceivedAsync()
     {
         // Arrange
         ScheduledRunInfo scheduledRun = CreateScheduledRun();
@@ -210,7 +210,7 @@ public sealed class AssuranceCanaryRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_ReturnsFailure_WithUnknown_WhenUnexpectedExceptionOccurs()
+    public async Task RunAsync_ReturnsFailure_WithUnknown_WhenUnexpectedExceptionOccursAsync()
     {
         // Arrange
         ScheduledRunInfo scheduledRun = CreateScheduledRun();
@@ -233,7 +233,7 @@ public sealed class AssuranceCanaryRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_CallsEndpointGrain_ToGetManifest()
+    public async Task RunAsync_CallsEndpointGrain_ToGetManifestAsync()
     {
         // Arrange
         ScheduledRunInfo scheduledRun = CreateScheduledRun(endpointId: "my-endpoint");
@@ -255,7 +255,7 @@ public sealed class AssuranceCanaryRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_CallsValidateInput_WithCorrectInput()
+    public async Task RunAsync_CallsValidateInput_WithCorrectInputAsync()
     {
         // Arrange
         JsonElement input = JsonDocument.Parse("{\"test\":\"value\"}").RootElement;
@@ -278,7 +278,7 @@ public sealed class AssuranceCanaryRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_CallsEngineRun_WithCorrectContext()
+    public async Task RunAsync_CallsEngineRun_WithCorrectContextAsync()
     {
         // Arrange
         ScheduledRunInfo scheduledRun = CreateScheduledRun(runId: "run-123", endpointId: "endpoint-456");
@@ -309,7 +309,7 @@ public sealed class AssuranceCanaryRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_ReturnsOutcome_WithDiagnosticsUri_WhenFailed()
+    public async Task RunAsync_ReturnsOutcome_WithDiagnosticsUri_WhenFailedAsync()
     {
         // Arrange
         ScheduledRunInfo scheduledRun = CreateScheduledRun();
@@ -332,7 +332,7 @@ public sealed class AssuranceCanaryRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_ReturnsOutcome_WithoutDiagnosticsUri_WhenSuccessful()
+    public async Task RunAsync_ReturnsOutcome_WithoutDiagnosticsUri_WhenSuccessfulAsync()
     {
         // Arrange
         ScheduledRunInfo scheduledRun = CreateScheduledRun();
@@ -354,7 +354,7 @@ public sealed class AssuranceCanaryRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_ThrowsArgumentNullException_WhenScheduledRunIsNull()
+    public async Task RunAsync_ThrowsArgumentNullException_WhenScheduledRunIsNullAsync()
     {
         // Arrange
         AssuranceCanaryRunner runner = CreateRunner();

@@ -98,7 +98,7 @@ public sealed class TenantGrainTests
     // CL-002: Enhanced auditability tests
 
     [Fact]
-    public async Task AuthorizeRunAsync_IncludesClassification_ForQuotaExceeded()
+    public async Task AuthorizeRunAsync_IncludesClassification_ForQuotaExceededAsync()
     {
         TenantState state = new()
         {
@@ -121,7 +121,7 @@ public sealed class TenantGrainTests
     }
 
     [Fact]
-    public async Task AuthorizeRunAsync_IncludesClassification_ForAuthorized()
+    public async Task AuthorizeRunAsync_IncludesClassification_ForAuthorizedAsync()
     {
         TenantState state = new()
         {
@@ -143,7 +143,7 @@ public sealed class TenantGrainTests
     }
 
     [Fact]
-    public async Task AuthorizeRunAsync_IncludesClassification_ForIdempotent()
+    public async Task AuthorizeRunAsync_IncludesClassification_ForIdempotentAsync()
     {
         TenantState state = new()
         {
@@ -163,7 +163,7 @@ public sealed class TenantGrainTests
     }
 
     [Fact]
-    public async Task AuthorizeRunAsync_RecordsAuditEntry_WithCorrelationId()
+    public async Task AuthorizeRunAsync_RecordsAuditEntry_WithCorrelationIdAsync()
     {
         TenantState state = new()
         {
@@ -183,7 +183,7 @@ public sealed class TenantGrainTests
     }
 
     [Fact]
-    public async Task AuthorizeRunAsync_Denies_WithValidationFailed_ForEmptyRunId()
+    public async Task AuthorizeRunAsync_Denies_WithValidationFailed_ForEmptyRunIdAsync()
     {
         TenantState state = new()
         {
@@ -203,7 +203,7 @@ public sealed class TenantGrainTests
     }
 
     [Fact]
-    public async Task AuthorizeRunAsync_Denies_WithValidationFailed_ForEmptyEndpointId()
+    public async Task AuthorizeRunAsync_Denies_WithValidationFailed_ForEmptyEndpointIdAsync()
     {
         TenantState state = new()
         {
@@ -223,7 +223,7 @@ public sealed class TenantGrainTests
     }
 
     [Fact]
-    public async Task GetAuthorizationAuditAsync_ReturnsAuditEntries()
+    public async Task GetAuthorizationAuditAsync_ReturnsAuditEntriesAsync()
     {
         TenantState state = new()
         {
@@ -262,7 +262,7 @@ public sealed class TenantGrainTests
     }
 
     [Fact]
-    public async Task IsRunAllowedAsync_RespectsDailyLimit()
+    public async Task IsRunAllowedAsync_RespectsDailyLimitAsync()
     {
         TenantState state = new()
         {
@@ -280,7 +280,7 @@ public sealed class TenantGrainTests
     }
 
     [Fact]
-    public async Task IsRunAllowedAsync_ReturnsFalse_WhenDailyLimitExceeded()
+    public async Task IsRunAllowedAsync_ReturnsFalse_WhenDailyLimitExceededAsync()
     {
         TenantState state = new()
         {

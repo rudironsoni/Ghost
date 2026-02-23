@@ -124,7 +124,7 @@ public sealed class SchedulerGrainTests
     [InlineData("replay")]
     [InlineData("Canary")]  // Case insensitive
     [InlineData("Cassette-Refresh")]
-    public async Task ScheduleRunAsync_Accepts_ValidRunKinds(string runKind)
+    public async Task ScheduleRunAsync_Accepts_ValidRunKindsAsync(string runKind)
     {
         SchedulerState schedulerState = new();
         IPersistentState<SchedulerState> persistentState = CreatePersistentState(schedulerState);
@@ -146,7 +146,7 @@ public sealed class SchedulerGrainTests
     }
 
     [Fact]
-    public async Task ScheduleRunAsync_Rejects_InvalidRunKind()
+    public async Task ScheduleRunAsync_Rejects_InvalidRunKindAsync()
     {
         SchedulerState schedulerState = new();
         IPersistentState<SchedulerState> persistentState = CreatePersistentState(schedulerState);
@@ -167,7 +167,7 @@ public sealed class SchedulerGrainTests
     }
 
     [Fact]
-    public async Task ScheduleRunAsync_PersistsRecurringScheduleConfiguration()
+    public async Task ScheduleRunAsync_PersistsRecurringScheduleConfigurationAsync()
     {
         SchedulerState schedulerState = new();
         IPersistentState<SchedulerState> persistentState = CreatePersistentState(schedulerState);
@@ -203,7 +203,7 @@ public sealed class SchedulerGrainTests
     }
 
     [Fact]
-    public async Task ScheduleRunAsync_Rejects_EmptyCronExpression()
+    public async Task ScheduleRunAsync_Rejects_EmptyCronExpressionAsync()
     {
         SchedulerState schedulerState = new();
         IPersistentState<SchedulerState> persistentState = CreatePersistentState(schedulerState);
@@ -230,7 +230,7 @@ public sealed class SchedulerGrainTests
     }
 
     [Fact]
-    public async Task ScheduleRunAsync_Rejects_InvalidCronExpressionFormat()
+    public async Task ScheduleRunAsync_Rejects_InvalidCronExpressionFormatAsync()
     {
         SchedulerState schedulerState = new();
         IPersistentState<SchedulerState> persistentState = CreatePersistentState(schedulerState);
@@ -257,7 +257,7 @@ public sealed class SchedulerGrainTests
     }
 
     [Fact]
-    public async Task ScheduleRunAsync_Rejects_InvalidTimeZone()
+    public async Task ScheduleRunAsync_Rejects_InvalidTimeZoneAsync()
     {
         SchedulerState schedulerState = new();
         IPersistentState<SchedulerState> persistentState = CreatePersistentState(schedulerState);
@@ -284,7 +284,7 @@ public sealed class SchedulerGrainTests
     }
 
     [Fact]
-    public async Task ScheduleRunAsync_Rejects_InvalidMaxOccurrences()
+    public async Task ScheduleRunAsync_Rejects_InvalidMaxOccurrencesAsync()
     {
         SchedulerState schedulerState = new();
         IPersistentState<SchedulerState> persistentState = CreatePersistentState(schedulerState);
