@@ -95,7 +95,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         throw new TimeoutException($"Condition did not become true within {timeout}ms: {script}");
     }
 
-    [Fact(Skip = "Flaky test - scenario server timing issue, tracked in Ghost-?")]
+    [Fact]
     public async Task AutoThreshold_ScrollTriggersFetch_LoadsMoreItems()
     {
         // Arrange
@@ -123,7 +123,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         _output.WriteLine($"Jobs after scroll: {jobsAfterScroll.Count}");
     }
 
-    [Fact(Skip = "Flaky test - scenario server timing issue, tracked in Ghost-?")]
+    [Fact]
     public async Task AutoThreshold_MultipleScrolls_LoadsAllItems()
     {
         // Arrange
@@ -176,7 +176,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         _output.WriteLine($"Total unique jobs loaded: {jobIds.Count}");
     }
 
-    [Fact(Skip = "Flaky test - scenario server timing issue, tracked in Ghost-?")]
+    [Fact]
     public async Task AutoThreshold_Termination_StopsAtEnd()
     {
         // Arrange
@@ -319,7 +319,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         _output.WriteLine($"Total unique jobs loaded: {jobIds.Count}");
     }
 
-    [Fact(Skip = "Flaky test - scenario server timing issue, tracked in Ghost-?")]
+    [Fact]
     public async Task ButtonDriven_Termination_DisablesButtonAtEnd()
     {
         // Arrange
