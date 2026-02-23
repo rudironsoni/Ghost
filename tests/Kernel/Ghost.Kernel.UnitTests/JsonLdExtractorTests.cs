@@ -1,5 +1,5 @@
-using Ghost.Utilities;
 using System.Text.Json;
+using Ghost.Utilities;
 using Xunit;
 
 namespace Ghost.Kernel.Tests;

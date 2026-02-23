@@ -20,7 +20,7 @@ public class LinkedInJobClientParallelTests
     {
         // Arrange: Create a mock strategy router that returns test data
         var mockRouter = new Mock<IStrategyRouter>();
-        
+
         // Setup the router to return 3 test jobs when "Browser" strategy is executed
         mockRouter
             .Setup(r => r.ExecuteStrategyAsync(
@@ -39,13 +39,13 @@ public class LinkedInJobClientParallelTests
 
         var session = new Mock<IBrowserSession>();
         IOptions<LinkedInOptions> options = Options.Create(new LinkedInOptions { ScrapingStrategy = JobScrapingStrategy.Browser });
-        
+
         // Use internal constructor to inject mock router
         var client = new LinkedInJobClient(
-            session.Object, 
-            options, 
-            NullLogger<LinkedInJobClient>.Instance, 
-            new JavaScriptAdapter(), 
+            session.Object,
+            options,
+            NullLogger<LinkedInJobClient>.Instance,
+            new JavaScriptAdapter(),
             new EntityParser(),
             mockRouter.Object);
 

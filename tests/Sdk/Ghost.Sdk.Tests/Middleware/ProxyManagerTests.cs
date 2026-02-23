@@ -87,7 +87,7 @@ public sealed class ProxyManagerTests
         hosts.Should().Contain("proxy1.example.com");
         hosts.Should().Contain("proxy2.example.com");
         hosts.Should().Contain("proxy3.example.com");
-        
+
         // Fourth call should wrap around
         proxy4!.Address!.Host.Should().Be(proxy1!.Address!.Host);
     }
@@ -292,10 +292,10 @@ public sealed class ProxyManagerTests
     public async Task GetNextProxyAsync_AfterRetryPeriod_ShouldRecoverFailedProxy()
     {
         // Arrange
-        var options = new ProxyOptions 
-        { 
+        var options = new ProxyOptions
+        {
             MaxFailures = 1,
-            RetryAfter = TimeSpan.FromMilliseconds(100) 
+            RetryAfter = TimeSpan.FromMilliseconds(100)
         };
         var manager = new ProxyManager(options);
         manager.AddProxy("proxy.example.com", 8080);
@@ -341,7 +341,7 @@ public sealed class ProxyManagerTests
 
         // Assert - All calls should succeed
         proxies.Should().AllSatisfy(p => p.Should().NotBeNull());
-        proxies.Should().OnlyContain(p => 
+        proxies.Should().OnlyContain(p =>
             p!.Address!.Host == "proxy1.example.com" ||
             p.Address.Host == "proxy2.example.com" ||
             p.Address.Host == "proxy3.example.com");

@@ -183,7 +183,7 @@ public class MemoryUsageExtensionIntegrationTests
 
         // Assert
         statsAfter.CurrentBytes.Should().BeGreaterOrEqualTo(statsBefore.CurrentBytes);
-        
+
         // Keep reference to prevent GC from collecting before assertion
         GC.KeepAlive(temp);
     }

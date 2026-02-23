@@ -171,21 +171,21 @@ public sealed class TenantGrain : Grain, ITenantGrain
         string code,
         string message,
         AuthorizationDecisionClassification classification) => new()
-    {
-        IsAuthorized = isAuthorized,
-        Code = code,
-        Message = message,
-        Classification = classification,
-        CurrentRunCount = _state.State.CurrentRunCount,
-        ActiveRunCount = _state.State.ActiveRuns.Count,
-        DailyRunLimit = _state.State.DailyRunLimit,
-        MaxConcurrentRuns = _state.State.MaxConcurrentRuns,
-        TenantId = _state.State.TenantId,
-        // CL-002: Generate verification evidence URI for denied requests
-        VerificationEvidenceUri = isAuthorized
+        {
+            IsAuthorized = isAuthorized,
+            Code = code,
+            Message = message,
+            Classification = classification,
+            CurrentRunCount = _state.State.CurrentRunCount,
+            ActiveRunCount = _state.State.ActiveRuns.Count,
+            DailyRunLimit = _state.State.DailyRunLimit,
+            MaxConcurrentRuns = _state.State.MaxConcurrentRuns,
+            TenantId = _state.State.TenantId,
+            // CL-002: Generate verification evidence URI for denied requests
+            VerificationEvidenceUri = isAuthorized
             ? null
             : $"ghost://audit/tenant/{_state.State.TenantId:N}/authorization/{Guid.NewGuid():N}"
-    };
+        };
 
     private Task AppendAuditAsync(string runId, string endpointId, RunAuthorizationDecision decision)
     {
