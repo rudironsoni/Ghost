@@ -7,8 +7,6 @@
     <IsPackable>false</IsPackable>
     <LangVersion>preview</LangVersion>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
-    <NoWarn>$(NoWarn);IDE0008;IDE0051</NoWarn>
-
   </PropertyGroup>
 
   <ItemGroup>
