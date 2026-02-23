@@ -295,7 +295,7 @@ public class WebSocketAdapterTests : IDisposable
                     if (message == "ping")
                     {
                         // Don't respond - simulating a dead connection
-                        await Task.Delay(TimeSpan.FromHours(1), CancellationToken.None);
+                        continue;
                     }
                 }
                 else if (result.MessageType == WebSocketMessageType.Close)
