@@ -82,7 +82,9 @@ internal sealed class ReliabilityExecutor : XunitTestFrameworkExecutor
         finally
         {
             // Check for leaked browser processes after tests complete
-            // Use synchronous wait because Xunit framework contract requires void return
+            // xUnit framework contract requires void return. This is test infrastructure code,
+            // not library code, so sync-over-async is acceptable here.
+            // See: https://xunit.net/docs/running-tests-in-parallel.html
             Task.Delay(1000).GetAwaiter().GetResult(); // Give processes a moment to clean up
             List<Process> leakedProcesses = BrowserLeakDetector.DetectNewProcesses(initialSnapshot);
 

@@ -1,3 +1,4 @@
+using Ghost.Redis;
 using Ghost.Worker;
 using StackExchange.Redis;
 
@@ -23,7 +24,15 @@ redisOptions.AbortOnConnectFail = false;
 redisOptions.ConnectTimeout = 5000;
 redisOptions.SyncTimeout = 5000;
 
-builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisOptions));
+// Use async factory pattern to avoid sync-over-async in DI
+builder.Services.AddSingleton<RedisConnectionFactory>(_ => new RedisConnectionFactory(redisOptions));
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    // Defer connection until first use via async lazy pattern
+    RedisConnectionFactory factory = sp.GetRequiredService<RedisConnectionFactory>();
+    // This will be called asynchronously by hosted services during startup
+    return factory.ConnectAsync().GetAwaiter().GetResult();
+});
 
 // Register the worker
 builder.Services.AddHostedService<ScraperWorker>();

@@ -17,8 +17,9 @@ public sealed class SessionManager : ISessionManager, IDisposable
     private readonly SessionManagerOptions _options;
     private readonly ILogger<SessionManager> _logger;
     private readonly byte[] _encryptionKey;
-    private readonly ConnectionMultiplexer? _redis;
-    private readonly IDatabase? _redisDb;
+    private ConnectionMultiplexer? _redis;
+    private IDatabase? _redisDb;
+    private readonly SemaphoreSlim _redisConnectLock;
     private bool _disposed;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -103,15 +104,42 @@ public sealed class SessionManager : ISessionManager, IDisposable
                 throw new InvalidOperationException("Redis connection string is required when using Redis backend");
             }
 
-            _redis = ConnectionMultiplexer.Connect(_options.RedisConnectionString);
-            _redisDb = _redis.GetDatabase();
-            _logInitializedRedis(_logger, null);
+            // Defer Redis connection until first use to avoid sync-over-async
+            _redisConnectLock = new SemaphoreSlim(1, 1);
         }
         else
         {
             // Ensure storage directory exists for filesystem backend
             Directory.CreateDirectory(_options.StoragePath);
             _logInitializedFileSystem(_logger, _options.StoragePath, null);
+            _redisConnectLock = new SemaphoreSlim(1, 1);
+        }
+    }
+
+    /// <summary>
+    /// Ensures Redis connection is established asynchronously.
+    /// Uses double-checked locking for thread-safe lazy initialization.
+    /// </summary>
+    private async Task EnsureRedisConnectedAsync(CancellationToken ct = default)
+    {
+        if (_redis != null || _options.Backend != SessionStorageBackend.Redis)
+        {
+            return;
+        }
+
+        await _redisConnectLock.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            if (_redis == null)
+            {
+                _redis = await ConnectionMultiplexer.ConnectAsync(_options.RedisConnectionString!).ConfigureAwait(false);
+                _redisDb = _redis.GetDatabase();
+                _logInitializedRedis(_logger, null);
+            }
+        }
+        finally
+        {
+            _redisConnectLock.Release();
         }
     }
 
@@ -405,6 +433,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
     // Redis Backend Methods
     private async Task SaveToRedisAsync(string platform, string sessionId, string data, TimeSpan expiry, CancellationToken ct)
     {
+        await EnsureRedisConnectedAsync(ct).ConfigureAwait(false);
         if (_redisDb == null) throw new InvalidOperationException("Redis not initialized");
 
         string key = GetRedisKey(platform, sessionId);
@@ -413,6 +442,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
 
     private async Task<string?> LoadFromRedisAsync(string platform, string? sessionId, CancellationToken ct)
     {
+        await EnsureRedisConnectedAsync(ct).ConfigureAwait(false);
         if (_redisDb == null) throw new InvalidOperationException("Redis not initialized");
 
         if (sessionId != null)
@@ -435,6 +465,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
 
     private async Task DeleteFromRedisAsync(string platform, string? sessionId, CancellationToken ct)
     {
+        await EnsureRedisConnectedAsync(ct).ConfigureAwait(false);
         if (_redisDb == null) throw new InvalidOperationException("Redis not initialized");
 
         if (sessionId != null)
@@ -456,6 +487,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
 
     private async Task<List<string>> ListSessionsFromRedisAsync(string platform, bool includeExpired, CancellationToken ct)
     {
+        await EnsureRedisConnectedAsync(ct).ConfigureAwait(false);
         if (_redis == null) throw new InvalidOperationException("Redis not initialized");
 
         string pattern = $"ghost:session:{platform}:*";
@@ -590,6 +622,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
         if (_disposed) return;
 
         _redis?.Dispose();
+        _redisConnectLock?.Dispose();
         _disposed = true;
     }
 
