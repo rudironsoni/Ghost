@@ -13,9 +13,9 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
 {
     private readonly RedisQueueOptions _options;
     private readonly ILogger<RedisJobDispatcher> _logger;
-    private readonly Lazy<ConnectionMultiplexer> _redisLazy;
     private ConnectionMultiplexer? _redis;
     private IDatabase? _db;
+    private readonly SemaphoreSlim _connectLock = new(1, 1);
 
     private static readonly JsonSerializerOptions s_jsonOptions = new()
     {
@@ -64,26 +64,32 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
 
         _options = options.Value;
         _logger = logger;
-
-        // Use lazy initialization to defer Redis connection until first use
-        // This prevents DI container build failures when Redis is unavailable
-        _redisLazy = new Lazy<ConnectionMultiplexer>(() =>
-        {
-            var redis = ConnectionMultiplexer.Connect(_options.ConnectionString);
-            s_queueInitialized(_logger, _options.ConnectionString, null);
-            return redis;
-        });
     }
 
     /// <summary>
-    /// Ensures the Redis connection is established.
+    /// Ensures the Redis connection is established asynchronously.
+    /// Uses double-checked locking pattern for thread-safe lazy initialization.
     /// </summary>
-    private void EnsureConnected()
+    private async Task EnsureConnectedAsync(CancellationToken ct = default)
     {
-        if (_redis is null)
+        if (_redis is not null)
         {
-            _redis = _redisLazy.Value;
-            _db = _redis.GetDatabase(_options.Database);
+            return;
+        }
+
+        await _connectLock.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            if (_redis is null)
+            {
+                _redis = await ConnectionMultiplexer.ConnectAsync(_options.ConnectionString).ConfigureAwait(false);
+                _db = _redis.GetDatabase(_options.Database);
+                s_queueInitialized(_logger, _options.ConnectionString, null);
+            }
+        }
+        finally
+        {
+            _connectLock.Release();
         }
     }
 
@@ -92,7 +98,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(job);
 
-        EnsureConnected();
+        await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
         job.Priority = (JobPriority)Math.Clamp(priority, 0, 3);
         job.CreatedAt = DateTime.UtcNow;
@@ -116,7 +122,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workerId);
 
-        EnsureConnected();
+        await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
         // Try to dequeue from each priority level
         for (int priority = 0; priority <= 3; priority++)
@@ -161,7 +167,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(jobId);
         ArgumentNullException.ThrowIfNull(result);
 
-        EnsureConnected();
+        await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
         result.JobId = jobId;
         result.CompletedAt = DateTime.UtcNow;
@@ -187,7 +193,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(jobId);
         ArgumentNullException.ThrowIfNull(exception);
 
-        EnsureConnected();
+        await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
         // Get job from active queue
         Job? job = null;
@@ -260,7 +266,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
     /// <inheritdoc />
     public async Task<int> GetPendingCountAsync(CancellationToken cancellationToken = default)
     {
-        EnsureConnected();
+        await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
         long total = 0;
         for (int priority = 0; priority <= 3; priority++)
@@ -275,7 +281,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
     /// <inheritdoc />
     public async Task<int> GetActiveCountAsync(CancellationToken cancellationToken = default)
     {
-        EnsureConnected();
+        await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
         long total = 0;
         IServer server = _redis!.GetServer(_redis.GetEndPoints().First());
@@ -293,7 +299,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
     /// <inheritdoc />
     public async Task<int> GetCompletedCountAsync(CancellationToken cancellationToken = default)
     {
-        EnsureConnected();
+        await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
         string key = GetCompletedKey();
         long count = await _db!.ListLengthAsync(key).ConfigureAwait(false);
@@ -303,7 +309,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
     /// <inheritdoc />
     public async Task<int> GetDeadCountAsync(CancellationToken cancellationToken = default)
     {
-        EnsureConnected();
+        await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
         string key = GetDeadKey();
         long count = await _db!.ListLengthAsync(key).ConfigureAwait(false);
