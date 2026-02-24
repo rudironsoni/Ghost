@@ -2,7 +2,9 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 using FluentAssertions;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Architecture.Tests;
 
@@ -10,8 +12,10 @@ namespace Ghost.Architecture.Tests;
 /// Enforces the FW-001 guardrail:
 /// Kernel and SDK MUST NOT depend on plugin implementations.
 /// </summary>
-public sealed class KernelSdkPluginIsolationTests
+public sealed class KernelSdkPluginIsolationTests : ReliabilityTestBase
 {
+    public KernelSdkPluginIsolationTests(ITestOutputHelper output) : base(output) { }
+
     private const string KernelProjectPath = "src/Kernel/Ghost/Ghost.csproj";
 
     private static readonly string[] SdkProjectPaths = new[]

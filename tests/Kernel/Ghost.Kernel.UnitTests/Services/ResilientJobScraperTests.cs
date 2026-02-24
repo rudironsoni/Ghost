@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using FluentAssertions.Specialized;
 using Ghost.Contracts.Jobs;
 using Ghost.Kernel;
 using Ghost.Resilience;
@@ -102,7 +103,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         var mockInner = new Mock<IJobScraper>();
         mockInner.Setup(x => x.PlatformName).Returns("TestPlatform");
 
-        var scraper = CreateScraper(mockInner.Object);
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object);
 
         scraper.PlatformName.Should().Be("TestPlatform");
     }
@@ -131,8 +132,8 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         mockCircuit.Setup(x => x.ExecuteAsync(It.IsAny<Func<Task<IReadOnlyList<JobListing>>>>()))
             .Returns<Func<Task<IReadOnlyList<JobListing>>>>(f => f());
 
-        var scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
-        var result = await scraper.SearchJobsAsync(criteria);
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
+        IReadOnlyList<JobListing> result = await scraper.SearchJobsAsync(criteria);
 
         result.Should().BeEquivalentTo(expectedJobs);
         mockCircuit.Verify(x => x.ExecuteAsync(It.IsAny<Func<Task<IReadOnlyList<JobListing>>>>()), Times.Once);
@@ -154,7 +155,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
 
         var mockDlq = new Mock<IGenericDeadLetterQueue>();
 
-        var scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
 
         Func<Task> act = async () => await scraper.SearchJobsAsync(criteria);
         await act.Should().ThrowAsync<InvalidOperationException>();
@@ -180,7 +181,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
 
         var mockDlq = new Mock<IGenericDeadLetterQueue>();
 
-        var scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
 
         Func<Task> act = async () => await scraper.SearchJobsAsync(criteria);
         await act.Should().ThrowAsync<OperationCanceledException>();
@@ -212,8 +213,8 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         mockCircuit.Setup(x => x.ExecuteAsync(It.IsAny<Func<Task<JobListing>>>()))
             .Returns<Func<Task<JobListing>>>(f => f());
 
-        var scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
-        var result = await scraper.GetJobDetailsAsync(jobId);
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
+        JobListing result = await scraper.GetJobDetailsAsync(jobId);
 
         result.Should().BeEquivalentTo(expectedJob);
     }
@@ -234,7 +235,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
 
         var mockDlq = new Mock<IGenericDeadLetterQueue>();
 
-        var scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
 
         Func<Task> act = async () => await scraper.GetJobDetailsAsync(jobId);
         await act.Should().ThrowAsync<HttpRequestException>();
@@ -267,8 +268,8 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         mockCircuit.Setup(x => x.ExecuteAsync(It.IsAny<Func<Task<JobApplication>>>()))
             .Returns<Func<Task<JobApplication>>>(f => f());
 
-        var scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
-        var result = await scraper.ApplyAsync(jobId, details);
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
+        JobApplication result = await scraper.ApplyAsync(jobId, details);
 
         result.Should().BeEquivalentTo(expectedApplication);
     }
@@ -290,7 +291,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
 
         var mockDlq = new Mock<IGenericDeadLetterQueue>();
 
-        var scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
 
         Func<Task> act = async () => await scraper.ApplyAsync(jobId, details);
         await act.Should().ThrowAsync<UnauthorizedAccessException>();
@@ -326,8 +327,8 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         mockCircuit.Setup(x => x.ExecuteAsync(It.IsAny<Func<Task<IReadOnlyList<JobApplication>>>>()))
             .Returns<Func<Task<IReadOnlyList<JobApplication>>>>(f => f());
 
-        var scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
-        var result = await scraper.GetApplicationsAsync(filter);
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
+        IReadOnlyList<JobApplication> result = await scraper.GetApplicationsAsync(filter);
 
         result.Should().BeEquivalentTo(expectedApplications);
     }
@@ -351,8 +352,8 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         mockCircuit.Setup(x => x.ExecuteAsync(It.IsAny<Func<Task<IReadOnlyList<JobApplication>>>>()))
             .Returns<Func<Task<IReadOnlyList<JobApplication>>>>(f => f());
 
-        var scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
-        var result = await scraper.GetApplicationsAsync(null);
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
+        IReadOnlyList<JobApplication> result = await scraper.GetApplicationsAsync(null);
 
         result.Should().BeEquivalentTo(expectedApplications);
     }
@@ -376,7 +377,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         mockCircuit.Setup(x => x.ExecuteAsync(It.IsAny<Func<Task<bool>>>()))
             .Returns<Func<Task<bool>>>(f => f());
 
-        var scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
 
         Func<Task> act = async () => await scraper.SaveJobAsync(jobId);
         await act.Should().NotThrowAsync();
@@ -398,7 +399,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
 
         var mockDlq = new Mock<IGenericDeadLetterQueue>();
 
-        var scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
 
         Func<Task> act = async () => await scraper.SaveJobAsync(jobId);
         await act.Should().ThrowAsync<InvalidOperationException>();
@@ -433,8 +434,8 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         mockCircuit.Setup(x => x.ExecuteAsync(It.IsAny<Func<Task<IReadOnlyList<JobListing>>>>()))
             .Returns<Func<Task<IReadOnlyList<JobListing>>>>(f => f());
 
-        var scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
-        var result = await scraper.GetSavedJobsAsync();
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
+        IReadOnlyList<JobListing> result = await scraper.GetSavedJobsAsync();
 
         result.Should().BeEquivalentTo(expectedJobs);
     }
@@ -466,10 +467,10 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(dlqException);
 
-        var scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
 
         Func<Task> act = async () => await scraper.SearchJobsAsync(criteria);
-        var thrown = await act.Should().ThrowAsync<HttpRequestException>();
+        ExceptionAssertions<HttpRequestException> thrown = await act.Should().ThrowAsync<HttpRequestException>();
         thrown.Which.Message.Should().Be("Original error");
     }
 
@@ -489,8 +490,8 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         mockCircuit.Setup(x => x.ExecuteAsync(It.IsAny<Func<Task<IReadOnlyList<JobListing>>>>()))
             .Returns<Func<Task<IReadOnlyList<JobListing>>>>(f => f());
 
-        var scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
-        var result = await scraper.SearchJobsAsync(criteria);
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
+        IReadOnlyList<JobListing> result = await scraper.SearchJobsAsync(criteria);
 
         result.Should().BeEquivalentTo(expectedJobs);
     }
@@ -513,7 +514,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         mockCircuit.Setup(x => x.ExecuteAsync(It.IsAny<Func<Task<IReadOnlyList<JobListing>>>>()))
             .ThrowsAsync(new OperationCanceledException());
 
-        var scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
+        ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object);
 
         Func<Task> act = async () => await scraper.SearchJobsAsync(criteria, cts.Token);
         await act.Should().ThrowAsync<OperationCanceledException>();

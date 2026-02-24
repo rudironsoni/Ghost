@@ -1,8 +1,8 @@
 using FluentAssertions;
 using Ghost.Testing.Fakes;
+using Ghost.Testing.Reliability;
 using Xunit;
 using Xunit.Abstractions;
-using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Unit.Tests;
 

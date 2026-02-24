@@ -6,6 +6,7 @@ using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Smoke.Tests.Assertions;
 using Ghost.Testing.Attributes;
+using Ghost.Testing.Reliability;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -17,15 +18,13 @@ namespace Ghost.Smoke.Tests.Smoke;
 /// </summary>
 [Trait("Category", "Smoke")]
 [Trait("Flow", "MultiPlatform")]
-public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
+public class MultiPlatformHttpSmokeTests : ReliabilityTestBase, IClassFixture<GhostWebApiFixture>
 {
     private readonly GhostWebApiFixture _fixture;
-    private readonly ITestOutputHelper _output;
 
-    public MultiPlatformHttpSmokeTests(GhostWebApiFixture fixture, ITestOutputHelper output)
+    public MultiPlatformHttpSmokeTests(GhostWebApiFixture fixture, ITestOutputHelper output) : base(output)
     {
         _fixture = fixture;
-        _output = output;
     }
 
     [ConditionalFact("MultiPlatform")]
@@ -40,17 +39,17 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         };
 
         // Act
-        _output.WriteLine($"Searching all platforms via API for: {searchRequest.query}");
+        Output.WriteLine($"Searching all platforms via API for: {searchRequest.query}");
         List<JobListing>? results = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output);
+            Output);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
         results.Should().NotBeEmpty("search should return at least one job");
 
-        _output.WriteLine($"Found {results!.Count} jobs across all platforms");
+        Output.WriteLine($"Found {results!.Count} jobs across all platforms");
 
         // Validate data quality
         results.AssertRealJobResults();
@@ -70,11 +69,11 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
             .OrderByDescending(g => g.Count)
             .ToList();
 
-        _output.WriteLine("\n=== Platform Distribution ===");
-        _output.WriteLine($"Platforms contributing data: {platformDistribution.Count}");
+        Output.WriteLine("\n=== Platform Distribution ===");
+        Output.WriteLine($"Platforms contributing data: {platformDistribution.Count}");
         foreach (var platform in platformDistribution)
         {
-            _output.WriteLine($"  - {platform.Platform}: {platform.Count} jobs");
+            Output.WriteLine($"  - {platform.Platform}: {platform.Count} jobs");
         }
 
         // Assert that we have results from multiple platforms
@@ -93,17 +92,17 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         };
 
         // Act
-        _output.WriteLine($"Searching for deduplication via API for: {searchRequest.query}");
+        Output.WriteLine($"Searching for deduplication via API for: {searchRequest.query}");
         List<JobListing>? results = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output);
+            Output);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
         results.Should().NotBeEmpty("search should return at least one job");
 
-        _output.WriteLine($"Found {results!.Count} jobs");
+        Output.WriteLine($"Found {results!.Count} jobs");
 
         // Validate no duplicates
         results.AssertNoDuplicateJobs();
@@ -115,11 +114,11 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
             .Select(g => new { Title = g.Key.Title, Company = g.Key.Company, Count = g.Count() })
             .ToList();
 
-        _output.WriteLine($"\n=== Potential Duplicates by Title/Company ===");
-        _output.WriteLine($"Found {potentialDuplicates.Count} potential duplicates");
+        Output.WriteLine($"\n=== Potential Duplicates by Title/Company ===");
+        Output.WriteLine($"Found {potentialDuplicates.Count} potential duplicates");
         foreach (var dup in potentialDuplicates)
         {
-            _output.WriteLine($"  - '{dup.Title}' at {dup.Company}: {dup.Count} occurrences");
+            Output.WriteLine($"  - '{dup.Title}' at {dup.Company}: {dup.Count} occurrences");
         }
 
         // Note: Some duplicates by title/company are expected across platforms
@@ -138,17 +137,17 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         };
 
         // Act
-        _output.WriteLine($"Searching all platforms via API for: {searchRequest.query} in {searchRequest.location}");
+        Output.WriteLine($"Searching all platforms via API for: {searchRequest.query} in {searchRequest.location}");
         List<JobListing>? results = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output);
+            Output);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
         results.Should().NotBeEmpty("search should return at least one job");
 
-        _output.WriteLine($"Found {results!.Count} jobs");
+        Output.WriteLine($"Found {results!.Count} jobs");
 
         // Validate data quality
         results.AssertRealJobResults();
@@ -167,10 +166,10 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
             .Take(5)
             .ToList();
 
-        _output.WriteLine("\n=== Top 5 Locations ===");
+        Output.WriteLine("\n=== Top 5 Locations ===");
         foreach (var loc in locationDistribution)
         {
-            _output.WriteLine($"  - {loc.Location}: {loc.Count} jobs");
+            Output.WriteLine($"  - {loc.Location}: {loc.Count} jobs");
         }
 
         // Check for remote jobs
@@ -179,8 +178,8 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
             (j.Location.Contains("Remote", StringComparison.OrdinalIgnoreCase) ||
              j.Location.Contains("Anywhere", StringComparison.OrdinalIgnoreCase))).ToList();
 
-        _output.WriteLine($"\n=== Remote Jobs ===");
-        _output.WriteLine($"Found {remoteJobs.Count} remote jobs");
+        Output.WriteLine($"\n=== Remote Jobs ===");
+        Output.WriteLine($"Found {remoteJobs.Count} remote jobs");
     }
 
     [ConditionalFact("MultiPlatform")]
@@ -197,7 +196,7 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         List<JobListing>? searchResults = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output);
+            Output);
 
         searchResults.Should().NotBeEmpty("need at least one job to test details endpoint");
 
@@ -208,14 +207,14 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
             .Select(g => g.First())
             .ToList();
 
-        _output.WriteLine($"\n=== Testing Job Details from {jobsByPlatform.Count} Platforms ===");
+        Output.WriteLine($"\n=== Testing Job Details from {jobsByPlatform.Count} Platforms ===");
 
         // Act & Assert - Get details for each job
         foreach (JobListing? job in jobsByPlatform)
         {
-            _output.WriteLine($"\nTesting {job.Source} job: {job.Id}");
+            Output.WriteLine($"\nTesting {job.Source} job: {job.Id}");
 
-            JobListing? jobDetails = await _fixture.GetAsync<JobListing>($"/api/jobs/{job.Id}", _output);
+            JobListing? jobDetails = await _fixture.GetAsync<JobListing>($"/api/jobs/{job.Id}", Output);
 
             jobDetails.Should().NotBeNull("job details should not be null");
             jobDetails!.Id.Should().Be(job.Id, "job ID should match the requested ID");
@@ -226,7 +225,7 @@ public class MultiPlatformHttpSmokeTests : IClassFixture<GhostWebApiFixture>
             jobDetails.AssertValidPlatformId(job.Source!);
             jobDetails.AssertUrlReachable();
 
-            _output.WriteLine($"  ✓ Valid job details for {job.Source}");
+            Output.WriteLine($"  ✓ Valid job details for {job.Source}");
         }
     }
 }

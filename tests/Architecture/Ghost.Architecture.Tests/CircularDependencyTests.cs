@@ -2,13 +2,17 @@ using ArchUnitNET.Domain;
 using ArchUnitNET.Fluent;
 using ArchUnitNET.Loader;
 using ArchUnitNET.xUnit;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 
 namespace Ghost.Architecture.Tests;
 
-public sealed class CircularDependencyTests
+public sealed class CircularDependencyTests : ReliabilityTestBase
 {
+    public CircularDependencyTests(ITestOutputHelper output) : base(output) { }
+
     private static readonly ArchUnitNET.Domain.Architecture Arch = new ArchLoader()
         .LoadAssemblies(
             typeof(Ghost.Contracts.IExtension).Assembly,

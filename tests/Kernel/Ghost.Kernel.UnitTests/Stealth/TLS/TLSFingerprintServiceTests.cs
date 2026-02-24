@@ -1,10 +1,10 @@
 using FluentAssertions;
 using Ghost.Stealth.TLS;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Xunit.Abstractions;
-using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Stealth.TLS;
 

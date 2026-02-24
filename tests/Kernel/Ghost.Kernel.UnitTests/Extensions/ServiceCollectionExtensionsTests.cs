@@ -1,9 +1,9 @@
 using FluentAssertions;
+using Ghost.Testing.Reliability;
 using Ghost.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
-using Ghost.Testing.Reliability;
 
 namespace Ghost.Extensions.Tests;
 

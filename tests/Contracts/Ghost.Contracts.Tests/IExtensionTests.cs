@@ -1,13 +1,16 @@
 using System;
 using FluentAssertions;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Contracts.Tests;
 
-public class IExtensionTests
+public class IExtensionTests : ReliabilityTestBase
 {
+    public IExtensionTests(ITestOutputHelper output) : base(output) { }
     private sealed class FakeExtension : IExtension
     {
         public string Name => "fake";

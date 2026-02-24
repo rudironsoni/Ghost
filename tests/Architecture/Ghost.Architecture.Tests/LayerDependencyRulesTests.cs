@@ -1,7 +1,9 @@
 using FluentAssertions;
 using Ghost.Engine.Abstractions.Engine;
 using Ghost.Hosting;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Architecture.Tests;
 
@@ -13,8 +15,10 @@ namespace Ghost.Architecture.Tests;
 /// Engine -> Contracts, Engine.Abstractions
 /// Plugins -> Contracts, Kernel, Sdk, Hosting (abstractions only)
 /// </summary>
-public sealed class LayerDependencyRulesTests
+public sealed class LayerDependencyRulesTests : ReliabilityTestBase
 {
+    public LayerDependencyRulesTests(ITestOutputHelper output) : base(output) { }
+
     #region Contracts Layer Tests
 
     [Fact]

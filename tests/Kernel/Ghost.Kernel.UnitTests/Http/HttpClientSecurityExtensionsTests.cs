@@ -130,7 +130,7 @@ public class HttpClientSecurityExtensionsTests : ReliabilityTestBase
     public void CreateCertificateValidationCallback_WithValidCertificate_ShouldReturnTrue()
     {
         // Arrange
-        var callback = HttpClientSecurityExtensions.CreateCertificateValidationCallback();
+        RemoteCertificateValidationCallback callback = HttpClientSecurityExtensions.CreateCertificateValidationCallback();
 
         // Act
         bool result = callback(null!, null, null, SslPolicyErrors.None);
@@ -143,7 +143,7 @@ public class HttpClientSecurityExtensionsTests : ReliabilityTestBase
     public void CreateCertificateValidationCallback_WithCertificateError_ShouldReturnFalse()
     {
         // Arrange
-        var callback = HttpClientSecurityExtensions.CreateCertificateValidationCallback();
+        RemoteCertificateValidationCallback callback = HttpClientSecurityExtensions.CreateCertificateValidationCallback();
 
         // Act
         bool result = callback(null!, null, null, SslPolicyErrors.RemoteCertificateChainErrors);
@@ -202,7 +202,7 @@ public class HttpClientSecurityExtensionsTests : ReliabilityTestBase
     {
         // Arrange
         ILogger logger = new LoggerFactory().CreateLogger<HttpClientSecurityExtensionsTests>();
-        var callback = HttpClientSecurityExtensions.CreateDangerousBypassCallback(logger, "Testing");
+        Func<HttpRequestMessage, X509Certificate2?, X509Chain?, SslPolicyErrors, bool> callback = HttpClientSecurityExtensions.CreateDangerousBypassCallback(logger, "Testing");
 
         // Act
         bool result = callback(null!, null, null, SslPolicyErrors.RemoteCertificateChainErrors);
@@ -216,7 +216,7 @@ public class HttpClientSecurityExtensionsTests : ReliabilityTestBase
     {
         // Arrange
         ILogger logger = new LoggerFactory().CreateLogger<HttpClientSecurityExtensionsTests>();
-        var callback = HttpClientSecurityExtensions.CreateDangerousBypassCallback(logger, "Testing");
+        Func<HttpRequestMessage, X509Certificate2?, X509Chain?, SslPolicyErrors, bool> callback = HttpClientSecurityExtensions.CreateDangerousBypassCallback(logger, "Testing");
 
         // Act
         bool result = callback(null!, null, null, SslPolicyErrors.None);
@@ -248,7 +248,7 @@ public class HttpClientSecurityExtensionsTests : ReliabilityTestBase
         // Arrange
         var handler = new HttpClientHandler();
         // Create a self-signed certificate for testing
-        using var certificate = CreateTestCertificate();
+        using X509Certificate2 certificate = CreateTestCertificate();
 
         // Act
         HttpClientHandler result = HttpClientSecurityExtensions.ConfigureSecureHttpClientHandler(handler, certificate);
@@ -270,7 +270,7 @@ public class HttpClientSecurityExtensionsTests : ReliabilityTestBase
             System.Security.Cryptography.RSASignaturePadding.Pkcs1);
 
         // Create a self-signed certificate with 1 day validity
-        using var certificate = request.CreateSelfSigned(
+        using X509Certificate2 certificate = request.CreateSelfSigned(
             DateTimeOffset.UtcNow.AddDays(-1),
             DateTimeOffset.UtcNow.AddDays(1));
 
@@ -348,7 +348,7 @@ public class HttpClientSecurityExtensionsTests : ReliabilityTestBase
     {
         // Arrange
         ILogger logger = new LoggerFactory().CreateLogger<HttpClientSecurityExtensionsTests>();
-        var callback = HttpClientSecurityExtensions.CreateDangerousBypassCallback(logger, "Test bypass");
+        Func<HttpRequestMessage, X509Certificate2?, X509Chain?, SslPolicyErrors, bool> callback = HttpClientSecurityExtensions.CreateDangerousBypassCallback(logger, "Test bypass");
 
         // Act
         bool result = callback(null!, null, null, sslPolicyErrors);
@@ -362,7 +362,7 @@ public class HttpClientSecurityExtensionsTests : ReliabilityTestBase
     {
         // Arrange
         ILogger logger = new LoggerFactory().CreateLogger<HttpClientSecurityExtensionsTests>();
-        var callback = HttpClientSecurityExtensions.CreateDangerousBypassCallback(logger, "Testing with null request");
+        Func<HttpRequestMessage, X509Certificate2?, X509Chain?, SslPolicyErrors, bool> callback = HttpClientSecurityExtensions.CreateDangerousBypassCallback(logger, "Testing with null request");
 
         // Act & Assert
         Action act = () => callback(null!, null, null, SslPolicyErrors.RemoteCertificateChainErrors);

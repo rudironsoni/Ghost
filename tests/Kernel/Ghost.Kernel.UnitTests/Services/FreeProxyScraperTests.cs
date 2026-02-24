@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using FluentAssertions.Specialized;
 using Ghost.ProxyManagement;
 using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging;
@@ -51,20 +52,6 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
             });
     }
 
-    private static void SetupMockResponseForAnyRequest(Mock<HttpMessageHandler> mockHandler, string content)
-    {
-        mockHandler.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(content)
-            });
-    }
-
     #region Constructor Tests
 
     [Fact]
@@ -81,8 +68,8 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public void Constructor_NullLogger_ThrowsArgumentNullException()
     {
-        var mockHandler = CreateMockHandler();
-        var httpClient = CreateMockHttpClient(mockHandler);
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
 
         Action act = () =>
         {
@@ -110,8 +97,8 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public void Constructor_WithCustomHttpClient_UsesProvidedClient()
     {
-        var mockHandler = CreateMockHandler();
-        var httpClient = CreateMockHttpClient(mockHandler);
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
 
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
         scraper.Should().NotBeNull();
@@ -124,7 +111,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_AllSourcesSuccess_ReturnsProxies()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "1.2.3.4:8080\n5.6.7.8:3128");
@@ -132,10 +119,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "13.14.15.16:8080\n17.18.19.20:3128");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[{\"Ip\":\"21.22.23.24\",\"Port\":\"8080\"}]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         // proxy-list.download returns 3 (2 from http + 1 from https)
@@ -150,7 +137,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_RemovesDuplicates()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "1.2.3.4:8080\n5.6.7.8:3128\n1.2.3.4:8080");
@@ -158,10 +145,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "5.6.7.8:3128");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         // 1.2.3.4:8080 (deduplicated), 5.6.7.8:3128, 9.10.11.12:8080
@@ -172,7 +159,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_OneSourceFails_ReturnsProxiesFromOtherSources()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "1.2.3.4:8080");
@@ -187,10 +174,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
 
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(2);
@@ -199,7 +186,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_AllSourcesFail_ReturnsEmptyList()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         mockHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -208,10 +195,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
                 ItExpr.IsAny<CancellationToken>())
             .ThrowsAsync(new HttpRequestException("Network error"));
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
 
         proxies.Should().BeEmpty();
     }
@@ -219,7 +206,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_EmptyResponses_ReturnsEmptyList()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "");
@@ -227,10 +214,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
 
         proxies.Should().BeEmpty();
     }
@@ -238,7 +225,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_InvalidProxyFormat_SkipsInvalidLines()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "1.2.3.4:8080\ninvalid-line\n5.6.7.8:3128\nno-port-here");
@@ -246,10 +233,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(2);
@@ -260,7 +247,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_InvalidPort_SkipsLine()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "1.2.3.4:abc");
@@ -268,10 +255,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
 
         proxies.Should().BeEmpty();
     }
@@ -279,7 +266,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_MultipleColons_SkipsInvalidLine()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "1.2.3.4:8080:extra\n5.6.7.8:3128");
@@ -287,10 +274,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(1);
@@ -300,7 +287,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_EmptyLines_SkipsEmptyLines()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "1.2.3.4:8080\n\n\n5.6.7.8:3128\n");
@@ -308,10 +295,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(2);
@@ -324,7 +311,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_ProxyScanJsonParsing_Success()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "");
@@ -333,10 +320,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy",
             "[{\"Ip\":\"192.168.1.1\",\"Port\":\"8080\"},{\"Ip\":\"10.0.0.1\",\"Port\":\"3128\"}]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(2);
@@ -347,7 +334,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_ProxyScanInvalidJson_ReturnsEmpty()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "");
@@ -355,10 +342,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "invalid json");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
 
         proxies.Should().BeEmpty();
     }
@@ -366,7 +353,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_ProxyScanEmptyArray_ReturnsEmpty()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "");
@@ -374,10 +361,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
 
         proxies.Should().BeEmpty();
     }
@@ -385,7 +372,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_ProxyScanNullResponse_ReturnsEmpty()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "");
@@ -393,10 +380,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "null");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
 
         proxies.Should().BeEmpty();
     }
@@ -404,7 +391,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_ProxyScanNullIp_SkipsInvalid()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "");
@@ -413,10 +400,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy",
             "[{\"Ip\":null,\"Port\":\"8080\"},{\"Ip\":\"10.0.0.1\",\"Port\":\"3128\"}]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(1);
@@ -426,7 +413,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_ProxyScanNullPort_SkipsInvalid()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "");
@@ -435,10 +422,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy",
             "[{\"Ip\":\"10.0.0.1\",\"Port\":null},{\"Ip\":\"10.0.0.2\",\"Port\":\"3128\"}]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(1);
@@ -452,7 +439,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_CancellationToken_ThrowsOperationCanceledException()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
         mockHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -460,7 +447,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
                 ItExpr.IsAny<CancellationToken>())
             .ThrowsAsync(new OperationCanceledException());
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
         var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -472,7 +459,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_OperationCanceledException_NotCaughtAsGeneralException()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
         mockHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -480,11 +467,11 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
                 ItExpr.IsAny<CancellationToken>())
             .ThrowsAsync(new OperationCanceledException("User cancelled"));
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
         Func<Task> act = async () => await scraper.FetchProxiesAsync(CancellationToken);
-        var exception = await act.Should().ThrowAsync<OperationCanceledException>();
+        ExceptionAssertions<OperationCanceledException> exception = await act.Should().ThrowAsync<OperationCanceledException>();
         exception.Which.Message.Should().Be("User cancelled");
     }
 
@@ -495,7 +482,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_NonSuccessStatusCode_ContinuesProcessing()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         mockHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -513,10 +500,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(1);
@@ -526,7 +513,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_HttpRequestException_HandledGracefully()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         mockHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -539,10 +526,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "1.2.3.4:8080");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(1);
@@ -551,7 +538,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_InvalidOperationException_HandledGracefully()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         mockHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -564,10 +551,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "1.2.3.4:8080");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(1);
@@ -580,7 +567,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_WhitespaceInLines_TrimsCorrectly()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "  1.2.3.4:8080  \n\n  5.6.7.8:3128  \n");
@@ -588,10 +575,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(2);
@@ -600,7 +587,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_TabsInLines_TrimsCorrectly()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "\t1.2.3.4:8080\t\n\t5.6.7.8:3128\t");
@@ -608,10 +595,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(2);
@@ -628,14 +615,14 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         var mockLogger = new Mock<ILogger<FreeProxyScraper>>();
         mockLogger.Setup(x => x.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "1.2.3.4:8080");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=https", "");
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, mockLogger.Object);
 
         await scraper.FetchProxiesAsync(CancellationToken);
@@ -655,7 +642,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     {
         var mockLogger = new Mock<ILogger<FreeProxyScraper>>();
 
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
         mockHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -663,11 +650,11 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
                 ItExpr.IsAny<CancellationToken>())
             .ThrowsAsync(new HttpRequestException("Network error"));
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, mockLogger.Object);
 
         // Should complete without throwing
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
 
         proxies.Should().BeEmpty();
     }
@@ -679,7 +666,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_ReturnsProxies_WithNullCredentials()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "1.2.3.4:8080");
@@ -687,10 +674,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(1);
@@ -702,7 +689,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     [Fact]
     public async Task FetchProxiesAsync_MultipleSources_ReturnsProxiesFromAllSources()
     {
-        var mockHandler = CreateMockHandler();
+        Mock<HttpMessageHandler> mockHandler = CreateMockHandler();
 
         SetupMockResponse(mockHandler, "https://www.free-proxy-list.net/", "<html></html>");
         SetupMockResponse(mockHandler, "https://www.proxy-list.download/api/v1/get?type=http", "1.2.3.4:8080");
@@ -710,10 +697,10 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
         SetupMockResponse(mockHandler, "https://api.proxyscrape.com/v2/", "3.3.3.3:8080");
         SetupMockResponse(mockHandler, "https://www.proxyscan.io/api/proxy", "[{\"Ip\":\"4.4.4.4\",\"Port\":\"8080\"}]");
 
-        var httpClient = CreateMockHttpClient(mockHandler);
+        HttpClient httpClient = CreateMockHttpClient(mockHandler);
         var scraper = new FreeProxyScraper(httpClient, NullLogger<FreeProxyScraper>.Instance);
 
-        var proxies = await scraper.FetchProxiesAsync(CancellationToken);
+        IEnumerable<ProxyInfo> proxies = await scraper.FetchProxiesAsync(CancellationToken);
         var proxyList = proxies.ToList();
 
         proxyList.Should().HaveCount(4);

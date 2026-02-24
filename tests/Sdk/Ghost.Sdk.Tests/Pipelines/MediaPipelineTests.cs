@@ -7,10 +7,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Sdk.Pipelines;
+using Ghost.Testing.Reliability;
 using Moq;
 using Moq.Protected;
 using Xunit;
-using Ghost.Testing.Reliability;
 using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Pipelines;

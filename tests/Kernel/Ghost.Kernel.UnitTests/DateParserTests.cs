@@ -1,7 +1,7 @@
+using Ghost.Testing.Reliability;
 using Ghost.Utilities;
 using Xunit;
 using Xunit.Abstractions;
-using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Tests;
 
@@ -14,7 +14,7 @@ public class DateParserTests : ReliabilityTestBase
     [Fact]
     public void ParseMonthYear()
     {
-        var d = _parser.ParseDate("Jan 2024");
+        DateOnly? d = _parser.ParseDate("Jan 2024");
         Assert.NotNull(d);
         Assert.Equal(2024, d.Value.Year);
         Assert.Equal(1, d.Value.Month);
@@ -23,7 +23,7 @@ public class DateParserTests : ReliabilityTestBase
     [Fact]
     public void ParseRangePresent()
     {
-        var (s, e) = _parser.ParseDateRange("Mar 2020 - Present");
+        (DateOnly? s, DateOnly? e) = _parser.ParseDateRange("Mar 2020 - Present");
         Assert.NotNull(s);
         Assert.Null(e);
     }
@@ -31,7 +31,7 @@ public class DateParserTests : ReliabilityTestBase
     [Fact]
     public void ParseRelativeDaysAgo()
     {
-        var dt = _parser.ParseRelativeDate("3 days ago");
+        DateTime? dt = _parser.ParseRelativeDate("3 days ago");
         Assert.NotNull(dt);
         Assert.True((DateTime.UtcNow - dt.Value).TotalDays >= 2);
     }

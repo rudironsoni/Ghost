@@ -1,10 +1,10 @@
 using FluentAssertions;
 using Ghost.Sdk.Deduplication;
 using Ghost.Sdk.Spider.Adapters.Contracts;
+using Ghost.Testing.Reliability;
 using Ghost.Utilities;
 using Xunit;
 using Xunit.Abstractions;
-using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Tests.Dedupe;
 

@@ -1,5 +1,7 @@
 using FluentAssertions;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Architecture.Tests;
 
@@ -7,8 +9,10 @@ namespace Ghost.Architecture.Tests;
 /// Tests enforcing namespace conventions across the codebase.
 /// Namespace conventions help maintain a clean and predictable architecture.
 /// </summary>
-public sealed class NamespaceConventionTests
+public sealed class NamespaceConventionTests : ReliabilityTestBase
 {
+    public NamespaceConventionTests(ITestOutputHelper output) : base(output) { }
+
     #region Namespace Naming Convention Tests
 
     /// <summary>
