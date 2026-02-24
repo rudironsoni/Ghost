@@ -1,16 +1,19 @@
 using Ghost.Contracts.Jobs;
 using Ghost.Hosting;
 using Ghost.Plugin.Indeed.Internal;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.Indeed.Tests;
 
-public class IndeedExtensionTests
+public class IndeedExtensionTests : ReliabilityTestBase
 {
+    public IndeedExtensionTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void RegistersServices()
     {

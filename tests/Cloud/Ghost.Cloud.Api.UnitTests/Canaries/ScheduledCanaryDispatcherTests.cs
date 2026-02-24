@@ -1,13 +1,16 @@
 using Ghost.Cloud.Api.Canaries;
 using Ghost.Cloud.Contracts.Runs;
 using Ghost.Cloud.Grains.Interfaces;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using Xunit.Abstractions;
 
 namespace Ghost.Cloud.Api.UnitTests.Canaries;
 
-public sealed class ScheduledCanaryDispatcherTests
+public sealed class ScheduledCanaryDispatcherTests : ReliabilityTestBase
 {
+    public ScheduledCanaryDispatcherTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task DispatchDueCanariesOnceAsync_CompletesRun_WhenRunnerSucceedsAsync()
     {

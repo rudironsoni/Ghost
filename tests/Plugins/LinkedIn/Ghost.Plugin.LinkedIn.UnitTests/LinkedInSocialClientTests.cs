@@ -4,15 +4,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Contracts.Social;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.LinkedIn.Tests;
 
-public class LinkedInSocialClientTests
+public class LinkedInSocialClientTests : ReliabilityTestBase
 {
+    public LinkedInSocialClientTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task GetProfileAsyncReturnsDefaultWhenNoElementFound()
     {

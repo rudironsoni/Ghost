@@ -1,11 +1,14 @@
 using System.Text.Json;
 using Ghost.Plugin.Indeed.Internal;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.Indeed.Tests;
 
-public class IndeedJobParserTests
+public class IndeedJobParserTests : ReliabilityTestBase
 {
+    public IndeedJobParserTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void ParsesSampleResponse()
     {

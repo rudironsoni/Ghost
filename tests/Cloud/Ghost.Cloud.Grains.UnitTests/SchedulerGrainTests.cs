@@ -1,12 +1,15 @@
 using Ghost.Cloud.Contracts.Runs;
 using Ghost.Cloud.Grains.Implementation;
+using Ghost.Testing.Reliability;
 using NSubstitute;
 using Orleans.Runtime;
+using Xunit.Abstractions;
 
 namespace Ghost.Cloud.Grains.UnitTests;
 
-public sealed class SchedulerGrainTests
+public sealed class SchedulerGrainTests : ReliabilityTestBase
 {
+    public SchedulerGrainTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task ScheduleRunAsync_PersistsCanaryMetadataAsync()
     {

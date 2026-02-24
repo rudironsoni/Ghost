@@ -1,10 +1,13 @@
 using FluentAssertions;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.LinkedIn.Tests;
 
-public class LinkedInSessionPoolMetricsTests
+public class LinkedInSessionPoolMetricsTests : ReliabilityTestBase
 {
+    public LinkedInSessionPoolMetricsTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void MetricsPropertiesSetAndGet()
     {

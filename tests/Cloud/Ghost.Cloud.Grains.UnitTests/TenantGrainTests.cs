@@ -2,13 +2,16 @@ using FluentAssertions;
 using Ghost.Cloud.Contracts.Runs;
 using Ghost.Cloud.Grains.Implementation;
 using Ghost.Cloud.Grains.State;
+using Ghost.Testing.Reliability;
 using NSubstitute;
 using Orleans.Runtime;
+using Xunit.Abstractions;
 
 namespace Ghost.Cloud.Grains.UnitTests;
 
-public sealed class TenantGrainTests
+public sealed class TenantGrainTests : ReliabilityTestBase
 {
+    public TenantGrainTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task AuthorizeRunAsync_Denies_WhenDailyLimitExceededAsync()
     {

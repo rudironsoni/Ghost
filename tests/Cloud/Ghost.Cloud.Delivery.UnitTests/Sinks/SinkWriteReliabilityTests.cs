@@ -1,10 +1,13 @@
 using System.Text;
 using Ghost.Cloud.Delivery.Sinks;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Cloud.Delivery.UnitTests.Sinks;
 
-public sealed class SinkWriteReliabilityTests
+public sealed class SinkWriteReliabilityTests : ReliabilityTestBase
 {
+    public SinkWriteReliabilityTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Create_WithCursor_ProducesStableIdempotencyKeyAndObjectName()
     {

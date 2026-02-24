@@ -1,11 +1,14 @@
 using System.Security.Claims;
 using Ghost.Cloud.Api.Middleware;
+using Ghost.Testing.Reliability;
 using Microsoft.AspNetCore.Http;
+using Xunit.Abstractions;
 
 namespace Ghost.Cloud.Api.UnitTests.Middleware;
 
-public sealed class TenantResolutionMiddlewareTests
+public sealed class TenantResolutionMiddlewareTests : ReliabilityTestBase
 {
+    public TenantResolutionMiddlewareTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task InvokeAsync_WithTenantHeader_SetsTenantIdAsync()
     {

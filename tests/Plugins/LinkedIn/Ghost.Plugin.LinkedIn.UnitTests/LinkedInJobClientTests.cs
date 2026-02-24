@@ -5,16 +5,19 @@ using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Core.Extraction;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.LinkedIn.Tests;
 
-public class LinkedInJobClientTests
+public class LinkedInJobClientTests : ReliabilityTestBase
 {
+    public LinkedInJobClientTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task SearchJobsAsyncReturnsEnumerable()
     {

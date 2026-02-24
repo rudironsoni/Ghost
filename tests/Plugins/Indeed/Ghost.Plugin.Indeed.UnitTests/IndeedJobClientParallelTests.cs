@@ -1,13 +1,16 @@
 using Ghost.Contracts.Jobs;
 using Ghost.Plugin.Indeed;
 using Ghost.Plugin.Indeed.Internal;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.Indeed.Tests;
 
-public class IndeedJobClientParallelTests
+public class IndeedJobClientParallelTests : ReliabilityTestBase
 {
+    public IndeedJobClientParallelTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task SearchJobsParallelAsync_YieldsJobsFromPagesAsync()
     {

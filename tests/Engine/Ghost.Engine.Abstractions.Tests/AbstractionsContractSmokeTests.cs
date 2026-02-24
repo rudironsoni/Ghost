@@ -6,12 +6,15 @@ using Ghost.Engine.Abstractions.Settings;
 using Ghost.Engine.Abstractions.Signals;
 using Ghost.Engine.Abstractions.Spider;
 using Ghost.Engine.Abstractions.Transport;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Engine.Abstractions.Tests;
 
-public sealed class AbstractionsContractSmokeTests
+public sealed class AbstractionsContractSmokeTests : ReliabilityTestBase
 {
+    public AbstractionsContractSmokeTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void CoreContracts_AreComposable()
     {

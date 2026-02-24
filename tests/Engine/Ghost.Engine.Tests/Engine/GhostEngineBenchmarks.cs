@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading.Channels;
+using Ghost.Testing.Reliability;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -10,14 +11,9 @@ namespace Ghost.Engine.Tests.Engine;
 /// Benchmark tests comparing ConcurrentBag&lt;Task&gt; vs Channel&lt;Task&gt; performance.
 /// These tests validate the performance improvements of the Channel implementation.
 /// </summary>
-public class GhostEngineBenchmarks
+public class GhostEngineBenchmarks : ReliabilityTestBase
 {
-    private readonly ITestOutputHelper _output;
-
-    public GhostEngineBenchmarks(ITestOutputHelper output)
-    {
-        _output = output;
-    }
+    public GhostEngineBenchmarks(ITestOutputHelper output) : base(output) { }
 
     [Theory]
     [InlineData(100, 10)]
@@ -52,7 +48,7 @@ public class GhostEngineBenchmarks
         long channelMemoryAllocated = channelMemoryAfter - channelMemoryBefore;
 
         // Report results
-        _output.WriteLine($"""
+        Output.WriteLine($"""
             Benchmark Results ({taskCount} tasks, {maxInFlight} max in-flight):
             =====================================================
             ConcurrentBag<Task>:
@@ -131,7 +127,7 @@ public class GhostEngineBenchmarks
         channel.Writer.Complete();
         await consumer;
 
-        _output.WriteLine($"Max observed in-flight: {maxObservedInFlight}, limit: {maxInFlight}");
+        Output.WriteLine($"Max observed in-flight: {maxObservedInFlight}, limit: {maxInFlight}");
 
         // Channel bounds should limit concurrency naturally
         Assert.True(maxObservedInFlight <= maxInFlight + 5,
@@ -207,7 +203,7 @@ public class GhostEngineBenchmarks
             // Expected - ReadAllAsync throws when cancelled
         }
 
-        _output.WriteLine($"Written tasks: {writtenTasks}, Completed tasks: {completedTasks}");
+        Output.WriteLine($"Written tasks: {writtenTasks}, Completed tasks: {completedTasks}");
 
         // Channel gracefully handles cancellation - some tasks may have completed
         // The important thing is that cancellation doesn't cause hangs or crashes

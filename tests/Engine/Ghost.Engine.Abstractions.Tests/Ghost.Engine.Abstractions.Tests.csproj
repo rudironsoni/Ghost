@@ -20,5 +20,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../../../src/Engine/Ghost.Engine.Abstractions/Ghost.Engine.Abstractions.csproj" />
+    <ProjectReference Include="../../../tests/Shared/Ghost.Testing/Ghost.Testing.csproj" />
   </ItemGroup>
 </Project>

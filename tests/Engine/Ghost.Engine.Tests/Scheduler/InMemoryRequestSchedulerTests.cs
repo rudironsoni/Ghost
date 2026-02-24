@@ -4,12 +4,15 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Engine.Abstractions.Transport;
 using Ghost.Engine.Scheduler;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Engine.Tests.Scheduler;
 
-public class InMemoryRequestSchedulerTests
+public class InMemoryRequestSchedulerTests : ReliabilityTestBase
 {
+    public InMemoryRequestSchedulerTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task EnqueueAsync_WithPriority_DequeuesInPriorityOrderAsync()
     {

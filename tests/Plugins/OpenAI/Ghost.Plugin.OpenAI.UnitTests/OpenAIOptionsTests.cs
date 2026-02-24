@@ -1,10 +1,13 @@
 using FluentAssertions;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.OpenAI.Tests;
 
-public class OpenAIOptionsTests
+public class OpenAIOptionsTests : ReliabilityTestBase
 {
+    public OpenAIOptionsTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void DefaultsAreReasonable()
     {

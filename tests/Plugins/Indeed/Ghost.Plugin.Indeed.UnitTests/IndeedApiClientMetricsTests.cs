@@ -1,12 +1,15 @@
 using Ghost.Plugin.Indeed;
 using Ghost.Plugin.Indeed.Internal;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.Indeed.Tests;
 
-public class IndeedApiClientMetricsTests
+public class IndeedApiClientMetricsTests : ReliabilityTestBase
 {
+    public IndeedApiClientMetricsTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void GetMetrics_ReturnsDefaults_WhenNoRequests()
     {

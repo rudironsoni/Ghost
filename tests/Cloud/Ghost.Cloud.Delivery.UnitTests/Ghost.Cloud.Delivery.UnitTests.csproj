@@ -20,5 +20,6 @@
   <ItemGroup>
     <ProjectReference Include="../../../src/Cloud/Ghost.Cloud.Delivery/Ghost.Cloud.Delivery.csproj" />
     <ProjectReference Include="../../../src/Cloud/Ghost.Cloud.Contracts/Ghost.Cloud.Contracts.csproj" />
+    <ProjectReference Include="../../Shared/Ghost.Testing/Ghost.Testing.csproj" />
   </ItemGroup>
 </Project>
