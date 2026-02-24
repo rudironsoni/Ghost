@@ -12,16 +12,17 @@ public sealed class PooledBrowserSession : IDisposable, IAsyncDisposable
     public required bool IsAvailable { get; set; }
     public required int UseCount { get; set; }
 
-    public bool IsExpired(TimeSpan maxAge)
+    public bool IsExpired(TimeSpan maxAge, TimeProvider? timeProvider = null)
     {
-        return DateTime.UtcNow - CreatedAt > maxAge;
+        timeProvider ??= TimeProvider.System;
+        return timeProvider.GetUtcNow().DateTime - CreatedAt > maxAge;
     }
 
     public void Dispose()
     {
-        // Fire-and-forget async disposal to avoid blocking
-        // Consumers should use DisposeAsync() for proper cleanup
-        _ = DisposeAsync().AsTask();
+        // Synchronously dispose by blocking on the async operation
+        // This is the recommended pattern when implementing both IDisposable and IAsyncDisposable
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
     }
 
     public async ValueTask DisposeAsync()
