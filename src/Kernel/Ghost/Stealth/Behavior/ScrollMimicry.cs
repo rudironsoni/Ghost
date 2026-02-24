@@ -7,7 +7,6 @@ namespace Ghost.Stealth.Behavior;
 /// </summary>
 public sealed class ScrollMimicry
 {
-    private readonly Random _random;
     private readonly TimeProvider _timeProvider;
 
     /// <summary>
@@ -16,7 +15,6 @@ public sealed class ScrollMimicry
     /// <param name="timeProvider">Optional time provider for testability.</param>
     public ScrollMimicry(TimeProvider? timeProvider = null)
     {
-        _random = new Random();
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -39,7 +37,7 @@ public sealed class ScrollMimicry
         }
 
         // Random number of steps (10-30 for smooth scrolling)
-        int steps = _random.Next(10, 31);
+        int steps = Random.Shared.Next(10, 31);
 
         for (int i = 0; i < steps; i++)
         {
@@ -60,7 +58,7 @@ public sealed class ScrollMimicry
             // Variable delay between steps (20-100ms) for natural rhythm
             if (i < steps - 1)
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(_random.Next(20, 101)), _timeProvider, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(20, 101)), _timeProvider, cancellationToken).ConfigureAwait(false);
             }
         }
     }
@@ -125,10 +123,10 @@ public sealed class ScrollMimicry
         ArgumentNullException.ThrowIfNull(mouse);
 
         // Small random scroll (50-150 pixels)
-        int deltaY = _random.Next(50, 151);
+        int deltaY = Random.Shared.Next(50, 151);
 
         // Random direction (60% down, 40% up - humans tend to scroll down more)
-        if (_random.NextDouble() < 0.4)
+        if (Random.Shared.NextDouble() < 0.4)
         {
             deltaY = -deltaY;
         }

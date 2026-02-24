@@ -7,7 +7,6 @@ namespace Ghost.Stealth.Behavior;
 /// </summary>
 public sealed class MouseMimicry
 {
-    private readonly Random _random;
     private readonly TimeProvider _timeProvider;
 
     /// <summary>
@@ -16,7 +15,6 @@ public sealed class MouseMimicry
     /// <param name="timeProvider">Optional time provider for testability.</param>
     public MouseMimicry(TimeProvider? timeProvider = null)
     {
-        _random = new Random();
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -48,7 +46,7 @@ public sealed class MouseMimicry
         (float controlX, float controlY) = GetRandomControlPoint(startX, startY, targetX, targetY);
 
         // Random number of steps (20-50 for smooth movement)
-        int steps = _random.Next(20, 51);
+        int steps = Random.Shared.Next(20, 51);
         double stepIncrement = 1.0 / steps;
 
         for (int i = 0; i <= steps; i++)
@@ -63,7 +61,7 @@ public sealed class MouseMimicry
             // Variable delay between steps (5-20ms) for human-like speed variance
             if (i < steps)
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(_random.Next(5, 21)), _timeProvider, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(5, 21)), _timeProvider, cancellationToken).ConfigureAwait(false);
             }
         }
     }
@@ -104,10 +102,10 @@ public sealed class MouseMimicry
 
         // Calculate distance for offset (10-30% of total distance)
         double distance = Math.Sqrt(Math.Pow(endX - startX, 2) + Math.Pow(endY - startY, 2));
-        double offsetMagnitude = distance * (_random.NextDouble() * 0.2 + 0.1); // 10-30%
+        double offsetMagnitude = distance * (Random.Shared.NextDouble() * 0.2 + 0.1); // 10-30%
 
         // Random angle offset
-        double angle = _random.NextDouble() * Math.PI * 2;
+        double angle = Random.Shared.NextDouble() * Math.PI * 2;
 
         // Apply offset to midpoint
         float controlX = (float)(midX + (offsetMagnitude * Math.Cos(angle)));

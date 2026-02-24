@@ -5,7 +5,6 @@ namespace Ghost.Stealth.Behavior;
 /// </summary>
 public sealed class TimingMimicry
 {
-    private readonly Random _random;
     private readonly TimeProvider _timeProvider;
 
     /// <summary>
@@ -14,7 +13,6 @@ public sealed class TimingMimicry
     /// <param name="timeProvider">Optional time provider for testability.</param>
     public TimingMimicry(TimeProvider? timeProvider = null)
     {
-        _random = new Random();
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -23,7 +21,7 @@ public sealed class TimingMimicry
     /// </summary>
     public async Task NavigationDelayAsync(CancellationToken cancellationToken = default)
     {
-        await Task.Delay(TimeSpan.FromMilliseconds(_random.Next(2000, 5001)), _timeProvider, cancellationToken).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(2000, 5001)), _timeProvider, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -31,7 +29,7 @@ public sealed class TimingMimicry
     /// </summary>
     public async Task PreClickDelayAsync(CancellationToken cancellationToken = default)
     {
-        await Task.Delay(TimeSpan.FromMilliseconds(_random.Next(500, 1501)), _timeProvider, cancellationToken).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(500, 1501)), _timeProvider, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -39,7 +37,7 @@ public sealed class TimingMimicry
     /// </summary>
     public async Task PostClickDelayAsync(CancellationToken cancellationToken = default)
     {
-        await Task.Delay(TimeSpan.FromMilliseconds(_random.Next(1000, 3001)), _timeProvider, cancellationToken).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(1000, 3001)), _timeProvider, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -47,7 +45,7 @@ public sealed class TimingMimicry
     /// </summary>
     public async Task FormFieldDelayAsync(CancellationToken cancellationToken = default)
     {
-        await Task.Delay(TimeSpan.FromMilliseconds(_random.Next(200, 801)), _timeProvider, cancellationToken).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(200, 801)), _timeProvider, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -55,7 +53,7 @@ public sealed class TimingMimicry
     /// </summary>
     public async Task ReadingDelayAsync(CancellationToken cancellationToken = default)
     {
-        await Task.Delay(TimeSpan.FromMilliseconds(_random.Next(500, 2001)), _timeProvider, cancellationToken).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(500, 2001)), _timeProvider, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -81,6 +79,6 @@ public sealed class TimingMimicry
                 "Must be greater than minMilliseconds.");
         }
 
-        await Task.Delay(TimeSpan.FromMilliseconds(_random.Next(minMilliseconds, maxMilliseconds + 1)), _timeProvider, cancellationToken).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(minMilliseconds, maxMilliseconds + 1)), _timeProvider, cancellationToken).ConfigureAwait(false);
     }
 }

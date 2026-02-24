@@ -30,7 +30,6 @@ public sealed class ProxyRotationMiddleware : IPipelineMiddleware
 {
     private readonly List<ProxyEndpoint> _proxies;
     private readonly string _rotationStrategy;
-    private readonly Random _random;
     private int _currentIndex;
     private readonly object _lock = new();
 
@@ -55,7 +54,6 @@ public sealed class ProxyRotationMiddleware : IPipelineMiddleware
         _rotationStrategy = configuration.TryGetValue("RotationStrategy", out object? strategy)
             ? strategy.ToString() ?? "RoundRobin"
             : "RoundRobin";
-        _random = new Random();
         _currentIndex = 0;
     }
 
@@ -123,7 +121,7 @@ public sealed class ProxyRotationMiddleware : IPipelineMiddleware
             ProxyEndpoint selected;
             if (_rotationStrategy.Equals("Random", StringComparison.OrdinalIgnoreCase))
             {
-                selected = healthyProxies[_random.Next(healthyProxies.Count)];
+                selected = healthyProxies[Random.Shared.Next(healthyProxies.Count)];
             }
             else // RoundRobin
             {

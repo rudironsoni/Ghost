@@ -9,7 +9,6 @@ public class StealthHttpClient
     private readonly HttpClient _client;
     private readonly RateLimitOptions _options;
     private readonly ILogger<StealthHttpClient>? _logger;
-    private readonly Random _rng;
     private readonly TimeProvider _timeProvider;
     private static readonly Action<ILogger<StealthHttpClient>, Exception?> _logJitterCancelled =
         LoggerMessage.Define(LogLevel.Debug, new EventId(1, "JitterCancelled"), "Jitter delay cancelled");
@@ -20,7 +19,6 @@ public class StealthHttpClient
         _client = client;
         _options = options ?? new RateLimitOptions();
         _logger = logger;
-        _rng = new Random();
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -56,7 +54,7 @@ public class StealthHttpClient
 
     private async Task ApplyJitterAsync(CancellationToken ct)
     {
-        int delay = _rng.Next(_options.DelayMinMs, _options.DelayMaxMs + 1);
+        int delay = Random.Shared.Next(_options.DelayMinMs, _options.DelayMaxMs + 1);
         try
         {
             await Task.Delay(TimeSpan.FromMilliseconds(delay), _timeProvider, ct).ConfigureAwait(false);

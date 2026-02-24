@@ -57,10 +57,10 @@ public sealed class IPv6RotatorOptions
 public sealed class IPv6Rotator : IDisposable
 {
     private readonly IPv6RotatorOptions _options;
-    private readonly Random _random;
     private readonly SemaphoreSlim _lock = new(1, 1);
     private readonly HashSet<string> _activeAddresses = [];
     private readonly ILogger<IPv6Rotator> _logger;
+    private readonly int _maxRetries = 10;
     private bool _disposed;
 
     // Security: Whitelist patterns for input validation
@@ -122,7 +122,6 @@ public sealed class IPv6Rotator : IDisposable
 
         _options = options;
         _logger = logger;
-        _random = new Random();
     }
 
     /// <summary>
@@ -133,13 +132,31 @@ public sealed class IPv6Rotator : IDisposable
     public async Task<string> GetRandomAddressAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
+        return await GetRandomAddressWithRetryAsync(cancellationToken, 0).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Generates a random IPv6 address with retry limit to prevent infinite recursion.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <param name="retryCount">Current retry count.</param>
+    /// <returns>A random IPv6 address string.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when all retry attempts are exhausted.</exception>
+    private async Task<string> GetRandomAddressWithRetryAsync(CancellationToken cancellationToken, int retryCount)
+    {
+        if (retryCount >= _maxRetries)
+        {
+            throw new InvalidOperationException(
+                $"Failed to generate a healthy IPv6 address after {_maxRetries} attempts. " +
+                "The subnet may be exhausted or health checks are consistently failing.");
+        }
 
         await _lock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             // Generate random 64-bit host identifier
             Span<byte> hostBytes = stackalloc byte[8];
-            _random.NextBytes(hostBytes);
+            Random.Shared.NextBytes(hostBytes);
 
             // Construct full IPv6 address: prefix + random host
             // Security: Using format specifiers ensures only hex digits are produced
@@ -158,8 +175,8 @@ public sealed class IPv6Rotator : IDisposable
                 bool isHealthy = await CheckAddressHealthAsync(normalized, cancellationToken).ConfigureAwait(false);
                 if (!isHealthy)
                 {
-                    // Retry with different address
-                    return await GetRandomAddressAsync(cancellationToken).ConfigureAwait(false);
+                    // Retry with different address (limited retries to prevent stack overflow)
+                    return await GetRandomAddressWithRetryAsync(cancellationToken, retryCount + 1).ConfigureAwait(false);
                 }
             }
 

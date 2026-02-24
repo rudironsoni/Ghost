@@ -16,7 +16,6 @@ public sealed class ProxyManager : IProxyManager, IDisposable
     private readonly ConcurrentDictionary<string, ProxyHealthStatus> _healthStatus = new();
     private readonly Timer? _healthCheckTimer;
     private int _roundRobinIndex;
-    private readonly Random _random = new();
 
     public ProxyManager(IOptions<ProxyConfiguration> config, ILogger<ProxyManager>? logger = null)
     {
@@ -178,7 +177,7 @@ public sealed class ProxyManager : IProxyManager, IDisposable
 
     private IProxyProvider? SelectRandom(List<ProviderEntry> providers)
     {
-        int index = _random.Next(providers.Count);
+        int index = Random.Shared.Next(providers.Count);
         ProviderEntry provider = providers[index];
         provider.LastUsed = DateTime.UtcNow;
         Interlocked.Increment(ref provider.UseCount);
@@ -188,7 +187,7 @@ public sealed class ProxyManager : IProxyManager, IDisposable
     private IProxyProvider? SelectWeighted(List<ProviderEntry> providers)
     {
         int totalWeight = providers.Sum(p => p.Config.Weight);
-        int random = _random.Next(totalWeight);
+        int random = Random.Shared.Next(totalWeight);
         int current = 0;
 
         foreach (ProviderEntry provider in providers)

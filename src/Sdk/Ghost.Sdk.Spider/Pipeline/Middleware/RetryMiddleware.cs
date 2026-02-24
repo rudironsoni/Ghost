@@ -34,7 +34,6 @@ public sealed class RetryMiddleware : IPipelineMiddleware
     private readonly double _backoffMultiplier;
     private readonly bool _useJitter;
     private readonly bool _retryOnTimeout;
-    private readonly Random _random;
     private readonly TimeProvider _timeProvider;
 
     /// <summary>
@@ -71,7 +70,6 @@ public sealed class RetryMiddleware : IPipelineMiddleware
             ? retryOnTimeout
             : true;
 
-        _random = new Random();
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -172,7 +170,7 @@ public sealed class RetryMiddleware : IPipelineMiddleware
         if (_useJitter)
         {
             double jitterRange = delay * 0.25;
-            double jitter = (_random.NextDouble() * 2 - 1) * jitterRange; // Random between -25% and +25%
+            double jitter = (Random.Shared.NextDouble() * 2 - 1) * jitterRange; // Random between -25% and +25%
             delay += jitter;
         }
 

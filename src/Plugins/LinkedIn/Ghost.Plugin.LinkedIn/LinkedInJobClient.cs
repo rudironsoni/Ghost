@@ -708,7 +708,6 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
 
     private static List<JobListing> GenerateMockJobs(string keywords, string location, int count)
     {
-        var random = new Random();
         List<JobListing> mockJobs = [];
         string[] jobTitles = new[] { "Software Engineer", "Senior Developer", "Full Stack Engineer", "DevOps Engineer", "Data Scientist" };
         string[] companies = new[] { "Tech Corp", "Innovation Labs", "Digital Solutions Inc", "Cloud Systems", "Data Dynamics" };
@@ -728,7 +727,7 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
                 Location = locationValue,
                 Description = $"Looking for an experienced {title.ToLowerInvariant()} to join our team. Work with cutting-edge technologies and solve challenging problems.",
                 Source = "LinkedIn",
-                PostedAt = DateTimeOffset.UtcNow.AddDays(-random.Next(1, 30)),
+                PostedAt = DateTimeOffset.UtcNow.AddDays(-Random.Shared.Next(1, 30)),
                 Url = $"https://linkedin.com/jobs/view/linkedin-job-{i + 1}",
                 JobType = JobType.FullTime,
                 ExperienceLevel = ExperienceLevel.MidLevel,

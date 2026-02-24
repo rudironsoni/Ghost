@@ -14,7 +14,6 @@ namespace Ghost.Plugin.Google.Jobs.Internal;
 
 public sealed class GoogleJobsBrowserClient
 {
-    private static readonly Random s_random = new Random();
     private readonly IGhostKernel _kernel;
     private readonly ILogger<GoogleJobsBrowserClient> _logger;
     private readonly IOptions<GoogleJobsOptions> _options;
@@ -82,7 +81,7 @@ public sealed class GoogleJobsBrowserClient
             "Mozilla/5.0 (X11; Linux x86_64) Chrome/120.0.0.0"
         };
 
-        return agents[s_random.Next(0, agents.Length)];
+        return agents[Random.Shared.Next(0, agents.Length)];
     }
 
     private static async Task InjectConsentCookiesAsync(IPage page, CancellationToken ct)
@@ -384,7 +383,7 @@ public sealed class GoogleJobsBrowserClient
     {
         try
         {
-            int ms = s_random.Next(Math.Max(1, minMs), Math.Max(minMs + 1, maxMs + 1));
+            int ms = Random.Shared.Next(Math.Max(1, minMs), Math.Max(minMs + 1, maxMs + 1));
             await Task.Delay(ms, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException) { throw; }
@@ -429,7 +428,7 @@ public sealed class GoogleJobsBrowserClient
 
             attempt++;
             int delay = backoff * (int)Math.Pow(2, attempt - 1);
-            try { await Task.Delay(delay + s_random.Next(0, 200), ct).ConfigureAwait(false); } catch { }
+            try { await Task.Delay(delay + Random.Shared.Next(0, 200), ct).ConfigureAwait(false); } catch { }
         }
 
         return false;

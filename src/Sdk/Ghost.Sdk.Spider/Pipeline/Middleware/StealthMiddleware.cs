@@ -38,7 +38,6 @@ public sealed class StealthMiddleware : IPipelineMiddleware
     private readonly int _minDelayMs;
     private readonly int _maxDelayMs;
     private readonly bool _enableFingerprinting;
-    private readonly Random _random;
     private int _currentUserAgentIndex;
     private readonly object _lock = new();
 
@@ -84,7 +83,6 @@ public sealed class StealthMiddleware : IPipelineMiddleware
             ? enableFingerprinting
             : true;
 
-        _random = new Random();
         _currentUserAgentIndex = 0;
     }
 
@@ -104,7 +102,7 @@ public sealed class StealthMiddleware : IPipelineMiddleware
 
         if (_randomDelay)
         {
-            int delay = _random.Next(_minDelayMs, _maxDelayMs);
+            int delay = Random.Shared.Next(_minDelayMs, _maxDelayMs);
             await Task.Delay(delay, context.CancellationToken).ConfigureAwait(false);
         }
 
