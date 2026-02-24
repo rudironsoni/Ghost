@@ -1,6 +1,7 @@
 using System.Reflection;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
+using Ghost.Redis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -47,6 +48,10 @@ public class ScraperWorkerTests
         var redis = new Mock<IConnectionMultiplexer>();
         redis.Setup(x => x.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(db.Object);
 
+        // Create a mock factory that returns the mocked connection
+        var redisFactory = new Mock<RedisConnectionFactory>(new ConfigurationOptions());
+        redisFactory.Setup(x => x.ConnectAsync(It.IsAny<CancellationToken>())).ReturnsAsync(redis.Object);
+
         var config = new Ghost.Worker.WorkerConfiguration
         {
             WorkerId = "worker-test",
@@ -59,7 +64,7 @@ public class ScraperWorkerTests
 
         var worker = new Ghost.Worker.ScraperWorker(
             NullLogger<Ghost.Worker.ScraperWorker>.Instance,
-            redis.Object,
+            redisFactory.Object,
             serviceProvider,
             config);
 

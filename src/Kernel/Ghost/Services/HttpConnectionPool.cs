@@ -177,8 +177,9 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
                 return false;
             }
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
             return false;
         }
     }
@@ -189,7 +190,7 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
         {
             pooled.Client?.Dispose();
         }
-        catch { }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
     }
 
     private static void DisposeClient(HttpClient client)

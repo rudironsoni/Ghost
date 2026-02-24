@@ -20,8 +20,9 @@ public static class GlassdoorJobParser
 
             return jobs;
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
             return Array.Empty<JobListing>();
         }
     }
@@ -146,7 +147,7 @@ public static class GlassdoorJobParser
                 Source = "Glassdoor"
             };
         }
-        catch { return null; }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); return null; }
     }
 
     private static string? GetString(JsonElement el, params string[] names)
@@ -169,7 +170,7 @@ public static class GlassdoorJobParser
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
         }
         return null;
     }
@@ -182,7 +183,7 @@ public static class GlassdoorJobParser
             if (v.ValueKind == JsonValueKind.Number && v.TryGetDouble(out double d)) return d;
             if (v.ValueKind == JsonValueKind.String && double.TryParse(v.GetString(), out d)) return d;
         }
-        catch { }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
         return null;
     }
 }

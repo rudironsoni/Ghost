@@ -41,7 +41,7 @@ public sealed partial class OpenAIClient : Ghost.Contracts.Inference.IInferenceC
         try
         {
             await page.NavigateAsync(_options.BaseUrl, ct: ct).ConfigureAwait(false);
-            try { await page.WaitForSelectorAsync("textarea", ct: ct).ConfigureAwait(false); } catch { }
+            try { await page.WaitForSelectorAsync("textarea", ct: ct).ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
 
             string prompt = string.Join("\n", request.Messages.Select(m => m.Content));
             await page.TypeAsync("textarea", prompt, ct: ct).ConfigureAwait(false);
@@ -73,7 +73,7 @@ public sealed partial class OpenAIClient : Ghost.Contracts.Inference.IInferenceC
         }
         finally
         {
-            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
         }
     }
 }
