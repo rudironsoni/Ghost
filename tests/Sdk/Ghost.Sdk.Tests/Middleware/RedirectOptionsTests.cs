@@ -1,6 +1,8 @@
 using FluentAssertions;
 using Ghost.Sdk.Middleware;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Middleware;
 
@@ -8,8 +10,9 @@ namespace Ghost.Sdk.Tests.Middleware;
 /// Unit tests for RedirectOptions configuration.
 /// </summary>
 [Trait("Category", "Unit")]
-public class RedirectOptionsTests
+public class RedirectOptionsTests : ReliabilityTestBase
 {
+    public RedirectOptionsTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Constructor_SetsDefaultValues()
     {

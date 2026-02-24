@@ -2,12 +2,15 @@ using FluentAssertions;
 using Ghost.Sdk.Statistics;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Statistics;
 
 [Trait("Category", "Unit")]
-public class StatsCollectorTests
+public class StatsCollectorTests : ReliabilityTestBase
 {
+    public StatsCollectorTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void RecordRequest_WithNullSpiderId_ThrowsArgumentNullException()
     {

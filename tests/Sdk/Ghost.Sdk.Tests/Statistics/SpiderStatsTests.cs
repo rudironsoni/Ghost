@@ -1,12 +1,15 @@
 using FluentAssertions;
 using Ghost.Sdk.Statistics;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Statistics;
 
 [Trait("Category", "Unit")]
-public class SpiderStatsTests
+public class SpiderStatsTests : ReliabilityTestBase
 {
+    public SpiderStatsTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Constructor_InitializesWithDefaultValues()
     {

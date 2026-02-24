@@ -6,6 +6,8 @@ using Moq;
 using Xunit;
 using Quartz;
 using SpiderBase = Ghost.Sdk.Spider.Engine.Spider;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Scheduling;
 
@@ -14,8 +16,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Scheduling;
 /// Note: These tests assume a SpiderJob implementation exists.
 /// If not implemented yet, they serve as specification tests.
 /// </summary>
-public class SpiderJobTests
+public class SpiderJobTests : ReliabilityTestBase
 {
+    public SpiderJobTests(ITestOutputHelper output) : base(output) { }
     private Mock<IJobExecutionContext> _mockJobContext;
     private Mock<ISpiderEngine> _mockEngine;
     private TestSpider _testSpider;

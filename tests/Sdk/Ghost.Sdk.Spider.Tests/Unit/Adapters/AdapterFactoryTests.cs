@@ -186,6 +186,8 @@ public class AdapterFactoryTests : IDisposable
         // Arrange
         var request = TestData.CreateRequest("https://example.com");
         using var cts = new CancellationTokenSource();
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
         cts.Cancel();
 
         // Act

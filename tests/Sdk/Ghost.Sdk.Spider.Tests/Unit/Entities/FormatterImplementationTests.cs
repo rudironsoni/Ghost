@@ -2,13 +2,17 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Entities.Formatters;
 using Xunit;
 using System.Globalization;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Entities;
 
-public class FormatterImplementationTests
+public class FormatterImplementationTests : ReliabilityTestBase
 {
-    public class TrimFormatterTests
-    {
+    public FormatterImplementationTests(ITestOutputHelper output) : base(output) { }
+    public class TrimFormatterTests : ReliabilityTestBase
+{
+    public TrimFormatterTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Format_WithWhitespace_TrimsWhitespace()
         {
@@ -75,8 +79,9 @@ public class FormatterImplementationTests
         }
     }
 
-    public class RegexFormatterTests
-    {
+    public class RegexFormatterTests : ReliabilityTestBase
+{
+    public RegexFormatterTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Format_WithReplacement_ReplacesPattern()
         {
@@ -156,8 +161,9 @@ public class FormatterImplementationTests
         }
     }
 
-    public class DateTimeFormatterTests
-    {
+    public class DateTimeFormatterTests : ReliabilityTestBase
+{
+    public DateTimeFormatterTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Format_WithInputFormat_ParsesCustomFormat()
         {
@@ -243,8 +249,9 @@ public class FormatterImplementationTests
         }
     }
 
-    public class HtmlDecodeFormatterTests
-    {
+    public class HtmlDecodeFormatterTests : ReliabilityTestBase
+{
+    public HtmlDecodeFormatterTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Format_WithHtmlEntities_DecodesEntities()
         {
@@ -311,8 +318,9 @@ public class FormatterImplementationTests
         }
     }
 
-    public class StringFormatterTests
-    {
+    public class StringFormatterTests : ReliabilityTestBase
+{
+    public StringFormatterTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Format_WithFormatString_FormatsValue()
         {
@@ -367,8 +375,9 @@ public class FormatterImplementationTests
         }
     }
 
-    public class ReplaceFormatterTests
-    {
+    public class ReplaceFormatterTests : ReliabilityTestBase
+{
+    public ReplaceFormatterTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Format_WithSimpleReplace_ReplacesText()
         {
@@ -422,8 +431,9 @@ public class FormatterImplementationTests
         }
     }
 
-    public class UrlDecodeFormatterTests
-    {
+    public class UrlDecodeFormatterTests : ReliabilityTestBase
+{
+    public UrlDecodeFormatterTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Format_WithEncodedUrl_DecodesUrl()
         {
@@ -477,8 +487,9 @@ public class FormatterImplementationTests
         }
     }
 
-    public class FormatterChainTests
-    {
+    public class FormatterChainTests : ReliabilityTestBase
+{
+    public FormatterChainTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void FormatterChain_WithMultipleFormatters_AppliesInOrder()
         {

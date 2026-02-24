@@ -9,6 +9,8 @@ using Microsoft.Extensions.Time.Testing;
 using Moq;
 using Xunit;
 using SpiderExecutionContext = Ghost.Sdk.Spider.Engine.ExecutionContext;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 
@@ -17,13 +19,13 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 /// Note: These tests assume a SpiderEngine implementation exists.
 /// If not implemented yet, they serve as specification tests.
 /// </summary>
-public class SpiderEngineTests
+public class SpiderEngineTests : ReliabilityTestBase
 {
     private Mock<ISpiderEngine> _mockEngine;
     private Mock<IRequestQueue> _mockQueue;
     private TestSpider _testSpider;
 
-    public SpiderEngineTests()
+    public SpiderEngineTests(ITestOutputHelper output) : base(output)
     {
         _mockEngine = new Mock<ISpiderEngine>();
         _mockQueue = new Mock<IRequestQueue>();

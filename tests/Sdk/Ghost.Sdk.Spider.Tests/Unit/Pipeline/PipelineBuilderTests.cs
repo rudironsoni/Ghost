@@ -4,11 +4,14 @@ using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Moq;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline;
 
-public class PipelineBuilderTests
+public class PipelineBuilderTests : ReliabilityTestBase
 {
+    public PipelineBuilderTests(ITestOutputHelper output) : base(output) { }
     private readonly PipelineBuilder _builder;
 
     public PipelineBuilderTests()

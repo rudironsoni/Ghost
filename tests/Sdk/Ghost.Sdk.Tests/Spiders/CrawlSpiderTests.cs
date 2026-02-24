@@ -3,6 +3,8 @@ using Ghost.Sdk.Extraction;
 using Ghost.Sdk.Spiders;
 using NSubstitute;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Spiders;
 
@@ -10,11 +12,11 @@ namespace Ghost.Sdk.Tests.Spiders;
 /// Unit tests for the <see cref="CrawlSpider"/> class.
 /// </summary>
 [Trait("Category", "Unit")]
-public class CrawlSpiderTests
+public class CrawlSpiderTests : ReliabilityTestBase
 {
     private readonly ILinkExtractor _mockLinkExtractor;
 
-    public CrawlSpiderTests()
+    public CrawlSpiderTests(ITestOutputHelper output) : base(output)
     {
         _mockLinkExtractor = Substitute.For<ILinkExtractor>();
     }

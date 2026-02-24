@@ -1,11 +1,14 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Extraction.Selectors;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 
-public class CssSelectorTests
+public class CssSelectorTests : ReliabilityTestBase
 {
+    public CssSelectorTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Select_WithValidCssSelector_ShouldReturnMatches()
     {

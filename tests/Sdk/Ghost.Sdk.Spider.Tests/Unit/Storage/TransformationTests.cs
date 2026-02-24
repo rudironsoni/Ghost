@@ -2,6 +2,8 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Storage.Contracts;
 using Xunit;
 using System.Text.RegularExpressions;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
@@ -9,8 +11,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// Tests for data transformation operations in the storage pipeline.
 /// These tests verify various transformation strategies applied before storage.
 /// </summary>
-public class TransformationTests
+public class TransformationTests : ReliabilityTestBase
 {
+    public TransformationTests(ITestOutputHelper output) : base(output) { }
     private static readonly string[] s_requiredFields = ["Title", "Price"];
 
     [Fact]

@@ -7,6 +7,8 @@ using Quartz.Impl;
 using SpiderBase = Ghost.Sdk.Spider.Engine.Spider;
 using SpiderOptions = Ghost.Sdk.Spider.Engine.SpiderOptions;
 using SpiderScheduler = Ghost.Sdk.Spider.Scheduling.Contracts.IScheduler;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Scheduling;
 
@@ -15,8 +17,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Scheduling;
 /// Note: These tests assume a QuartzSpiderScheduler implementation exists.
 /// If not implemented yet, they serve as specification tests.
 /// </summary>
-public class QuartzSpiderSchedulerTests
+public class QuartzSpiderSchedulerTests : ReliabilityTestBase
 {
+    public QuartzSpiderSchedulerTests(ITestOutputHelper output) : base(output) { }
     private static readonly string[] ExpectedMetadataTags = new[] { "tag1", "tag2" };
     
     private Mock<SpiderScheduler> _mockScheduler;

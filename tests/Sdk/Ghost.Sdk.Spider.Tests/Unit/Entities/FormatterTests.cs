@@ -2,13 +2,17 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Entities.Formatters;
 using Xunit;
 using System.Web;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Entities;
 
-public class FormatterTests
+public class FormatterTests : ReliabilityTestBase
 {
-    public class TrimFormatterTests
-    {
+    public FormatterTests(ITestOutputHelper output) : base(output) { }
+    public class TrimFormatterTests : ReliabilityTestBase
+{
+    public TrimFormatterTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Format_WithWhitespace_ShouldTrim()
         {
@@ -51,8 +55,9 @@ public class FormatterTests
         }
     }
 
-    public class HtmlDecodeFormatterTests
-    {
+    public class HtmlDecodeFormatterTests : ReliabilityTestBase
+{
+    public HtmlDecodeFormatterTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Format_WithHtmlEntities_ShouldDecode()
         {
@@ -95,8 +100,9 @@ public class FormatterTests
         }
     }
 
-    public class UrlDecodeFormatterTests
-    {
+    public class UrlDecodeFormatterTests : ReliabilityTestBase
+{
+    public UrlDecodeFormatterTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Format_WithUrlEncoded_ShouldDecode()
         {
@@ -139,8 +145,9 @@ public class FormatterTests
         }
     }
 
-    public class ReplaceFormatterTests
-    {
+    public class ReplaceFormatterTests : ReliabilityTestBase
+{
+    public ReplaceFormatterTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Format_WithPattern_ShouldReplace()
         {
@@ -193,8 +200,9 @@ public class FormatterTests
         }
     }
 
-    public class RegexFormatterTests
-    {
+    public class RegexFormatterTests : ReliabilityTestBase
+{
+    public RegexFormatterTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Format_WithMatchingPattern_ShouldExtractMatch()
         {
@@ -261,8 +269,9 @@ public class FormatterTests
         }
     }
 
-    public class DateTimeFormatterTests
-    {
+    public class DateTimeFormatterTests : ReliabilityTestBase
+{
+    public DateTimeFormatterTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Format_WithValidDateTime_ShouldParse()
         {
@@ -325,8 +334,9 @@ public class FormatterTests
         }
     }
 
-    public class StringFormatterTests
-    {
+    public class StringFormatterTests : ReliabilityTestBase
+{
+    public StringFormatterTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Format_WithLowerCase_ShouldConvertToLowerCase()
         {
@@ -384,8 +394,9 @@ public class FormatterTests
         }
     }
 
-    public class FormatterChainTests
-    {
+    public class FormatterChainTests : ReliabilityTestBase
+{
+    public FormatterChainTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void MultipleFormatters_ShouldApplyInOrder()
         {

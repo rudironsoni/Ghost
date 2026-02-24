@@ -3,14 +3,17 @@ using Ghost.Sdk.Spider.Adapters.WebSocket;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
 using System.Net.WebSockets;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Comprehensive tests for MessageBuffer class.
 /// </summary>
-public class MessageBufferTests
+public class MessageBufferTests : ReliabilityTestBase
 {
+    public MessageBufferTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Constructor_WithValidMaxMessageCount_ShouldInitialize()
     {

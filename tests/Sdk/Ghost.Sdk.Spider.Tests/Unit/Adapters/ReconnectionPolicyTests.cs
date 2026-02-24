@@ -1,14 +1,17 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.WebSocket;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Comprehensive tests for ReconnectionPolicy covering all configuration scenarios.
 /// </summary>
-public class ReconnectionPolicyTests
+public class ReconnectionPolicyTests : ReliabilityTestBase
 {
+    public ReconnectionPolicyTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Constructor_DefaultValues_ShouldInitializeCorrectly()
     {

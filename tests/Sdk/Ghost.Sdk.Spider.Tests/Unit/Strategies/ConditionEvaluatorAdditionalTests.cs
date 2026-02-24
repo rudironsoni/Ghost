@@ -1,14 +1,17 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Strategies;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Strategies;
 
 /// <summary>
 /// Additional comprehensive tests for ConditionEvaluator to increase coverage.
 /// </summary>
-public class ConditionEvaluatorAdditionalTests
+public class ConditionEvaluatorAdditionalTests : ReliabilityTestBase
 {
+    public ConditionEvaluatorAdditionalTests(ITestOutputHelper output) : base(output) { }
     private readonly ConditionEvaluator _evaluator;
 
     public ConditionEvaluatorAdditionalTests()

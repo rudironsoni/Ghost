@@ -4,6 +4,8 @@ using Ghost.Sdk.Spider.Configuration.Compiler;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Configuration;
 
@@ -11,8 +13,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Configuration;
 /// Security tests for ConfigurationCompiler to verify protection against
 /// deserialization attacks and malicious YAML payloads.
 /// </summary>
-public class ConfigurationCompilerSecurityTests
+public class ConfigurationCompilerSecurityTests : ReliabilityTestBase
 {
+    public ConfigurationCompilerSecurityTests(ITestOutputHelper output) : base(output) { }
     private readonly ConfigurationCompiler _compiler;
 
     public ConfigurationCompilerSecurityTests()

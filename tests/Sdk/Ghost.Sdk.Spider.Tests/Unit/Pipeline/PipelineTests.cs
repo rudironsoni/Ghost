@@ -9,8 +9,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline;
 /// <summary>
 /// Comprehensive tests for Pipeline components.
 /// </summary>
-public class PipelineTests
+public class PipelineTests : ReliabilityTestBase
 {
+    public PipelineTests(ITestOutputHelper output) : base(output) { }
     private readonly Mock<IPipelineMiddleware> _mockMiddleware1;
     private readonly Mock<IPipelineMiddleware> _mockMiddleware2;
 
@@ -67,6 +68,8 @@ public class PipelineTests
     {
         // Arrange
         using var cts = new CancellationTokenSource();
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
         cts.Cancel();
 
         var context = new PipelineContext

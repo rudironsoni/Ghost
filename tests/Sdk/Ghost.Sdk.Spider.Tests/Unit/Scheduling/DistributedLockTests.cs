@@ -1,14 +1,17 @@
 using FluentAssertions;
 using Xunit;
 using System.Collections.Concurrent;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Scheduling;
 
 /// <summary>
 /// Tests for distributed locking mechanisms used in scheduling
 /// </summary>
-public class DistributedLockTests
+public class DistributedLockTests : ReliabilityTestBase
 {
+    public DistributedLockTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task DistributedLock_AcquireAndRelease_ShouldWork()
     {

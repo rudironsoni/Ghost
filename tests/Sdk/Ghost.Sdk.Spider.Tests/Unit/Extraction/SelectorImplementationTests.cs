@@ -2,13 +2,17 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Extraction.Selectors;
 using Xunit;
 using System.Text.RegularExpressions;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 
-public class SelectorImplementationTests
+public class SelectorImplementationTests : ReliabilityTestBase
 {
-    public class XPathSelectorTests
-    {
+    public SelectorImplementationTests(ITestOutputHelper output) : base(output) { }
+    public class XPathSelectorTests : ReliabilityTestBase
+{
+    public XPathSelectorTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Select_WithBasicXPath_ReturnsAllMatches()
         {
@@ -81,8 +85,9 @@ public class SelectorImplementationTests
         }
     }
 
-    public class CssSelectorTests
-    {
+    public class CssSelectorTests : ReliabilityTestBase
+{
+    public CssSelectorTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Select_WithBasicCss_ReturnsAllMatches()
         {
@@ -157,8 +162,9 @@ public class SelectorImplementationTests
         }
     }
 
-    public class RegexSelectorTests
-    {
+    public class RegexSelectorTests : ReliabilityTestBase
+{
+    public RegexSelectorTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Select_WithSimplePattern_ReturnsAllMatches()
         {
@@ -233,8 +239,9 @@ public class SelectorImplementationTests
         }
     }
 
-    public class JsonPathSelectorTests
-    {
+    public class JsonPathSelectorTests : ReliabilityTestBase
+{
+    public JsonPathSelectorTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Select_WithBasicPath_ReturnsAllMatches()
         {
@@ -323,8 +330,9 @@ public class SelectorImplementationTests
         }
     }
 
-    public class JmesPathSelectorTests
-    {
+    public class JmesPathSelectorTests : ReliabilityTestBase
+{
+    public JmesPathSelectorTests(ITestOutputHelper output) : base(output) { }
         [Fact]
         public void Select_WithBasicExpression_ReturnsValue()
         {

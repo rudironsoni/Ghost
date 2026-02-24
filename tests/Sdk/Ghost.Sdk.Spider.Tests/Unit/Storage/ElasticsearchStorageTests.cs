@@ -3,6 +3,8 @@ using Ghost.Sdk.Spider.Configuration.Models;
 using Ghost.Sdk.Spider.Storage.Contracts;
 using System.Globalization;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
@@ -10,8 +12,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// Tests for Elasticsearch storage implementation using mocking.
 /// These tests verify the expected behavior of Elasticsearch storage without requiring a real cluster.
 /// </summary>
-public class ElasticsearchStorageTests
+public class ElasticsearchStorageTests : ReliabilityTestBase
 {
+    public ElasticsearchStorageTests(ITestOutputHelper output) : base(output) { }
     private readonly ElasticsearchConfiguration _config;
     private readonly MockElasticsearchClient _mockClient;
 

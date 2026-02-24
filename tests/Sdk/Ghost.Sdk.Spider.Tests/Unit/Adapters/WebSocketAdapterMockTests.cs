@@ -2,14 +2,17 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.WebSocket;
 using Xunit;
 using System.Net.WebSockets;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Unit tests for WebSocket adapter components with mocked dependencies.
 /// </summary>
-public class WebSocketAdapterMockTests
+public class WebSocketAdapterMockTests : ReliabilityTestBase
 {
+    public WebSocketAdapterMockTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void WebSocketMessage_ShouldHaveCorrectProperties()
     {

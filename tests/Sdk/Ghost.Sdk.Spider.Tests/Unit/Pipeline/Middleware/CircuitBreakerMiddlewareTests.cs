@@ -5,11 +5,14 @@ using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Ghost.Sdk.Spider.Pipeline.Middleware;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline.Middleware;
 
-public class CircuitBreakerMiddlewareTests
+public class CircuitBreakerMiddlewareTests : ReliabilityTestBase
 {
+    public CircuitBreakerMiddlewareTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Constructor_WithNullConfiguration_ShouldThrow()
     {

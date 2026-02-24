@@ -5,8 +5,9 @@ using Xunit;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Configuration;
 
-public class ConfigurationLoaderTests
+public class ConfigurationLoaderTests : ReliabilityTestBase
 {
+    public ConfigurationLoaderTests(ITestOutputHelper output) : base(output) { }
     private readonly ConfigurationLoader _loader;
 
     public ConfigurationLoaderTests()
@@ -241,6 +242,8 @@ targets: [invalid yaml structure
         // Arrange
         var filePath = TestData.GetFixturePath("test-config.yaml");
         using var cts = new CancellationTokenSource();
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
         cts.Cancel();
 
         // Act & Assert

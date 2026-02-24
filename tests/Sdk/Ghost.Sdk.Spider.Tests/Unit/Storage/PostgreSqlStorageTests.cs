@@ -4,6 +4,8 @@ using Ghost.Sdk.Spider.Storage.Contracts;
 using Moq;
 using Xunit;
 using System.Data;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
@@ -11,8 +13,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// Tests for PostgreSQL storage implementation using mocking.
 /// These tests verify the expected behavior of PostgreSQL storage without requiring a real database.
 /// </summary>
-public class PostgreSqlStorageTests
+public class PostgreSqlStorageTests : ReliabilityTestBase
 {
+    public PostgreSqlStorageTests(ITestOutputHelper output) : base(output) { }
     private readonly Mock<IDbConnection> _mockConnection;
     private readonly Mock<IDbCommand> _mockCommand;
     private readonly Mock<IDbTransaction> _mockTransaction;

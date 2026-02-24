@@ -2,11 +2,14 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Engine.Queue;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 
-public class InMemoryRequestQueueTests
+public class InMemoryRequestQueueTests : ReliabilityTestBase
 {
+    public InMemoryRequestQueueTests(ITestOutputHelper output) : base(output) { }
     private InMemoryRequestQueue _queue;
 
     public InMemoryRequestQueueTests()

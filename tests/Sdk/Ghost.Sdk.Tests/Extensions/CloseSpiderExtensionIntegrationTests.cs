@@ -1,14 +1,17 @@
 using FluentAssertions;
 using Ghost.Sdk.Extensions;
 using Ghost.Sdk.Spider.Contracts;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Extensions;
 
 [Trait("Category", "Integration")]
-public class CloseSpiderExtensionIntegrationTests
+public class CloseSpiderExtensionIntegrationTests : ReliabilityTestBase
 {
+    public CloseSpiderExtensionIntegrationTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task ShouldCloseAsync_WithMultipleBuiltInConditions_WorksCorrectly()
     {

@@ -2,6 +2,8 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Configuration;
 using Ghost.Sdk.Spider.Configuration.Models;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Configuration;
 
@@ -9,8 +11,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Configuration;
 /// Comprehensive tests for configuration model DTOs.
 /// Tests property getters/setters and default values.
 /// </summary>
-public class ConfigurationModelsTests
+public class ConfigurationModelsTests : ReliabilityTestBase
 {
+    public ConfigurationModelsTests(ITestOutputHelper output) : base(output) { }
     private static readonly string[] ExpectedScopes = new[] { "read", "write" };
     private static readonly string[] ExpectedChannels = new[] { "email", "slack" };
     private static readonly string[] ExpectedContentTypes = new[] { "image/*", "video/*", "audio/*", "font/*" };

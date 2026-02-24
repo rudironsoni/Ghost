@@ -5,17 +5,19 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
 using NSubstitute;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Extensions;
 
 [Trait("Category", "Unit")]
-public class PeriodicStatsLoggingTests
+public class PeriodicStatsLoggingTests : ReliabilityTestBase
 {
     private readonly IStatsCollector _statsCollector;
     private readonly ILogger<PeriodicStatsLogging> _logger;
     private readonly FakeTimeProvider _timeProvider;
 
-    public PeriodicStatsLoggingTests()
+    public PeriodicStatsLoggingTests(ITestOutputHelper output) : base(output)
     {
         _statsCollector = Substitute.For<IStatsCollector>();
         _logger = Substitute.For<ILogger<PeriodicStatsLogging>>();

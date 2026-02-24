@@ -5,14 +5,17 @@ using Microsoft.Extensions.Logging;
 using Patchright;
 using Moq;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Unit tests for JavaScriptAdapter with mocked Playwright dependencies.
 /// </summary>
-public class JavaScriptAdapterMockTests
+public class JavaScriptAdapterMockTests : ReliabilityTestBase
 {
+    public JavaScriptAdapterMockTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Name_ShouldReturnJavaScript()
     {

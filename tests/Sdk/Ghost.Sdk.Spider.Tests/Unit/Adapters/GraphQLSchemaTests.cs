@@ -1,14 +1,17 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.GraphQL.Schema;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Comprehensive tests for GraphQL Schema classes.
 /// </summary>
-public class GraphQLSchemaTests
+public class GraphQLSchemaTests : ReliabilityTestBase
 {
+    public GraphQLSchemaTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void GraphQLSchema_DefaultConstructor_ShouldInitialize()
     {

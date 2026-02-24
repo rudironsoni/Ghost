@@ -6,14 +6,17 @@ using Ghost.Sdk.Spider.Extraction;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
 using Xunit;
 using SpiderExecutionContext = Ghost.Sdk.Spider.Engine.ExecutionContext;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 
 /// <summary>
 /// Unit tests for the CrawlSpider and Rule implementations.
 /// </summary>
-public class CrawlSpiderTests
+public class CrawlSpiderTests : ReliabilityTestBase
 {
+    public CrawlSpiderTests(ITestOutputHelper output) : base(output) { }
     private readonly TestLinkExtractor _mockLinkExtractor;
     private static readonly string[] TestLinks = ["https://example.com/link1", "https://example.com/link2"];
 

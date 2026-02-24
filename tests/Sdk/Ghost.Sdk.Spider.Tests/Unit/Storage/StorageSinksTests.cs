@@ -11,8 +11,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// <summary>
 /// Comprehensive tests for storage sinks including WebhookStorage and ConsoleStorage.
 /// </summary>
-public class StorageSinksTests
+public class StorageSinksTests : ReliabilityTestBase
 {
+    public StorageSinksTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task ConsoleStorage_StoreAsync_ShouldSucceed()
     {
@@ -163,6 +164,8 @@ public class StorageSinksTests
             Timestamp = DateTimeOffset.UtcNow
         };
         using var cts = new CancellationTokenSource();
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
         cts.Cancel();
 
         // Act

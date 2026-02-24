@@ -4,14 +4,17 @@ using Moq;
 using Xunit;
 using SpiderBase = Ghost.Sdk.Spider.Engine.Spider;
 using SpiderOptions = Ghost.Sdk.Spider.Engine.SpiderOptions;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Scheduling;
 
 /// <summary>
 /// Tests for trigger management and scheduling coordination
 /// </summary>
-public class TriggerManagerTests
+public class TriggerManagerTests : ReliabilityTestBase
 {
+    public TriggerManagerTests(ITestOutputHelper output) : base(output) { }
     private static readonly string[] ExpectedSpiderNames = new[] { "Spider1", "Spider2", "Spider3" };
     
     private Mock<IScheduler> _mockScheduler;

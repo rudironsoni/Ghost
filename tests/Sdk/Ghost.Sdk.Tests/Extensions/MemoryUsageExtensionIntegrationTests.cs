@@ -3,15 +3,17 @@ using Ghost.Sdk.Extensions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Extensions;
 
 [Trait("Category", "Integration")]
-public class MemoryUsageExtensionIntegrationTests
+public class MemoryUsageExtensionIntegrationTests : ReliabilityTestBase
 {
     private readonly ILogger<MemoryUsageExtension> _logger;
 
-    public MemoryUsageExtensionIntegrationTests()
+    public MemoryUsageExtensionIntegrationTests(ITestOutputHelper output) : base(output)
     {
         _logger = Substitute.For<ILogger<MemoryUsageExtension>>();
     }

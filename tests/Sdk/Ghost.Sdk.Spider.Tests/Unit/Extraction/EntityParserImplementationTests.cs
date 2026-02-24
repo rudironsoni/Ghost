@@ -3,11 +3,14 @@ using Ghost.Sdk.Spider.Core.Entities;
 using Ghost.Sdk.Spider.Core.Entities.Attributes;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 
-public class EntityParserImplementationTests
+public class EntityParserImplementationTests : ReliabilityTestBase
 {
+    public EntityParserImplementationTests(ITestOutputHelper output) : base(output) { }
     private static readonly string[] ExpectedTags = new[] { "Tag1", "Tag2", "Tag3" };
 
     [Fact]

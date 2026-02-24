@@ -1,14 +1,17 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Storage.Contracts;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
 /// <summary>
 /// Tests for StorageResult class and its factory methods.
 /// </summary>
-public class StorageResultTests
+public class StorageResultTests : ReliabilityTestBase
 {
+    public StorageResultTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void CreateSuccess_ShouldCreateSuccessfulResult()
     {

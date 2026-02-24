@@ -1,6 +1,8 @@
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Statistics;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Statistics;
 
@@ -8,8 +10,9 @@ namespace Ghost.Sdk.Spider.Tests.Statistics;
 /// Unit tests for <see cref="DepthTracker"/>.
 /// </summary>
 [Trait("Category", "Unit")]
-public class DepthTrackerTests
+public class DepthTrackerTests : ReliabilityTestBase
 {
+    public DepthTrackerTests(ITestOutputHelper output) : base(output) { }
     private const string StartUrl = "https://example.com";
 
     [Fact]

@@ -1,6 +1,8 @@
 using FluentAssertions;
 using Ghost.Sdk.Spiders;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Spiders;
 
@@ -8,8 +10,9 @@ namespace Ghost.Sdk.Tests.Spiders;
 /// Unit tests for the <see cref="SitemapSpider"/> class.
 /// </summary>
 [Trait("Category", "Unit")]
-public class SitemapSpiderTests
+public class SitemapSpiderTests : ReliabilityTestBase
 {
+    public SitemapSpiderTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Constructor_WithNoArguments_SetsDefaultProperties()
     {

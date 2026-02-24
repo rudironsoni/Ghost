@@ -3,14 +3,17 @@ using Ghost.Sdk.Spider.Configuration;
 using Ghost.Sdk.Spider.Configuration.Compiler;
 using Ghost.Sdk.Spider.Configuration.Models;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Configuration;
 
 /// <summary>
 /// Comprehensive tests for ConfigurationCompiler covering YAML and JSON compilation.
 /// </summary>
-public class ConfigurationCompilerTests
+public class ConfigurationCompilerTests : ReliabilityTestBase
 {
+    public ConfigurationCompilerTests(ITestOutputHelper output) : base(output) { }
     private readonly ConfigurationCompiler _compiler;
 
     public ConfigurationCompilerTests()

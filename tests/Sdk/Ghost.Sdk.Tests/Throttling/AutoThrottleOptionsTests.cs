@@ -1,12 +1,15 @@
 using FluentAssertions;
 using Ghost.Sdk.Throttling;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Throttling;
 
 [Trait("Category", "Unit")]
-public class AutoThrottleOptionsTests
+public class AutoThrottleOptionsTests : ReliabilityTestBase
 {
+    public AutoThrottleOptionsTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Constructor_WithDefaultValues_SetsExpectedDefaults()
     {

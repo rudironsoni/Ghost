@@ -1,14 +1,17 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Storage.Contracts;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
 /// <summary>
 /// Tests for StorageContext class and its factory methods.
 /// </summary>
-public class StorageContextTests
+public class StorageContextTests : ReliabilityTestBase
 {
+    public StorageContextTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public static void Create_WithSpiderName_ShouldCreateContext()
     {

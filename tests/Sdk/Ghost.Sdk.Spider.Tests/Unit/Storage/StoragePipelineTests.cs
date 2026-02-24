@@ -1,6 +1,8 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Storage.Contracts;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
@@ -9,8 +11,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// These tests verify the pipeline pattern for storage operations including
 /// transformation, validation, and multi-storage scenarios.
 /// </summary>
-public class StoragePipelineTests
+public class StoragePipelineTests : ReliabilityTestBase
 {
+    public StoragePipelineTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task Pipeline_WithSingleStorage_ShouldStore()
     {

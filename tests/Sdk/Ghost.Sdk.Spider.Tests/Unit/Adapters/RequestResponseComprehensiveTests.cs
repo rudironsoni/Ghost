@@ -2,14 +2,17 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Meta;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Comprehensive tests for Request and Response classes.
 /// </summary>
-public class RequestResponseComprehensiveTests
+public class RequestResponseComprehensiveTests : ReliabilityTestBase
 {
+    public RequestResponseComprehensiveTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Request_Constructor_WithUrl_ShouldSetUrl()
     {
