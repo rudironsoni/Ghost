@@ -26,6 +26,7 @@ public sealed class StatsCollector : IStatsCollector
     private readonly ConcurrentDictionary<string, List<TimeSpan>> _latencies = new();
     private readonly ConcurrentDictionary<string, object> _latencyLocks = new();
     private readonly TimeProvider _timeProvider;
+    private const int MaxLatencySamples = 10000; // Maximum latency samples per spider to prevent unbounded growth
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StatsCollector"/> class.
@@ -105,6 +106,14 @@ public sealed class StatsCollector : IStatsCollector
 
         lock (lockObj)
         {
+            // Enforce maximum samples to prevent unbounded memory growth
+            if (latencies.Count >= MaxLatencySamples)
+            {
+                // Remove oldest 25% of samples to make room
+                int removeCount = MaxLatencySamples / 4;
+                latencies.RemoveRange(0, removeCount);
+            }
+
             latencies.Add(latency);
             stats.AverageResponseTime = latencies.Average(l => l.TotalMilliseconds);
         }

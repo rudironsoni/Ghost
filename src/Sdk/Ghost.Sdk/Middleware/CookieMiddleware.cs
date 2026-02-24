@@ -17,6 +17,32 @@ public sealed class CookieMiddleware : ICookieMiddleware
 
     private readonly ConcurrentDictionary<string, List<Cookie>> _cookies = new();
     private readonly object _fileLock = new();
+    private const int MaxCookiesPerDomain = 1000;
+
+    /// <summary>
+    /// Validates that the file path is safe to use (prevents directory traversal).
+    /// </summary>
+    /// <param name="filePath">The file path to validate.</param>
+    /// <exception cref="ArgumentException">Thrown when the path contains invalid characters or traversal patterns.</exception>
+    private static void ValidateFilePath(string filePath)
+    {
+        // Check for directory traversal patterns
+        if (filePath.Contains("..", StringComparison.Ordinal) ||
+            filePath.Contains("~", StringComparison.Ordinal) ||
+            filePath.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
+        {
+            throw new ArgumentException("Invalid file path: contains potentially unsafe characters or patterns.", nameof(filePath));
+        }
+
+        // Ensure the path is not trying to escape to a different drive/root
+        string fullPath = Path.GetFullPath(filePath);
+        string workingDir = Path.GetFullPath(Directory.GetCurrentDirectory());
+
+        if (!fullPath.StartsWith(workingDir, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("Invalid file path: must be within the working directory.", nameof(filePath));
+        }
+    }
 
     /// <summary>
     /// Retrieves all cookies for the specified domain.
@@ -50,6 +76,15 @@ public sealed class CookieMiddleware : ICookieMiddleware
         {
             // Remove existing cookie with the same name
             domainCookies.RemoveAll(c => c.Name == cookie.Name);
+
+            // Enforce maximum cookies per domain to prevent unbounded growth
+            if (domainCookies.Count >= MaxCookiesPerDomain)
+            {
+                // Remove oldest cookies (FIFO)
+                int removeCount = domainCookies.Count - MaxCookiesPerDomain + 1;
+                domainCookies.RemoveRange(0, removeCount);
+            }
+
             domainCookies.Add(cookie);
         }
 
@@ -63,6 +98,7 @@ public sealed class CookieMiddleware : ICookieMiddleware
     public async Task LoadCookiesAsync(string filePath, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(filePath);
+        ValidateFilePath(filePath);
 
         if (!File.Exists(filePath))
         {
@@ -96,6 +132,7 @@ public sealed class CookieMiddleware : ICookieMiddleware
     public async Task SaveCookiesAsync(string filePath, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(filePath);
+        ValidateFilePath(filePath);
 
         var cookieData = _cookies.ToDictionary(
             kvp => kvp.Key,
