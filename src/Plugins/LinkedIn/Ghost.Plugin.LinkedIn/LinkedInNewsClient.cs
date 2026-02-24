@@ -56,14 +56,17 @@ public sealed class LinkedInNewsClient : INewsClient
                             url = string.Empty;
                         list.Add(new NewsArticle { Id = Guid.NewGuid().ToString(), Title = title, Url = url });
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to parse news article: {ex.Message}");
+                    }
                 }
 
                 return list;
             }
             finally
             {
-                try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+                try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to dispose page: {ex.Message}"); }
             }
         }
         catch (OperationCanceledException)
@@ -122,14 +125,17 @@ public sealed class LinkedInNewsClient : INewsClient
                             list.Add(new NewsArticle { Id = Guid.NewGuid().ToString(), Title = title.Trim(), Url = url });
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to parse news article: {ex.Message}");
+                    }
                 }
 
                 return list;
             }
             finally
             {
-                try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+                try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to dispose page: {ex.Message}"); }
             }
         }
         catch (OperationCanceledException)

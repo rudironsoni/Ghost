@@ -140,7 +140,10 @@ internal sealed class JsonLdParser
                     if (!string.IsNullOrWhiteSpace(s)) return s;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to parse JSON-LD: {ex.Message}");
+            }
         }
 
         return null;

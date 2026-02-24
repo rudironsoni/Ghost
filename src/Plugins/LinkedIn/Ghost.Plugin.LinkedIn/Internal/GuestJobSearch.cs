@@ -244,7 +244,10 @@ public sealed class GuestJobSearch : IGuestJobSearch
             var warmNav = new NavigationOptions { Timeout = 10_000, WaitUntil = WaitUntil.Load };
             await page.NavigateAsync(warmUpUrl, warmNav, ct: ct).ConfigureAwait(false);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Warm-up navigation failed: {ex.Message}");
+        }
     }
 
     private async Task CheckRateLimitAsync(IPage page, string url)
@@ -254,7 +257,14 @@ public sealed class GuestJobSearch : IGuestJobSearch
             await LinkedInRateLimitDetector.CheckAsync(page).ConfigureAwait(false);
             s_logRateLimitPassed(_logger, url, null);
         }
-        catch { }
+        catch (LinkedInRateLimitException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Rate limit check failed: {ex.Message}");
+        }
     }
 
     private TryFetchResult? ValidateSearchResponse(string html)
@@ -288,13 +298,16 @@ public sealed class GuestJobSearch : IGuestJobSearch
             s_logSavingSession(_logger, _options.Value.StorageStatePath, null);
             await session.SaveStorageStateAsync(_options.Value.StorageStatePath).ConfigureAwait(false);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to save session state: {ex.Message}");
+        }
     }
 
     private static async Task DisposePageAsync(IPage? page)
     {
         if (page is null) return;
-        try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+        try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to dispose page: {ex.Message}"); }
     }
 
     private void ReleaseSession(IBrowserSession? session)
@@ -407,7 +420,10 @@ public sealed class GuestJobSearch : IGuestJobSearch
         {
             Console.WriteLine($"[DEBUG] Result for {jobId}: Title='{parsed?.Title}', Company='{parsed?.Company}', Loc='{parsed?.Location}', JobType='{parsed?.JobType}', Exp='{parsed?.ExperienceLevel}'");
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to log debug result: {ex.Message}");
+        }
     }
 
     private async Task<JobListing?> EnrichJobListingAsync(
