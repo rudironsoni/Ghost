@@ -24,15 +24,9 @@ redisOptions.AbortOnConnectFail = false;
 redisOptions.ConnectTimeout = 5000;
 redisOptions.SyncTimeout = 5000;
 
-// Use async factory pattern to avoid sync-over-async in DI
-builder.Services.AddSingleton<RedisConnectionFactory>(_ => new RedisConnectionFactory(redisOptions));
-builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-{
-    // Defer connection until first use via async lazy pattern
-    RedisConnectionFactory factory = sp.GetRequiredService<RedisConnectionFactory>();
-    // This will be called asynchronously by hosted services during startup
-    return factory.ConnectAsync().GetAwaiter().GetResult();
-});
+// Use async factory pattern - services should inject RedisConnectionFactory
+// and call ConnectAsync() in their async initialization
+builder.Services.AddSingleton(_ => new RedisConnectionFactory(redisOptions));
 
 // Register the worker
 builder.Services.AddHostedService<ScraperWorker>();

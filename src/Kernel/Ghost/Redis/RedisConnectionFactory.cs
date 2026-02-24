@@ -12,55 +12,56 @@ namespace Ghost.Redis;
 /// </remarks>
 public sealed class RedisConnectionFactory : IDisposable
 {
-  private readonly ConfigurationOptions _options;
-  private ConnectionMultiplexer? _connection;
-  private readonly SemaphoreSlim _connectLock = new(1, 1);
+    private readonly ConfigurationOptions _options;
+    private ConnectionMultiplexer? _connection;
+    private readonly SemaphoreSlim _connectLock = new(1, 1);
 
-  /// <summary>
-  /// Initializes a new instance of the <see cref="RedisConnectionFactory"/> class.
-  /// </summary>
-  /// <param name="options">The Redis configuration options.</param>
-  public RedisConnectionFactory(ConfigurationOptions options)
-  {
-    _options = options ?? throw new ArgumentNullException(nameof(options));
-  }
-
-  /// <summary>
-  /// Connects to Redis asynchronously.
-  /// </summary>
-  /// <param name="ct">Cancellation token.</param>
-  /// <returns>The Redis connection multiplexer.</returns>
-  public async Task<IConnectionMultiplexer> ConnectAsync(CancellationToken ct = default)
-  {
-    if (_connection is not null)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RedisConnectionFactory"/> class.
+    /// </summary>
+    /// <param name="options">The Redis configuration options.</param>
+    public RedisConnectionFactory(ConfigurationOptions options)
     {
-      return _connection;
+        _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
-    await _connectLock.WaitAsync(ct).ConfigureAwait(false);
-    try
+    /// <summary>
+    /// Connects to Redis asynchronously.
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The Redis connection multiplexer.</returns>
+    public async Task<IConnectionMultiplexer> ConnectAsync(CancellationToken ct = default)
     {
-      // Double-check after acquiring lock
-      if (_connection is null)
-      {
-        _connection = await ConnectionMultiplexer.ConnectAsync(_options).ConfigureAwait(false);
-      }
-      return _connection;
+        if (_connection is not null)
+        {
+            return _connection;
+        }
+
+        await _connectLock.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            // Double-check after acquiring lock
+            if (_connection is null)
+            {
+                _connection = await ConnectionMultiplexer.ConnectAsync(_options).ConfigureAwait(false);
+            }
+            return _connection;
+        }
+        finally
+        {
+            _connectLock.Release();
+        }
     }
-    finally
+
+    /// <summary>
+    /// Gets the existing connection if already established, otherwise null.
+    /// </summary>
+    public IConnectionMultiplexer? Connection => _connection;
+
+    /// <inheritdoc />
+    public void Dispose()
     {
-      _connectLock.Release();
+        _connection?.Dispose();
+        _connectLock.Dispose();
     }
-  }
-
-  /// <summary>
-  /// Gets the existing connection if already established, otherwise null.
-  /// </summary>
-  public IConnectionMultiplexer? Connection => _connection;
-
-  /// <inheritdoc />
-  public void Dispose()
-  {
-    _connectLock.Dispose();
-  }
 }
