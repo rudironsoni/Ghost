@@ -1,10 +1,13 @@
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Configuration;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.Common.Tests;
 
-public class PluginConfigurationHelperTests
+public class PluginConfigurationHelperTests : ReliabilityTestBase
 {
+    public PluginConfigurationHelperTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void GetSectionName_ReturnsCorrectFormat()
     {

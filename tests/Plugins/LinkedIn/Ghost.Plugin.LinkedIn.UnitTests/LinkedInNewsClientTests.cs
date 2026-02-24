@@ -2,15 +2,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Contracts.News;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.LinkedIn.Tests;
 
-public class LinkedInNewsClientTests
+public class LinkedInNewsClientTests : ReliabilityTestBase
 {
+    public LinkedInNewsClientTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task GetArticlesAsyncReturnsEnumerable()
     {

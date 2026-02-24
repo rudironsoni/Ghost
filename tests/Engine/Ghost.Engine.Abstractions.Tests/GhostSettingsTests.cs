@@ -1,11 +1,14 @@
 using FluentAssertions;
 using Ghost.Engine.Abstractions.Settings;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Engine.Abstractions.Tests;
 
-public sealed class GhostSettingsTests
+public sealed class GhostSettingsTests : ReliabilityTestBase
 {
+    public GhostSettingsTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void GetOrDefault_ReturnsOverrideWhenPresent()
     {

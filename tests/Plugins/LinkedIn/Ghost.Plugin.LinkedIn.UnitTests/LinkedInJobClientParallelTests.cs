@@ -5,16 +5,19 @@ using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Ghost.Sdk.Spider.Strategies;
 using Ghost.Sdk.Spider.Strategies.Contracts;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.LinkedIn.Tests;
 
-public class LinkedInJobClientParallelTests
+public class LinkedInJobClientParallelTests : ReliabilityTestBase
 {
+    public LinkedInJobClientParallelTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task SearchJobsParallelAsyncYieldsJobsFromGuestPages()
     {

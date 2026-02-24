@@ -1,14 +1,17 @@
 using System;
 using FluentAssertions;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.OpenAI.Tests;
 
-public class OpenAIPluginTests
+public class OpenAIPluginTests : ReliabilityTestBase
 {
+    public OpenAIPluginTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void NameShouldContainOpenAI()
     {

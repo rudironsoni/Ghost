@@ -1,11 +1,14 @@
 using System.Diagnostics;
 using Ghost.Plugin.Indeed.Internal;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.Indeed.Tests;
 
-public class IndeedHtmlParsingTests
+public class IndeedHtmlParsingTests : ReliabilityTestBase
 {
+    public IndeedHtmlParsingTests(ITestOutputHelper output) : base(output) { }
     [Theory]
     [InlineData("<p>Simple text</p>", "Simple text")]
     [InlineData("<div><p>Nested tags</p></div>", "Nested tags")]

@@ -7,13 +7,15 @@ using Ghost.Engine.Abstractions.Downloader;
 using Ghost.Engine.Abstractions.Engine;
 using Ghost.Engine.Abstractions.Spider;
 using Ghost.Engine.Abstractions.Transport;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using Xunit.Abstractions;
 
 namespace Ghost.Cloud.Api.UnitTests.Canaries;
 
-public sealed class AssuranceCanaryRunnerTests
+public sealed class AssuranceCanaryRunnerTests : ReliabilityTestBase
 {
     private readonly IClusterClient _clusterClient;
     private readonly IGhostEngine _engine;
@@ -21,7 +23,7 @@ public sealed class AssuranceCanaryRunnerTests
     private readonly IEndpointGrain _endpointGrain;
     private readonly ITenantGrain _tenantGrain;
 
-    public AssuranceCanaryRunnerTests()
+    public AssuranceCanaryRunnerTests(ITestOutputHelper output) : base(output)
     {
         _clusterClient = Substitute.For<IClusterClient>();
         _engine = Substitute.For<IGhostEngine>();

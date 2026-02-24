@@ -4,15 +4,18 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Plugin.LinkedIn.Internal;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.LinkedIn.Tests;
 
-public class LinkedInAuthenticatorSecurityTests
+public class LinkedInAuthenticatorSecurityTests : ReliabilityTestBase
 {
+    public LinkedInAuthenticatorSecurityTests(ITestOutputHelper output) : base(output) { }
     [Theory]
     [InlineData("<script>alert(1)</script>")]
     [InlineData("';alert(1);//")]

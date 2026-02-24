@@ -1,9 +1,12 @@
 using Ghost.Cloud.Contracts.Endpoints;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Cloud.Contracts.UnitTests.Endpoints;
 
-public class EndpointManifestTests
+public class EndpointManifestTests : ReliabilityTestBase
 {
+    public EndpointManifestTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void EndpointManifest_DefaultValues_AreSet()
     {

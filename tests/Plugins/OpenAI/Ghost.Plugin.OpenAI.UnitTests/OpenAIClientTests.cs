@@ -3,16 +3,19 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost;
 using Ghost.Contracts.Inference;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.OpenAI.Tests;
 
-public class OpenAIClientTests
+public class OpenAIClientTests : ReliabilityTestBase
 {
+    public OpenAIClientTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task CompleteAsyncReturnsTextWhenPageEvaluates()
     {

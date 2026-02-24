@@ -1,13 +1,16 @@
 using System.Linq;
 using System.Net;
 using Ghost.Testing.External.Http;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.Google.End2EndTests.Cassettes;
 
 [Trait("Category", "Integration")]
-public sealed class CassetteDelegatingHandlerTests
+public class CassetteDelegatingHandlerTests : ReliabilityTestBase
 {
+    public CassetteDelegatingHandlerTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void CassetteModeResolver_ParsesModes_AndDefaultsToReplay()
     {

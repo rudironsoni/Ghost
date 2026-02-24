@@ -1,10 +1,13 @@
 using Ghost.Cloud.Contracts.Delivery;
 using Ghost.Cloud.Contracts.Runs;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Cloud.Contracts.UnitTests.Runs;
 
-public class ScrapeRunRequestTests
+public class ScrapeRunRequestTests : ReliabilityTestBase
 {
+    public ScrapeRunRequestTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void ScrapeRunRequest_DefaultValues_AreSet()
     {

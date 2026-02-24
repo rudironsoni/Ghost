@@ -10,12 +10,15 @@ using Ghost.Engine.Abstractions.Spider;
 using Ghost.Engine.Abstractions.Transport;
 using Ghost.Engine.Engine;
 using Ghost.Engine.Scheduler;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Engine.Tests.Engine;
 
-public class GhostEngineTests
+public class GhostEngineTests : ReliabilityTestBase
 {
+    public GhostEngineTests(ITestOutputHelper output) : base(output) { }
     private static readonly GhostRequest[] EmptyRequests = Array.Empty<GhostRequest>();
     private static readonly ItemEnvelope[] EmptyItems = Array.Empty<ItemEnvelope>();
     private static readonly string[] TestUrls = { "http://example.com/1", "http://example.com/2", "http://example.com/3" };

@@ -1,12 +1,15 @@
 using Ghost.Contracts;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.Common.Tests;
 
-public class PluginBaseTests
+public class PluginBaseTests : ReliabilityTestBase
 {
+    public PluginBaseTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void PluginBase_Implements_IExtension()
     {

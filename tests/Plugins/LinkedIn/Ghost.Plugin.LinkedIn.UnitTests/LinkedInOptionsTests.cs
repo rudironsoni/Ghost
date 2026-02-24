@@ -1,11 +1,14 @@
 using FluentAssertions;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Plugin.LinkedIn.Tests;
 
-public class LinkedInOptionsTests
+public class LinkedInOptionsTests : ReliabilityTestBase
 {
+    public LinkedInOptionsTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void DefaultsAndSetters()
     {
