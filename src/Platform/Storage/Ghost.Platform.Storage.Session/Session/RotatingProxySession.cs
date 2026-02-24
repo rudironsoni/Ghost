@@ -172,8 +172,7 @@ public class RotatingProxySession : IDisposable
     {
         if (_options.JitterMinMs > 0 && _options.JitterMaxMs > 0)
         {
-            var random = new Random();
-            int delay = random.Next(_options.JitterMinMs, _options.JitterMaxMs + 1);
+            int delay = Random.Shared.Next(_options.JitterMinMs, _options.JitterMaxMs + 1);
             await Task.Delay(TimeSpan.FromMilliseconds(delay), _timeProvider, cancellationToken).ConfigureAwait(false);
         }
     }

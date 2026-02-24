@@ -9,7 +9,6 @@ public sealed class ClickMimicry
 {
     private readonly MouseMimicry _mouseMimicry;
     private readonly TimingMimicry _timingMimicry;
-    private readonly Random _random = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ClickMimicry"/> class.
@@ -47,8 +46,8 @@ public sealed class ClickMimicry
         float usableWidth = Math.Max(box.Width - (2 * margin), 1);
         float usableHeight = Math.Max(box.Height - (2 * margin), 1);
 
-        float offsetX = margin + (float)(_random.NextDouble() * usableWidth);
-        float offsetY = margin + (float)(_random.NextDouble() * usableHeight);
+        float offsetX = margin + (float)(Random.Shared.NextDouble() * usableWidth);
+        float offsetY = margin + (float)(Random.Shared.NextDouble() * usableHeight);
 
         float clickX = box.X + offsetX;
         float clickY = box.Y + offsetY;
@@ -88,8 +87,8 @@ public sealed class ClickMimicry
         float usableWidth = Math.Max(box.Width - (2 * margin), 1);
         float usableHeight = Math.Max(box.Height - (2 * margin), 1);
 
-        float offsetX = margin + (float)(_random.NextDouble() * usableWidth);
-        float offsetY = margin + (float)(_random.NextDouble() * usableHeight);
+        float offsetX = margin + (float)(Random.Shared.NextDouble() * usableWidth);
+        float offsetY = margin + (float)(Random.Shared.NextDouble() * usableHeight);
 
         float clickX = box.X + offsetX;
         float clickY = box.Y + offsetY;
@@ -129,8 +128,8 @@ public sealed class ClickMimicry
         float usableWidth = Math.Max(box.Width - (2 * margin), 1);
         float usableHeight = Math.Max(box.Height - (2 * margin), 1);
 
-        float offsetX = margin + (float)(_random.NextDouble() * usableWidth);
-        float offsetY = margin + (float)(_random.NextDouble() * usableHeight);
+        float offsetX = margin + (float)(Random.Shared.NextDouble() * usableWidth);
+        float offsetY = margin + (float)(Random.Shared.NextDouble() * usableHeight);
 
         float clickX = box.X + offsetX;
         float clickY = box.Y + offsetY;

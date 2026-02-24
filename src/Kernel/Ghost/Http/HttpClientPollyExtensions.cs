@@ -7,8 +7,6 @@ namespace Ghost.Http;
 
 public static class HttpClientPollyExtensions
 {
-    private static readonly Random _random = new Random();
-
     public static IAsyncPolicy<HttpResponseMessage> CreateRetryPolicy(int retries = 3, double backoffFactor = 2.0)
     {
         return Policy<HttpResponseMessage>
@@ -32,7 +30,7 @@ public static class HttpClientPollyExtensions
                 retryAttempt =>
                 {
                     var backoffDelay = TimeSpan.FromSeconds(Math.Pow(backoffFactor, retryAttempt));
-                    var jitterDelay = TimeSpan.FromMilliseconds(_random.Next(minDelayMs, maxDelayMs));
+                    var jitterDelay = TimeSpan.FromMilliseconds(Random.Shared.Next(minDelayMs, maxDelayMs));
                     return backoffDelay + jitterDelay;
                 });
     }

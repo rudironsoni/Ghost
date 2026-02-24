@@ -34,14 +34,12 @@ public static class GoogleJobsConstants
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0",
     };
 
-    private static readonly Random s_random = new Random();
-
     /// <summary>
     /// Gets a random user agent from the pool for rotation
     /// </summary>
     public static string GetRandomUserAgent()
     {
-        return s_userAgents[s_random.Next(s_userAgents.Length)];
+        return s_userAgents[Random.Shared.Next(s_userAgents.Length)];
     }
 
     // Updated to align with JobSpy headers (more extensive sec-ch-ua values and Google-specific x-browser-* headers)
