@@ -386,6 +386,9 @@ public class ScrollScenarioTests : IAsyncLifetime
         await page.EvaluateAsync<string>("document.getElementById('viewport').scrollTop = 500");
         await WaitForConditionAsync(page, "() => document.querySelectorAll('.job').length > 0");
 
+        // Wait a moment for virtualization to replace items
+        await Task.Delay(100);
+
         // Get items after scroll
         IReadOnlyList<IElement> jobsAfterScroll = await page.QuerySelectorAllAsync(".job");
         List<string> afterScrollJobIds = [];
