@@ -133,7 +133,7 @@ public sealed class FreeProxyHealthChecker
 /// </summary>
 public sealed class ProxyHealthCheckResult
 {
-    public ProxyInfo Proxy { get; set; } = null!;
+    public required ProxyInfo Proxy { get; set; }
     public bool IsHealthy { get; set; }
     public TimeSpan ResponseTime { get; set; }
     public HttpStatusCode? StatusCode { get; set; }

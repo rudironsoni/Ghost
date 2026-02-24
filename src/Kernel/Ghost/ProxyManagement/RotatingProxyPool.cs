@@ -244,7 +244,7 @@ public sealed class RotatingProxyPool : IDisposable
 /// </summary>
 public sealed class ProxyPoolEntry
 {
-    public ProxyInfo Proxy { get; set; } = null!;
+    public required ProxyInfo Proxy { get; set; }
     public bool IsHealthy { get; set; }
     public string? Country { get; set; }
     public string? City { get; set; }
