@@ -323,7 +323,7 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
         {
             if (page != null)
             {
-                try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+                try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to dispose page: {ex.Message}"); }
             }
         }
     }
@@ -386,7 +386,7 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
             }
 
             await applyBtn.HumanClickAsync(ct: ct).ConfigureAwait(false);
-            try { await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false); } catch { }
+            try { await page.WaitForLoadStateAsync(ct: ct).ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Wait for load state failed: {ex.Message}"); }
 
             return new JobApplication
             {
@@ -400,7 +400,7 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
         }
         finally
         {
-            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to dispose page: {ex.Message}"); }
         }
     }
 
@@ -495,7 +495,10 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
             {
                 await page.EvaluateAsync<object>("() => { document.cookie.split(';').forEach(function(c) { document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/'); }); }", ct: ct).ConfigureAwait(false);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to clear cookies: {ex.Message}");
+            }
 
             string url = BuildBrowserSearchUrl(keywords, location);
             var navOptions = new NavigationOptions { Timeout = 30_000, WaitUntil = WaitUntil.Load };
@@ -694,7 +697,7 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
         {
             if (page != null)
             {
-                try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+                try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to dispose page: {ex.Message}"); }
             }
         }
     }

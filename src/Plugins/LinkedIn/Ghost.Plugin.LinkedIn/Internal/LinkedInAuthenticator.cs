@@ -66,7 +66,7 @@ public sealed class LinkedInAuthenticator
         }
         finally
         {
-            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to dispose page: {ex.Message}"); }
         }
     }
 
@@ -152,7 +152,7 @@ public sealed class LinkedInAuthenticator
                 int delay = Random.Shared.Next(1500, 3001);
                 await Task.Delay(delay, ct).ConfigureAwait(false);
                 // scroll a bit
-                try { await page.EvaluateAsync<object>("window.scrollBy(0,500);", ct: ct).ConfigureAwait(false); } catch { }
+                try { await page.EvaluateAsync<object>("window.scrollBy(0,500);", ct: ct).ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Scroll failed: {ex.Message}"); }
             }
             s_logWarmUpComplete(_logger, null);
         }
