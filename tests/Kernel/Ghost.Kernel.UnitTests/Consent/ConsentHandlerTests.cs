@@ -1,13 +1,16 @@
 using Ghost.Consent;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Tests.Consent;
 
-public class ConsentHandlerTests
+public class ConsentHandlerTests : ReliabilityTestBase
 {
+    public ConsentHandlerTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Constructor_WithoutLogger_CreatesInstance()
     {
