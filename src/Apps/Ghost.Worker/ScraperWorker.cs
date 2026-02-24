@@ -1,4 +1,5 @@
 using Ghost.Contracts.Jobs;
+using Ghost.Redis;
 using Newtonsoft.Json;
 using StackExchange.Redis;
 
@@ -10,7 +11,8 @@ namespace Ghost.Worker;
 public sealed partial class ScraperWorker : BackgroundService
 {
     private readonly ILogger<ScraperWorker> _logger;
-    private readonly IConnectionMultiplexer _redis;
+    private readonly RedisConnectionFactory _redisFactory;
+    private IConnectionMultiplexer? _redis;
     private readonly IServiceProvider _serviceProvider;
     private readonly WorkerConfiguration _config;
     private readonly TimeProvider _timeProvider;
@@ -45,13 +47,13 @@ public sealed partial class ScraperWorker : BackgroundService
 
     public ScraperWorker(
         ILogger<ScraperWorker> logger,
-        IConnectionMultiplexer redis,
+        RedisConnectionFactory redisFactory,
         IServiceProvider serviceProvider,
         WorkerConfiguration config,
         TimeProvider? timeProvider = null)
     {
         _logger = logger;
-        _redis = redis;
+        _redisFactory = redisFactory;
         _serviceProvider = serviceProvider;
         _config = config;
         _timeProvider = timeProvider ?? TimeProvider.System;
@@ -61,6 +63,8 @@ public sealed partial class ScraperWorker : BackgroundService
     {
         LogWorkerStarting(_config.WorkerId, _config.NodeName, _config.MaxConcurrentJobs);
 
+        // Connect to Redis asynchronously (no sync-over-async)
+        _redis = await _redisFactory.ConnectAsync(stoppingToken).ConfigureAwait(false);
         IDatabase db = _redis.GetDatabase();
         string queueKey = _config.RedisQueueKey;
 
@@ -175,7 +179,7 @@ public sealed partial class ScraperWorker : BackgroundService
 
     private async Task StoreResultsAsync(string jobId, IReadOnlyList<JobListing> results, CancellationToken cancellationToken)
     {
-        IDatabase db = _redis.GetDatabase();
+        IDatabase db = _redis!.GetDatabase();
         string resultsKey = $"job:results:{jobId}";
 
         // Store results as JSON in Redis (with expiration)
@@ -191,7 +195,7 @@ public sealed partial class ScraperWorker : BackgroundService
         CancellationToken cancellationToken,
         string? errorMessage = null)
     {
-        IDatabase db = _redis.GetDatabase();
+        IDatabase db = _redis!.GetDatabase();
         string statusKey = $"job:status:{jobId}";
 
         var statusData = new
