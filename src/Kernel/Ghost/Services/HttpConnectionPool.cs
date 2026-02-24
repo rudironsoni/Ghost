@@ -209,7 +209,7 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
 
 public sealed record PooledConnection
 {
-    public HttpClient Client { get; init; } = null!;
+    public required HttpClient Client { get; init; }
     public DateTime CreatedAt { get; init; }
     public DateTime LastUsed { get; set; }
     public int UsageCount { get; set; }
