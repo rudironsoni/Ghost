@@ -1,6 +1,8 @@
 using FluentAssertions;
 using Ghost.Testing.Fakes;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Unit.Tests;
 
@@ -8,8 +10,10 @@ namespace Ghost.Kernel.Unit.Tests;
 /// Hermetic unit tests for FakeElement functionality.
 /// Tests element interaction without real browser dependencies.
 /// </summary>
-public class FakeElementHermeticTests
+public class FakeElementHermeticTests : ReliabilityTestBase
 {
+    public FakeElementHermeticTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task FakeElement_ShouldReturnEmptyTextContentByDefault()
     {

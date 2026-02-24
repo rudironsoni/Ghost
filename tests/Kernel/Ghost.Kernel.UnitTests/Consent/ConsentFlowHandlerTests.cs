@@ -2,11 +2,15 @@ using Ghost.Consent;
 using Microsoft.Playwright;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Consent;
 
-public class ConsentFlowHandlerTests
+public class ConsentFlowHandlerTests : ReliabilityTestBase
 {
+    public ConsentFlowHandlerTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void Constructor_WithNoParameters_CreatesInstance()
     {

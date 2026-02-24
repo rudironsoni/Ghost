@@ -1,11 +1,15 @@
 using FluentAssertions;
 using Ghost.Monitoring;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Monitoring;
 
-public class MetricsServiceTests
+public class MetricsServiceTests : ReliabilityTestBase
 {
+    public MetricsServiceTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void RecordRequestIncrementsTotalRequests()
     {

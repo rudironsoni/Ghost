@@ -1,3 +1,4 @@
+using Ghost.Testing.Reliability;
 using System;
 using System.Reflection;
 using System.Threading;
@@ -6,11 +7,14 @@ using FluentAssertions;
 using Microsoft.Playwright;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Kernel.Tests;
 
-public class GhostKernelTests
+public class GhostKernelTests : ReliabilityTestBase
 {
+    public GhostKernelTests(ITestOutputHelper output) : base(output) { }
+
     private static GhostKernel CreateKernel(IPlaywright playwright, IBrowser browser, bool useStealth = false)
     {
         // Get the private constructor (there's only one)

@@ -3,14 +3,16 @@ using Ghost.ProxyConfiguration;
 using Ghost.ProxyManagement;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.UnitTests.ProxyManagement;
 
-public class ProxyHealthTrackerTests
+public class ProxyHealthTrackerTests : ReliabilityTestBase
 {
     private readonly ProxyHealthTracker _tracker;
 
-    public ProxyHealthTrackerTests()
+    public ProxyHealthTrackerTests(ITestOutputHelper output) : base(output)
     {
         _tracker = new ProxyHealthTracker(NullLogger<ProxyHealthTracker>.Instance);
     }

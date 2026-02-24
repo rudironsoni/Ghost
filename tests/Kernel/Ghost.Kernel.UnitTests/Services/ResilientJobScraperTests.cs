@@ -7,14 +7,20 @@ using Ghost.Contracts.Jobs;
 using Ghost.Kernel;
 using Ghost.Resilience;
 using Ghost.Services;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Kernel.UnitTests.Services;
 
-public sealed class ResilientJobScraperTests
+public sealed class ResilientJobScraperTests : ReliabilityTestBase
 {
+    public ResilientJobScraperTests(ITestOutputHelper output) : base(output)
+    {
+    }
+
     private static ResilientJobScraper CreateScraper(
         IJobScraper? innerScraper = null,
         ICircuitBreaker? circuitBreaker = null,

@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Kernel.Unit.Tests.Infrastructure;
 
@@ -10,8 +11,10 @@ namespace Ghost.Kernel.Unit.Tests.Infrastructure;
 /// Tests verifying that test timeout infrastructure is properly configured.
 /// </summary>
 [Trait("Category", "Unit")]
-public class TestTimeoutInfrastructureTests
+public class TestTimeoutInfrastructureTests : ReliabilityTestBase
 {
+    public TestTimeoutInfrastructureTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void TestTimeoutAttribute_DefaultTimeout_IsTenSeconds()
     {

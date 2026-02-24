@@ -6,11 +6,15 @@ using FluentAssertions;
 using Ghost.Resilience;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Tests.Resilience;
 
-public class FileSystemDeadLetterQueueTests
+public class FileSystemDeadLetterQueueTests : ReliabilityTestBase
 {
+    public FileSystemDeadLetterQueueTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task EnqueueAsyncPersistsJobWithDefaults()
     {

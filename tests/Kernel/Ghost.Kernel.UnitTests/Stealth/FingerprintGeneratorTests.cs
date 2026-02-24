@@ -1,11 +1,15 @@
 using FluentAssertions;
 using Ghost.Stealth;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Stealth;
 
-public class FingerprintGeneratorTests
+public class FingerprintGeneratorTests : ReliabilityTestBase
 {
+    public FingerprintGeneratorTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void GenerateReturnsCoherentProfile()
     {

@@ -3,14 +3,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.ProxyManagement;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Tests.ProxyManagement;
 
-public sealed class RotatingProxyPoolTests
+public sealed class RotatingProxyPoolTests : ReliabilityTestBase
 {
+    public RotatingProxyPoolTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task GetNextProxyAsync_WithEmptyPool_ReturnsNull()
     {

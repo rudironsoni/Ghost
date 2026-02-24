@@ -2,11 +2,15 @@ using Ghost.Stealth.Behavior;
 using Microsoft.Playwright;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Stealth.Behavior;
 
-public class MouseMimicryTests
+public class MouseMimicryTests : ReliabilityTestBase
 {
+    public MouseMimicryTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task MoveHumanLikeAsync_MovesInMultipleSteps()
     {

@@ -1,10 +1,14 @@
 using FluentAssertions;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Abstractions;
 
-public class TypeOptionsTests
+public class TypeOptionsTests : ReliabilityTestBase
 {
+    public TypeOptionsTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void DefaultsAreExpected()
     {

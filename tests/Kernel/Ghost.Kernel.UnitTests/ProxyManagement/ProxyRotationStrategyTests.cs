@@ -1,16 +1,18 @@
 using Ghost.ProxyConfiguration;
 using Ghost.ProxyManagement;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Kernel.UnitTests.ProxyManagement;
 
-public sealed class ProxyRotationStrategyTests
+public sealed class ProxyRotationStrategyTests : ReliabilityTestBase
 {
     private readonly ProxyHealthTracker _healthTracker;
     private readonly ProxyRotationStrategy _strategy;
 
-    public ProxyRotationStrategyTests()
+    public ProxyRotationStrategyTests(ITestOutputHelper output) : base(output)
     {
         _healthTracker = new ProxyHealthTracker(NullLogger<ProxyHealthTracker>.Instance);
         _strategy = new ProxyRotationStrategy(_healthTracker, NullLogger<ProxyRotationStrategy>.Instance);

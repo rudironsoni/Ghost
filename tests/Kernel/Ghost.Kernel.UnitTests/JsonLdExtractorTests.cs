@@ -1,11 +1,15 @@
 using System.Text.Json;
 using Ghost.Utilities;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Tests;
 
-public class JsonLdExtractorTests
+public class JsonLdExtractorTests : ReliabilityTestBase
 {
+    public JsonLdExtractorTests(ITestOutputHelper output) : base(output) { }
+
     private readonly JsonLdExtractor _ext = new();
 
     [Fact]

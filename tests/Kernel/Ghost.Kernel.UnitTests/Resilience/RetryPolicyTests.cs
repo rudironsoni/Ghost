@@ -3,11 +3,15 @@ using System.Net.Http;
 using FluentAssertions;
 using Ghost.Resilience;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Resilience;
 
-public class RetryPolicyTests
+public class RetryPolicyTests : ReliabilityTestBase
 {
+    public RetryPolicyTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task ExecuteAsyncSucceedsWithoutRetries()
     {

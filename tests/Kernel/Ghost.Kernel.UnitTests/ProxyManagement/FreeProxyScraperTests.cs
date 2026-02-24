@@ -6,15 +6,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.ProxyManagement;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Moq.Protected;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Tests.ProxyManagement;
 
-public sealed class FreeProxyScraperTests
+public sealed class FreeProxyScraperTests : ReliabilityTestBase
 {
+    public FreeProxyScraperTests(ITestOutputHelper output) : base(output) { }
+
     private static HttpClient CreateMockHttpClient(Mock<HttpMessageHandler> mockHandler)
     {
         return new HttpClient(mockHandler.Object);

@@ -1,6 +1,8 @@
 using FluentAssertions;
 using Ghost.Testing.Fakes;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Unit.Tests;
 
@@ -8,8 +10,10 @@ namespace Ghost.Kernel.Unit.Tests;
 /// Hermetic unit tests for FakePage functionality.
 /// Tests the fake page's ability to store and retrieve content without real browsers.
 /// </summary>
-public class FakePageHermeticTests
+public class FakePageHermeticTests : ReliabilityTestBase
 {
+    public FakePageHermeticTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task FakePage_ShouldHaveDefaultContent()
     {

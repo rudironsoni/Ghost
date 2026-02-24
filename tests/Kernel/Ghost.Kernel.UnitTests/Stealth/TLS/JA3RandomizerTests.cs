@@ -1,11 +1,15 @@
 using FluentAssertions;
 using Ghost.Stealth.TLS;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Stealth.TLS;
 
-public class JA3RandomizerTests
+public class JA3RandomizerTests : ReliabilityTestBase
 {
+    public JA3RandomizerTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void GenerateRandomProfile_ReturnsValidProfile()
     {

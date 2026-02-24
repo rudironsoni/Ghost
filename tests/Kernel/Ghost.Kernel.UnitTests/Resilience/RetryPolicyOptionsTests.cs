@@ -1,11 +1,15 @@
 using FluentAssertions;
 using Ghost.Resilience;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Resilience;
 
-public class RetryPolicyOptionsTests
+public class RetryPolicyOptionsTests : ReliabilityTestBase
 {
+    public RetryPolicyOptionsTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void DefaultsAreExpected()
     {

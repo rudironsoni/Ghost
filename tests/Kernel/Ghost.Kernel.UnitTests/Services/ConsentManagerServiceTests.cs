@@ -2,16 +2,22 @@ using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.ConsentManagement;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Kernel.UnitTests.Services;
 
-public sealed class ConsentManagerServiceTests
+public sealed class ConsentManagerServiceTests : ReliabilityTestBase
 {
+    public ConsentManagerServiceTests(ITestOutputHelper output) : base(output)
+    {
+    }
+
     private static ConsentManagerService CreateService(ILogger<ConsentManagerService>? logger = null)
     {
         return new ConsentManagerService(logger ?? NullLogger<ConsentManagerService>.Instance);

@@ -2,11 +2,15 @@ using Ghost.Consent;
 using Microsoft.Playwright;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Consent;
 
-public class ShadowDOMHelperTests
+public class ShadowDOMHelperTests : ReliabilityTestBase
 {
+    public ShadowDOMHelperTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task FindInShadowDOMAsync_WithNullPage_ThrowsArgumentNullException()
     {

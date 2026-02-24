@@ -1,10 +1,14 @@
 using Ghost.Consent;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Consent;
 
-public class CMPDatabaseTests
+public class CMPDatabaseTests : ReliabilityTestBase
 {
+    public CMPDatabaseTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void GetAllConfigs_ReturnsNonEmptyList()
     {

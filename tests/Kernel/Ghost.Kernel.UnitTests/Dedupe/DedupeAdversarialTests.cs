@@ -3,12 +3,16 @@ using Ghost.Sdk.Deduplication;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Utilities;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Tests.Dedupe;
 
 [Trait("Category", "Unit")]
-public class DedupeAdversarialTests
+public class DedupeAdversarialTests : ReliabilityTestBase
 {
+    public DedupeAdversarialTests(ITestOutputHelper output) : base(output) { }
+
     private readonly DeduplicationService _dedupeService = new();
 
     #region Redirect Chain Tests

@@ -8,15 +8,31 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.ProxyConfiguration;
 using Ghost.ProxyManagement;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Kernel.UnitTests.Services;
 
-public sealed class ProxyHealthIntelligenceTests : IDisposable
+public sealed class ProxyHealthIntelligenceTests : ReliabilityTestBase, IAsyncLifetime
 {
+    public ProxyHealthIntelligenceTests(ITestOutputHelper output) : base(output)
+    {
+    }
+
+    public override async Task InitializeAsync()
+    {
+        await base.InitializeAsync();
+    }
+
+    public override async Task DisposeAsync()
+    {
+        await base.DisposeAsync();
+    }
+
     private static ProxyHealthIntelligence CreateIntelligence(
         IEnumerable<IProxySource>? sources = null,
         IOptions<ProxySystemOptions>? options = null,
@@ -46,11 +62,6 @@ public sealed class ProxyHealthIntelligenceTests : IDisposable
     private static ProxyInfo CreateProxy(string server, string? username = null, string? password = null)
     {
         return new ProxyInfo(server, username, password);
-    }
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
     }
 
     #region Constructor Tests
