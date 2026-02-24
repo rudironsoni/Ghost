@@ -131,9 +131,11 @@ public class GoogleJobsScraper
                 };
             }
         }
-        catch { }
-
-        return null;
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to parse JSON-LD job: {ex.Message}");
+            return null;
+        }
     }
 
     private static string? ExtractJsonValue(string json, string key)
@@ -186,7 +188,10 @@ public class GoogleJobsScraper
                             if (jobs.Count >= maxResults) break;
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to extract job from HTML node: {ex.Message}");
+                    }
                 }
 
                 if (jobs.Count > 0) break;
@@ -216,7 +221,11 @@ public class GoogleJobsScraper
                 };
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to extract job from node: {ex.Message}");
+            return null;
+        }
 
         return null;
     }

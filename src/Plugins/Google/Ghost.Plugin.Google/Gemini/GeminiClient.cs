@@ -42,7 +42,7 @@ public sealed partial class GeminiClient : Ghost.Contracts.Inference.IInferenceC
         try
         {
             await page.NavigateAsync(_options.BaseUrl, ct: ct).ConfigureAwait(false);
-            try { await page.WaitForSelectorAsync("textarea", ct: ct).ConfigureAwait(false); } catch { }
+            try { await page.WaitForSelectorAsync("textarea", ct: ct).ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Wait for textarea selector failed: {ex.Message}"); }
 
             string prompt = string.Join("\n", request.Messages.Select(m => m.Content));
             await page.TypeAsync("textarea", prompt, ct: ct).ConfigureAwait(false);
@@ -74,7 +74,7 @@ public sealed partial class GeminiClient : Ghost.Contracts.Inference.IInferenceC
         }
         finally
         {
-            try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+            try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to dispose page: {ex.Message}"); }
         }
     }
 }

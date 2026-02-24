@@ -132,17 +132,17 @@ public sealed class IPv6Rotator : IDisposable
     public async Task<string> GetRandomAddressAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        return await GetRandomAddressWithRetryAsync(cancellationToken, 0).ConfigureAwait(false);
+        return await GetRandomAddressWithRetryAsync(0, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
     /// Generates a random IPv6 address with retry limit to prevent infinite recursion.
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token.</param>
     /// <param name="retryCount">Current retry count.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A random IPv6 address string.</returns>
     /// <exception cref="InvalidOperationException">Thrown when all retry attempts are exhausted.</exception>
-    private async Task<string> GetRandomAddressWithRetryAsync(CancellationToken cancellationToken, int retryCount)
+    private async Task<string> GetRandomAddressWithRetryAsync(int retryCount, CancellationToken cancellationToken)
     {
         if (retryCount >= _maxRetries)
         {
@@ -176,7 +176,7 @@ public sealed class IPv6Rotator : IDisposable
                 if (!isHealthy)
                 {
                     // Retry with different address (limited retries to prevent stack overflow)
-                    return await GetRandomAddressWithRetryAsync(cancellationToken, retryCount + 1).ConfigureAwait(false);
+                    return await GetRandomAddressWithRetryAsync(retryCount + 1, cancellationToken).ConfigureAwait(false);
                 }
             }
 
