@@ -90,7 +90,7 @@ public sealed class MouseMimicry
     /// Generates a random control point for the Bezier curve.
     /// The control point is offset from the midpoint to create a natural curve.
     /// </summary>
-    private (float x, float y) GetRandomControlPoint(
+    private static (float x, float y) GetRandomControlPoint(
         float startX,
         float startY,
         float endX,

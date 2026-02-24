@@ -96,8 +96,9 @@ public sealed class GoogleJobsBrowserClient
 
             await page.EvaluateAsync<string>(script, null, ct).ConfigureAwait(false);
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Failed to inject consent cookies: {ex.Message}");
         }
     }
 
@@ -140,7 +141,10 @@ public sealed class GoogleJobsBrowserClient
                 {
                     await page.EvaluateAsync<string>("(ua) => { try { Object.defineProperty(navigator, 'userAgent', {get: () => ua}); return 'ok'; } catch(e) { return 'err'; } }", ua, ct).ConfigureAwait(false);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to set user agent via primary evaluate: {ex.Message}");
+                }
 
                 // also try to patch navigator.userAgent in-page (best-effort)
                 try
@@ -148,9 +152,15 @@ public sealed class GoogleJobsBrowserClient
                     // fallback: evaluate a basic userAgent override without cancellation token
                     await page.EvaluateAsync<string>("() => { try { Object.defineProperty(navigator, 'userAgent', {get: () => '" + ua + "'}); return 'ok'; } catch(e) { return 'err'; } }", null, ct).ConfigureAwait(false);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to set user agent via fallback evaluate: {ex.Message}");
+                }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to rotate user agent: {ex.Message}");
+            }
 
             s_logNavigating(_logger, url, null);
 
@@ -227,8 +237,9 @@ public sealed class GoogleJobsBrowserClient
                    html.Contains("Reject all", StringComparison.OrdinalIgnoreCase) ||
                    html.Contains("Accept all", StringComparison.OrdinalIgnoreCase);
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Consent page detection failed: {ex.Message}");
             return false;
         }
     }
@@ -264,7 +275,10 @@ public sealed class GoogleJobsBrowserClient
                         return true;
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to click reject button: {ex.Message}");
+                }
             }
 
             // Strategy 2: Customize -> Confirm
@@ -300,11 +314,17 @@ public sealed class GoogleJobsBrowserClient
                                     return true;
                                 }
                             }
-                            catch { }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Failed to click confirm button: {ex.Message}");
+                            }
                         }
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to handle customize flow: {ex.Message}");
+                }
             }
 
             // Strategy 3: Search for any negative/decline textual button
@@ -327,7 +347,10 @@ public sealed class GoogleJobsBrowserClient
                         }
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to click negative button: {ex.Message}");
+                }
             }
 
             // Strategy 4: Try keyboard navigation (tab -> enter)
@@ -354,7 +377,10 @@ public sealed class GoogleJobsBrowserClient
                     if (!still) return true;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to click button via script: {ex.Message}");
+            }
 
             // Strategy 5: Try setting a consent cookie (best-effort) and reload
             try
@@ -369,12 +395,16 @@ public sealed class GoogleJobsBrowserClient
                 bool still2 = await IsConsentPageAsync(page, ct).ConfigureAwait(false);
                 if (!still2) return true;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to set consent cookie and reload: {ex.Message}");
+            }
 
             return false;
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"HandleConsentPageAsync failed: {ex.Message}");
             return false;
         }
     }
@@ -387,7 +417,10 @@ public sealed class GoogleJobsBrowserClient
             await Task.Delay(ms, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException) { throw; }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Delay was cancelled: {ex.Message}");
+        }
     }
 
     private static async Task SimulateGlobalMouseMovementAsync(IPage page, CancellationToken ct)
@@ -409,7 +442,10 @@ public sealed class GoogleJobsBrowserClient
             await page.EvaluateAsync<string>(script, null, ct).ConfigureAwait(false);
             await RandomDelayAsync(40, 160, ct).ConfigureAwait(false);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Mouse movement simulation failed: {ex.Message}");
+        }
     }
 
     private static async Task<bool> RetryAsync(Func<Task<bool>> action, int maxAttempts, CancellationToken ct)
@@ -424,11 +460,14 @@ public sealed class GoogleJobsBrowserClient
                 bool ok = await action().ConfigureAwait(false);
                 if (ok) return true;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Retry action failed: {ex.Message}");
+            }
 
             attempt++;
             int delay = backoff * (int)Math.Pow(2, attempt - 1);
-            try { await Task.Delay(delay + Random.Shared.Next(0, 200), ct).ConfigureAwait(false); } catch { }
+            try { await Task.Delay(delay + Random.Shared.Next(0, 200), ct).ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Retry delay was cancelled: {ex.Message}"); }
         }
 
         return false;
@@ -464,7 +503,10 @@ public sealed class GoogleJobsBrowserClient
                             return;
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Query for job listings failed: {ex.Message}");
+                    }
                 }
 
                 await Task.Delay(500, ct).ConfigureAwait(false);
@@ -474,8 +516,9 @@ public sealed class GoogleJobsBrowserClient
         {
             throw;
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"WaitForJobListingsAsync failed: {ex.Message}");
         }
     }
 
@@ -532,10 +575,16 @@ public sealed class GoogleJobsBrowserClient
                         jobs.Add(job);
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to extract job from DOM element: {ex.Message}");
+                }
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ExtractJobsFromDomAsync failed: {ex.Message}");
+        }
 
         return jobs;
     }
@@ -636,8 +685,9 @@ public sealed class GoogleJobsBrowserClient
                 Url = $"https://www.google.com/search?q={Uri.EscapeDataString(title)}+{Uri.EscapeDataString(company ?? "")}&ibp=htl;jobs&udm=8&pws=0"
             };
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Failed to extract job from element: {ex.Message}");
             return null;
         }
     }

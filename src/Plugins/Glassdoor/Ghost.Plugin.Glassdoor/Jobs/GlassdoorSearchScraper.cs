@@ -686,7 +686,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                             return extractedJobs;
                         }
                     }
-                    catch { }
+                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to parse JSON from script tag: {ex.Message}"); }
                 }
             }
 
@@ -762,7 +762,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                                 });
                             }
                         }
-                        catch { }
+                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to extract job from HTML regex: {ex.Message}"); }
                     }
 
                     if (jobs.Count > 0)
@@ -829,7 +829,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                 }
             }
         }
-        catch { }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to enumerate JSON array: {ex.Message}"); }
 
         return jobs;
     }
@@ -890,7 +890,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                 };
             }
         }
-        catch { }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to extract job from JSON element: {ex.Message}"); }
 
         return null;
     }
@@ -908,7 +908,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                         return str;
                 }
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to get JSON property value: {ex.Message}"); }
         }
         return null;
     }
