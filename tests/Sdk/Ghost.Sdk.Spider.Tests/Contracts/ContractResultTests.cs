@@ -1,14 +1,17 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Contracts;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Contracts;
 
 /// <summary>
 /// Unit tests for <see cref="ContractResult"/>.
 /// </summary>
-public class ContractResultTests
+public class ContractResultTests : ReliabilityTestBase
 {
+    public ContractResultTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     [Trait("Category", "Unit")]
     public void Constructor_SetsContractNameAndPassed()

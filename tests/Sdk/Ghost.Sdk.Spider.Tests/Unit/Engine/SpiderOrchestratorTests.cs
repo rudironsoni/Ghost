@@ -4,14 +4,17 @@ using Ghost.Sdk.Spider.Tests.TestHelpers;
 using Moq;
 using Xunit;
 using SpiderExecutionContext = Ghost.Sdk.Spider.Engine.ExecutionContext;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 
 /// <summary>
 /// Tests for spider orchestration and coordination
 /// </summary>
-public class SpiderOrchestratorTests
+public class SpiderOrchestratorTests : ReliabilityTestBase
 {
+    public SpiderOrchestratorTests(ITestOutputHelper output) : base(output) { }
     private Mock<ISpiderEngine> _mockEngine;
     private SpiderOptions _options;
 

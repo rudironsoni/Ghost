@@ -3,11 +3,14 @@ using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Compilation;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline;
 
-public class PipelineExecutionTests
+public class PipelineExecutionTests : ReliabilityTestBase
 {
+    public PipelineExecutionTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task Build_WithMultipleMiddleware_ExecutesInOrder()
     {

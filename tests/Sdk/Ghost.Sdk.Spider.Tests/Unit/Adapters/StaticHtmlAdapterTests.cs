@@ -157,6 +157,8 @@ public class StaticHtmlAdapterTests : IDisposable
 
         var request = TestData.CreateRequest($"{_server.Url}/long");
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
         // Act
         var response = await _adapter.ExtractAsync(request, cts.Token);

@@ -2,11 +2,14 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Entities;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Entities;
 
-public class EntityBaseTests
+public class EntityBaseTests : ReliabilityTestBase
 {
+    public EntityBaseTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void GetMetadata_ShouldReturnEntityMetadata()
     {

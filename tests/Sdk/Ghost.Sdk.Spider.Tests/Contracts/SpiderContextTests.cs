@@ -2,14 +2,17 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Contracts;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Contracts;
 
 /// <summary>
 /// Unit tests for <see cref="SpiderContext"/>.
 /// </summary>
-public class SpiderContextTests
+public class SpiderContextTests : ReliabilityTestBase
 {
+    public SpiderContextTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     [Trait("Category", "Unit")]
     public void SpiderId_DefaultValue_IsEmptyString()

@@ -7,8 +7,9 @@ namespace Ghost.Sdk.Spider.Tests.Contracts;
 /// <summary>
 /// Unit tests for <see cref="MinItemsContract"/>.
 /// </summary>
-public class MinItemsContractTests
+public class MinItemsContractTests : ReliabilityTestBase
 {
+    public MinItemsContractTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     [Trait("Category", "Unit")]
     public void Name_ReturnsExpectedValue()
@@ -147,6 +148,8 @@ public class MinItemsContractTests
         var contract = new MinItemsContract { MinItems = 10 };
         var context = new SpiderContext { ItemCount = 15 };
         using var cts = new CancellationTokenSource();
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
         // Act
         var result = await contract.ValidateAsync(context, cts.Token);

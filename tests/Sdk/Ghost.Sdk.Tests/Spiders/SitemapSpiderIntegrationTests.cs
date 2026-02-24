@@ -1,6 +1,8 @@
 using FluentAssertions;
 using Ghost.Sdk.Spiders;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Spiders;
 
@@ -8,8 +10,9 @@ namespace Ghost.Sdk.Tests.Spiders;
 /// Integration tests for the <see cref="SitemapSpider"/> class.
 /// </summary>
 [Trait("Category", "Integration")]
-public class SitemapSpiderIntegrationTests
+public class SitemapSpiderIntegrationTests : ReliabilityTestBase
 {
+    public SitemapSpiderIntegrationTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task ParseSitemapAsync_WithRealWorldSitemap_ParsesSuccessfully()
     {

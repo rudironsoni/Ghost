@@ -1,14 +1,17 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Configuration.Models;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Configuration;
 
 /// <summary>
 /// Complex validation tests for configuration edge cases
 /// </summary>
-public class ComplexValidationTests
+public class ComplexValidationTests : ReliabilityTestBase
 {
+    public ComplexValidationTests(ITestOutputHelper output) : base(output) { }
     private static readonly string[] ExpectedFieldNames = new[] { "Name", "Price", "Description" };
     
     [Fact]

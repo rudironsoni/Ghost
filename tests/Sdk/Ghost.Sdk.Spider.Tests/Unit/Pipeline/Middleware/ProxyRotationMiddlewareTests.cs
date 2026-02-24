@@ -4,12 +4,15 @@ using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Ghost.Sdk.Spider.Pipeline.Middleware;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline.Middleware;
 
 
-public class ProxyRotationMiddlewareTests
+public class ProxyRotationMiddlewareTests : ReliabilityTestBase
 {
+    public ProxyRotationMiddlewareTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
     {

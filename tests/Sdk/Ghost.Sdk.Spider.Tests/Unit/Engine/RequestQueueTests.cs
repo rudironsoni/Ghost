@@ -3,6 +3,8 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Engine.Queue;
 using Ghost.Testing;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 
@@ -10,8 +12,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 /// Comprehensive tests for request queue implementations.
 /// </summary>
 [Trait("Category", TestCategories.Unit)]
-public class RequestQueueTests
+public class RequestQueueTests : ReliabilityTestBase
 {
+    public RequestQueueTests(ITestOutputHelper output) : base(output) { }
     #region InMemoryRequestQueue Tests (Additional to existing)
 
     [Fact]

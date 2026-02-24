@@ -3,12 +3,15 @@ using Ghost.Sdk.Extensions;
 using Ghost.Sdk.Spider.Contracts;
 using Moq;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Extensions;
 
 [Trait("Category", "Unit")]
-public class CloseSpiderExtensionTests
+public class CloseSpiderExtensionTests : ReliabilityTestBase
 {
+    public CloseSpiderExtensionTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task ShouldCloseAsync_WithNoConditions_ReturnsFalse()
     {

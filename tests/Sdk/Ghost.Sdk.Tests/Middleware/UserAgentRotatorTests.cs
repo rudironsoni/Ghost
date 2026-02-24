@@ -1,11 +1,14 @@
 using FluentAssertions;
 using Ghost.Sdk.Middleware;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Middleware;
 
-public class UserAgentRotatorTests
+public class UserAgentRotatorTests : ReliabilityTestBase
 {
+    public UserAgentRotatorTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Constructor_InitializesWithDefaultUserAgents()
     {

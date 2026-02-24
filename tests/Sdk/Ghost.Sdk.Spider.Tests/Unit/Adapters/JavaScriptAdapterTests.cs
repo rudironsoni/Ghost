@@ -11,8 +11,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 /// <summary>
 /// Comprehensive tests for JavaScriptAdapter covering browser automation scenarios.
 /// </summary>
-public class JavaScriptAdapterTests
+public class JavaScriptAdapterTests : ReliabilityTestBase
 {
+    public JavaScriptAdapterTests(ITestOutputHelper output) : base(output) { }
     private readonly Mock<ILogger<JavaScriptAdapter>> _mockLogger;
 
     public JavaScriptAdapterTests()
@@ -223,6 +224,8 @@ public class JavaScriptAdapterTests
         var adapter = new JavaScriptAdapter(_mockLogger.Object);
         var request = new Request("https://example.com");
         using var cts = new CancellationTokenSource();
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
         // Act
         var result = await adapter.CanHandleAsync(request, cts.Token);

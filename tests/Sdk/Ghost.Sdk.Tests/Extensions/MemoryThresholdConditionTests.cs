@@ -2,12 +2,15 @@ using FluentAssertions;
 using Ghost.Sdk.Extensions;
 using Ghost.Sdk.Spider.Contracts;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Extensions;
 
 [Trait("Category", "Unit")]
-public class MemoryThresholdConditionTests
+public class MemoryThresholdConditionTests : ReliabilityTestBase
 {
+    public MemoryThresholdConditionTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task IsMetAsync_WhenMemoryBelowThreshold_ReturnsFalse()
     {

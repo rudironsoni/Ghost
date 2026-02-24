@@ -2,12 +2,15 @@ using FluentAssertions;
 using Ghost.Sdk.Deduplication;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Deduplication;
 
 [Trait("Category", "Unit")]
-public class RequestFingerprinterTests
+public class RequestFingerprinterTests : ReliabilityTestBase
 {
+    public RequestFingerprinterTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void CreateFingerprint_WithSameUrl_ReturnsSameFingerprint()
     {

@@ -1,14 +1,17 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.GraphQL;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Comprehensive tests for GraphQL request and response models.
 /// </summary>
-public class GraphQLModelsTests
+public class GraphQLModelsTests : ReliabilityTestBase
 {
+    public GraphQLModelsTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void GraphQLRequest_DefaultConstructor_ShouldInitialize()
     {

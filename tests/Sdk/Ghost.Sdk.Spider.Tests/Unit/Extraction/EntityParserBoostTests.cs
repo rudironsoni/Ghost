@@ -2,14 +2,17 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 
 /// <summary>
 /// Additional comprehensive tests for EntityParser to boost coverage to 80%.
 /// </summary>
-public class EntityParserBoostTests
+public class EntityParserBoostTests : ReliabilityTestBase
 {
+    public EntityParserBoostTests(ITestOutputHelper output) : base(output) { }
 
     [Fact]
     public static void Parse_WithNullContent_ShouldReturnEmptyList()

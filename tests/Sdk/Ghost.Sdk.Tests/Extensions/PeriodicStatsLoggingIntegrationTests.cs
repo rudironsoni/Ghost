@@ -5,19 +5,18 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
 using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Sdk.Tests.Extensions;
 
 [Trait("Category", "Integration")]
-public class PeriodicStatsLoggingIntegrationTests
+public class PeriodicStatsLoggingIntegrationTests : ReliabilityTestBase
 {
-    private readonly ITestOutputHelper _output;
     private readonly ILogger<PeriodicStatsLogging> _logger;
     private readonly FakeTimeProvider _timeProvider;
 
-    public PeriodicStatsLoggingIntegrationTests(ITestOutputHelper output)
+    public PeriodicStatsLoggingIntegrationTests(ITestOutputHelper output) : base(output)
     {
-        _output = output;
         _logger = new TestLogger<PeriodicStatsLogging>(output);
         _timeProvider = new FakeTimeProvider();
     }

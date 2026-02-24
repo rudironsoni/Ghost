@@ -2,12 +2,15 @@ using FluentAssertions;
 using Ghost.Sdk.Extensions;
 using Ghost.Sdk.Spider.Contracts;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Extensions;
 
 [Trait("Category", "Unit")]
-public class MaxPagesConditionTests
+public class MaxPagesConditionTests : ReliabilityTestBase
 {
+    public MaxPagesConditionTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task IsMetAsync_WhenRequestCountBelowMax_ReturnsFalse()
     {

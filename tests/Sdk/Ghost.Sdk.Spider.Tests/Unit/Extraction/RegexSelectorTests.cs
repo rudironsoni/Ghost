@@ -2,11 +2,14 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Extraction.Selectors;
 using Xunit;
 using System.Text.RegularExpressions;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 
-public class RegexSelectorTests
+public class RegexSelectorTests : ReliabilityTestBase
 {
+    public RegexSelectorTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public static void Select_WithPattern_ShouldReturnMatches()
     {

@@ -4,14 +4,17 @@ using Ghost.Sdk.Spider.Tests.TestHelpers;
 using Moq;
 using Xunit;
 using System.Collections.Concurrent;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 
 /// <summary>
 /// Tests for parallel execution capabilities
 /// </summary>
-public class ParallelExecutionTests
+public class ParallelExecutionTests : ReliabilityTestBase
 {
+    public ParallelExecutionTests(ITestOutputHelper output) : base(output) { }
     private Mock<ISpiderEngine> _mockEngine;
 
     public ParallelExecutionTests()

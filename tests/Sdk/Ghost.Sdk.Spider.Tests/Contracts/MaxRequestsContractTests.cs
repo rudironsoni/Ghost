@@ -7,8 +7,9 @@ namespace Ghost.Sdk.Spider.Tests.Contracts;
 /// <summary>
 /// Unit tests for <see cref="MaxRequestsContract"/>.
 /// </summary>
-public class MaxRequestsContractTests
+public class MaxRequestsContractTests : ReliabilityTestBase
 {
+    public MaxRequestsContractTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     [Trait("Category", "Unit")]
     public void Name_ReturnsExpectedValue()
@@ -129,6 +130,8 @@ public class MaxRequestsContractTests
         var contract = new MaxRequestsContract { MaxRequests = 100 };
         var context = new SpiderContext { RequestCount = 50 };
         using var cts = new CancellationTokenSource();
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
         // Act
         var result = await contract.ValidateAsync(context, cts.Token);

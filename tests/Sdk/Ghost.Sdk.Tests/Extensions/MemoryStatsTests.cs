@@ -1,12 +1,15 @@
 using FluentAssertions;
 using Ghost.Sdk.Extensions;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Extensions;
 
 [Trait("Category", "Unit")]
-public class MemoryStatsTests
+public class MemoryStatsTests : ReliabilityTestBase
 {
+    public MemoryStatsTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void UsagePercent_WithValidValues_CalculatesCorrectly()
     {

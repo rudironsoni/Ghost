@@ -7,8 +7,9 @@ namespace Ghost.Sdk.Spider.Tests.Contracts;
 /// <summary>
 /// Unit tests for <see cref="MaxDurationContract"/>.
 /// </summary>
-public class MaxDurationContractTests
+public class MaxDurationContractTests : ReliabilityTestBase
 {
+    public MaxDurationContractTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     [Trait("Category", "Unit")]
     public void Name_ReturnsExpectedValue()
@@ -129,6 +130,8 @@ public class MaxDurationContractTests
         var contract = new MaxDurationContract { MaxDuration = TimeSpan.FromMinutes(10) };
         var context = new SpiderContext { StartTime = DateTimeOffset.UtcNow.AddMinutes(-5) };
         using var cts = new CancellationTokenSource();
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
         // Act
         var result = await contract.ValidateAsync(context, cts.Token);

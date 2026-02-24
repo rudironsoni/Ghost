@@ -7,8 +7,9 @@ namespace Ghost.Sdk.Spider.Tests.Contracts;
 /// <summary>
 /// Unit tests for <see cref="ContractValidator"/>.
 /// </summary>
-public class ContractValidatorTests
+public class ContractValidatorTests : ReliabilityTestBase
 {
+    public ContractValidatorTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     [Trait("Category", "Unit")]
     public void AddContract_WithValidContract_IncreasesContractCount()
@@ -174,6 +175,8 @@ public class ContractValidatorTests
         validator.AddContract(new MaxRequestsContract { MaxRequests = 100 });
         var context = new SpiderContext { RequestCount = 50 };
         using var cts = new CancellationTokenSource();
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
         // Act
         var result = await validator.ValidateAllAsync(context, cts.Token);

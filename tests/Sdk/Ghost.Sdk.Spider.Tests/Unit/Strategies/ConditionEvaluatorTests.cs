@@ -1,11 +1,14 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Strategies;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Strategies;
 
-public class ConditionEvaluatorTests
+public class ConditionEvaluatorTests : ReliabilityTestBase
 {
+    public ConditionEvaluatorTests(ITestOutputHelper output) : base(output) { }
     private readonly ConditionEvaluator _evaluator;
 
     public ConditionEvaluatorTests()

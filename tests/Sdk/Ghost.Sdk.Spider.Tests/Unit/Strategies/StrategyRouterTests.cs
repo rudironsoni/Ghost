@@ -2,11 +2,14 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Strategies;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Strategies;
 
-public class StrategyRouterTests
+public class StrategyRouterTests : ReliabilityTestBase
 {
+    public StrategyRouterTests(ITestOutputHelper output) : base(output) { }
     private readonly StrategyRouter _router;
 
     public StrategyRouterTests()

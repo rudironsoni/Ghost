@@ -3,14 +3,17 @@ using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Xunit;
 using System.Net.Http;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Comprehensive tests for HttpRequestBuilder class.
 /// </summary>
-public class HttpRequestBuilderTests
+public class HttpRequestBuilderTests : ReliabilityTestBase
 {
+    public HttpRequestBuilderTests(ITestOutputHelper output) : base(output) { }
     private readonly StaticHtmlAdapterOptions _options;
 
     public HttpRequestBuilderTests()

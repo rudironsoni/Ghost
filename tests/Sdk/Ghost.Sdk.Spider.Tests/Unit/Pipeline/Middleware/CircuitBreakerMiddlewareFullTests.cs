@@ -6,14 +6,17 @@ using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Ghost.Sdk.Spider.Pipeline.Middleware;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline.Middleware;
 
 /// <summary>
 /// Comprehensive tests for CircuitBreakerMiddleware covering edge cases and state transitions.
 /// </summary>
-public class CircuitBreakerMiddlewareFullTests
+public class CircuitBreakerMiddlewareFullTests : ReliabilityTestBase
 {
+    public CircuitBreakerMiddlewareFullTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Constructor_WithTimeSpanTimeout_ShouldInitialize()
     {

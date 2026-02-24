@@ -1,14 +1,17 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Storage.Contracts;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
 /// <summary>
 /// Additional comprehensive tests for Storage Pipeline to boost coverage.
 /// </summary>
-public class StoragePipelineFullTests
+public class StoragePipelineFullTests : ReliabilityTestBase
 {
+    public StoragePipelineFullTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task Pipeline_WithNullItem_ShouldHandleGracefully()
     {

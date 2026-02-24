@@ -7,14 +7,17 @@ using Moq;
 using Newtonsoft.Json;
 using Xunit;
 using System.Net;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Unit tests for GraphQL pagination functionality.
 /// </summary>
-public class GraphQLPaginationTests
+public class GraphQLPaginationTests : ReliabilityTestBase
 {
+    public GraphQLPaginationTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void GraphQLRequest_ShouldSerializeCorrectly()
     {

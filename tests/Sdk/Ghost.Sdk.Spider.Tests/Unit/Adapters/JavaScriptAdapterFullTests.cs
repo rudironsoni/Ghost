@@ -4,14 +4,17 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Additional comprehensive tests for JavaScriptAdapter covering edge cases and error scenarios.
 /// </summary>
-public class JavaScriptAdapterFullTests
+public class JavaScriptAdapterFullTests : ReliabilityTestBase
 {
+    public JavaScriptAdapterFullTests(ITestOutputHelper output) : base(output) { }
     private readonly Mock<ILogger<JavaScriptAdapter>> _mockLogger;
 
     public JavaScriptAdapterFullTests()

@@ -2,14 +2,17 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
 
 /// <summary>
 /// Comprehensive tests for AdapterRegistry covering registration and discovery.
 /// </summary>
-public class AdapterRegistryTests
+public class AdapterRegistryTests : ReliabilityTestBase
 {
+    public AdapterRegistryTests(ITestOutputHelper output) : base(output) { }
     private readonly AdapterRegistry _registry;
 
     public AdapterRegistryTests()

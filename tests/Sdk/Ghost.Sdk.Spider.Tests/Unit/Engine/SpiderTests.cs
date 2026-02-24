@@ -3,11 +3,14 @@ using Ghost.Sdk.Spider.Engine;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
 using Xunit;
 using SpiderExecutionContext = Ghost.Sdk.Spider.Engine.ExecutionContext;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 
-public class SpiderTests
+public class SpiderTests : ReliabilityTestBase
 {
+    public SpiderTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void GetStartUrls_ShouldReturnConfiguredUrls()
     {

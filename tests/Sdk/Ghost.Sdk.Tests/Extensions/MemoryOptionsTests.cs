@@ -1,12 +1,15 @@
 using FluentAssertions;
 using Ghost.Sdk.Extensions;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Extensions;
 
 [Trait("Category", "Unit")]
-public class MemoryOptionsTests
+public class MemoryOptionsTests : ReliabilityTestBase
 {
+    public MemoryOptionsTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Constructor_UsesDefaultMaxMemoryBytes()
     {

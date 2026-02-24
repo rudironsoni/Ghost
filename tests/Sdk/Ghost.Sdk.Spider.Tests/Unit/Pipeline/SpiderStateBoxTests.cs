@@ -1,11 +1,14 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Pipeline;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline;
 
-public class SpiderStateBoxTests
+public class SpiderStateBoxTests : ReliabilityTestBase
 {
+    public SpiderStateBoxTests(ITestOutputHelper output) : base(output) { }
     private readonly SpiderStateBox _stateBox;
 
     public SpiderStateBoxTests()

@@ -3,12 +3,15 @@ using Ghost.Sdk.Deduplication;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Moq;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Deduplication;
 
 [Trait("Category", "Unit")]
-public class RFPDupeFilterTests
+public class RFPDupeFilterTests : ReliabilityTestBase
 {
+    public RFPDupeFilterTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task IsDuplicateAsync_WithRequest_DelegatesToStorage()
     {

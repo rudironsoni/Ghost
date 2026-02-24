@@ -624,6 +624,7 @@ public class WebSocketAdapterTests : IDisposable
         await Assert.ThrowsAsync<TimeoutException>(async () =>
         {
             using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
+using Ghost.Testing.Reliability;
             await connection.ReceiveAsync(cts.Token);
         });
 

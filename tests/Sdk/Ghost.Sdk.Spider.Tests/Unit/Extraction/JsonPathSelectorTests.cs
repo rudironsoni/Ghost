@@ -2,11 +2,14 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Extraction.Selectors;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 
-public class JsonPathSelectorTests
+public class JsonPathSelectorTests : ReliabilityTestBase
 {
+    public JsonPathSelectorTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public static void Select_WithSimplePath_ShouldReturnValue()
     {

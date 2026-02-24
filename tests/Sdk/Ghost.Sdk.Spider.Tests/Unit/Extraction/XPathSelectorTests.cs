@@ -1,11 +1,14 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Extraction.Selectors;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Extraction;
 
-public class XPathSelectorTests
+public class XPathSelectorTests : ReliabilityTestBase
 {
+    public XPathSelectorTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Select_WithValidXPath_ShouldReturnMatches()
     {

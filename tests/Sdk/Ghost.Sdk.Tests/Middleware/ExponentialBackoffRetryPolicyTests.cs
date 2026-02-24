@@ -1,6 +1,8 @@
 using FluentAssertions;
 using Ghost.Sdk.Middleware;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Middleware;
 
@@ -8,8 +10,9 @@ namespace Ghost.Sdk.Tests.Middleware;
 /// Unit tests for ExponentialBackoffRetryPolicy.
 /// </summary>
 [Trait("Category", "Unit")]
-public class ExponentialBackoffRetryPolicyTests
+public class ExponentialBackoffRetryPolicyTests : ReliabilityTestBase
 {
+    public ExponentialBackoffRetryPolicyTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void Constructor_WithNullOptions_ThrowsArgumentNullException()
     {

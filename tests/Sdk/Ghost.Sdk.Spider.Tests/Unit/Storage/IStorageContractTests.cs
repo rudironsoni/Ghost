@@ -1,6 +1,8 @@
 using FluentAssertions;
 using Ghost.Sdk.Spider.Storage.Contracts;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
@@ -8,8 +10,9 @@ namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 /// Contract tests for IStorage implementations.
 /// These tests ensure all storage implementations follow the interface contract.
 /// </summary>
-public class IStorageContractTests
+public class IStorageContractTests : ReliabilityTestBase
 {
+    public IStorageContractTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public static async Task MockStorage_ShouldImplementIStorage()
     {

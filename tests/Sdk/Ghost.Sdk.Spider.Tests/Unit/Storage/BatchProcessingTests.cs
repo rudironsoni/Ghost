@@ -5,14 +5,17 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 using System.Collections.Concurrent;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Storage;
 
 /// <summary>
 /// Tests for batch processing edge cases and performance scenarios
 /// </summary>
-public class BatchProcessingTests
+public class BatchProcessingTests : ReliabilityTestBase
 {
+    public BatchProcessingTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task BatchProcessing_WithConcurrentBatches_ShouldHandleThreadSafely()
     {

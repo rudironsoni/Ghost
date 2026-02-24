@@ -4,11 +4,14 @@ using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Ghost.Sdk.Spider.Pipeline.Middleware;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline.Middleware;
 
-public class RateLimitMiddlewareTests
+public class RateLimitMiddlewareTests : ReliabilityTestBase
 {
+    public RateLimitMiddlewareTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task InvokeAsync_WithinLimit_ShouldExecuteImmediately()
     {

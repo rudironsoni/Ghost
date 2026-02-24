@@ -2,11 +2,14 @@ using FluentAssertions;
 using Ghost.Sdk.Spider.Core.Extraction;
 using Ghost.Sdk.Spider.Tests.TestHelpers;
 using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Entities;
 
-public class EntityParserTests
+public class EntityParserTests : ReliabilityTestBase
 {
+    public EntityParserTests(ITestOutputHelper output) : base(output) { }
 
     [Fact]
     public async Task Parse_WithXPathSelector_ShouldExtractEntities()

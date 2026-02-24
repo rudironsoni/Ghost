@@ -5,14 +5,17 @@ using Xunit;
 using System.Collections.Concurrent;
 using System.Globalization;
 using SpiderExecutionContext = Ghost.Sdk.Spider.Engine.ExecutionContext;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Engine;
 
 /// <summary>
 /// Comprehensive tests for ExecutionContext.
 /// </summary>
-public class ExecutionContextTests
+public class ExecutionContextTests : ReliabilityTestBase
 {
+    public ExecutionContextTests(ITestOutputHelper output) : base(output) { }
     private SpiderExecutionContext _context;
     private SpiderOptions _options;
 
