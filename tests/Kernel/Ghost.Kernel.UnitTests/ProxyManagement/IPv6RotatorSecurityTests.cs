@@ -1,8 +1,8 @@
-using Ghost.Testing.Reliability;
 using System;
 using System.Reflection;
 using FluentAssertions;
 using Ghost.Kernel.ProxyManagement;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Xunit.Abstractions;
@@ -236,7 +236,7 @@ public class IPv6RotatorSecurityTests : ReliabilityTestBase
     public void ValidateIPv6Address_WithValidAddress_ShouldNotThrowArgumentException(string validAddress)
     {
         // Arrange
-        var method = typeof(IPv6Rotator).GetMethod("ValidateIPv6Address", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        MethodInfo? method = typeof(IPv6Rotator).GetMethod("ValidateIPv6Address", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
         // Act
         Action act = () => method?.Invoke(null, new[] { validAddress });
@@ -266,7 +266,7 @@ public class IPv6RotatorSecurityTests : ReliabilityTestBase
         var rotator = new IPv6Rotator(options, NullLogger<IPv6Rotator>.Instance);
 
         // Act - Use reflection to call the private ValidateIPv6Address method
-        var method = typeof(IPv6Rotator).GetMethod("ValidateIPv6Address", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        MethodInfo? method = typeof(IPv6Rotator).GetMethod("ValidateIPv6Address", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         Action act = () => method?.Invoke(null, new[] { maliciousAddress });
 
         // Assert
@@ -280,7 +280,7 @@ public class IPv6RotatorSecurityTests : ReliabilityTestBase
     public void ValidateIPv6Address_WithValidAddress_ShouldNotThrow(string validAddress)
     {
         // Arrange
-        var method = typeof(IPv6Rotator).GetMethod("ValidateIPv6Address", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        MethodInfo? method = typeof(IPv6Rotator).GetMethod("ValidateIPv6Address", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
         // Act
         Action act = () => method?.Invoke(null, new[] { validAddress });
@@ -306,7 +306,7 @@ public class IPv6RotatorSecurityTests : ReliabilityTestBase
     public void ValidateInterfaceName_WithValidInterface_ShouldNotThrow(string validInterface)
     {
         // Arrange
-        var method = typeof(IPv6Rotator).GetMethod("ValidateInterfaceName", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        MethodInfo? method = typeof(IPv6Rotator).GetMethod("ValidateInterfaceName", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
         // Act
         Action act = () => method?.Invoke(null, new[] { validInterface });
@@ -331,7 +331,7 @@ public class IPv6RotatorSecurityTests : ReliabilityTestBase
     public void ValidateInterfaceName_WithCommandInjectionCharacters_ShouldThrowArgumentException(string maliciousInterface)
     {
         // Arrange
-        var method = typeof(IPv6Rotator).GetMethod("ValidateInterfaceName", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        MethodInfo? method = typeof(IPv6Rotator).GetMethod("ValidateInterfaceName", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
         // Act
         Action act = () => method?.Invoke(null, new[] { maliciousInterface });
@@ -351,7 +351,7 @@ public class IPv6RotatorSecurityTests : ReliabilityTestBase
     public void ValidateIPv6PrefixForSecurity_WithValidPrefix_ShouldNotThrow(string validPrefix)
     {
         // Arrange
-        var method = typeof(IPv6Rotator).GetMethod("ValidateIPv6PrefixForSecurity", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        MethodInfo? method = typeof(IPv6Rotator).GetMethod("ValidateIPv6PrefixForSecurity", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
         // Act
         Action act = () => method?.Invoke(null, new[] { validPrefix });
@@ -377,7 +377,7 @@ public class IPv6RotatorSecurityTests : ReliabilityTestBase
     public void ValidateIPv6PrefixForSecurity_WithMaliciousPatterns_ShouldThrowArgumentException(string maliciousPrefix)
     {
         // Arrange
-        var method = typeof(IPv6Rotator).GetMethod("ValidateIPv6PrefixForSecurity", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        MethodInfo? method = typeof(IPv6Rotator).GetMethod("ValidateIPv6PrefixForSecurity", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
         // Act
         Action act = () => method?.Invoke(null, new[] { maliciousPrefix });
@@ -392,7 +392,7 @@ public class IPv6RotatorSecurityTests : ReliabilityTestBase
     public void ValidateIPv6PrefixForSecurity_WithNonHexCharacters_ShouldThrowArgumentException(string invalidPrefix)
     {
         // Arrange - Characters outside valid hex range (g-z, G-Z)
-        var method = typeof(IPv6Rotator).GetMethod("ValidateIPv6PrefixForSecurity", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        MethodInfo? method = typeof(IPv6Rotator).GetMethod("ValidateIPv6PrefixForSecurity", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
         // Act
         Action act = () => method?.Invoke(null, new[] { invalidPrefix });

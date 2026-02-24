@@ -1,9 +1,9 @@
 using Ghost.ProxyConfiguration;
 using Ghost.ProxyManagement;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Xunit.Abstractions;
-using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.UnitTests.ProxyManagement;
 

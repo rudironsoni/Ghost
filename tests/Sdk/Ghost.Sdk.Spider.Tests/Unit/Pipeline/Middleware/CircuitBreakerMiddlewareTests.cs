@@ -3,9 +3,9 @@ using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Pipeline;
 using Ghost.Sdk.Spider.Pipeline.Contracts;
 using Ghost.Sdk.Spider.Pipeline.Middleware;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
-using Ghost.Testing.Reliability;
 using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Spider.Tests.Unit.Pipeline.Middleware;

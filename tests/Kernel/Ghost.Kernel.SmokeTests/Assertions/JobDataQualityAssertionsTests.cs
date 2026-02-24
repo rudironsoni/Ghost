@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Smoke.Tests.Assertions;
 
-public class JobDataQualityAssertionsTests
+public class JobDataQualityAssertionsTests : ReliabilityTestBase
 {
+    public JobDataQualityAssertionsTests(ITestOutputHelper output) : base(output) { }
+
     private static readonly DateTimeOffset RecentDate = DateTimeOffset.UtcNow.AddDays(-10);
     private static readonly DateTimeOffset OldDate = DateTimeOffset.UtcNow.AddDays(-100);
 

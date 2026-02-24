@@ -294,20 +294,20 @@ public class TieredBrowserPoolTests : ReliabilityTestBase, IAsyncLifetime
             .Select(_ => new TaskCompletionSource())
             .ToList();
 
-        var acquisitionTasks = holdSignals.Select(async tcs =>
+        Task[] acquisitionTasks = holdSignals.Select(async tcs =>
         {
             IBrowserSession session = await pool.AcquireBrowserAsync(Tier.Cold);
             await tcs.Task;
             await pool.ReturnBrowserAsync(session);
         }).ToArray();
 
-        var health = await WaitForHealthStateAsync(pool, h => h.Cold.InUse == maxConcurrent);
+        PoolHealth health = await WaitForHealthStateAsync(pool, h => h.Cold.InUse == maxConcurrent);
         Assert.Equal(maxConcurrent, health.Cold.InUse);
 
         var extraTcs = new TaskCompletionSource<IBrowserSession>();
         var extraTask = Task.Run(async () =>
         {
-            var session = await pool.AcquireBrowserAsync(Tier.Cold);
+            IBrowserSession session = await pool.AcquireBrowserAsync(Tier.Cold);
             extraTcs.SetResult(session);
             await pool.ReturnBrowserAsync(session);
         });
@@ -317,10 +317,10 @@ public class TieredBrowserPoolTests : ReliabilityTestBase, IAsyncLifetime
 
         holdSignals[0].SetResult();
 
-        await using var extraSession = await extraTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await using IBrowserSession extraSession = await extraTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
         Assert.NotNull(extraSession);
 
-        foreach (var tcs in holdSignals.Skip(1))
+        foreach (TaskCompletionSource? tcs in holdSignals.Skip(1))
         {
             tcs.SetResult();
         }
@@ -333,11 +333,11 @@ public class TieredBrowserPoolTests : ReliabilityTestBase, IAsyncLifetime
         TimeSpan timeout)
     {
         using var cts = new CancellationTokenSource(timeout);
-        var deadline = DateTime.UtcNow.Add(timeout);
+        DateTime deadline = DateTime.UtcNow.Add(timeout);
 
         while (DateTime.UtcNow < deadline)
         {
-            var health = await pool.GetHealthAsync();
+            PoolHealth health = await pool.GetHealthAsync();
             if (health.Hot.Total >= 2 && health.Warm.Total >= 3)
             {
                 return;
@@ -357,11 +357,11 @@ public class TieredBrowserPoolTests : ReliabilityTestBase, IAsyncLifetime
     {
         timeout ??= TimeSpan.FromSeconds(5);
         using var cts = new CancellationTokenSource(timeout.Value);
-        var deadline = DateTime.UtcNow.Add(timeout.Value);
+        DateTime deadline = DateTime.UtcNow.Add(timeout.Value);
 
         while (DateTime.UtcNow < deadline)
         {
-            var health = await pool.GetHealthAsync();
+            PoolHealth health = await pool.GetHealthAsync();
             if (predicate(health))
             {
                 return health;

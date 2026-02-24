@@ -60,17 +60,6 @@ public class ScrollScenarioTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Waits for the job count to be at least the specified minimum.
-    /// </summary>
-    private static async Task WaitForJobCountAsync(IPage page, int minCount, CancellationToken ct = default)
-    {
-        await WaitForConditionAsync(
-            page,
-            $"() => document.querySelectorAll('.job').length >= {minCount}",
-            ct);
-    }
-
-    /// <summary>
     /// Polls for a JavaScript condition to return true using Playwright's EvaluateAsync.
     /// </summary>
     [SlopwatchSuppress("SW004", "Browser integration test requires real delays for polling JavaScript conditions")]

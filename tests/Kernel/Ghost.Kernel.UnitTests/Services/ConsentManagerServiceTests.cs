@@ -48,7 +48,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public void Constructor_WithLogger_CreatesInstance()
     {
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         service.Should().NotBeNull();
     }
 
@@ -56,7 +56,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     public void Constructor_WithCustomLogger_CreatesInstance()
     {
         var logger = new Mock<ILogger<ConsentManagerService>>();
-        var service = CreateService(logger.Object);
+        ConsentManagerService service = CreateService(logger.Object);
         service.Should().NotBeNull();
     }
 
@@ -67,11 +67,11 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_NoBannerDetected_ReturnsFalse()
     {
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object);
 
         result.Should().BeFalse();
@@ -80,11 +80,11 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_AllSelectorsNull_ReturnsFalse()
     {
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeFalse();
@@ -93,7 +93,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_NullPage_ThrowsArgumentNullException()
     {
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
 
         Func<Task> act = async () => await service.HandleConsentAsync(null!);
         await act.Should().ThrowAsync<ArgumentNullException>();
@@ -106,10 +106,10 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_GoogleFundingChoices_DetectedAndAccepted_ReturnsTrue()
     {
-        var mockButton = CreateMockElement(isVisible: true, isEnabled: true);
+        Mock<IElement> mockButton = CreateMockElement(isVisible: true, isEnabled: true);
         mockButton.Setup(x => x.ClickAsync()).Returns(Task.CompletedTask);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         var sequence = new MockSequence();
 
         mockPage.InSequence(sequence)
@@ -120,7 +120,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
             .Setup(x => x.QuerySelectorAsync(".fc-cta-consent"))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeTrue();
@@ -130,13 +130,13 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_GoogleFundingChoices_ButtonNotVisible_SkipsToNext()
     {
-        var mockHiddenButton = CreateMockElement(isVisible: false, isEnabled: true);
+        Mock<IElement> mockHiddenButton = CreateMockElement(isVisible: false, isEnabled: true);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(".fc-cta-consent"))
             .ReturnsAsync(mockHiddenButton.Object);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeFalse();
@@ -145,13 +145,13 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_GoogleFundingChoices_ButtonDisabled_DoesNotClick()
     {
-        var mockDisabledButton = CreateMockElement(isVisible: true, isEnabled: false);
+        Mock<IElement> mockDisabledButton = CreateMockElement(isVisible: true, isEnabled: false);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(".fc-cta-consent"))
             .ReturnsAsync(mockDisabledButton.Object);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeFalse();
@@ -163,13 +163,13 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [InlineData("[aria-label*='consent' i]")]
     public async Task HandleConsentAsync_DetectsGoogleFundingChoicesSelectors(string selector)
     {
-        var mockElement = CreateMockElement(isVisible: true);
+        Mock<IElement> mockElement = CreateMockElement(isVisible: true);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(selector))
             .ReturnsAsync(mockElement.Object);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         mockPage.Verify(x => x.QuerySelectorAsync(selector), Times.AtLeastOnce);
@@ -182,10 +182,10 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_OneTrust_DetectedAndAccepted_ReturnsTrue()
     {
-        var mockButton = CreateMockElement(isVisible: true, isEnabled: true);
+        Mock<IElement> mockButton = CreateMockElement(isVisible: true, isEnabled: true);
         mockButton.Setup(x => x.ClickAsync()).Returns(Task.CompletedTask);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.SetupSequence(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync((IElement?)null)
             .ReturnsAsync((IElement?)null)
@@ -193,7 +193,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
             .ReturnsAsync(mockButton.Object)
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeTrue();
@@ -203,13 +203,13 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_OneTrust_AcceptButtonDisabled_Skips()
     {
-        var mockDisabledButton = CreateMockElement(isVisible: true, isEnabled: false);
+        Mock<IElement> mockDisabledButton = CreateMockElement(isVisible: true, isEnabled: false);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeFalse();
@@ -221,13 +221,13 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [InlineData("[class*='onetrust']")]
     public async Task HandleConsentAsync_DetectsOneTrustSelectors(string selector)
     {
-        var mockElement = CreateMockElement(isVisible: true);
+        Mock<IElement> mockElement = CreateMockElement(isVisible: true);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(selector))
             .ReturnsAsync(mockElement.Object);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         mockPage.Verify(x => x.QuerySelectorAsync(selector), Times.AtLeastOnce);
@@ -236,13 +236,13 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_OneTrustOptanon_Detected()
     {
-        var mockElement = CreateMockElement(isVisible: true);
+        Mock<IElement> mockElement = CreateMockElement(isVisible: true);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync("#optanon-root"))
             .ReturnsAsync(mockElement.Object);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         mockPage.Verify(x => x.QuerySelectorAsync("#optanon-root"), Times.AtLeastOnce);
@@ -255,17 +255,17 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_CookieBot_DetectedAndAccepted_ReturnsTrue()
     {
-        var mockButton = CreateMockElement(isVisible: true, isEnabled: true);
+        Mock<IElement> mockButton = CreateMockElement(isVisible: true, isEnabled: true);
         mockButton.Setup(x => x.ClickAsync()).Returns(Task.CompletedTask);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         // CookieBot selectors are checked after other selectors
         // First return the button for detection/click, then null to indicate banner disappeared
         mockPage.SetupSequence(x => x.QuerySelectorAsync("#CybotCookiebotDialog"))
             .ReturnsAsync(mockButton.Object)
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeTrue();
@@ -276,13 +276,13 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [InlineData("[data-cybot]")]
     public async Task HandleConsentAsync_DetectsCookieBotSelectors(string selector)
     {
-        var mockElement = CreateMockElement(isVisible: true);
+        Mock<IElement> mockElement = CreateMockElement(isVisible: true);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(selector))
             .ReturnsAsync(mockElement.Object);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         mockPage.Verify(x => x.QuerySelectorAsync(selector), Times.AtLeastOnce);
@@ -297,13 +297,13 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [InlineData("#sp_message")]
     public async Task HandleConsentAsync_DetectsSourcepointSelectors(string selector)
     {
-        var mockElement = CreateMockElement(isVisible: true);
+        Mock<IElement> mockElement = CreateMockElement(isVisible: true);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(selector))
             .ReturnsAsync(mockElement.Object);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         mockPage.Verify(x => x.QuerySelectorAsync(selector), Times.AtLeastOnce);
@@ -318,13 +318,13 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [InlineData("[data-testid='uc-accept-all-button']")]
     public async Task HandleConsentAsync_DetectsUserCentricsSelectors(string selector)
     {
-        var mockElement = CreateMockElement(isVisible: true);
+        Mock<IElement> mockElement = CreateMockElement(isVisible: true);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(selector))
             .ReturnsAsync(mockElement.Object);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         mockPage.Verify(x => x.QuerySelectorAsync(selector), Times.AtLeastOnce);
@@ -339,13 +339,13 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [InlineData("[id*='qc-cmp']")]
     public async Task HandleConsentAsync_DetectsQuantcastSelectors(string selector)
     {
-        var mockElement = CreateMockElement(isVisible: true);
+        Mock<IElement> mockElement = CreateMockElement(isVisible: true);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(selector))
             .ReturnsAsync(mockElement.Object);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         mockPage.Verify(x => x.QuerySelectorAsync(selector), Times.AtLeastOnce);
@@ -360,13 +360,13 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [InlineData(".didomi-popup")]
     public async Task HandleConsentAsync_DetectsDidomiSelectors(string selector)
     {
-        var mockElement = CreateMockElement(isVisible: true);
+        Mock<IElement> mockElement = CreateMockElement(isVisible: true);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(selector))
             .ReturnsAsync(mockElement.Object);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         mockPage.Verify(x => x.QuerySelectorAsync(selector), Times.AtLeastOnce);
@@ -381,13 +381,13 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [InlineData("#cookiefirst")]
     public async Task HandleConsentAsync_DetectsCookieFirstSelectors(string selector)
     {
-        var mockElement = CreateMockElement(isVisible: true);
+        Mock<IElement> mockElement = CreateMockElement(isVisible: true);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(selector))
             .ReturnsAsync(mockElement.Object);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         mockPage.Verify(x => x.QuerySelectorAsync(selector), Times.AtLeastOnce);
@@ -402,13 +402,13 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [InlineData("#osano-cm")]
     public async Task HandleConsentAsync_DetectsOsanoSelectors(string selector)
     {
-        var mockElement = CreateMockElement(isVisible: true);
+        Mock<IElement> mockElement = CreateMockElement(isVisible: true);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(selector))
             .ReturnsAsync(mockElement.Object);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         mockPage.Verify(x => x.QuerySelectorAsync(selector), Times.AtLeastOnce);
@@ -421,10 +421,10 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_ClickThrowsException_FallsBackToEvaluate()
     {
-        var mockButton = CreateMockElement(isVisible: true, isEnabled: true);
+        Mock<IElement> mockButton = CreateMockElement(isVisible: true, isEnabled: true);
         mockButton.Setup(x => x.ClickAsync()).ThrowsAsync(new InvalidOperationException("Click failed"));
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.SetupSequence(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync(mockButton.Object)
             .ReturnsAsync((IElement?)null);
@@ -432,7 +432,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
         mockPage.Setup(x => x.EvaluateAsync<object>(It.IsAny<string>()))
             .ReturnsAsync(new object());
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeTrue();
@@ -442,10 +442,10 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_ClickAndEvaluateFail_StillReturnsTrue()
     {
-        var mockButton = CreateMockElement(isVisible: true, isEnabled: true);
+        Mock<IElement> mockButton = CreateMockElement(isVisible: true, isEnabled: true);
         mockButton.Setup(x => x.ClickAsync()).ThrowsAsync(new InvalidOperationException("Click failed"));
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.SetupSequence(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync(mockButton.Object)
             .ReturnsAsync((IElement?)null);
@@ -453,7 +453,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
         mockPage.Setup(x => x.EvaluateAsync<object>(It.IsAny<string>()))
             .ReturnsAsync(new object());
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeTrue();
@@ -468,7 +468,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     {
         var mockFrame = new Mock<IElement>();
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         // Use callback to return frame on first call to any iframe selector, null on subsequent calls
         int iframeCallCount = 0;
         mockPage.Setup(x => x.QuerySelectorAsync(It.Is<string>(s =>
@@ -488,7 +488,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
         mockPage.Setup(x => x.EvaluateAsync<bool>(It.IsAny<string>()))
             .ReturnsAsync(true);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeTrue();
@@ -499,14 +499,14 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     {
         var mockFrame = new Mock<IElement>();
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.Is<string>(s => s.Contains("iframe"))))
             .ReturnsAsync(mockFrame.Object);
 
         mockPage.Setup(x => x.EvaluateAsync<bool>(It.IsAny<string>()))
             .ReturnsAsync(false);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeFalse();
@@ -517,14 +517,14 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     {
         var mockFrame = new Mock<IElement>();
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.Is<string>(s => s.Contains("iframe"))))
             .ReturnsAsync(mockFrame.Object);
 
         mockPage.Setup(x => x.EvaluateAsync<bool>(It.IsAny<string>()))
             .ThrowsAsync(new InvalidOperationException("Evaluate failed"));
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeFalse();
@@ -537,11 +537,11 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_DetectionThrowsException_ContinuesToNextManager()
     {
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ThrowsAsync(new InvalidOperationException("Selector error"));
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeFalse();
@@ -550,7 +550,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_IsVisibleThrowsException_ContinuesToNextSelector()
     {
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
 
         var mockFailingElement = new Mock<IElement>();
         mockFailingElement.Setup(x => x.IsVisibleAsync()).ThrowsAsync(new InvalidOperationException("Visibility check failed"));
@@ -559,7 +559,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
             .ReturnsAsync(mockFailingElement.Object)
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeFalse();
@@ -568,7 +568,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_IsEnabledThrowsException_ContinuesToNextSelector()
     {
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
 
         var mockFailingElement = new Mock<IElement>();
         mockFailingElement.Setup(x => x.IsVisibleAsync()).ReturnsAsync(true);
@@ -578,7 +578,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
             .ReturnsAsync(mockFailingElement.Object)
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeFalse();
@@ -587,10 +587,10 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_QuerySelectorThrowsOnBannerCheck_Continues()
     {
-        var mockButton = CreateMockElement(isVisible: true, isEnabled: true);
+        Mock<IElement> mockButton = CreateMockElement(isVisible: true, isEnabled: true);
         mockButton.Setup(x => x.ClickAsync()).Returns(Task.CompletedTask);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         var callCount = 0;
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync(() =>
@@ -600,7 +600,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
                 throw new InvalidOperationException("Query failed");
             });
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeTrue();
@@ -613,10 +613,10 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task WaitAndHandleConsentAsync_BannerAppearsWithinTimeout_ReturnsTrue()
     {
-        var mockButton = CreateMockElement(isVisible: true, isEnabled: true);
+        Mock<IElement> mockButton = CreateMockElement(isVisible: true, isEnabled: true);
         mockButton.Setup(x => x.ClickAsync()).Returns(Task.CompletedTask);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         // First returns null (no banner), then returns button (banner appears)
         mockPage.SetupSequence(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync((IElement?)null)
@@ -624,7 +624,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
             .ReturnsAsync(mockButton.Object)
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.WaitAndHandleConsentAsync(mockPage.Object, maxWaitMs: 500, checkIntervalMs: 100);
 
         result.Should().BeTrue();
@@ -633,11 +633,11 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task WaitAndHandleConsentAsync_BannerNeverAppears_ReturnsFalse()
     {
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.WaitAndHandleConsentAsync(mockPage.Object, maxWaitMs: 100, checkIntervalMs: 50);
 
         result.Should().BeFalse();
@@ -646,11 +646,11 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task WaitAndHandleConsentAsync_ZeroTimeout_ReturnsFalse()
     {
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.WaitAndHandleConsentAsync(mockPage.Object, maxWaitMs: 0, checkIntervalMs: 10);
 
         result.Should().BeFalse();
@@ -659,11 +659,11 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task WaitAndHandleConsentAsync_NegativeTimeout_ReturnsFalse()
     {
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.WaitAndHandleConsentAsync(mockPage.Object, maxWaitMs: -1, checkIntervalMs: 10);
 
         result.Should().BeFalse();
@@ -672,11 +672,11 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task WaitAndHandleConsentAsync_LargeCheckInterval_StillWorks()
     {
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.WaitAndHandleConsentAsync(mockPage.Object, maxWaitMs: 50, checkIntervalMs: 100);
 
         result.Should().BeFalse();
@@ -692,10 +692,10 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [InlineData("[class*='cookie-consent']")]
     public async Task HandleConsentAsync_DetectsGenericSelectors(string selector)
     {
-        var mockElement = CreateMockElement(isVisible: true);
+        Mock<IElement> mockElement = CreateMockElement(isVisible: true);
         mockElement.Setup(x => x.ClickAsync()).Returns(Task.CompletedTask);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         // First return the element for detection/click, then null to indicate banner disappeared
         mockPage.SetupSequence(x => x.QuerySelectorAsync(selector))
             .ReturnsAsync(mockElement.Object)
@@ -704,7 +704,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
         mockPage.Setup(x => x.QuerySelectorAsync(It.Is<string>(s => s != selector)))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeTrue();
@@ -713,10 +713,10 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_GenericAcceptButtons_AttemptsClick()
     {
-        var mockButton = CreateMockElement(isVisible: true, isEnabled: true);
+        Mock<IElement> mockButton = CreateMockElement(isVisible: true, isEnabled: true);
         mockButton.Setup(x => x.ClickAsync()).Returns(Task.CompletedTask);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         // First return the button for detection/click, then null to indicate banner disappeared
         mockPage.SetupSequence(x => x.QuerySelectorAsync("[class*='accept-all']"))
             .ReturnsAsync(mockButton.Object)
@@ -725,7 +725,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
         mockPage.Setup(x => x.QuerySelectorAsync(It.Is<string>(s => s != "[class*='accept-all']")))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeTrue();
@@ -735,15 +735,15 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_BannerStillPresentAfterClick_ReturnsFalse()
     {
-        var mockButton = CreateMockElement(isVisible: true, isEnabled: true);
+        Mock<IElement> mockButton = CreateMockElement(isVisible: true, isEnabled: true);
         mockButton.Setup(x => x.ClickAsync()).Returns(Task.CompletedTask);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         // Banner remains present after click
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync(mockButton.Object);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         // Returns false because banner still present
@@ -757,14 +757,14 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_ShortTimeout_CompletesWithinTime()
     {
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
-        var startTime = DateTime.UtcNow;
+        ConsentManagerService service = CreateService();
+        DateTime startTime = DateTime.UtcNow;
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 10);
-        var endTime = DateTime.UtcNow;
+        DateTime endTime = DateTime.UtcNow;
 
         (endTime - startTime).Should().BeLessThan(TimeSpan.FromMilliseconds(100));
     }
@@ -772,11 +772,11 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_ZeroTimeout_ProcessesImmediately()
     {
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 0);
 
         result.Should().BeFalse();
@@ -789,7 +789,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_ChecksManagersInOrder()
     {
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         var verificationList = new System.Collections.Generic.List<string>();
 
         // Use callback to track calls and return null to simulate no banner found
@@ -797,7 +797,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
             .Callback<string, CancellationToken>((selector, _) => verificationList.Add(selector))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 10);
 
         // Should check multiple consent managers in order
@@ -811,11 +811,11 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_ElementIsNull_DoesNotThrow()
     {
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
 
         Func<Task> act = async () => await service.HandleConsentAsync(mockPage.Object);
         await act.Should().NotThrowAsync();
@@ -825,11 +825,11 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     public async Task HandleConsentAsync_EmptyDetectionSelectors_SkipsManager()
     {
         // This tests internal behavior - if a manager had empty selectors
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         var result = await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         result.Should().BeFalse();
@@ -838,10 +838,10 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     [Fact]
     public async Task HandleConsentAsync_MultipleAcceptanceSelectors_TriesAll()
     {
-        var mockButton = CreateMockElement(isVisible: true, isEnabled: true);
+        Mock<IElement> mockButton = CreateMockElement(isVisible: true, isEnabled: true);
         mockButton.Setup(x => x.ClickAsync()).Returns(Task.CompletedTask);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
 
         // First selector returns null, second returns the button
         var callCount = 0;
@@ -854,7 +854,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
                        callCount == 2 ? mockButton.Object : null;
             });
 
-        var service = CreateService();
+        ConsentManagerService service = CreateService();
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         mockPage.Verify(x => x.QuerySelectorAsync(It.IsAny<string>()), Times.AtLeastOnce);
@@ -871,11 +871,11 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
         var mockLogger = new Mock<ILogger<ConsentManagerService>>();
         mockLogger.Setup(x => x.IsEnabled(LogLevel.Debug)).Returns(true);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService(mockLogger.Object);
+        ConsentManagerService service = CreateService(mockLogger.Object);
         await service.HandleConsentAsync(mockPage.Object);
 
         mockLogger.Verify(x => x.Log(
@@ -895,15 +895,15 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
         var mockLogger = new Mock<ILogger<ConsentManagerService>>();
         mockLogger.Setup(x => x.IsEnabled(LogLevel.Information)).Returns(true);
 
-        var mockButton = CreateMockElement(isVisible: true, isEnabled: true);
+        Mock<IElement> mockButton = CreateMockElement(isVisible: true, isEnabled: true);
         mockButton.Setup(x => x.ClickAsync()).Returns(Task.CompletedTask);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         mockPage.SetupSequence(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync(mockButton.Object)
             .ReturnsAsync((IElement?)null);
 
-        var service = CreateService(mockLogger.Object);
+        ConsentManagerService service = CreateService(mockLogger.Object);
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         mockLogger.Verify(x => x.Log(
@@ -923,15 +923,15 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
         var mockLogger = new Mock<ILogger<ConsentManagerService>>();
         mockLogger.Setup(x => x.IsEnabled(LogLevel.Warning)).Returns(true);
 
-        var mockButton = CreateMockElement(isVisible: true, isEnabled: true);
+        Mock<IElement> mockButton = CreateMockElement(isVisible: true, isEnabled: true);
         mockButton.Setup(x => x.ClickAsync()).Returns(Task.CompletedTask);
 
-        var mockPage = CreateMockPage();
+        Mock<IPage> mockPage = CreateMockPage();
         // Banner remains visible after click
         mockPage.Setup(x => x.QuerySelectorAsync(It.IsAny<string>()))
             .ReturnsAsync(mockButton.Object);
 
-        var service = CreateService(mockLogger.Object);
+        ConsentManagerService service = CreateService(mockLogger.Object);
         await service.HandleConsentAsync(mockPage.Object, timeoutMs: 100);
 
         mockLogger.Verify(x => x.Log(

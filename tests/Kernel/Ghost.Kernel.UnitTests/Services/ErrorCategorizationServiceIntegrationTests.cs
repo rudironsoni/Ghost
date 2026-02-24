@@ -3,9 +3,9 @@ using System.Net.Http;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Kernel.Services;
+using Ghost.Testing.Reliability;
 using Xunit;
 using Xunit.Abstractions;
-using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Tests.Services;
 

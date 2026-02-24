@@ -1,8 +1,8 @@
 using FluentAssertions;
 using Ghost.Sdk.Statistics;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
-using Ghost.Testing.Reliability;
 using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Statistics;

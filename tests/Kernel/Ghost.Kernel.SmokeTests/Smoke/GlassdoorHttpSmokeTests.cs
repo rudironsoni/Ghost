@@ -6,6 +6,7 @@ using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Smoke.Tests.Assertions;
 using Ghost.Testing.Attributes;
+using Ghost.Testing.Reliability;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -17,15 +18,13 @@ namespace Ghost.Smoke.Tests.Smoke;
 /// </summary>
 [Trait("Category", "Smoke")]
 [Trait("Plugin", "Glassdoor")]
-public class GlassdoorHttpSmokeTests : IClassFixture<GhostWebApiFixture>
+public class GlassdoorHttpSmokeTests : ReliabilityTestBase, IClassFixture<GhostWebApiFixture>
 {
     private readonly GhostWebApiFixture _fixture;
-    private readonly ITestOutputHelper _output;
 
-    public GlassdoorHttpSmokeTests(GhostWebApiFixture fixture, ITestOutputHelper output)
+    public GlassdoorHttpSmokeTests(GhostWebApiFixture fixture, ITestOutputHelper output) : base(output)
     {
         _fixture = fixture;
-        _output = output;
     }
 
     [ConditionalFact("Glassdoor")]
@@ -40,17 +39,17 @@ public class GlassdoorHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         };
 
         // Act
-        _output.WriteLine($"Searching Glassdoor via API for: {searchRequest.query}");
+        Output.WriteLine($"Searching Glassdoor via API for: {searchRequest.query}");
         List<JobListing>? results = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output);
+            Output);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
         results.Should().NotBeEmpty("search should return at least one job");
 
-        _output.WriteLine($"Found {results!.Count} jobs");
+        Output.WriteLine($"Found {results!.Count} jobs");
 
         // Validate data quality
         results.AssertRealJobResults();
@@ -63,15 +62,15 @@ public class GlassdoorHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         }
 
         // Output sample data for human verification
-        _output.WriteLine("\n=== Sample Job Data ===");
+        Output.WriteLine("\n=== Sample Job Data ===");
         JobListing sampleJob = results[0]!;
-        _output.WriteLine($"ID: {sampleJob.Id}");
-        _output.WriteLine($"Title: {sampleJob.Title}");
-        _output.WriteLine($"Company: {sampleJob.Company}");
-        _output.WriteLine($"Location: {sampleJob.Location}");
-        _output.WriteLine($"URL: {sampleJob.Url}");
-        _output.WriteLine($"Posted: {sampleJob.PostedAt:yyyy-MM-dd}");
-        _output.WriteLine($"Source: {sampleJob.Source}");
+        Output.WriteLine($"ID: {sampleJob.Id}");
+        Output.WriteLine($"Title: {sampleJob.Title}");
+        Output.WriteLine($"Company: {sampleJob.Company}");
+        Output.WriteLine($"Location: {sampleJob.Location}");
+        Output.WriteLine($"URL: {sampleJob.Url}");
+        Output.WriteLine($"Posted: {sampleJob.PostedAt:yyyy-MM-dd}");
+        Output.WriteLine($"Source: {sampleJob.Source}");
     }
 
     [ConditionalFact("Glassdoor")]
@@ -87,17 +86,17 @@ public class GlassdoorHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         };
 
         // Act
-        _output.WriteLine($"Searching Glassdoor via API for: {searchRequest.query} in {searchRequest.location}");
+        Output.WriteLine($"Searching Glassdoor via API for: {searchRequest.query} in {searchRequest.location}");
         List<JobListing>? results = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output);
+            Output);
 
         // Assert
         results.Should().NotBeNull("search results should not be null");
         results.Should().NotBeEmpty("search should return at least one job");
 
-        _output.WriteLine($"Found {results!.Count} jobs");
+        Output.WriteLine($"Found {results!.Count} jobs");
 
         // Validate data quality
         results.AssertRealJobResults();
@@ -108,10 +107,10 @@ public class GlassdoorHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         jobsWithLocation.Should().NotBeEmpty("at least some jobs should have location information");
 
         // Output sample locations for human verification
-        _output.WriteLine("\n=== Sample Locations ===");
+        Output.WriteLine("\n=== Sample Locations ===");
         foreach (JobListing? job in results.Take(3))
         {
-            _output.WriteLine($"{job.Title} at {job.Company}: {job.Location ?? "No location"}");
+            Output.WriteLine($"{job.Title} at {job.Company}: {job.Location ?? "No location"}");
         }
     }
 
@@ -130,15 +129,15 @@ public class GlassdoorHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         List<JobListing>? searchResults = await _fixture.PostAsync<object, List<JobListing>>(
             "/api/jobs/search",
             searchRequest,
-            _output);
+            Output);
 
         searchResults.Should().NotBeEmpty("need at least one job to test details endpoint");
 
         string jobId = searchResults![0].Id;
-        _output.WriteLine($"Testing GetJobDetails for job ID: {jobId}");
+        Output.WriteLine($"Testing GetJobDetails for job ID: {jobId}");
 
         // Act
-        JobListing? jobDetails = await _fixture.GetAsync<JobListing>($"/api/jobs/{jobId}", _output);
+        JobListing? jobDetails = await _fixture.GetAsync<JobListing>($"/api/jobs/{jobId}", Output);
 
         // Assert
         jobDetails.Should().NotBeNull("job details should not be null");
@@ -151,17 +150,17 @@ public class GlassdoorHttpSmokeTests : IClassFixture<GhostWebApiFixture>
         jobDetails.AssertUrlReachable();
 
         // Output detailed job information
-        _output.WriteLine("\n=== Job Details ===");
-        _output.WriteLine($"ID: {jobDetails.Id}");
-        _output.WriteLine($"Title: {jobDetails.Title}");
-        _output.WriteLine($"Company: {jobDetails.Company}");
-        _output.WriteLine($"Location: {jobDetails.Location}");
-        _output.WriteLine($"URL: {jobDetails.Url}");
-        _output.WriteLine($"Posted: {jobDetails.PostedAt:yyyy-MM-dd}");
-        _output.WriteLine($"Description Length: {jobDetails.Description?.Length ?? 0} characters");
-        _output.WriteLine($"Job Type: {jobDetails.JobType}");
-        _output.WriteLine($"Experience Level: {jobDetails.ExperienceLevel}");
-        _output.WriteLine($"Easy Apply: {jobDetails.IsEasyApply}");
-        _output.WriteLine($"Salary: {jobDetails.Salary ?? "Not specified"}");
+        Output.WriteLine("\n=== Job Details ===");
+        Output.WriteLine($"ID: {jobDetails.Id}");
+        Output.WriteLine($"Title: {jobDetails.Title}");
+        Output.WriteLine($"Company: {jobDetails.Company}");
+        Output.WriteLine($"Location: {jobDetails.Location}");
+        Output.WriteLine($"URL: {jobDetails.Url}");
+        Output.WriteLine($"Posted: {jobDetails.PostedAt:yyyy-MM-dd}");
+        Output.WriteLine($"Description Length: {jobDetails.Description?.Length ?? 0} characters");
+        Output.WriteLine($"Job Type: {jobDetails.JobType}");
+        Output.WriteLine($"Experience Level: {jobDetails.ExperienceLevel}");
+        Output.WriteLine($"Easy Apply: {jobDetails.IsEasyApply}");
+        Output.WriteLine($"Salary: {jobDetails.Salary ?? "Not specified"}");
     }
 }

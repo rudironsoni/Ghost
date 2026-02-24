@@ -1,4 +1,3 @@
-using Ghost.Testing.Reliability;
 using System;
 using System;
 using System.Net;
@@ -7,6 +6,7 @@ using System.Net.Sockets;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Proxy;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Xunit.Abstractions;

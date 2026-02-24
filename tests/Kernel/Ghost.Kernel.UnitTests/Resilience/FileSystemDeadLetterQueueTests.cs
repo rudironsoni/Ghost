@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Resilience;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Xunit.Abstractions;
-using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Tests.Resilience;
 

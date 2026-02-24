@@ -1,9 +1,9 @@
 using Ghost.Consent;
+using Ghost.Testing.Reliability;
 using Microsoft.Playwright;
 using Moq;
 using Xunit;
 using Xunit.Abstractions;
-using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Consent;
 

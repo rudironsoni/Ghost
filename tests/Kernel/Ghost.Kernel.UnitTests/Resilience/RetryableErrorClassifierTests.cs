@@ -4,9 +4,9 @@ using System.Net.Http;
 using System.Text.Json;
 using FluentAssertions;
 using Ghost.Resilience;
+using Ghost.Testing.Reliability;
 using Xunit;
 using Xunit.Abstractions;
-using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Resilience;
 

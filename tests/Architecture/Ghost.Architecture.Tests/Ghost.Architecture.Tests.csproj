@@ -47,6 +47,9 @@
     <ProjectReference Include="../../../src/Sdk/Ghost.Sdk/Ghost.Sdk.csproj" />
     <ProjectReference Include="../../../src/Sdk/Ghost.Sdk.Spider/Ghost.Sdk.Spider.csproj" />
 
+    <!-- Testing -->
+    <ProjectReference Include="../../Shared/Ghost.Testing/Ghost.Testing.csproj" />
+
     <!-- Plugins -->
     <ProjectReference Include="../../../src/Plugins/Indeed/Ghost.Plugin.Indeed/Ghost.Plugin.Indeed.csproj" />
     <ProjectReference Include="../../../src/Plugins/LinkedIn/Ghost.Plugin.LinkedIn/Ghost.Plugin.LinkedIn.csproj" />

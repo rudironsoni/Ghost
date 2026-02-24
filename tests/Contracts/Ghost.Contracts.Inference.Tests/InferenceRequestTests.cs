@@ -1,12 +1,15 @@
 using System;
 using FluentAssertions;
 using Ghost.Contracts.Inference;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Contracts.Inference.Tests;
 
-public class InferenceRequestTests
+public class InferenceRequestTests : ReliabilityTestBase
 {
+    public InferenceRequestTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public void DefaultsAreExpected()
     {

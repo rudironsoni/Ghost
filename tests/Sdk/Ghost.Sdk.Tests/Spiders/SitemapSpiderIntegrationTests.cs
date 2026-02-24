@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Ghost.Sdk.Spiders;
-using Xunit;
 using Ghost.Testing.Reliability;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace Ghost.Sdk.Tests.Spiders;

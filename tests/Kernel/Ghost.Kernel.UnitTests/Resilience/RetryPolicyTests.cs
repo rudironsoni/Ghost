@@ -2,9 +2,9 @@ using System.Diagnostics;
 using System.Net.Http;
 using FluentAssertions;
 using Ghost.Resilience;
+using Ghost.Testing.Reliability;
 using Xunit;
 using Xunit.Abstractions;
-using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Resilience;
 

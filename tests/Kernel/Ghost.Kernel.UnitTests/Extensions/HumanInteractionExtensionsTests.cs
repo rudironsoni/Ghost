@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost;
 using Ghost.Extensions;
+using Ghost.Testing.Reliability;
 using Moq;
 using Xunit;
 using Xunit.Abstractions;
-using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Extensions;
 

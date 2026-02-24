@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Kernel.Services;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Xunit.Abstractions;
-using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Tests.Services;
 

@@ -1,8 +1,8 @@
 using Ghost.Resilience;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
 using Xunit.Abstractions;
-using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Tests;
 
@@ -17,7 +17,7 @@ public class CircuitBreakerTests : ReliabilityTestBase
         var result = await breaker.ExecuteAsync(() => Task.FromResult(42));
         Assert.Equal(42, result);
         Assert.Equal(CircuitState.Closed, breaker.State);
-        var metrics = breaker.GetMetrics();
+        CircuitBreakerMetrics metrics = breaker.GetMetrics();
         Assert.Equal(1, metrics.SuccessCount);
     }
 
@@ -48,7 +48,7 @@ public class CircuitBreakerTests : ReliabilityTestBase
         });
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => breaker.ExecuteAsync<int>(() => throw new InvalidOperationException()));
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => breaker.ExecuteAsync(() => Task.FromResult(1)));
+        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(() => breaker.ExecuteAsync(() => Task.FromResult(1)));
         Assert.Contains("open", exception.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(CircuitState.Open, breaker.State);
     }
@@ -108,9 +108,9 @@ public class CircuitBreakerTests : ReliabilityTestBase
         fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(30));
 
         var gate = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var firstAttempt = breaker.ExecuteAsync(() => gate.Task);
+        Task<int> firstAttempt = breaker.ExecuteAsync(() => gate.Task);
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => breaker.ExecuteAsync(() => Task.FromResult(4)));
+        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(() => breaker.ExecuteAsync(() => Task.FromResult(4)));
         Assert.Contains("open", exception.Message, StringComparison.OrdinalIgnoreCase);
 
         gate.SetResult(3);
@@ -139,7 +139,7 @@ public class CircuitBreakerTests : ReliabilityTestBase
     public void GetMetricsReturnsSnapshot()
     {
         var breaker = new CircuitBreaker("Test", new CircuitBreakerOptions());
-        var metrics = breaker.GetMetrics();
+        CircuitBreakerMetrics metrics = breaker.GetMetrics();
         Assert.Equal(0, metrics.FailureCount);
         Assert.Equal(0, metrics.SuccessCount);
         Assert.True(metrics.TimeInCurrentState >= TimeSpan.Zero);
@@ -158,7 +158,7 @@ public class CircuitBreakerTests : ReliabilityTestBase
         await Assert.ThrowsAsync<InvalidOperationException>(() => breaker.ExecuteAsync<int>(() => throw new InvalidOperationException()));
         await breaker.ExecuteAsync(() => Task.FromResult(1));
 
-        var metrics = breaker.GetMetrics();
+        CircuitBreakerMetrics metrics = breaker.GetMetrics();
         Assert.Equal(1, metrics.FailureCount);
         Assert.Equal(1, metrics.SuccessCount);
         Assert.NotEqual(DateTime.MinValue, metrics.LastFailure);
@@ -191,9 +191,9 @@ public class CircuitBreakerTests : ReliabilityTestBase
     [Fact]
     public void FactoryMethodsCreateConfiguredInstances()
     {
-        var linkedIn = CircuitBreaker.CreateForLinkedIn();
-        var indeed = CircuitBreaker.CreateForIndeed();
-        var proxy = CircuitBreaker.CreateForProxy();
+        ICircuitBreaker linkedIn = CircuitBreaker.CreateForLinkedIn();
+        ICircuitBreaker indeed = CircuitBreaker.CreateForIndeed();
+        ICircuitBreaker proxy = CircuitBreaker.CreateForProxy();
 
         Assert.Equal("LinkedIn", linkedIn.Platform);
         Assert.Equal("Indeed", indeed.Platform);
