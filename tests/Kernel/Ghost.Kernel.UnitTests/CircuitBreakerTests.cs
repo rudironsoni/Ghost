@@ -1,11 +1,15 @@
 using Ghost.Resilience;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Tests;
 
-public class CircuitBreakerTests
+public class CircuitBreakerTests : ReliabilityTestBase
 {
+    public CircuitBreakerTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task ExecuteAsyncAllowsSuccessInClosedState()
     {

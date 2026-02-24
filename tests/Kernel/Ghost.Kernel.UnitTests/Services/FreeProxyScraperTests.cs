@@ -7,22 +7,22 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.ProxyManagement;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Moq.Protected;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Kernel.UnitTests.Services;
 
-public sealed class FreeProxyScraperTests : IDisposable
+public sealed class FreeProxyScraperTests : ReliabilityTestBase
 {
     private readonly CancellationTokenSource _cts = new(TimeSpan.FromSeconds(30));
 
-    public void Dispose()
+    public FreeProxyScraperTests(ITestOutputHelper output) : base(output)
     {
-        _cts.Cancel();
-        _cts.Dispose();
     }
 
     private CancellationToken CancellationToken => _cts.Token;

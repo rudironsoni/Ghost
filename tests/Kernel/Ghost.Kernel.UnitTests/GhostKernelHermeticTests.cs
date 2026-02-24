@@ -2,6 +2,8 @@ using FluentAssertions;
 using Ghost.Kernel;
 using Ghost.Testing.Fakes;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Unit.Tests;
 
@@ -9,8 +11,10 @@ namespace Ghost.Kernel.Unit.Tests;
 /// Hermetic unit tests for GhostKernel functionality using StubGhostKernel.
 /// These tests run without real browsers and complete in milliseconds.
 /// </summary>
-public class GhostKernelHermeticTests
+public class GhostKernelHermeticTests : ReliabilityTestBase
 {
+    public GhostKernelHermeticTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task StubKernel_ShouldCreateSession()
     {

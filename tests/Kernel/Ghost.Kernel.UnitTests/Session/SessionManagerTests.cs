@@ -1,14 +1,17 @@
 using Ghost.Session;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Microsoft.Playwright;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Tests.Session;
 
-public sealed class SessionManagerTests
+public class SessionManagerTests : ReliabilityTestBase
 {
+    public SessionManagerTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task SaveSessionAsync_WithValidContext_SavesSession()
     {

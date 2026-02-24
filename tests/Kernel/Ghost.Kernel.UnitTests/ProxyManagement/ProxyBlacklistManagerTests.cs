@@ -2,14 +2,16 @@ using Ghost.ProxyConfiguration;
 using Ghost.ProxyManagement;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.UnitTests.ProxyManagement;
 
-public class ProxyBlacklistManagerTests
+public class ProxyBlacklistManagerTests : ReliabilityTestBase
 {
     private readonly ProxyBlacklistManager _manager;
 
-    public ProxyBlacklistManagerTests()
+    public ProxyBlacklistManagerTests(ITestOutputHelper output) : base(output)
     {
         _manager = new ProxyBlacklistManager(NullLogger<ProxyBlacklistManager>.Instance);
     }

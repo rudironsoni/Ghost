@@ -1,10 +1,14 @@
 using FluentAssertions;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Abstractions;
 
-public class ScreenshotOptionsTests
+public class ScreenshotOptionsTests : ReliabilityTestBase
 {
+    public ScreenshotOptionsTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void DefaultsAreExpected()
     {

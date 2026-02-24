@@ -4,13 +4,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.ProxyManagement;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Tests.ProxyManagement;
 
-public sealed class FreeProxyHealthCheckerTests
+public sealed class FreeProxyHealthCheckerTests : ReliabilityTestBase
 {
+    public FreeProxyHealthCheckerTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task CheckHealthAsync_WithNullProxy_ThrowsArgumentNullException()
     {

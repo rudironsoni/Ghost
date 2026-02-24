@@ -2,11 +2,15 @@ using FluentAssertions;
 using Ghost.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Extensions.Tests;
 
-public class ServiceCollectionExtensionsTests
+public class ServiceCollectionExtensionsTests : ReliabilityTestBase
 {
+    public ServiceCollectionExtensionsTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void AddGhostKernelServices_RegistersDeduplicationService()
     {

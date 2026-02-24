@@ -1,3 +1,4 @@
+using Ghost.Testing.Reliability;
 using System;
 using System;
 using System.Net;
@@ -8,14 +9,17 @@ using FluentAssertions;
 using Ghost.Proxy;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Tests.Proxy;
 
 /// <summary>
 /// Integration tests for <see cref="ProxyHealthChecker"/> covering health checks and latency measurement.
 /// </summary>
-public class ProxyHealthCheckerIntegrationTests
+public class ProxyHealthCheckerIntegrationTests : ReliabilityTestBase
 {
+    public ProxyHealthCheckerIntegrationTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task CheckAllProxiesAsyncReturnsAllStatusesWhenCredentialsMissing()
     {

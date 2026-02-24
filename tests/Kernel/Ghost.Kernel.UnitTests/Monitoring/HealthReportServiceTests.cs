@@ -1,13 +1,16 @@
 using FluentAssertions;
 using Ghost.Monitoring;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Kernel.Unit.Tests.Monitoring;
 
-public sealed class HealthReportServiceTests
+public sealed class HealthReportServiceTests : ReliabilityTestBase
 {
+    public HealthReportServiceTests(ITestOutputHelper output) : base(output) { }
     [Fact]
     public async Task BuildReportAsync_ShouldIncludePlatformAndProxyHealth()
     {

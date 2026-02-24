@@ -4,6 +4,7 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using FluentAssertions;
 using Ghost.Http;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -14,14 +15,9 @@ namespace Ghost.Kernel.Unit.Tests.Http;
 /// <summary>
 /// Security tests for HttpClientSecurityExtensions to verify TLS certificate validation cannot be bypassed accidentally.
 /// </summary>
-public class HttpClientSecurityExtensionsTests
+public class HttpClientSecurityExtensionsTests : ReliabilityTestBase
 {
-    private readonly ITestOutputHelper _output;
-
-    public HttpClientSecurityExtensionsTests(ITestOutputHelper output)
-    {
-        _output = output;
-    }
+    public HttpClientSecurityExtensionsTests(ITestOutputHelper output) : base(output) { }
     #region Configuration Tests
 
     [Fact]

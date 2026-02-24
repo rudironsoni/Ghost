@@ -5,11 +5,15 @@ using System.Text.Json;
 using FluentAssertions;
 using Ghost.Resilience;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Resilience;
 
-public class RetryableErrorClassifierTests
+public class RetryableErrorClassifierTests : ReliabilityTestBase
 {
+    public RetryableErrorClassifierTests(ITestOutputHelper output) : base(output) { }
+
     [Theory]
     [InlineData(HttpStatusCode.TooManyRequests)]
     [InlineData(HttpStatusCode.ServiceUnavailable)]

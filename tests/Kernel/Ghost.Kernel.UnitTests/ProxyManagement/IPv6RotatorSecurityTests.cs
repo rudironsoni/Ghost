@@ -1,9 +1,11 @@
+using Ghost.Testing.Reliability;
 using System;
 using System.Reflection;
 using FluentAssertions;
 using Ghost.Kernel.ProxyManagement;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Kernel.UnitTests.ProxyManagement;
 
@@ -11,8 +13,10 @@ namespace Ghost.Kernel.UnitTests.ProxyManagement;
 /// Security tests for IPv6Rotator to prevent command injection attacks.
 /// These tests verify that malicious input is properly rejected.
 /// </summary>
-public class IPv6RotatorSecurityTests
+public class IPv6RotatorSecurityTests : ReliabilityTestBase
 {
+    public IPv6RotatorSecurityTests(ITestOutputHelper output) : base(output) { }
+
     #region Constructor Security Tests
 
     [Theory]

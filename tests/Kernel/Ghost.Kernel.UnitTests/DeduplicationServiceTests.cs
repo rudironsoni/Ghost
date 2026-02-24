@@ -1,10 +1,14 @@
 using Ghost.Utilities;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Tests;
 
-public class DeduplicationServiceTests
+public class DeduplicationServiceTests : ReliabilityTestBase
 {
+    public DeduplicationServiceTests(ITestOutputHelper output) : base(output) { }
+
     private readonly DeduplicationService _svc = new();
 
     [Fact]

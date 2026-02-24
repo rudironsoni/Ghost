@@ -2,11 +2,15 @@ using Ghost.Consent;
 using Microsoft.Playwright;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Consent;
 
-public class RegionDetectorTests
+public class RegionDetectorTests : ReliabilityTestBase
 {
+    public RegionDetectorTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task DetectRegulationAsync_WithNullPage_ThrowsArgumentNullException()
     {

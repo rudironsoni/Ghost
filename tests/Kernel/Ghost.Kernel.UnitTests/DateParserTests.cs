@@ -1,10 +1,14 @@
 using Ghost.Utilities;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Tests;
 
-public class DateParserTests
+public class DateParserTests : ReliabilityTestBase
 {
+    public DateParserTests(ITestOutputHelper output) : base(output) { }
+
     private readonly DateParser _parser = new();
 
     [Fact]

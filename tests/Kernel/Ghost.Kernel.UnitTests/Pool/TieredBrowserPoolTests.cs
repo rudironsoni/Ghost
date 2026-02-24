@@ -4,20 +4,25 @@ using System.Runtime.CompilerServices;
 using Ghost.Kernel;
 using Ghost.Pool;
 using Ghost.Testing;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Tests.Pool;
 
 [Trait("Category", "Unit")]
 [SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "Async disposal handled by IAsyncLifetime")]
-public class TieredBrowserPoolTests : IAsyncLifetime
+public class TieredBrowserPoolTests : ReliabilityTestBase, IAsyncLifetime
 {
     private GhostKernel? _kernel;
     private TieredBrowserPool? _pool;
 
-    public async Task InitializeAsync()
+    public TieredBrowserPoolTests(ITestOutputHelper output) : base(output) { }
+
+    public override async Task InitializeAsync()
     {
+        await base.InitializeAsync();
         try
         {
             _kernel = await GhostKernel.CreateAsync(new KernelOptions
@@ -61,13 +66,15 @@ public class TieredBrowserPoolTests : IAsyncLifetime
         }
     }
 
-    public async Task DisposeAsync()
+    public override async Task DisposeAsync()
     {
         if (_pool != null)
             await _pool.DisposeAsync();
 
         if (_kernel != null)
             await _kernel.DisposeAsync();
+
+        await base.DisposeAsync();
     }
 
     [Fact]

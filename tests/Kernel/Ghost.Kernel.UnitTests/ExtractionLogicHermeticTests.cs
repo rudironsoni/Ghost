@@ -2,6 +2,8 @@ using FluentAssertions;
 using Ghost.Kernel;
 using Ghost.Testing.Fakes;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Unit.Tests;
 
@@ -9,8 +11,10 @@ namespace Ghost.Kernel.Unit.Tests;
 /// Hermetic unit tests demonstrating conversion from integration tests.
 /// These tests verify extraction logic without real browser dependencies.
 /// </summary>
-public class ExtractionLogicHermeticTests
+public class ExtractionLogicHermeticTests : ReliabilityTestBase
 {
+    public ExtractionLogicHermeticTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task ShouldExtractJobTitle_UsingHermeticPage()
     {

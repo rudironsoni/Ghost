@@ -3,13 +3,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.ProxyManagement;
+using Ghost.Testing.Reliability;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Tests.ProxyManagement;
 
-public sealed class ProxyGeographicFilterTests
+public sealed class ProxyGeographicFilterTests : ReliabilityTestBase
 {
+    public ProxyGeographicFilterTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task GetGeolocationAsync_WithNullIp_ThrowsArgumentException()
     {

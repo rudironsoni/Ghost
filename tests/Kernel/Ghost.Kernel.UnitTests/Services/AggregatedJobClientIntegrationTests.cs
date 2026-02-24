@@ -9,18 +9,20 @@ using Ghost.Kernel.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Tests.Services;
 
 /// <summary>
 /// Integration tests for AggregatedJobClient covering multi-platform job search, error handling, and deduplication.
 /// </summary>
-public class AggregatedJobClientIntegrationTests
+public class AggregatedJobClientIntegrationTests : ReliabilityTestBase
 {
     private readonly Mock<ILogger<AggregatedJobClient>> _mockLogger;
     private readonly Mock<IDeduplicationService> _mockDedupe;
 
-    public AggregatedJobClientIntegrationTests()
+    public AggregatedJobClientIntegrationTests(ITestOutputHelper output) : base(output)
     {
         _mockLogger = new Mock<ILogger<AggregatedJobClient>>();
         _mockDedupe = new Mock<IDeduplicationService>();

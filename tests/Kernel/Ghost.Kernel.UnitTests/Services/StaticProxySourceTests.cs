@@ -8,11 +8,15 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Services;
 
-public class StaticProxySourceTests
+public class StaticProxySourceTests : ReliabilityTestBase
 {
+    public StaticProxySourceTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task FetchProxiesAsyncShouldUseGlobalConfigWhenItemIsBareHost()
     {

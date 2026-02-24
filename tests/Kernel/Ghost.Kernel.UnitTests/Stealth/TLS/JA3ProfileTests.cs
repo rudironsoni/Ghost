@@ -1,11 +1,15 @@
 using FluentAssertions;
 using Ghost.Stealth.TLS;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Stealth.TLS;
 
-public class JA3ProfileTests
+public class JA3ProfileTests : ReliabilityTestBase
 {
+    public JA3ProfileTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void ToJA3String_WithValidProfile_ReturnsCorrectFormat()
     {

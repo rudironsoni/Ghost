@@ -4,14 +4,18 @@ using FluentAssertions;
 using Ghost.Contracts.Jobs;
 using Ghost.Kernel.Services;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Tests.Services;
 
 /// <summary>
 /// Integration tests for ErrorCategorizationService covering error categorization.
 /// </summary>
-public class ErrorCategorizationServiceIntegrationTests
+public class ErrorCategorizationServiceIntegrationTests : ReliabilityTestBase
 {
+    public ErrorCategorizationServiceIntegrationTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void CategorizeErrorNetworkErrorReturnsNetworkCategory()
     {

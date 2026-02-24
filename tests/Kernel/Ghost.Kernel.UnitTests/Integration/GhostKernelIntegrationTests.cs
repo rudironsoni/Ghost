@@ -1,12 +1,16 @@
 using System;
 using System.Threading.Tasks;
 using Ghost.Kernel;
+using Ghost.Testing.Reliability;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Ghost.Kernel.Tests.Integration;
 
-public class GhostKernelIntegrationTests
+public class GhostKernelIntegrationTests : ReliabilityTestBase
 {
+    public GhostKernelIntegrationTests(ITestOutputHelper output) : base(output) { }
+
     // This is an integration test that launches the real browser via Playwright.
     // It verifies that when stealth is enabled the init script alters navigator properties
     // as expected (navigator.webdriver undefined, languages present, plugins array-like).

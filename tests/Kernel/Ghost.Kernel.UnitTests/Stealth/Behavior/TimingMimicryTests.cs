@@ -1,10 +1,14 @@
 using Ghost.Stealth.Behavior;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Stealth.Behavior;
 
-public class TimingMimicryTests
+public class TimingMimicryTests : ReliabilityTestBase
 {
+    public TimingMimicryTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task NavigationDelayAsync_TakesExpectedTime()
     {

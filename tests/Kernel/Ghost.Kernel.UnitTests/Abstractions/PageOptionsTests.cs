@@ -1,10 +1,14 @@
 using FluentAssertions;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Abstractions;
 
-public class PageOptionsTests
+public class PageOptionsTests : ReliabilityTestBase
 {
+    public PageOptionsTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void DefaultsAreExpected()
     {

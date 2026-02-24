@@ -1,11 +1,15 @@
 using FluentAssertions;
 using Ghost.Stealth;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Stealth;
 
-public class StealthScriptsTests
+public class StealthScriptsTests : ReliabilityTestBase
 {
+    public StealthScriptsTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void GetInitScriptContainsProfileValues()
     {

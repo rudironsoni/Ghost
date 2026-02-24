@@ -5,11 +5,15 @@ using Ghost;
 using Ghost.Extensions;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Extensions;
 
-public class HumanInteractionExtensionsTests
+public class HumanInteractionExtensionsTests : ReliabilityTestBase
 {
+    public HumanInteractionExtensionsTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public async Task HumanClickAsyncCallsMethodsInOrder()
     {

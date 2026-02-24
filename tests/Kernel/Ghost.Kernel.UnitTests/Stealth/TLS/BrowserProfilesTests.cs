@@ -1,11 +1,15 @@
 using FluentAssertions;
 using Ghost.Stealth.TLS;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Stealth.TLS;
 
-public class BrowserProfilesTests
+public class BrowserProfilesTests : ReliabilityTestBase
 {
+    public BrowserProfilesTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void Chrome120_HasValidProfile()
     {

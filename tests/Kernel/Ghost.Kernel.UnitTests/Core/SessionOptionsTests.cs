@@ -1,10 +1,14 @@
 using FluentAssertions;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Kernel.Tests;
 
-public class SessionOptionsTests
+public class SessionOptionsTests : ReliabilityTestBase
 {
+    public SessionOptionsTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void CtorDefaultsAreExpected()
     {

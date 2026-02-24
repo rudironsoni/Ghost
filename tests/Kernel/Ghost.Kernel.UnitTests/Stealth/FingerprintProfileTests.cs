@@ -1,10 +1,14 @@
 using FluentAssertions;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Stealth.Tests;
 
-public class FingerprintProfileTests
+public class FingerprintProfileTests : ReliabilityTestBase
 {
+    public FingerprintProfileTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void DesktopDefaultHasExpectedFields()
     {

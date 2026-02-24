@@ -3,15 +3,17 @@ using Ghost.Stealth.TLS;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Stealth.TLS;
 
-public class TLSFingerprintServiceTests
+public class TLSFingerprintServiceTests : ReliabilityTestBase
 {
     private readonly Mock<ILogger<TLSFingerprintService>> _mockLogger;
     private readonly TLSFingerprintService _service;
 
-    public TLSFingerprintServiceTests()
+    public TLSFingerprintServiceTests(ITestOutputHelper output) : base(output)
     {
         _mockLogger = new Mock<ILogger<TLSFingerprintService>>();
         _service = new TLSFingerprintService(_mockLogger.Object);

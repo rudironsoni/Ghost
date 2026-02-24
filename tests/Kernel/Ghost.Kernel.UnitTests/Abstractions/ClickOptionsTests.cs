@@ -1,11 +1,15 @@
 using System.Linq;
 using FluentAssertions;
 using Xunit;
+using Xunit.Abstractions;
+using Ghost.Testing.Reliability;
 
 namespace Ghost.Tests.Abstractions;
 
-public class ClickOptionsTests
+public class ClickOptionsTests : ReliabilityTestBase
 {
+    public ClickOptionsTests(ITestOutputHelper output) : base(output) { }
+
     [Fact]
     public void DefaultsAreExpected()
     {
