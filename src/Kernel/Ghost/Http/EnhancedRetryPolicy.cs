@@ -16,7 +16,6 @@ namespace Ghost.Http;
 /// </summary>
 public static class EnhancedRetryPolicy
 {
-    private static readonly Random _random = new Random();
 
     private static readonly Action<ILogger, int, double, string, Exception?> LogRetryAttemptWithException =
         LoggerMessage.Define<int, double, string>(
@@ -134,7 +133,7 @@ public static class EnhancedRetryPolicy
         // Add jitter if enabled to prevent thundering herd effect
         if (enableJitter)
         {
-            int jitterMs = _random.Next(250, 1000); // 250ms to 1000ms jitter
+            int jitterMs = Random.Shared.Next(250, 1000); // 250ms to 1000ms jitter
             baseDelay = baseDelay.Add(TimeSpan.FromMilliseconds(jitterMs));
         }
 
