@@ -81,7 +81,7 @@ internal sealed class ElementWrapper : IElement, Ghost.IElementHandle
             {
                 res = await _handle.InnerTextAsync().ConfigureAwait(false);
             }
-            catch { /* Ignore */ }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
         }
 
         // Final fallback to JavaScript evaluation
@@ -91,7 +91,7 @@ internal sealed class ElementWrapper : IElement, Ghost.IElementHandle
             {
                 res = await _handle.EvaluateAsync<string>("() => this.innerText || this.textContent || ''").ConfigureAwait(false);
             }
-            catch { /* Ignore */ }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
         }
 
         return res;

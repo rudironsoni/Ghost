@@ -62,8 +62,9 @@ public static class RegionDetector
             regulation = await DetectFromGeolocationAsync(page).ConfigureAwait(false);
             return regulation;
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
             return PrivacyRegulation.Unknown;
         }
     }
@@ -160,8 +161,9 @@ public static class RegionDetector
                 return PrivacyRegulation.LGPD;
             }
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
             // Continue to next detection method
         }
 

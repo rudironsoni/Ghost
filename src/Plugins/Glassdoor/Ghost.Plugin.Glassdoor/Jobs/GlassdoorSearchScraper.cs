@@ -207,11 +207,11 @@ public sealed class GlassdoorSearchScraper : IDisposable
             {
                 if (page != null)
                 {
-                    try { await page.DisposeAsync().ConfigureAwait(false); } catch { /* ignore */ }
+                    try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
                 }
                 if (session != null)
                 {
-                    try { await session.DisposeAsync().ConfigureAwait(false); } catch { /* ignore */ }
+                    try { await session.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
                 }
             }
         }

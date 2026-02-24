@@ -32,7 +32,11 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         {
             _logger.LogWarning("AggregatedJobClient constructed with {Count} scrapers: {Names}", _scrapers.Count, string.Join(", ", _scrapers.Select(s => s.GetType().Name)));
         }
-        catch { /* swallow logging errors */ }
+        catch (Exception ex)
+        {
+            // Logging failed - cannot log the failure, but don't crash
+            System.Diagnostics.Debug.WriteLine($"Logging error during construction: {ex.Message}");
+        }
     }
 
     public string PlatformName => "Aggregated";
@@ -60,7 +64,11 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
                 }
             }
         }
-        catch { /* swallow any logging errors */ }
+        catch (Exception ex)
+        {
+            // Logging should never fail the operation
+            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+        }
 
         // determine which scrapers to run based on criteria.Sources
         IEnumerable<IJobScraper> scrapersToRun = Enumerable.Empty<IJobScraper>();
@@ -73,7 +81,11 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
                     _logger.LogInformation("Search criteria sources: {Sources}", string.Join(", ", criteriaNonNull.Sources));
                 }
             }
-            catch { }
+            catch (Exception ex)
+        {
+            // Logging should never fail the operation
+            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+        }
             var lower = new HashSet<string>((criteriaNonNull.Sources ?? new List<string>()).Select(s => s?.ToLowerInvariant() ?? string.Empty));
             try
             {
@@ -82,7 +94,11 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
                     _logger.LogInformation("Requested sources (normalized): {Sources}", string.Join(", ", lower));
                 }
             }
-            catch { }
+            catch (Exception ex)
+        {
+            // Logging should never fail the operation
+            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+        }
             scrapersToRun = (_scrapers ?? Enumerable.Empty<IJobScraper>())
                 .Where(s => lower.Contains(s.PlatformName?.ToLowerInvariant() ?? string.Empty));
         }
@@ -98,7 +114,11 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
                 _logger.LogInformation("Selected scrapers: {Scrapers}", string.Join(", ", (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => s.PlatformName)));
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            // Logging should never fail the operation
+            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+        }
 
         var platformErrors = new ConcurrentBag<PlatformError>();
         int successfulPlatforms = 0;
@@ -173,7 +193,11 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
                 }
             }
         }
-        catch { /* swallow any logging errors */ }
+        catch (Exception ex)
+        {
+            // Logging should never fail the operation
+            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+        }
 
         // determine which scrapers to run based on criteria.Sources
         IEnumerable<IJobScraper> scrapersToRun = Enumerable.Empty<IJobScraper>();
@@ -187,7 +211,11 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
                     _logger.LogInformation("Search criteria sources: {Sources}", string.Join(", ", criteriaNonNull.Sources));
                 }
             }
-            catch { }
+            catch (Exception ex)
+        {
+            // Logging should never fail the operation
+            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+        }
             var lower = new HashSet<string>((criteriaNonNull.Sources ?? new List<string>()).Select(s => s?.ToLowerInvariant() ?? string.Empty));
             // log normalized requested sources for debugging
             try
@@ -197,7 +225,11 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
                     _logger.LogInformation("Requested sources (normalized): {Sources}", string.Join(", ", lower));
                 }
             }
-            catch { }
+            catch (Exception ex)
+        {
+            // Logging should never fail the operation
+            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+        }
             scrapersToRun = (_scrapers ?? Enumerable.Empty<IJobScraper>())
                 .Where(s => lower.Contains(s.PlatformName?.ToLowerInvariant() ?? string.Empty));
         }
@@ -214,7 +246,11 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
                 _logger.LogInformation("Selected scrapers: {Scrapers}", string.Join(", ", (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => s.PlatformName)));
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            // Logging should never fail the operation
+            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+        }
 
         Task<IReadOnlyList<JobListing>>[] tasks = (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => Task.Run(async () =>
         {
@@ -258,7 +294,11 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
                     if (details != null && !string.IsNullOrEmpty(details.Title)) return details;
                 }
                 catch (OperationCanceledException) { throw; }
-                catch { }
+                catch (Exception ex)
+        {
+            // Logging should never fail the operation
+            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+        }
             }
             return new JobListing { Id = jobId };
         }, ct);

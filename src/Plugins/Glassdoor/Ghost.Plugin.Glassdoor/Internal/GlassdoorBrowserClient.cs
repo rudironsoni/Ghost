@@ -238,11 +238,11 @@ public sealed class GlassdoorBrowserClient : IDisposable
             {
                 if (page != null)
                 {
-                    try { await page.DisposeAsync().ConfigureAwait(false); } catch { }
+                    try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
                 }
                 if (session != null)
                 {
-                    try { await session.DisposeAsync().ConfigureAwait(false); } catch { }
+                    try { await session.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
                 }
             }
         }
@@ -642,7 +642,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                             return extractedJobs;
                         }
                     }
-                    catch { }
+                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
                 }
             }
 
@@ -718,7 +718,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                                 });
                             }
                         }
-                        catch { }
+                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
                     }
 
                     if (jobs.Count > 0)
@@ -785,7 +785,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                 }
             }
         }
-        catch { }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
 
         return jobs;
     }
@@ -846,7 +846,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                 };
             }
         }
-        catch { }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
 
         return null;
     }
@@ -864,7 +864,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                         return str;
                 }
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
         }
         return null;
     }
@@ -907,7 +907,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                         break;
                     }
                 }
-                catch { }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
             }
 
             if (jobs.Count == 0)
