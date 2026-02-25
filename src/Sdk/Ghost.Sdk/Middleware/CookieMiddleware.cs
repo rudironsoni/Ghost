@@ -26,7 +26,7 @@ public sealed class CookieMiddleware : ICookieMiddleware
     /// <exception cref="ArgumentException">Thrown when the path contains invalid characters or traversal patterns.</exception>
     private static void ValidateFilePath(string filePath)
     {
-        // Check for directory traversal patterns
+        // Check for directory traversal patterns and invalid characters
         if (filePath.Contains("..", StringComparison.Ordinal) ||
             filePath.Contains('~') ||
             filePath.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
@@ -34,13 +34,10 @@ public sealed class CookieMiddleware : ICookieMiddleware
             throw new ArgumentException("Invalid file path: contains potentially unsafe characters or patterns.", nameof(filePath));
         }
 
-        // Ensure the path is not trying to escape to a different drive/root
-        string fullPath = Path.GetFullPath(filePath);
-        string workingDir = Path.GetFullPath(Directory.GetCurrentDirectory());
-
-        if (!fullPath.StartsWith(workingDir, StringComparison.OrdinalIgnoreCase))
+        // Ensure the path doesn't contain null bytes or other dangerous patterns
+        if (filePath.Contains('\0'))
         {
-            throw new ArgumentException("Invalid file path: must be within the working directory.", nameof(filePath));
+            throw new ArgumentException("Invalid file path: contains null bytes.", nameof(filePath));
         }
     }
 
