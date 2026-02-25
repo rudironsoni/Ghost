@@ -134,8 +134,8 @@ public class GoogleJobsScraper
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Failed to parse JSON-LD job: {ex.Message}");
-            return null;
         }
+        return null;
     }
 
     private static string? ExtractJsonValue(string json, string key)

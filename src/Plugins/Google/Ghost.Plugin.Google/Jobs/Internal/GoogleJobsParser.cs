@@ -914,7 +914,7 @@ public static class GoogleJobsParser
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Failed to get string at index: {ex.Message}");
-            return null;
         }
+        return null;
     }
 }
