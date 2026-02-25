@@ -16,16 +16,20 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
     private readonly List<IJobScraper> _scrapers;
     private readonly IDeduplicationService _dedupe;
     private readonly ILogger<AggregatedJobClient> _logger;
+    private readonly TimeProvider _timeProvider;
+    private readonly ErrorCategorizationService _errorCategorizationService;
     private static readonly Action<ILogger, string, Exception?> s_logScraperFailed =
         LoggerMessage.Define<string>(LogLevel.Warning, new EventId(1, nameof(AggregatedJobClient)), "Scraper {Platform} failed");
 
-    public AggregatedJobClient(IEnumerable<IJobScraper> scrapers, IDeduplicationService dedupe, ILogger<AggregatedJobClient> logger)
+    public AggregatedJobClient(IEnumerable<IJobScraper> scrapers, IDeduplicationService dedupe, ILogger<AggregatedJobClient> logger, TimeProvider? timeProvider = null, ErrorCategorizationService? errorCategorizationService = null)
     {
         ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
         // materialize the incoming enumerable so we can inspect it reliably at runtime
         _scrapers = (scrapers ?? Enumerable.Empty<IJobScraper>()).ToList();
         _dedupe = dedupe;
+        _timeProvider = timeProvider ?? TimeProvider.System;
+        _errorCategorizationService = errorCategorizationService ?? new ErrorCategorizationService(_timeProvider);
 
         // log exactly what was injected so we can diagnose missing scrapers
         try
@@ -49,7 +53,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
     /// <returns>Job search result with jobs and error information</returns>
     public async Task<JobSearchResult> SearchJobsWithErrorsAsync(JobSearchCriteria criteria, CancellationToken ct = default)
     {
-        DateTime startTime = DateTime.UtcNow;
+        DateTime startTime = _timeProvider.GetUtcNow().UtcDateTime;
         JobSearchCriteria criteriaNonNull = criteria ?? new JobSearchCriteria();
 
         // Log how many scrapers were injected
@@ -135,7 +139,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             catch (OperationCanceledException) { throw; }
             catch (Exception ex)
             {
-                PlatformError error = ErrorCategorizationService.CategorizeError(ex, s.PlatformName ?? "Unknown");
+                PlatformError error = _errorCategorizationService.CategorizeError(ex, s.PlatformName ?? "Unknown");
                 platformErrors.Add(error);
                 s_logScraperFailed(_logger, s.PlatformName ?? "Unknown", ex);
                 return (IReadOnlyList<JobListing>)new List<JobListing>();
@@ -154,7 +158,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             if (!map.ContainsKey(id)) map[id] = job;
         }
 
-        TimeSpan executionTime = DateTime.UtcNow - startTime;
+        TimeSpan executionTime = _timeProvider.GetUtcNow().UtcDateTime - startTime;
         var platformErrorsList = platformErrors.ToList();
         bool success = platformErrorsList.Count < totalPlatforms || all.Count > 0;
 

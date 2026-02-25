@@ -62,12 +62,23 @@ public sealed class BrowserSession
     /// </summary>
     public string? Locale { get; set; }
 
+    private readonly TimeProvider _timeProvider;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BrowserSession"/> class.
+    /// </summary>
+    /// <param name="timeProvider">The time provider to use for time-based operations. Defaults to system time.</param>
+    public BrowserSession(TimeProvider? timeProvider = null)
+    {
+        _timeProvider = timeProvider ?? TimeProvider.System;
+    }
+
     /// <summary>
     /// Check if this session has expired using the system clock.
     /// </summary>
     public bool IsExpired()
     {
-        return DateTime.UtcNow >= ExpiresAt;
+        return _timeProvider.GetUtcNow().UtcDateTime >= ExpiresAt;
     }
 
     /// <summary>

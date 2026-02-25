@@ -11,12 +11,13 @@ public sealed class CircuitStateChangedEventArgs : EventArgs
     /// <param name="previousState">The previous circuit state.</param>
     /// <param name="currentState">The new circuit state.</param>
     /// <param name="platform">The platform name associated with the circuit.</param>
-    public CircuitStateChangedEventArgs(CircuitState previousState, CircuitState currentState, string platform)
+    /// <param name="changedAt">The time the state change occurred.</param>
+    public CircuitStateChangedEventArgs(CircuitState previousState, CircuitState currentState, string platform, DateTime changedAt)
     {
         PreviousState = previousState;
         CurrentState = currentState;
         Platform = platform;
-        ChangedAt = DateTime.UtcNow;
+        ChangedAt = changedAt;
     }
 
     /// <summary>

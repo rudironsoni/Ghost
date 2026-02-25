@@ -21,6 +21,12 @@ public class MetricsCollector : IMetricsCollector
 {
     private readonly ConcurrentDictionary<string, PlatformMetrics> _metrics = new();
     private readonly object _lock = new();
+    private readonly TimeProvider _timeProvider;
+
+    public MetricsCollector(TimeProvider? timeProvider = null)
+    {
+        _timeProvider = timeProvider ?? TimeProvider.System;
+    }
 
     public void RecordScrapeAttempt(string platform)
     {
@@ -79,7 +85,7 @@ public class MetricsCollector : IMetricsCollector
 
         return new MetricsSnapshot
         {
-            Timestamp = DateTime.UtcNow,
+            Timestamp = _timeProvider.GetUtcNow().UtcDateTime,
             Platforms = platforms
         };
     }

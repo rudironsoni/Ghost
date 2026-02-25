@@ -48,11 +48,13 @@ public class InMemoryDeadLetterQueue : IGenericDeadLetterQueue
     private readonly ConcurrentQueue<DeadLetterItem> _queue = new();
     private readonly ILogger<InMemoryDeadLetterQueue> _logger;
     private readonly object _lock = new();
+    private readonly TimeProvider _timeProvider;
 
-    public InMemoryDeadLetterQueue(ILogger<InMemoryDeadLetterQueue> logger)
+    public InMemoryDeadLetterQueue(ILogger<InMemoryDeadLetterQueue> logger, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     public Task EnqueueAsync<T>(T item, string reason, Exception? exception = null, CancellationToken cancellationToken = default)
@@ -62,7 +64,7 @@ public class InMemoryDeadLetterQueue : IGenericDeadLetterQueue
         var deadLetterItem = new DeadLetterItem
         {
             Id = Guid.NewGuid(),
-            EnqueuedAt = DateTime.UtcNow,
+            EnqueuedAt = _timeProvider.GetUtcNow().UtcDateTime,
             Reason = safeReason,
             ExceptionMessage = exception?.Message,
             ExceptionType = exception?.GetType().Name ?? string.Empty,

@@ -13,6 +13,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
     private readonly GhostKernel _kernel;
     private readonly TieredBrowserPoolOptions _options;
     private readonly ILogger<TieredBrowserPool> _logger;
+    private readonly TimeProvider _timeProvider;
 
     private readonly ConcurrentBag<PooledBrowserSession> _hotPool = new();
     private readonly ConcurrentBag<PooledBrowserSession> _warmPool = new();
@@ -38,12 +39,14 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
     public TieredBrowserPool(
         GhostKernel kernel,
         TieredBrowserPoolOptions? options = null,
-        ILogger<TieredBrowserPool>? logger = null)
+        ILogger<TieredBrowserPool>? logger = null,
+        TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(kernel);
         _kernel = kernel;
         _options = options ?? new TieredBrowserPoolOptions();
         _logger = logger ?? NullLogger<TieredBrowserPool>.Instance;
+        _timeProvider = timeProvider ?? TimeProvider.System;
 
         _coldPoolSemaphore = new SemaphoreSlim(_options.Cold.MaximumConcurrent, _options.Cold.MaximumConcurrent);
 
@@ -99,8 +102,8 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
             {
                 Session = session,
                 Tier = tier,
-                CreatedAt = DateTime.UtcNow,
-                LastUsedAt = DateTime.UtcNow,
+                CreatedAt = _timeProvider.GetUtcNow().UtcDateTime,
+                LastUsedAt = _timeProvider.GetUtcNow().UtcDateTime,
                 IsAvailable = false,
                 UseCount = 1
             };
@@ -128,7 +131,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
         if (_hotPool.TryTake(out PooledBrowserSession? pooled) && !pooled.IsExpired(_options.Hot.MaxAge))
         {
             Interlocked.Increment(ref _hotAcquisitions);
-            pooled.LastUsedAt = DateTime.UtcNow;
+            pooled.LastUsedAt = _timeProvider.GetUtcNow().UtcDateTime;
             pooled.UseCount++;
 
             _ = Task.Run(async () => await ReplenishHotPoolAsync().ConfigureAwait(false), CancellationToken.None);
@@ -153,7 +156,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
                 return await CreateNewSessionAsync(ct).ConfigureAwait(false);
             }
 
-            pooled.LastUsedAt = DateTime.UtcNow;
+            pooled.LastUsedAt = _timeProvider.GetUtcNow().UtcDateTime;
             pooled.UseCount++;
 
             _ = Task.Run(async () => await ReplenishWarmPoolAsync().ConfigureAwait(false), CancellationToken.None);
@@ -219,7 +222,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
             }
 
             pooled.IsAvailable = true;
-            pooled.LastUsedAt = DateTime.UtcNow;
+            pooled.LastUsedAt = _timeProvider.GetUtcNow().UtcDateTime;
 
             ConcurrentBag<PooledBrowserSession>? targetPool = pooled.Tier switch
             {
@@ -330,8 +333,8 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
                     {
                         Session = session,
                         Tier = tier,
-                        CreatedAt = DateTime.UtcNow,
-                        LastUsedAt = DateTime.UtcNow,
+                        CreatedAt = _timeProvider.GetUtcNow().UtcDateTime,
+                        LastUsedAt = _timeProvider.GetUtcNow().UtcDateTime,
                         IsAvailable = true,
                         UseCount = 0
                     };

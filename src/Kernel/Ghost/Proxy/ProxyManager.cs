@@ -12,15 +12,17 @@ public sealed class ProxyManager : IProxyManager, IDisposable
 {
     private readonly ProxyConfiguration _config;
     private readonly ILogger<ProxyManager> _logger;
+    private readonly TimeProvider _timeProvider;
     private readonly ConcurrentDictionary<string, ProviderEntry> _providers = new();
     private readonly ConcurrentDictionary<string, ProxyHealthStatus> _healthStatus = new();
     private readonly Timer? _healthCheckTimer;
     private int _roundRobinIndex;
 
-    public ProxyManager(IOptions<ProxyConfiguration> config, ILogger<ProxyManager>? logger = null)
+    public ProxyManager(IOptions<ProxyConfiguration> config, ILogger<ProxyManager>? logger = null, TimeProvider? timeProvider = null)
     {
         _config = config.Value ?? new ProxyConfiguration();
         _logger = logger ?? NullLogger<ProxyManager>.Instance;
+        _timeProvider = timeProvider ?? TimeProvider.System;
 
         if (_config.EnableHealthChecks)
         {
@@ -162,7 +164,7 @@ public sealed class ProxyManager : IProxyManager, IDisposable
     {
         int index = Interlocked.Increment(ref _roundRobinIndex) % providers.Count;
         ProviderEntry provider = providers[index];
-        provider.LastUsed = DateTime.UtcNow;
+        provider.LastUsed = _timeProvider.GetUtcNow().UtcDateTime;
         Interlocked.Increment(ref provider.UseCount);
         return provider.Provider;
     }
@@ -170,7 +172,7 @@ public sealed class ProxyManager : IProxyManager, IDisposable
     private IProxyProvider? SelectLeastUsed(List<ProviderEntry> providers)
     {
         ProviderEntry provider = providers.OrderBy(p => p.UseCount).ThenBy(p => p.LastUsed).First();
-        provider.LastUsed = DateTime.UtcNow;
+        provider.LastUsed = _timeProvider.GetUtcNow().UtcDateTime;
         Interlocked.Increment(ref provider.UseCount);
         return provider.Provider;
     }
@@ -179,7 +181,7 @@ public sealed class ProxyManager : IProxyManager, IDisposable
     {
         int index = Random.Shared.Next(providers.Count);
         ProviderEntry provider = providers[index];
-        provider.LastUsed = DateTime.UtcNow;
+        provider.LastUsed = _timeProvider.GetUtcNow().UtcDateTime;
         Interlocked.Increment(ref provider.UseCount);
         return provider.Provider;
     }
@@ -195,14 +197,14 @@ public sealed class ProxyManager : IProxyManager, IDisposable
             current += provider.Config.Weight;
             if (random < current)
             {
-                provider.LastUsed = DateTime.UtcNow;
+                provider.LastUsed = _timeProvider.GetUtcNow().UtcDateTime;
                 Interlocked.Increment(ref provider.UseCount);
                 return provider.Provider;
             }
         }
 
         ProviderEntry lastProvider = providers.Last();
-        lastProvider.LastUsed = DateTime.UtcNow;
+        lastProvider.LastUsed = _timeProvider.GetUtcNow().UtcDateTime;
         Interlocked.Increment(ref lastProvider.UseCount);
         return lastProvider.Provider;
     }
@@ -221,7 +223,7 @@ public sealed class ProxyManager : IProxyManager, IDisposable
                 ProviderName = entry.Config.Name,
                 Host = proxy?.Server ?? "unknown",
                 IsHealthy = proxy != null,
-                LastChecked = DateTime.UtcNow,
+                LastChecked = _timeProvider.GetUtcNow().UtcDateTime,
                 SuccessCount = proxy != null ? 1 : 0
             };
 
@@ -241,8 +243,8 @@ public sealed class ProxyManager : IProxyManager, IDisposable
                 ProviderName = entry.Config.Name,
                 Host = "unknown",
                 IsHealthy = false,
-                LastChecked = DateTime.UtcNow,
-                LastFailure = DateTime.UtcNow,
+                LastChecked = _timeProvider.GetUtcNow().UtcDateTime,
+                LastFailure = _timeProvider.GetUtcNow().UtcDateTime,
                 LastErrorMessage = ex.Message
             };
 

@@ -53,6 +53,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
 
     private readonly DeadLetterQueueOptions _options;
     private readonly ILogger<FileSystemDeadLetterQueue> _logger;
+    private readonly TimeProvider _timeProvider;
     private readonly JsonSerializerOptions _serializerOptions;
     private readonly string _activePath;
     private readonly string _archivePath;
@@ -73,7 +74,8 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
     /// </summary>
     /// <param name="options">Dead letter queue options.</param>
     /// <param name="logger">Optional logger instance.</param>
-    public FileSystemDeadLetterQueue(DeadLetterQueueOptions options, ILogger<FileSystemDeadLetterQueue>? logger = null)
+    /// <param name="timeProvider">Optional time provider instance.</param>
+    public FileSystemDeadLetterQueue(DeadLetterQueueOptions options, ILogger<FileSystemDeadLetterQueue>? logger = null, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(options);
 
@@ -90,6 +92,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
             ArchiveCheckInterval = options.ArchiveCheckInterval
         };
         _logger = logger ?? NullLogger<FileSystemDeadLetterQueue>.Instance;
+        _timeProvider = timeProvider ?? TimeProvider.System;
         _activePath = Path.Combine(_options.RootPath, "active");
         _archivePath = Path.Combine(_options.RootPath, "archived");
         _serializerOptions = new JsonSerializerOptions
@@ -105,8 +108,9 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
     /// </summary>
     /// <param name="options">Dead letter queue options.</param>
     /// <param name="logger">Logger instance.</param>
-    public FileSystemDeadLetterQueue(IOptions<DeadLetterQueueOptions> options, ILogger<FileSystemDeadLetterQueue> logger)
-        : this(options?.Value ?? new DeadLetterQueueOptions(), logger)
+    /// <param name="timeProvider">Optional time provider instance.</param>
+    public FileSystemDeadLetterQueue(IOptions<DeadLetterQueueOptions> options, ILogger<FileSystemDeadLetterQueue> logger, TimeProvider? timeProvider = null)
+        : this(options?.Value ?? new DeadLetterQueueOptions(), logger, timeProvider)
     {
     }
 
@@ -124,7 +128,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
 
         if (job.FailedAt == default)
         {
-            job.FailedAt = DateTime.UtcNow;
+            job.FailedAt = _timeProvider.GetUtcNow().UtcDateTime;
         }
 
         if (job.Platform is null)
@@ -148,7 +152,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
             Id = Guid.NewGuid().ToString("N")[..8],
             Platform = typeof(T).Name,
             Error = reason + (exception != null ? $": {exception.Message}" : string.Empty),
-            FailedAt = DateTime.UtcNow,
+            FailedAt = _timeProvider.GetUtcNow().UtcDateTime,
             StackTrace = exception?.StackTrace ?? string.Empty
         };
 
@@ -334,7 +338,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
             ?? throw new InvalidOperationException($"Failed job '{jobId}' could not be loaded.");
 
         job.RetryCount++;
-        job.LastRetryAt = DateTime.UtcNow;
+        job.LastRetryAt = _timeProvider.GetUtcNow().UtcDateTime;
 
         await WriteJobAsync(match, job).ConfigureAwait(false);
     }
@@ -358,7 +362,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
                 continue;
 
             job.RetryCount++;
-            job.LastRetryAt = DateTime.UtcNow;
+            job.LastRetryAt = _timeProvider.GetUtcNow().UtcDateTime;
 
             await WriteJobAsync(path, job).ConfigureAwait(false);
         }
@@ -422,7 +426,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
             return;
         }
 
-        DateTime now = DateTime.UtcNow;
+        DateTime now = _timeProvider.GetUtcNow().UtcDateTime;
         lock (_archiveGate)
         {
             if (now - _lastArchiveCheckUtc < _options.ArchiveCheckInterval)
@@ -475,14 +479,14 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
         }
     }
 
-    private static DateTime GetThresholdUtc(TimeSpan span)
+    private DateTime GetThresholdUtc(TimeSpan span)
     {
         if (span == TimeSpan.Zero)
         {
             return DateTime.MinValue;
         }
 
-        DateTime now = DateTime.UtcNow;
+        DateTime now = _timeProvider.GetUtcNow().UtcDateTime;
         TimeSpan maxSpan = now - DateTime.MinValue;
         if (span >= maxSpan)
         {
@@ -492,14 +496,14 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
         return now - span;
     }
 
-    private static DateTime GetFailedAtUtc(FailedScrapeJob job, string path)
+    private DateTime GetFailedAtUtc(FailedScrapeJob job, string path)
     {
         if (job.FailedAt != default)
         {
             return DateTime.SpecifyKind(job.FailedAt, DateTimeKind.Utc);
         }
 
-        DateTime lastWrite = File.Exists(path) ? File.GetLastWriteTimeUtc(path) : DateTime.UtcNow;
+        DateTime lastWrite = File.Exists(path) ? File.GetLastWriteTimeUtc(path) : _timeProvider.GetUtcNow().UtcDateTime;
         job.FailedAt = lastWrite;
         return lastWrite;
     }
