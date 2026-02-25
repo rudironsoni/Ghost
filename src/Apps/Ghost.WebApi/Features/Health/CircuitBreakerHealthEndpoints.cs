@@ -8,7 +8,7 @@ public class CircuitBreakerHealthStatus
     public string Platform { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;
     public bool IsHealthy { get; set; }
-    public CircuitBreakerMetrics Metrics { get; set; } = null!;
+    public required CircuitBreakerMetrics Metrics { get; set; }
 }
 
 public class CircuitBreakersStatus

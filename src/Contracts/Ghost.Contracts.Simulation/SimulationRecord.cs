@@ -35,7 +35,7 @@ public class SimulationRecord
     /// <summary>
     /// Gets or sets the simulation result.
     /// </summary>
-    public SimulationResult Result { get; set; } = null!;
+    public required SimulationResult Result { get; set; }
 
     /// <summary>
     /// Gets or sets the session identifier for grouping related actions.
