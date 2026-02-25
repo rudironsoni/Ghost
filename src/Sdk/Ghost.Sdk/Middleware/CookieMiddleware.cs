@@ -28,7 +28,7 @@ public sealed class CookieMiddleware : ICookieMiddleware
     {
         // Check for directory traversal patterns
         if (filePath.Contains("..", StringComparison.Ordinal) ||
-            filePath.Contains("~", StringComparison.Ordinal) ||
+            filePath.Contains('~') ||
             filePath.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
         {
             throw new ArgumentException("Invalid file path: contains potentially unsafe characters or patterns.", nameof(filePath));
