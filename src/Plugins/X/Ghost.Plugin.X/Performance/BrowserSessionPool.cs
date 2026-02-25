@@ -226,7 +226,7 @@ public partial class BrowserSessionPool : IBrowserSessionPool
 
     private sealed class PoolEntry
     {
-        public IBrowserSession Session { get; set; } = null!;
+        public required IBrowserSession Session { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime LastUsedAt { get; set; }
     }
