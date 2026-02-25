@@ -48,7 +48,33 @@ public class ScrollScenarioTests : IAsyncLifetime
     /// </summary>
     private static async Task WaitForLoadingCompleteAsync(IPage page, CancellationToken ct = default)
     {
+        // The loading indicator may not exist initially, wait for it to appear then disappear
+        try
+        {
+            // First wait for loading to become visible (with short timeout)
+            await page.WaitForSelectorAsync("#loading", new WaitOptions { State = WaitState.Visible, Timeout = 5000 }, ct);
+        }
+        catch (TimeoutException)
+        {
+            // Loading indicator may have already come and gone, or never appeared
+            // This is acceptable - continue to check if it's hidden
+        }
+
+        // Now wait for loading to be hidden
         await page.WaitForSelectorAsync("#loading", new WaitOptions { State = WaitState.Hidden }, ct);
+    }
+
+    /// <summary>
+    /// Waits for the page JavaScript to be ready by checking a known condition.
+    /// </summary>
+    [SlopwatchSuppress("SW004", "Browser integration test requires delay for page initialization")]
+    private static async Task WaitForPageReadyAsync(IPage page, CancellationToken ct = default)
+    {
+        // Wait for page load state to be complete
+        await page.WaitForLoadStateAsync(ct: ct);
+
+        // Additional delay to ensure JavaScript event listeners are attached
+        await Task.Delay(300, ct);
     }
 
     /// <summary>
@@ -84,7 +110,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         throw new TimeoutException($"Condition did not become true within {timeout}ms: {script}");
     }
 
-    [Fact(Skip = "Flaky Playwright test - scenario server timing issue")]
+    [Fact]
     public async Task AutoThreshold_ScrollTriggersFetch_LoadsMoreItems()
     {
         // Arrange
@@ -94,6 +120,7 @@ public class ScrollScenarioTests : IAsyncLifetime
 
         // Act
         await page.NavigateAsync(url);
+        await WaitForPageReadyAsync(page);
 
         // Verify initial items are loaded
         IReadOnlyList<IElement> initialJobs = await page.QuerySelectorAllAsync(".job");
@@ -102,7 +129,9 @@ public class ScrollScenarioTests : IAsyncLifetime
 
         // Scroll to trigger auto-fetch
         await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)");
-        await WaitForLoadingCompleteAsync(page); // Wait for fetch to complete
+
+        // Wait for fetch to complete by checking job count increased
+        await WaitForConditionAsync(page, $"() => document.querySelectorAll('.job').length > {initialJobs.Count}");
 
         // Assert - More items should be loaded
         IReadOnlyList<IElement> jobsAfterScroll = await page.QuerySelectorAllAsync(".job");
@@ -112,7 +141,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         _output.WriteLine($"Jobs after scroll: {jobsAfterScroll.Count}");
     }
 
-    [Fact(Skip = "Flaky Playwright test - scenario server timing issue")]
+    [Fact]
     public async Task AutoThreshold_MultipleScrolls_LoadsAllItems()
     {
         // Arrange
@@ -122,16 +151,30 @@ public class ScrollScenarioTests : IAsyncLifetime
 
         // Act
         await page.NavigateAsync(url);
+        await WaitForPageReadyAsync(page);
 
         int previousCount = 0;
         int scrollCount = 0;
         int maxScrolls = 10; // Prevent infinite loop
 
+        // Wait for initial load to complete
+        await WaitForConditionAsync(page, "() => document.querySelectorAll('.job').length > 0");
+
         // Scroll until no more items are loaded
         while (scrollCount < maxScrolls)
         {
             await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)");
-            await WaitForLoadingCompleteAsync(page);
+
+            // Wait for fetch to complete by checking job count increased or timeout
+            try
+            {
+                await WaitForConditionAsync(page, $"() => document.querySelectorAll('.job').length > {previousCount}");
+            }
+            catch (TimeoutException)
+            {
+                // No more items loaded, we've reached the end
+                break;
+            }
 
             IReadOnlyList<IElement> currentJobs = await page.QuerySelectorAllAsync(".job");
             int currentCount = currentJobs.Count;
@@ -165,7 +208,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         _output.WriteLine($"Total unique jobs loaded: {jobIds.Count}");
     }
 
-    [Fact(Skip = "Flaky Playwright test - scenario server timing issue")]
+    [Fact]
     public async Task AutoThreshold_Termination_StopsAtEnd()
     {
         // Arrange
@@ -175,6 +218,10 @@ public class ScrollScenarioTests : IAsyncLifetime
 
         // Act
         await page.NavigateAsync(url);
+        await WaitForPageReadyAsync(page);
+
+        // Wait for initial load
+        await WaitForConditionAsync(page, "() => document.querySelectorAll('.job').length > 0");
 
         // Scroll to the end
         int previousCount = 0;
@@ -183,10 +230,19 @@ public class ScrollScenarioTests : IAsyncLifetime
         for (int i = 0; i < 20; i++)
         {
             await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)");
-            await WaitForLoadingCompleteAsync(page);
 
-            IReadOnlyList<IElement> currentJobs = await page.QuerySelectorAllAsync(".job");
-            int currentCount = currentJobs.Count;
+            // Wait for fetch to complete by checking job count increased or timeout
+            int currentCount = previousCount;
+            try
+            {
+                await WaitForConditionAsync(page, $"() => document.querySelectorAll('.job').length > {previousCount}");
+                IReadOnlyList<IElement> currentJobs = await page.QuerySelectorAllAsync(".job");
+                currentCount = currentJobs.Count;
+            }
+            catch (TimeoutException)
+            {
+                // No more items loaded, count stays the same
+            }
 
             if (currentCount == previousCount)
             {
@@ -308,7 +364,7 @@ public class ScrollScenarioTests : IAsyncLifetime
         _output.WriteLine($"Total unique jobs loaded: {jobIds.Count}");
     }
 
-    [Fact(Skip = "Flaky Playwright test - scenario server timing issue")]
+    [Fact]
     public async Task ButtonDriven_Termination_DisablesButtonAtEnd()
     {
         // Arrange
@@ -318,6 +374,11 @@ public class ScrollScenarioTests : IAsyncLifetime
 
         // Act
         await page.NavigateAsync(url);
+        await WaitForPageReadyAsync(page);
+
+        // Wait for button to be present and initial load to complete
+        await WaitForConditionAsync(page, "() => document.getElementById('load-more-btn') !== null");
+        await WaitForConditionAsync(page, "() => document.querySelectorAll('.job').length > 0");
 
         // Click until end
         for (int i = 0; i < 50; i++)
@@ -334,16 +395,48 @@ public class ScrollScenarioTests : IAsyncLifetime
                 break;
             }
 
-            // Check if button is disabled (loading state)
+            // Check if button is disabled (loading state) - wait for it to become enabled
             string? isDisabledAttr = await loadMoreBtn.GetAttributeAsync("disabled");
             if (isDisabledAttr != null)
             {
-                await WaitForButtonEnabledAsync(page); // Wait for loading to complete
+                // Button is disabled, wait for loading to complete
+                try
+                {
+                    await WaitForButtonEnabledAsync(page);
+                }
+                catch (TimeoutException)
+                {
+                    // Button stayed disabled, might be at end - check text
+                    string? currentText = await loadMoreBtn.GetTextContentAsync();
+                    if (currentText?.Contains("No More") == true)
+                    {
+                        break;
+                    }
+                    throw;
+                }
                 continue;
             }
 
+            // Get job count before click
+            IReadOnlyList<IElement> jobsBeforeClick = await page.QuerySelectorAllAsync(".job");
+            int countBefore = jobsBeforeClick.Count;
+
             await loadMoreBtn.ClickAsync();
-            await WaitForButtonEnabledAsync(page);
+
+            // Wait for jobs to increase or button to show "No More"
+            try
+            {
+                await WaitForConditionAsync(page, $"() => document.querySelectorAll('.job').length > {countBefore} || document.getElementById('load-more-btn')?.textContent?.includes('No More')");
+            }
+            catch (TimeoutException)
+            {
+                // Check if we've reached the end
+                string? currentText = await loadMoreBtn.GetTextContentAsync();
+                if (currentText?.Contains("No More") != true)
+                {
+                    throw;
+                }
+            }
         }
 
         // Assert - Termination: Button should show "No More Jobs"
