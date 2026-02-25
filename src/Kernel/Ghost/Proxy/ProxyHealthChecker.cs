@@ -24,6 +24,7 @@ public sealed class ProxyHealthChecker
 
     private readonly HttpClient _httpClient;
     private readonly ILogger<ProxyHealthChecker> _logger;
+    private readonly TimeProvider _timeProvider;
 
     private static readonly string[] s_nordVpnProxies =
     {
@@ -53,11 +54,12 @@ public sealed class ProxyHealthChecker
     /// <summary>
     /// Initializes a new instance of the <see cref="ProxyHealthChecker"/> class.
     /// </summary>
-    public ProxyHealthChecker(HttpClient httpClient, ILogger<ProxyHealthChecker>? logger = null)
+    public ProxyHealthChecker(HttpClient httpClient, ILogger<ProxyHealthChecker>? logger = null, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(httpClient);
         _httpClient = httpClient;
         _logger = logger ?? NullLogger<ProxyHealthChecker>.Instance;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <summary>
@@ -79,7 +81,7 @@ public sealed class ProxyHealthChecker
                         IsHealthy = false,
                         LatencyMs = -1,
                         Error = "NordVPN credentials are missing.",
-                        LastChecked = DateTime.UtcNow
+                        LastChecked = _timeProvider.GetUtcNow().UtcDateTime
                     })
                     .ToList(),
                 HealthyCount = 0,
@@ -128,7 +130,7 @@ public sealed class ProxyHealthChecker
             IsHealthy = false,
             LatencyMs = -1,
             Error = string.Empty,
-            LastChecked = DateTime.UtcNow
+            LastChecked = _timeProvider.GetUtcNow().UtcDateTime
         };
 
         if (string.IsNullOrWhiteSpace(proxyUrl))
@@ -178,7 +180,7 @@ public sealed class ProxyHealthChecker
             stopwatch.Stop();
 
             status.LatencyMs = stopwatch.ElapsedMilliseconds;
-            status.LastChecked = DateTime.UtcNow;
+            status.LastChecked = _timeProvider.GetUtcNow().UtcDateTime;
 
             if (response.IsSuccessStatusCode && status.LatencyMs < HealthyLatencyThresholdMs)
             {

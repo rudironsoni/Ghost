@@ -262,7 +262,7 @@ public sealed class CircuitBreaker : ICircuitBreaker
             _halfOpenSuccesses = 0;
         }
 
-        return new CircuitStateChangedEventArgs(previous, newState, Platform);
+        return new CircuitStateChangedEventArgs(previous, newState, Platform, _timeProvider.GetUtcNow().UtcDateTime);
     }
 
     private void RaiseStateChanged(CircuitStateChangedEventArgs? args)

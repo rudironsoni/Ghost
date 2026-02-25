@@ -24,6 +24,7 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
     private readonly ConcurrentDictionary<HttpClient, PooledConnection> _inUse = new();
     private readonly ILogger<HttpConnectionPool> _logger;
     private readonly HttpConnectionPoolOptions _options;
+    private readonly TimeProvider _timeProvider;
 
     private int _availableCount;
     private int _totalCreated;
@@ -33,12 +34,13 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
     public int AvailableCount => _availableCount;
     public int InUseCount => _inUse.Count;
 
-    public HttpConnectionPool(HttpConnectionPoolOptions options, ILogger<HttpConnectionPool> logger)
+    public HttpConnectionPool(HttpConnectionPoolOptions options, ILogger<HttpConnectionPool> logger, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(logger);
         _options = options;
         _logger = logger;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     public async Task<HttpClient> AcquireAsync(CancellationToken cancellationToken = default)
@@ -87,7 +89,7 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
             return Task.CompletedTask;
         }
 
-        pooled.LastUsed = DateTime.UtcNow;
+        pooled.LastUsed = _timeProvider.GetUtcNow().UtcDateTime;
         pooled.UsageCount++;
         _available.Add(pooled);
         Interlocked.Increment(ref _availableCount);
@@ -148,17 +150,17 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
         return new PooledConnection
         {
             Client = client,
-            CreatedAt = DateTime.UtcNow,
-            LastUsed = DateTime.UtcNow,
+            CreatedAt = _timeProvider.GetUtcNow().UtcDateTime,
+            LastUsed = _timeProvider.GetUtcNow().UtcDateTime,
             UsageCount = 0
         };
     }
 
-    private static async Task<bool> IsHealthyAsync(PooledConnection pooled, CancellationToken cancellationToken)
+    private async Task<bool> IsHealthyAsync(PooledConnection pooled, CancellationToken cancellationToken)
     {
         try
         {
-            if (DateTime.UtcNow - pooled.LastUsed > pooled.Options.IdleTimeout)
+            if (_timeProvider.GetUtcNow().UtcDateTime - pooled.LastUsed > pooled.Options.IdleTimeout)
             {
                 return false;
             }

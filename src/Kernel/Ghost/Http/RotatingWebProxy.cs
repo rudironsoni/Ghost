@@ -16,12 +16,14 @@ public sealed class RotatingWebProxy : IWebProxy, IDisposable
     private DateTime _cacheTimestamp = DateTime.MinValue;
     private readonly object _lock = new();
     private readonly Timer? _refreshTimer;
+    private readonly TimeProvider _timeProvider;
 
-    public RotatingWebProxy(IProxyProvider provider, TimeSpan? cacheDuration = null)
+    public RotatingWebProxy(IProxyProvider provider, TimeSpan? cacheDuration = null, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(provider);
         _provider = provider;
         _cacheDuration = cacheDuration ?? TimeSpan.FromMinutes(5);
+        _timeProvider = timeProvider ?? TimeProvider.System;
 
         // Start background refresh timer - fire-and-forget is intentional
 #pragma warning disable CS4014
@@ -67,7 +69,7 @@ public sealed class RotatingWebProxy : IWebProxy, IDisposable
         lock (_lock)
         {
             // Return cached proxy if still valid
-            if (_cachedProxy is not null && DateTime.UtcNow - _cacheTimestamp < _cacheDuration)
+            if (_cachedProxy is not null && _timeProvider.GetUtcNow().UtcDateTime - _cacheTimestamp < _cacheDuration)
             {
                 return _cachedProxy;
             }
@@ -93,7 +95,7 @@ public sealed class RotatingWebProxy : IWebProxy, IDisposable
             lock (_lock)
             {
                 _cachedProxy = proxy;
-                _cacheTimestamp = DateTime.UtcNow;
+                _cacheTimestamp = _timeProvider.GetUtcNow().UtcDateTime;
             }
         }
         catch

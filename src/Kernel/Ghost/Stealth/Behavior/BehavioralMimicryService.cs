@@ -10,14 +10,16 @@ namespace Ghost.Stealth.Behavior;
 public sealed partial class BehavioralMimicryService
 {
     private readonly ILogger<BehavioralMimicryService> _logger;
+    private readonly TimeProvider _timeProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BehavioralMimicryService"/> class.
     /// </summary>
-    public BehavioralMimicryService(ILogger<BehavioralMimicryService> logger)
+    public BehavioralMimicryService(ILogger<BehavioralMimicryService> logger, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
+        _timeProvider = timeProvider ?? TimeProvider.System;
         Mouse = new MouseMimicry();
         Scroll = new ScrollMimicry();
         Timing = new TimingMimicry();
@@ -151,9 +153,9 @@ public sealed partial class BehavioralMimicryService
 
         LogSimulatingReading(durationSeconds);
 
-        DateTime endTime = DateTime.UtcNow.AddSeconds(durationSeconds);
+        DateTime endTime = _timeProvider.GetUtcNow().UtcDateTime.AddSeconds(durationSeconds);
 
-        while (DateTime.UtcNow < endTime && !cancellationToken.IsCancellationRequested)
+        while (_timeProvider.GetUtcNow().UtcDateTime < endTime && !cancellationToken.IsCancellationRequested)
         {
             // Random micro-scroll
             await Scroll.MicroScrollAsync(page.Mouse, cancellationToken).ConfigureAwait(false);

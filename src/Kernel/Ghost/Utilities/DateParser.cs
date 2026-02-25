@@ -5,6 +5,12 @@ namespace Ghost.Utilities;
 public class DateParser : IDateParser
 {
     private static readonly string[] Formats = new[] { "MMM yyyy", "MMMM yyyy", "yyyy" };
+    private readonly TimeProvider _timeProvider;
+
+    public DateParser(TimeProvider? timeProvider = null)
+    {
+        _timeProvider = timeProvider ?? TimeProvider.System;
+    }
 
     public DateOnly? ParseDate(string? input)
     {
@@ -65,7 +71,7 @@ public class DateParser : IDateParser
 
         string s = input.Trim();
         if (string.Equals(s, "today", StringComparison.OrdinalIgnoreCase))
-            return DateTime.UtcNow.Date;
+            return _timeProvider.GetUtcNow().UtcDateTime.Date;
 
         if (s.EndsWith("ago", StringComparison.OrdinalIgnoreCase))
         {
@@ -74,13 +80,14 @@ public class DateParser : IDateParser
             if (parts.Length >= 3 && int.TryParse(parts[0], out int num))
             {
                 string unit = parts[1].ToLowerInvariant();
+                DateTime now = _timeProvider.GetUtcNow().UtcDateTime;
                 return unit switch
                 {
-                    "day" or "days" => DateTime.UtcNow.AddDays(-num),
-                    "hour" or "hours" => DateTime.UtcNow.AddHours(-num),
-                    "minute" or "minutes" => DateTime.UtcNow.AddMinutes(-num),
-                    "month" or "months" => DateTime.UtcNow.AddMonths(-num),
-                    "year" or "years" => DateTime.UtcNow.AddYears(-num),
+                    "day" or "days" => now.AddDays(-num),
+                    "hour" or "hours" => now.AddHours(-num),
+                    "minute" or "minutes" => now.AddMinutes(-num),
+                    "month" or "months" => now.AddMonths(-num),
+                    "year" or "years" => now.AddYears(-num),
                     _ => null
                 };
             }

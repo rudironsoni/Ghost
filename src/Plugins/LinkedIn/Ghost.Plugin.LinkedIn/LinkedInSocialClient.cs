@@ -16,8 +16,9 @@ public sealed class LinkedInSocialClient : ISocialClient
     private readonly LinkedInOptions _options;
     private readonly ILogger<LinkedInSocialClient> _logger;
     private readonly Internal.LinkedInAuthenticator _authenticator;
+    private readonly Ghost.IDateParser _dateParser;
 
-    public LinkedInSocialClient(Ghost.IBrowserSession session, IOptions<LinkedInOptions> options, ILogger<LinkedInSocialClient> logger, Internal.LinkedInAuthenticator authenticator)
+    public LinkedInSocialClient(Ghost.IBrowserSession session, IOptions<LinkedInOptions> options, ILogger<LinkedInSocialClient> logger, Internal.LinkedInAuthenticator authenticator, Ghost.IDateParser? dateParser = null)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(authenticator);
@@ -25,11 +26,12 @@ public sealed class LinkedInSocialClient : ISocialClient
         _options = options?.Value ?? new LinkedInOptions();
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<LinkedInSocialClient>.Instance;
         _authenticator = authenticator;
+        _dateParser = dateParser ?? new Ghost.Utilities.DateParser();
     }
 
     // Back-compat constructor used by existing tests/consumers that don't provide an authenticator
-    public LinkedInSocialClient(Ghost.IBrowserSession session, IOptions<LinkedInOptions> options, ILogger<LinkedInSocialClient> logger)
-        : this(session, options, logger, new Internal.LinkedInAuthenticator(session, options, Microsoft.Extensions.Logging.Abstractions.NullLogger<Internal.LinkedInAuthenticator>.Instance))
+    public LinkedInSocialClient(Ghost.IBrowserSession session, IOptions<LinkedInOptions> options, ILogger<LinkedInSocialClient> logger, Ghost.IDateParser? dateParser = null)
+        : this(session, options, logger, new Internal.LinkedInAuthenticator(session, options, Microsoft.Extensions.Logging.Abstractions.NullLogger<Internal.LinkedInAuthenticator>.Instance), dateParser)
     {
     }
 
@@ -264,7 +266,7 @@ public sealed class LinkedInSocialClient : ISocialClient
                     // dateString may contain duration after a middle dot
                     string[] parts = dateString.Split('·');
                     string range = parts.Length > 0 ? parts[0].Trim() : dateString.Trim();
-                    (DateOnly? s, DateOnly? e) = new Ghost.Utilities.DateParser().ParseDateRange(range);
+                    (DateOnly? s, DateOnly? e) = _dateParser.ParseDateRange(range);
                     exp = exp with { StartDate = s is null ? null : new DateTime?(s.Value.ToDateTime(TimeOnly.MinValue)), EndDate = e is null ? null : new DateTime?(e.Value.ToDateTime(TimeOnly.MinValue)), IsCurrent = e is null };
                     if (parts.Length > 1)
                     {
@@ -343,7 +345,7 @@ public sealed class LinkedInSocialClient : ISocialClient
 
                 if (!string.IsNullOrWhiteSpace(dateString))
                 {
-                    (DateOnly? s, DateOnly? e) = new Ghost.Utilities.DateParser().ParseDateRange(dateString);
+                    (DateOnly? s, DateOnly? e) = _dateParser.ParseDateRange(dateString);
                     edu = edu with { StartDate = s is null ? null : new DateTime?(s.Value.ToDateTime(TimeOnly.MinValue)), EndDate = e is null ? null : new DateTime?(e.Value.ToDateTime(TimeOnly.MinValue)) };
                 }
 

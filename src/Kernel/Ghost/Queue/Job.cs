@@ -7,6 +7,18 @@ namespace Ghost.Queue;
 /// </summary>
 public sealed class Job
 {
+    private readonly TimeProvider _timeProvider;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Job"/> class.
+    /// </summary>
+    /// <param name="timeProvider">The time provider to use for time-based operations. Defaults to system time.</param>
+    public Job(TimeProvider? timeProvider = null)
+    {
+        _timeProvider = timeProvider ?? TimeProvider.System;
+        CreatedAt = _timeProvider.GetUtcNow().UtcDateTime;
+    }
+
     /// <summary>
     /// Unique job identifier
     /// </summary>
@@ -47,7 +59,7 @@ public sealed class Job
     /// Time when job was created
     /// </summary>
     [JsonPropertyName("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
 
     /// <summary>
     /// Time when job was last attempted

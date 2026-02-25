@@ -8,15 +8,22 @@ namespace Ghost.Kernel.Services;
 /// <summary>
 /// Service for categorizing and providing suggestions for job search errors.
 /// </summary>
-public static class ErrorCategorizationService
+public class ErrorCategorizationService
 {
+    private readonly TimeProvider _timeProvider;
+
+    public ErrorCategorizationService(TimeProvider? timeProvider = null)
+    {
+        _timeProvider = timeProvider ?? TimeProvider.System;
+    }
+
     /// <summary>
     /// Categorizes an exception and provides structured error information.
     /// </summary>
     /// <param name="exception">The exception to categorize</param>
     /// <param name="platformName">Name of the platform where the error occurred</param>
     /// <returns>Structured error information</returns>
-    public static PlatformError CategorizeError(Exception exception, string platformName)
+    public PlatformError CategorizeError(Exception exception, string platformName)
     {
         string errorCategory = DetermineErrorCategory(exception);
         string message = GetErrorMessage(exception);
@@ -31,7 +38,7 @@ public static class ErrorCategorizationService
             TechnicalDetails = exception.ToString(),
             Suggestion = suggestion,
             Retryable = retryable,
-            Timestamp = DateTime.UtcNow
+            Timestamp = _timeProvider.GetUtcNow().UtcDateTime
         };
     }
 
@@ -41,7 +48,7 @@ public static class ErrorCategorizationService
     /// <param name="response">The HTTP response that failed</param>
     /// <param name="platformName">Name of the platform where the error occurred</param>
     /// <returns>Structured error information</returns>
-    public static PlatformError CategorizeHttpError(HttpResponseMessage response, string platformName)
+    public PlatformError CategorizeHttpError(HttpResponseMessage response, string platformName)
     {
         int statusCode = (int)response.StatusCode;
         string errorCategory = DetermineHttpErrorCategory(statusCode);
@@ -57,7 +64,7 @@ public static class ErrorCategorizationService
             TechnicalDetails = $"HTTP {statusCode}: {response.ReasonPhrase}",
             Suggestion = suggestion,
             Retryable = retryable,
-            Timestamp = DateTime.UtcNow
+            Timestamp = _timeProvider.GetUtcNow().UtcDateTime
         };
     }
 

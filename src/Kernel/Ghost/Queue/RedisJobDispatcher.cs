@@ -13,6 +13,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
 {
     private readonly RedisQueueOptions _options;
     private readonly ILogger<RedisJobDispatcher> _logger;
+    private readonly TimeProvider _timeProvider;
     private ConnectionMultiplexer? _redis;
     private IDatabase? _db;
     private readonly SemaphoreSlim _connectLock = new(1, 1);
@@ -57,13 +58,15 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
 
     public RedisJobDispatcher(
         IOptions<RedisQueueOptions> options,
-        ILogger<RedisJobDispatcher> logger)
+        ILogger<RedisJobDispatcher> logger,
+        TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(logger);
 
         _options = options.Value;
         _logger = logger;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <summary>
@@ -101,14 +104,14 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
         await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
         job.Priority = (JobPriority)Math.Clamp(priority, 0, 3);
-        job.CreatedAt = DateTime.UtcNow;
+        job.CreatedAt = _timeProvider.GetUtcNow().UtcDateTime;
         job.RetryCount = 0;
 
         string key = GetPendingKey(job.Priority);
         string jobJson = JsonSerializer.Serialize(job, KernelSerializerContext.Default.Job);
 
         // Use current timestamp as score for FIFO within priority
-        long score = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        long score = _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
 
         await _db!.SortedSetAddAsync(key, jobJson, score).ConfigureAwait(false);
 
@@ -146,7 +149,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
                 continue;
 
             job.WorkerId = workerId;
-            job.LastAttemptAt = DateTime.UtcNow;
+            job.LastAttemptAt = _timeProvider.GetUtcNow().UtcDateTime;
 
             // Add to active jobs
             string activeKey = GetActiveKey(workerId);
@@ -170,7 +173,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
         await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
         result.JobId = jobId;
-        result.CompletedAt = DateTime.UtcNow;
+        result.CompletedAt = _timeProvider.GetUtcNow().UtcDateTime;
 
         // Remove from active jobs
         string activeKey = GetActiveKey(result.WorkerId ?? "unknown");
@@ -221,7 +224,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
 
         job.RetryCount++;
         job.LastError = exception.Message;
-        job.LastAttemptAt = DateTime.UtcNow;
+        job.LastAttemptAt = _timeProvider.GetUtcNow().UtcDateTime;
 
         // Remove from active jobs
         string activeKey = GetActiveKey(workerId ?? "unknown");
@@ -240,7 +243,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
         {
             // Calculate exponential backoff: 2^attempt minutes
             double delayMinutes = Math.Pow(2, job.RetryCount);
-            long retryAt = DateTimeOffset.UtcNow.AddMinutes(delayMinutes).ToUnixTimeMilliseconds();
+            long retryAt = _timeProvider.GetUtcNow().AddMinutes(delayMinutes).ToUnixTimeMilliseconds();
 
             // Re-enqueue with delay (using score as timestamp)
             string key = GetPendingKey(job.Priority);
@@ -258,7 +261,7 @@ public sealed class RedisJobDispatcher : IJobDispatcher, IAsyncDisposable
             new("retry_count", job.RetryCount),
             new("error", exception.Message),
             new("stack_trace", exception.StackTrace ?? ""),
-            new("failed_at", DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+            new("failed_at", _timeProvider.GetUtcNow().ToUnixTimeSeconds())
         }).ConfigureAwait(false);
         await _db!.KeyExpireAsync(failedKey, TimeSpan.FromDays(7)).ConfigureAwait(false); // Keep for 7 days
     }
