@@ -566,7 +566,6 @@ public class GraphQLAdapterExtractTests : IDisposable
     }
 
     [Fact]
-    [SlopwatchSuppress("SW004", "Testing HTTP timeout behavior requires simulating slow response")]
     public async Task ExtractAsync_WithTimeout_ShouldRespectRequestTimeout()
     {
         // Arrange
@@ -576,16 +575,16 @@ public class GraphQLAdapterExtractTests : IDisposable
             Timeout = TimeSpan.FromMilliseconds(10)
         };
 
+        // Use TaskCompletionSource that never completes to simulate a hung request
+        // This triggers the timeout without requiring arbitrary Task.Delay
+        var tcs = new TaskCompletionSource<HttpResponseMessage>();
+
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
-            .Returns(async (HttpRequestMessage req, CancellationToken ct) =>
-            {
-                await Task.Delay(50, ct); // Delay longer than timeout (50ms > 10ms)
-                return new HttpResponseMessage(HttpStatusCode.OK);
-            });
+            .Returns(tcs.Task);
 
         // Act
         var response = await _adapter.ExtractAsync(request, new GraphQLAdapterOptions());
