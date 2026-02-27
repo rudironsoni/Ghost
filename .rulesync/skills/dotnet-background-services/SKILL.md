@@ -2,21 +2,22 @@
 name: dotnet-background-services
 description: Implements background work. BackgroundService, IHostedService, lifecycle, graceful shutdown.
 license: MIT
-targets: ["*"]
-tags: ["architecture", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['architecture', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for architecture tasks"
+  short-description: '.NET skill guidance for architecture tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-background-services
 
-Patterns for long-running background work in .NET applications. Covers `BackgroundService`, `IHostedService`, hosted service lifecycle, and graceful shutdown handling.
+Patterns for long-running background work in .NET applications. Covers `BackgroundService`, `IHostedService`, hosted
+service lifecycle, and graceful shutdown handling.
 
 ## Scope
 
@@ -30,21 +31,24 @@ Patterns for long-running background work in .NET applications. Covers `Backgrou
 - DI registration mechanics and service lifetimes -- see [skill:dotnet-csharp-dependency-injection]
 - Async/await patterns and cancellation token propagation -- see [skill:dotnet-csharp-async-patterns]
 - Project scaffolding -- see [skill:dotnet-scaffold-project]
-- Testing strategies for background services -- see [skill:dotnet-testing-strategy] and [skill:dotnet-integration-testing]
+- Testing strategies for background services -- see [skill:dotnet-testing-strategy] and
+  [skill:dotnet-integration-testing]
 - Channel<T> fundamentals and drain patterns -- see [skill:dotnet-channels]
 
-Cross-references: [skill:dotnet-csharp-async-patterns] for async patterns in background workers, [skill:dotnet-csharp-dependency-injection] for hosted service registration and scope management, [skill:dotnet-channels] for Channel<T> patterns used in background work queues.
+Cross-references: [skill:dotnet-csharp-async-patterns] for async patterns in background workers,
+[skill:dotnet-csharp-dependency-injection] for hosted service registration and scope management, [skill:dotnet-channels]
+for Channel<T> patterns used in background work queues.
 
 ---
 
 ## BackgroundService vs IHostedService
 
-| Feature | `BackgroundService` | `IHostedService` |
-|---------|-------------------|-----------------|
-| Purpose | Long-running loop or continuous work | Startup/shutdown hooks |
-| Methods | Override `ExecuteAsync` | Implement `StartAsync` + `StopAsync` |
-| Lifetime | Runs until cancellation or host shutdown | `StartAsync` runs at startup, `StopAsync` at shutdown |
-| Use when | Polling queues, processing streams, periodic jobs | Database migrations, cache warming, resource cleanup |
+| Feature  | `BackgroundService`                               | `IHostedService`                                      |
+| -------- | ------------------------------------------------- | ----------------------------------------------------- |
+| Purpose  | Long-running loop or continuous work              | Startup/shutdown hooks                                |
+| Methods  | Override `ExecuteAsync`                           | Implement `StartAsync` + `StopAsync`                  |
+| Lifetime | Runs until cancellation or host shutdown          | `StartAsync` runs at startup, `StopAsync` at shutdown |
+| Use when | Polling queues, processing streams, periodic jobs | Database migrations, cache warming, resource cleanup  |
 
 ---
 
@@ -52,7 +56,8 @@ Cross-references: [skill:dotnet-csharp-async-patterns] for async patterns in bac
 
 ### Basic Polling Worker
 
-```csharp
+````csharp
+
 public sealed class OrderProcessorWorker(
     IServiceScopeFactory scopeFactory,
     ILogger<OrderProcessorWorker> logger) : BackgroundService
@@ -96,13 +101,17 @@ public sealed class OrderProcessorWorker(
 
 // Registration
 builder.Services.AddHostedService<OrderProcessorWorker>();
-```
+
+```text
 
 ### Critical Rules for BackgroundService
 
-1. **Always create scopes** -- `BackgroundService` is registered as a singleton. Inject `IServiceScopeFactory`, not scoped services directly.
-2. **Always handle exceptions** -- by default, unhandled exceptions in `ExecuteAsync` stop the host (configurable via `HostOptions.BackgroundServiceExceptionBehavior`). Wrap the loop body in try/catch.
-3. **Always respect the stopping token** -- check `stoppingToken.IsCancellationRequested` and pass the token to all async calls.
+1. **Always create scopes** -- `BackgroundService` is registered as a singleton. Inject `IServiceScopeFactory`, not
+   scoped services directly.
+2. **Always handle exceptions** -- by default, unhandled exceptions in `ExecuteAsync` stop the host (configurable via
+   `HostOptions.BackgroundServiceExceptionBehavior`). Wrap the loop body in try/catch.
+3. **Always respect the stopping token** -- check `stoppingToken.IsCancellationRequested` and pass the token to all
+   async calls.
 4. **Back off on empty/error** -- avoid tight polling loops that waste CPU. Use `Task.Delay` with the stopping token.
 
 ---
@@ -112,6 +121,7 @@ builder.Services.AddHostedService<OrderProcessorWorker>();
 ### Startup Hook (Cache Warming, Migrations)
 
 ```csharp
+
 public sealed class CacheWarmupService(
     IServiceScopeFactory scopeFactory,
     ILogger<CacheWarmupService> logger) : IHostedService
@@ -129,11 +139,13 @@ public sealed class CacheWarmupService(
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
-```
+
+```text
 
 ### Startup + Shutdown (Resource Lifecycle)
 
 ```csharp
+
 public sealed class MessageBusService(
     ILogger<MessageBusService> logger) : IHostedService
 {
@@ -162,7 +174,8 @@ public sealed class MessageBusService(
         throw new NotImplementedException();
     }
 }
-```
+
+```text
 
 ---
 
@@ -173,12 +186,16 @@ Understanding the startup and shutdown sequence is critical for correct behavior
 ### Startup Sequence
 
 1. `IHostedService.StartAsync` is called for each registered service **in registration order**
-2. `BackgroundService.ExecuteAsync` is called after `StartAsync` completes (it runs concurrently -- the host does not wait for it to finish)
+2. `BackgroundService.ExecuteAsync` is called after `StartAsync` completes (it runs concurrently -- the host does not
+   wait for it to finish)
 3. The host is ready to serve requests after all `StartAsync` calls complete
 
-**Important:** `ExecuteAsync` must not block before yielding to the caller. The first `await` in `ExecuteAsync` is where control returns to the host. If you have synchronous setup before the first `await`, keep it short or move it to `StartAsync` via an override.
+**Important:** `ExecuteAsync` must not block before yielding to the caller. The first `await` in `ExecuteAsync` is where
+control returns to the host. If you have synchronous setup before the first `await`, keep it short or move it to
+`StartAsync` via an override.
 
 ```csharp
+
 public sealed class MyWorker : BackgroundService
 {
     // StartAsync runs to completion before the host is ready.
@@ -202,7 +219,8 @@ public sealed class MyWorker : BackgroundService
     private Task InitializeAsync(CancellationToken ct) => Task.CompletedTask;
     private Task DoWorkAsync(CancellationToken ct) => Task.CompletedTask;
 }
-```
+
+```text
 
 ### Shutdown Sequence
 
@@ -215,11 +233,14 @@ public sealed class MyWorker : BackgroundService
 
 ## Channels Integration
 
-See [skill:dotnet-channels] for comprehensive `Channel<T>` guidance including bounded/unbounded options, `BoundedChannelFullMode`, backpressure strategies, `itemDropped` callbacks, multiple consumers, performance tuning, and drain patterns.
+See [skill:dotnet-channels] for comprehensive `Channel<T>` guidance including bounded/unbounded options,
+`BoundedChannelFullMode`, backpressure strategies, `itemDropped` callbacks, multiple consumers, performance tuning, and
+drain patterns.
 
 The most common integration is a channel-backed background task queue consumed by a `BackgroundService`:
 
 ```csharp
+
 // Channel-backed work queue -- register as singleton
 public sealed class BackgroundTaskQueue
 {
@@ -260,7 +281,8 @@ public sealed class QueueProcessorWorker(
 // Registration
 builder.Services.AddSingleton<BackgroundTaskQueue>();
 builder.Services.AddHostedService<QueueProcessorWorker>();
-```
+
+```text
 
 ---
 
@@ -271,15 +293,18 @@ builder.Services.AddHostedService<QueueProcessorWorker>();
 By default, the host waits 30 seconds for services to stop. Configure this for long-running operations:
 
 ```csharp
+
 builder.Services.Configure<HostOptions>(options =>
 {
     options.ShutdownTimeout = TimeSpan.FromSeconds(60);
 });
-```
+
+```text
 
 ### Responding to Application Lifetime Events
 
 ```csharp
+
 public sealed class LifecycleLogger(
     IHostApplicationLifetime lifetime,
     ILogger<LifecycleLogger> logger) : IHostedService
@@ -300,7 +325,8 @@ public sealed class LifecycleLogger(
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
-```
+
+```text
 
 ---
 
@@ -309,6 +335,7 @@ public sealed class LifecycleLogger(
 Use `PeriodicTimer` instead of `Task.Delay` for more accurate periodic execution:
 
 ```csharp
+
 public sealed class HealthCheckReporter(
     IServiceScopeFactory scopeFactory,
     ILogger<HealthCheckReporter> logger) : BackgroundService
@@ -333,15 +360,19 @@ public sealed class HealthCheckReporter(
         }
     }
 }
-```
+
+```text
 
 ---
 
 ## Agent Gotchas
 
-1. **Do not inject scoped services into BackgroundService constructors** -- they are singletons. Always use `IServiceScopeFactory`.
-2. **Do not use `Task.Run` for background work** -- use `BackgroundService` for proper lifecycle management and graceful shutdown.
-3. **Do not swallow `OperationCanceledException`** -- let it propagate or re-check the stopping token. Swallowing it prevents graceful shutdown.
+1. **Do not inject scoped services into BackgroundService constructors** -- they are singletons. Always use
+   `IServiceScopeFactory`.
+2. **Do not use `Task.Run` for background work** -- use `BackgroundService` for proper lifecycle management and graceful
+   shutdown.
+3. **Do not swallow `OperationCanceledException`** -- let it propagate or re-check the stopping token. Swallowing it
+   prevents graceful shutdown.
 4. **Do not use `Thread.Sleep`** -- use `await Task.Delay(duration, stoppingToken)` or `PeriodicTimer`.
 5. **Do not forget to register** -- `AddHostedService<T>()` is required; merely implementing the interface does nothing.
 
@@ -354,3 +385,4 @@ public sealed class HealthCheckReporter(
 - [IHostedService interface](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.hosting.ihostedservice)
 - [Generic host shutdown](https://learn.microsoft.com/en-us/dotnet/core/extensions/generic-host#host-shutdown)
 - [PeriodicTimer](https://learn.microsoft.com/en-us/dotnet/api/system.threading.periodictimer)
+````

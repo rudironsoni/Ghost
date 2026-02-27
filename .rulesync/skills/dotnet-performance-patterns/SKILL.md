@@ -2,23 +2,27 @@
 name: dotnet-performance-patterns
 description: Optimizes .NET allocations and throughput. Span, ArrayPool, ref struct, sealed, stackalloc.
 license: MIT
-targets: ["*"]
-tags: ["foundation", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['foundation', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for foundation tasks"
+  short-description: '.NET skill guidance for foundation tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-performance-patterns
 
-Performance-oriented architecture patterns for .NET applications. Covers zero-allocation coding with Span\<T\> and Memory\<T\>, buffer pooling with ArrayPool\<T\>, struct design for performance (readonly struct, ref struct, in parameters), sealed class devirtualization by the JIT, stack-based allocation with stackalloc, and string handling performance. Focuses on the **why** (performance rationale and measurement) rather than the **how** (language syntax).
+Performance-oriented architecture patterns for .NET applications. Covers zero-allocation coding with Span\<T\> and
+Memory\<T\>, buffer pooling with ArrayPool\<T\>, struct design for performance (readonly struct, ref struct, in
+parameters), sealed class devirtualization by the JIT, stack-based allocation with stackalloc, and string handling
+performance. Focuses on the **why** (performance rationale and measurement) rather than the **how** (language syntax).
 
-**Version assumptions:** .NET 8.0+ baseline. Span\<T\> and Memory\<T\> are available from .NET Core 2.1+ but this skill targets modern usage patterns on .NET 8+.
+**Version assumptions:** .NET 8.0+ baseline. Span\<T\> and Memory\<T\> are available from .NET Core 2.1+ but this skill
+targets modern usage patterns on .NET 8+.
 
 ## Scope
 
@@ -38,7 +42,10 @@ Performance-oriented architecture patterns for .NET applications. Covers zero-al
 - Serialization format performance -- see [skill:dotnet-serialization]
 - Architecture patterns (caching, resilience, DI) -- see [skill:dotnet-architecture-patterns]
 
-Cross-references: [skill:dotnet-benchmarkdotnet] for measuring the impact of these patterns, [skill:dotnet-csharp-modern-patterns] for Span/Memory syntax foundation, [skill:dotnet-csharp-coding-standards] for sealed class style conventions, [skill:dotnet-native-aot] for AOT performance characteristics and trimming impact on pattern choices, [skill:dotnet-serialization] for serialization performance context.
+Cross-references: [skill:dotnet-benchmarkdotnet] for measuring the impact of these patterns,
+[skill:dotnet-csharp-modern-patterns] for Span/Memory syntax foundation, [skill:dotnet-csharp-coding-standards] for
+sealed class style conventions, [skill:dotnet-native-aot] for AOT performance characteristics and trimming impact on
+pattern choices, [skill:dotnet-serialization] for serialization performance context.
 
 ---
 
@@ -46,11 +53,14 @@ Cross-references: [skill:dotnet-benchmarkdotnet] for measuring the impact of the
 
 ### Why Span\<T\> Matters for Performance
 
-`Span<T>` provides a safe, bounds-checked view over contiguous memory without allocating. It enables slicing arrays, strings, and stack memory without copying. For syntax details see [skill:dotnet-csharp-modern-patterns]; this section focuses on performance rationale.
+`Span<T>` provides a safe, bounds-checked view over contiguous memory without allocating. It enables slicing arrays,
+strings, and stack memory without copying. For syntax details see [skill:dotnet-csharp-modern-patterns]; this section
+focuses on performance rationale.
 
 ### Zero-Allocation String Processing
 
-```csharp
+````csharp
+
 // BAD: Substring allocates a new string on each call
 public static (string Key, string Value) ParseHeader_Allocating(string header)
 {
@@ -65,7 +75,8 @@ public static (ReadOnlySpan<char> Key, ReadOnlySpan<char> Value) ParseHeader_Zer
     var colonIndex = header.IndexOf(':');
     return (header[..colonIndex], header[(colonIndex + 1)..].Trim());
 }
-```
+
+```text
 
 Performance impact: for high-throughput parsing (HTTP headers, log lines, CSV rows), Span-based parsing eliminates GC pressure entirely. Measure with `[MemoryDiagnoser]` in [skill:dotnet-benchmarkdotnet] -- the `Allocated` column should read `0 B`.
 
@@ -78,6 +89,7 @@ Performance impact: for high-throughput parsing (HTTP headers, log lines, CSV ro
 - Return a memory region from a method for later consumption
 
 ```csharp
+
 public async Task<int> ReadAndProcessAsync(Stream stream, Memory<byte> buffer)
 {
     var bytesRead = await stream.ReadAsync(buffer);
@@ -92,7 +104,8 @@ private int ProcessData(ReadOnlySpan<byte> data)
         sum += b;
     return sum;
 }
-```
+
+```text
 
 ---
 
@@ -105,6 +118,7 @@ Large array allocations (>= 85,000 bytes) go directly to the Large Object Heap (
 ### Usage Pattern
 
 ```csharp
+
 using System.Buffers;
 
 public int ProcessLargeData(Stream source)
@@ -123,7 +137,8 @@ public int ProcessLargeData(Stream source)
         // clearArray: true zeroes the buffer -- use when buffer held sensitive data
     }
 }
-```
+
+```text
 
 ### Common Mistakes
 
@@ -143,6 +158,7 @@ public int ProcessLargeData(Stream source)
 The JIT must defensively copy non-readonly structs when accessed via `in`, `readonly` fields, or `readonly` methods to prevent mutation. Marking a struct `readonly` guarantees immutability, eliminating these copies:
 
 ```csharp
+
 // GOOD: readonly eliminates defensive copies on every access
 public readonly struct Point3D
 {
@@ -161,7 +177,8 @@ public readonly struct Point3D
         return Math.Sqrt(dx * dx + dy * dy + dz * dz);
     }
 }
-```
+
+```text
 
 Without `readonly`, calling a method on a struct through an `in` parameter forces the JIT to copy the entire struct to protect against mutation. For large structs in tight loops, this eliminates significant overhead.
 
@@ -170,6 +187,7 @@ Without `readonly`, calling a method on a struct through an `in` parameter force
 `ref struct` types are constrained to the stack. They cannot be boxed, stored in fields, or used in async methods. This enables safe wrapping of Span\<T\>:
 
 ```csharp
+
 public ref struct SpanLineEnumerator
 {
     private ReadOnlySpan<char> _remaining;
@@ -197,17 +215,20 @@ public ref struct SpanLineEnumerator
         return true;
     }
 }
-```
+
+```text
 
 ### in Parameters -- Pass-by-Reference Without Mutation
 
 Use `in` for large readonly structs passed to methods. The `in` modifier passes by reference (avoids copying) and prevents mutation:
 
 ```csharp
+
 // in parameter: pass by reference, no copy, no mutation allowed
 public static double CalculateDistance(in Point3D a, in Point3D b)
     => a.DistanceTo(in b);
-```
+
+```csharp
 
 **When to use `in`:**
 
@@ -227,6 +248,7 @@ public static double CalculateDistance(in Point3D a, in Point3D b)
 When a class is `sealed`, the JIT can replace virtual method calls with direct calls (devirtualization) because no subclass override is possible. This enables further inlining:
 
 ```csharp
+
 // Without sealed: virtual dispatch through vtable
 public class OpenService : IProcessor
 {
@@ -240,7 +262,8 @@ public sealed class SealedService : IProcessor
 }
 
 public interface IProcessor { int Process(int x); }
-```
+
+```text
 
 Verify devirtualization with `[DisassemblyDiagnoser]` in [skill:dotnet-benchmarkdotnet]. See [skill:dotnet-csharp-coding-standards] for the project convention of defaulting to sealed classes.
 
@@ -262,6 +285,7 @@ In tight loops and hot paths, the cumulative effect is measurable. For framework
 `stackalloc` allocates memory on the stack, avoiding GC entirely. Use for small, fixed-size buffers in hot paths:
 
 ```csharp
+
 public static string FormatGuid(Guid guid)
 {
     // 68 bytes on the stack -- well within safe limits
@@ -269,7 +293,8 @@ public static string FormatGuid(Guid guid)
     guid.TryFormat(buffer, out var charsWritten, "D");
     return new string(buffer[..charsWritten]);
 }
-```
+
+```text
 
 ### Safety Guidelines
 
@@ -283,6 +308,7 @@ public static string FormatGuid(Guid guid)
 ### Hybrid Pattern: stackalloc with ArrayPool Fallback
 
 ```csharp
+
 public static string ProcessData(ReadOnlySpan<byte> input)
 {
     const int stackThreshold = 256;
@@ -303,7 +329,8 @@ public static string ProcessData(ReadOnlySpan<byte> input)
             ArrayPool<char>.Shared.Return(rented);
     }
 }
-```
+
+```text
 
 This pattern is used throughout the .NET runtime libraries and is the recommended approach for methods that handle both small and large inputs.
 
@@ -316,6 +343,7 @@ This pattern is used throughout the .NET runtime libraries and is the recommende
 Ordinal comparisons are significantly faster than culture-aware comparisons because they avoid Unicode normalization:
 
 ```csharp
+
 // FAST: ordinal comparison (byte-by-byte)
 bool isMatch = str.Equals("expected", StringComparison.Ordinal);
 bool containsKey = dict.ContainsKey(key); // Dictionary<string, T> uses ordinal by default
@@ -325,7 +353,8 @@ bool isMatchIgnoreCase = str.Equals("expected", StringComparison.OrdinalIgnoreCa
 
 // SLOW: culture-aware comparison (Unicode normalization, linguistic rules)
 bool isMatchCulture = str.Equals("expected", StringComparison.CurrentCulture);
-```
+
+```text
 
 **Default guidance:** Use `StringComparison.Ordinal` or `StringComparison.OrdinalIgnoreCase` for internal identifiers, dictionary keys, file paths, and protocol strings. Reserve culture-aware comparison for user-visible text sorting and display.
 
@@ -334,9 +363,11 @@ bool isMatchCulture = str.Equals("expected", StringComparison.CurrentCulture);
 The CLR interns compile-time string literals automatically. `string.Intern()` can reduce memory for runtime strings that repeat frequently:
 
 ```csharp
+
 // Intern frequently-repeated runtime strings to share a single instance
 var normalized = string.Intern(headerName.ToLowerInvariant());
-```
+
+```csharp
 
 **Caution:** Interned strings are never garbage collected. Only intern strings from a bounded, known set (HTTP headers, XML element names). Never intern user input or unbounded data.
 
@@ -350,6 +381,7 @@ var normalized = string.Intern(headerName.ToLowerInvariant());
 | High-throughput formatting | `Span<char>` + `TryFormat` | Zero-allocation formatting |
 
 ```csharp
+
 // string.Create for single-allocation building
 public static string FormatId(int category, int item)
 {
@@ -360,7 +392,8 @@ public static string FormatId(int category, int item)
         state.item.TryFormat(span[(catWritten + 1)..], out _);
     });
 }
-```
+
+```text
 
 ---
 
@@ -398,3 +431,4 @@ Performance patterns in this skill are grounded in guidance from:
 - **Nick Chapsas** -- Modern .NET performance patterns and benchmarking methodology.
 
 > These sources inform the patterns and rationale presented above. This skill does not claim to represent or speak for any individual.
+````

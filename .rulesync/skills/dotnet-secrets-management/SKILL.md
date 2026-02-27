@@ -2,21 +2,24 @@
 name: dotnet-secrets-management
 description: Manages secrets and sensitive config. User secrets, environment variables, rotation.
 license: MIT
-targets: ["*"]
-tags: ["security", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['security', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for security tasks"
+  short-description: '.NET skill guidance for security tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-secrets-management
 
-Cloud-agnostic secrets management for .NET applications. Covers the full lifecycle: user secrets for local development, environment variables for production, IConfiguration binding patterns, secret rotation, and managed identity as a production best practice. Includes anti-patterns to avoid (secrets in source, appsettings.json, hardcoded connection strings).
+Cloud-agnostic secrets management for .NET applications. Covers the full lifecycle: user secrets for local development,
+environment variables for production, IConfiguration binding patterns, secret rotation, and managed identity as a
+production best practice. Includes anti-patterns to avoid (secrets in source, appsettings.json, hardcoded connection
+strings).
 
 ## Scope
 
@@ -29,34 +32,40 @@ Cloud-agnostic secrets management for .NET applications. Covers the full lifecyc
 
 ## Out of scope
 
-- Cloud-provider-specific vault services (Azure Key Vault, AWS Secrets Manager, GCP Secret Manager) -- see [skill:dotnet-advisor]
-- Authentication/authorization implementation (OAuth, Identity) -- see [skill:dotnet-api-security] and [skill:dotnet-blazor-auth]
+- Cloud-provider-specific vault services (Azure Key Vault, AWS Secrets Manager, GCP Secret Manager) -- see
+  [skill:dotnet-advisor]
+- Authentication/authorization implementation (OAuth, Identity) -- see [skill:dotnet-api-security] and
+  [skill:dotnet-blazor-auth]
 - Cryptographic algorithm selection -- see [skill:dotnet-cryptography]
 - General Options pattern and configuration sources -- see [skill:dotnet-csharp-configuration]
 
-Cross-references: [skill:dotnet-security-owasp] for OWASP A02 (Cryptographic Failures) and deprecated pattern warnings, [skill:dotnet-csharp-configuration] for Options pattern and configuration source precedence.
+Cross-references: [skill:dotnet-security-owasp] for OWASP A02 (Cryptographic Failures) and deprecated pattern warnings,
+[skill:dotnet-csharp-configuration] for Options pattern and configuration source precedence.
 
 ---
 
 ## Secrets Lifecycle
 
-| Environment | Secret Source | Mechanism |
-|-------------|-------------|-----------|
-| Local dev | User secrets | `dotnet user-secrets` CLI, `secrets.json` outside repo |
-| CI/CD | Pipeline variables | Injected as environment variables, never in YAML |
+| Environment        | Secret Source                  | Mechanism                                              |
+| ------------------ | ------------------------------ | ------------------------------------------------------ |
+| Local dev          | User secrets                   | `dotnet user-secrets` CLI, `secrets.json` outside repo |
+| CI/CD              | Pipeline variables             | Injected as environment variables, never in YAML       |
 | Staging/Production | Environment variables or vault | OS-level env vars, managed identity, or vault provider |
 
-**Principle:** Secrets must never exist in the source repository or in any file committed to version control. Each environment tier uses the appropriate mechanism for its trust boundary.
+**Principle:** Secrets must never exist in the source repository or in any file committed to version control. Each
+environment tier uses the appropriate mechanism for its trust boundary.
 
 ---
 
 ## User Secrets (Local Development)
 
-User secrets store sensitive configuration outside the project directory in the user profile, preventing accidental commits.
+User secrets store sensitive configuration outside the project directory in the user profile, preventing accidental
+commits.
 
 ### Setup
 
-```bash
+````bash
+
 # Initialize user secrets for a project (creates UserSecretsId in csproj)
 dotnet user-secrets init
 
@@ -73,7 +82,8 @@ dotnet user-secrets remove "Smtp:ApiKey"
 
 # Clear all secrets
 dotnet user-secrets clear
-```
+
+```text
 
 ### How It Works
 
@@ -84,6 +94,7 @@ User secrets are stored at:
 The `secrets.json` file is plain JSON with the same structure as `appsettings.json`:
 
 ```json
+
 {
   "ConnectionStrings": {
     "DefaultDb": "Server=localhost;Database=myapp;User=sa;Password=dev123"
@@ -95,22 +106,26 @@ The `secrets.json` file is plain JSON with the same structure as `appsettings.js
     "SigningKey": "dev-signing-key-min-32-chars-long!!"
   }
 }
-```
+
+```text
 
 ### Loading in Code
 
 User secrets are loaded automatically by `WebApplication.CreateBuilder` and `Host.CreateDefaultBuilder` when `DOTNET_ENVIRONMENT` or `ASPNETCORE_ENVIRONMENT` is `Development`:
 
 ```csharp
+
 var builder = WebApplication.CreateBuilder(args);
 
 // User secrets are already loaded. Access them via IConfiguration:
 var connectionString = builder.Configuration.GetConnectionString("DefaultDb");
-```
+
+```text
 
 For non-web hosts (console apps, worker services):
 
 ```csharp
+
 var builder = Host.CreateApplicationBuilder(args);
 // User secrets are loaded automatically in Development environment.
 // For explicit control:
@@ -118,7 +133,8 @@ if (builder.Environment.IsDevelopment())
 {
     builder.Configuration.AddUserSecrets<Program>();
 }
-```
+
+```text
 
 **Gotcha:** User secrets are not encrypted -- they are just stored outside the repo. They are appropriate for development only, never for production.
 
@@ -143,6 +159,7 @@ In the default ASP.NET Core configuration stack, environment variables override 
 .NET maps environment variables to configuration keys using `__` (double underscore) as the section separator:
 
 ```bash
+
 # These environment variables map to configuration sections:
 export ConnectionStrings__DefaultDb="Server=prod-db;Database=myapp;..."
 export Smtp__ApiKey="SG.production-key"
@@ -150,19 +167,23 @@ export Jwt__SigningKey="production-signing-key-256-bits"
 
 # With a prefix (recommended to avoid collisions):
 export MYAPP_ConnectionStrings__DefaultDb="Server=prod-db;..."
-```
+
+```text
 
 ```csharp
+
 // Load prefixed environment variables
 builder.Configuration.AddEnvironmentVariables(prefix: "MYAPP_");
 
 // Access the same way as any configuration source:
 var smtpKey = builder.Configuration["Smtp:ApiKey"];
-```
+
+```text
 
 ### Container Environments
 
 ```yaml
+
 # docker-compose.yml -- inject secrets via environment
 services:
   api:
@@ -172,14 +193,17 @@ services:
       - Smtp__ApiKey=${SMTP_API_KEY}
     env_file:
       - .env  # NOT committed to source control
-```
+
+```text
 
 ```dockerfile
+
 # Dockerfile -- do NOT bake secrets into images
 # Use environment variables at runtime instead
 ENV ASPNETCORE_URLS=http://+:8080
 # NEVER: ENV ConnectionStrings__DefaultDb="Server=..."
-```
+
+```dockerfile
 
 **Gotcha:** Environment variables are visible to all processes under the same user. In multi-tenant container environments, use container-level isolation (Kubernetes secrets, Docker secrets) rather than host-level env vars.
 
@@ -190,6 +214,7 @@ ENV ASPNETCORE_URLS=http://+:8080
 Bind secrets to strongly typed options classes for compile-time safety and validation.
 
 ```csharp
+
 public sealed class JwtOptions
 {
     public const string SectionName = "Jwt";
@@ -220,9 +245,11 @@ builder.Services
     .BindConfiguration(JwtOptions.SectionName)
     .ValidateDataAnnotations()
     .ValidateOnStart(); // Fail fast if secrets are missing
-```
+
+```text
 
 ```csharp
+
 // Inject and use
 public sealed class TokenService(IOptions<JwtOptions> jwtOptions)
 {
@@ -244,7 +271,8 @@ public sealed class TokenService(IOptions<JwtOptions> jwtOptions)
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
-```
+
+```text
 
 > Options classes must use `{ get; set; }` (not `{ get; init; }`) because the configuration binder and `PostConfigure` need to mutate properties after construction. Use data annotation attributes (`[Required]`, `[MinLength]`) for validation.
 
@@ -259,6 +287,7 @@ Design applications to handle secret rotation without downtime.
 ### Rotation-Friendly Patterns
 
 ```csharp
+
 // Use IOptionsMonitor<T> for secrets that may change at runtime
 public sealed class EmailService(IOptionsMonitor<SmtpOptions> smtpOptions, ILogger<EmailService> logger)
 {
@@ -296,9 +325,11 @@ public sealed class SmtpOptionsChangeLogger(
 
 // Registration:
 builder.Services.AddHostedService<SmtpOptionsChangeLogger>();
-```
+
+```text
 
 ```csharp
+
 // Dual-key validation for zero-downtime rotation
 // Accept both old and new signing keys during rotation window
 public sealed class DualKeyTokenValidator(IOptionsMonitor<JwtOptions> optionsMonitor)
@@ -331,7 +362,8 @@ public sealed class DualKeyTokenValidator(IOptionsMonitor<JwtOptions> optionsMon
         };
     }
 }
-```
+
+```text
 
 ### Rotation Checklist
 
@@ -350,13 +382,15 @@ Managed identity eliminates secrets entirely for cloud-hosted applications by us
 **Concept:** Instead of storing a connection string with a password, the application authenticates to the database/service using its platform-assigned identity. No secret to manage, rotate, or leak.
 
 ```csharp
+
 // Example: passwordless connection to SQL Server using DefaultAzureCredential
 // This pattern works across Azure, and similar patterns exist for AWS and GCP
 var connectionString = "Server=myserver.database.windows.net;Database=mydb;Authentication=Active Directory Default";
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 // No password in the connection string -- identity is resolved from the environment
-```
+
+```text
 
 **When to use managed identity:**
 - Production and staging environments hosted on cloud platforms
@@ -375,27 +409,32 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 ### Secrets in Source Control
 
 ```csharp
+
 // NEVER: hardcoded secrets in source code
 private const string ApiKey = "sk-live-abc123def456";           // WRONG
 private const string ConnectionString = "Server=prod;Password=secret"; // WRONG
-```
+
+```csharp
 
 **Fix:** Use user secrets (dev) or environment variables (production). See sections above.
 
 ### Secrets in appsettings.json
 
 ```json
+
 // NEVER: real credentials in appsettings.json (committed to repo)
 {
   "ConnectionStrings": {
     "DefaultDb": "Server=prod-db;Password=RealPassword123!"
   }
 }
-```
+
+```text
 
 **Fix:** `appsettings.json` should contain only non-sensitive defaults. Use placeholder values that fail visibly:
 
 ```json
+
 {
   "ConnectionStrings": {
     "DefaultDb": "Server=localhost;Database=myapp;Integrated Security=true"
@@ -404,18 +443,22 @@ private const string ConnectionString = "Server=prod;Password=secret"; // WRONG
     "ApiKey": "REPLACE_VIA_ENV_OR_USER_SECRETS"
   }
 }
-```
+
+```text
 
 ### Hardcoded Connection Strings
 
 ```csharp
+
 // NEVER: connection strings directly in code
 var connection = new SqlConnection("Server=prod-db;Database=myapp;User=sa;Password=P@ssw0rd!");
-```
+
+```csharp
 
 **Fix:** Always resolve connection strings from `IConfiguration`:
 
 ```csharp
+
 // Correct: resolve from configuration
 public sealed class OrderRepository(IConfiguration configuration)
 {
@@ -429,22 +472,27 @@ public sealed class OrderRepository(IOptions<DatabaseOptions> options)
 {
     private readonly string _connectionString = options.Value.ConnectionString;
 }
-```
+
+```text
 
 ### Logging Secrets
 
 ```csharp
+
 // NEVER: log secret values
 logger.LogInformation("Using API key: {ApiKey}", apiKey);       // WRONG
 logger.LogDebug("Connection string: {Conn}", connectionString); // WRONG
-```
+
+```csharp
 
 **Fix:** Log that a secret was loaded, not its value:
 
 ```csharp
+
 logger.LogInformation("API key configured: {IsConfigured}", !string.IsNullOrEmpty(apiKey));
 logger.LogInformation("Database connection configured for {Server}", new SqlConnectionStringBuilder(connectionString).DataSource);
-```
+
+```csharp
 
 ---
 
@@ -476,3 +524,4 @@ logger.LogInformation("Database connection configured for {Server}", new SqlConn
 - [ASP.NET Core Security](https://learn.microsoft.com/en-us/aspnet/core/security/?view=aspnetcore-10.0)
 - [Secure Coding Guidelines for .NET](https://learn.microsoft.com/en-us/dotnet/standard/security/secure-coding-guidelines)
 - [Use Managed Identities](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview)
+````

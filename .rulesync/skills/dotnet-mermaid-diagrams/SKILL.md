@@ -2,23 +2,30 @@
 name: dotnet-mermaid-diagrams
 description: Creates Mermaid diagrams for .NET. Architecture, sequence, class, deployment, ER, flowcharts.
 license: MIT
-targets: ["*"]
-tags: ["foundation", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['foundation', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for foundation tasks"
+  short-description: '.NET skill guidance for foundation tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-mermaid-diagrams
 
-Mermaid diagram reference for .NET projects: architecture diagrams (C4-style context, container, component views, layered architecture, microservice topology), sequence diagrams (API request flows, async/await patterns, middleware pipeline, authentication flows), class diagrams (domain models, DI registration graphs, inheritance hierarchies, interface implementations), deployment diagrams (container deployment, Kubernetes pod layout, CI/CD pipeline flow), ER diagrams (EF Core model relationships, database schema visualization), state diagrams (workflow states, order processing, saga patterns, state machine patterns), and flowcharts (decision trees, framework selection, architecture choices). Includes diagram-as-code conventions for naming, grouping, GitHub rendering, and dark mode considerations.
+Mermaid diagram reference for .NET projects: architecture diagrams (C4-style context, container, component views,
+layered architecture, microservice topology), sequence diagrams (API request flows, async/await patterns, middleware
+pipeline, authentication flows), class diagrams (domain models, DI registration graphs, inheritance hierarchies,
+interface implementations), deployment diagrams (container deployment, Kubernetes pod layout, CI/CD pipeline flow), ER
+diagrams (EF Core model relationships, database schema visualization), state diagrams (workflow states, order
+processing, saga patterns, state machine patterns), and flowcharts (decision trees, framework selection, architecture
+choices). Includes diagram-as-code conventions for naming, grouping, GitHub rendering, and dark mode considerations.
 
-**Version assumptions:** Mermaid v10+ (supported by GitHub, Starlight, Docusaurus natively). GitHub renders Mermaid in Markdown files, issues, PRs, and discussions. .NET 8.0+ baseline for code examples.
+**Version assumptions:** Mermaid v10+ (supported by GitHub, Starlight, Docusaurus natively). GitHub renders Mermaid in
+Markdown files, issues, PRs, and discussions. .NET 8.0+ baseline for code examples.
 
 For complete diagram examples, see `examples.md` in this skill directory.
 
@@ -37,7 +44,9 @@ For complete diagram examples, see `examples.md` in this skill directory.
 - GitHub-native doc structure and README patterns -- see [skill:dotnet-github-docs]
 - CI/CD pipeline deployment of doc sites -- see [skill:dotnet-gha-deploy]
 
-Cross-references: [skill:dotnet-documentation-strategy] for Mermaid rendering setup across doc platforms, [skill:dotnet-github-docs] for embedding diagrams in GitHub-native docs, [skill:dotnet-gha-deploy] for doc site deployment.
+Cross-references: [skill:dotnet-documentation-strategy] for Mermaid rendering setup across doc platforms,
+[skill:dotnet-github-docs] for embedding diagrams in GitHub-native docs, [skill:dotnet-gha-deploy] for doc site
+deployment.
 
 ---
 
@@ -106,7 +115,8 @@ Cross-references: [skill:dotnet-documentation-strategy] for Mermaid rendering se
 
 ### GitHub Rendering Tips
 
-- GitHub renders Mermaid in fenced code blocks with the `mermaid` language identifier in Markdown files, issues, PRs, and discussions
+- GitHub renders Mermaid in fenced code blocks with the `mermaid` language identifier in Markdown files, issues, PRs,
+  and discussions
 - Maximum recommended diagram size: ~50 nodes for readable rendering
 - GitHub uses a light theme by default -- avoid light-colored fill that disappears on white backgrounds
 - Diagrams auto-size to container width -- keep node labels concise (under 30 characters per line)
@@ -123,37 +133,49 @@ Cross-references: [skill:dotnet-documentation-strategy] for Mermaid rendering se
 
 ### Diagram Size Guidelines
 
-| Diagram Type | Recommended Max Nodes | Notes |
-|---|---|---|
-| C4 Context | 10-12 | One system + external actors |
-| C4 Container | 15-20 | Internal containers + data stores |
-| C4 Component | 15-20 | Single service internals |
-| Sequence | 8 participants | More becomes unreadable |
-| Class | 10-15 classes | Split into multiple diagrams |
-| ER | 10-12 entities | Split by bounded context |
-| State | 12-15 states | Split complex workflows |
-| Flowchart | 15-20 nodes | Keep decision trees focused |
+| Diagram Type | Recommended Max Nodes | Notes                             |
+| ------------ | --------------------- | --------------------------------- |
+| C4 Context   | 10-12                 | One system + external actors      |
+| C4 Container | 15-20                 | Internal containers + data stores |
+| C4 Component | 15-20                 | Single service internals          |
+| Sequence     | 8 participants        | More becomes unreadable           |
+| Class        | 10-15 classes         | Split into multiple diagrams      |
+| ER           | 10-12 entities        | Split by bounded context          |
+| State        | 12-15 states          | Split complex workflows           |
+| Flowchart    | 15-20 nodes           | Keep decision trees focused       |
 
 ---
 
 ## Agent Gotchas
 
-1. **Always use `.NET-specific content` in diagrams** -- do not generate generic diagrams. Use real .NET types (DbContext, IRepository, MediatR), real .NET tools (EF Core, MassTransit, YARP), and real .NET patterns (middleware pipeline, DI registration).
+1. **Always use `.NET-specific content` in diagrams** -- do not generate generic diagrams. Use real .NET types
+   (DbContext, IRepository, MediatR), real .NET tools (EF Core, MassTransit, YARP), and real .NET patterns (middleware
+   pipeline, DI registration).
 
-2. **Keep diagrams under 50 nodes** -- larger diagrams render poorly on GitHub and doc sites. Split complex architectures into multiple focused diagrams (context, container, component) rather than one monolithic diagram.
+1. **Keep diagrams under 50 nodes** -- larger diagrams render poorly on GitHub and doc sites. Split complex
+   architectures into multiple focused diagrams (context, container, component) rather than one monolithic diagram.
 
-3. **Use `<br/>` for line breaks in node labels, not `\n`** -- Mermaid renders `\n` literally as text. Multi-line labels require `<br/>` HTML tags.
+1. **Use `<br/>` for line breaks in node labels, not `\n`** -- Mermaid renders `\n` literally as text. Multi-line labels
+   require `<br/>` HTML tags.
 
-4. **Test Mermaid syntax before committing** -- syntax errors cause GitHub to render raw text instead of a diagram. Use the Mermaid Live Editor (https://mermaid.live) or a local preview tool to validate.
+1. **Test Mermaid syntax before committing** -- syntax errors cause GitHub to render raw text instead of a diagram. Use
+   the Mermaid Live Editor (https://mermaid.live) or a local preview tool to validate.
 
-5. **ER diagram relationship notation follows Mermaid syntax, not UML** -- use `||--o{` for one-to-many, `||--||` for one-to-one. Do not use UML multiplicity notation.
+1. **ER diagram relationship notation follows Mermaid syntax, not UML** -- use `||--o{` for one-to-many, `||--||` for
+   one-to-one. Do not use UML multiplicity notation.
 
-6. **Use the `neutral` theme for GitHub compatibility** -- `%%{init: {'theme': 'neutral'}}%%` provides the best rendering in both light and dark modes.
+1. **Use the `neutral` theme for GitHub compatibility** -- `%%{init: {'theme': 'neutral'}}%%` provides the best
+   rendering in both light and dark modes.
 
-7. **Sequence diagram participant names cannot contain special characters** -- use `participant DB as "SQL Server"` alias syntax for names with spaces or special characters.
+1. **Sequence diagram participant names cannot contain special characters** -- use `participant DB as "SQL Server"`
+   alias syntax for names with spaces or special characters.
 
-8. **Nested generics (`Task~List~T~~`) may not render on all Mermaid versions** -- the double `~~` at the end of nested generic types requires Mermaid v10.3+. Test rendering in your target environment before committing complex generic type diagrams.
+1. **Nested generics (`Task~List~T~~`) may not render on all Mermaid versions** -- the double `~~` at the end of nested
+   generic types requires Mermaid v10.3+. Test rendering in your target environment before committing complex generic
+   type diagrams.
 
-9. **Do not use Font Awesome icon syntax (`fa:fa-user`) in diagrams intended for GitHub** -- GitHub's native Mermaid renderer does not load Font Awesome CSS. Icons render as literal text. Use plain text labels instead.
+1. **Do not use Font Awesome icon syntax (`fa:fa-user`) in diagrams intended for GitHub** -- GitHub's native Mermaid
+   renderer does not load Font Awesome CSS. Icons render as literal text. Use plain text labels instead.
 
-10. **Do not configure Mermaid rendering in doc platforms** -- platform setup (Starlight remark plugin, Docusaurus theme, DocFX template) belongs to [skill:dotnet-documentation-strategy]. This skill provides the diagram content only.
+1. **Do not configure Mermaid rendering in doc platforms** -- platform setup (Starlight remark plugin, Docusaurus theme,
+   DocFX template) belongs to [skill:dotnet-documentation-strategy]. This skill provides the diagram content only.

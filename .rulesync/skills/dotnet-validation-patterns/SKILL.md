@@ -2,21 +2,24 @@
 name: dotnet-validation-patterns
 description: Validates models and IOptions. DataAnnotations, IValidatableObject, IValidateOptions<T>.
 license: MIT
-targets: ["*"]
-tags: ["csharp", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['csharp', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for csharp tasks"
+  short-description: '.NET skill guidance for csharp tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-validation-patterns
 
-Built-in .NET validation patterns that do not require third-party packages. Covers DataAnnotations attributes, `IValidatableObject` for cross-property validation, `IValidateOptions<T>` for options validation at startup, custom `ValidationAttribute` authoring, and `Validator.TryValidateObject` for manual validation. Prefer these built-in mechanisms as the default; reserve FluentValidation for complex domain rules that outgrow declarative attributes.
+Built-in .NET validation patterns that do not require third-party packages. Covers DataAnnotations attributes,
+`IValidatableObject` for cross-property validation, `IValidateOptions<T>` for options validation at startup, custom
+`ValidationAttribute` authoring, and `Validator.TryValidateObject` for manual validation. Prefer these built-in
+mechanisms as the default; reserve FluentValidation for complex domain rules that outgrow declarative attributes.
 
 ## Scope
 
@@ -31,7 +34,10 @@ Built-in .NET validation patterns that do not require third-party packages. Cove
 - Options pattern binding and ValidateOnStart registration -- see [skill:dotnet-csharp-configuration]
 - Architectural placement of validation in layers -- see [skill:dotnet-architecture-patterns]
 
-Cross-references: [skill:dotnet-input-validation] for API pipeline validation and FluentValidation, [skill:dotnet-csharp-configuration] for Options pattern binding and `ValidateOnStart()`, [skill:dotnet-architecture-patterns] for validation placement in architecture layers, [skill:dotnet-csharp-coding-standards] for naming conventions.
+Cross-references: [skill:dotnet-input-validation] for API pipeline validation and FluentValidation,
+[skill:dotnet-csharp-configuration] for Options pattern binding and `ValidateOnStart()`,
+[skill:dotnet-architecture-patterns] for validation placement in architecture layers,
+[skill:dotnet-csharp-coding-standards] for naming conventions.
 
 ---
 
@@ -39,23 +45,33 @@ Cross-references: [skill:dotnet-input-validation] for API pipeline validation an
 
 Choose the validation approach based on complexity:
 
-1. **DataAnnotations** (default) -- declarative `[Required]`, `[Range]`, `[StringLength]`, `[RegularExpression]` attributes. Best for: simple property-level constraints on DTOs, request models, and options classes.
-2. **`IValidatableObject`** -- implement `Validate()` for cross-property rules within the same object. Best for: date range comparisons, conditional required fields, business rules that span multiple properties.
-3. **Custom `ValidationAttribute`** -- subclass `ValidationAttribute` for reusable property-level rules. Best for: domain-specific constraints (SKU format, postal code, currency code) applied across multiple models.
-4. **`IValidateOptions<T>`** -- validate configuration/options classes at startup with access to DI services. Best for: cross-property options checks, environment-dependent validation, fail-fast startup.
-5. **FluentValidation** -- third-party library for complex, testable validation with fluent API. Best for: async validators, database-dependent rules, deeply nested object graphs. See [skill:dotnet-input-validation] for FluentValidation patterns.
+1. **DataAnnotations** (default) -- declarative `[Required]`, `[Range]`, `[StringLength]`, `[RegularExpression]`
+   attributes. Best for: simple property-level constraints on DTOs, request models, and options classes.
+2. **`IValidatableObject`** -- implement `Validate()` for cross-property rules within the same object. Best for: date
+   range comparisons, conditional required fields, business rules that span multiple properties.
+3. **Custom `ValidationAttribute`** -- subclass `ValidationAttribute` for reusable property-level rules. Best for:
+   domain-specific constraints (SKU format, postal code, currency code) applied across multiple models.
+4. **`IValidateOptions<T>`** -- validate configuration/options classes at startup with access to DI services. Best for:
+   cross-property options checks, environment-dependent validation, fail-fast startup.
+5. **FluentValidation** -- third-party library for complex, testable validation with fluent API. Best for: async
+   validators, database-dependent rules, deeply nested object graphs. See [skill:dotnet-input-validation] for
+   FluentValidation patterns.
 
-General guidance: start with DataAnnotations. Add `IValidatableObject` when cross-property rules emerge. Introduce FluentValidation only when rules outgrow declarative attributes.
+General guidance: start with DataAnnotations. Add `IValidatableObject` when cross-property rules emerge. Introduce
+FluentValidation only when rules outgrow declarative attributes.
 
 ---
 
 ## DataAnnotations
 
-The `System.ComponentModel.DataAnnotations` namespace provides declarative validation through attributes. These attributes work with MVC model binding, `Validator.TryValidateObject`, and the .NET 10 source-generated validation pipeline.
+The `System.ComponentModel.DataAnnotations` namespace provides declarative validation through attributes. These
+attributes work with MVC model binding, `Validator.TryValidateObject`, and the .NET 10 source-generated validation
+pipeline.
 
 ### Standard Attributes
 
-```csharp
+````csharp
+
 using System.ComponentModel.DataAnnotations;
 
 public sealed class CreateProductRequest
@@ -80,7 +96,8 @@ public sealed class CreateProductRequest
     [Range(0, int.MaxValue, ErrorMessage = "Quantity cannot be negative")]
     public int Quantity { get; set; }
 }
-```
+
+```text
 
 ### Attribute Reference
 
@@ -110,6 +127,7 @@ Create reusable validation attributes for domain-specific rules.
 ### Property-Level Custom Attribute
 
 ```csharp
+
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter)]
 public sealed class FutureDateAttribute : ValidationAttribute
 {
@@ -137,13 +155,15 @@ public sealed class CreateEventRequest
     [FutureDate(ErrorMessage = "Event date must be in the future")]
     public DateOnly EventDate { get; set; }
 }
-```
+
+```text
 
 ### Class-Level Custom Attribute
 
 Apply validation across the entire object when multiple properties are involved:
 
 ```csharp
+
 [AttributeUsage(AttributeTargets.Class)]
 public sealed class DateRangeAttribute : ValidationAttribute
 {
@@ -180,7 +200,8 @@ public sealed class DateRangeFilter
     [Required]
     public DateOnly EndDate { get; set; }
 }
-```
+
+```text
 
 ---
 
@@ -189,6 +210,7 @@ public sealed class DateRangeFilter
 Implement `IValidatableObject` for cross-property validation within the model itself. This interface runs after all individual attribute validations pass (when using MVC model binding or `Validator.TryValidateObject` with `validateAllProperties: true`).
 
 ```csharp
+
 public sealed class CreateOrderRequest : IValidatableObject
 {
     [Required]
@@ -243,7 +265,8 @@ public sealed class OrderLineItem
 
     public bool RequiresShipping { get; set; }
 }
-```
+
+```text
 
 **When to use `IValidatableObject` vs custom attribute:** Use `IValidatableObject` when the validation logic is specific to one model and involves multiple properties. Use a custom `ValidationAttribute` when the same rule applies across multiple models (reusable).
 
@@ -256,6 +279,7 @@ Use `IValidateOptions<T>` for complex validation of options/configuration classe
 ### Basic IValidateOptions
 
 ```csharp
+
 public sealed class DatabaseOptions
 {
     public const string SectionName = "Database";
@@ -300,11 +324,13 @@ public sealed class DatabaseOptionsValidator : IValidateOptions<DatabaseOptions>
             : ValidateOptionsResult.Success;
     }
 }
-```
+
+```text
 
 ### Registration
 
 ```csharp
+
 builder.Services
     .AddOptions<DatabaseOptions>()
     .BindConfiguration(DatabaseOptions.SectionName)
@@ -313,13 +339,15 @@ builder.Services
 // Register the validator -- runs automatically with ValidateOnStart
 builder.Services.AddSingleton<
     IValidateOptions<DatabaseOptions>, DatabaseOptionsValidator>();
-```
+
+```text
 
 ### Combining DataAnnotations with IValidateOptions
 
 Use DataAnnotations for simple property constraints and `IValidateOptions<T>` for cross-property or environment-dependent logic:
 
 ```csharp
+
 public sealed class SmtpOptions
 {
     public const string SectionName = "Smtp";
@@ -359,7 +387,8 @@ builder.Services
 
 builder.Services.AddSingleton<
     IValidateOptions<SmtpOptions>, SmtpOptionsValidator>(); // Cross-property checks
-```
+
+```text
 
 ---
 
@@ -368,6 +397,7 @@ builder.Services.AddSingleton<
 Run DataAnnotations validation programmatically outside the MVC/Minimal API pipeline. Useful for validating objects in background services, console apps, or domain logic.
 
 ```csharp
+
 public static class ValidationHelper
 {
     public static (bool IsValid, IReadOnlyList<ValidationResult> Errors) Validate<T>(
@@ -414,7 +444,8 @@ public sealed class OrderImportWorker(
     private Task<Order> ReadNextOrderFromQueue(CancellationToken ct) =>
         throw new NotImplementedException();
 }
-```
+
+```text
 
 **Critical:** Without `validateAllProperties: true`, `Validator.TryValidateObject` only checks `[Required]` attributes, silently skipping `[Range]`, `[StringLength]`, `[RegularExpression]`, and all other attributes.
 
@@ -425,6 +456,7 @@ public sealed class OrderImportWorker(
 `Validator.TryValidateObject` does not recurse into nested objects or collections by default. Implement recursive validation when models contain nested complex types:
 
 ```csharp
+
 public static class RecursiveValidator
 {
     public static bool TryValidateObjectRecursive(
@@ -516,7 +548,8 @@ public static class RecursiveValidator
         || (Nullable.GetUnderlyingType(type) is { } underlying
             && IsSimpleType(underlying));
 }
-```
+
+```text
 
 **Note:** This implementation tracks visited objects via `HashSet<object>` with `ReferenceEqualityComparer` to safely handle circular reference graphs without stack overflow.
 
@@ -554,3 +587,4 @@ public static class RecursiveValidator
 ## Attribution
 
 Adapted from [Aaronontheweb/dotnet-skills](https://github.com/Aaronontheweb/dotnet-skills) (MIT license).
+````

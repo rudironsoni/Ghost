@@ -2,21 +2,23 @@
 name: dotnet-solution-navigation
 description: Orients in .NET solutions -- entry points, .sln/.slnx, dependency graphs, config.
 license: MIT
-targets: ["*"]
-tags: ["csharp", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['csharp', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
   model: haiku
 codexcli:
-  short-description: ".NET skill guidance for csharp tasks"
+  short-description: '.NET skill guidance for csharp tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
-```! find . -maxdepth 2 \( -name "*.sln" -o -name "*.slnx" \) 2>/dev/null | head -5
-```
+````! find . -maxdepth 2 ( -name "*.sln" -o -name "*.slnx" ) 2>/dev/null | head -5
+
+
+```bash
 
 # dotnet-solution-navigation
 
@@ -54,16 +56,20 @@ Used in older projects, worker services, and when explicit control over hosting 
 **Discovery command:**
 
 ```bash
+
 # Find Program.cs files containing a Main method
 grep -rn "static.*void Main\|static.*Task Main\|static.*async.*Main" --include="*.cs" .
-```
+
+```bash
 
 **Example output:**
 
-```
+```text
+
 src/MyApp.Worker/Program.cs:5:    public static async Task Main(string[] args)
 src/MyApp.Console/Program.cs:3:    static void Main(string[] args)
-```
+
+```csharp
 
 ### Pattern 2: Top-Level Statements (C# 9+)
 
@@ -72,6 +78,7 @@ Modern .NET projects (templates since .NET 6) use top-level statements -- the fi
 **Discovery command:**
 
 ```bash
+
 # Find Program.cs files that do NOT contain class/namespace declarations
 # (top-level statements have no enclosing class)
 for f in $(find . -name "Program.cs" -not -path "*/obj/*" -not -path "*/bin/*"); do
@@ -79,25 +86,30 @@ for f in $(find . -name "Program.cs" -not -path "*/obj/*" -not -path "*/bin/*");
     echo "Top-level: $f"
   fi
 done
-```
+
+```text
 
 **Example output:**
 
-```
+```text
+
 Top-level: ./src/MyApp.Api/Program.cs
 Top-level: ./src/MyApp.Web/Program.cs
-```
+
+```csharp
 
 **Typical content of a top-level Program.cs:**
 
 ```csharp
+
 // No namespace, no class, no Main -- this IS the entry point
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 var app = builder.Build();
 app.MapControllers();
 app.Run();
-```
+
+```text
 
 ### Pattern 3: Worker Services and Background Hosts
 
@@ -106,20 +118,24 @@ Worker services use `Host.CreateDefaultBuilder` or `Host.CreateApplicationBuilde
 **Discovery command:**
 
 ```bash
+
 # Find worker service projects by SDK type
 grep -rn 'Sdk="Microsoft.NET.Sdk.Worker"' --include="*.csproj" .
 
 # Or find IHostedService/BackgroundService implementations
 grep -rn "BackgroundService\|IHostedService" --include="*.cs" . | grep -v "obj/" | grep -v "bin/"
-```
+
+```csharp
 
 **Example output:**
 
-```
+```text
+
 src/MyApp.Worker/MyApp.Worker.csproj:1:<Project Sdk="Microsoft.NET.Sdk.Worker">
 src/MyApp.Worker/Services/OrderProcessor.cs:8:public class OrderProcessor : BackgroundService
 src/MyApp.Worker/Services/EmailSender.cs:5:public class EmailSender : IHostedService
-```
+
+```csharp
 
 ### Pattern 4: Test Projects
 
@@ -128,23 +144,28 @@ Test projects are entry points for `dotnet test`. They may not have a `Program.c
 **Discovery command:**
 
 ```bash
+
 # Find test projects by IsTestProject property or test SDK references
 grep -rn "<IsTestProject>true</IsTestProject>" --include="*.csproj" .
 grep -rn "Microsoft.NET.Test.Sdk\|xunit\|NUnit\|MSTest" --include="*.csproj" . | grep -v "obj/"  # Matches both xunit.v3 and legacy xunit
-```
+
+```bash
 
 **Example output:**
 
-```
+```text
+
 tests/MyApp.Api.Tests/MyApp.Api.Tests.csproj:5:    <IsTestProject>true</IsTestProject>
 tests/MyApp.Core.Tests/MyApp.Core.Tests.csproj:8:    <PackageReference Include="xunit.v3" />
-```
+
+```csharp
 
 ### Summary Heuristic
 
 When orienting in a new .NET solution, run these commands in sequence:
 
 ```bash
+
 # 1. Find all .csproj files
 find . -name "*.csproj" -not -path "*/obj/*" | sort
 
@@ -156,7 +177,8 @@ find . -name "Program.cs" -not -path "*/obj/*" -not -path "*/bin/*"
 
 # 4. Identify test projects
 grep -rn "<IsTestProject>true" --include="*.csproj" .
-```
+
+```csharp
 
 ---
 
@@ -171,6 +193,7 @@ The traditional solution format is a text file with a custom syntax (not XML).
 **Discovery and parsing commands:**
 
 ```bash
+
 # Find solution files
 find . -name "*.sln" -maxdepth 2
 
@@ -178,11 +201,13 @@ find . -name "*.sln" -maxdepth 2
 dotnet sln list
 # Or specify the solution file explicitly:
 dotnet sln MyApp.sln list
-```
+
+```text
 
 **Example output of `dotnet sln list`:**
 
-```
+```text
+
 Project(s)
 ----------
 src/MyApp.Api/MyApp.Api.csproj
@@ -190,21 +215,26 @@ src/MyApp.Core/MyApp.Core.csproj
 src/MyApp.Infrastructure/MyApp.Infrastructure.csproj
 tests/MyApp.Api.Tests/MyApp.Api.Tests.csproj
 tests/MyApp.Core.Tests/MyApp.Core.Tests.csproj
-```
+
+```csharp
 
 **Reading the .sln file directly** (useful when `dotnet sln list` is not available):
 
 ```bash
+
 # Extract project entries from .sln file
 grep "^Project(" MyApp.sln
-```
+
+```bash
 
 **Example output:**
 
-```
+```text
+
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyApp.Api", "src\MyApp.Api\MyApp.Api.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyApp.Core", "src\MyApp.Core\MyApp.Core.csproj", "{B2C3D4E5-F6A7-8901-BCDE-F12345678901}"
-```
+
+```csharp
 
 The GUID `{FAE04EC0-...}` identifies C# projects. The second value is the relative path to the `.csproj` file.
 
@@ -215,16 +245,19 @@ The `.slnx` format is an XML-based solution file introduced as a preview feature
 **Discovery and parsing commands:**
 
 ```bash
+
 # Find .slnx files
 find . -name "*.slnx" -maxdepth 2
 
 # dotnet sln commands work with .slnx files too
 dotnet sln MyApp.slnx list
-```
+
+```bash
 
 **Example .slnx content:**
 
 ```xml
+
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/MyApp.Api/MyApp.Api.csproj" />
@@ -234,7 +267,8 @@ dotnet sln MyApp.slnx list
     <Project Path="tests/MyApp.Api.Tests/MyApp.Api.Tests.csproj" />
   </Folder>
 </Solution>
-```
+
+```csharp
 
 **Key differences from .sln:**
 
@@ -251,10 +285,12 @@ dotnet sln MyApp.slnx list
 Some repositories use individual `.csproj` files without a `.sln`. Build and run from project directories:
 
 ```bash
+
 # If no .sln exists, find all .csproj files and build individually
 find . -name "*.csproj" -not -path "*/obj/*" | sort
 dotnet build src/MyApp.Api/MyApp.Api.csproj
-```
+
+```bash
 
 ---
 
@@ -265,73 +301,89 @@ Understanding `ProjectReference` chains is critical for determining build order,
 ### Discovery Commands
 
 ```bash
+
 # Find all ProjectReference entries across the solution
 grep -rn "<ProjectReference" --include="*.csproj" . | grep -v "obj/"
-```
+
+```bash
 
 **Example output:**
 
-```
+```text
+
 src/MyApp.Api/MyApp.Api.csproj:12:    <ProjectReference Include="../MyApp.Core/MyApp.Core.csproj" />
 src/MyApp.Api/MyApp.Api.csproj:13:    <ProjectReference Include="../MyApp.Infrastructure/MyApp.Infrastructure.csproj" />
 src/MyApp.Infrastructure/MyApp.Infrastructure.csproj:10:    <ProjectReference Include="../MyApp.Core/MyApp.Core.csproj" />
 tests/MyApp.Api.Tests/MyApp.Api.Tests.csproj:14:    <ProjectReference Include="../../src/MyApp.Api/MyApp.Api.csproj" />
-```
+
+```csharp
 
 ### Building a Dependency Graph
 
 From the above output, the dependency graph is:
 
-```
+```text
+
 MyApp.Api.Tests
   -> MyApp.Api
        -> MyApp.Core
        -> MyApp.Infrastructure
             -> MyApp.Core
-```
+
+```text
 
 **Automated traversal using `dotnet list reference`:**
 
 ```bash
+
 # List direct references for a specific project
 dotnet list src/MyApp.Api/MyApp.Api.csproj reference
-```
+
+```bash
 
 **Example output:**
 
-```
+```text
+
 Project reference(s)
 --------------------
 ../MyApp.Core/MyApp.Core.csproj
 ../MyApp.Infrastructure/MyApp.Infrastructure.csproj
-```
+
+```csharp
 
 **Full transitive dependency analysis:**
 
 ```bash
+
 # Build the full dependency tree by traversing transitively
 # Start from the top-level project and follow each reference
 dotnet list src/MyApp.Api/MyApp.Api.csproj reference
 dotnet list src/MyApp.Infrastructure/MyApp.Infrastructure.csproj reference
 # Continue until you reach projects with no ProjectReference entries
-```
+
+```csharp
 
 ### Impact Analysis
 
 When modifying a shared project like `MyApp.Core`, all projects that reference it (directly or transitively) are affected:
 
 ```bash
+
 # Find all projects that reference a specific project
 grep -rn "MyApp.Core.csproj" --include="*.csproj" . | grep -v "obj/"
-```
+
+```bash
 
 **Example output:**
 
-```
+```text
+
 src/MyApp.Api/MyApp.Api.csproj:12:    <ProjectReference Include="../MyApp.Core/MyApp.Core.csproj" />
 src/MyApp.Infrastructure/MyApp.Infrastructure.csproj:10:    <ProjectReference Include="../MyApp.Core/MyApp.Core.csproj" />
 tests/MyApp.Core.Tests/MyApp.Core.Tests.csproj:14:    <ProjectReference Include="../../src/MyApp.Core/MyApp.Core.csproj" />
-```
+
+```csharp
 
 This means changes to `MyApp.Core` require testing `MyApp.Api`, `MyApp.Infrastructure`, and `MyApp.Core.Tests`.
 
@@ -346,18 +398,22 @@ This means changes to `MyApp.Core` require testing `MyApp.Api`, `MyApp.Infrastru
 **Discovery command:**
 
 ```bash
+
 # Find all appsettings files
 find . -name "appsettings*.json" -not -path "*/obj/*" -not -path "*/bin/*" | sort
-```
+
+```bash
 
 **Example output:**
 
-```
+```text
+
 ./src/MyApp.Api/appsettings.json
 ./src/MyApp.Api/appsettings.Development.json
 ./src/MyApp.Api/appsettings.Production.json
 ./src/MyApp.Worker/appsettings.json
-```
+
+```json
 
 **Key behavior:** Environment-specific files (`appsettings.{ENVIRONMENT}.json`) override values from the base `appsettings.json`. The environment is set via `DOTNET_ENVIRONMENT` or `ASPNETCORE_ENVIRONMENT`.
 
@@ -366,16 +422,20 @@ find . -name "appsettings*.json" -not -path "*/obj/*" -not -path "*/bin/*" | sor
 **Discovery command:**
 
 ```bash
+
 # Find launch settings (inside Properties/ folder of each project)
 find . -name "launchSettings.json" -not -path "*/obj/*" -not -path "*/bin/*"
-```
+
+```bash
 
 **Example output:**
 
-```
+```text
+
 ./src/MyApp.Api/Properties/launchSettings.json
 ./src/MyApp.Web/Properties/launchSettings.json
-```
+
+```json
 
 **Key behavior:** Used by `dotnet run` and Visual Studio to configure launch profiles (ports, environment variables, launch URLs). Not deployed to production.
 
@@ -384,38 +444,46 @@ find . -name "launchSettings.json" -not -path "*/obj/*" -not -path "*/bin/*"
 **Discovery command:**
 
 ```bash
+
 # Find all Directory.Build.props/targets files (may exist at multiple levels)
 find . -name "Directory.Build.props" -o -name "Directory.Build.targets" | sort
-```
+
+```bash
 
 **Example output:**
 
-```
+```text
+
 ./Directory.Build.props
 ./Directory.Build.targets
 ./src/Directory.Build.props
 ./tests/Directory.Build.props
-```
+
+```xml
 
 **Key behavior:** MSBuild imports the nearest file found walking upward from the project directory. Nested files shadow parent files unless they explicitly import the parent (see [skill:dotnet-csproj-reading] for chaining).
 
 ### Other Configuration Files
 
 ```bash
+
 # Find all .NET configuration files in one sweep
 find . \( -name "nuget.config" -o -name "global.json" -o -name ".editorconfig" \
   -o -name "Directory.Packages.props" \) -not -path "*/obj/*" | sort
-```
+
+```bash
 
 **Example output:**
 
-```
+```text
+
 ./.editorconfig
 ./Directory.Packages.props
 ./global.json
 ./nuget.config
 ./src/.editorconfig
-```
+
+```json
 
 | File | Purpose | Resolution |
 |------|---------|-----------|
@@ -434,7 +502,8 @@ Recognizing the layout pattern helps agents navigate unfamiliar codebases faster
 
 The most common layout. Source projects in `src/`, test projects in `tests/`, mirroring names.
 
-```
+```text
+
 MyApp/
   MyApp.sln
   Directory.Build.props
@@ -463,7 +532,8 @@ MyApp/
       MyApp.Core.Tests.csproj
   docs/
     architecture.md
-```
+
+```csharp
 
 **Heuristics:**
 - `src/` and `tests/` directories at root level.
@@ -473,15 +543,18 @@ MyApp/
 **Discovery:**
 
 ```bash
+
 # Detect src/tests layout
 ls -d src/ tests/ 2>/dev/null && echo "src/tests layout detected"
-```
+
+```bash
 
 ### Pattern 2: Vertical Slice Layout
 
 Organizes code by feature rather than by technical layer. Each slice contains its own models, handlers, and endpoints.
 
-```
+```text
+
 MyApp/
   MyApp.sln
   src/
@@ -509,7 +582,8 @@ MyApp/
         Orders/
           CreateOrderTests.cs
           GetOrderTests.cs
-```
+
+```csharp
 
 **Heuristics:**
 - `Features/` directory within a project.
@@ -519,15 +593,18 @@ MyApp/
 **Discovery:**
 
 ```bash
+
 # Detect vertical slice layout
 find . -type d -name "Features" -not -path "*/obj/*" -not -path "*/bin/*"
-```
+
+```bash
 
 ### Pattern 3: Modular Monolith
 
 Multiple bounded contexts as separate projects within a single solution, communicating through explicit interfaces or a shared message bus.
 
-```
+```text
+
 MyApp/
   MyApp.sln
   src/
@@ -553,7 +630,8 @@ MyApp/
         MyApp.Catalog.Tests/
     MyApp.Shared/
       MyApp.Shared.csproj        # Cross-cutting contracts (events, interfaces)
-```
+
+```csharp
 
 **Heuristics:**
 - `Modules/` directory with self-contained bounded contexts.
@@ -563,11 +641,13 @@ MyApp/
 **Discovery:**
 
 ```bash
+
 # Detect modular monolith layout
 find . -type d -name "Modules" -not -path "*/obj/*" -not -path "*/bin/*"
 # Or look for module registration patterns
 grep -rn "Module\|AddModule\|RegisterModule" --include="*.cs" . | grep -v "obj/" | head -10
-```
+
+```csharp
 
 ---
 
@@ -580,6 +660,7 @@ These patterns in test project discovery indicate an agent is hiding testing gap
 When navigating a solution and identifying test projects, watch for tests that exist but are silently disabled:
 
 ```csharp
+
 // RED FLAG: skipped tests that will not run during dotnet test
 [Fact(Skip = "Flaky -- revisit later")]
 public async Task ProcessOrder_ConcurrentRequests_HandledCorrectly() { }
@@ -596,11 +677,13 @@ public class OrderIntegrationTests
 // RED FLAG: commented-out test methods
 // [Fact]
 // public void CalculateDiscount_NegativeAmount_ThrowsException() { }
-```
+
+```text
 
 **Discovery commands to check for disabled tests:**
 
 ```bash
+
 # Find skipped tests
 grep -rEn 'Skip[[:space:]]*=' --include="*.cs" . | grep -v "obj/" | grep -v "bin/"
 
@@ -609,7 +692,8 @@ grep -rn "#if false" --include="*.cs" . | grep -v "obj/" | grep -v "bin/"
 
 # Find commented-out test attributes
 grep -rEn '//[[:space:]]*\[(Fact|Theory|Test)\]' --include="*.cs" . | grep -v "obj/" | grep -v "bin/"
-```
+
+```csharp
 
 **Fix:** Investigate why tests are disabled. If they are flaky due to timing, fix the non-determinism or use `[Retry]` (xUnit v3). If they test removed functionality, delete them. Never leave disabled tests as invisible technical debt.
 
@@ -628,3 +712,4 @@ grep -rEn '//[[:space:]]*\[(Fact|Theory|Test)\]' --include="*.cs" . | grep -v "o
 - [.slnx Solution Format](https://learn.microsoft.com/en-us/visualstudio/ide/reference/solution-file-slnx)
 - [Configuration in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/)
 - [Directory.Build.props/targets](https://learn.microsoft.com/en-us/visualstudio/msbuild/customize-by-directory)
+````

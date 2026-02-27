@@ -2,21 +2,23 @@
 name: dotnet-semantic-kernel
 description: Integrates AI/LLM via Semantic Kernel. Plugins, prompt templates, memory stores, agents.
 license: MIT
-targets: ["*"]
-tags: ["foundation", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['foundation', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for foundation tasks"
+  short-description: '.NET skill guidance for foundation tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-semantic-kernel
 
-Microsoft Semantic Kernel for AI and LLM orchestration in .NET applications. Covers kernel setup and configuration, plugin/function calling, prompt templates with Handlebars and Liquid syntax, memory and vector store integration, planners, the agents framework, and integration with Azure OpenAI, OpenAI, and local models.
+Microsoft Semantic Kernel for AI and LLM orchestration in .NET applications. Covers kernel setup and configuration,
+plugin/function calling, prompt templates with Handlebars and Liquid syntax, memory and vector store integration,
+planners, the agents framework, and integration with Azure OpenAI, OpenAI, and local models.
 
 ## Scope
 
@@ -34,31 +36,36 @@ Microsoft Semantic Kernel for AI and LLM orchestration in .NET applications. Cov
 - HTTP client resilience and retry policies -- see [skill:dotnet-resilience]
 - Configuration binding (options pattern, secrets) -- see [skill:dotnet-csharp-configuration]
 
-Cross-references: [skill:dotnet-csharp-async-patterns] for async streaming patterns used with chat completions, [skill:dotnet-csharp-dependency-injection] for kernel service registration in ASP.NET Core, [skill:dotnet-resilience] for retry policies on AI service calls, [skill:dotnet-csharp-configuration] for managing API keys and model configuration.
+Cross-references: [skill:dotnet-csharp-async-patterns] for async streaming patterns used with chat completions,
+[skill:dotnet-csharp-dependency-injection] for kernel service registration in ASP.NET Core, [skill:dotnet-resilience]
+for retry policies on AI service calls, [skill:dotnet-csharp-configuration] for managing API keys and model
+configuration.
 
 ---
 
 ## Kernel Setup
 
-The `Kernel` is the central object in Semantic Kernel. It manages AI service connections, plugins, and function invocation.
+The `Kernel` is the central object in Semantic Kernel. It manages AI service connections, plugins, and function
+invocation.
 
 ### Package Landscape
 
-| Package | Purpose |
-|---------|---------|
-| `Microsoft.SemanticKernel` | Core kernel, function calling, prompt templates |
-| `Microsoft.SemanticKernel.Connectors.AzureOpenAI` | Azure OpenAI chat/embedding/image services |
-| `Microsoft.SemanticKernel.Connectors.OpenAI` | OpenAI chat/embedding/image services |
-| `Microsoft.SemanticKernel.Connectors.Ollama` | Ollama local model integration |
-| `Microsoft.SemanticKernel.Plugins.Core` | Built-in plugins (time, math, text) |
-| `Microsoft.SemanticKernel.Agents.Core` | Agent framework (chat agents, group chat) |
-| `Microsoft.Extensions.VectorData.Abstractions` | Vector store abstraction layer |
-| `Microsoft.SemanticKernel.Connectors.Qdrant` | Qdrant vector store connector |
-| `Microsoft.SemanticKernel.Connectors.AzureAISearch` | Azure AI Search vector store connector |
+| Package                                             | Purpose                                         |
+| --------------------------------------------------- | ----------------------------------------------- |
+| `Microsoft.SemanticKernel`                          | Core kernel, function calling, prompt templates |
+| `Microsoft.SemanticKernel.Connectors.AzureOpenAI`   | Azure OpenAI chat/embedding/image services      |
+| `Microsoft.SemanticKernel.Connectors.OpenAI`        | OpenAI chat/embedding/image services            |
+| `Microsoft.SemanticKernel.Connectors.Ollama`        | Ollama local model integration                  |
+| `Microsoft.SemanticKernel.Plugins.Core`             | Built-in plugins (time, math, text)             |
+| `Microsoft.SemanticKernel.Agents.Core`              | Agent framework (chat agents, group chat)       |
+| `Microsoft.Extensions.VectorData.Abstractions`      | Vector store abstraction layer                  |
+| `Microsoft.SemanticKernel.Connectors.Qdrant`        | Qdrant vector store connector                   |
+| `Microsoft.SemanticKernel.Connectors.AzureAISearch` | Azure AI Search vector store connector          |
 
 ### Basic Kernel Configuration
 
-```csharp
+````csharp
+
 using Microsoft.SemanticKernel;
 
 var builder = Kernel.CreateBuilder();
@@ -70,11 +77,13 @@ builder.AddAzureOpenAIChatCompletion(
     apiKey: Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY")!);
 
 var kernel = builder.Build();
-```
+
+```text
 
 ### DI Integration with ASP.NET Core
 
 ```csharp
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddKernel();
@@ -92,13 +101,15 @@ builder.Services.AddSingleton(sp =>
     kernel.Plugins.AddFromObject(sp.GetRequiredService<OrderPlugin>());
     return kernel;
 });
-```
+
+```text
 
 ### Multiple AI Services
 
 Register multiple AI services and select by service ID:
 
 ```csharp
+
 var builder = Kernel.CreateBuilder();
 
 builder.AddAzureOpenAIChatCompletion(
@@ -121,11 +132,13 @@ var result = await kernel.InvokePromptAsync("Summarize: {{$input}}", new(setting
 {
     ["input"] = longDocument
 });
-```
+
+```text
 
 ### Local Models with Ollama
 
 ```csharp
+
 #pragma warning disable SKEXP0070  // Ollama connector is experimental
 
 var builder = Kernel.CreateBuilder();
@@ -135,7 +148,8 @@ builder.AddOllamaChatCompletion(
     endpoint: new Uri("http://localhost:11434"));
 
 var kernel = builder.Build();
-```
+
+```text
 
 ---
 
@@ -146,6 +160,7 @@ Plugins expose .NET methods as functions that the AI model can invoke. This is t
 ### Defining a Plugin
 
 ```csharp
+
 using Microsoft.SemanticKernel;
 using System.ComponentModel;
 
@@ -176,11 +191,13 @@ public sealed class OrderPlugin
         return orders.Select(o => new OrderSummary(o)).ToList();
     }
 }
-```
+
+```text
 
 ### Registering Plugins
 
 ```csharp
+
 var kernel = builder.Build();
 
 // From an object instance (DI-friendly)
@@ -197,13 +214,15 @@ kernel.Plugins.AddFromFunctions("Math",
         "Add",
         "Adds two numbers")
 ]);
-```
+
+```text
 
 ### Automatic Function Calling
 
 Enable the model to call functions automatically during chat:
 
 ```csharp
+
 var settings = new AzureOpenAIPromptExecutionSettings
 {
     FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
@@ -217,13 +236,15 @@ var result = await kernel.GetRequiredService<IChatCompletionService>()
 
 // The model calls get_order("ORD-12345") automatically and responds with the result
 Console.WriteLine(result.Content);
-```
+
+```text
 
 ### Function Filters
 
 Intercept function calls for logging, authorization, or modification:
 
 ```csharp
+
 public sealed class AuthorizationFilter : IFunctionInvocationFilter
 {
     public async Task OnFunctionInvocationAsync(
@@ -245,7 +266,8 @@ public sealed class AuthorizationFilter : IFunctionInvocationFilter
 
 // Register the filter
 builder.Services.AddSingleton<IFunctionInvocationFilter, AuthorizationFilter>();
-```
+
+```text
 
 ---
 
@@ -256,6 +278,7 @@ Prompt templates support variable substitution and function calling within struc
 ### Inline Prompts
 
 ```csharp
+
 var result = await kernel.InvokePromptAsync(
     "Summarize the following text in {{$style}} style:\n\n{{$input}}",
     new KernelArguments
@@ -263,13 +286,15 @@ var result = await kernel.InvokePromptAsync(
         ["input"] = articleText,
         ["style"] = "concise bullet points"
     });
-```
+
+```text
 
 ### Handlebars Templates
 
 Handlebars templates support conditionals, loops, and function calls:
 
 ```csharp
+
 var templateString = """
     <message role="system">
     You are a helpful customer service agent.
@@ -299,13 +324,15 @@ var result = await template.RenderAsync(kernel, new KernelArguments
     ["isVip"] = true,
     ["orders"] = recentOrders
 });
-```
+
+```text
 
 ### YAML Prompt Configuration
 
 Define prompts as YAML files for separation of concerns:
 
 ```yaml
+
 # prompts/summarize.yaml
 name: Summarize
 description: Summarizes text to a specified length
@@ -327,9 +354,11 @@ execution_settings:
   default:
     temperature: 0.3
     max_tokens: 500
-```
+
+```text
 
 ```csharp
+
 var yamlContent = File.ReadAllText("prompts/summarize.yaml");
 var function = kernel.CreateFunctionFromPromptYaml(yamlContent);
 
@@ -338,7 +367,8 @@ var result = await kernel.InvokeAsync(function, new KernelArguments
     ["input"] = longText,
     ["maxWords"] = "50"
 });
-```
+
+```text
 
 ---
 
@@ -349,6 +379,7 @@ Semantic Kernel provides abstractions for vector storage, enabling retrieval-aug
 ### Vector Store Abstractions
 
 ```csharp
+
 using Microsoft.Extensions.VectorData;
 
 public sealed class DocumentRecord
@@ -365,11 +396,13 @@ public sealed class DocumentRecord
     [VectorStoreRecordVector(Dimensions: 1536)]
     public ReadOnlyMemory<float> Embedding { get; set; }
 }
-```
+
+```text
 
 ### Registering a Vector Store
 
 ```csharp
+
 using Microsoft.SemanticKernel.Connectors.Qdrant;
 
 var builder = Kernel.CreateBuilder();
@@ -382,11 +415,13 @@ builder.AddAzureOpenAITextEmbeddingGeneration(
 
 // Register vector store
 builder.Services.AddQdrantVectorStore("localhost", 6334);
-```
+
+```text
 
 ### RAG Pattern
 
 ```csharp
+
 public sealed class RagService
 {
     private readonly IVectorStoreRecordCollection<string, DocumentRecord> _collection;
@@ -435,11 +470,13 @@ public sealed class RagService
         return response.Content ?? string.Empty;
     }
 }
-```
+
+```text
 
 ### Ingesting Documents
 
 ```csharp
+
 public async Task IngestAsync(
     string documentId,
     string content,
@@ -459,7 +496,8 @@ public async Task IngestAsync(
         Embedding = embedding
     }, cancellationToken: ct);
 }
-```
+
+```text
 
 ---
 
@@ -470,6 +508,7 @@ The Semantic Kernel agents framework enables building multi-agent systems where 
 ### Chat Completion Agent
 
 ```csharp
+
 #pragma warning disable SKEXP0110  // Agents framework is experimental
 
 using Microsoft.SemanticKernel.Agents;
@@ -496,13 +535,15 @@ await foreach (var message in agent.InvokeAsync(
 {
     Console.WriteLine(message.Content);
 }
-```
+
+```text
 
 ### Agent Group Chat
 
 Multiple agents can collaborate in a group chat with termination conditions:
 
 ```csharp
+
 var analyst = new ChatCompletionAgent
 {
     Name = "DataAnalyst",
@@ -535,13 +576,15 @@ await foreach (var message in chat.InvokeAsync())
 {
     Console.WriteLine($"[{message.AuthorName}]: {message.Content}");
 }
-```
+
+```text
 
 ### OpenAI Assistant Agent
 
 For stateful conversations with built-in tools (code interpreter, file search):
 
 ```csharp
+
 #pragma warning disable SKEXP0110
 
 // Create the assistant via the builder pattern
@@ -569,7 +612,8 @@ finally
 {
     await agent.DeleteAsync();
 }
-```
+
+```text
 
 Note: The agents framework is experimental (`SKEXP0110`). APIs change frequently between Semantic Kernel releases. Verify method signatures against the [latest samples](https://github.com/microsoft/semantic-kernel/tree/main/dotnet/samples) when adopting.
 
@@ -580,6 +624,7 @@ Note: The agents framework is experimental (`SKEXP0110`). APIs change frequently
 For chat applications, stream responses token-by-token:
 
 ```csharp
+
 var chatService = kernel.GetRequiredService<IChatCompletionService>();
 var chatHistory = new ChatHistory("You are a helpful assistant.");
 chatHistory.AddUserMessage(userInput);
@@ -594,7 +639,8 @@ await foreach (var chunk in chatService.GetStreamingChatMessageContentsAsync(
 {
     Console.Write(chunk.Content);
 }
-```
+
+```text
 
 ---
 
@@ -636,3 +682,4 @@ await foreach (var chunk in chatService.GetStreamingChatMessageContentsAsync(
 - [Semantic Kernel agents](https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/)
 - [Vector store connectors](https://learn.microsoft.com/en-us/semantic-kernel/concepts/vector-store-connectors/)
 - [Semantic Kernel samples](https://github.com/microsoft/semantic-kernel/tree/main/dotnet/samples)
+````

@@ -2,21 +2,23 @@
 name: dotnet-observability
 description: Adds observability. OpenTelemetry traces/metrics/logs, health checks, custom metrics.
 license: MIT
-targets: ["*"]
-tags: ["architecture", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['architecture', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for architecture tasks"
+  short-description: '.NET skill guidance for architecture tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-observability
 
-Modern observability for .NET applications using OpenTelemetry, structured logging, health checks, and custom metrics. Covers the three pillars of observability (traces, metrics, logs), integration with `Microsoft.Extensions.Diagnostics` and `System.Diagnostics`, and production-ready health check patterns.
+Modern observability for .NET applications using OpenTelemetry, structured logging, health checks, and custom metrics.
+Covers the three pillars of observability (traces, metrics, logs), integration with `Microsoft.Extensions.Diagnostics`
+and `System.Diagnostics`, and production-ready health check patterns.
 
 ## Scope
 
@@ -32,40 +34,47 @@ Modern observability for .NET applications using OpenTelemetry, structured loggi
 - Testing observability output -- see [skill:dotnet-integration-testing]
 - Middleware pipeline patterns (request logging, exception handling) -- see [skill:dotnet-middleware-patterns]
 
-Cross-references: [skill:dotnet-csharp-dependency-injection] for service registration, [skill:dotnet-csharp-async-patterns] for async patterns in background exporters, [skill:dotnet-resilience] for Polly telemetry integration, [skill:dotnet-middleware-patterns] for request/exception logging middleware.
+Cross-references: [skill:dotnet-csharp-dependency-injection] for service registration,
+[skill:dotnet-csharp-async-patterns] for async patterns in background exporters, [skill:dotnet-resilience] for Polly
+telemetry integration, [skill:dotnet-middleware-patterns] for request/exception logging middleware.
 
 ---
 
 ## OpenTelemetry Setup
 
-OpenTelemetry is the standard observability framework in .NET. The .NET SDK includes native support for `System.Diagnostics.Activity` (traces) and `System.Diagnostics.Metrics` (metrics), which OpenTelemetry collects and exports.
+OpenTelemetry is the standard observability framework in .NET. The .NET SDK includes native support for
+`System.Diagnostics.Activity` (traces) and `System.Diagnostics.Metrics` (metrics), which OpenTelemetry collects and
+exports.
 
 ### Package Landscape
 
-| Package | Purpose |
-|---------|---------|
-| `OpenTelemetry.Extensions.Hosting` | Host integration, lifecycle management |
-| `OpenTelemetry.Instrumentation.AspNetCore` | Automatic HTTP server trace/metric instrumentation |
-| `OpenTelemetry.Instrumentation.Http` | Automatic `HttpClient` trace/metric instrumentation |
-| `OpenTelemetry.Instrumentation.Runtime` | GC, thread pool, assembly metrics |
-| `OpenTelemetry.Exporter.OpenTelemetryProtocol` | OTLP exporter (gRPC/HTTP) for collectors |
-| `OpenTelemetry.Exporter.Console` | Console exporter for local development |
+| Package                                        | Purpose                                             |
+| ---------------------------------------------- | --------------------------------------------------- |
+| `OpenTelemetry.Extensions.Hosting`             | Host integration, lifecycle management              |
+| `OpenTelemetry.Instrumentation.AspNetCore`     | Automatic HTTP server trace/metric instrumentation  |
+| `OpenTelemetry.Instrumentation.Http`           | Automatic `HttpClient` trace/metric instrumentation |
+| `OpenTelemetry.Instrumentation.Runtime`        | GC, thread pool, assembly metrics                   |
+| `OpenTelemetry.Exporter.OpenTelemetryProtocol` | OTLP exporter (gRPC/HTTP) for collectors            |
+| `OpenTelemetry.Exporter.Console`               | Console exporter for local development              |
 
 Install the core stack:
 
-```xml
+````xml
+
 <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.*" />
 <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.*" />
 <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.*" />
 <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.*" />
 <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.*" />
-```
+
+```text
 
 ### Aspire Service Defaults Integration
 
 If using .NET Aspire, the `ServiceDefaults` project configures OpenTelemetry automatically. This is the recommended approach for Aspire apps -- do not duplicate this configuration manually:
 
 ```csharp
+
 // ServiceDefaults/Extensions.cs (generated by Aspire)
 public static IHostApplicationBuilder AddServiceDefaults(
     this IHostApplicationBuilder builder)
@@ -75,13 +84,15 @@ public static IHostApplicationBuilder AddServiceDefaults(
     // ... other defaults
     return builder;
 }
-```
+
+```text
 
 For non-Aspire apps, configure OpenTelemetry explicitly as shown below.
 
 ### Full Configuration (Non-Aspire)
 
 ```csharp
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenTelemetry()
@@ -102,13 +113,15 @@ builder.Services.AddOpenTelemetry()
         .AddRuntimeInstrumentation()
         .AddMeter("MyApp.*")           // Custom Meters
         .AddOtlpExporter());
-```
+
+```text
 
 ### OTLP Configuration via Environment Variables
 
 The OTLP exporter reads standard environment variables -- no code changes needed between environments:
 
 ```bash
+
 # Collector endpoint (gRPC default)
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
 
@@ -121,7 +134,8 @@ OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production,service.namespace=mya
 
 # Service name (overrides code-based configuration)
 OTEL_SERVICE_NAME=order-api
-```
+
+```text
 
 ---
 
@@ -165,3 +179,4 @@ For detailed code examples (custom traces, metrics, structured logging, health c
 ## Attribution
 
 Adapted from [Aaronontheweb/dotnet-skills](https://github.com/Aaronontheweb/dotnet-skills) (MIT license).
+````

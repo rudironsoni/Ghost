@@ -2,21 +2,24 @@
 name: dotnet-uno-targets
 description: Deploys Uno Platform apps. Per-target guidance for WASM, iOS, Android, macOS, Windows, Linux.
 license: MIT
-targets: ["*"]
-tags: ["ui", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['ui', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for ui tasks"
+  short-description: '.NET skill guidance for ui tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-uno-targets
 
-Per-target deployment guidance for Uno Platform applications: Web/WASM, iOS, Android, macOS (Catalyst), Windows, Linux (Skia/GTK), and Embedded (Skia/Framebuffer). Each target section covers project setup, debugging workflow, packaging/distribution, platform-specific gotchas, AOT/trimming implications, and behavior differences from other targets.
+Per-target deployment guidance for Uno Platform applications: Web/WASM, iOS, Android, macOS (Catalyst), Windows, Linux
+(Skia/GTK), and Embedded (Skia/Framebuffer). Each target section covers project setup, debugging workflow,
+packaging/distribution, platform-specific gotchas, AOT/trimming implications, and behavior differences from other
+targets.
 
 ## Scope
 
@@ -33,23 +36,26 @@ Per-target deployment guidance for Uno Platform applications: Web/WASM, iOS, And
 - General AOT/trimming patterns -- see [skill:dotnet-aot-wasm]
 - UI framework selection -- see [skill:dotnet-ui-chooser]
 
-Cross-references: [skill:dotnet-uno-platform] for core development, [skill:dotnet-uno-mcp] for MCP integration, [skill:dotnet-uno-testing] for testing, [skill:dotnet-aot-wasm] for general WASM AOT patterns, [skill:dotnet-ui-chooser] for framework selection.
+Cross-references: [skill:dotnet-uno-platform] for core development, [skill:dotnet-uno-mcp] for MCP integration,
+[skill:dotnet-uno-testing] for testing, [skill:dotnet-aot-wasm] for general WASM AOT patterns, [skill:dotnet-ui-chooser]
+for framework selection.
 
 ---
 
 ## Target Platform Overview
 
-| Target | TFM | Tooling | Packaging | Key Constraints |
-|--------|-----|---------|-----------|----------------|
-| Web/WASM | `net8.0-browserwasm` | Browser DevTools | Static hosting / Azure SWA | No filesystem access, AOT recommended, limited threading |
-| iOS | `net8.0-ios` | Xcode / VS Code / Rider | App Store / TestFlight | Provisioning profiles, entitlements, no JIT |
-| Android | `net8.0-android` | Android SDK / Emulator | Play Store / APK sideload | SDK version targeting, permissions |
-| macOS (Catalyst) | `net8.0-maccatalyst` | Xcode | Mac App Store / notarization | Sandbox restrictions, entitlements |
-| Windows | `net8.0-windows10.0.19041` | Visual Studio | MSIX / Windows Store | WinAppSDK version alignment |
-| Linux | `net8.0-desktop` | Skia/GTK host | AppImage / Flatpak / Snap | GTK dependencies, Skia rendering |
-| Embedded | `net8.0-desktop` | Skia/Framebuffer | Direct deployment | No windowing system, headless rendering |
+| Target           | TFM                        | Tooling                 | Packaging                    | Key Constraints                                          |
+| ---------------- | -------------------------- | ----------------------- | ---------------------------- | -------------------------------------------------------- |
+| Web/WASM         | `net8.0-browserwasm`       | Browser DevTools        | Static hosting / Azure SWA   | No filesystem access, AOT recommended, limited threading |
+| iOS              | `net8.0-ios`               | Xcode / VS Code / Rider | App Store / TestFlight       | Provisioning profiles, entitlements, no JIT              |
+| Android          | `net8.0-android`           | Android SDK / Emulator  | Play Store / APK sideload    | SDK version targeting, permissions                       |
+| macOS (Catalyst) | `net8.0-maccatalyst`       | Xcode                   | Mac App Store / notarization | Sandbox restrictions, entitlements                       |
+| Windows          | `net8.0-windows10.0.19041` | Visual Studio           | MSIX / Windows Store         | WinAppSDK version alignment                              |
+| Linux            | `net8.0-desktop`           | Skia/GTK host           | AppImage / Flatpak / Snap    | GTK dependencies, Skia rendering                         |
+| Embedded         | `net8.0-desktop`           | Skia/Framebuffer        | Direct deployment            | No windowing system, headless rendering                  |
 
-**TFM note:** Use version-agnostic globs (`net*-ios`, `net*-android`) when detecting platform targets programmatically to avoid false negatives on older or newer TFMs.
+**TFM note:** Use version-agnostic globs (`net*-ios`, `net*-android`) when detecting platform targets programmatically
+to avoid false negatives on older or newer TFMs.
 
 ---
 
@@ -57,10 +63,12 @@ Cross-references: [skill:dotnet-uno-platform] for core development, [skill:dotne
 
 ### Project Setup
 
-```bash
+````bash
+
 # Run the WASM target
 dotnet run -f net8.0-browserwasm --project MyApp/MyApp.csproj
-```
+
+```bash
 
 The WASM target renders XAML controls in the browser. The renderer depends on project configuration: Skia (canvas/WebGL) or native HTML mapping. The app loads via a JavaScript bootstrap (`uno-bootstrap.js`) that initializes the .NET WASM runtime.
 
@@ -74,12 +82,14 @@ The WASM target renders XAML controls in the browser. The renderer depends on pr
 ### Packaging/Distribution
 
 ```bash
+
 # Publish for production
 dotnet publish -f net8.0-browserwasm -c Release --output ./publish
 
 # Output is a static site (HTML/JS/WASM)
 # Deploy to: Azure Static Web Apps, GitHub Pages, Netlify, any static host
-```
+
+```text
 
 Published output is a self-contained static site. No server-side runtime required.
 
@@ -96,11 +106,13 @@ Published output is a self-contained static site. No server-side runtime require
 **Trimming** reduces download size by removing unused code. **AOT** pre-compiles IL to WebAssembly, improving runtime execution speed but increasing artifact size. Use both together and measure the tradeoffs for your app.
 
 ```xml
+
 <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0-browserwasm'">
   <WasmShellMonoRuntimeExecutionMode>InterpreterAndAOT</WasmShellMonoRuntimeExecutionMode>
   <RunAOTCompilation>true</RunAOTCompilation>
 </PropertyGroup>
-```
+
+```bash
 
 **Trimming is critical for WASM.** Untrimmed apps can exceed 30MB. With trimming, typical apps are 5-15MB. AOT adds to the artifact size but eliminates interpreter overhead at runtime -- profile both download time and execution speed in target conditions.
 
@@ -120,12 +132,14 @@ For Uno-specific AOT gotchas (linker descriptors, Uno source generators), see th
 ### Project Setup
 
 ```bash
+
 # Build for iOS simulator
 dotnet build -f net8.0-ios
 
 # Run on simulator
 dotnet run -f net8.0-ios
-```
+
+```text
 
 Requires Xcode installed on macOS. The renderer (Skia or native) depends on project configuration and Uno version.
 
@@ -138,11 +152,13 @@ Requires Xcode installed on macOS. The renderer (Skia or native) depends on proj
 ### Packaging/Distribution
 
 ```bash
+
 # Publish for App Store
 dotnet publish -f net8.0-ios -c Release \
   /p:CodesignKey="Apple Distribution: MyCompany" \
   /p:CodesignProvision="MyApp Distribution Profile"
-```
+
+```text
 
 Distribution channels: App Store (requires Apple Developer account), TestFlight (beta testing), Ad Hoc (enterprise).
 
@@ -161,11 +177,13 @@ Distribution channels: App Store (requires Apple Developer account), TestFlight 
 iOS requires AOT by default (no JIT). The .NET runtime compiles to native ARM64 code.
 
 ```xml
+
 <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
   <PublishTrimmed>true</PublishTrimmed>
   <TrimMode>link</TrimMode>
 </PropertyGroup>
-```
+
+```text
 
 **Gotcha:** Reflection-heavy code fails silently on iOS. Test with trimming enabled during development, not just for release builds.
 
@@ -182,12 +200,14 @@ iOS requires AOT by default (no JIT). The .NET runtime compiles to native ARM64 
 ### Project Setup
 
 ```bash
+
 # Build for Android
 dotnet build -f net8.0-android
 
 # Deploy to connected device or emulator
 dotnet run -f net8.0-android
-```
+
+```text
 
 Requires Android SDK (installed via `dotnet workload install android` or Android Studio).
 
@@ -200,6 +220,7 @@ Requires Android SDK (installed via `dotnet workload install android` or Android
 ### Packaging/Distribution
 
 ```bash
+
 # Publish signed APK/AAB (use env vars or CI secrets for passwords — never hardcode)
 dotnet publish -f net8.0-android -c Release \
   /p:AndroidKeyStore=true \
@@ -207,7 +228,8 @@ dotnet publish -f net8.0-android -c Release \
   /p:AndroidSigningStorePass="$ANDROID_KEYSTORE_PASS" \
   /p:AndroidSigningKeyAlias=myalias \
   /p:AndroidSigningKeyPass="$ANDROID_KEY_PASS"
-```
+
+```text
 
 Google Play requires Android App Bundle (AAB) format. Sideloading uses APK.
 
@@ -221,11 +243,13 @@ Google Play requires Android App Bundle (AAB) format. Sideloading uses APK.
 ### AOT/Trimming
 
 ```xml
+
 <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
   <PublishTrimmed>true</PublishTrimmed>
   <RunAOTCompilation>true</RunAOTCompilation>
 </PropertyGroup>
-```
+
+```text
 
 AOT on Android improves startup time. Unlike iOS, JIT is available as fallback for untrimmed code paths.
 
@@ -242,12 +266,14 @@ AOT on Android improves startup time. Unlike iOS, JIT is available as fallback f
 ### Project Setup
 
 ```bash
+
 # Build for macOS
 dotnet build -f net8.0-maccatalyst
 
 # Run on macOS
 dotnet run -f net8.0-maccatalyst
-```
+
+```text
 
 Uses Mac Catalyst (iOS APIs adapted for macOS). Requires Xcode on macOS.
 
@@ -260,11 +286,13 @@ Uses Mac Catalyst (iOS APIs adapted for macOS). Requires Xcode on macOS.
 ### Packaging/Distribution
 
 ```bash
+
 # Publish for distribution
 dotnet publish -f net8.0-maccatalyst -c Release \
   /p:CodesignKey="Developer ID Application: MyCompany" \
   /p:CodesignProvision="MyApp Mac Profile"
-```
+
+```text
 
 Distribution channels: Mac App Store, direct download with notarization, enterprise deployment.
 
@@ -294,12 +322,14 @@ Same profile as iOS (AOT by default for Catalyst). Trimming recommended for dist
 ### Project Setup
 
 ```bash
+
 # Build for Windows
 dotnet build -f net8.0-windows10.0.19041
 
 # Run on Windows
 dotnet run -f net8.0-windows10.0.19041
-```
+
+```text
 
 The Windows target can use either the Skia renderer or native WinAppSDK/WinUI 3 rendering.
 
@@ -311,10 +341,12 @@ The Windows target can use either the Skia renderer or native WinAppSDK/WinUI 3 
 ### Packaging/Distribution
 
 ```bash
+
 # Package as MSIX
 dotnet publish -f net8.0-windows10.0.19041 -c Release \
   /p:PackageOutputPath=./packages
-```
+
+```bash
 
 Distribution: Microsoft Store (MSIX), sideloading (MSIX with certificate), ClickOnce, or direct EXE.
 
@@ -328,11 +360,13 @@ Distribution: Microsoft Store (MSIX), sideloading (MSIX with certificate), Click
 ### AOT/Trimming
 
 ```xml
+
 <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
   <PublishTrimmed>true</PublishTrimmed>
   <PublishAot>true</PublishAot>
 </PropertyGroup>
-```
+
+```text
 
 Windows supports both JIT and AOT. AOT produces a single native EXE with faster startup.
 
@@ -349,12 +383,14 @@ Windows supports both JIT and AOT. AOT produces a single native EXE with faster 
 ### Project Setup
 
 ```bash
+
 # Build for Linux desktop
 dotnet build -f net8.0-desktop
 
 # Run on Linux
 dotnet run -f net8.0-desktop
-```
+
+```text
 
 The Linux target uses the Skia renderer with a GTK host window. All XAML rendering is done by Skia -- GTK provides only the window and input handling.
 
@@ -367,13 +403,15 @@ The Linux target uses the Skia renderer with a GTK host window. All XAML renderi
 ### Packaging/Distribution
 
 ```bash
+
 # Publish self-contained for Linux
 dotnet publish -f net8.0-desktop -c Release \
   --self-contained \
   -r linux-x64
 
 # Package as AppImage, Flatpak, or Snap
-```
+
+```text
 
 Distribution: AppImage (portable, no install), Flatpak (sandboxed), Snap (Ubuntu Store), DEB/RPM packages.
 
@@ -387,11 +425,13 @@ Distribution: AppImage (portable, no install), Flatpak (sandboxed), Snap (Ubuntu
 ### AOT/Trimming
 
 ```xml
+
 <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0-desktop'">
   <PublishTrimmed>true</PublishTrimmed>
   <PublishAot>true</PublishAot>
 </PropertyGroup>
-```
+
+```text
 
 AOT on Linux produces a native binary. Self-contained deployment avoids requiring a system-wide .NET runtime.
 
@@ -410,16 +450,19 @@ AOT on Linux produces a native binary. Self-contained deployment avoids requirin
 The Embedded target uses the Skia renderer with a framebuffer backend, enabling headless or kiosk-style rendering without a windowing system.
 
 ```bash
+
 # Build for embedded (same TFM as desktop)
 dotnet build -f net8.0-desktop -r linux-arm64
 
 # Run directly on embedded device
 dotnet run -f net8.0-desktop
-```
+
+```text
 
 The embedded target shares the `net8.0-desktop` TFM with Linux desktop. Platform-specific configuration selects the framebuffer backend.
 
 ```csharp
+
 // Program.cs -- framebuffer host configuration
 public static void Main(string[] args)
 {
@@ -429,7 +472,8 @@ public static void Main(string[] args)
         .Build()
         .Run();
 }
-```
+
+```text
 
 ### Debugging
 
@@ -440,6 +484,7 @@ public static void Main(string[] args)
 ### Packaging/Distribution
 
 ```bash
+
 # Publish self-contained for ARM64
 dotnet publish -f net8.0-desktop -c Release \
   --self-contained \
@@ -447,7 +492,8 @@ dotnet publish -f net8.0-desktop -c Release \
 
 # Deploy binary directly to device filesystem
 scp -r ./publish/* pi@device:/opt/myapp/
-```
+
+```text
 
 Direct deployment to device filesystem. No app store or package manager.
 
@@ -464,12 +510,14 @@ Direct deployment to device filesystem. No app store or package manager.
 **AOT is strongly recommended for embedded** due to limited resources and startup time requirements.
 
 ```xml
+
 <PropertyGroup Condition="'$(RuntimeIdentifier)' == 'linux-arm64'">
   <PublishTrimmed>true</PublishTrimmed>
   <PublishAot>true</PublishAot>
   <InvariantGlobalization>true</InvariantGlobalization>
 </PropertyGroup>
-```
+
+```text
 
 `InvariantGlobalization` reduces binary size by removing ICU data (~28MB). Only use if the app does not need locale-specific formatting.
 
@@ -549,3 +597,4 @@ Direct deployment to device filesystem. No app store or package manager.
 - [iOS Deployment](https://learn.microsoft.com/en-us/dotnet/maui/ios/deployment/)
 - [Android Deployment](https://learn.microsoft.com/en-us/dotnet/maui/android/deployment/)
 - [Linux with Skia/GTK](https://platform.uno/docs/articles/get-started-with-linux.html)
+````

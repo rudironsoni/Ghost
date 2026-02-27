@@ -2,23 +2,29 @@
 name: dotnet-api-docs
 description: Generates API documentation. DocFX setup, OpenAPI-as-docs, doc-code sync, versioned docs.
 license: MIT
-targets: ["*"]
-tags: ["api", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['api', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for api tasks"
+  short-description: '.NET skill guidance for api tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-api-docs
 
-API documentation generation for .NET projects: DocFX setup for API reference from assemblies (`docfx.json` configuration, metadata extraction, template customization, cross-referencing), OpenAPI spec as living API documentation (Scalar and Swagger UI embedding, versioned OpenAPI documents), documentation-code synchronization (CI validation with `-warnaserror:CS1591`, broken link detection, automated doc builds on PR), API changelog patterns (breaking change documentation, migration guides, deprecated API tracking), and versioned API documentation (version selectors, multi-version maintenance, URL patterns).
+API documentation generation for .NET projects: DocFX setup for API reference from assemblies (`docfx.json`
+configuration, metadata extraction, template customization, cross-referencing), OpenAPI spec as living API documentation
+(Scalar and Swagger UI embedding, versioned OpenAPI documents), documentation-code synchronization (CI validation with
+`-warnaserror:CS1591`, broken link detection, automated doc builds on PR), API changelog patterns (breaking change
+documentation, migration guides, deprecated API tracking), and versioned API documentation (version selectors,
+multi-version maintenance, URL patterns).
 
-**Version assumptions:** DocFX v2.x (community-maintained). OpenAPI 3.x via `Microsoft.AspNetCore.OpenApi` (.NET 9+ built-in). Scalar UI for modern OpenAPI visualization. .NET 8.0+ baseline for code examples.
+**Version assumptions:** DocFX v2.x (community-maintained). OpenAPI 3.x via `Microsoft.AspNetCore.OpenApi` (.NET 9+
+built-in). Scalar UI for modern OpenAPI visualization. .NET 8.0+ baseline for code examples.
 
 ## Scope
 
@@ -36,28 +42,34 @@ API documentation generation for .NET projects: DocFX setup for API reference fr
 - Documentation platform selection and initial setup -- see [skill:dotnet-documentation-strategy]
 - Changelog generation tooling and SemVer versioning -- see [skill:dotnet-release-management]
 
-Cross-references: [skill:dotnet-xml-docs] for XML doc comment authoring, [skill:dotnet-openapi] for OpenAPI generation, [skill:dotnet-gha-deploy] for doc site deployment pipelines, [skill:dotnet-documentation-strategy] for platform selection, [skill:dotnet-release-management] for changelog tooling and versioning.
+Cross-references: [skill:dotnet-xml-docs] for XML doc comment authoring, [skill:dotnet-openapi] for OpenAPI generation,
+[skill:dotnet-gha-deploy] for doc site deployment pipelines, [skill:dotnet-documentation-strategy] for platform
+selection, [skill:dotnet-release-management] for changelog tooling and versioning.
 
 ---
 
 ## DocFX Setup for .NET API Reference
 
-DocFX generates API reference documentation directly from .NET assemblies and XML documentation comments. It is the only documentation tool with native `docfx metadata` extraction from .NET projects.
+DocFX generates API reference documentation directly from .NET assemblies and XML documentation comments. It is the only
+documentation tool with native `docfx metadata` extraction from .NET projects.
 
 ### Installation
 
-```bash
+`````bash
+
 # Install DocFX as a .NET global tool
 dotnet tool install -g docfx
 
 # Or as a local tool (recommended for team consistency)
 dotnet new tool-manifest
 dotnet tool install docfx
-```
+
+```text
 
 ### Configuration (`docfx.json`)
 
 ```json
+
 {
   "metadata": [
     {
@@ -82,12 +94,7 @@ dotnet tool install docfx
         "files": ["api/**.yml", "api/index.md"]
       },
       {
-        "files": [
-          "articles/**.md",
-          "articles/**/toc.yml",
-          "toc.yml",
-          "*.md"
-        ]
+        "files": ["articles/**.md", "articles/**/toc.yml", "toc.yml", "*.md"]
       }
     ],
     "resource": [
@@ -113,13 +120,15 @@ dotnet tool install docfx
     }
   }
 }
-```
+
+```text
 
 ### Metadata Extraction
 
 The `metadata` section controls how DocFX extracts API information from .NET projects:
 
 ```bash
+
 # Generate API metadata YAML files from projects
 docfx metadata docfx.json
 
@@ -127,23 +136,25 @@ docfx metadata docfx.json
 #   api/MyLibrary.WidgetService.yml
 #   api/MyLibrary.Widget.yml
 #   api/toc.yml
-```
+
+```yaml
 
 **Key metadata configuration options:**
 
-| Property | Purpose | Default |
-|----------|---------|---------|
-| `src.files` | Project files to extract from | Required |
-| `dest` | Output directory for YAML | `api` |
-| `properties.TargetFramework` | TFM to build against | Project default |
-| `disableGitFeatures` | Skip git blame info | `false` |
-| `filter` | Path to API filter YAML | None (all public APIs) |
+| Property                     | Purpose                       | Default                |
+| ---------------------------- | ----------------------------- | ---------------------- |
+| `src.files`                  | Project files to extract from | Required               |
+| `dest`                       | Output directory for YAML     | `api`                  |
+| `properties.TargetFramework` | TFM to build against          | Project default        |
+| `disableGitFeatures`         | Skip git blame info           | `false`                |
+| `filter`                     | Path to API filter YAML       | None (all public APIs) |
 
 ### API Filtering
 
 Exclude internal types from the generated documentation:
 
 ```yaml
+
 # filterConfig.yml
 apiRules:
   - exclude:
@@ -151,14 +162,16 @@ apiRules:
       type: Namespace
   - exclude:
       hasAttribute:
-          uid: System.ComponentModel.EditorBrowsableAttribute
-          ctorArguments:
-            - System.ComponentModel.EditorBrowsableState.Never
-```
+        uid: System.ComponentModel.EditorBrowsableAttribute
+        ctorArguments:
+          - System.ComponentModel.EditorBrowsableState.Never
+
+```text
 
 Reference the filter in `docfx.json`:
 
 ```json
+
 {
   "metadata": [
     {
@@ -166,13 +179,15 @@ Reference the filter in `docfx.json`:
     }
   ]
 }
-```
+
+```yaml
 
 ### Template Customization
 
 DocFX supports template overrides for custom branding:
 
-```
+```text
+
 docs/
   templates/
     custom/
@@ -181,30 +196,37 @@ docs/
       partials/
         head.tmpl.partial # Custom head section (analytics, fonts)
         footer.tmpl.partial
-```
+
+```csharp
 
 Reference custom templates in `docfx.json`:
 
 ```json
+
 {
   "build": {
     "template": ["default", "modern", "templates/custom"]
   }
 }
-```
+
+```text
 
 ### Cross-Referencing Between Pages
 
 DocFX supports `uid`-based cross-references between API pages and conceptual articles:
 
 ```markdown
+
 <!-- In a conceptual article -->
+
 See the @MyLibrary.WidgetService.CreateWidgetAsync(System.String) method for details.
 
 For the full API, see <xref:MyLibrary.WidgetService>.
-```
+
+```text
 
 ```yaml
+
 # In an API YAML override file (api/MyLibrary.WidgetService.yml)
 # Add links to conceptual articles
 references:
@@ -212,19 +234,22 @@ references:
     seealso:
       - linkId: ../articles/getting-started.md
         commentId: getting-started
-```
+
+```markdown
 
 ---
 
 ## OpenAPI Spec as Documentation
 
-Generated OpenAPI specifications serve as living API documentation that stays in sync with the code. This section covers using OpenAPI output as documentation; for OpenAPI generation and configuration, see [skill:dotnet-openapi].
+Generated OpenAPI specifications serve as living API documentation that stays in sync with the code. This section covers
+using OpenAPI output as documentation; for OpenAPI generation and configuration, see [skill:dotnet-openapi].
 
 ### Scalar UI Embedding
 
 Scalar provides a modern, interactive API documentation viewer:
 
 ```csharp
+
 // Program.cs
 var builder = WebApplication.CreateBuilder(args);
 
@@ -244,9 +269,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.Run();
-```
+
+```text
 
 Scalar renders the OpenAPI spec as an interactive documentation page with:
+
 - Endpoint grouping by tags
 - Request/response examples
 - Authentication configuration
@@ -257,6 +284,7 @@ Scalar renders the OpenAPI spec as an interactive documentation page with:
 For projects using Swashbuckle or requiring the classic Swagger UI:
 
 ```csharp
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwaggerUI(options =>
@@ -267,13 +295,15 @@ if (app.Environment.IsDevelopment())
         options.DefaultModelsExpandDepth(-1); // Hide schemas by default
     });
 }
-```
+
+```text
 
 ### Versioned OpenAPI Documents
 
 Serve multiple OpenAPI documents for different API versions:
 
 ```csharp
+
 builder.Services.AddOpenApi("v1", options =>
 {
     options.AddDocumentTransformer((document, context, ct) =>
@@ -296,24 +326,28 @@ builder.Services.AddOpenApi("v2", options =>
 
 // Serves /openapi/v1.json and /openapi/v2.json
 app.MapOpenApi();
-```
+
+```json
 
 ### Exporting OpenAPI for Static Documentation
 
 Export the OpenAPI spec at build time for use in static documentation sites:
 
 ```bash
+
 # Generate OpenAPI spec from the running application
 dotnet run -- --urls "http://localhost:5099" &
 APP_PID=$!
 sleep 3
 curl -s http://localhost:5099/openapi/v1.json > docs/openapi/v1.json
 kill $APP_PID
-```
+
+```json
 
 Alternatively, use the `Microsoft.Extensions.ApiDescription.Server` package to generate at build time:
 
 ```xml
+
 <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Version="8.0.0">
   <PrivateAssets>all</PrivateAssets>
   <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
@@ -323,7 +357,8 @@ Alternatively, use the `Microsoft.Extensions.ApiDescription.Server` package to g
   <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
   <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/../docs/openapi</OpenApiDocumentsDirectory>
 </PropertyGroup>
-```
+
+```text
 
 For OpenAPI generation setup and Swashbuckle migration details, see [skill:dotnet-openapi].
 
@@ -335,7 +370,8 @@ For OpenAPI generation setup and Swashbuckle migration details, see [skill:dotne
 
 The primary pipeline for library API reference documentation:
 
-```
+```xml
+
 Source Code (.cs files)
     |
     v
@@ -358,7 +394,8 @@ docfx build (generates HTML)
     |
     v
 Static HTML Site (_site/)
-```
+
+```text
 
 For XML documentation comment authoring best practices, see [skill:dotnet-xml-docs].
 
@@ -372,26 +409,31 @@ For projects using Starlight instead of DocFX, extract API documentation as Mark
    - Custom script: parse the XML file and generate Markdown pages for each type
 
 ```bash
+
 # Using xmldoc2md
 dotnet tool install -g XMLDoc2Markdown
 xmldoc2md MyLibrary.dll docs/src/content/docs/reference/
 
 # Output: one Markdown file per type in the reference/ directory
-```
 
-3. **Include in Starlight build:**
+```xml
 
-```
+1. **Include in Starlight build:**
+
+```text
+
 docs/src/content/docs/
   reference/
     MyLibrary.WidgetService.md    # Auto-generated from XML docs
     MyLibrary.Widget.md
     MyLibrary.WidgetStatus.md
-```
+
+```xml
 
 Configure the sidebar to auto-generate from the reference directory:
 
 ```javascript
+
 // astro.config.mjs
 sidebar: [
   {
@@ -399,7 +441,8 @@ sidebar: [
     autogenerate: { directory: 'reference' },
   },
 ],
-```
+
+```text
 
 ---
 
@@ -410,6 +453,7 @@ sidebar: [
 Enforce XML documentation completeness in CI by treating CS1591 as an error:
 
 ```xml
+
 <!-- Directory.Build.props -->
 <PropertyGroup>
   <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -419,46 +463,57 @@ Enforce XML documentation completeness in CI by treating CS1591 as an error:
 <PropertyGroup Condition="'$(IsPublicLibrary)' == 'true'">
   <WarningsAsErrors>$(WarningsAsErrors);CS1591</WarningsAsErrors>
 </PropertyGroup>
-```
+
+```text
 
 ```bash
+
 # CI command: build with warnings-as-errors for doc completeness
 dotnet build -warnaserror:CS1591
-```
 
-This fails the build if any public member is missing XML documentation. Use the `IsPublicLibrary` condition (or per-project configuration) to apply only to published NuGet packages, not test projects or internal tools.
+```bash
+
+This fails the build if any public member is missing XML documentation. Use the `IsPublicLibrary` condition (or
+per-project configuration) to apply only to published NuGet packages, not test projects or internal tools.
 
 ### Broken Link Detection
 
 Validate documentation links in CI:
 
 ```bash
+
 # Build DocFX and check for broken cross-references
 docfx build docfx.json --warningsAsErrors
 
 # DocFX reports broken xref links as warnings -- the flag promotes them to errors
-```
+
+```json
 
 For Starlight or Docusaurus sites, use a link checker after building:
 
 ```bash
+
 # Build the doc site
 npm run build
 
 # Check for broken links in the built output
 npx broken-link-checker-local ./_site --recursive
-```
+
+```text
 
 ### Automated Doc Builds on PR
 
-Validate documentation builds on every pull request without deploying. For the deployment workflow configuration, see [skill:dotnet-gha-deploy]. The validation step typically runs as part of the CI workflow:
+Validate documentation builds on every pull request without deploying. For the deployment workflow configuration, see
+[skill:dotnet-gha-deploy]. The validation step typically runs as part of the CI workflow:
 
 ```bash
+
 # In CI: verify docs build without errors
 dotnet build -warnaserror:CS1591          # XML doc completeness
 docfx metadata docfx.json                 # API metadata extraction
 docfx build docfx.json --warningsAsErrors # Full doc site build
-```
+
+```json
 
 This catches documentation regressions (missing docs, broken cross-references) before they reach the main branch.
 
@@ -471,45 +526,53 @@ This catches documentation regressions (missing docs, broken cross-references) b
 Document breaking changes with a structured format that consumers can quickly scan:
 
 ```markdown
+
 ## Breaking Changes in v3.0
 
 ### Removed APIs
 
-| API | Replacement | Migration |
-|-----|-------------|-----------|
-| `WidgetService.Create(string)` | `WidgetService.CreateAsync(string, CancellationToken)` | Add `await` and `CancellationToken` parameter |
-| `Widget.Name` setter | `WidgetService.RenameAsync(Guid, string)` | Use service method instead of direct property mutation |
-| `IWidgetRepository` (interface) | `IWidgetRepository<T>` (generic) | Update implementations to use generic interface |
+| API                             | Replacement                                            | Migration                                              |
+| ------------------------------- | ------------------------------------------------------ | ------------------------------------------------------ |
+| `WidgetService.Create(string)`  | `WidgetService.CreateAsync(string, CancellationToken)` | Add `await` and `CancellationToken` parameter          |
+| `Widget.Name` setter            | `WidgetService.RenameAsync(Guid, string)`              | Use service method instead of direct property mutation |
+| `IWidgetRepository` (interface) | `IWidgetRepository<T>` (generic)                       | Update implementations to use generic interface        |
 
 ### Changed Behavior
 
-- `WidgetService.CreateAsync` now validates name uniqueness within a category.
-  Previously, duplicate names were silently allowed.
-- `Widget.Status` defaults to `Draft` instead of `Active`.
-  Existing code that assumes newly created widgets are active must call `widget.Activate()`.
+- `WidgetService.CreateAsync` now validates name uniqueness within a category. Previously, duplicate names were silently
+  allowed.
+- `Widget.Status` defaults to `Draft` instead of `Active`. Existing code that assumes newly created widgets are active
+  must call `widget.Activate()`.
 
 ### New Required Dependencies
 
-- `Microsoft.Extensions.Caching.Memory` is now a required dependency for `WidgetService`.
-  Register with `builder.Services.AddMemoryCache()`.
-```
+- `Microsoft.Extensions.Caching.Memory` is now a required dependency for `WidgetService`. Register with
+  `builder.Services.AddMemoryCache()`.
+
+```text
 
 ### Migration Guides Between Major Versions
 
 Structure migration guides by the action required:
 
-```markdown
+````markdown
+
 # Migrating from v2.x to v3.0
 
 ## Step 1: Update Package References
 
 ```xml
+
 <!-- Before -->
 <PackageReference Include="My.Library" Version="2.*" />
 
 <!-- After -->
 <PackageReference Include="My.Library" Version="3.0.0" />
-```
+
+```text
+
+
+`````
 
 ## Step 2: Fix Compilation Errors
 
@@ -517,35 +580,41 @@ Structure migration guides by the action required:
 
 All synchronous methods have been removed. Replace synchronous calls with async equivalents:
 
-```csharp
+````csharp
+
 // Before (v2.x)
 var widget = service.Create("name");
 
 // After (v3.0)
 var widget = await service.CreateAsync("name", cancellationToken);
-```
+
+```text
 
 ### Generic Repository Interface
 
 ```csharp
+
 // Before (v2.x)
 public class MyRepo : IWidgetRepository { }
 
 // After (v3.0)
 public class MyRepo : IWidgetRepository<Widget> { }
-```
+
+```text
 
 ## Step 3: Update Behavioral Assumptions
 
 - Check all code paths that assume `Widget.Status == Active` after creation
 - Add `builder.Services.AddMemoryCache()` to DI registration
-```
+
+````
 
 ### Deprecated API Tracking
 
 Use the `[Obsolete]` attribute with message pointing to the replacement. Document deprecation timelines:
 
 ```csharp
+
 /// <summary>
 /// Creates a widget synchronously.
 /// </summary>
@@ -557,19 +626,21 @@ Use the `[Obsolete]` attribute with message pointing to the replacement. Documen
 public Widget Create(string name)
 {
 }
+
 ```
 
 Track deprecated APIs in a dedicated document:
 
-```markdown
+`````markdown
 # Deprecated APIs
 
-| API | Deprecated In | Removed In | Replacement |
-|-----|---------------|------------|-------------|
-| `WidgetService.Create(string)` | v2.5 | v4.0 (planned) | `CreateAsync(string, CancellationToken)` |
-| `Widget.Name` setter | v3.0 | v4.0 (planned) | `WidgetService.RenameAsync(Guid, string)` |
-| `WidgetOptions.EnableCache` | v3.1 | v5.0 (planned) | `WidgetOptions.CachePolicy` |
-```
+| API                            | Deprecated In | Removed In     | Replacement                               |
+| ------------------------------ | ------------- | -------------- | ----------------------------------------- |
+| `WidgetService.Create(string)` | v2.5          | v4.0 (planned) | `CreateAsync(string, CancellationToken)`  |
+| `Widget.Name` setter           | v3.0          | v4.0 (planned) | `WidgetService.RenameAsync(Guid, string)` |
+| `WidgetOptions.EnableCache`    | v3.1          | v5.0 (planned) | `WidgetOptions.CachePolicy`               |
+
+````text
 
 For changelog format conventions and SemVer versioning strategy, see [skill:dotnet-release-management].
 
@@ -584,6 +655,7 @@ For changelog format conventions and SemVer versioning strategy, see [skill:dotn
 DocFX supports version-specific metadata extraction by targeting different project versions:
 
 ```json
+
 {
   "metadata": [
     {
@@ -594,11 +666,13 @@ DocFX supports version-specific metadata extraction by targeting different proje
     }
   ]
 }
-```
+
+```text
 
 Maintain separate branches or tags for each major version, and build documentation from each:
 
 ```bash
+
 # Build docs for v2.x (current branch)
 docfx build docfx.json
 
@@ -606,60 +680,92 @@ docfx build docfx.json
 git checkout v1.x
 docfx build docfx.json --output _site/v1
 git checkout main
-```
+
+```json
 
 **Starlight versioned docs:**
 
-Use directory-based versioning or the `@lorenzo_lewis/starlight-utils` plugin. See [skill:dotnet-documentation-strategy] for Starlight versioning setup.
+Use directory-based versioning or the `@lorenzo_lewis/starlight-utils` plugin. See [skill:dotnet-documentation-strategy]
+for Starlight versioning setup.
 
 **Docusaurus versioned docs:**
 
-Docusaurus has built-in versioning with `npx docusaurus docs:version`. See [skill:dotnet-documentation-strategy] for Docusaurus versioning setup.
+Docusaurus has built-in versioning with `npx docusaurus docs:version`. See [skill:dotnet-documentation-strategy] for
+Docusaurus versioning setup.
 
 ### Maintaining Docs for Multiple Active Versions
 
 When supporting multiple active major versions simultaneously:
 
-1. **Branch-per-major-version strategy:** Maintain `docs/v1`, `docs/v2` directories on the main branch, or separate `v1.x`, `v2.x` branches
-2. **Shared conceptual docs:** Keep version-independent guides (architecture, concepts) in a shared location, version-specific API reference in separate directories
+1. **Branch-per-major-version strategy:** Maintain `docs/v1`, `docs/v2` directories on the main branch, or separate
+   `v1.x`, `v2.x` branches
+2. **Shared conceptual docs:** Keep version-independent guides (architecture, concepts) in a shared location,
+   version-specific API reference in separate directories
 3. **Version banner:** Add a notification banner on older version docs pointing to the latest version
 
 ### URL Patterns
 
 Consistent URL patterns for versioned API docs:
 
-```
+```text
+
 https://docs.mylib.dev/                     # Latest stable version
 https://docs.mylib.dev/v2/                  # Specific version
 https://docs.mylib.dev/v2/api/WidgetService # Specific type in specific version
 https://docs.mylib.dev/latest/              # Alias for latest stable
 https://docs.mylib.dev/next/                # Pre-release / unreleased docs
-```
 
-Configure redirects so unversioned URLs point to the latest stable version. This ensures existing links remain valid when a new version is published.
+```text
+
+Configure redirects so unversioned URLs point to the latest stable version. This ensures existing links remain valid
+when a new version is published.
 
 ---
 
 ## Agent Gotchas
 
-1. **Do not generate OpenAPI spec configuration** -- OpenAPI generation setup (`builder.Services.AddOpenApi()`, document transformers, Swashbuckle migration) belongs to [skill:dotnet-openapi]. This skill covers using the generated OpenAPI output as documentation.
+1. **Do not generate OpenAPI spec configuration** -- OpenAPI generation setup (`builder.Services.AddOpenApi()`, document
+   transformers, Swashbuckle migration) belongs to [skill:dotnet-openapi]. This skill covers using the generated OpenAPI
+   output as documentation.
 
-2. **Do not write XML doc comment syntax guidance** -- XML tag syntax, conventions, `<inheritdoc>`, and `GenerateDocumentationFile` belong to [skill:dotnet-xml-docs]. This skill covers the pipeline from XML docs to generated documentation sites.
+1. **Do not write XML doc comment syntax guidance** -- XML tag syntax, conventions, `<inheritdoc>`, and
+   `GenerateDocumentationFile` belong to [skill:dotnet-xml-docs]. This skill covers the pipeline from XML docs to
+   generated documentation sites.
 
-3. **Do not generate CI deployment YAML** -- doc site deployment workflows (GitHub Pages actions, DocFX deploy) belong to [skill:dotnet-gha-deploy]. This skill covers doc build validation and local generation.
+1. **Do not generate CI deployment YAML** -- doc site deployment workflows (GitHub Pages actions, DocFX deploy) belong
+   to [skill:dotnet-gha-deploy]. This skill covers doc build validation and local generation.
 
-4. **`docfx metadata` requires a buildable project** -- the project must compile successfully for DocFX to extract API metadata. Always run `dotnet build` before `docfx metadata` in CI pipelines.
+1. **`docfx metadata` requires a buildable project** -- the project must compile successfully for DocFX to extract API
+   metadata. Always run `dotnet build` before `docfx metadata` in CI pipelines.
 
-5. **DocFX is community-maintained since November 2022** -- Microsoft transferred the repository. It remains actively maintained and widely used. For new projects evaluating alternatives, see [skill:dotnet-documentation-strategy].
+1. **DocFX is community-maintained since November 2022** -- Microsoft transferred the repository. It remains actively
+   maintained and widely used. For new projects evaluating alternatives, see [skill:dotnet-documentation-strategy].
 
-6. **DocFX `modern` template requires v2.75+** -- earlier versions use the `default` template which does not include Mermaid support or modern styling. Check the installed version with `docfx --version`.
+1. **DocFX `modern` template requires v2.75+** -- earlier versions use the `default` template which does not include
+   Mermaid support or modern styling. Check the installed version with `docfx --version`.
 
-7. **`-warnaserror:CS1591` should apply only to public library projects** -- applying it to test projects, console apps, or internal tools creates unnecessary documentation burden. Use MSBuild conditions to target only published packages.
+1. **`-warnaserror:CS1591` should apply only to public library projects** -- applying it to test projects, console apps,
+   or internal tools creates unnecessary documentation burden. Use MSBuild conditions to target only published packages.
 
-8. **API filtering with `filterConfig.yml` uses UID regex, not namespace strings** -- the pattern `^MyLibrary\.Internal\.` matches UIDs that start with that prefix. Test filter patterns with `docfx metadata --log verbose` to verify correct filtering.
+1. **API filtering with `filterConfig.yml` uses UID regex, not namespace strings** -- the pattern
+   `^MyLibrary\.Internal\.` matches UIDs that start with that prefix. Test filter patterns with
+   `docfx metadata --log verbose` to verify correct filtering.
 
-9. **Breaking change documentation must include migration code examples** -- a table listing removed APIs without showing the replacement code is insufficient. Always include before/after code snippets.
+1. **Breaking change documentation must include migration code examples** -- a table listing removed APIs without
+   showing the replacement code is insufficient. Always include before/after code snippets.
 
-10. **Versioned doc URLs must redirect unversioned paths to latest stable** -- do not break existing links when publishing a new version. Configure server-side redirects or a client-side redirect page at the root URL.
+1. **Versioned doc URLs must redirect unversioned paths to latest stable** -- do not break existing links when
+    publishing a new version. Configure server-side redirects or a client-side redirect page at the root URL.
 
-11. **OpenAPI UI (Scalar, Swagger UI) should only be exposed in development** -- wrap `MapScalarApiReference` and `UseSwaggerUI` in `if (app.Environment.IsDevelopment())` guards. Production exposure of interactive API docs is a security consideration.
+1. **OpenAPI UI (Scalar, Swagger UI) should only be exposed in development** -- wrap `MapScalarApiReference` and
+    `UseSwaggerUI` in `if (app.Environment.IsDevelopment())` guards. Production exposure of interactive API docs is a
+    security consideration.
+
+## References
+
+- [Mermaid Live Editor](https://mermaid.live/)
+- [Mermaid Documentation](https://mermaid.js.org/)
+
+```
+````
+`````

@@ -2,21 +2,23 @@
 name: dotnet-service-communication
 description: Chooses inter-service protocols. REST vs gRPC vs SignalR vs SSE decision matrix, tradeoffs.
 license: MIT
-targets: ["*"]
-tags: ["csharp", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['csharp', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for csharp tasks"
+  short-description: '.NET skill guidance for csharp tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-service-communication
 
-Higher-level routing skill for choosing the right service communication protocol. Provides a decision matrix mapping requirements (latency, direction, client type, payload format, browser support) to the five primary .NET communication protocols: gRPC, SignalR, SSE, JSON-RPC 2.0, and REST. Routes to specialized skills for implementation depth.
+Higher-level routing skill for choosing the right service communication protocol. Provides a decision matrix mapping
+requirements (latency, direction, client type, payload format, browser support) to the five primary .NET communication
+protocols: gRPC, SignalR, SSE, JSON-RPC 2.0, and REST. Routes to specialized skills for implementation depth.
 
 ## Scope
 
@@ -29,7 +31,9 @@ Higher-level routing skill for choosing the right service communication protocol
 - HTTP client factory and resilience pipelines -- see [skill:dotnet-http-client] and [skill:dotnet-resilience]
 - Native AOT architecture and trimming -- see [skill:dotnet-native-aot] and [skill:dotnet-trimming]
 
-Cross-references: [skill:dotnet-grpc] for gRPC implementation, [skill:dotnet-realtime-communication] for SignalR/SSE/JSON-RPC details, [skill:dotnet-http-client] for REST/HTTP client patterns. See [skill:dotnet-integration-testing] for testing service communication patterns.
+Cross-references: [skill:dotnet-grpc] for gRPC implementation, [skill:dotnet-realtime-communication] for
+SignalR/SSE/JSON-RPC details, [skill:dotnet-http-client] for REST/HTTP client patterns. See
+[skill:dotnet-integration-testing] for testing service communication patterns.
 
 ---
 
@@ -37,24 +41,25 @@ Cross-references: [skill:dotnet-grpc] for gRPC implementation, [skill:dotnet-rea
 
 Use this matrix to choose the right protocol based on your requirements:
 
-| Requirement | gRPC | SignalR | SSE | JSON-RPC 2.0 | REST |
-|-------------|------|---------|-----|--------------|------|
-| **Direction** | All four patterns | Full-duplex | Server-to-client | Request-response | Request-response |
-| **Wire format** | Protobuf (binary) | JSON or MessagePack | Text (JSON lines) | JSON | JSON/XML |
-| **Browser support** | gRPC-Web (proxy needed) | Yes (JS client) | Yes (native EventSource) | Via WebSocket | Yes (fetch/XHR) |
-| **Contract** | `.proto` schema | Hub interface | Convention | JSON-RPC spec | OpenAPI/Swagger |
-| **Latency** | Lowest | Low | Low | Medium | Medium |
-| **Throughput** | Highest | High | Moderate | Moderate | Moderate |
-| **Streaming** | All 4 patterns | Server + client streaming | Server push only | No | No (chunked transfer) |
-| **Connection** | HTTP/2 persistent | WebSocket (with fallback) | HTTP/1.1+ persistent | Transport-dependent | Per-request |
-| **Service-to-service** | Excellent | Good | Limited | Niche | Good |
-| **AOT-friendly** | Yes (Protobuf) | Yes | Yes | Yes | Yes (with STJ source gen) |
+| Requirement            | gRPC                    | SignalR                   | SSE                      | JSON-RPC 2.0        | REST                      |
+| ---------------------- | ----------------------- | ------------------------- | ------------------------ | ------------------- | ------------------------- |
+| **Direction**          | All four patterns       | Full-duplex               | Server-to-client         | Request-response    | Request-response          |
+| **Wire format**        | Protobuf (binary)       | JSON or MessagePack       | Text (JSON lines)        | JSON                | JSON/XML                  |
+| **Browser support**    | gRPC-Web (proxy needed) | Yes (JS client)           | Yes (native EventSource) | Via WebSocket       | Yes (fetch/XHR)           |
+| **Contract**           | `.proto` schema         | Hub interface             | Convention               | JSON-RPC spec       | OpenAPI/Swagger           |
+| **Latency**            | Lowest                  | Low                       | Low                      | Medium              | Medium                    |
+| **Throughput**         | Highest                 | High                      | Moderate                 | Moderate            | Moderate                  |
+| **Streaming**          | All 4 patterns          | Server + client streaming | Server push only         | No                  | No (chunked transfer)     |
+| **Connection**         | HTTP/2 persistent       | WebSocket (with fallback) | HTTP/1.1+ persistent     | Transport-dependent | Per-request               |
+| **Service-to-service** | Excellent               | Good                      | Limited                  | Niche               | Good                      |
+| **AOT-friendly**       | Yes (Protobuf)          | Yes                       | Yes                      | Yes                 | Yes (with STJ source gen) |
 
 ---
 
 ## Decision Flowchart
 
-```
+````text
+
 Is this service-to-service (no browser)?
 ├── Yes → Do you need streaming?
 │   ├── Yes → gRPC streaming [skill:dotnet-grpc]
@@ -70,7 +75,8 @@ Is this service-to-service (no browser)?
 Special cases:
 - LSP / tooling protocol → JSON-RPC 2.0 [skill:dotnet-realtime-communication]
 - Mixed (browser + service-to-service) → REST for browser, gRPC for internal
-```
+
+```json
 
 ---
 
@@ -151,20 +157,24 @@ See [skill:dotnet-http-client] for HTTP client patterns, resilience, and `IHttpC
 
 ### API Gateway with Mixed Protocols
 
-```
+```text
+
 Browser ─── REST/SignalR ──→ API Gateway ──→ gRPC ──→ Internal Services
                                           ──→ gRPC ──→ Order Service
                                           ──→ gRPC ──→ Inventory Service
-```
+
+```text
 
 Use REST for public-facing APIs and SignalR for real-time browser features. Internal service-to-service communication uses gRPC for performance. The API gateway translates between protocols.
 
 ### Event-Driven with SSE
 
-```
+```text
+
 Internal Services ──→ Message Broker ──→ SSE Endpoint ──→ Browser Dashboard
                                      ──→ gRPC Stream  ──→ Monitoring Service
-```
+
+```text
 
 Internal events flow through a message broker. Browser dashboards consume via SSE. Other services consume via gRPC streaming for higher throughput.
 
@@ -173,6 +183,7 @@ Internal events flow through a message broker. Browser dashboards consume via SS
 A single ASP.NET Core host can serve both gRPC and REST:
 
 ```csharp
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddGrpc();
@@ -189,7 +200,8 @@ app.MapControllers();
 // SSE for real-time browser updates
 app.MapGet("/events/orders", (OrderEventService svc, CancellationToken ct) =>
     TypedResults.ServerSentEvents(svc.GetEventsAsync(ct)));
-```
+
+```text
 
 ---
 
@@ -225,3 +237,4 @@ See [skill:dotnet-native-aot] for AOT compilation pipeline and [skill:dotnet-aot
 - [Server-Sent Events in .NET 10](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/server-sent-events?view=aspnetcore-10.0)
 - [Minimal APIs](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis?view=aspnetcore-10.0)
 - [IHttpClientFactory patterns](https://learn.microsoft.com/en-us/dotnet/core/extensions/httpclient-factory)
+````

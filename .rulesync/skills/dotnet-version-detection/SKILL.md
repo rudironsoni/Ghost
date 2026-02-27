@@ -2,21 +2,23 @@
 name: dotnet-version-detection
 description: Detects TFM/SDK from .csproj, global.json, Directory.Build.props. Runs first.
 license: MIT
-targets: ["*"]
-tags: ["csharp", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['csharp', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
   model: haiku
 codexcli:
-  short-description: ".NET skill guidance for csharp tasks"
+  short-description: '.NET skill guidance for csharp tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
-```! dotnet --version 2>/dev/null
-```
+````! dotnet --version 2>/dev/null
+
+
+```bash
 
 # dotnet-version-detection
 
@@ -46,8 +48,10 @@ Cross-cutting skill referenced by [skill:dotnet-advisor] and virtually all speci
 For large repos, run the bundled scanner first to quickly inventory TFM/SDK signals before applying the precedence algorithm below:
 
 ```bash
+
 python3 skills/dotnet-version-detection/scripts/scan-dotnet-targets.py --root . --json
-```
+
+```bash
 
 Use the script output (`project_target_frameworks`, `global_json.sdk_version`, `workflow_dotnet_versions`) as discovery input. The precedence rules below remain authoritative for final TFM selection.
 
@@ -62,10 +66,12 @@ Read project files in this strict order. **Higher-numbered sources are lower pri
 Read the nearest `.csproj` file to the current working file/directory.
 
 ```xml
+
 <PropertyGroup>
   <TargetFramework>net10.0</TargetFramework>
 </PropertyGroup>
-```
+
+```xml
 
 If found **and the value is a literal TFM** (e.g., `net10.0`, not `$(SomeProperty)`), this is the authoritative TFM. Report it and proceed to additional detection (Step 5).
 
@@ -74,10 +80,12 @@ If the value is an MSBuild property expression (starts with `$(`), skip to **Ste
 ### 2. `<TargetFrameworks>` in .csproj (multi-targeting)
 
 ```xml
+
 <PropertyGroup>
   <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
 </PropertyGroup>
-```
+
+```xml
 
 If found:
 - Report **all** TFMs (semicolon-delimited)
@@ -90,11 +98,13 @@ If found:
 If no `<TargetFramework>` or `<TargetFrameworks>` found in the .csproj (or if the .csproj inherits from shared props), read `Directory.Build.props` in the current directory or any parent directory up to the solution root.
 
 ```xml
+
 <!-- Directory.Build.props -->
 <PropertyGroup>
   <TargetFramework>net10.0</TargetFramework>
 </PropertyGroup>
-```
+
+```xml
 
 If found, use this as the TFM. Note: per-project `.csproj` values override `Directory.Build.props`.
 
@@ -103,8 +113,10 @@ If found, use this as the TFM. Note: per-project `.csproj` values override `Dire
 If the TFM value is an MSBuild property expression rather than a literal:
 
 ```xml
+
 <TargetFramework>$(MyCustomTfm)</TargetFramework>
-```
+
+```xml
 
 Emit warning:
 > **Warning: Unresolved MSBuild property `$(MyCustomTfm)`.** Cannot determine TFM statically. Falling back to SDK version from `global.json`.
@@ -114,12 +126,14 @@ Then fall through to `global.json` SDK version (Step 4a) or `dotnet --version` (
 #### 4a. `global.json` SDK version
 
 ```json
+
 {
   "sdk": {
     "version": "10.0.100"
   }
 }
-```
+
+```text
 
 Map SDK version to approximate TFM:
 - `8.0.xxx` -> net8.0
@@ -155,8 +169,10 @@ Report the SDK version alongside the TFM. Flag inconsistencies:
 Check for explicit `<LangVersion>` in .csproj or `Directory.Build.props`:
 
 ```xml
+
 <LangVersion>preview</LangVersion>
-```
+
+```csharp
 
 - If `preview` -- report "C# preview features enabled. Unlocks the next C# version available in the installed SDK (e.g., C# 15 preview features with a .NET 11 preview SDK)."
 - If `latest` -- report the default C# version for the detected TFM
@@ -168,15 +184,23 @@ Check for explicit `<LangVersion>` in .csproj or `Directory.Build.props`:
 Check for these properties in .csproj or `Directory.Build.props`:
 
 **EnablePreviewFeatures:**
+
 ```xml
+
 <EnablePreviewFeatures>true</EnablePreviewFeatures>
-```
+
+```xml
+
 Report: ".NET preview features enabled. Access to preview APIs and types."
 
 **Runtime-async feature flag (.NET 11+):**
+
 ```xml
+
 <Features>$(Features);runtime-async=on</Features>
-```
+
+```xml
+
 Report: "Runtime-async enabled. Async/await uses runtime-level execution instead of compiler state machines."
 
 Note: runtime-async requires `<EnablePreviewFeatures>true</EnablePreviewFeatures>` as well.
@@ -194,7 +218,8 @@ If multi-targeting was detected (Step 2), also note:
 
 After detection, present results in this structured format:
 
-```
+```text
+
 .NET Version Detection Results
 ==============================
 TFM:              net10.0 (or net8.0;net10.0 for multi-targeting)
@@ -208,11 +233,13 @@ Warnings:         none
 Guidance: This project targets .NET 10 LTS with C# 14. Use modern patterns
 including field-backed properties, collection expressions, and primary
 constructors. All guidance will target net10.0 capabilities.
-```
+
+```csharp
 
 For multi-targeting:
 
-```
+```text
+
 .NET Version Detection Results
 ==============================
 TFMs:             net8.0;net10.0
@@ -225,7 +252,8 @@ Warnings:         net8.0 reaches end of support Nov 2026
 Guidance: Multi-targeting net8.0 and net10.0. Guide on net10.0 patterns.
 For net8.0 compatibility, use PolySharp/Polyfill for language features.
 See [skill:dotnet-multi-targeting] for detailed polyfill guidance.
-```
+
+```text
 
 ---
 
@@ -315,17 +343,22 @@ This reference data maps .NET versions to their C# language versions, key featur
 
 **C# 15 preview (net11.0)**
 - Collection expression arguments (`with()` syntax for capacity/comparers):
+
   ```csharp
+
   List<int> nums = [with(capacity: 32), 0, ..evens, ..odds];
   HashSet<string> names = [with(comparer: StringComparer.OrdinalIgnoreCase), "Alice"];
-  ```
+
+````
+
 - Additional features expected as .NET 11 progresses through preview
 
 ### .NET 11 Preview 1 Notable Features
 
 These features are available when `net11.0` TFM is detected with preview features enabled:
 
-- **Runtime-async**: Async/await at runtime level (requires `<EnablePreviewFeatures>true</EnablePreviewFeatures>` + `<Features>$(Features);runtime-async=on</Features>`)
+- **Runtime-async**: Async/await at runtime level (requires `<EnablePreviewFeatures>true</EnablePreviewFeatures>` +
+  `<Features>$(Features);runtime-async=on</Features>`)
 - **Zstandard compression**: `System.IO.Compression.Zstandard` (2-7x faster than Brotli/Deflate)
 - **BFloat16**: `System.Numerics.BFloat16` for AI/ML workloads
 - **Happy Eyeballs**: `ConnectAlgorithm.Parallel` for dual-stack networking
@@ -337,6 +370,7 @@ These features are available when `net11.0` TFM is detected with preview feature
 ### Support Lifecycle Guidance
 
 When reporting version information, include lifecycle context:
+
 - **End-of-support approaching** (within 6 months): Warn and suggest [skill:dotnet-version-upgrade]
 - **Preview/RC**: Warn "not for production use" unless user explicitly opted in
 - **STS reaching end**: Note shorter support window compared to LTS

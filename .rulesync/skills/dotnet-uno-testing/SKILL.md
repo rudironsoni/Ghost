@@ -2,23 +2,26 @@
 name: dotnet-uno-testing
 description: Tests Uno Platform apps. Playwright for WASM, platform-specific patterns, runtime heads.
 license: MIT
-targets: ["*"]
-tags: ["testing", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['testing', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for testing tasks"
+  short-description: '.NET skill guidance for testing tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-uno-testing
 
-Testing Uno Platform applications across target heads (WASM, Desktop, Mobile). Covers Playwright-based browser automation for Uno WASM apps, platform-specific testing patterns for different runtime heads, and test infrastructure for cross-platform Uno projects.
+Testing Uno Platform applications across target heads (WASM, Desktop, Mobile). Covers Playwright-based browser
+automation for Uno WASM apps, platform-specific testing patterns for different runtime heads, and test infrastructure
+for cross-platform Uno projects.
 
-**Version assumptions:** .NET 8.0+ baseline, Uno Platform 5.x+, Playwright 1.40+ for WASM testing. Uno Platform uses single-project structure with multiple target frameworks.
+**Version assumptions:** .NET 8.0+ baseline, Uno Platform 5.x+, Playwright 1.40+ for WASM testing. Uno Platform uses
+single-project structure with multiple target frameworks.
 
 ## Scope
 
@@ -32,25 +35,32 @@ Testing Uno Platform applications across target heads (WASM, Desktop, Mobile). C
 - Playwright fundamentals (installation, CI caching, trace viewer) -- see [skill:dotnet-playwright]
 - Test project scaffolding -- see [skill:dotnet-add-testing]
 
-**Prerequisites:** Uno Platform application with WASM head configured. For WASM testing: Playwright browsers installed (see [skill:dotnet-playwright]). For mobile testing: platform SDKs configured (Android SDK, Xcode).
+**Prerequisites:** Uno Platform application with WASM head configured. For WASM testing: Playwright browsers installed
+(see [skill:dotnet-playwright]). For mobile testing: platform SDKs configured (Android SDK, Xcode).
 
-Cross-references: [skill:dotnet-ui-testing-core] for page object model and selector strategies, [skill:dotnet-playwright] for Playwright installation, CI caching, and trace viewer, [skill:dotnet-uno-platform] for Uno Extensions, MVUX, Toolkit, and theme guidance, [skill:dotnet-uno-targets] for per-target deployment and platform-specific gotchas.
+Cross-references: [skill:dotnet-ui-testing-core] for page object model and selector strategies,
+[skill:dotnet-playwright] for Playwright installation, CI caching, and trace viewer, [skill:dotnet-uno-platform] for Uno
+Extensions, MVUX, Toolkit, and theme guidance, [skill:dotnet-uno-targets] for per-target deployment and
+platform-specific gotchas.
 
 ---
 
 ## Uno Testing Strategy by Head
 
-Uno Platform apps run on multiple heads (WASM, Desktop/Skia, iOS, Android, Windows). Each head has different testing tools and trade-offs.
+Uno Platform apps run on multiple heads (WASM, Desktop/Skia, iOS, Android, Windows). Each head has different testing
+tools and trade-offs.
 
-| Head | Testing Approach | Tool | Speed | Fidelity |
-|------|-----------------|------|-------|----------|
-| **WASM** | Browser automation | Playwright | Medium | High -- real browser rendering |
-| **Desktop (Skia/GTK, WPF)** | UI automation | Appium / WinAppDriver | Medium | High -- real desktop rendering |
-| **iOS** | Simulator automation | Appium + XCUITest | Slow | Highest -- real iOS rendering |
-| **Android** | Emulator automation | Appium + UIAutomator2 | Slow | Highest -- real Android rendering |
-| **Unit (shared logic)** | In-memory | xUnit (no UI) | Fast | N/A -- logic only |
+| Head                        | Testing Approach     | Tool                  | Speed  | Fidelity                          |
+| --------------------------- | -------------------- | --------------------- | ------ | --------------------------------- |
+| **WASM**                    | Browser automation   | Playwright            | Medium | High -- real browser rendering    |
+| **Desktop (Skia/GTK, WPF)** | UI automation        | Appium / WinAppDriver | Medium | High -- real desktop rendering    |
+| **iOS**                     | Simulator automation | Appium + XCUITest     | Slow   | Highest -- real iOS rendering     |
+| **Android**                 | Emulator automation  | Appium + UIAutomator2 | Slow   | Highest -- real Android rendering |
+| **Unit (shared logic)**     | In-memory            | xUnit (no UI)         | Fast   | N/A -- logic only                 |
 
-**Recommended priority:** Test shared business logic with unit tests first. Use Playwright against the WASM head for UI verification -- it is the fastest UI testing path with the broadest coverage. Add platform-specific Appium tests only for behaviors that differ between heads.
+**Recommended priority:** Test shared business logic with unit tests first. Use Playwright against the WASM head for UI
+verification -- it is the fastest UI testing path with the broadest coverage. Add platform-specific Appium tests only
+for behaviors that differ between heads.
 
 ---
 
@@ -60,7 +70,8 @@ The WASM head renders Uno apps in a browser, making Playwright the natural choic
 
 ### Test Infrastructure
 
-```csharp
+````csharp
+
 // NuGet: Microsoft.Playwright
 public class UnoWasmFixture : IAsyncLifetime
 {
@@ -145,11 +156,13 @@ public class UnoWasmFixture : IAsyncLifetime
         return process;
     }
 }
-```
+
+```text
 
 ### WASM UI Tests
 
 ```csharp
+
 public class UnoNavigationTests : IClassFixture<UnoWasmFixture>
 {
     private readonly IPage _page;
@@ -180,11 +193,13 @@ public class UnoNavigationTests : IClassFixture<UnoWasmFixture>
         await Expect(settingsHeader).ToHaveTextAsync("Settings");
     }
 }
-```
+
+```text
 
 ### Form Interaction Tests
 
 ```csharp
+
 [Fact]
 public async Task LoginForm_SubmitValid_NavigatesToDashboard()
 {
@@ -208,7 +223,8 @@ public async Task TodoList_AddItem_AppearsInList()
     await Expect(items).ToHaveCountAsync(1);
     await Expect(items.First).ToContainTextAsync("Buy groceries");
 }
-```
+
+```text
 
 ---
 
@@ -219,6 +235,7 @@ public async Task TodoList_AddItem_AppearsInList()
 Uno maps `AutomationProperties.AutomationId` to each platform's native identifier:
 
 ```xml
+
 <!-- Uno XAML -- works across all heads -->
 <Page x:Class="MyApp.Views.LoginPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -238,7 +255,8 @@ Uno maps `AutomationProperties.AutomationId` to each platform's native identifie
                    Foreground="Red" />
     </StackPanel>
 </Page>
-```
+
+```text
 
 Platform mapping:
 - **WASM:** Rendered as `data-testid` attribute (Playwright selector)
@@ -251,6 +269,7 @@ Platform mapping:
 For code that varies by platform, use conditional compilation and separate test classes:
 
 ```csharp
+
 // Shared test -- runs on all platforms
 [Fact]
 public async Task Settings_ChangeTheme_UpdatesUI()
@@ -275,7 +294,8 @@ public async Task FileUpload_BrowserDialog_AcceptsFiles()
     var fileName = _page.Locator("[data-testid='file-name']");
     await Expect(fileName).ToHaveTextAsync("sample.pdf");
 }
-```
+
+```text
 
 ---
 
@@ -286,6 +306,7 @@ Validate that the same UI logic works correctly across different Uno runtime hea
 ### Shared Test Logic Pattern
 
 ```csharp
+
 /// <summary>
 /// Abstract base that defines UI tests once. Concrete subclasses provide
 /// the driver for each platform (Playwright for WASM, Appium for mobile).
@@ -341,7 +362,8 @@ public class LoginTestsWasm : LoginTestsBase, IClassFixture<UnoWasmFixture>
             $"[data-testid='{automationId}']",
             new() { Timeout = timeoutMs });
 }
-```
+
+```text
 
 ---
 
@@ -372,3 +394,4 @@ public class LoginTestsWasm : LoginTestsBase, IClassFixture<UnoWasmFixture>
 - [Uno Platform WASM Head](https://platform.uno/docs/articles/getting-started/wizard/wasm.html)
 - [AutomationProperties in UWP/WinUI](https://learn.microsoft.com/en-us/windows/apps/design/accessibility/basic-accessibility-information)
 - [Uno Platform GitHub](https://github.com/unoplatform/uno)
+````

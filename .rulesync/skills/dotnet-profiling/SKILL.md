@@ -2,23 +2,27 @@
 name: dotnet-profiling
 description: Diagnoses .NET performance issues. dotnet-counters, dotnet-trace, dotnet-dump, flame graphs.
 license: MIT
-targets: ["*"]
-tags: ["foundation", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['foundation', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for foundation tasks"
+  short-description: '.NET skill guidance for foundation tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-profiling
 
-Diagnostic tool guidance for investigating .NET performance problems. Covers real-time metric monitoring with dotnet-counters, event tracing and flame graph generation with dotnet-trace, and memory dump capture and analysis with dotnet-dump. Focuses on interpreting profiling data (reading flame graphs, analyzing heap dumps, correlating GC metrics) rather than just invoking tools.
+Diagnostic tool guidance for investigating .NET performance problems. Covers real-time metric monitoring with
+dotnet-counters, event tracing and flame graph generation with dotnet-trace, and memory dump capture and analysis with
+dotnet-dump. Focuses on interpreting profiling data (reading flame graphs, analyzing heap dumps, correlating GC metrics)
+rather than just invoking tools.
 
-**Version assumptions:** .NET SDK 8.0+ baseline. All three diagnostic tools (dotnet-counters, dotnet-trace, dotnet-dump) ship with the .NET SDK -- no separate installation required.
+**Version assumptions:** .NET SDK 8.0+ baseline. All three diagnostic tools (dotnet-counters, dotnet-trace, dotnet-dump)
+ship with the .NET SDK -- no separate installation required.
 
 ## Scope
 
@@ -35,7 +39,9 @@ Diagnostic tool guidance for investigating .NET performance problems. Covers rea
 - Continuous benchmark regression detection in CI -- see [skill:dotnet-ci-benchmarking]
 - Architecture patterns (caching, resilience) -- see [skill:dotnet-architecture-patterns]
 
-Cross-references: [skill:dotnet-observability] for GC/threadpool metrics interpretation and OpenTelemetry correlation, [skill:dotnet-benchmarkdotnet] for structured benchmarking after profiling identifies hot paths, [skill:dotnet-performance-patterns] for optimization patterns to apply based on profiling results.
+Cross-references: [skill:dotnet-observability] for GC/threadpool metrics interpretation and OpenTelemetry correlation,
+[skill:dotnet-benchmarkdotnet] for structured benchmarking after profiling identifies hot paths,
+[skill:dotnet-performance-patterns] for optimization patterns to apply based on profiling results.
 
 ---
 
@@ -43,11 +49,14 @@ Cross-references: [skill:dotnet-observability] for GC/threadpool metrics interpr
 
 ### Overview
 
-`dotnet-counters` provides real-time monitoring of .NET runtime metrics without modifying application code. Use it as a first-pass triage tool to identify whether a performance problem is CPU-bound, memory-bound, or I/O-bound before reaching for heavier instrumentation.
+`dotnet-counters` provides real-time monitoring of .NET runtime metrics without modifying application code. Use it as a
+first-pass triage tool to identify whether a performance problem is CPU-bound, memory-bound, or I/O-bound before
+reaching for heavier instrumentation.
 
 ### Monitoring Running Processes
 
-```bash
+````bash
+
 # List running .NET processes
 dotnet-counters ps
 
@@ -56,7 +65,8 @@ dotnet-counters monitor --process-id <PID>
 
 # Monitor with a specific refresh interval (seconds)
 dotnet-counters monitor --process-id <PID> --refresh-interval 2
-```
+
+```text
 
 ### Key Built-In Counter Providers
 
@@ -71,6 +81,7 @@ dotnet-counters monitor --process-id <PID> --refresh-interval 2
 ### Monitoring Specific Providers
 
 ```bash
+
 # Monitor runtime and ASP.NET counters together
 dotnet-counters monitor --process-id <PID> \
   --counters System.Runtime,Microsoft.AspNetCore.Hosting
@@ -78,13 +89,15 @@ dotnet-counters monitor --process-id <PID> \
 # Monitor only GC-related counters
 dotnet-counters monitor --process-id <PID> \
   --counters System.Runtime[gc-heap-size,gen-0-gc-count,gen-1-gc-count,gen-2-gc-count]
-```
+
+```text
 
 ### Custom EventCounters
 
 Applications can publish custom counters for domain-specific metrics:
 
 ```csharp
+
 using System.Diagnostics.Tracing;
 
 [EventSource(Name = "MyApp.Orders")]
@@ -122,13 +135,16 @@ public sealed class OrderMetrics : EventSource
         base.Dispose(disposing);
     }
 }
-```
+
+```text
 
 Monitor custom counters:
 
 ```bash
+
 dotnet-counters monitor --process-id <PID> --counters MyApp.Orders
-```
+
+```bash
 
 ### Interpreting Counter Data
 
@@ -145,6 +161,7 @@ Use counter values to direct further investigation. See [skill:dotnet-observabil
 ### Exporting Counter Data
 
 ```bash
+
 # Export to CSV for analysis
 dotnet-counters collect --process-id <PID> \
   --format csv \
@@ -155,7 +172,8 @@ dotnet-counters collect --process-id <PID> \
 dotnet-counters collect --process-id <PID> \
   --format json \
   --output counters.json
-```
+
+```json
 
 ---
 
@@ -170,6 +188,7 @@ dotnet-counters collect --process-id <PID> \
 CPU sampling records stack frames at a fixed interval to build a statistical profile of where the application spends time:
 
 ```bash
+
 # Collect a CPU sampling trace (default profile)
 dotnet-trace collect --process-id <PID> --duration 00:00:30
 
@@ -177,7 +196,8 @@ dotnet-trace collect --process-id <PID> --duration 00:00:30
 dotnet-trace collect --process-id <PID> \
   --profile cpu-sampling \
   --output cpu-trace.nettrace
-```
+
+```text
 
 ### CPU Sampling vs Instrumentation
 
@@ -195,18 +215,22 @@ Trace files (`.nettrace`) must be converted to a flame graph format for visual a
 **Using Speedscope (browser-based, recommended):**
 
 ```bash
+
 # Convert to Speedscope format
 dotnet-trace convert cpu-trace.nettrace --format Speedscope
 
 # Opens cpu-trace.speedscope.json -- load at https://www.speedscope.app/
-```
+
+```json
 
 **Using PerfView (Windows, deep .NET integration):**
 
 ```bash
+
 # Convert to Chromium trace format (also viewable in chrome://tracing)
 dotnet-trace convert cpu-trace.nettrace --format Chromium
-```
+
+```bash
 
 ### Reading Flame Graphs
 
@@ -238,12 +262,14 @@ Flame graphs display call stacks where:
 The `gc-collect` profile captures allocation events to identify what code paths allocate the most memory:
 
 ```bash
+
 # Collect allocation data
 dotnet-trace collect --process-id <PID> \
   --profile gc-collect \
   --duration 00:00:30 \
   --output alloc-trace.nettrace
-```
+
+```text
 
 This produces a trace that shows:
 
@@ -258,6 +284,7 @@ Correlate allocation data with GC counter evidence from dotnet-counters. If `gen
 Target specific event providers for focused tracing:
 
 ```bash
+
 # Trace specific providers with keywords and verbosity
 dotnet-trace collect --process-id <PID> \
   --providers "Microsoft-Diagnostics-DiagnosticSource:::FilterAndPayloadSpecs=[AS]System.Net.Http"
@@ -269,7 +296,8 @@ dotnet-trace collect --process-id <PID> \
 # Trace ASP.NET Core request processing
 dotnet-trace collect --process-id <PID> \
   --providers Microsoft.AspNetCore
-```
+
+```text
 
 ### Trace File Management
 
@@ -290,12 +318,14 @@ dotnet-trace collect --process-id <PID> \
 ### Capturing Dumps
 
 ```bash
+
 # Capture a full heap dump
 dotnet-dump collect --process-id <PID> --output app-dump.dmp
 
 # Capture a minimal dump (faster, smaller, but less detail)
 dotnet-dump collect --process-id <PID> --type Mini --output app-mini.dmp
-```
+
+```text
 
 **When to capture:**
 
@@ -309,14 +339,17 @@ dotnet-dump collect --process-id <PID> --type Mini --output app-mini.dmp
 Open the dump in the interactive analyzer:
 
 ```bash
+
 dotnet-dump analyze app-dump.dmp
-```
+
+```bash
 
 ### !dumpheap -- Heap Object Summary
 
 Lists objects on the managed heap grouped by type, sorted by total size:
 
-```
+```text
+
 > dumpheap -stat
 
 Statistics:
@@ -325,7 +358,8 @@ Statistics:
 00007fff2c6a1230    8,432      269,824 System.String
 00007fff2c7b5640    2,100      504,000 MyApp.Models.OrderEntity
 00007fff2c6a0988   15,230    1,218,400 System.Byte[]
-```
+
+```text
 
 **Analysis approach:**
 
@@ -335,10 +369,12 @@ Statistics:
 
 Filter by type:
 
-```
+```text
+
 > dumpheap -type MyApp.Models.OrderEntity
 > dumpheap -type System.Byte[] -min 85000
-```
+
+```text
 
 The `-min 85000` filter shows Large Object Heap entries (objects >= 85,000 bytes that cause Gen 2 GC pressure).
 
@@ -346,7 +382,8 @@ The `-min 85000` filter shows Large Object Heap entries (objects >= 85,000 bytes
 
 Traces the reference chain from a GC root to a specific object, explaining why it is not collected:
 
-```
+```text
+
 > gcroot 00007fff3c4a2100
 
 HandleTable:
@@ -356,7 +393,8 @@ HandleTable:
                 -> 00007fff3c4a2100 MyApp.Models.OrderEntity
 
 Found 1 unique root(s).
-```
+
+```text
 
 **Common root types and their meaning:**
 
@@ -372,7 +410,8 @@ Found 1 unique root(s).
 
 Shows objects waiting for finalization, which delays their collection by at least one GC cycle:
 
-```
+```text
+
 > finalizequeue
 
 SyncBlocks to be cleaned up: 0
@@ -384,7 +423,8 @@ generation 0 has 12 finalizable objects
 generation 1 has 45 finalizable objects
 generation 2 has 230 finalizable objects
 Ready for finalization 8 objects
-```
+
+```text
 
 **Key indicators:**
 
@@ -414,6 +454,7 @@ Ready for finalization 8 objects
 6. **Fix:** Break the retention chain (remove from static collections, dispose event subscriptions, fix async lifetime issues)
 
 ```bash
+
 # Tip: save dumpheap output for comparison
 # In dump 1:
 > dumpheap -stat > /tmp/heap-before.txt
@@ -421,7 +462,8 @@ Ready for finalization 8 objects
 > dumpheap -stat > /tmp/heap-after.txt
 # Compare externally:
 # diff /tmp/heap-before.txt /tmp/heap-after.txt
-```
+
+```text
 
 ---
 
@@ -429,7 +471,8 @@ Ready for finalization 8 objects
 
 Use the diagnostic tools in a structured investigation workflow:
 
-```
+```text
+
 1. dotnet-counters (triage)
    ├── CPU high?         → dotnet-trace --profile cpu-sampling
    │                       → Convert to flame graph (Speedscope)
@@ -444,7 +487,8 @@ Use the diagnostic tools in a structured investigation workflow:
    └── Thread starvation? → dotnet-dump analyze
                             → threads (list all managed threads)
                             → clrstack (check for blocking calls)
-```
+
+```text
 
 After profiling identifies the bottleneck, use [skill:dotnet-benchmarkdotnet] to create targeted benchmarks that quantify the improvement from fixes.
 
@@ -459,3 +503,4 @@ After profiling identifies the bottleneck, use [skill:dotnet-benchmarkdotnet] to
 5. **Filter dumpheap by `-min 85000` to find LOH objects** -- objects >= 85,000 bytes go to the Large Object Heap, which is only collected in Gen 2 GC. Large LOH counts indicate potential fragmentation.
 6. **Interpret GC counter data with [skill:dotnet-observability]** -- runtime GC/threadpool counters overlap with OpenTelemetry metrics. Use the observability skill for correlating profiling findings with distributed trace context.
 7. **Do not confuse dotnet-trace gc-collect with dotnet-dump** -- gc-collect traces allocation events over time (which methods allocate); dotnet-dump captures a point-in-time heap snapshot (what objects exist). Use gc-collect for allocation rate analysis; use dotnet-dump for retention/leak analysis.
+````

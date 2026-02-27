@@ -2,23 +2,25 @@
 name: dotnet-project-structure
 description: Sets up .NET solution layout. .slnx, Directory.Build.props, CPM, .editorconfig, analyzers.
 license: MIT
-targets: ["*"]
-tags: ["foundation", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['foundation', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for foundation tasks"
+  short-description: '.NET skill guidance for foundation tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-project-structure
 
-Reference guide for modern .NET project structure and solution layout. Use when creating new solutions, reviewing existing structure, or recommending improvements.
+Reference guide for modern .NET project structure and solution layout. Use when creating new solutions, reviewing
+existing structure, or recommending improvements.
 
-**Prerequisites:** Run [skill:dotnet-version-detection] first to determine TFM and SDK version — this affects which features are available (e.g., .slnx requires .NET 9+ SDK).
+**Prerequisites:** Run [skill:dotnet-version-detection] first to determine TFM and SDK version — this affects which
+features are available (e.g., .slnx requires .NET 9+ SDK).
 
 ## Scope
 
@@ -33,13 +35,16 @@ Reference guide for modern .NET project structure and solution layout. Use when 
 - Build output organization (UseArtifactsOutput) -- see [skill:dotnet-artifacts-output]
 - MSBuild authoring (custom targets, conditions) -- see [skill:dotnet-msbuild-authoring]
 
-Cross-references: [skill:dotnet-project-analysis] for analyzing existing projects, [skill:dotnet-scaffold-project] for generating a new project from scratch, [skill:dotnet-artifacts-output] for centralized build output layout (`UseArtifactsOutput`).
+Cross-references: [skill:dotnet-project-analysis] for analyzing existing projects, [skill:dotnet-scaffold-project] for
+generating a new project from scratch, [skill:dotnet-artifacts-output] for centralized build output layout
+(`UseArtifactsOutput`).
 
 ---
 
 ## Recommended Solution Layout
 
-```
+````text
+
 MyApp/
 ├── .editorconfig
 ├── .gitignore
@@ -63,7 +68,8 @@ MyApp/
     │   └── MyApp.UnitTests.csproj
     └── MyApp.IntegrationTests/
         └── MyApp.IntegrationTests.csproj
-```
+
+```csharp
 
 Key principles:
 - Separate `src/` and `tests/` directories
@@ -80,6 +86,7 @@ Key principles:
 The XML-based solution format is human-readable and diff-friendly. Requires .NET 9+ SDK or Visual Studio 17.13+.
 
 ```xml
+
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/MyApp.Core/MyApp.Core.csproj" />
@@ -91,23 +98,28 @@ The XML-based solution format is human-readable and diff-friendly. Requires .NET
     <Project Path="tests/MyApp.IntegrationTests/MyApp.IntegrationTests.csproj" />
   </Folder>
 </Solution>
-```
+
+```csharp
 
 Convert existing `.sln` to `.slnx`:
 
 ```bash
+
 dotnet sln MyApp.sln migrate
-```
+
+```bash
 
 ### .sln (Legacy — All Versions)
 
 The traditional format remains the fallback for older tooling, CI agents, and third-party integrations that don't support `.slnx` yet. Keep `.sln` alongside `.slnx` during the transition period if needed.
 
 ```bash
+
 dotnet new sln -n MyApp
 dotnet sln add src/**/*.csproj
 dotnet sln add tests/**/*.csproj
-```
+
+```bash
 
 ---
 
@@ -116,6 +128,7 @@ dotnet sln add tests/**/*.csproj
 Shared MSBuild properties applied to all projects in the directory subtree. Place at the repo root.
 
 ```xml
+
 <Project>
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -127,13 +140,15 @@ Shared MSBuild properties applied to all projects in the directory subtree. Plac
     <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 </Project>
-```
+
+```text
 
 ### Nested Directory.Build.props
 
 Inner files do **not** automatically import outer files. To chain them:
 
 ```xml
+
 <!-- src/Directory.Build.props -->
 <Project>
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
@@ -141,18 +156,21 @@ Inner files do **not** automatically import outer files. To chain them:
     <!-- src-specific settings -->
   </PropertyGroup>
 </Project>
-```
+
+```text
 
 Common pattern: separate props for src vs tests:
 
-```
+```text
+
 repo/
 ├── Directory.Build.props              # Shared: LangVersion, Nullable, ImplicitUsings
 ├── src/
 │   └── Directory.Build.props          # Imports parent + adds TreatWarningsAsErrors
 └── tests/
     └── Directory.Build.props          # Imports parent + sets IsTestProject
-```
+
+```xml
 
 ---
 
@@ -164,6 +182,7 @@ Imported **after** project evaluation. Use for:
 - Conditional logic based on project type
 
 ```xml
+
 <Project>
   <!-- Apply analyzers to all projects -->
   <ItemGroup>
@@ -171,7 +190,8 @@ Imported **after** project evaluation. Use for:
     <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
   </ItemGroup>
 </Project>
-```
+
+```text
 
 ---
 
@@ -182,6 +202,7 @@ CPM centralizes all NuGet package versions in `Directory.Packages.props` at the 
 ### Directory.Packages.props
 
 ```xml
+
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -200,26 +221,31 @@ CPM centralizes all NuGet package versions in `Directory.Packages.props` at the 
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
   </ItemGroup>
 </Project>
-```
+
+```text
 
 ### Project File with CPM
 
 ```xml
+
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <!-- No Version attribute — managed centrally -->
     <PackageReference Include="Microsoft.Extensions.Logging" />
   </ItemGroup>
 </Project>
-```
+
+```text
 
 ### Version Overrides
 
 When a specific project needs a different version (rare), use `VersionOverride`:
 
 ```xml
+
 <PackageReference Include="Newtonsoft.Json" VersionOverride="13.0.3" />
-```
+
+```json
 
 Flag version overrides during code review — they defeat the purpose of CPM.
 
@@ -230,6 +256,7 @@ Flag version overrides during code review — they defeat the purpose of CPM.
 Place at the repo root to enforce consistent code style across all editors and the build.
 
 ```ini
+
 root = true
 
 [*]
@@ -282,7 +309,8 @@ dotnet_naming_symbols.private_fields.applicable_kinds = field
 dotnet_naming_symbols.private_fields.applicable_accessibilities = private
 dotnet_naming_style.camel_case_underscore.required_prefix = _
 dotnet_naming_style.camel_case_underscore.capitalization = camel_case
-```
+
+```text
 
 See [skill:dotnet-add-analyzers] for full analyzer rule configuration.
 
@@ -293,13 +321,15 @@ See [skill:dotnet-add-analyzers] for full analyzer rule configuration.
 Pin the SDK version for reproducible builds:
 
 ```json
+
 {
   "sdk": {
     "version": "10.0.100",
     "rollForward": "latestPatch"
   }
 }
-```
+
+```text
 
 Roll-forward policies:
 - `latestPatch` — allow patch updates only (recommended for CI)
@@ -314,6 +344,7 @@ Roll-forward policies:
 Configure package sources and security:
 
 ```xml
+
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
   <packageSources>
@@ -326,13 +357,15 @@ Configure package sources and security:
     </packageSource>
   </packageSourceMapping>
 </configuration>
-```
+
+```text
 
 The `<clear />` + explicit sources + `<packageSourceMapping>` pattern prevents supply-chain attacks by ensuring packages only come from expected sources.
 
 For private feeds, map internal package prefixes exclusively to the private source:
 
 ```xml
+
 <packageSources>
   <clear />
   <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
@@ -346,7 +379,8 @@ For private feeds, map internal package prefixes exclusively to the private sour
     <package pattern="MyCompany.*" />
   </packageSource>
 </packageSourceMapping>
-```
+
+```text
 
 NuGet uses **most-specific-pattern-wins** precedence: `MyCompany.Foo` matches `MyCompany.*` (internal) over `*` (nuget.org), so internal packages restore exclusively from the private feed. This prevents dependency confusion attacks — an attacker cannot squat `MyCompany.Foo` on nuget.org because NuGet will never look there for packages matching `MyCompany.*`.
 
@@ -359,13 +393,15 @@ NuGet uses **most-specific-pattern-wins** precedence: `MyCompany.Foo` matches `M
 .NET 9+ enables `NuGetAudit` by default, which checks for known vulnerabilities during restore. Configure the severity threshold:
 
 ```xml
+
 <!-- In Directory.Build.props -->
 <PropertyGroup>
   <NuGetAudit>true</NuGetAudit>
   <NuGetAuditLevel>low</NuGetAuditLevel>
   <NuGetAuditMode>all</NuGetAuditMode>  <!-- audit direct + transitive -->
 </PropertyGroup>
-```
+
+```text
 
 ---
 
@@ -374,17 +410,21 @@ NuGet uses **most-specific-pattern-wins** precedence: `MyCompany.Foo` matches `M
 Enable deterministic restores with lock files:
 
 ```xml
+
 <!-- In Directory.Build.props -->
 <PropertyGroup>
   <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 </PropertyGroup>
-```
+
+```xml
 
 This generates `packages.lock.json` per project. Commit these files. In CI, restore with `--locked-mode`:
 
 ```bash
+
 dotnet restore --locked-mode
-```
+
+```bash
 
 ---
 
@@ -393,6 +433,7 @@ dotnet restore --locked-mode
 For libraries published to NuGet:
 
 ```xml
+
 <!-- In Directory.Build.props -->
 <PropertyGroup>
   <PublishRepositoryUrl>true</PublishRepositoryUrl>
@@ -403,7 +444,8 @@ For libraries published to NuGet:
 <ItemGroup>
   <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
 </ItemGroup>
-```
+
+```text
 
 Key properties:
 - `PublishRepositoryUrl` — includes the repo URL in the NuGet package
@@ -421,3 +463,4 @@ Key properties:
 - [Directory.Build.props](https://learn.microsoft.com/en-us/visualstudio/msbuild/customize-your-build)
 - [SourceLink](https://learn.microsoft.com/en-us/dotnet/standard/library-guidance/sourcelink)
 - [NuGet Audit](https://learn.microsoft.com/en-us/nuget/concepts/auditing-packages)
+````

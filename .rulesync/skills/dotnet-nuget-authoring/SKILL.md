@@ -2,23 +2,29 @@
 name: dotnet-nuget-authoring
 description: Creates NuGet packages. SDK-style csproj, source generators, multi-TFM, symbols, signing.
 license: MIT
-targets: ["*"]
-tags: ["foundation", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['foundation', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for foundation tasks"
+  short-description: '.NET skill guidance for foundation tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-nuget-authoring
 
-NuGet package authoring for .NET library authors: SDK-style `.csproj` package properties (`PackageId`, `PackageTags`, `PackageReadmeFile`, `PackageLicenseExpression`), source generator NuGet packaging with `analyzers/dotnet/cs/` folder layout and `buildTransitive` targets, multi-TFM packages, symbol packages (snupkg) with deterministic builds, package signing (author signing with certificates, repository signing), package validation (`EnablePackageValidation`, `Microsoft.DotNet.ApiCompat.Task` for API compatibility), and NuGet versioning strategies (SemVer 2.0, pre-release suffixes, NBGV integration).
+NuGet package authoring for .NET library authors: SDK-style `.csproj` package properties (`PackageId`, `PackageTags`,
+`PackageReadmeFile`, `PackageLicenseExpression`), source generator NuGet packaging with `analyzers/dotnet/cs/` folder
+layout and `buildTransitive` targets, multi-TFM packages, symbol packages (snupkg) with deterministic builds, package
+signing (author signing with certificates, repository signing), package validation (`EnablePackageValidation`,
+`Microsoft.DotNet.ApiCompat.Task` for API compatibility), and NuGet versioning strategies (SemVer 2.0, pre-release
+suffixes, NBGV integration).
 
-**Version assumptions:** .NET 8.0+ baseline. NuGet client bundled with .NET 8+ SDK. `Microsoft.DotNet.ApiCompat.Task` 8.0+ for API compatibility validation.
+**Version assumptions:** .NET 8.0+ baseline. NuGet client bundled with .NET 8+ SDK. `Microsoft.DotNet.ApiCompat.Task`
+8.0+ for API compatibility validation.
 
 ## Scope
 
@@ -37,17 +43,23 @@ NuGet package authoring for .NET library authors: SDK-style `.csproj` package pr
 - Roslyn analyzer authoring -- see [skill:dotnet-roslyn-analyzers]
 - Release lifecycle and NBGV setup -- see [skill:dotnet-release-management]
 
-Cross-references: [skill:dotnet-project-structure] for CPM, SourceLink, nuget.config, [skill:dotnet-gha-publish] for CI NuGet push workflows, [skill:dotnet-ado-publish] for ADO NuGet push workflows, [skill:dotnet-cli-packaging] for CLI tool distribution formats, [skill:dotnet-csharp-source-generators] for Roslyn source generator authoring, [skill:dotnet-release-management] for release lifecycle and NBGV setup, [skill:dotnet-roslyn-analyzers] for Roslyn analyzer authoring.
+Cross-references: [skill:dotnet-project-structure] for CPM, SourceLink, nuget.config, [skill:dotnet-gha-publish] for CI
+NuGet push workflows, [skill:dotnet-ado-publish] for ADO NuGet push workflows, [skill:dotnet-cli-packaging] for CLI tool
+distribution formats, [skill:dotnet-csharp-source-generators] for Roslyn source generator authoring,
+[skill:dotnet-release-management] for release lifecycle and NBGV setup, [skill:dotnet-roslyn-analyzers] for Roslyn
+analyzer authoring.
 
 ---
 
 ## SDK-Style Package Properties
 
-Every NuGet package starts with MSBuild properties in the `.csproj`. SDK-style projects produce NuGet packages with `dotnet pack` -- no `.nuspec` file required.
+Every NuGet package starts with MSBuild properties in the `.csproj`. SDK-style projects produce NuGet packages with
+`dotnet pack` -- no `.nuspec` file required.
 
 ### Essential Package Metadata
 
-```xml
+````xml
+
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -80,7 +92,8 @@ Every NuGet package starts with MSBuild properties in the `.csproj`. SDK-style p
     <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>
-```
+
+```markdown
 
 ### Property Reference
 
@@ -106,6 +119,7 @@ Every NuGet package starts with MSBuild properties in the `.csproj`. SDK-style p
 For multi-project repos, set common properties in `Directory.Build.props`:
 
 ```xml
+
 <!-- Directory.Build.props (repo root) -->
 <Project>
   <PropertyGroup>
@@ -117,7 +131,8 @@ For multi-project repos, set common properties in `Directory.Build.props`:
     <Copyright>Copyright 2024 My Company</Copyright>
   </PropertyGroup>
 </Project>
-```
+
+```text
 
 Individual `.csproj` files then only set package-specific properties (`PackageId`, `Description`, `PackageTags`).
 
@@ -130,6 +145,7 @@ Source generators and analyzers require a specific NuGet package layout. The gen
 ### Project Setup for Source Generator Package
 
 ```xml
+
 <!-- MyCompany.Generators.csproj -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -161,13 +177,15 @@ Source generators and analyzers require a specific NuGet package layout. The gen
           Visible="false" />
   </ItemGroup>
 </Project>
-```
+
+```text
 
 ### Adding Build Props/Targets
 
 When a source generator needs to set MSBuild properties in consuming projects, use the `buildTransitive` folder:
 
 ```xml
+
 <!-- build/MyCompany.Generators.props -->
 <Project>
   <PropertyGroup>
@@ -178,11 +196,13 @@ When a source generator needs to set MSBuild properties in consuming projects, u
     <CompilerVisibleProperty Include="MyCompanyGeneratorsEnabled" />
   </ItemGroup>
 </Project>
-```
+
+```text
 
 Include `buildTransitive` content in the package:
 
 ```xml
+
 <!-- In the .csproj -->
 <ItemGroup>
   <!-- buildTransitive ensures props/targets flow through transitive dependencies -->
@@ -193,13 +213,15 @@ Include `buildTransitive` content in the package:
         Pack="true"
         PackagePath="buildTransitive\MyCompany.Generators.targets" />
 </ItemGroup>
-```
+
+```text
 
 ### Multi-Target Analyzer Package (Analyzer + Library)
 
 When shipping both an analyzer and a runtime library in the same package:
 
 ```xml
+
 <!-- MyCompany.Widgets.csproj (ships both runtime lib + analyzer) -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -214,11 +236,13 @@ When shipping both an analyzer and a runtime library in the same package:
                       ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>
-```
+
+```text
 
 ### NuGet Package Folder Layout
 
-```
+```text
+
 MyCompany.Generators.1.0.0.nupkg
   analyzers/
     dotnet/
@@ -230,7 +254,8 @@ MyCompany.Generators.1.0.0.nupkg
   lib/
     netstandard2.0/
       _._                                <-- empty marker (no runtime lib)
-```
+
+```text
 
 ---
 
@@ -250,6 +275,7 @@ Multi-targeting produces a single NuGet package with assemblies for each target 
 ### Multi-TFM Configuration
 
 ```xml
+
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net8.0;net9.0</TargetFrameworks>
@@ -261,11 +287,13 @@ Multi-targeting produces a single NuGet package with assemblies for each target 
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 </Project>
-```
+
+```json
 
 ### Conditional Compilation
 
 ```csharp
+
 public static class StringExtensions
 {
     public static bool ContainsIgnoreCase(this string source, string value)
@@ -277,11 +305,13 @@ public static class StringExtensions
 #endif
     }
 }
-```
+
+```text
 
 ### NuGet Package Folder Layout (Multi-TFM)
 
-```
+```text
+
 MyCompany.Widgets.1.0.0.nupkg
   lib/
     netstandard2.0/
@@ -290,7 +320,8 @@ MyCompany.Widgets.1.0.0.nupkg
       MyCompany.Widgets.dll
     net9.0/
       MyCompany.Widgets.dll
-```
+
+```text
 
 ---
 
@@ -301,6 +332,7 @@ Symbol packages (`.snupkg`) enable source-level debugging for package consumers 
 ### Enabling Symbol Packages
 
 ```xml
+
 <PropertyGroup>
   <!-- Generate .snupkg alongside .nupkg -->
   <IncludeSymbols>true</IncludeSymbols>
@@ -313,16 +345,19 @@ Symbol packages (`.snupkg`) enable source-level debugging for package consumers 
   <!-- Embed source in PDB for debugging without source server -->
   <EmbedUntrackedSources>true</EmbedUntrackedSources>
 </PropertyGroup>
-```
+
+```text
 
 The `snupkg` is pushed alongside the `nupkg` automatically when using `dotnet nuget push`:
 
 ```bash
+
 # Push both .nupkg and .snupkg to nuget.org
 dotnet nuget push "bin/Release/*.nupkg" \
   --source https://api.nuget.org/v3/index.json \
   --api-key "$NUGET_API_KEY"
-```
+
+```json
 
 **SourceLink integration:** For source-level debugging with links to the actual source repository, configure SourceLink in your project. See [skill:dotnet-project-structure] for SourceLink setup -- do not duplicate that configuration here.
 
@@ -331,10 +366,12 @@ dotnet nuget push "bin/Release/*.nupkg" \
 For packages where a separate symbol package is undesirable:
 
 ```xml
+
 <PropertyGroup>
   <DebugType>embedded</DebugType>
 </PropertyGroup>
-```
+
+```xml
 
 This embeds the PDB directly in the assembly DLL. The tradeoff is larger package size but simpler distribution.
 
@@ -347,6 +384,7 @@ NuGet supports author signing (proving package origin) and repository signing (p
 ### Author Signing with a Certificate
 
 ```bash
+
 # Sign a package with a PFX certificate
 dotnet nuget sign "MyCompany.Widgets.1.0.0.nupkg" \
   --certificate-path ./signing-cert.pfx \
@@ -357,7 +395,8 @@ dotnet nuget sign "MyCompany.Widgets.1.0.0.nupkg" \
 dotnet nuget sign "MyCompany.Widgets.1.0.0.nupkg" \
   --certificate-fingerprint "ABC123..." \
   --timestamper http://timestamp.digicert.com
-```
+
+```text
 
 ### Certificate Requirements
 
@@ -376,12 +415,14 @@ Repository signing is applied by feed operators (e.g., nuget.org signs all packa
 ### Verifying Package Signatures
 
 ```bash
+
 # Verify a signed package
 dotnet nuget verify "MyCompany.Widgets.1.0.0.nupkg"
 
 # Verify with verbose output
 dotnet nuget verify "MyCompany.Widgets.1.0.0.nupkg" --verbosity detailed
-```
+
+```text
 
 ---
 
@@ -392,11 +433,13 @@ Package validation catches API breaks, invalid package layouts, and compatibilit
 ### Built-in Pack Validation
 
 ```xml
+
 <PropertyGroup>
   <!-- Enable package validation on dotnet pack -->
   <EnablePackageValidation>true</EnablePackageValidation>
 </PropertyGroup>
-```
+
+```text
 
 This validates:
 - All TFMs have compatible API surface
@@ -408,18 +451,21 @@ This validates:
 Compare the current package against a previously published baseline version to detect breaking changes:
 
 ```xml
+
 <PropertyGroup>
   <EnablePackageValidation>true</EnablePackageValidation>
   <!-- Compare against last released version -->
   <PackageValidationBaselineVersion>1.0.0</PackageValidationBaselineVersion>
 </PropertyGroup>
-```
+
+```text
 
 ### Microsoft.DotNet.ApiCompat.Task
 
 For advanced API compatibility checking across assemblies:
 
 ```xml
+
 <ItemGroup>
   <PackageReference Include="Microsoft.DotNet.ApiCompat.Task" Version="8.0.0" PrivateAssets="all" />
 </ItemGroup>
@@ -429,20 +475,24 @@ For advanced API compatibility checking across assemblies:
   <ApiCompatEnableRuleAttributesMustMatch>true</ApiCompatEnableRuleAttributesMustMatch>
   <ApiCompatEnableRuleCannotChangeParameterName>true</ApiCompatEnableRuleCannotChangeParameterName>
 </PropertyGroup>
-```
+
+```text
 
 ### Suppressing Known Breaks
 
 When intentional API changes are made, generate and commit a suppression file:
 
 ```bash
+
 # Generate suppression file for known breaks
 dotnet pack /p:GenerateCompatibilitySuppressionFile=true
-```
+
+```bash
 
 This creates `CompatibilitySuppressions.xml`:
 
 ```xml
+
 <!-- CompatibilitySuppressions.xml (committed to source control) -->
 <?xml version="1.0" encoding="utf-8"?>
 <Suppressions xmlns:ns="https://learn.microsoft.com/dotnet/fundamentals/package-validation/diagnostic-ids">
@@ -453,15 +503,18 @@ This creates `CompatibilitySuppressions.xml`:
     <Right>lib/net8.0/MyCompany.Widgets.dll</Right>
   </Suppression>
 </Suppressions>
-```
+
+```text
 
 Reference the suppression file:
 
 ```xml
+
 <ItemGroup>
   <ApiCompatSuppressionFile Include="CompatibilitySuppressions.xml" />
 </ItemGroup>
-```
+
+```xml
 
 ---
 
@@ -484,6 +537,7 @@ NuGet follows Semantic Versioning 2.0:
 ### Pre-release Suffixes
 
 ```xml
+
 <!-- Stable release -->
 <Version>1.2.3</Version>
 
@@ -492,18 +546,21 @@ NuGet follows Semantic Versioning 2.0:
 
 <!-- CI build with commit height (NBGV pattern) -->
 <!-- Produces: 1.2.3-beta.42+abcdef -->
-```
+
+```text
 
 ### NBGV Integration
 
 Nerdbank.GitVersioning (NBGV) calculates versions from git history. For NBGV setup and `version.json` configuration, see [skill:dotnet-release-management]. This skill covers how NBGV-generated versions interact with NuGet packaging:
 
 ```xml
+
 <PropertyGroup>
   <!-- NBGV sets Version, PackageVersion, AssemblyVersion automatically -->
   <!-- Do NOT set Version explicitly when using NBGV -->
 </PropertyGroup>
-```
+
+```text
 
 NBGV produces versions like `1.2.42-beta+abcdef` where:
 - `1.2` comes from `version.json`
@@ -528,6 +585,7 @@ NBGV produces versions like `1.2.42-beta+abcdef` where:
 ### Building the Package
 
 ```bash
+
 # Pack in Release configuration
 dotnet pack --configuration Release
 
@@ -536,13 +594,15 @@ dotnet pack --configuration Release /p:Version=1.2.3-beta.1
 
 # Output to specific directory
 dotnet pack --configuration Release --output ./artifacts
-```
+
+```text
 
 ### Local Feed Testing
 
 Test a package locally before publishing:
 
 ```bash
+
 # Create a local feed directory
 mkdir -p ~/local-nuget-feed
 
@@ -552,17 +612,20 @@ dotnet nuget push "bin/Release/MyCompany.Widgets.1.0.0.nupkg" \
 
 # In the consuming project, add the local feed
 dotnet nuget add source ~/local-nuget-feed --name LocalFeed
-```
+
+```text
 
 ### Package Content Inspection
 
 ```bash
+
 # List package contents (nupkg is a zip file)
 unzip -l MyCompany.Widgets.1.0.0.nupkg
 
 # Verify analyzer placement
 unzip -l MyCompany.Generators.1.0.0.nupkg | grep analyzers/
-```
+
+```text
 
 ---
 
@@ -570,16 +633,17 @@ unzip -l MyCompany.Generators.1.0.0.nupkg | grep analyzers/
 
 1. **Do not set both `PackageLicenseExpression` and `PackageLicenseFile`** -- they are mutually exclusive. Use `PackageLicenseExpression` for standard SPDX identifiers, `PackageLicenseFile` for custom licenses only.
 
-2. **Source generators MUST target `netstandard2.0`** -- the Roslyn host requires this. Do not multi-target generators themselves; multi-target the runtime library that references the generator project.
+1. **Source generators MUST target `netstandard2.0`** -- the Roslyn host requires this. Do not multi-target generators themselves; multi-target the runtime library that references the generator project.
 
-3. **Do not set `IncludeBuildOutput` to `false` on library projects** -- only on pure analyzer/generator projects that should not contribute runtime assemblies.
+1. **Do not set `IncludeBuildOutput` to `false` on library projects** -- only on pure analyzer/generator projects that should not contribute runtime assemblies.
 
-4. **`buildTransitive` vs `build` folder** -- use `buildTransitive` for props/targets that should flow through transitive `PackageReference` dependencies. The `build` folder only affects direct consumers.
+1. **`buildTransitive` vs `build` folder** -- use `buildTransitive` for props/targets that should flow through transitive `PackageReference` dependencies. The `build` folder only affects direct consumers.
 
-5. **Package validation suppression uses `ApiCompatSuppressionFile` with `CompatibilitySuppressions.xml`** -- not a `PackageValidationSuppression` MSBuild item. Generate the file with `/p:GenerateCompatibilitySuppressionFile=true`.
+1. **Package validation suppression uses `ApiCompatSuppressionFile` with `CompatibilitySuppressions.xml`** -- not a `PackageValidationSuppression` MSBuild item. Generate the file with `/p:GenerateCompatibilitySuppressionFile=true`.
 
-6. **SDK-style projects auto-include all `*.cs` files** -- adding TFM-conditional `Compile Include` without a preceding `Compile Remove` causes NETSDK1022 duplicate items.
+1. **SDK-style projects auto-include all `*.cs` files** -- adding TFM-conditional `Compile Include` without a preceding `Compile Remove` causes NETSDK1022 duplicate items.
 
-7. **Never hardcode API keys in CLI examples** -- always use environment variable placeholders (`$NUGET_API_KEY`) with a note about CI secret storage.
+1. **Never hardcode API keys in CLI examples** -- always use environment variable placeholders (`$NUGET_API_KEY`) with a note about CI secret storage.
 
-8. **`ContinuousIntegrationBuild` must be conditional on CI** -- setting it unconditionally breaks local debugging by making PDBs non-reproducible with local file paths.
+1. **`ContinuousIntegrationBuild` must be conditional on CI** -- setting it unconditionally breaks local debugging by making PDBs non-reproducible with local file paths.
+````

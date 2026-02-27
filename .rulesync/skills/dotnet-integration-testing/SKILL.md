@@ -2,23 +2,28 @@
 name: dotnet-integration-testing
 description: Tests with real infrastructure. WebApplicationFactory, Testcontainers, Aspire, fixtures.
 license: MIT
-targets: ["*"]
-tags: ["testing", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['testing', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for testing tasks"
+  short-description: '.NET skill guidance for testing tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-integration-testing
 
-Integration testing patterns for .NET applications using WebApplicationFactory, Testcontainers, and .NET Aspire testing. Covers in-process API testing, disposable infrastructure via containers, database fixture management, and test isolation strategies.
+Integration testing patterns for .NET applications using WebApplicationFactory, Testcontainers, and .NET Aspire testing.
+Covers in-process API testing, disposable infrastructure via containers, database fixture management, and test isolation
+strategies.
 
-**Version assumptions:** .NET 8.0+ baseline, Testcontainers 3.x+, .NET Aspire 9.0+. Package versions for `Microsoft.AspNetCore.Mvc.Testing` must match the project's target framework major version (e.g., 8.x for net8.0, 9.x for net9.0, 10.x for net10.0). Examples below use Testcontainers 4.x APIs; the patterns apply equally to 3.x with minor namespace differences.
+**Version assumptions:** .NET 8.0+ baseline, Testcontainers 3.x+, .NET Aspire 9.0+. Package versions for
+`Microsoft.AspNetCore.Mvc.Testing` must match the project's target framework major version (e.g., 8.x for net8.0, 9.x
+for net9.0, 10.x for net10.0). Examples below use Testcontainers 4.x APIs; the patterns apply equally to 3.x with minor
+namespace differences.
 
 ## Scope
 
@@ -34,26 +39,34 @@ Integration testing patterns for .NET applications using WebApplicationFactory, 
 - Testing strategy and test type selection -- see [skill:dotnet-testing-strategy]
 - Snapshot testing for verifying API response structures -- see [skill:dotnet-snapshot-testing]
 
-**Prerequisites:** Test project already scaffolded via [skill:dotnet-add-testing] with integration test packages referenced. Docker daemon running (required by Testcontainers). Run [skill:dotnet-version-detection] to confirm .NET 8.0+ baseline.
+**Prerequisites:** Test project already scaffolded via [skill:dotnet-add-testing] with integration test packages
+referenced. Docker daemon running (required by Testcontainers). Run [skill:dotnet-version-detection] to confirm .NET
+8.0+ baseline.
 
-Cross-references: [skill:dotnet-testing-strategy] for deciding when integration tests are appropriate, [skill:dotnet-xunit] for xUnit fixtures and parallel execution configuration, [skill:dotnet-snapshot-testing] for verifying API response structures with Verify.
+Cross-references: [skill:dotnet-testing-strategy] for deciding when integration tests are appropriate,
+[skill:dotnet-xunit] for xUnit fixtures and parallel execution configuration, [skill:dotnet-snapshot-testing] for
+verifying API response structures with Verify.
 
 ---
 
 ## WebApplicationFactory
 
-`WebApplicationFactory<TEntryPoint>` creates an in-process test server for ASP.NET Core applications. Tests send HTTP requests without network overhead, exercising the full middleware pipeline, routing, model binding, and serialization.
+`WebApplicationFactory<TEntryPoint>` creates an in-process test server for ASP.NET Core applications. Tests send HTTP
+requests without network overhead, exercising the full middleware pipeline, routing, model binding, and serialization.
 
 ### Package
 
-```xml
+````xml
+
 <!-- Version must match target framework: 8.x for net8.0, 9.x for net9.0, etc. -->
 <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
-```
+
+```xml
 
 ### Basic Usage
 
 ```csharp
+
 public class OrdersApiTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly HttpClient _client;
@@ -89,28 +102,35 @@ public class OrdersApiTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.NotNull(response.Headers.Location);
     }
 }
-```
 
-**Important:** The `Program` class must be accessible to the test project. Either make it public or add an `InternalsVisibleTo` attribute:
+```text
+
+**Important:** The `Program` class must be accessible to the test project. Either make it public or add an
+`InternalsVisibleTo` attribute:
 
 ```csharp
+
 // In the API project (e.g., Program.cs or a separate file)
 [assembly: InternalsVisibleTo("MyApp.Api.IntegrationTests")]
-```
+
+```csharp
 
 Or in the csproj:
 
 ```xml
+
 <ItemGroup>
   <InternalsVisibleTo Include="MyApp.Api.IntegrationTests" />
 </ItemGroup>
-```
+
+```xml
 
 ### Customizing the Test Server
 
 Override services, configuration, or middleware using `WebApplicationFactory<T>.WithWebHostBuilder`:
 
 ```csharp
+
 public class CustomWebAppFactory : WebApplicationFactory<Program>
 {
     // Provide connection string from test fixture (e.g., Testcontainers)
@@ -142,13 +162,15 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>
         });
     }
 }
-```
+
+```text
 
 ### Authenticated Requests
 
 Test authenticated endpoints by configuring an authentication handler:
 
 ```csharp
+
 public class AuthenticatedWebAppFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -185,27 +207,32 @@ public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions
         return Task.FromResult(AuthenticateResult.Success(ticket));
     }
 }
-```
+
+```text
 
 ---
 
 ## Testcontainers
 
-Testcontainers spins up real infrastructure (databases, message brokers, caches) in Docker containers for tests. Each test run gets a fresh, disposable environment.
+Testcontainers spins up real infrastructure (databases, message brokers, caches) in Docker containers for tests. Each
+test run gets a fresh, disposable environment.
 
 ### Packages
 
 ```xml
+
 <PackageReference Include="Testcontainers" Version="4.*" />
 <!-- Database-specific modules -->
 <PackageReference Include="Testcontainers.PostgreSql" Version="4.*" />
 <PackageReference Include="Testcontainers.MsSql" Version="4.*" />
 <PackageReference Include="Testcontainers.Redis" Version="4.*" />
-```
+
+```text
 
 ### PostgreSQL Example
 
 ```csharp
+
 public class PostgresFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
@@ -264,11 +291,13 @@ public class OrderRepositoryTests
         return new AppDbContext(options);
     }
 }
-```
+
+```text
 
 ### SQL Server Example
 
 ```csharp
+
 public class SqlServerFixture : IAsyncLifetime
 {
     private readonly MsSqlContainer _container = new MsSqlBuilder()
@@ -287,13 +316,15 @@ public class SqlServerFixture : IAsyncLifetime
         await _container.DisposeAsync();
     }
 }
-```
+
+```text
 
 ### Combining WebApplicationFactory with Testcontainers
 
 The most common pattern: use Testcontainers for the database and WebApplicationFactory for the API:
 
 ```csharp
+
 public class ApiTestFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
@@ -355,23 +386,28 @@ public class OrdersApiIntegrationTests : IClassFixture<ApiTestFactory>
         Assert.Equal("cust-1", order!.CustomerId);
     }
 }
-```
+
+```text
 
 ---
 
 ## .NET Aspire Testing
 
-.NET Aspire provides `DistributedApplicationTestingBuilder` for testing multi-service applications orchestrated with Aspire. This tests the actual distributed topology including service discovery, configuration, and health checks.
+.NET Aspire provides `DistributedApplicationTestingBuilder` for testing multi-service applications orchestrated with
+Aspire. This tests the actual distributed topology including service discovery, configuration, and health checks.
 
 ### Package
 
 ```xml
+
 <PackageReference Include="Aspire.Hosting.Testing" Version="9.*" />
-```
+
+```xml
 
 ### Basic Aspire Test
 
 ```csharp
+
 public class AspireIntegrationTests
 {
     [Fact]
@@ -412,13 +448,15 @@ public class AspireIntegrationTests
         response.EnsureSuccessStatusCode();
     }
 }
-```
+
+```text
 
 ### Aspire with Service Overrides
 
 Replace services in the Aspire app model for testing:
 
 ```csharp
+
 [Fact]
 public async Task ApiService_WithMockedExternalDependency()
 {
@@ -439,7 +477,8 @@ public async Task ApiService_WithMockedExternalDependency()
 
     response.EnsureSuccessStatusCode();
 }
-```
+
+```text
 
 ---
 
@@ -450,6 +489,7 @@ public async Task ApiService_WithMockedExternalDependency()
 Roll back each test's changes using a transaction scope:
 
 ```csharp
+
 public class TransactionalTestBase : IClassFixture<PostgresFixture>, IAsyncLifetime
 {
     private readonly PostgresFixture _postgres;
@@ -496,13 +536,16 @@ public class OrderTests : TransactionalTestBase
         // Transaction rolls back after test -- database stays clean
     }
 }
-```
+
+```text
 
 ### Per-Test Isolation with Respawn
 
-Use Respawn to reset database state between tests by deleting data instead of rolling back transactions. This is useful when transaction rollback is not feasible (e.g., testing code that commits its own transactions):
+Use Respawn to reset database state between tests by deleting data instead of rolling back transactions. This is useful
+when transaction rollback is not feasible (e.g., testing code that commits its own transactions):
 
 ```csharp
+
 // NuGet: Respawn
 // Combined fixture: owns the container AND the respawner
 public class RespawnablePostgresFixture : IAsyncLifetime
@@ -543,7 +586,8 @@ public class RespawnablePostgresFixture : IAsyncLifetime
         await _container.DisposeAsync();
     }
 }
-```
+
+```text
 
 ---
 
@@ -551,29 +595,33 @@ public class RespawnablePostgresFixture : IAsyncLifetime
 
 ### Strategy Comparison
 
-| Strategy | Speed | Isolation | Complexity | Best For |
-|----------|-------|-----------|------------|----------|
-| **Transaction rollback** | Fastest | High | Low | Tests that use a single DbContext |
-| **Respawn (data deletion)** | Fast | High | Medium | Tests where code commits its own transactions |
-| **Fresh container per class** | Slow | Highest | Low | Tests that modify schema or need complete isolation |
-| **Shared container + cleanup** | Moderate | Medium | Medium | Test suites with many classes sharing infrastructure |
+| Strategy                       | Speed    | Isolation | Complexity | Best For                                             |
+| ------------------------------ | -------- | --------- | ---------- | ---------------------------------------------------- |
+| **Transaction rollback**       | Fastest  | High      | Low        | Tests that use a single DbContext                    |
+| **Respawn (data deletion)**    | Fast     | High      | Medium     | Tests where code commits its own transactions        |
+| **Fresh container per class**  | Slow     | Highest   | Low        | Tests that modify schema or need complete isolation  |
+| **Shared container + cleanup** | Moderate | Medium    | Medium     | Test suites with many classes sharing infrastructure |
 
 ### Container Lifecycle Recommendations
 
-```
+```text
+
 Per-test:       Too slow. Never spin up a container per test.
 Per-class:      Good isolation, acceptable speed with ICollectionFixture.
 Per-collection: Best balance -- share one container across related test classes.
 Per-assembly:   Fastest but requires careful cleanup between tests.
-```
 
-Use `ICollectionFixture<T>` (see [skill:dotnet-xunit]) to share a single container across multiple test classes while running those classes sequentially to avoid data conflicts.
+```text
+
+Use `ICollectionFixture<T>` (see [skill:dotnet-xunit]) to share a single container across multiple test classes while
+running those classes sequentially to avoid data conflicts.
 
 ---
 
 ## Testing with Redis
 
 ```csharp
+
 public class RedisFixture : IAsyncLifetime
 {
     private readonly RedisContainer _container = new RedisBuilder()
@@ -610,29 +658,42 @@ public class CacheServiceTests
         Assert.Equal(99m, result.Total);
     }
 }
-```
+
+```text
 
 ---
 
 ## Key Principles
 
-- **Use WebApplicationFactory for API tests.** It is faster, more reliable, and more deterministic than testing against a deployed instance.
-- **Use Testcontainers for real infrastructure.** Do not mock `DbContext` -- test against a real database to verify LINQ-to-SQL translation and constraint enforcement.
-- **Share containers across test classes** via `ICollectionFixture` to avoid the overhead of starting a new container per class.
-- **Choose the right isolation strategy.** Transaction rollback is fastest and simplest; use Respawn when you cannot control transaction boundaries.
-- **Always clean up test data.** Leftover data from one test causes flaky failures in another. Use transaction rollback, Respawn, or fresh containers.
+- **Use WebApplicationFactory for API tests.** It is faster, more reliable, and more deterministic than testing against
+  a deployed instance.
+- **Use Testcontainers for real infrastructure.** Do not mock `DbContext` -- test against a real database to verify
+  LINQ-to-SQL translation and constraint enforcement.
+- **Share containers across test classes** via `ICollectionFixture` to avoid the overhead of starting a new container
+  per class.
+- **Choose the right isolation strategy.** Transaction rollback is fastest and simplest; use Respawn when you cannot
+  control transaction boundaries.
+- **Always clean up test data.** Leftover data from one test causes flaky failures in another. Use transaction rollback,
+  Respawn, or fresh containers.
 - **Match `Microsoft.AspNetCore.Mvc.Testing` version to TFM.** Using the wrong version causes runtime binding failures.
 
 ---
 
 ## Agent Gotchas
 
-1. **Do not hardcode `Microsoft.AspNetCore.Mvc.Testing` versions.** The package version must match the project's target framework major version. Specifying e.g. `Version="8.0.0"` breaks net9.0 projects.
-2. **Do not forget `InternalsVisibleTo` for the `Program` class.** Without it, `WebApplicationFactory<Program>` cannot access the entry point and tests fail at compile time.
-3. **Do not use `EnsureCreated()` with Respawn.** `EnsureCreated()` does not track migrations. Use `Database.MigrateAsync()` for production schemas, or `EnsureCreated()` only for simple test schemas.
-4. **Do not dispose `WebApplicationFactory` before `HttpClient`.** The factory owns the test server; disposing it invalidates all clients. Let xUnit manage disposal via `IClassFixture`.
-5. **Do not use `localhost` ports with Testcontainers.** Testcontainers maps random host ports to container ports. Always use the connection string from the container object (e.g., `_container.GetConnectionString()`), never hardcoded ports.
-6. **Do not skip Docker availability checks in CI.** Testcontainers requires a running Docker daemon. Ensure your CI environment has Docker available, or use conditional test skipping when Docker is unavailable.
+1. **Do not hardcode `Microsoft.AspNetCore.Mvc.Testing` versions.** The package version must match the project's target
+   framework major version. Specifying e.g. `Version="8.0.0"` breaks net9.0 projects.
+2. **Do not forget `InternalsVisibleTo` for the `Program` class.** Without it, `WebApplicationFactory<Program>` cannot
+   access the entry point and tests fail at compile time.
+3. **Do not use `EnsureCreated()` with Respawn.** `EnsureCreated()` does not track migrations. Use
+   `Database.MigrateAsync()` for production schemas, or `EnsureCreated()` only for simple test schemas.
+4. **Do not dispose `WebApplicationFactory` before `HttpClient`.** The factory owns the test server; disposing it
+   invalidates all clients. Let xUnit manage disposal via `IClassFixture`.
+5. **Do not use `localhost` ports with Testcontainers.** Testcontainers maps random host ports to container ports.
+   Always use the connection string from the container object (e.g., `_container.GetConnectionString()`), never
+   hardcoded ports.
+6. **Do not skip Docker availability checks in CI.** Testcontainers requires a running Docker daemon. Ensure your CI
+   environment has Docker available, or use conditional test skipping when Docker is unavailable.
 
 ---
 
@@ -644,3 +705,4 @@ public class CacheServiceTests
 - [.NET Aspire testing](https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/testing)
 - [Respawn](https://github.com/jbogard/Respawn)
 - [Testcontainers PostgreSQL module](https://dotnet.testcontainers.org/modules/postgres/)
+````

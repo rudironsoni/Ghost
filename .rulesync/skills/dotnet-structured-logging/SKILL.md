@@ -2,21 +2,24 @@
 name: dotnet-structured-logging
 description: Designs log pipelines. Aggregation, structured queries, sampling, PII scrubbing, correlation.
 license: MIT
-targets: ["*"]
-tags: ["architecture", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['architecture', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for architecture tasks"
+  short-description: '.NET skill guidance for architecture tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-structured-logging
 
-Log pipeline design and operations for .NET distributed systems. Covers log aggregation architecture (ELK, Seq, Grafana Loki), structured query patterns for each platform, log sampling and volume management strategies, PII scrubbing and destructuring policies, and cross-service correlation beyond single-service log scopes. This skill addresses what happens _after_ log emission -- the pipeline, query, and operations layer.
+Log pipeline design and operations for .NET distributed systems. Covers log aggregation architecture (ELK, Seq, Grafana
+Loki), structured query patterns for each platform, log sampling and volume management strategies, PII scrubbing and
+destructuring policies, and cross-service correlation beyond single-service log scopes. This skill addresses what
+happens _after_ log emission -- the pipeline, query, and operations layer.
 
 ## Scope
 
@@ -32,7 +35,8 @@ Log pipeline design and operations for .NET distributed systems. Covers log aggr
 - Application configuration and options pattern -- see [skill:dotnet-csharp-configuration]
 - Distributed tracing setup and trace context propagation -- see [skill:dotnet-observability]
 
-Cross-references: [skill:dotnet-observability] for log emission, Serilog/MEL configuration, and OpenTelemetry logging export, [skill:dotnet-csharp-configuration] for appsettings.json configuration patterns used in log pipeline setup.
+Cross-references: [skill:dotnet-observability] for log emission, Serilog/MEL configuration, and OpenTelemetry logging
+export, [skill:dotnet-csharp-configuration] for appsettings.json configuration patterns used in log pipeline setup.
 
 ---
 
@@ -40,26 +44,29 @@ Cross-references: [skill:dotnet-observability] for log emission, Serilog/MEL con
 
 ### Architecture Options
 
-| Platform | Ingest | Storage | Query | Best for |
-|----------|--------|---------|-------|----------|
-| **ELK** (Elasticsearch, Logstash, Kibana) | Logstash / Filebeat | Elasticsearch | KQL in Kibana | Large-scale, flexible schema, full-text search |
-| **Seq** | HTTP API / Serilog sink | Built-in | Seq signal expressions | .NET-native, developer-friendly, structured queries |
-| **Grafana Loki** | Promtail / OTel Collector | Loki (label-indexed) | LogQL | Cost-effective, Grafana ecosystem, label-based queries |
-| **Azure Monitor** | OTel Collector / Application Insights SDK | Log Analytics workspace | KQL (Kusto) | Azure-native, integrated alerting, cost management |
+| Platform                                  | Ingest                                    | Storage                 | Query                  | Best for                                               |
+| ----------------------------------------- | ----------------------------------------- | ----------------------- | ---------------------- | ------------------------------------------------------ |
+| **ELK** (Elasticsearch, Logstash, Kibana) | Logstash / Filebeat                       | Elasticsearch           | KQL in Kibana          | Large-scale, flexible schema, full-text search         |
+| **Seq**                                   | HTTP API / Serilog sink                   | Built-in                | Seq signal expressions | .NET-native, developer-friendly, structured queries    |
+| **Grafana Loki**                          | Promtail / OTel Collector                 | Loki (label-indexed)    | LogQL                  | Cost-effective, Grafana ecosystem, label-based queries |
+| **Azure Monitor**                         | OTel Collector / Application Insights SDK | Log Analytics workspace | KQL (Kusto)            | Azure-native, integrated alerting, cost management     |
 
 ### Recommended Pipeline Patterns
 
-**Pattern 1: OTel Collector as central router**
+#### Pattern 1: OTel Collector as central router
 
-```
+````text
+
 App (OTLP) --> OTel Collector --> Elasticsearch / Loki / Azure Monitor
                   |
                   +--> Sampling / filtering / PII scrub
-```
+
+```text
 
 The OpenTelemetry Collector acts as a vendor-neutral log router. Applications emit logs via OTLP; the collector handles filtering, sampling, enrichment, and routing to one or more backends. This decouples applications from backend choice.
 
 ```yaml
+
 # otel-collector-config.yaml
 receivers:
   otlp:
@@ -93,13 +100,16 @@ service:
       receivers: [otlp]
       processors: [batch, filter]
       exporters: [elasticsearch, loki]
-```
+
+```text
 
 **Pattern 2: Direct sink (smaller deployments)**
 
-```
+```text
+
 App (Serilog) --> Seq / Elasticsearch sink
-```
+
+```text
 
 For smaller systems or development environments, Serilog sinks write directly to the aggregation platform. This avoids the OTel Collector but couples the application to the backend.
 
@@ -115,7 +125,8 @@ Structured logs store each property as a queryable field. The query syntax diffe
 
 ### Kibana KQL (Elasticsearch / ELK)
 
-```
+```text
+
 # Find errors for a specific order
 level: "Error" AND OrderId: "abc-123"
 
@@ -127,11 +138,13 @@ message: "Failed to process*" AND NOT level: "Debug"
 
 # Time-scoped with correlation
 TraceId: "0af7651916cd43dd8448eb211c80319c" AND @timestamp >= "2025-01-15T10:00:00"
-```
+
+```text
 
 ### Seq Signal Expressions
 
-```
+```text
+
 # Find errors for a specific order
 @Level = 'Error' and OrderId = 'abc-123'
 
@@ -143,13 +156,15 @@ Duration > 5000 and Application = 'order-api'
 
 # Correlation across services
 TraceId = '0af7651916cd43dd8448eb211c80319c'
-```
+
+```text
 
 Seq signals are saved queries that trigger alerts. Define signals for recurring patterns (e.g., "Payment failures > 10/min") and attach notification channels.
 
 ### Grafana LogQL (Loki)
 
-```
+```text
+
 # Filter by labels then regex on log line
 {service_name="order-api"} |= "Error" | json | OrderId="abc-123"
 
@@ -158,11 +173,13 @@ Seq signals are saved queries that trigger alerts. Define signals for recurring 
 
 # Count errors per service over time (for dashboards)
 sum(rate({service_name=~".+"} |= "Error" [5m])) by (service_name)
-```
+
+```json
 
 ### Azure Monitor KQL (Kusto)
 
 ```kusto
+
 // Find errors for a specific order
 traces
 | where severityLevel >= 3
@@ -178,7 +195,8 @@ traces
 union traces, exceptions
 | where operation_Id == "0af7651916cd43dd8448eb211c80319c"
 | order by timestamp asc
-```
+
+```text
 
 ---
 
@@ -202,6 +220,7 @@ The `filter` processor in the OTel Collector drops log records at the pipeline l
 Note: The `tail_sampling` processor operates on **traces** (spans), not logs. For log volume management, use the `filter` and `transform` processors instead.
 
 ```yaml
+
 processors:
   filter:
     logs:
@@ -221,11 +240,13 @@ processors:
           # Keep all Warning+ logs unconditionally
           - severity_number >= SEVERITY_NUMBER_WARN
         statements: []
-```
+
+```text
 
 ### Application-Level Sampling with Serilog
 
 ```csharp
+
 // Serilog.Expressions package for conditional log filtering
 builder.Host.UseSerilog((context, loggerConfiguration) =>
 {
@@ -237,13 +258,16 @@ builder.Host.UseSerilog((context, loggerConfiguration) =>
         .Filter.ByExcluding(
             "@Level = 'Debug' and Hash(@i) % 10 != 0");
 });
-```
+
+```text
 
 **Key packages:**
 
 ```xml
+
 <PackageReference Include="Serilog.Expressions" Version="5.*" />
-```
+
+```xml
 
 ### Volume Management Checklist
 
@@ -262,6 +286,7 @@ Logs must not contain personally identifiable information (PII) in production. G
 ### Property-Level Masking with Enrichers
 
 ```csharp
+
 // Enricher that masks known-sensitive properties on every log event
 public sealed class PiiMaskingEnricher : ILogEventEnricher
 {
@@ -289,11 +314,13 @@ public sealed class PiiMaskingEnricher : ILogEventEnricher
 
 // Registration
 loggerConfiguration.Enrich.With<PiiMaskingEnricher>();
-```
+
+```text
 
 ### OTel Collector Attribute Processing
 
 ```yaml
+
 processors:
   attributes:
     actions:
@@ -306,7 +333,8 @@ processors:
         action: delete
       - key: user.password
         action: delete
-```
+
+```text
 
 ### PII Scrubbing Checklist
 
@@ -327,6 +355,7 @@ In distributed systems, a single user request may traverse multiple services. Co
 The primary correlation mechanism is the W3C `traceparent` header, which propagates automatically through `HttpClient` when OpenTelemetry instrumentation is configured (see [skill:dotnet-observability]). All log events emitted within a traced request include `TraceId` and `SpanId` properties.
 
 ```csharp
+
 // Query all logs for a distributed operation across services
 // In Seq:
 TraceId = '0af7651916cd43dd8448eb211c80319c'
@@ -336,13 +365,15 @@ TraceId: "0af7651916cd43dd8448eb211c80319c"
 
 // In Azure Monitor:
 traces | where operation_Id == "0af7651916cd43dd8448eb211c80319c"
-```
+
+```text
 
 ### Custom Correlation IDs
 
 When trace context is insufficient (e.g., async workflows spanning message queues, batch jobs, or external system callbacks), add custom correlation IDs:
 
 ```csharp
+
 // Propagate a business correlation ID through Serilog LogContext
 public sealed class CorrelationIdMiddleware(RequestDelegate next)
 {
@@ -364,13 +395,15 @@ public sealed class CorrelationIdMiddleware(RequestDelegate next)
 
 // Registration
 app.UseMiddleware<CorrelationIdMiddleware>();
-```
+
+```text
 
 ### Message Queue Correlation
 
 For asynchronous messaging (Azure Service Bus, RabbitMQ), propagate correlation through message properties:
 
 ```csharp
+
 // Producer -- attach correlation to message
 var message = new ServiceBusMessage(payload)
 {
@@ -395,7 +428,8 @@ processor.ProcessMessageAsync += async args =>
     logger.LogInformation("Processing message {MessageId}", args.Message.MessageId);
     await ProcessAsync(args.Message, args.CancellationToken);
 };
-```
+
+```text
 
 ### Correlation Best Practices
 
@@ -431,3 +465,4 @@ processor.ProcessMessageAsync += async args =>
 - [Serilog PII masking](https://github.com/serilog/serilog/wiki/Structured-Data#masking-sensitive-data)
 - [Azure Monitor KQL reference](https://learn.microsoft.com/en-us/azure/data-explorer/kusto/query/)
 - [W3C Trace Context specification](https://www.w3.org/TR/trace-context/)
+````

@@ -2,23 +2,26 @@
 name: dotnet-tool-management
 description: Installs and manages .NET tools. Global, local, manifests, restore, version pinning.
 license: MIT
-targets: ["*"]
-tags: ["foundation", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['foundation', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for foundation tasks"
+  short-description: '.NET skill guidance for foundation tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-tool-management
 
-Consumer-side management of .NET CLI tools: installing global and local tools, creating and maintaining `.config/dotnet-tools.json` manifests, version pinning for team reproducibility, `dotnet tool restore` in CI pipelines, updating and uninstalling tools, and troubleshooting common tool issues.
+Consumer-side management of .NET CLI tools: installing global and local tools, creating and maintaining
+`.config/dotnet-tools.json` manifests, version pinning for team reproducibility, `dotnet tool restore` in CI pipelines,
+updating and uninstalling tools, and troubleshooting common tool issues.
 
-**Version assumptions:** .NET 8.0+ baseline. Local tools and tool manifests available since .NET Core 3.0. RID-specific tool packaging available since .NET 10.
+**Version assumptions:** .NET 8.0+ baseline. Local tools and tool manifests available since .NET Core 3.0. RID-specific
+tool packaging available since .NET 10.
 
 ## Scope
 
@@ -35,15 +38,19 @@ Consumer-side management of .NET CLI tools: installing global and local tools, c
 - Distribution strategy (AOT vs framework-dependent decision) -- see [skill:dotnet-cli-distribution]
 - Release CI/CD pipeline -- see [skill:dotnet-cli-release-pipeline]
 
-Cross-references: [skill:dotnet-cli-packaging] for tool authoring and NuGet packaging, [skill:dotnet-cli-distribution] for distribution strategy and RID matrix, [skill:dotnet-cli-release-pipeline] for automated release workflows, [skill:dotnet-project-analysis] for detecting existing tool manifests.
+Cross-references: [skill:dotnet-cli-packaging] for tool authoring and NuGet packaging, [skill:dotnet-cli-distribution]
+for distribution strategy and RID matrix, [skill:dotnet-cli-release-pipeline] for automated release workflows,
+[skill:dotnet-project-analysis] for detecting existing tool manifests.
 
 ---
 
 ## Global Tool Installation
 
-Global tools are installed per-user and available from any directory. The tool binaries are added to a directory on the user's PATH.
+Global tools are installed per-user and available from any directory. The tool binaries are added to a directory on the
+user's PATH.
 
-```bash
+````bash
+
 # Install a global tool
 dotnet tool install -g <package-id>
 
@@ -61,7 +68,8 @@ dotnet tool update -g <package-id>
 
 # Uninstall a global tool
 dotnet tool uninstall -g <package-id>
-```
+
+```text
 
 **Default install locations:**
 
@@ -77,8 +85,10 @@ Global tools are user-scoped, not machine-wide. Each user maintains their own to
 Use `--tool-path` to install to a custom directory. The directory is not automatically added to PATH -- you must manage PATH yourself:
 
 ```bash
+
 dotnet tool install <package-id> --tool-path ~/my-tools
-```
+
+```bash
 
 ---
 
@@ -91,19 +101,23 @@ Local tools are scoped to a directory tree and tracked in a manifest file. Diffe
 The manifest file `.config/dotnet-tools.json` tracks local tool versions. Create it at the repository root:
 
 ```bash
+
 # Create the manifest (first time only, at repo root)
 dotnet new tool-manifest
-```
+
+```bash
 
 This produces:
 
 ```json
+
 {
   "version": 1,
   "isRoot": true,
   "tools": {}
 }
-```
+
+```text
 
 Commit this file to source control so all team members share the same tool versions.
 
@@ -112,6 +126,7 @@ Commit this file to source control so all team members share the same tool versi
 Omit the `-g` flag to install a tool locally. The tool is recorded in the nearest manifest file:
 
 ```bash
+
 # Install a local tool (recorded in .config/dotnet-tools.json)
 dotnet tool install <package-id>
 
@@ -126,11 +141,13 @@ dotnet tool update <package-id>
 
 # Uninstall a local tool
 dotnet tool uninstall <package-id>
-```
+
+```text
 
 After installing two tools, the manifest looks like:
 
 ```json
+
 {
   "version": 1,
   "isRoot": true,
@@ -149,11 +166,13 @@ After installing two tools, the manifest looks like:
     }
   }
 }
-```
+
+```text
 
 ### Running Local Tools
 
 ```bash
+
 # Run a local tool (long form)
 dotnet tool run <command-name>
 
@@ -163,7 +182,8 @@ dotnet <command-name>
 # Examples
 dotnet tool run dotnet-ef migrations add Init
 dotnet ef migrations add Init  # equivalent short form
-```
+
+```text
 
 ---
 
@@ -183,6 +203,7 @@ The tool manifest enables reproducible tool versions across the team.
 Use the `--version` option with NuGet version ranges for controlled flexibility:
 
 ```bash
+
 # Exact version (strictest)
 dotnet tool install <package-id> --version 2.0.1
 
@@ -191,7 +212,8 @@ dotnet tool install <package-id> --version "2.0.*"
 
 # Pre-release versions
 dotnet tool install <package-id> --version "*-preview*"
-```
+
+```text
 
 The manifest always records the exact resolved version, ensuring all team members use identical versions after restore.
 
@@ -206,6 +228,7 @@ In CI pipelines, restore tools before any build step that depends on them. Tool 
 **GitHub Actions:**
 
 ```yaml
+
 steps:
   - uses: actions/checkout@v4
   - uses: actions/setup-dotnet@v4
@@ -217,11 +240,13 @@ steps:
     run: dotnet build
   - name: Run EF migrations check
     run: dotnet ef migrations has-pending-changes
-```
+
+```text
 
 **Azure DevOps Pipelines:**
 
 ```yaml
+
 steps:
   - task: UseDotNet@2
     inputs:
@@ -231,7 +256,8 @@ steps:
     displayName: 'Restore tools'
   - script: dotnet build
     displayName: 'Build'
-```
+
+```text
 
 ### CI Best Practices
 
@@ -247,9 +273,11 @@ steps:
 Starting with .NET 10, tool authors can publish RID-specific, self-contained, or Native AOT versions of their tools. From a consumer perspective, this is transparent -- the `dotnet tool install` command automatically selects the best package for your platform.
 
 ```bash
+
 # RID selection is automatic -- no extra flags needed
 dotnet tool install -g <package-id>
-```
+
+```bash
 
 The .NET CLI detects your platform and downloads the appropriate RID-specific package. If no RID-specific package matches your platform, the CLI falls back to a framework-dependent package (if the tool author provided one).
 
@@ -264,8 +292,10 @@ For details on authoring and packaging RID-specific tools, see [skill:dotnet-cli
 **"Tool already installed"** -- Uninstall first or use `dotnet tool update`:
 
 ```bash
+
 dotnet tool update -g <package-id>
-```
+
+```bash
 
 **"No manifest file found"** -- Run `dotnet new tool-manifest` to create one, or check that you are in a directory at or below the manifest location.
 
@@ -308,3 +338,4 @@ dotnet tool update -g <package-id>
 - [dotnet tool restore command](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-restore)
 - [RID-specific .NET tools](https://learn.microsoft.com/en-us/dotnet/core/tools/rid-specific-tools)
 - [Troubleshoot .NET tool usage issues](https://learn.microsoft.com/en-us/dotnet/core/tools/troubleshoot-usage-issues)
+````

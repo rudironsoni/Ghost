@@ -2,25 +2,28 @@
 name: dotnet-uno-mcp
 description: Queries Uno MCP server. Tool detection, search-then-fetch workflow, init rules, fallback.
 license: MIT
-targets: ["*"]
-tags: ["ui", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['ui', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for ui tasks"
+  short-description: '.NET skill guidance for ui tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-uno-mcp
 
-MCP (Model Context Protocol) server integration for Uno Platform live documentation lookups. Covers tool detection (`mcp__uno__` prefix), search-then-fetch workflow, initialization rules invocation, graceful fallback when MCP is unavailable, citation requirements, and safety guidelines for external data. Includes inline documentation that provides useful guidance without MCP server availability.
+MCP (Model Context Protocol) server integration for Uno Platform live documentation lookups. Covers tool detection
+(`mcp__uno__` prefix), search-then-fetch workflow, initialization rules invocation, graceful fallback when MCP is
+unavailable, citation requirements, and safety guidelines for external data. Includes inline documentation that provides
+useful guidance without MCP server availability.
 
 ## Scope
 
-- MCP tool detection (mcp__uno__ prefix)
+- MCP tool detection (mcp**uno** prefix)
 - Search-then-fetch workflow for Uno Platform documentation
 - Initialization rules invocation
 - Graceful fallback when MCP is unavailable
@@ -33,33 +36,38 @@ MCP (Model Context Protocol) server integration for Uno Platform live documentat
 - Uno Platform testing -- see [skill:dotnet-uno-testing]
 - Uno development patterns without MCP -- see [skill:dotnet-uno-platform] and [skill:dotnet-uno-targets]
 
-Cross-references: [skill:dotnet-uno-platform] for core development patterns, [skill:dotnet-uno-targets] for deployment guidance, [skill:dotnet-uno-testing] for testing.
+Cross-references: [skill:dotnet-uno-platform] for core development patterns, [skill:dotnet-uno-targets] for deployment
+guidance, [skill:dotnet-uno-testing] for testing.
 
 ---
 
 ## MCP Tool Detection
 
-The Uno Platform MCP server provides tools prefixed with `mcp__uno__`. Before using MCP tools, detect their availability.
+The Uno Platform MCP server provides tools prefixed with `mcp__uno__`. Before using MCP tools, detect their
+availability.
 
 ### Available Tools
 
-| Tool | Purpose |
-|------|---------|
-| `mcp__uno__uno_platform_docs_search` | Search Uno Platform documentation by query |
-| `mcp__uno__uno_platform_docs_fetch` | Fetch full content of a specific documentation page |
-| `mcp__uno__uno_platform_agent_rules_init` | Initialize agent session with Uno development rules |
+| Tool                                      | Purpose                                              |
+| ----------------------------------------- | ---------------------------------------------------- |
+| `mcp__uno__uno_platform_docs_search`      | Search Uno Platform documentation by query           |
+| `mcp__uno__uno_platform_docs_fetch`       | Fetch full content of a specific documentation page  |
+| `mcp__uno__uno_platform_agent_rules_init` | Initialize agent session with Uno development rules  |
 | `mcp__uno__uno_platform_usage_rules_init` | Load common usage rules for Uno Platform development |
 
 ### Detection Logic
 
-Check if Uno MCP tools are available by looking for tools with the `mcp__uno__` prefix. If the tools are listed in the available tool set, the MCP server is configured and reachable.
+Check if Uno MCP tools are available by looking for tools with the `mcp__uno__` prefix. If the tools are listed in the
+available tool set, the MCP server is configured and reachable.
 
-```
+````text
+
 Detection steps:
 1. Check if tools prefixed with mcp__uno__ are available
 2. If available: use MCP workflow (search -> fetch -> cite)
 3. If unavailable: fall back to static skill content and official docs URLs
-```
+
+```text
 
 **When MCP is available:** Use the search-then-fetch workflow for the latest documentation. MCP results are authoritative and current.
 
@@ -93,11 +101,13 @@ Call `mcp__uno__uno_platform_usage_rules_init` to load:
 
 ### Invocation Order
 
-```
+```bash
+
 1. Call mcp__uno__uno_platform_agent_rules_init (loads routing rules and feature catalog)
 2. Call mcp__uno__uno_platform_usage_rules_init (loads design and coding conventions)
 3. Proceed with documentation searches using mcp__uno__uno_platform_docs_search
-```
+
+```text
 
 Both init tools are idempotent -- calling them multiple times in the same session is safe but unnecessary.
 
@@ -111,12 +121,14 @@ The primary workflow for retrieving Uno documentation uses a two-step pattern: b
 
 Use `mcp__uno__uno_platform_docs_search` to find relevant documentation pages.
 
-```
+```text
+
 Search parameters:
 - query: descriptive search term (e.g., "MVUX reactive pattern", "Navigation Extensions")
 - topK: number of results (default 8; use 15-20 for complex topics, 3-5 for specific queries)
 - contentType: "prose" for guides, "code" for examples, null for all
-```
+
+```text
 
 Search results include:
 - Document title and summary
@@ -128,28 +140,32 @@ Search results include:
 
 Use `mcp__uno__uno_platform_docs_fetch` to retrieve full content of high-value pages identified by search.
 
-```
+```text
+
 Fetch parameters:
 - sourcePath: from search results SourcePath field (e.g., "articles/guides/overview.md")
 - anchor: optional section fragment (e.g., "getting-started", "data-binding")
 - maxChars: content limit (4000-8000 for most cases, up to 15000 for comprehensive guides)
-```
+
+```markdown
 
 ### Workflow Example
 
-```
+```text
+
 Topic: "How to implement region-based navigation with Uno Extensions"
 
 1. Search: mcp__uno__uno_platform_docs_search("Navigation Extensions region-based", topK=8)
    -> Returns multiple results including "Navigation Overview", "Region Navigation", etc.
 
-2. Fetch: mcp__uno__uno_platform_docs_fetch(
+1. Fetch: mcp__uno__uno_platform_docs_fetch(
      sourcePath="articles/external/uno.extensions/doc/Learn/Navigation/Overview.md",
      maxChars=8000)
    -> Returns full navigation documentation with code examples
 
-3. Cite: Include source URL in response
-```
+1. Cite: Include source URL in response
+
+```text
 
 ### Routing Rules
 
@@ -192,11 +208,13 @@ MCP results are external data fetched from the Uno Platform documentation server
 
 When presenting information from MCP results:
 
-```
+```text
+
 According to the Uno Platform documentation on [topic]:
 [content from MCP]
 Source: [URL from MCP result]
-```
+
+```text
 
 ---
 
@@ -256,7 +274,8 @@ When MCP is unavailable, reference these canonical documentation URLs:
 
 ### Fallback Workflow
 
-```
+```text
+
 1. Check if mcp__uno__ tools are available
 2. If NOT available:
    a. Load [skill:dotnet-uno-platform] for core development patterns
@@ -269,7 +288,8 @@ When MCP is unavailable, reference these canonical documentation URLs:
    b. Use search-then-fetch workflow
    c. Cite sources from MCP results
    d. Supplement with static skill content for vetted patterns
-```
+
+```text
 
 ---
 
@@ -355,3 +375,4 @@ When MCP is unavailable, the following `UnoFeatures` values are supported in `.c
 - [Uno Platform Documentation](https://platform.uno/docs/)
 - [MCP Protocol Specification](https://modelcontextprotocol.io/)
 - [Uno Platform GitHub](https://github.com/unoplatform/uno)
+````

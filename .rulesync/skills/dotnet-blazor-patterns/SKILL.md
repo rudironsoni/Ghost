@@ -2,21 +2,23 @@
 name: dotnet-blazor-patterns
 description: Architects Blazor apps. Hosting models, render modes, routing, streaming, prerender.
 license: MIT
-targets: ["*"]
-tags: ["ui", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['ui', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for ui tasks"
+  short-description: '.NET skill guidance for ui tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-blazor-patterns
 
-Blazor hosting models, render modes, project setup, routing, enhanced navigation, streaming rendering, and AOT-safe patterns. Covers all five hosting models (InteractiveServer, InteractiveWebAssembly, InteractiveAuto, Static SSR, Hybrid) with trade-off analysis for each.
+Blazor hosting models, render modes, project setup, routing, enhanced navigation, streaming rendering, and AOT-safe
+patterns. Covers all five hosting models (InteractiveServer, InteractiveWebAssembly, InteractiveAuto, Static SSR,
+Hybrid) with trade-off analysis for each.
 
 ## Scope
 
@@ -36,60 +38,73 @@ Blazor hosting models, render modes, project setup, routing, enhanced navigation
 - Browser-based E2E testing -- see [skill:dotnet-playwright]
 - UI framework selection decision tree -- see [skill:dotnet-ui-chooser]
 
-Cross-references: [skill:dotnet-blazor-components] for component architecture, [skill:dotnet-blazor-auth] for authentication, [skill:dotnet-blazor-testing] for bUnit testing, [skill:dotnet-realtime-communication] for standalone SignalR, [skill:dotnet-playwright] for E2E testing, [skill:dotnet-ui-chooser] for framework selection, [skill:dotnet-accessibility] for accessibility patterns (ARIA, keyboard nav, screen readers).
+Cross-references: [skill:dotnet-blazor-components] for component architecture, [skill:dotnet-blazor-auth] for
+authentication, [skill:dotnet-blazor-testing] for bUnit testing, [skill:dotnet-realtime-communication] for standalone
+SignalR, [skill:dotnet-playwright] for E2E testing, [skill:dotnet-ui-chooser] for framework selection,
+[skill:dotnet-accessibility] for accessibility patterns (ARIA, keyboard nav, screen readers).
 
 ---
 
 ## Hosting Models & Render Modes
 
-Blazor Web App (.NET 8+) is the default project template, replacing the separate Blazor Server and Blazor WebAssembly templates. Render modes can be set globally, per-page, or per-component.
+Blazor Web App (.NET 8+) is the default project template, replacing the separate Blazor Server and Blazor WebAssembly
+templates. Render modes can be set globally, per-page, or per-component.
 
 ### Render Mode Overview
 
-| Render Mode | Attribute | Interactivity | Connection | Best For |
-|---|---|---|---|---|
-| Static SSR | (none / default) | None -- server renders HTML, no interactivity | HTTP request only | Content pages, SEO, forms with minimal interactivity |
-| InteractiveServer | `@rendermode InteractiveServer` | Full | SignalR circuit | Low-latency interactivity, full server access, small user base |
-| InteractiveWebAssembly | `@rendermode InteractiveWebAssembly` | Full (after download) | None (runs in browser) | Offline-capable, large user base, reduced server load |
-| InteractiveAuto | `@rendermode InteractiveAuto` | Full | SignalR initially, then WASM | Best of both -- immediate interactivity, eventual client-side |
-| Blazor Hybrid | `BlazorWebView` in MAUI/WPF/WinForms | Full (native) | None (runs in-process) | Desktop/mobile apps with web UI, native API access |
+| Render Mode            | Attribute                            | Interactivity                                 | Connection                   | Best For                                                       |
+| ---------------------- | ------------------------------------ | --------------------------------------------- | ---------------------------- | -------------------------------------------------------------- |
+| Static SSR             | (none / default)                     | None -- server renders HTML, no interactivity | HTTP request only            | Content pages, SEO, forms with minimal interactivity           |
+| InteractiveServer      | `@rendermode InteractiveServer`      | Full                                          | SignalR circuit              | Low-latency interactivity, full server access, small user base |
+| InteractiveWebAssembly | `@rendermode InteractiveWebAssembly` | Full (after download)                         | None (runs in browser)       | Offline-capable, large user base, reduced server load          |
+| InteractiveAuto        | `@rendermode InteractiveAuto`        | Full                                          | SignalR initially, then WASM | Best of both -- immediate interactivity, eventual client-side  |
+| Blazor Hybrid          | `BlazorWebView` in MAUI/WPF/WinForms | Full (native)                                 | None (runs in-process)       | Desktop/mobile apps with web UI, native API access             |
 
 ### Per-Mode Trade-offs
 
-| Concern | Static SSR | InteractiveServer | InteractiveWebAssembly | InteractiveAuto | Hybrid |
-|---|---|---|---|---|---|
-| First load | Fast | Fast | Slow (WASM download) | Fast (Server first) | Instant (local) |
-| Server resources | Minimal | Per-user circuit | None after download | Circuit then none | None |
-| Offline support | No | No | Yes | Partial | Yes |
-| Full .NET API access | Yes (server) | Yes (server) | Limited (browser sandbox) | Varies by phase | Yes (native) |
-| Scalability | High | Limited by circuits | High | High (after WASM) | N/A (local) |
-| SEO | Yes | Prerender | Prerender | Prerender | N/A |
+| Concern              | Static SSR   | InteractiveServer   | InteractiveWebAssembly    | InteractiveAuto     | Hybrid          |
+| -------------------- | ------------ | ------------------- | ------------------------- | ------------------- | --------------- |
+| First load           | Fast         | Fast                | Slow (WASM download)      | Fast (Server first) | Instant (local) |
+| Server resources     | Minimal      | Per-user circuit    | None after download       | Circuit then none   | None            |
+| Offline support      | No           | No                  | Yes                       | Partial             | Yes             |
+| Full .NET API access | Yes (server) | Yes (server)        | Limited (browser sandbox) | Varies by phase     | Yes (native)    |
+| Scalability          | High         | Limited by circuits | High                      | High (after WASM)   | N/A (local)     |
+| SEO                  | Yes          | Prerender           | Prerender                 | Prerender           | N/A             |
 
 ### Setting Render Modes
 
 **Global (App.razor):**
 
-```razor
+````razor
+
 <!-- Sets default render mode for all pages -->
 <Routes @rendermode="InteractiveServer" />
-```
+
+```text
 
 **Per-page:**
 
 ```razor
+
 @page "/dashboard"
 @rendermode InteractiveServer
 
 <h1>Dashboard</h1>
-```
+
+```text
 
 **Per-component:**
 
 ```razor
-<Counter @rendermode="InteractiveWebAssembly" />
-```
 
-**Gotcha:** Without an explicit render mode boundary, a child component cannot request a more interactive render mode than its parent. However, interactive islands are supported: you can place an `@rendermode` attribute on a component embedded in a Static SSR page to create a render mode boundary, enabling interactive children under otherwise static content.
+<Counter @rendermode="InteractiveWebAssembly" />
+
+```text
+
+**Gotcha:** Without an explicit render mode boundary, a child component cannot request a more interactive render mode
+than its parent. However, interactive islands are supported: you can place an `@rendermode` attribute on a component
+embedded in a Static SSR page to create a render mode boundary, enabling interactive children under otherwise static
+content.
 
 ---
 
@@ -98,6 +113,7 @@ Blazor Web App (.NET 8+) is the default project template, replacing the separate
 ### Blazor Web App (Default Template)
 
 ```bash
+
 # Creates a Blazor Web App with InteractiveServer render mode
 dotnet new blazor -n MyApp
 
@@ -106,11 +122,13 @@ dotnet new blazor -n MyApp --interactivity Auto    # InteractiveAuto
 dotnet new blazor -n MyApp --interactivity WebAssembly  # InteractiveWebAssembly
 dotnet new blazor -n MyApp --interactivity Server  # InteractiveServer (default)
 dotnet new blazor -n MyApp --interactivity None    # Static SSR only
-```
+
+```text
 
 ### Blazor Web App Project Structure
 
-```
+```text
+
 MyApp/
   MyApp/                     # Server project
     Program.cs               # Host builder, services, middleware
@@ -126,13 +144,16 @@ MyApp/
     Pages/
       Counter.razor           # Components that run in browser
     Program.cs                # WASM entry point
-```
 
-When using InteractiveAuto or InteractiveWebAssembly, components that must run in the browser go in the `.Client` project. Components in the server project run on the server only.
+```csharp
+
+When using InteractiveAuto or InteractiveWebAssembly, components that must run in the browser go in the `.Client`
+project. Components in the server project run on the server only.
 
 ### Blazor Hybrid Setup (MAUI)
 
 ```xml
+
 <!-- .csproj for MAUI Blazor Hybrid -->
 <Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
@@ -141,9 +162,11 @@ When using InteractiveAuto or InteractiveWebAssembly, components that must run i
     <UseMaui>true</UseMaui>
   </PropertyGroup>
 </Project>
-```
+
+```text
 
 ```csharp
+
 // MainPage.xaml.cs hosts BlazorWebView
 public partial class MainPage : ContentPage
 {
@@ -152,9 +175,11 @@ public partial class MainPage : ContentPage
         InitializeComponent();
     }
 }
-```
+
+```text
 
 ```xml
+
 <!-- MainPage.xaml -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:b="clr-namespace:Microsoft.AspNetCore.Components.WebView.Maui;assembly=Microsoft.AspNetCore.Components.WebView.Maui">
@@ -164,7 +189,8 @@ public partial class MainPage : ContentPage
         </b:BlazorWebView.RootComponents>
     </b:BlazorWebView>
 </ContentPage>
-```
+
+```text
 
 ---
 
@@ -173,6 +199,7 @@ public partial class MainPage : ContentPage
 ### Basic Routing
 
 ```razor
+
 @page "/products"
 @page "/products/{Category}"
 
@@ -186,11 +213,13 @@ public partial class MainPage : ContentPage
     [Parameter]
     public string? Category { get; set; }
 }
-```
+
+```text
 
 ### Route Constraints
 
 ```razor
+
 @page "/products/{Id:int}"
 @page "/orders/{Date:datetime}"
 @page "/search/{Query:minlength(3)}"
@@ -200,11 +229,13 @@ public partial class MainPage : ContentPage
     [Parameter] public DateTime Date { get; set; }
     [Parameter] public string Query { get; set; } = "";
 }
-```
+
+```text
 
 ### Query String Parameters
 
 ```razor
+
 @page "/search"
 
 @code {
@@ -214,11 +245,13 @@ public partial class MainPage : ContentPage
     [SupplyParameterFromQuery(Name = "page")]
     public int CurrentPage { get; set; } = 1;
 }
-```
+
+```text
 
 ### NavigationManager
 
 ```csharp
+
 @inject NavigationManager Navigation
 
 // Programmatic navigation
@@ -229,13 +262,15 @@ Navigation.NavigateTo("/search?term=keyboard&page=2");
 
 // Force full page reload (bypasses enhanced navigation)
 Navigation.NavigateTo("/external-page", forceLoad: true);
-```
+
+```text
 
 ---
 
 ## Enhanced Navigation (.NET 8+)
 
-Enhanced navigation intercepts link clicks and form submissions to update only the changed DOM content, preserving page state and avoiding full page reloads. This applies to Static SSR and prerendered pages.
+Enhanced navigation intercepts link clicks and form submissions to update only the changed DOM content, preserving page
+state and avoiding full page reloads. This applies to Static SSR and prerendered pages.
 
 ### How It Works
 
@@ -248,6 +283,7 @@ Enhanced navigation intercepts link clicks and form submissions to update only t
 ### Opting Out
 
 ```razor
+
 <!-- Disable enhanced navigation for a specific link -->
 <a href="/legacy-page" data-enhance-nav="false">Legacy Page</a>
 
@@ -255,17 +291,21 @@ Enhanced navigation intercepts link clicks and form submissions to update only t
 <form method="post" data-enhance="false">
     ...
 </form>
-```
 
-**Gotcha:** Enhanced navigation may interfere with third-party JavaScript libraries that expect full page loads. Use `data-enhance-nav="false"` on links that navigate to pages with JS that initializes on `DOMContentLoaded`.
+```text
+
+**Gotcha:** Enhanced navigation may interfere with third-party JavaScript libraries that expect full page loads. Use
+`data-enhance-nav="false"` on links that navigate to pages with JS that initializes on `DOMContentLoaded`.
 
 ---
 
 ## Streaming Rendering (.NET 8+)
 
-Streaming rendering sends initial HTML immediately (with placeholder content), then streams updates as async operations complete. Useful for pages with slow data sources.
+Streaming rendering sends initial HTML immediately (with placeholder content), then streams updates as async operations
+complete. Useful for pages with slow data sources.
 
 ```razor
+
 @page "/dashboard"
 @attribute [StreamRendering]
 
@@ -295,21 +335,27 @@ else
         orders = await OrderService.GetRecentOrdersAsync();
     }
 }
-```
+
+```text
 
 **Behavior per render mode:**
-- **Static SSR:** Streaming rendering sends the initial response, then patches the DOM via chunked transfer encoding. The page is not interactive.
-- **InteractiveServer/WebAssembly/Auto:** Streaming rendering is less impactful because components re-render automatically after async operations. The `[StreamRendering]` attribute primarily benefits the prerender phase.
+
+- **Static SSR:** Streaming rendering sends the initial response, then patches the DOM via chunked transfer encoding.
+  The page is not interactive.
+- **InteractiveServer/WebAssembly/Auto:** Streaming rendering is less impactful because components re-render
+  automatically after async operations. The `[StreamRendering]` attribute primarily benefits the prerender phase.
 
 ---
 
 ## AOT-Safe Patterns
 
-When targeting Blazor WebAssembly with Native AOT (ahead-of-time compilation) or IL trimming, avoid patterns that rely on runtime reflection.
+When targeting Blazor WebAssembly with Native AOT (ahead-of-time compilation) or IL trimming, avoid patterns that rely
+on runtime reflection.
 
 ### Source-Generator-First Serialization
 
 ```csharp
+
 // CORRECT: Source-generated JSON serialization (AOT-compatible)
 [JsonSerializable(typeof(ProductDto))]
 [JsonSerializable(typeof(List<ProductDto>))]
@@ -326,16 +372,20 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 var products = await Http.GetFromJsonAsync<List<ProductDto>>(
     "/api/products",
     AppJsonContext.Default.ListProductDto);
-```
+
+```json
 
 ```csharp
+
 // WRONG: Reflection-based serialization (fails under AOT/trimming)
 var products = await Http.GetFromJsonAsync<List<ProductDto>>("/api/products");
-```
+
+```csharp
 
 ### Trim-Safe JS Interop
 
 ```csharp
+
 // CORRECT: Use IJSRuntime with explicit method names (no dynamic dispatch)
 await JSRuntime.InvokeVoidAsync("localStorage.setItem", "key", "value");
 var value = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "key");
@@ -345,26 +395,32 @@ var module = await JSRuntime.InvokeAsync<IJSObjectReference>(
     "import", "./js/chart.js");
 await module.InvokeVoidAsync("initChart", elementRef, data);
 await module.DisposeAsync();
-```
+
+```javascript
 
 ```csharp
+
 // WRONG: Dynamic dispatch via reflection (trimmed away)
 // var method = typeof(JSRuntime).GetMethod("InvokeAsync");
 // method.MakeGenericMethod(returnType).Invoke(...)
-```
+
+```csharp
 
 ### Linker Configuration
 
 ```xml
+
 <!-- Preserve types used dynamically in components -->
 <ItemGroup>
   <TrimmerRootAssembly Include="MyApp.Client" />
 </ItemGroup>
-```
+
+```text
 
 For types that must be preserved from trimming:
 
 ```csharp
+
 // Mark types that are accessed via reflection
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public class DynamicFormModel
@@ -373,39 +429,51 @@ public class DynamicFormModel
     public string Name { get; set; } = "";
     public int Age { get; set; }
 }
-```
+
+```text
 
 ### Anti-Patterns to Avoid
 
-1. **Reflection-based DI** -- Do not use `Activator.CreateInstance` or `Type.GetType` to resolve services. Use the built-in DI container with explicit registrations.
-2. **Dynamic type loading** -- Do not use `Assembly.Load` or `Assembly.GetTypes()` at runtime. Register all types at startup.
-3. **Runtime code generation** -- Do not use `System.Reflection.Emit` or `System.Linq.Expressions.Expression.Compile()`. Use source generators instead.
-4. **Untyped JSON deserialization** -- Do not use `JsonSerializer.Deserialize<T>(json)` without a `JsonSerializerContext`. Always provide a source-generated context.
+1. **Reflection-based DI** -- Do not use `Activator.CreateInstance` or `Type.GetType` to resolve services. Use the
+   built-in DI container with explicit registrations.
+2. **Dynamic type loading** -- Do not use `Assembly.Load` or `Assembly.GetTypes()` at runtime. Register all types at
+   startup.
+3. **Runtime code generation** -- Do not use `System.Reflection.Emit` or `System.Linq.Expressions.Expression.Compile()`.
+   Use source generators instead.
+4. **Untyped JSON deserialization** -- Do not use `JsonSerializer.Deserialize<T>(json)` without a
+   `JsonSerializerContext`. Always provide a source-generated context.
 
 ---
 
 ## Prerendering
 
-Prerendering generates HTML on the server before the interactive runtime loads. This improves perceived performance and SEO.
+Prerendering generates HTML on the server before the interactive runtime loads. This improves perceived performance and
+SEO.
 
 ### Prerender with Interactive Modes
 
 ```razor
+
 <!-- Component prerenders on server, then becomes interactive -->
 <Counter @rendermode="InteractiveServer" />
-```
+
+```text
 
 By default, interactive components prerender. To disable:
 
 ```razor
+
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-```
+
+```text
 
 ### Persisting State Across Prerender
 
-State computed during prerendering is lost when the component reinitializes interactively. Use `PersistentComponentState` to preserve it:
+State computed during prerendering is lost when the component reinitializes interactively. Use
+`PersistentComponentState` to preserve it:
 
 ```razor
+
 @inject PersistentComponentState ApplicationState
 @implements IDisposable
 
@@ -436,7 +504,8 @@ State computed during prerendering is lost when the component reinitializes inte
 
     public void Dispose() => _subscription.Dispose();
 }
-```
+
+```text
 
 ---
 
@@ -446,18 +515,25 @@ These features are available when `net10.0` TFM is detected. They are stable and
 
 ### WebAssembly Preloading
 
-.NET 10 adds `blazor.web.js` preloading of WebAssembly assemblies during the Server phase of InteractiveAuto. When the user first loads a page, the WASM runtime and app assemblies download in the background while the Server circuit handles interactivity. Subsequent navigations switch to WASM faster because assemblies are already cached.
+.NET 10 adds `blazor.web.js` preloading of WebAssembly assemblies during the Server phase of InteractiveAuto. When the
+user first loads a page, the WASM runtime and app assemblies download in the background while the Server circuit handles
+interactivity. Subsequent navigations switch to WASM faster because assemblies are already cached.
 
 ```razor
+
 <!-- No code changes needed -- preloading is automatic in .NET 10 -->
 <!-- Verify in browser DevTools Network tab: assemblies download during Server phase -->
-```
+
+```text
 
 ### Enhanced Form Validation
 
-.NET 10 extends `EditForm` validation with improved error message formatting and support for `IValidatableObject` in Static SSR forms. Validation messages render correctly with enhanced form handling (`Enhance` attribute) without requiring a full page reload.
+.NET 10 extends `EditForm` validation with improved error message formatting and support for `IValidatableObject` in
+Static SSR forms. Validation messages render correctly with enhanced form handling (`Enhance` attribute) without
+requiring a full page reload.
 
 ```csharp
+
 // IValidatableObject works in Static SSR enhanced forms in .NET 10
 public sealed class OrderModel : IValidatableObject
 {
@@ -477,32 +553,42 @@ public sealed class OrderModel : IValidatableObject
         }
     }
 }
-```
+
+```text
 
 ### Blazor Diagnostics Middleware
 
 .NET 10 adds `MapBlazorDiagnostics` middleware for inspecting Blazor circuit and component state in development:
 
 ```csharp
+
 // Program.cs -- available in .NET 10
 if (app.Environment.IsDevelopment())
 {
     app.MapBlazorDiagnostics(); // Exposes /_blazor/diagnostics endpoint
 }
-```
 
-The diagnostics endpoint shows active circuits, component tree, render mode assignments, and timing data. Use it to debug render mode boundaries and component lifecycle issues during development.
+```text
+
+The diagnostics endpoint shows active circuits, component tree, render mode assignments, and timing data. Use it to
+debug render mode boundaries and component lifecycle issues during development.
 
 ---
 
 ## Agent Gotchas
 
-1. **Do not default to InteractiveServer for every page.** Static SSR is the default and most efficient render mode. Only add interactivity where user interaction requires it.
-2. **Do not put WASM-targeted components in the server project.** Components that must run in the browser (InteractiveWebAssembly or InteractiveAuto) belong in the `.Client` project.
-3. **Do not forget `PersistentComponentState` when prerendering.** Without it, data fetched during prerender is discarded and re-fetched when the component becomes interactive, causing a visible flicker.
-4. **Do not use reflection-based serialization in WASM.** Always use `JsonSerializerContext` with source-generated serializers for AOT compatibility and trimming safety.
-5. **Do not force-load navigation unless leaving the Blazor app.** `NavigateTo("/page", forceLoad: true)` bypasses enhanced navigation and causes a full page reload.
-6. **Do not nest interactive render modes incorrectly.** A child component cannot request a more interactive mode than its parent. Plan render mode boundaries from the layout down.
+1. **Do not default to InteractiveServer for every page.** Static SSR is the default and most efficient render mode.
+   Only add interactivity where user interaction requires it.
+2. **Do not put WASM-targeted components in the server project.** Components that must run in the browser
+   (InteractiveWebAssembly or InteractiveAuto) belong in the `.Client` project.
+3. **Do not forget `PersistentComponentState` when prerendering.** Without it, data fetched during prerender is
+   discarded and re-fetched when the component becomes interactive, causing a visible flicker.
+4. **Do not use reflection-based serialization in WASM.** Always use `JsonSerializerContext` with source-generated
+   serializers for AOT compatibility and trimming safety.
+5. **Do not force-load navigation unless leaving the Blazor app.** `NavigateTo("/page", forceLoad: true)` bypasses
+   enhanced navigation and causes a full page reload.
+6. **Do not nest interactive render modes incorrectly.** A child component cannot request a more interactive mode than
+   its parent. Plan render mode boundaries from the layout down.
 
 ---
 
@@ -523,3 +609,4 @@ The diagnostics endpoint shows active circuits, component tree, render mode assi
 - [Streaming Rendering](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/rendering?view=aspnetcore-10.0#streaming-rendering)
 - [Blazor Hybrid](https://learn.microsoft.com/en-us/aspnet/core/blazor/hybrid/?view=aspnetcore-10.0)
 - [AOT Deployment](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/)
+````

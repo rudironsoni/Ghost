@@ -1,0 +1,26 @@
+{
+  "private_files": [
+    "*.dll",
+    "*.exe",
+    "*.key",
+    "*.pdb",
+    "*.pem",
+    "*.pfx",
+    "*.snk",
+    "*.tmp",
+    "*.user",
+    ".env",
+    ".vs/",
+    ".vscode/",
+    "TestResults/",
+    "appsettings.*.json",
+    "bin/",
+    "coverage/",
+    "launchSettings.json",
+    "node_modules/",
+    "obj/",
+    "packages/",
+    "temp/",
+    "tmp/"
+  ]
+}

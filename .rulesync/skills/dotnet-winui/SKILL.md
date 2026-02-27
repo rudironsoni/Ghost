@@ -2,23 +2,26 @@
 name: dotnet-winui
 description: Builds WinUI 3 desktop apps. Windows App SDK, XAML patterns, MSIX/unpackaged, UWP migration.
 license: MIT
-targets: ["*"]
-tags: ["ui", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['ui', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for ui tasks"
+  short-description: '.NET skill guidance for ui tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-winui
 
-WinUI 3 / Windows App SDK development: project setup with `UseWinUI` and Windows 10 TFM, XAML patterns with compiled bindings (`x:Bind`) and deferred loading (`x:Load`), MVVM with CommunityToolkit.Mvvm, MSIX and unpackaged deployment modes, Windows integration (lifecycle, notifications, widgets), UWP migration guidance, and common agent pitfalls.
+WinUI 3 / Windows App SDK development: project setup with `UseWinUI` and Windows 10 TFM, XAML patterns with compiled
+bindings (`x:Bind`) and deferred loading (`x:Load`), MVVM with CommunityToolkit.Mvvm, MSIX and unpackaged deployment
+modes, Windows integration (lifecycle, notifications, widgets), UWP migration guidance, and common agent pitfalls.
 
-**Version assumptions:** .NET 8.0+ baseline. Windows App SDK 1.6+ (current stable). TFM `net8.0-windows10.0.19041.0`. .NET 9 features explicitly marked.
+**Version assumptions:** .NET 8.0+ baseline. Windows App SDK 1.6+ (current stable). TFM `net8.0-windows10.0.19041.0`.
+.NET 9 features explicitly marked.
 
 ## Scope
 
@@ -36,15 +39,21 @@ WinUI 3 / Windows App SDK development: project setup with `UseWinUI` and Windows
 - UI framework selection decision tree -- see [skill:dotnet-ui-chooser]
 - WPF patterns -- see [skill:dotnet-wpf-modern]
 
-Cross-references: [skill:dotnet-ui-testing-core] for desktop testing, [skill:dotnet-wpf-modern] for WPF patterns, [skill:dotnet-wpf-migration] for migration guidance, [skill:dotnet-native-aot] for general AOT, [skill:dotnet-ui-chooser] for framework selection, [skill:dotnet-native-interop] for general P/Invoke patterns (CsWin32 generates P/Invoke declarations), [skill:dotnet-accessibility] for accessibility patterns (AutomationProperties, AutomationPeer, UI Automation).
+Cross-references: [skill:dotnet-ui-testing-core] for desktop testing, [skill:dotnet-wpf-modern] for WPF patterns,
+[skill:dotnet-wpf-migration] for migration guidance, [skill:dotnet-native-aot] for general AOT,
+[skill:dotnet-ui-chooser] for framework selection, [skill:dotnet-native-interop] for general P/Invoke patterns (CsWin32
+generates P/Invoke declarations), [skill:dotnet-accessibility] for accessibility patterns (AutomationProperties,
+AutomationPeer, UI Automation).
 
 ---
 
 ## Project Setup
 
-WinUI 3 uses the Windows App SDK (formerly Project Reunion) as its runtime and API layer. Projects target a Windows 10 version-specific TFM.
+WinUI 3 uses the Windows App SDK (formerly Project Reunion) as its runtime and API layer. Projects target a Windows 10
+version-specific TFM.
 
-```xml
+````xml
+
 <!-- MyWinUIApp.csproj -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -64,11 +73,13 @@ WinUI 3 uses the Windows App SDK (formerly Project Reunion) as its runtime and A
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.*" />
   </ItemGroup>
 </Project>
-```
+
+```text
 
 ### Project Layout
 
-```
+```text
+
 MyWinUIApp/
   App.xaml / App.xaml.cs        # Application entry, resource dictionaries
   MainWindow.xaml / .xaml.cs    # Main window
@@ -80,13 +91,15 @@ MyWinUIApp/
   Package.appxmanifest          # MSIX manifest (packaged mode)
   Properties/
     launchSettings.json
-```
+
+```json
 
 ### Host Builder Pattern
 
 Modern WinUI apps use the generic host for dependency injection and service configuration:
 
 ```csharp
+
 // App.xaml.cs
 public partial class App : Application
 {
@@ -136,7 +149,8 @@ public partial class App : Application
         return app._host.Services.GetRequiredService<T>();
     }
 }
-```
+
+```text
 
 ### TFM Requirements
 
@@ -160,6 +174,7 @@ WinUI 3 XAML is distinct from UWP XAML. The root namespace is `Microsoft.UI.Xaml
 `x:Bind` provides compile-time type checking and better performance than `{Binding}`. It resolves properties relative to the code-behind class (not the `DataContext`).
 
 ```xml
+
 <Page x:Class="MyApp.Views.ProductListPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -189,9 +204,11 @@ WinUI 3 XAML is distinct from UWP XAML. The root namespace is `Microsoft.UI.Xaml
         </ListView>
     </StackPanel>
 </Page>
-```
+
+```text
 
 ```csharp
+
 // Code-behind: expose ViewModel property for x:Bind
 public sealed partial class ProductListPage : Page
 {
@@ -203,7 +220,8 @@ public sealed partial class ProductListPage : Page
         this.InitializeComponent();
     }
 }
-```
+
+```text
 
 **Key differences from `{Binding}`:**
 - `x:Bind` is resolved at compile time (type-safe, faster)
@@ -216,6 +234,7 @@ public sealed partial class ProductListPage : Page
 Use `x:Load` to defer element creation until needed, reducing initial page load time:
 
 ```xml
+
 <StackPanel>
     <TextBlock Text="Always visible" />
 
@@ -225,7 +244,8 @@ Use `x:Load` to defer element creation until needed, reducing initial page load 
         <ListView ItemsSource="{x:Bind ViewModel.DetailItems, Mode=OneWay}" />
     </StackPanel>
 </StackPanel>
-```
+
+```text
 
 **When to use `x:Load`:** Heavy UI sections (complex lists, settings panels, detail views) that are not immediately visible. The element is created when the bound property becomes `true` and destroyed when it becomes `false`.
 
@@ -234,6 +254,7 @@ Use `x:Load` to defer element creation until needed, reducing initial page load 
 WinUI apps typically use `NavigationView` with a `Frame` for page navigation:
 
 ```xml
+
 <!-- MainWindow.xaml -->
 <Window x:Class="MyApp.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -251,7 +272,8 @@ WinUI apps typically use `NavigationView` with a `Frame` for page navigation:
         <Frame x:Name="ContentFrame" />
     </NavigationView>
 </Window>
-```
+
+```text
 
 ---
 
@@ -260,6 +282,7 @@ WinUI apps typically use `NavigationView` with a `Frame` for page navigation:
 WinUI 3 integrates with CommunityToolkit.Mvvm (the same MVVM Toolkit used by MAUI). Source generators eliminate boilerplate for properties and commands.
 
 ```csharp
+
 // ViewModels/ProductListViewModel.cs
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -312,7 +335,8 @@ public partial class ProductListViewModel : ObservableObject
 
     private bool CanSearch() => !string.IsNullOrWhiteSpace(SearchTerm);
 }
-```
+
+```text
 
 **Key source generator attributes:**
 - `[ObservableProperty]` -- generates property with `INotifyPropertyChanged` from a backing field
@@ -331,6 +355,7 @@ WinUI 3 supports two deployment models: MSIX packaged and unpackaged. The choice
 MSIX is the default packaging model. It provides app identity, clean install/uninstall, automatic updates, and access to full Windows integration APIs.
 
 ```xml
+
 <!-- Package.appxmanifest declares app identity and capabilities -->
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
          xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
@@ -354,23 +379,28 @@ MSIX is the default packaging model. It provides app identity, clean install/uni
     <Capability Name="internetClient" />
   </Capabilities>
 </Package>
-```
+
+```text
 
 ```bash
+
 # Build MSIX package
 dotnet publish -c Release -r win-x64
-```
+
+```bash
 
 ### Unpackaged Deployment
 
 Unpackaged mode removes MSIX requirements. The app runs as a standard Win32 executable without app identity.
 
 ```xml
+
 <!-- .csproj: enable unpackaged mode -->
 <PropertyGroup>
   <WindowsPackageType>None</WindowsPackageType>
 </PropertyGroup>
-```
+
+```csharp
 
 **Trade-offs:**
 
@@ -401,6 +431,7 @@ Unpackaged mode removes MSIX requirements. The app runs as a standard Win32 exec
 WinUI 3 apps use the Windows App SDK activation and lifecycle model, distinct from UWP's `CoreApplication`.
 
 ```csharp
+
 // Handle activation kinds (protocol, file, toast, etc.)
 public partial class App : Application
 {
@@ -427,13 +458,15 @@ public partial class App : Application
         }
     }
 }
-```
+
+```text
 
 ### Notifications
 
 Toast notifications require the Windows App SDK notification APIs:
 
 ```csharp
+
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 
@@ -451,7 +484,8 @@ var builder = new AppNotificationBuilder()
         .AddArgument("orderId", "12345"));
 
 AppNotificationManager.Default.Show(builder.BuildNotification());
-```
+
+```text
 
 ### Widgets (Windows 11)
 
@@ -470,12 +504,14 @@ See the [Windows App SDK Widget documentation](https://learn.microsoft.com/en-us
 Taskbar progress in WinUI 3 requires Win32 COM interop via the `ITaskbarList3` interface. Unlike UWP which had a managed `TaskbarManager`, WinUI 3 does not expose a managed wrapper.
 
 ```csharp
+
 // Taskbar progress requires COM interop in WinUI 3
 // Use CsWin32 source generator or manual P/Invoke for ITaskbarList3
 // 1. Add CsWin32: <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.*" />
 // 2. Add to NativeMethods.txt: ITaskbarList3
 // See: https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nn-shobjidl_core-itaskbarlist3
-```
+
+```csharp
 
 ---
 
@@ -556,3 +592,4 @@ For comprehensive migration path guidance across frameworks, see [skill:dotnet-w
 - [UWP to WinUI Migration](https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/migrate-to-windows-app-sdk/)
 - [MSIX Packaging](https://learn.microsoft.com/en-us/windows/msix/)
 - [Windows App SDK Deployment Guide](https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/deploy-overview)
+````

@@ -2,23 +2,27 @@
 name: dotnet-csharp-concurrency-patterns
 description: Synchronizes threads and protects shared state. lock, SemaphoreSlim, Interlocked, concurrent collections.
 license: MIT
-targets: ["*"]
-tags: ["csharp", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['csharp', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for csharp tasks"
+  short-description: '.NET skill guidance for csharp tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-csharp-concurrency-patterns
 
-Thread synchronization primitives, concurrent data structures, and a decision framework for choosing the right concurrency mechanism. Covers `lock`/`Monitor`, `SemaphoreSlim`, `Interlocked`, `ConcurrentDictionary`, `ConcurrentQueue`, `ReaderWriterLockSlim`, and `SpinLock`. This skill is the authoritative source for synchronization and thread-safe data access patterns.
+Thread synchronization primitives, concurrent data structures, and a decision framework for choosing the right
+concurrency mechanism. Covers `lock`/`Monitor`, `SemaphoreSlim`, `Interlocked`, `ConcurrentDictionary`,
+`ConcurrentQueue`, `ReaderWriterLockSlim`, and `SpinLock`. This skill is the authoritative source for synchronization
+and thread-safe data access patterns.
 
-**Version assumptions:** .NET 8.0+ baseline. All primitives covered are available from .NET Core 1.0+ but examples use modern C# idioms.
+**Version assumptions:** .NET 8.0+ baseline. All primitives covered are available from .NET Core 1.0+ but examples use
+modern C# idioms.
 
 ## Scope
 
@@ -33,7 +37,8 @@ Thread synchronization primitives, concurrent data structures, and a decision fr
 - Producer/consumer with Channel<T> -- see [skill:dotnet-channels]
 - Naming and style conventions -- see [skill:dotnet-csharp-coding-standards]
 
-Cross-references: [skill:dotnet-csharp-async-patterns] for async/await patterns, [skill:dotnet-channels] for producer/consumer, [skill:dotnet-csharp-coding-standards] for naming conventions.
+Cross-references: [skill:dotnet-csharp-async-patterns] for async/await patterns, [skill:dotnet-channels] for
+producer/consumer, [skill:dotnet-csharp-coding-standards] for naming conventions.
 
 ---
 
@@ -41,7 +46,8 @@ Cross-references: [skill:dotnet-csharp-async-patterns] for async/await patterns,
 
 Choose the simplest primitive that meets the requirement. Complexity increases downward:
 
-```
+````text
+
 Is the shared state a single scalar (int, long, reference)?
   YES -> Use Interlocked (lock-free, lowest overhead)
 
@@ -56,19 +62,20 @@ Does the critical section contain `await`?
 
 Is the critical section extremely short (< 100 ns) with high contention?
   YES -> Consider SpinLock (advanced, measure first)
-```
+
+```text
 
 ### Quick Reference Table
 
-| Primitive | Async-Safe | Reentrant | Use Case |
-|-----------|-----------|-----------|----------|
-| `lock` / `Monitor` | No | Yes (same thread) | Short critical sections without `await` |
-| `SemaphoreSlim` | Yes (`WaitAsync`) | No | Async-compatible mutual exclusion, throttling |
-| `Interlocked` | N/A (lock-free) | N/A | Atomic scalar operations (increment, compare-exchange) |
-| `ConcurrentDictionary<K,V>` | N/A (thread-safe) | N/A | Thread-safe key-value cache/lookup |
-| `ConcurrentQueue<T>` | N/A (thread-safe) | N/A | Thread-safe FIFO queue |
-| `ReaderWriterLockSlim` | No | Optional (`LockRecursionPolicy`) | Many-readers/few-writers (profile-driven only) |
-| `SpinLock` | No | No | Ultra-short critical sections under extreme contention |
+| Primitive                   | Async-Safe        | Reentrant                        | Use Case                                               |
+| --------------------------- | ----------------- | -------------------------------- | ------------------------------------------------------ |
+| `lock` / `Monitor`          | No                | Yes (same thread)                | Short critical sections without `await`                |
+| `SemaphoreSlim`             | Yes (`WaitAsync`) | No                               | Async-compatible mutual exclusion, throttling          |
+| `Interlocked`               | N/A (lock-free)   | N/A                              | Atomic scalar operations (increment, compare-exchange) |
+| `ConcurrentDictionary<K,V>` | N/A (thread-safe) | N/A                              | Thread-safe key-value cache/lookup                     |
+| `ConcurrentQueue<T>`        | N/A (thread-safe) | N/A                              | Thread-safe FIFO queue                                 |
+| `ReaderWriterLockSlim`      | No                | Optional (`LockRecursionPolicy`) | Many-readers/few-writers (profile-driven only)         |
+| `SpinLock`                  | No                | No                               | Ultra-short critical sections under extreme contention |
 
 ---
 
@@ -79,6 +86,7 @@ Is the critical section extremely short (< 100 ns) with high contention?
 ### Correct Usage
 
 ```csharp
+
 public sealed class Counter
 {
     private readonly object _lock = new();
@@ -100,23 +108,25 @@ public sealed class Counter
         }
     }
 }
-```
+
+```text
 
 ### Lock Object Rules
 
-| Rule | Rationale |
-|------|-----------|
-| Use a private, dedicated `object` field | Prevents external code from locking on the same object |
-| Never lock on `this` | Any external code with a reference can cause deadlocks |
-| Never lock on `typeof(T)` | Global lock shared by all code in the AppDomain |
-| Never lock on string literals | String interning means different code may share the same reference |
-| Never lock on value types | Boxing creates a new object each time -- lock is never acquired |
+| Rule                                    | Rationale                                                          |
+| --------------------------------------- | ------------------------------------------------------------------ |
+| Use a private, dedicated `object` field | Prevents external code from locking on the same object             |
+| Never lock on `this`                    | Any external code with a reference can cause deadlocks             |
+| Never lock on `typeof(T)`               | Global lock shared by all code in the AppDomain                    |
+| Never lock on string literals           | String interning means different code may share the same reference |
+| Never lock on value types               | Boxing creates a new object each time -- lock is never acquired    |
 
 ### Monitor.Wait / Monitor.Pulse
 
 For signaling between threads (producer/consumer without `Channel<T>`):
 
 ```csharp
+
 public sealed class BoundedBuffer<T>
 {
     private readonly Queue<T> _queue = new();
@@ -150,7 +160,8 @@ public sealed class BoundedBuffer<T>
         }
     }
 }
-```
+
+```text
 
 For modern code, prefer `Channel<T>` (see [skill:dotnet-channels]) over Monitor.Wait/Pulse.
 
@@ -158,11 +169,13 @@ For modern code, prefer `Channel<T>` (see [skill:dotnet-channels]) over Monitor.
 
 ## SemaphoreSlim
 
-The only built-in .NET synchronization primitive that supports `await`. Use it whenever a critical section contains async operations.
+The only built-in .NET synchronization primitive that supports `await`. Use it whenever a critical section contains
+async operations.
 
 ### Mutual Exclusion (1,1)
 
 ```csharp
+
 public sealed class AsyncCache
 {
     private readonly SemaphoreSlim _semaphore = new(1, 1);
@@ -188,11 +201,13 @@ public sealed class AsyncCache
         }
     }
 }
-```
+
+```text
 
 ### Throttling (N concurrent operations)
 
 ```csharp
+
 public sealed class ThrottledProcessor
 {
     private readonly SemaphoreSlim _throttle;
@@ -222,20 +237,23 @@ public sealed class ThrottledProcessor
     private Task ProcessItemAsync(WorkItem item, CancellationToken ct) =>
         Task.CompletedTask; // implementation
 }
-```
+
+```text
 
 ### SemaphoreSlim Disposal
 
 `SemaphoreSlim` implements `IDisposable`. Dispose it when the owning object is disposed:
 
 ```csharp
+
 public sealed class ManagedResource : IDisposable
 {
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     public void Dispose() => _semaphore.Dispose();
 }
-```
+
+```text
 
 ---
 
@@ -246,6 +264,7 @@ Lock-free atomic operations for scalar values. The lowest-overhead synchronizati
 ### Common Operations
 
 ```csharp
+
 private int _counter;
 private long _totalBytes;
 private object? _current;
@@ -264,13 +283,15 @@ var previous = Interlocked.Exchange(ref _current, newValue);
 var original = Interlocked.CompareExchange(ref _counter,
     newValue: 10,
     comparand: 0); // Sets to 10 only if current value is 0
-```
+
+```text
 
 ### Volatile Read/Write
 
 For visibility guarantees without atomicity (reading the latest value written by another thread):
 
 ```csharp
+
 private int _flag;
 
 // Write with release semantics (all prior writes visible to readers)
@@ -278,15 +299,16 @@ Volatile.Write(ref _flag, 1);
 
 // Read with acquire semantics (sees all writes prior to the last Volatile.Write)
 var value = Volatile.Read(ref _flag);
-```
+
+```text
 
 ### Interlocked vs volatile vs lock
 
-| Mechanism | Atomicity | Ordering | Use Case |
-|-----------|----------|----------|----------|
-| `Interlocked` | Yes | Full fence | Counters, flags, CAS loops |
-| `Volatile.Read/Write` | No (single read/write is naturally atomic for aligned <= pointer-size) | Acquire/release | Signal flags, publication patterns |
-| `lock` | Yes (for entire block) | Full fence | Multi-step operations on shared state |
+| Mechanism             | Atomicity                                                              | Ordering        | Use Case                              |
+| --------------------- | ---------------------------------------------------------------------- | --------------- | ------------------------------------- |
+| `Interlocked`         | Yes                                                                    | Full fence      | Counters, flags, CAS loops            |
+| `Volatile.Read/Write` | No (single read/write is naturally atomic for aligned <= pointer-size) | Acquire/release | Signal flags, publication patterns    |
+| `lock`                | Yes (for entire block)                                                 | Full fence      | Multi-step operations on shared state |
 
 ---
 
@@ -297,6 +319,7 @@ Thread-safe key-value store. The most commonly used concurrent collection.
 ### Safe Patterns
 
 ```csharp
+
 private readonly ConcurrentDictionary<int, Widget> _cache = new();
 
 // Atomic get-or-add
@@ -312,13 +335,16 @@ if (_cache.TryRemove(id, out var removed))
 {
     // Process removed item
 }
-```
+
+```text
 
 ### Delegate Execution Caveats
 
-`GetOrAdd` and `AddOrUpdate` factory delegates may execute multiple times under contention. Only one result is stored, but the factory runs for each competing thread:
+`GetOrAdd` and `AddOrUpdate` factory delegates may execute multiple times under contention. Only one result is stored,
+but the factory runs for each competing thread:
 
 ```csharp
+
 // WRONG -- factory has side effects (database write) that may run multiple times
 var widget = _cache.GetOrAdd(id, key =>
 {
@@ -332,11 +358,13 @@ private readonly ConcurrentDictionary<int, Lazy<Widget>> _cache = new();
 
 var widget = _cache.GetOrAdd(id,
     key => new Lazy<Widget>(() => LoadAndSaveWidget(key))).Value;
-```
+
+```text
 
 ### Composite Operations Are Not Atomic
 
 ```csharp
+
 // WRONG -- check-then-act race condition
 if (!_cache.ContainsKey(key))
 {
@@ -345,15 +373,18 @@ if (!_cache.ContainsKey(key))
 
 // CORRECT -- single atomic operation
 var value = _cache.GetOrAdd(key, k => ComputeValue(k));
-```
+
+```text
 
 ---
 
 ## ReaderWriterLockSlim
 
-Allows concurrent reads while serializing writes. Only beneficial when reads significantly outnumber writes AND profiling shows `lock` contention on the read path.
+Allows concurrent reads while serializing writes. Only beneficial when reads significantly outnumber writes AND
+profiling shows `lock` contention on the read path.
 
 ```csharp
+
 public sealed class ReadHeavyCache<TKey, TValue> : IDisposable
     where TKey : notnull
 {
@@ -388,9 +419,11 @@ public sealed class ReadHeavyCache<TKey, TValue> : IDisposable
 
     public void Dispose() => _rwLock.Dispose();
 }
-```
+
+```text
 
 **When NOT to use ReaderWriterLockSlim:**
+
 - Reads and writes are roughly equal -- `lock` is simpler and faster
 - Critical sections contain `await` -- not async-compatible; use `SemaphoreSlim`
 - You need a concurrent dictionary -- use `ConcurrentDictionary` directly
@@ -399,9 +432,11 @@ public sealed class ReadHeavyCache<TKey, TValue> : IDisposable
 
 ## SpinLock
 
-A low-level primitive for ultra-short critical sections where thread switching overhead exceeds the wait time. **Measure before using.**
+A low-level primitive for ultra-short critical sections where thread switching overhead exceeds the wait time. **Measure
+before using.**
 
 ```csharp
+
 private SpinLock _spinLock = new(enableThreadOwnerTracking: false);
 
 public void UpdateCounter()
@@ -418,9 +453,11 @@ public void UpdateCounter()
             _spinLock.Exit(useMemoryBarrier: false);
     }
 }
-```
+
+```text
 
 **Rules:**
+
 - Never use `SpinLock` for anything longer than ~100 nanoseconds
 - Never use in async code (thread affinity required)
 - Never use `enableThreadOwnerTracking: true` in production (debug only -- adds overhead)
@@ -435,6 +472,7 @@ public void UpdateCounter()
 Prefer immutable data for sharing across threads without synchronization:
 
 ```csharp
+
 // Thread-safe via immutability -- no locks needed for reads
 private ImmutableList<Widget> _widgets = ImmutableList<Widget>.Empty;
 
@@ -451,13 +489,15 @@ public void AddWidget(Widget widget)
 }
 
 public ImmutableList<Widget> GetWidgets() => _widgets; // No lock needed
-```
+
+```text
 
 ### Double-Checked Locking
 
 For lazy initialization when `Lazy<T>` is not appropriate:
 
 ```csharp
+
 private volatile Widget? _instance;
 private readonly object _lock = new();
 
@@ -478,27 +518,40 @@ public Widget GetInstance()
         return instance;
     }
 }
-```
+
+```text
 
 For most cases, prefer `Lazy<T>` which handles this correctly:
 
 ```csharp
+
 private readonly Lazy<Widget> _instance = new(() => CreateWidget());
 public Widget Instance => _instance.Value;
-```
+
+```csharp
 
 ---
 
 ## Agent Gotchas
 
-1. **Do not use `lock` inside `async` methods** -- `lock` is thread-affine; the continuation after `await` may resume on a different thread, causing `SynchronizationLockException`. Use `SemaphoreSlim.WaitAsync` instead.
-2. **Do not assume `volatile` provides atomicity** -- `volatile` only provides ordering guarantees (acquire/release semantics). Compound operations like `_counter++` are still non-atomic on volatile fields. Use `Interlocked` for atomic operations.
-3. **Do not use `ConcurrentDictionary.ContainsKey` followed by indexer set** -- this is a check-then-act race condition. Use `GetOrAdd`, `AddOrUpdate`, or `TryAdd` for atomic composite operations.
-4. **Do not use `ReaderWriterLockSlim` without profiling evidence** -- it has higher overhead than `lock` and is only beneficial when reads significantly outnumber writes. Default to `lock` and only switch if contention is measured.
-5. **Do not copy `SpinLock`** -- it is a struct. Copying creates a new, unlocked instance. Always pass by reference and store in a field (not a local variable that gets captured by a lambda).
-6. **Do not use `lock(this)` or `lock(typeof(T))`** -- external code can acquire the same lock, causing unexpected contention or deadlocks. Always use a private, dedicated lock object.
-7. **Do not forget to release `SemaphoreSlim` in `finally`** -- if an exception occurs between `WaitAsync` and `Release`, the semaphore stays acquired permanently, blocking all subsequent callers.
-8. **Do not assume `GetOrAdd` factory executes exactly once** -- under contention, the factory delegate may run on multiple threads simultaneously. Only one result is stored, but side effects in the factory execute multiple times. Use `Lazy<T>` wrapping for exactly-once semantics.
+1. **Do not use `lock` inside `async` methods** -- `lock` is thread-affine; the continuation after `await` may resume on
+   a different thread, causing `SynchronizationLockException`. Use `SemaphoreSlim.WaitAsync` instead.
+2. **Do not assume `volatile` provides atomicity** -- `volatile` only provides ordering guarantees (acquire/release
+   semantics). Compound operations like `_counter++` are still non-atomic on volatile fields. Use `Interlocked` for
+   atomic operations.
+3. **Do not use `ConcurrentDictionary.ContainsKey` followed by indexer set** -- this is a check-then-act race condition.
+   Use `GetOrAdd`, `AddOrUpdate`, or `TryAdd` for atomic composite operations.
+4. **Do not use `ReaderWriterLockSlim` without profiling evidence** -- it has higher overhead than `lock` and is only
+   beneficial when reads significantly outnumber writes. Default to `lock` and only switch if contention is measured.
+5. **Do not copy `SpinLock`** -- it is a struct. Copying creates a new, unlocked instance. Always pass by reference and
+   store in a field (not a local variable that gets captured by a lambda).
+6. **Do not use `lock(this)` or `lock(typeof(T))`** -- external code can acquire the same lock, causing unexpected
+   contention or deadlocks. Always use a private, dedicated lock object.
+7. **Do not forget to release `SemaphoreSlim` in `finally`** -- if an exception occurs between `WaitAsync` and
+   `Release`, the semaphore stays acquired permanently, blocking all subsequent callers.
+8. **Do not assume `GetOrAdd` factory executes exactly once** -- under contention, the factory delegate may run on
+   multiple threads simultaneously. Only one result is stored, but side effects in the factory execute multiple times.
+   Use `Lazy<T>` wrapping for exactly-once semantics.
 
 ---
 
@@ -520,3 +573,4 @@ public Widget Instance => _instance.Value;
 - [ConcurrentDictionary best practices](https://learn.microsoft.com/dotnet/api/system.collections.concurrent.concurrentdictionary-2)
 - [SemaphoreSlim class](https://learn.microsoft.com/dotnet/api/system.threading.semaphoreslim)
 - [ReaderWriterLockSlim class](https://learn.microsoft.com/dotnet/api/system.threading.readerwriterlockslim)
+````
