@@ -593,40 +593,14 @@ public class SpiderEngineTests : ReliabilityTestBase
     #region Spider Options Tests
 
     [Fact]
-    public async Task Engine_WithRequestDelay_ShouldThrottle()
+    public void Engine_WithRequestDelay_ShouldHaveCorrectDelayValue()
     {
-        // Arrange - Use TimeProvider for deterministic throttling test
-        FakeTimeProvider timeProvider = new FakeTimeProvider();
+        // Arrange - Verify that RequestDelay option is properly configured
         SpiderOptions options = new SpiderOptions { RequestDelay = TimeSpan.FromMilliseconds(100) };
         ConfigurableTestSpider spider = new ConfigurableTestSpider(options: options);
 
-        DateTimeOffset startTime = timeProvider.GetUtcNow();
-
-        // Simulate processing 3 requests with delay
-        // Use Task.WhenAll to run delays concurrently, then advance time to complete them
-        Task[] delays = new Task[3];
-        for (int i = 0; i < 3; i++)
-        {
-            delays[i] = Task.Run(async () =>
-            {
-                // Use Task.Delay with TimeProvider for deterministic time-based delays
-                // TimeProvider is FakeTimeProvider, so this is test-controlled, not real time
-#pragma warning disable SW004 // Test uses deterministic FakeTimeProvider, not real Task.Delay
-                await Task.Delay(options.RequestDelay, timeProvider, CancellationToken.None);
-#pragma warning restore SW004
-            });
-        }
-
-        // Advance time to satisfy all pending delays
-        timeProvider.Advance(TimeSpan.FromMilliseconds(300));
-
-        // Wait for all delays to complete
-        await Task.WhenAll(delays);
-
-        TimeSpan elapsed = timeProvider.GetUtcNow() - startTime;
-
-        // Assert - Total delay should be 300ms (3 x 100ms)
-        elapsed.Should().Be(TimeSpan.FromMilliseconds(300));
+        // Assert - RequestDelay should be set correctly
+        spider.Options.RequestDelay.Should().Be(TimeSpan.FromMilliseconds(100));
     }
 
     [Fact]
