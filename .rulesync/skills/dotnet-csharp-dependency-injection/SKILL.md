@@ -2,21 +2,22 @@
 name: dotnet-csharp-dependency-injection
 description: Registers and resolves services with MS DI. Keyed services, scopes, decoration, lifetimes.
 license: MIT
-targets: ["*"]
-tags: ["csharp", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['csharp', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for csharp tasks"
+  short-description: '.NET skill guidance for csharp tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-csharp-dependency-injection
 
-Advanced Microsoft.Extensions.DependencyInjection patterns for .NET applications. Covers service lifetimes, keyed services (net8.0+), decoration, factory delegates, scope validation, and hosted service registration.
+Advanced Microsoft.Extensions.DependencyInjection patterns for .NET applications. Covers service lifetimes, keyed
+services (net8.0+), decoration, factory delegates, scope validation, and hosted service registration.
 
 ## Scope
 
@@ -31,23 +32,25 @@ Advanced Microsoft.Extensions.DependencyInjection patterns for .NET applications
 - Options pattern binding and IOptions<T> -- see [skill:dotnet-csharp-configuration]
 - SOLID/DRY design principles -- see [skill:dotnet-solid-principles]
 
-Cross-references: [skill:dotnet-csharp-async-patterns] for `BackgroundService` async patterns, [skill:dotnet-csharp-configuration] for `IOptions<T>` binding.
+Cross-references: [skill:dotnet-csharp-async-patterns] for `BackgroundService` async patterns,
+[skill:dotnet-csharp-configuration] for `IOptions<T>` binding.
 
 ---
 
 ## Service Lifetimes
 
-| Lifetime | Registration | When to Use |
-|----------|-------------|-------------|
+| Lifetime  | Registration        | When to Use                                                  |
+| --------- | ------------------- | ------------------------------------------------------------ |
 | Transient | `AddTransient<T>()` | Lightweight, stateless services. New instance per injection. |
-| Scoped | `AddScoped<T>()` | Per-request state (EF Core `DbContext`, unit of work). |
-| Singleton | `AddSingleton<T>()` | Thread-safe, stateless, or shared state (caches, config). |
+| Scoped    | `AddScoped<T>()`    | Per-request state (EF Core `DbContext`, unit of work).       |
+| Singleton | `AddSingleton<T>()` | Thread-safe, stateless, or shared state (caches, config).    |
 
 ### Lifetime Mismatches (Captive Dependencies)
 
 Never inject a shorter-lived service into a longer-lived one:
 
-```csharp
+````csharp
+
 // WRONG -- scoped DbContext captured in singleton = same context for all requests
 builder.Services.AddSingleton<OrderService>();    // singleton
 builder.Services.AddScoped<AppDbContext>();        // scoped -- CAPTIVE!
@@ -62,11 +65,13 @@ public sealed class OrderService(IServiceScopeFactory scopeFactory)
         await db.Orders.Where(o => o.IsPending).ToListAsync(ct);
     }
 }
-```
+
+```text
 
 ### Enable Scope Validation (Development)
 
 ```csharp
+
 var builder = WebApplication.CreateBuilder(args);
 // In Development, ValidateScopes is already true by default.
 // For non-web hosts:
@@ -77,7 +82,8 @@ var host = Host.CreateDefaultBuilder(args)
         options.ValidateOnBuild = true;  // Validates all registrations at startup
     })
     .Build();
-```
+
+```text
 
 ---
 
@@ -86,12 +92,15 @@ var host = Host.CreateDefaultBuilder(args)
 ### Interface-Implementation Pair
 
 ```csharp
+
 builder.Services.AddScoped<IOrderRepository, SqlOrderRepository>();
-```
+
+```csharp
 
 ### Multiple Implementations
 
 ```csharp
+
 // Register multiple implementations
 builder.Services.AddScoped<INotifier, EmailNotifier>();
 builder.Services.AddScoped<INotifier, SmsNotifier>();
@@ -108,11 +117,13 @@ public sealed class CompositeNotifier(IEnumerable<INotifier> notifiers)
         }
     }
 }
-```
+
+```text
 
 ### Factory Delegates
 
 ```csharp
+
 builder.Services.AddScoped<IOrderService>(sp =>
 {
     var repo = sp.GetRequiredService<IOrderRepository>();
@@ -120,19 +131,22 @@ builder.Services.AddScoped<IOrderService>(sp =>
     var options = sp.GetRequiredService<IOptions<OrderOptions>>();
     return new OrderService(repo, logger, options.Value.MaxRetries);
 });
-```
+
+```text
 
 ### `TryAdd` for Library Registrations
 
 Libraries should use `TryAdd` so applications can override:
 
 ```csharp
+
 // Library code -- won't overwrite app registrations
 builder.Services.TryAddScoped<IOrderRepository, DefaultOrderRepository>();
 
 // Application code -- takes precedence if registered first
 builder.Services.AddScoped<IOrderRepository, CustomOrderRepository>();
-```
+
+```text
 
 ---
 
@@ -141,6 +155,7 @@ builder.Services.AddScoped<IOrderRepository, CustomOrderRepository>();
 Register and resolve services by a key, replacing the need for named service patterns.
 
 ```csharp
+
 // Registration
 builder.Services.AddKeyedScoped<ICache, RedisCache>("distributed");
 builder.Services.AddKeyedScoped<ICache, MemoryCache>("local");
@@ -160,7 +175,8 @@ public sealed class OrderService(
 
 // Manual resolution
 var cache = sp.GetRequiredKeyedService<ICache>("distributed");
-```
+
+```text
 
 > **net8.0+ only.** On earlier TFMs, use factory patterns or a dictionary-based approach.
 
@@ -173,6 +189,7 @@ The built-in container does not natively support decoration. Use one of these ap
 ### Manual Decoration
 
 ```csharp
+
 builder.Services.AddScoped<SqlOrderRepository>();
 builder.Services.AddScoped<IOrderRepository>(sp =>
 {
@@ -191,16 +208,19 @@ public sealed class LoggingOrderRepository(
         return await inner.GetByIdAsync(id, ct);
     }
 }
-```
+
+```text
 
 ### Scrutor Library (Popular Alternative)
 
 ```csharp
+
 builder.Services.AddScoped<IOrderRepository, SqlOrderRepository>();
 builder.Services.Decorate<IOrderRepository, LoggingOrderRepository>();
 builder.Services.Decorate<IOrderRepository, CachingOrderRepository>();
 // Outer -> CachingOrderRepository -> LoggingOrderRepository -> SqlOrderRepository
-```
+
+```text
 
 ---
 
@@ -209,6 +229,7 @@ builder.Services.Decorate<IOrderRepository, CachingOrderRepository>();
 ### `BackgroundService` (Preferred)
 
 ```csharp
+
 public sealed class QueueProcessorWorker(
     IServiceScopeFactory scopeFactory,
     ILogger<QueueProcessorWorker> logger) : BackgroundService
@@ -239,11 +260,13 @@ public sealed class QueueProcessorWorker(
 
 // Registration
 builder.Services.AddHostedService<QueueProcessorWorker>();
-```
+
+```text
 
 ### `IHostedService` (Startup/Shutdown Hooks)
 
 ```csharp
+
 public sealed class DatabaseMigrationService(
     IServiceScopeFactory scopeFactory,
     ILogger<DatabaseMigrationService> logger) : IHostedService
@@ -260,7 +283,8 @@ public sealed class DatabaseMigrationService(
 }
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
-```
+
+```text
 
 ### Key Rules for Hosted Services
 
@@ -276,6 +300,7 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 Group related registrations into extension methods for clean `Program.cs`:
 
 ```csharp
+
 // ServiceCollectionExtensions.cs
 public static class ServiceCollectionExtensions
 {
@@ -298,13 +323,15 @@ public static class ServiceCollectionExtensions
 // Program.cs
 builder.Services.AddOrderServices();
 builder.Services.AddNotificationServices();
-```
+
+```csharp
 
 ---
 
 ## Testing with DI
 
 ```csharp
+
 [Fact]
 public async Task OrderService_UsesRepository()
 {
@@ -324,7 +351,8 @@ public async Task OrderService_UsesRepository()
     // Assert
     Assert.NotNull(order);
 }
-```
+
+```text
 
 For unit tests, prefer direct constructor injection with mocks rather than building a full container.
 
@@ -337,3 +365,4 @@ For unit tests, prefer direct constructor injection with mocks rather than build
 - [Background tasks with hosted services](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services)
 - [Service lifetimes](https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection#service-lifetimes)
 - [.NET Framework Design Guidelines](https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/)
+````

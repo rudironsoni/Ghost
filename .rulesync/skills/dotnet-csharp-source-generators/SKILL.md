@@ -2,21 +2,23 @@
 name: dotnet-csharp-source-generators
 description: Creates Roslyn source generators. IIncrementalGenerator, GeneratedRegex, LoggerMessage, STJ.
 license: MIT
-targets: ["*"]
-tags: ["csharp", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['csharp', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for csharp tasks"
+  short-description: '.NET skill guidance for csharp tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-csharp-source-generators
 
-Guidance for both **creating** and **consuming** Roslyn source generators in .NET. Creating: `IIncrementalGenerator`, syntax providers, semantic analysis, emit patterns, diagnostic reporting, testing with `CSharpGeneratorDriver`. Consuming: `[GeneratedRegex]`, `[LoggerMessage]`, System.Text.Json source generation, `[JsonSerializable]`.
+Guidance for both **creating** and **consuming** Roslyn source generators in .NET. Creating: `IIncrementalGenerator`,
+syntax providers, semantic analysis, emit patterns, diagnostic reporting, testing with `CSharpGeneratorDriver`.
+Consuming: `[GeneratedRegex]`, `[LoggerMessage]`, System.Text.Json source generation, `[JsonSerializable]`.
 
 ## Scope
 
@@ -31,7 +33,8 @@ Guidance for both **creating** and **consuming** Roslyn source generators in .NE
 - Modern C# language features -- see [skill:dotnet-csharp-modern-patterns]
 - Naming conventions -- see [skill:dotnet-csharp-coding-standards]
 
-Cross-references: [skill:dotnet-csharp-modern-patterns] for partial properties and related C# features, [skill:dotnet-csharp-coding-standards] for naming conventions.
+Cross-references: [skill:dotnet-csharp-modern-patterns] for partial properties and related C# features,
+[skill:dotnet-csharp-coding-standards] for naming conventions.
 
 ---
 
@@ -41,7 +44,8 @@ Cross-references: [skill:dotnet-csharp-modern-patterns] for partial properties a
 
 Source generators are shipped as analyzers targeting `netstandard2.0`.
 
-```xml
+````xml
+
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -55,15 +59,19 @@ Source generators are shipped as analyzers targeting `netstandard2.0`.
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" PrivateAssets="all" />
   </ItemGroup>
 </Project>
-```
 
-> **Always target `netstandard2.0`.** Generators load into the compiler process, which requires this TFM for compatibility. Use `LangVersion>latest` to write modern C# in the generator itself.
+```csharp
+
+> **Always target `netstandard2.0`.** Generators load into the compiler process, which requires this TFM for
+> compatibility. Use `LangVersion>latest` to write modern C# in the generator itself.
 
 ### `IIncrementalGenerator` (Preferred)
 
-Always use `IIncrementalGenerator` over the legacy `ISourceGenerator`. Incremental generators are cache-aware and only re-run when inputs change, making them significantly faster in IDE scenarios.
+Always use `IIncrementalGenerator` over the legacy `ISourceGenerator`. Incremental generators are cache-aware and only
+re-run when inputs change, making them significantly faster in IDE scenarios.
 
 ```csharp
+
 [Generator]
 public sealed class AutoNotifyGenerator : IIncrementalGenerator
 {
@@ -173,20 +181,28 @@ internal readonly record struct FieldInfo(
     string FullTypeName,
     string FieldName,
     string FieldType);
-```
 
-> **Scope note:** This example targets top-level, non-generic classes for clarity. A production generator should also handle generic type parameters (emitting matching `partial class Foo<T>` declarations) and nested types (emitting nested partial class hierarchies). Report a diagnostic for unsupported shapes rather than emitting invalid code.
+```text
+
+> **Scope note:** This example targets top-level, non-generic classes for clarity. A production generator should also
+> handle generic type parameters (emitting matching `partial class Foo<T>` declarations) and nested types (emitting
+> nested partial class hierarchies). Report a diagnostic for unsupported shapes rather than emitting invalid code.
 
 ### Key Pipeline Design Rules
 
-1. **Filter early** -- Use `ForAttributeWithMetadataName` or `CreateSyntaxProvider` with a tight predicate to minimize work.
-2. **Transform to simple data** -- Extract only the data you need (strings, records) in the transform step. Never pass `ISymbol` or `SyntaxNode` through the pipeline (they hold the compilation alive and break caching).
-3. **Use value equality** -- Pipeline outputs are compared by value. Use `record struct` or implement `IEquatable<T>` for custom types.
-4. **Emit deterministic output** -- Same inputs must produce identical source. Use `// <auto-generated/>` and `#nullable enable` headers.
+1. **Filter early** -- Use `ForAttributeWithMetadataName` or `CreateSyntaxProvider` with a tight predicate to minimize
+   work.
+2. **Transform to simple data** -- Extract only the data you need (strings, records) in the transform step. Never pass
+   `ISymbol` or `SyntaxNode` through the pipeline (they hold the compilation alive and break caching).
+3. **Use value equality** -- Pipeline outputs are compared by value. Use `record struct` or implement `IEquatable<T>`
+   for custom types.
+4. **Emit deterministic output** -- Same inputs must produce identical source. Use `// <auto-generated/>` and
+   `#nullable enable` headers.
 
 ### Syntax Providers
 
 ```csharp
+
 // ForAttributeWithMetadataName -- most common, filters by attribute
 var candidates = context.SyntaxProvider.ForAttributeWithMetadataName(
     "MyLib.GenerateMapperAttribute",
@@ -198,13 +214,17 @@ var candidates = context.SyntaxProvider.CreateSyntaxProvider(
     predicate: static (node, _) => node is MethodDeclarationSyntax m
         && m.Modifiers.Any(SyntaxKind.PartialKeyword),
     transform: static (ctx, _) => /* extract info */);
-```
+
+```text
 
 ### Diagnostic Reporting
 
-Report errors and warnings through `SourceProductionContext` rather than throwing exceptions. To report location-specific diagnostics, include a `Location` in your pipeline data (captured from the syntax node in the transform step).
+Report errors and warnings through `SourceProductionContext` rather than throwing exceptions. To report
+location-specific diagnostics, include a `Location` in your pipeline data (captured from the syntax node in the
+transform step).
 
 ```csharp
+
 private static readonly DiagnosticDescriptor InvalidFieldType = new(
     id: "AN001",
     title: "Invalid field type for AutoNotify",
@@ -221,13 +241,17 @@ context.ReportDiagnostic(Diagnostic.Create(
     InvalidFieldType,
     location,       // captured from syntax node, not from projected data
     fieldName));
-```
 
-> **Note:** `Location` is not value-equatable, so including it in your pipeline record breaks incremental caching. A common pattern is to carry it as a separate field that you exclude from equality, or report diagnostics in a `CreateSyntaxProvider` step before projecting to value types.
+```text
+
+> **Note:** `Location` is not value-equatable, so including it in your pipeline record breaks incremental caching. A
+> common pattern is to carry it as a separate field that you exclude from equality, or report diagnostics in a
+> `CreateSyntaxProvider` step before projecting to value types.
 
 ### Emit Patterns
 
 ```csharp
+
 // Prefer raw string literals for templates (C# 11+, in the generator project)
 var source = $$"""
     // <auto-generated/>
@@ -242,15 +266,18 @@ var source = $$"""
     """;
 
 context.AddSource($"{className}.g.cs", source);
-```
 
-**File naming convention:** `{TypeName}.{Feature}.g.cs` -- the `.g.cs` suffix signals generated code and is excluded by many linters.
+```csharp
+
+**File naming convention:** `{TypeName}.{Feature}.g.cs` -- the `.g.cs` suffix signals generated code and is excluded by
+many linters.
 
 ### Post-Init Output (Static Source)
 
 Use `RegisterPostInitializationOutput` for marker attributes and helper types that do not depend on user code:
 
 ```csharp
+
 context.RegisterPostInitializationOutput(static ctx =>
 {
     ctx.AddSource("AutoNotifyAttribute.g.cs", """
@@ -261,7 +288,8 @@ context.RegisterPostInitializationOutput(static ctx =>
         internal sealed class AutoNotifyAttribute : System.Attribute { }
         """);
 });
-```
+
+```text
 
 ---
 
@@ -270,6 +298,7 @@ context.RegisterPostInitializationOutput(static ctx =>
 Use `CSharpGeneratorDriver` to run generators in-memory and verify output.
 
 ```csharp
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -317,13 +346,16 @@ public void Generator_ProducesExpectedOutput()
     var generatedSource = runResult.GeneratedTrees[0].GetText().ToString();
     Assert.Contains("public string Name", generatedSource);
 }
-```
+
+```text
 
 ### Snapshot Testing (Verify)
 
-For more robust testing, use the [Verify.SourceGenerators](https://github.com/VerifyTests/Verify.SourceGenerators) package to snapshot-test generated output:
+For more robust testing, use the [Verify.SourceGenerators](https://github.com/VerifyTests/Verify.SourceGenerators)
+package to snapshot-test generated output:
 
 ```csharp
+
 [Fact]
 public Task Generator_SnapshotTest()
 {
@@ -339,7 +371,8 @@ public Task Generator_SnapshotTest()
 
     return TestHelper.Verify(source);
 }
-```
+
+```text
 
 ---
 
@@ -350,6 +383,7 @@ public Task Generator_SnapshotTest()
 Compile-time regex generation. Zero runtime compilation cost, AOT-compatible.
 
 ```csharp
+
 public partial class Validators
 {
     [GeneratedRegex(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
@@ -359,9 +393,11 @@ public partial class Validators
     public static bool IsValidEmail(string email)
         => EmailRegex().IsMatch(email);
 }
-```
+
+```text
 
 **Key rules:**
+
 - Method must be `static partial` returning `Regex`
 - Place on `partial class` (or `partial struct`)
 - Replaces `new Regex(...)` with zero allocation at runtime
@@ -372,6 +408,7 @@ public partial class Validators
 High-performance structured logging with zero-allocation at log-disabled levels.
 
 ```csharp
+
 public static partial class LogMessages
 {
     [LoggerMessage(Level = LogLevel.Information,
@@ -387,9 +424,11 @@ public static partial class LogMessages
 
 // Usage
 logger.OrderProcessing(order.Id, order.CustomerId);
-```
+
+```text
 
 **Key rules:**
+
 - Methods must be `static partial` in a `partial class`
 - Parameters matching `{Placeholder}` in the message are logged as structured data
 - `Exception` parameter is logged automatically (do not include in message template)
@@ -400,6 +439,7 @@ logger.OrderProcessing(order.Id, order.CustomerId);
 AOT-compatible JSON serialization. Eliminates runtime reflection.
 
 ```csharp
+
 [JsonSerializable(typeof(Order))]
 [JsonSerializable(typeof(List<Order>))]
 [JsonSerializable(typeof(Customer))]
@@ -407,11 +447,13 @@ AOT-compatible JSON serialization. Eliminates runtime reflection.
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 public partial class AppJsonContext : JsonSerializerContext;
-```
+
+```json
 
 #### Registration in ASP.NET Core
 
 ```csharp
+
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonContext.Default);
@@ -425,11 +467,13 @@ app.MapGet("/orders/{id}", async (int id, IOrderService service) =>
         ? Results.Ok(order)
         : Results.NotFound();
 });
-```
+
+```text
 
 #### Manual Serialization
 
 ```csharp
+
 // Serialize
 var json = JsonSerializer.Serialize(order, AppJsonContext.Default.Order);
 
@@ -439,9 +483,11 @@ var order = JsonSerializer.Deserialize(json, AppJsonContext.Default.Order);
 // With stream
 await JsonSerializer.SerializeAsync(stream, orders,
     AppJsonContext.Default.ListOrder);
-```
+
+```json
 
 **Key rules:**
+
 - Register all types that need serialization in `[JsonSerializable]` attributes
 - Use `TypeInfoResolverChain` (net8.0+) to combine multiple contexts
 - Required for Native AOT -- reflection-based serialization is trimmed
@@ -450,6 +496,7 @@ await JsonSerializer.SerializeAsync(stream, orders,
 ### `[JsonSerializable]` with Polymorphism (net7.0+)
 
 ```csharp
+
 [JsonDerivedType(typeof(CreditCardPayment), "credit")]
 [JsonDerivedType(typeof(BankTransferPayment), "bank")]
 public abstract class Payment
@@ -469,7 +516,8 @@ public class BankTransferPayment : Payment
 
 [JsonSerializable(typeof(Payment))]
 public partial class PaymentJsonContext : JsonSerializerContext;
-```
+
+```json
 
 ---
 
@@ -478,18 +526,21 @@ public partial class PaymentJsonContext : JsonSerializerContext;
 ### Referencing a Generator in a Consuming Project
 
 ```xml
+
 <ItemGroup>
   <ProjectReference Include="..\MyGenerator\MyGenerator.csproj"
                     OutputItemType="Analyzer"
                     ReferenceOutputAssembly="false" />
 </ItemGroup>
-```
+
+```csharp
 
 ### NuGet Package Layout
 
 When shipping a generator as a NuGet package, place the assembly under `analyzers/dotnet/cs/`:
 
-```
+```text
+
 MyGenerator.nupkg
   analyzers/
     dotnet/
@@ -498,9 +549,11 @@ MyGenerator.nupkg
   lib/
     netstandard2.0/
       _._   (empty placeholder if no runtime dependency)
-```
+
+```text
 
 ```xml
+
 <!-- In the generator .csproj -->
 <PropertyGroup>
   <IncludeBuildOutput>false</IncludeBuildOutput>
@@ -512,13 +565,15 @@ MyGenerator.nupkg
         Pack="true"
         PackagePath="analyzers/dotnet/cs" />
 </ItemGroup>
-```
+
+```text
 
 ---
 
 ## Debugging Source Generators
 
 ```csharp
+
 // Add to Initialize() for attach-debugger workflow
 #if DEBUG
 if (!System.Diagnostics.Debugger.IsAttached)
@@ -526,17 +581,20 @@ if (!System.Diagnostics.Debugger.IsAttached)
     System.Diagnostics.Debugger.Launch();
 }
 #endif
-```
+
+```text
 
 Alternatively, emit generated files to disk for inspection:
 
 ```xml
+
 <!-- In the consuming project -->
 <PropertyGroup>
   <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
 </PropertyGroup>
-```
+
+```text
 
 Add `Generated/` to `.gitignore`.
 
@@ -550,3 +608,4 @@ Add `Generated/` to `.gitignore`.
 - [Compile-time logging source generation](https://learn.microsoft.com/en-us/dotnet/core/extensions/logger-message-generator)
 - [System.Text.Json source generation](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/source-generation)
 - [.NET Framework Design Guidelines](https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/)
+````

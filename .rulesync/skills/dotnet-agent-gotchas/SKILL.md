@@ -2,21 +2,24 @@
 name: dotnet-agent-gotchas
 description: Flags agent mistakes in .NET code -- async misuse, NuGet errors, deprecated APIs, DI.
 license: MIT
-targets: ["*"]
-tags: ["foundation", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['foundation', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for foundation tasks"
+  short-description: '.NET skill guidance for foundation tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-agent-gotchas
 
-Common mistakes AI agents make when generating or modifying .NET code, organized by category. Each category provides a brief warning, anti-pattern code, corrected code, and a cross-reference to the canonical skill that owns the deep guidance. This skill does NOT provide full implementation walkthroughs -- it surfaces the mistake and points to the right skill.
+Common mistakes AI agents make when generating or modifying .NET code, organized by category. Each category provides a
+brief warning, anti-pattern code, corrected code, and a cross-reference to the canonical skill that owns the deep
+guidance. This skill does NOT provide full implementation walkthroughs -- it surfaces the mistake and points to the
+right skill.
 
 ## Scope
 
@@ -37,17 +40,21 @@ Common mistakes AI agents make when generating or modifying .NET code, organized
 
 .NET 8.0+ SDK. Familiarity with SDK-style projects and C# language features.
 
-Cross-references: [skill:dotnet-csharp-async-patterns], [skill:dotnet-csharp-dependency-injection], [skill:dotnet-csharp-nullable-reference-types], [skill:dotnet-csharp-source-generators], [skill:dotnet-testing-strategy], [skill:dotnet-security-owasp].
+Cross-references: [skill:dotnet-csharp-async-patterns], [skill:dotnet-csharp-dependency-injection],
+[skill:dotnet-csharp-nullable-reference-types], [skill:dotnet-csharp-source-generators],
+[skill:dotnet-testing-strategy], [skill:dotnet-security-owasp].
 
 ---
 
 ## Category 1: Async/Await Misuse
 
-**Warning:** Agents frequently block on async methods using `.Result` or `.Wait()`, causing deadlocks in ASP.NET Core and UI contexts. Another common mistake is fire-and-forget calls that silently swallow exceptions.
+**Warning:** Agents frequently block on async methods using `.Result` or `.Wait()`, causing deadlocks in ASP.NET Core
+and UI contexts. Another common mistake is fire-and-forget calls that silently swallow exceptions.
 
 ### Anti-Pattern
 
-```csharp
+````csharp
+
 // WRONG: blocking on async -- deadlock risk in synchronization contexts
 public Order GetOrder(int id)
 {
@@ -60,11 +67,13 @@ public void ProcessOrder(Order order)
 {
     _ = _emailService.SendConfirmationAsync(order); // exception silently lost
 }
-```
+
+```text
 
 ### Corrected
 
 ```csharp
+
 // CORRECT: async all the way
 public async Task<Order> GetOrderAsync(int id, CancellationToken ct = default)
 {
@@ -77,19 +86,23 @@ public async Task ProcessOrderAsync(Order order, CancellationToken ct = default)
 {
     await _emailService.SendConfirmationAsync(order, ct);
 }
-```
 
-See [skill:dotnet-csharp-async-patterns] for full async/await guidance including `ValueTask`, `ConfigureAwait`, and cancellation propagation.
+```text
+
+See [skill:dotnet-csharp-async-patterns] for full async/await guidance including `ValueTask`, `ConfigureAwait`, and
+cancellation propagation.
 
 ---
 
 ## Category 2: NuGet Package Errors
 
-**Warning:** Agents generate incorrect package names, reference pre-release versions without opt-in, or add packages that have been deprecated/replaced. ASP.NET Core shared-framework packages must match the project TFM major version.
+**Warning:** Agents generate incorrect package names, reference pre-release versions without opt-in, or add packages
+that have been deprecated/replaced. ASP.NET Core shared-framework packages must match the project TFM major version.
 
 ### Anti-Pattern
 
 ```xml
+
 <!-- WRONG: package name does not exist (correct: Microsoft.EntityFrameworkCore) -->
 <PackageReference Include="EntityFrameworkCore" Version="9.0.0" />
 
@@ -100,11 +113,13 @@ See [skill:dotnet-csharp-async-patterns] for full async/await guidance including
 <!-- WRONG: agents add Swashbuckle by default; .NET 9+ templates use built-in OpenAPI -->
 <PackageReference Include="Swashbuckle.AspNetCore" Version="7.0.0" />
 <!-- Swashbuckle is still valid when Swagger UI is needed, but not the default choice -->
-```
+
+```text
 
 ### Corrected
 
 ```xml
+
 <!-- CORRECT: exact package ID -->
 <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
 
@@ -115,7 +130,8 @@ See [skill:dotnet-csharp-async-patterns] for full async/await guidance including
 <!-- CORRECT: .NET 9+ templates prefer built-in OpenAPI support -->
 <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
 <!-- Swashbuckle remains a valid choice when Swagger UI features are needed -->
-```
+
+```text
 
 See [skill:dotnet-csproj-reading] for project file conventions and central package management guidance.
 
@@ -123,11 +139,14 @@ See [skill:dotnet-csproj-reading] for project file conventions and central packa
 
 ## Category 3: Deprecated API Usage
 
-**Warning:** Agents generate code using deprecated and insecure APIs: `BinaryFormatter` (CVE-prone deserialization), `WebClient` (replaced by `HttpClient`), and older cryptography APIs (`RNGCryptoServiceProvider`, `SHA1CryptoServiceProvider`).
+**Warning:** Agents generate code using deprecated and insecure APIs: `BinaryFormatter` (CVE-prone deserialization),
+`WebClient` (replaced by `HttpClient`), and older cryptography APIs (`RNGCryptoServiceProvider`,
+`SHA1CryptoServiceProvider`).
 
 ### Anti-Pattern
 
 ```csharp
+
 // WRONG: BinaryFormatter is banned in .NET 8+ (SYSLIB0011)
 var formatter = new BinaryFormatter();
 formatter.Serialize(stream, data);
@@ -139,11 +158,13 @@ var html = client.DownloadString("https://example.com");
 // WRONG: obsolete crypto API (SYSLIB0023)
 using var rng = new RNGCryptoServiceProvider();
 rng.GetBytes(buffer);
-```
+
+```text
 
 ### Corrected
 
 ```csharp
+
 // CORRECT: use System.Text.Json for serialization
 var json = JsonSerializer.Serialize(data);
 await File.WriteAllTextAsync("data.json", json);
@@ -157,7 +178,8 @@ public class MyService(HttpClient httpClient)
 
 // CORRECT: modern RandomNumberGenerator (static API)
 RandomNumberGenerator.Fill(buffer);
-```
+
+```text
 
 See [skill:dotnet-security-owasp] for the full deprecated security pattern catalog and OWASP mitigations.
 
@@ -165,11 +187,13 @@ See [skill:dotnet-security-owasp] for the full deprecated security pattern catal
 
 ## Category 4: Project Structure Mistakes
 
-**Warning:** Agents use wrong SDK types, add `PackageReference` entries for framework-included libraries, or create broken `ProjectReference` paths.
+**Warning:** Agents use wrong SDK types, add `PackageReference` entries for framework-included libraries, or create
+broken `ProjectReference` paths.
 
 ### Anti-Pattern
 
 ```xml
+
 <!-- WRONG: using Microsoft.NET.Sdk for a web project -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -186,11 +210,13 @@ See [skill:dotnet-security-owasp] for the full deprecated security pattern catal
 <!-- WRONG: relative path that doesn't match actual project location -->
 <ProjectReference Include="..\..\Core\MyApp.Core.csproj" />
 <!-- Actual location is ../MyApp.Core/MyApp.Core.csproj -->
-```
+
+```csharp
 
 ### Corrected
 
 ```xml
+
 <!-- CORRECT: use the Web SDK for ASP.NET Core projects -->
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
@@ -203,7 +229,8 @@ See [skill:dotnet-security-owasp] for the full deprecated security pattern catal
 
 <!-- CORRECT: verify the actual project path before adding a reference -->
 <ProjectReference Include="..\MyApp.Core\MyApp.Core.csproj" />
-```
+
+```csharp
 
 See [skill:dotnet-project-structure] for SDK types, project organization, and project reference conventions.
 
@@ -211,11 +238,13 @@ See [skill:dotnet-project-structure] for SDK types, project organization, and pr
 
 ## Category 5: Nullable Reference Type Annotation Errors
 
-**Warning:** Agents misuse the null-forgiving operator (`!`) to silence warnings instead of fixing nullability, or forget to enable the nullable context.
+**Warning:** Agents misuse the null-forgiving operator (`!`) to silence warnings instead of fixing nullability, or
+forget to enable the nullable context.
 
 ### Anti-Pattern
 
 ```csharp
+
 // WRONG: null-forgiving operator hides a real null risk
 public string GetUserName(int id)
 {
@@ -226,11 +255,13 @@ public string GetUserName(int id)
 // WRONG: nullable not enabled, so annotations are meaningless
 // Missing <Nullable>enable</Nullable> in .csproj
 public string? GetOptionalValue() => null; // no compiler warnings without nullable context
-```
+
+```csharp
 
 ### Corrected
 
 ```csharp
+
 // CORRECT: handle null explicitly
 public string GetUserName(int id)
 {
@@ -242,14 +273,17 @@ public string GetUserName(int id)
 
     return user.Name;
 }
-```
+
+```text
 
 ```xml
+
 <!-- CORRECT: enable nullable context in .csproj -->
 <PropertyGroup>
   <Nullable>enable</Nullable>
 </PropertyGroup>
-```
+
+```csharp
 
 See [skill:dotnet-csharp-nullable-reference-types] for full NRT usage patterns and annotation strategies.
 
@@ -257,11 +291,13 @@ See [skill:dotnet-csharp-nullable-reference-types] for full NRT usage patterns a
 
 ## Category 6: Source Generator Misconfiguration
 
-**Warning:** Agents forget to mark classes as `partial` when source generators need to augment them, or use incorrect output types that prevent generator output from compiling.
+**Warning:** Agents forget to mark classes as `partial` when source generators need to augment them, or use incorrect
+output types that prevent generator output from compiling.
 
 ### Anti-Pattern
 
 ```csharp
+
 // WRONG: missing partial keyword -- source generator cannot augment this class
 [JsonSerializable(typeof(WeatherForecast))]
 internal class WeatherJsonContext : JsonSerializerContext
@@ -273,11 +309,13 @@ internal class WeatherJsonContext : JsonSerializerContext
 public static partial struct LogMessages // struct is invalid for LoggerMessage
 {
 }
-```
+
+```text
 
 ### Corrected
 
 ```csharp
+
 // CORRECT: partial class allows source generator to emit companion code
 [JsonSerializable(typeof(WeatherForecast))]
 internal partial class WeatherJsonContext : JsonSerializerContext
@@ -290,7 +328,8 @@ public static partial class Log
     [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Processing {Item}")]
     public static partial void ProcessingItem(ILogger logger, string item);
 }
-```
+
+```text
 
 See [skill:dotnet-csharp-source-generators] for source generator configuration, diagnostics, and debugging.
 
@@ -298,11 +337,13 @@ See [skill:dotnet-csharp-source-generators] for source generator configuration, 
 
 ## Category 7: Trimming/AOT Warning Suppression
 
-**Warning:** Agents suppress trimming and AOT warnings with `#pragma` or `[UnconditionalSuppressMessage]` instead of fixing the underlying reflection/dynamic usage. Suppression hides runtime failures in published apps.
+**Warning:** Agents suppress trimming and AOT warnings with `#pragma` or `[UnconditionalSuppressMessage]` instead of
+fixing the underlying reflection/dynamic usage. Suppression hides runtime failures in published apps.
 
 ### Anti-Pattern
 
 ```csharp
+
 // WRONG: suppressing trim warning instead of fixing it
 #pragma warning disable IL2026
 var type = Type.GetType(typeName); // reflection not trim-safe
@@ -311,11 +352,13 @@ var instance = Activator.CreateInstance(type!);
 
 // WRONG: app-level suppression in .csproj hides all trim warnings
 // <NoWarn>IL2026;IL2046;IL3050</NoWarn>
-```
+
+```csharp
 
 ### Corrected
 
 ```csharp
+
 // CORRECT: use compile-time type resolution or [DynamicallyAccessedMembers]
 public T CreateInstance<T>() where T : new()
 {
@@ -329,9 +372,11 @@ public object CreateInstance(
     return Activator.CreateInstance(type)
         ?? throw new InvalidOperationException($"Cannot create {type.Name}");
 }
-```
+
+```text
 
 ```xml
+
 <!-- CORRECT: enable trim/AOT analyzers to catch issues early -->
 <!-- For apps: -->
 <PublishTrimmed>true</PublishTrimmed>
@@ -339,7 +384,8 @@ public object CreateInstance(
 <!-- For libraries: -->
 <IsTrimmable>true</IsTrimmable>
 <!-- IsTrimmable auto-enables trim analyzer for libraries -->
-```
+
+```text
 
 See [skill:dotnet-csproj-reading] for MSBuild property guidance on trimming and AOT configuration.
 
@@ -347,11 +393,13 @@ See [skill:dotnet-csproj-reading] for MSBuild property guidance on trimming and 
 
 ## Category 8: Test Organization Anti-Patterns
 
-**Warning:** Agents put test classes in production projects, use wrong test SDK configurations, or mix test framework attributes incorrectly.
+**Warning:** Agents put test classes in production projects, use wrong test SDK configurations, or mix test framework
+attributes incorrectly.
 
 ### Anti-Pattern
 
 ```csharp
+
 // WRONG: test class in the production project (not in a separate test project)
 // File: src/MyApp.Api/OrderServiceTests.cs
 namespace MyApp.Api;
@@ -361,9 +409,11 @@ public class OrderServiceTests
     [Fact] // xUnit attribute in production code -- ships test dependencies to users
     public void CalculateTotal_ReturnsCorrectSum() { }
 }
-```
+
+```text
 
 ```xml
+
 <!-- WRONG: test project missing Microsoft.NET.Test.Sdk and runner -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -374,11 +424,13 @@ public class OrderServiceTests
     <!-- Missing Microsoft.NET.Test.Sdk and runner -- dotnet test will find zero tests -->
   </ItemGroup>
 </Project>
-```
+
+```text
 
 ### Corrected
 
 ```xml
+
 <!-- CORRECT: test project in tests/ directory with proper configuration -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -394,7 +446,8 @@ public class OrderServiceTests
     <ProjectReference Include="..\..\src\MyApp.Api\MyApp.Api.csproj" />
   </ItemGroup>
 </Project>
-```
+
+```csharp
 
 See [skill:dotnet-testing-strategy] for test organization, naming conventions, and test type decision guidance.
 
@@ -402,11 +455,13 @@ See [skill:dotnet-testing-strategy] for test organization, naming conventions, a
 
 ## Category 9: DI Registration Errors
 
-**Warning:** Agents forget to register services, use wrong lifetimes (singleton capturing scoped), or create captive dependencies that cause memory leaks and concurrency bugs.
+**Warning:** Agents forget to register services, use wrong lifetimes (singleton capturing scoped), or create captive
+dependencies that cause memory leaks and concurrency bugs.
 
 ### Anti-Pattern
 
 ```csharp
+
 // WRONG: scoped service injected into singleton -- captive dependency
 builder.Services.AddSingleton<OrderProcessor>(); // singleton
 builder.Services.AddScoped<IOrderRepository, OrderRepository>(); // scoped
@@ -422,11 +477,13 @@ public class OrderProcessor(IOrderRepository repo) // repo is captured as single
 // WRONG: missing registration causes runtime exception
 // builder.Services.AddScoped<IOrderRepository, OrderRepository>(); // forgot this line
 // InvalidOperationException: Unable to resolve service for type 'IOrderRepository'
-```
+
+```text
 
 ### Corrected
 
 ```csharp
+
 // CORRECT: lifetimes must not capture shorter-lived dependencies
 builder.Services.AddScoped<OrderProcessor>(); // scoped, matches repository lifetime
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
@@ -443,7 +500,8 @@ public class OrderProcessor(IServiceScopeFactory scopeFactory)
         var order = await repo.GetByIdAsync(orderId, ct);
     }
 }
-```
+
+```text
 
 See [skill:dotnet-csharp-dependency-injection] for lifetime rules, registration patterns, and service scope management.
 
@@ -451,11 +509,13 @@ See [skill:dotnet-csharp-dependency-injection] for lifetime rules, registration 
 
 ## Slopwatch Anti-Patterns
 
-These are patterns that indicate an agent is hiding problems rather than fixing them. Every code review should check for these. See [skill:dotnet-slopwatch] for the automated quality gate that detects these patterns.
+These are patterns that indicate an agent is hiding problems rather than fixing them. Every code review should check for
+these. See [skill:dotnet-slopwatch] for the automated quality gate that detects these patterns.
 
 ### 1. Disabled or Skipped Tests
 
 ```csharp
+
 // RED FLAG: skipping tests to make the build pass
 [Fact(Skip = "Flaky, will fix later")] // test never gets fixed
 public void CriticalBusinessLogic_WorksCorrectly() { }
@@ -469,13 +529,16 @@ public void CriticalBusinessLogic_WorksCorrectly() { }
 [Fact]
 public void ImportantEdgeCase() { }
 #endif
-```
 
-**Fix:** Investigate and fix the underlying issue. If a test is genuinely flaky due to timing, use `[Retry]` (xUnit v3) or fix the non-determinism. Never disable tests to achieve a green build.
+```text
+
+**Fix:** Investigate and fix the underlying issue. If a test is genuinely flaky due to timing, use `[Retry]` (xUnit v3)
+or fix the non-determinism. Never disable tests to achieve a green build.
 
 ### 2. Warning Suppressions
 
 ```csharp
+
 // RED FLAG: blanket warning suppression
 #pragma warning disable CS8600, CS8602, CS8604 // suppress all nullability warnings
 var result = GetData();
@@ -484,13 +547,16 @@ result.Process();
 
 // RED FLAG: project-level suppression hiding real issues
 // <NoWarn>CS8618;CS8625;IL2026</NoWarn>
-```
 
-**Fix:** Address the underlying nullability or trim issues. Add proper null checks, use nullable annotations correctly, or apply `[DynamicallyAccessedMembers]` for trim warnings.
+```text
+
+**Fix:** Address the underlying nullability or trim issues. Add proper null checks, use nullable annotations correctly,
+or apply `[DynamicallyAccessedMembers]` for trim warnings.
 
 ### 3. Empty Catch Blocks
 
 ```csharp
+
 // RED FLAG: swallowing exceptions silently
 try
 {
@@ -503,26 +569,31 @@ catch (Exception ex)
 {
     // TODO: add logging
 }
-```
+
+```text
 
 **Fix:** At minimum, log the exception. Prefer catching specific exception types and handling them appropriately.
 
 ### 4. Silenced Analyzers Without Justification
 
 ```csharp
+
 // RED FLAG: suppressing analyzer with no explanation
 [SuppressMessage("Design", "CA1062")]
 public void Process(string input) { }
 
 // RED FLAG: disabling analyzer rules in .editorconfig globally
 // dotnet_diagnostic.CA1062.severity = none
-```
 
-**Fix:** Fix the code to satisfy the analyzer rule, or provide a documented justification in the suppression attribute: `[SuppressMessage("Design", "CA1062", Justification = "Input validated by middleware")]`.
+```text
+
+**Fix:** Fix the code to satisfy the analyzer rule, or provide a documented justification in the suppression attribute:
+`[SuppressMessage("Design", "CA1062", Justification = "Input validated by middleware")]`.
 
 ### 5. Removed Assertions from Tests
 
 ```csharp
+
 // RED FLAG: test with no assertions -- always passes
 [Fact]
 public async Task CreateOrder_Succeeds()
@@ -531,9 +602,11 @@ public async Task CreateOrder_Succeeds()
     await service.CreateOrderAsync(new Order());
     // no Assert -- this test proves nothing
 }
-```
 
-**Fix:** Every test must have at least one assertion that validates the expected behavior. If the test is for side effects, assert on the side effect (database state, published events, log output).
+```text
+
+**Fix:** Every test must have at least one assertion that validates the expected behavior. If the test is for side
+effects, assert on the side effect (database state, published events, log output).
 
 ---
 
@@ -552,3 +625,4 @@ public async Task CreateOrder_Succeeds()
 - [.NET Trimming Warnings](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/fixing-warnings)
 - [NuGet Package Reference](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files)
 - [Dependency Injection Lifetime Guidelines](https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection-guidelines)
+````

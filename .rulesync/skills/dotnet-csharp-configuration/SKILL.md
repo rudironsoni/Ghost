@@ -2,21 +2,23 @@
 name: dotnet-csharp-configuration
 description: Configures Options pattern, user secrets, and feature flags. IOptions<T>, FeatureManagement.
 license: MIT
-targets: ["*"]
-tags: ["csharp", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['csharp', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for csharp tasks"
+  short-description: '.NET skill guidance for csharp tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-csharp-configuration
 
-Configuration patterns for .NET applications using Microsoft.Extensions.Configuration and Microsoft.Extensions.Options. Covers the Options pattern (`IOptions<T>`, `IOptionsMonitor<T>`, `IOptionsSnapshot<T>`), validation, user secrets, environment-based configuration, and feature flags with `Microsoft.FeatureManagement`.
+Configuration patterns for .NET applications using Microsoft.Extensions.Configuration and Microsoft.Extensions.Options.
+Covers the Options pattern (`IOptions<T>`, `IOptionsMonitor<T>`, `IOptionsSnapshot<T>`), validation, user secrets,
+environment-based configuration, and feature flags with `Microsoft.FeatureManagement`.
 
 ## Scope
 
@@ -32,7 +34,8 @@ Configuration patterns for .NET applications using Microsoft.Extensions.Configur
 - EditorConfig and analyzer rule configuration -- see [skill:dotnet-editorconfig]
 - Structured logging pipeline configuration -- see [skill:dotnet-structured-logging]
 
-Cross-references: [skill:dotnet-csharp-dependency-injection] for service registration patterns, [skill:dotnet-csharp-coding-standards] for naming conventions.
+Cross-references: [skill:dotnet-csharp-dependency-injection] for service registration patterns,
+[skill:dotnet-csharp-coding-standards] for naming conventions.
 
 ---
 
@@ -46,11 +49,13 @@ Default configuration sources in `WebApplication.CreateBuilder` (last wins):
 4. Environment variables
 5. Command-line arguments
 
-```csharp
+````csharp
+
 var builder = WebApplication.CreateBuilder(args);
 // Sources above are loaded automatically. Add custom sources:
 builder.Configuration.AddJsonFile("features.json", optional: true, reloadOnChange: true);
-```
+
+```csharp
 
 ---
 
@@ -61,6 +66,7 @@ Bind configuration sections to strongly typed classes and inject them via DI.
 ### Defining Options Classes
 
 ```csharp
+
 public sealed class SmtpOptions
 {
     public const string SectionName = "Smtp";
@@ -70,23 +76,28 @@ public sealed class SmtpOptions
     public string FromAddress { get; set; } = "";
     public bool UseSsl { get; set; } = true;
 }
-```
 
-> Options classes use `{ get; set; }` (not `init`) because the configuration binder and `PostConfigure` need to mutate properties. Use `[Required]` via data annotations for mandatory fields instead.
+```text
+
+> Options classes use `{ get; set; }` (not `init`) because the configuration binder and `PostConfigure` need to mutate
+> properties. Use `[Required]` via data annotations for mandatory fields instead.
 
 ### Registration
 
 ```csharp
+
 builder.Services
     .AddOptions<SmtpOptions>()
     .BindConfiguration(SmtpOptions.SectionName)
     .ValidateDataAnnotations()
     .ValidateOnStart();
-```
+
+```text
 
 ### `appsettings.json`
 
 ```json
+
 {
   "Smtp": {
     "Host": "smtp.example.com",
@@ -95,21 +106,23 @@ builder.Services
     "UseSsl": true
   }
 }
-```
+
+```text
 
 ---
 
 ## Options Interfaces
 
-| Interface | Lifetime | Reload Behavior | Use Case |
-|-----------|----------|-----------------|----------|
-| `IOptions<T>` | Singleton | Never reloads after startup | Static config, most services |
-| `IOptionsSnapshot<T>` | Scoped | Reloads per request/scope | Per-request config in ASP.NET |
-| `IOptionsMonitor<T>` | Singleton | Live reload + change notification | Singletons, background services |
+| Interface             | Lifetime  | Reload Behavior                   | Use Case                        |
+| --------------------- | --------- | --------------------------------- | ------------------------------- |
+| `IOptions<T>`         | Singleton | Never reloads after startup       | Static config, most services    |
+| `IOptionsSnapshot<T>` | Scoped    | Reloads per request/scope         | Per-request config in ASP.NET   |
+| `IOptionsMonitor<T>`  | Singleton | Live reload + change notification | Singletons, background services |
 
 ### Injection Examples
 
 ```csharp
+
 // Static -- most common, singleton-safe
 public sealed class EmailService(IOptions<SmtpOptions> options)
 {
@@ -135,11 +148,13 @@ public sealed class PricingService(IOptionsSnapshot<PricingOptions> snapshot)
 {
     public decimal GetMarkup() => snapshot.Value.MarkupPercent;
 }
-```
+
+```text
 
 ### Change Notifications with `IOptionsMonitor<T>`
 
 ```csharp
+
 public sealed class CacheService : IDisposable
 {
     private readonly IDisposable? _changeListener;
@@ -157,7 +172,8 @@ public sealed class CacheService : IDisposable
 
     public void Dispose() => _changeListener?.Dispose();
 }
-```
+
+```text
 
 ---
 
@@ -166,6 +182,7 @@ public sealed class CacheService : IDisposable
 ### Data Annotations
 
 ```csharp
+
 using System.ComponentModel.DataAnnotations;
 
 public sealed class SmtpOptions
@@ -187,13 +204,15 @@ builder.Services
     .BindConfiguration(SmtpOptions.SectionName)
     .ValidateDataAnnotations()
     .ValidateOnStart(); // Fail fast at startup, not on first use
-```
+
+```text
 
 ### `IValidateOptions<T>` (Complex Validation)
 
 Use when validation logic requires cross-property checks or external dependencies.
 
 ```csharp
+
 public sealed class SmtpOptionsValidator : IValidateOptions<SmtpOptions>
 {
     public ValidateOptionsResult Validate(string? name, SmtpOptions options)
@@ -218,11 +237,13 @@ public sealed class SmtpOptionsValidator : IValidateOptions<SmtpOptions>
 
 // Register the validator
 builder.Services.AddSingleton<IValidateOptions<SmtpOptions>, SmtpOptionsValidator>();
-```
+
+```text
 
 ### `ValidateOnStart` (Fail Fast)
 
-Always use `.ValidateOnStart()` to surface configuration errors at startup instead of at first resolution. Without it, invalid config only throws when `IOptions<T>.Value` is first accessed.
+Always use `.ValidateOnStart()` to surface configuration errors at startup instead of at first resolution. Without it,
+invalid config only throws when `IOptions<T>.Value` is first accessed.
 
 ---
 
@@ -231,6 +252,7 @@ Always use `.ValidateOnStart()` to surface configuration errors at startup inste
 Store sensitive values outside source control during development.
 
 ```bash
+
 # Initialize (once per project)
 dotnet user-secrets init
 
@@ -243,11 +265,14 @@ dotnet user-secrets list
 
 # Clear all
 dotnet user-secrets clear
-```
 
-User secrets are stored in `~/.microsoft/usersecrets/<UserSecretsId>/secrets.json` and override `appsettings.json` values in Development.
+```text
+
+User secrets are stored in `~/.microsoft/usersecrets/<UserSecretsId>/secrets.json` and override `appsettings.json`
+values in Development.
 
 **Key rules:**
+
 - Never use user secrets in production -- use environment variables, Azure Key Vault, or other vault providers
 - User secrets are loaded automatically when `ASPNETCORE_ENVIRONMENT=Development`
 - For non-web hosts, explicitly add: `builder.Configuration.AddUserSecrets<Program>()`
@@ -259,29 +284,36 @@ User secrets are stored in `~/.microsoft/usersecrets/<UserSecretsId>/secrets.jso
 ### Environment Variables
 
 ```csharp
+
 // Hierarchical keys use __ (double underscore) as separator
 // Environment variable: Smtp__Host=smtp.prod.com
 // Maps to: configuration["Smtp:Host"]
-```
+
+```csharp
 
 ### Per-Environment Files
 
-```
+```text
+
 appsettings.json                 # Base (all environments)
 appsettings.Development.json     # Overrides for dev
 appsettings.Staging.json         # Overrides for staging
 appsettings.Production.json      # Overrides for prod
-```
+
+```json
 
 ```csharp
+
 // Set environment via ASPNETCORE_ENVIRONMENT or DOTNET_ENVIRONMENT
 // Defaults to "Production" if not set
 var env = builder.Environment.EnvironmentName; // "Development", "Staging", "Production"
-```
+
+```csharp
 
 ### Conditional Service Registration
 
 ```csharp
+
 if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddSingleton<IEmailSender, ConsoleEmailSender>();
@@ -290,27 +322,34 @@ else
 {
     builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
 }
-```
+
+```text
 
 ---
 
 ## Feature Flags with Microsoft.FeatureManagement
 
-`Microsoft.FeatureManagement.AspNetCore` provides structured feature flag support with filters, targeting, and gradual rollout.
+`Microsoft.FeatureManagement.AspNetCore` provides structured feature flag support with filters, targeting, and gradual
+rollout.
 
 ### Setup
 
 ```bash
+
 dotnet add package Microsoft.FeatureManagement.AspNetCore
-```
+
+```bash
 
 ```csharp
+
 builder.Services.AddFeatureManagement();
-```
+
+```csharp
 
 ### Configuration
 
 ```json
+
 {
   "FeatureManagement": {
     "NewDashboard": true,
@@ -328,10 +367,8 @@ builder.Services.AddFeatureManagement();
           "Name": "Targeting",
           "Parameters": {
             "Audience": {
-              "Users": [ "alice@example.com" ],
-              "Groups": [
-                { "Name": "Beta", "RolloutPercentage": 100 }
-              ],
+              "Users": ["alice@example.com"],
+              "Groups": [{ "Name": "Beta", "RolloutPercentage": 100 }],
               "DefaultRolloutPercentage": 0
             }
           }
@@ -340,11 +377,13 @@ builder.Services.AddFeatureManagement();
     }
   }
 }
-```
+
+```text
 
 ### Usage in Code
 
 ```csharp
+
 // Inject IFeatureManager
 public sealed class DashboardController(IFeatureManager featureManager) : ControllerBase
 {
@@ -359,11 +398,13 @@ public sealed class DashboardController(IFeatureManager featureManager) : Contro
         return Ok(new { version = "v1", dashboard = "legacy" });
     }
 }
-```
+
+```text
 
 ### Feature Gate Attribute
 
 ```csharp
+
 // Entire endpoint gated on feature flag
 [FeatureGate("BetaSearch")]
 [HttpGet("search")]
@@ -372,20 +413,22 @@ public async Task<IActionResult> Search(string query, CancellationToken ct = def
     var results = await _searchService.SearchAsync(query, ct);
     return Ok(results);
 }
-```
+
+```text
 
 ### Feature Filters
 
-| Filter | Purpose |
-|--------|---------|
-| `Percentage` | Enable for N% of requests (random) |
-| `TimeWindow` | Enable between start/end dates |
-| `Targeting` | Enable for specific users, groups, or rollout percentage |
-| Custom | Implement `IFeatureFilter` for domain-specific logic |
+| Filter       | Purpose                                                  |
+| ------------ | -------------------------------------------------------- |
+| `Percentage` | Enable for N% of requests (random)                       |
+| `TimeWindow` | Enable between start/end dates                           |
+| `Targeting`  | Enable for specific users, groups, or rollout percentage |
+| Custom       | Implement `IFeatureFilter` for domain-specific logic     |
 
 ### Custom Feature Filter
 
 ```csharp
+
 [FilterAlias("Browser")]
 public sealed class BrowserFeatureFilter(IHttpContextAccessor accessor) : IFeatureFilter
 {
@@ -408,7 +451,8 @@ public sealed class BrowserFilterSettings
 // Register
 builder.Services.AddFeatureManagement()
     .AddFeatureFilter<BrowserFeatureFilter>();
-```
+
+```text
 
 ---
 
@@ -417,6 +461,7 @@ builder.Services.AddFeatureManagement()
 Use named options when you need multiple instances of the same options type (e.g., multiple API clients).
 
 ```csharp
+
 // Registration with names
 builder.Services
     .AddOptions<ApiClientOptions>("GitHub")
@@ -435,7 +480,8 @@ public sealed class ApiClientFactory(IOptionsSnapshot<ApiClientOptions> snapshot
         return new HttpClient { BaseAddress = new Uri(options.BaseUrl) };
     }
 }
-```
+
+```text
 
 ---
 
@@ -444,6 +490,7 @@ public sealed class ApiClientFactory(IOptionsSnapshot<ApiClientOptions> snapshot
 Apply defaults or overrides after all configuration sources have been processed.
 
 ```csharp
+
 builder.Services.PostConfigure<SmtpOptions>(options =>
 {
     // Ensure a default port if none specified
@@ -452,13 +499,15 @@ builder.Services.PostConfigure<SmtpOptions>(options =>
         options.Port = options.UseSsl ? 465 : 25;
     }
 });
-```
+
+```text
 
 ---
 
 ## Testing Configuration
 
 ```csharp
+
 [Fact]
 public void SmtpOptions_Validates_InvalidPort()
 {
@@ -495,7 +544,8 @@ public void Configuration_BindsCorrectly()
     Assert.Equal("smtp.test.com", options.Host);
     Assert.Equal(465, options.Port);
 }
-```
+
+```text
 
 ---
 
@@ -507,3 +557,4 @@ public void Configuration_BindsCorrectly()
 - [Feature management in .NET](https://learn.microsoft.com/en-us/azure/azure-app-configuration/use-feature-flags-dotnet-core)
 - [IValidateOptions](https://learn.microsoft.com/en-us/dotnet/core/extensions/options#options-validation)
 - [.NET Framework Design Guidelines](https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/)
+````

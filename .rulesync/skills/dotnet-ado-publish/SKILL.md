@@ -2,23 +2,27 @@
 name: dotnet-ado-publish
 description: Publishes .NET artifacts from Azure DevOps. NuGet push, containers to ACR, pipeline artifacts.
 license: MIT
-targets: ["*"]
-tags: ["cicd", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['cicd', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for cicd tasks"
+  short-description: '.NET skill guidance for cicd tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-ado-publish
 
-Publishing pipelines for .NET projects in Azure DevOps: NuGet package push to Azure Artifacts and nuget.org, container image build and push to Azure Container Registry (ACR) using `Docker@2`, artifact staging with `PublishBuildArtifacts@1` and `PublishPipelineArtifact@1`, and pipeline artifacts for multi-stage release pipelines.
+Publishing pipelines for .NET projects in Azure DevOps: NuGet package push to Azure Artifacts and nuget.org, container
+image build and push to Azure Container Registry (ACR) using `Docker@2`, artifact staging with `PublishBuildArtifacts@1`
+and `PublishPipelineArtifact@1`, and pipeline artifacts for multi-stage release pipelines.
 
-**Version assumptions:** `DotNetCoreCLI@2` for pack/push operations. `Docker@2` for container image builds. `NuGetCommand@2` for NuGet push to external feeds. `PublishPipelineArtifact@1` (preferred over `PublishBuildArtifacts@1`).
+**Version assumptions:** `DotNetCoreCLI@2` for pack/push operations. `Docker@2` for container image builds.
+`NuGetCommand@2` for NuGet push to external feeds. `PublishPipelineArtifact@1` (preferred over
+`PublishBuildArtifacts@1`).
 
 ## Scope
 
@@ -36,7 +40,9 @@ Publishing pipelines for .NET projects in Azure DevOps: NuGet package push to Az
 - GitHub Actions publishing -- see [skill:dotnet-gha-publish]
 - ADO-unique features (environments, service connections) -- see [skill:dotnet-ado-unique]
 
-Cross-references: [skill:dotnet-containers] for container image authoring and SDK container properties, [skill:dotnet-native-aot] for AOT publish configuration in CI, [skill:dotnet-cli-release-pipeline] for CLI-specific release automation, [skill:dotnet-add-ci] for starter publish templates.
+Cross-references: [skill:dotnet-containers] for container image authoring and SDK container properties,
+[skill:dotnet-native-aot] for AOT publish configuration in CI, [skill:dotnet-cli-release-pipeline] for CLI-specific
+release automation, [skill:dotnet-add-ci] for starter publish templates.
 
 ---
 
@@ -44,7 +50,8 @@ Cross-references: [skill:dotnet-containers] for container image authoring and SD
 
 ### Push with `DotNetCoreCLI@2`
 
-```yaml
+````yaml
+
 trigger:
   tags:
     include:
@@ -100,13 +107,16 @@ stages:
               packagesToPush: '$(Pipeline.Workspace)/nupkgs/*.nupkg'
               nuGetFeedType: 'internal'
               publishVstsFeed: 'MyProject/MyFeed'
-```
+
+```bash
 
 ### Version from Git Tag
 
-Extract the version from the triggering Git tag using a script step. `Build.SourceBranch` is a runtime variable, so use a script to parse it rather than compile-time template expressions:
+Extract the version from the triggering Git tag using a script step. `Build.SourceBranch` is a runtime variable, so use
+a script to parse it rather than compile-time template expressions:
 
 ```yaml
+
 steps:
   - script: |
       set -euo pipefail
@@ -126,7 +136,8 @@ steps:
       configuration: 'Release'
       outputDir: '$(Build.ArtifactStagingDirectory)/nupkgs'
       arguments: '-p:Version=$(packageVersion)'
-```
+
+```csharp
 
 ---
 
@@ -137,6 +148,7 @@ steps:
 For pushing to external NuGet feeds (nuget.org), use a service connection:
 
 ```yaml
+
 - task: NuGetCommand@2
   displayName: 'Push to nuget.org'
   inputs:
@@ -144,13 +156,16 @@ For pushing to external NuGet feeds (nuget.org), use a service connection:
     packagesToPush: '$(Pipeline.Workspace)/nupkgs/*.nupkg'
     nuGetFeedType: 'external'
     publishFeedCredentials: 'NuGetOrgServiceConnection'
-```
 
-The service connection stores the nuget.org API key securely. Create it in Project Settings > Service Connections > NuGet.
+```bash
+
+The service connection stores the nuget.org API key securely. Create it in Project Settings > Service Connections >
+NuGet.
 
 ### Conditional Push (Stable vs Pre-Release)
 
 ```yaml
+
 - task: NuGetCommand@2
   displayName: 'Push to nuget.org (stable only)'
   condition: and(succeeded(), not(contains(variables['packageVersion'], '-')))
@@ -167,13 +182,16 @@ The service connection stores the nuget.org API key securely. Create it in Proje
     packagesToPush: '$(Pipeline.Workspace)/nupkgs/*.nupkg'
     nuGetFeedType: 'internal'
     publishVstsFeed: 'MyProject/MyFeed'
-```
 
-Pre-release versions (containing `-` like `1.2.3-preview.1`) go only to Azure Artifacts; stable versions go to both feeds.
+```bash
+
+Pre-release versions (containing `-` like `1.2.3-preview.1`) go only to Azure Artifacts; stable versions go to both
+feeds.
 
 ### Skip Duplicate Packages
 
 ```yaml
+
 - task: DotNetCoreCLI@2
   displayName: 'Push (skip duplicates)'
   inputs:
@@ -181,10 +199,12 @@ Pre-release versions (containing `-` like `1.2.3-preview.1`) go only to Azure Ar
     packagesToPush: '$(Pipeline.Workspace)/nupkgs/*.nupkg'
     nuGetFeedType: 'internal'
     publishVstsFeed: 'MyProject/MyFeed'
-  continueOnError: true  # Azure Artifacts returns 409 for duplicates
-```
+  continueOnError: true # Azure Artifacts returns 409 for duplicates
 
-Azure Artifacts returns HTTP 409 for duplicate package versions. Use `continueOnError: true` for idempotent pipeline reruns, or configure the feed to allow overwriting pre-release versions in Feed Settings.
+```text
+
+Azure Artifacts returns HTTP 409 for duplicate package versions. Use `continueOnError: true` for idempotent pipeline
+reruns, or configure the feed to allow overwriting pre-release versions in Feed Settings.
 
 ---
 
@@ -192,9 +212,11 @@ Azure Artifacts returns HTTP 409 for duplicate package versions. Use `continueOn
 
 ### `Docker@2` Task
 
-Build and push a container image to Azure Container Registry. See [skill:dotnet-containers] for Dockerfile authoring guidance:
+Build and push a container image to Azure Container Registry. See [skill:dotnet-containers] for Dockerfile authoring
+guidance:
 
 ```yaml
+
 stages:
   - stage: BuildContainer
     jobs:
@@ -219,11 +241,13 @@ stages:
               tags: |
                 $(Build.BuildId)
                 latest
-```
+
+```text
 
 ### Tagging Strategy
 
 ```yaml
+
 - task: Docker@2
   displayName: 'Build and push with semver tags'
   inputs:
@@ -236,15 +260,19 @@ stages:
       $(packageVersion)
       $(Build.SourceVersion)
       latest
-```
 
-Use semantic version tags for release images and commit SHA tags for traceability. The `latest` tag should only be applied to stable releases.
+```text
+
+Use semantic version tags for release images and commit SHA tags for traceability. The `latest` tag should only be
+applied to stable releases.
 
 ### SDK Container Publish (Dockerfile-Free)
 
-Use .NET SDK container publish for projects without a Dockerfile. See [skill:dotnet-containers] for `PublishContainer` MSBuild configuration:
+Use .NET SDK container publish for projects without a Dockerfile. See [skill:dotnet-containers] for `PublishContainer`
+MSBuild configuration:
 
 ```yaml
+
 - task: Docker@2
   displayName: 'Login to ACR'
   inputs:
@@ -266,13 +294,16 @@ Use .NET SDK container publish for projects without a Dockerfile. See [skill:dot
   displayName: 'Publish container via SDK'
   env:
     ACR_LOGIN_SERVER: $(acrLoginServer)
-```
+
+```text
 
 ### Native AOT Container Publish
 
-Publish a Native AOT binary as a container image. AOT configuration is owned by [skill:dotnet-native-aot]; this shows the CI pipeline step only:
+Publish a Native AOT binary as a container image. AOT configuration is owned by [skill:dotnet-native-aot]; this shows
+the CI pipeline step only:
 
 ```yaml
+
 - script: |
     dotnet publish src/MyApp/MyApp.csproj \
       -c Release \
@@ -284,9 +315,11 @@ Publish a Native AOT binary as a container image. AOT configuration is owned by 
       -p:ContainerBaseImage=mcr.microsoft.com/dotnet/runtime-deps:8.0-noble-chiseled \
       -p:ContainerImageTags='"$(packageVersion)"'
   displayName: 'Publish AOT container'
-```
 
-The `runtime-deps` base image is sufficient for AOT binaries since they include the runtime. See [skill:dotnet-native-aot] for AOT MSBuild properties and [skill:dotnet-containers] for base image selection.
+```text
+
+The `runtime-deps` base image is sufficient for AOT binaries since they include the runtime. See
+[skill:dotnet-native-aot] for AOT MSBuild properties and [skill:dotnet-containers] for base image selection.
 
 ---
 
@@ -297,6 +330,7 @@ The `runtime-deps` base image is sufficient for AOT binaries since they include 
 Pipeline artifacts are the modern replacement for build artifacts, offering faster upload/download and deduplication:
 
 ```yaml
+
 steps:
   - task: DotNetCoreCLI@2
     displayName: 'Publish app'
@@ -316,24 +350,28 @@ steps:
     inputs:
       targetPath: '$(Build.ArtifactStagingDirectory)/nupkgs'
       artifactName: 'nupkgs'
-```
+
+```text
 
 ### `PublishBuildArtifacts@1` (Legacy)
 
 Use only when integrating with classic release pipelines that require build artifacts:
 
 ```yaml
+
 - task: PublishBuildArtifacts@1
   displayName: 'Upload build artifact (legacy)'
   inputs:
     pathToPublish: '$(Build.ArtifactStagingDirectory)/app'
     artifactName: 'app'
     publishLocation: 'Container'
-```
+
+```text
 
 ### Downloading Artifacts in Downstream Stages
 
 ```yaml
+
 stages:
   - stage: Build
     jobs:
@@ -357,9 +395,11 @@ stages:
                 - download: current
                   artifact: app
                 - script: echo "Deploying from $(Pipeline.Workspace)/app"
-```
 
-The `download: current` keyword downloads artifacts from the current pipeline run. Use `download: pipelineName` for artifacts from a different pipeline.
+```text
+
+The `download: current` keyword downloads artifacts from the current pipeline run. Use `download: pipelineName` for
+artifacts from a different pipeline.
 
 ---
 
@@ -368,6 +408,7 @@ The `download: current` keyword downloads artifacts from the current pipeline ru
 ### Multi-Stage Release with Artifact Promotion
 
 ```yaml
+
 trigger:
   tags:
     include:
@@ -469,13 +510,15 @@ stages:
                 - download: current
                   artifact: app
                 - script: echo "Deploying to production from $(Pipeline.Workspace)/app"
-```
+
+```text
 
 ### Cross-Pipeline Artifact Consumption
 
 Consume artifacts from a different pipeline (e.g., a shared build pipeline):
 
 ```yaml
+
 resources:
   pipelines:
     - pipeline: buildPipeline
@@ -497,17 +540,28 @@ stages:
                 - download: buildPipeline
                   artifact: app
                 - script: echo "Deploying from $(Pipeline.Workspace)/buildPipeline/app"
-```
+
+```text
 
 ---
 
 ## Agent Gotchas
 
-1. **Use `PublishPipelineArtifact@1` over `PublishBuildArtifacts@1`** -- pipeline artifacts are faster, support deduplication, and work with multi-stage YAML pipelines; build artifacts are legacy and required only for classic release pipelines.
-2. **Azure Artifacts returns 409 for duplicate package versions** -- use `continueOnError: true` for idempotent reruns, or handle duplicates in feed settings by allowing pre-release version overwrites.
-3. **`NuGetCommand@2` with `external` feed type requires a service connection** -- do not hardcode API keys in pipeline YAML; create a NuGet service connection in Project Settings that stores the key securely.
-4. **SDK container publish requires Docker on the agent** -- `dotnet publish` with `PublishProfile=DefaultContainer` needs Docker; hosted `ubuntu-latest` agents include Docker, but self-hosted agents may not.
-5. **AOT publish requires matching RID** -- `dotnet publish -r linux-x64` must match the agent OS; do not use `-r win-x64` on a Linux agent.
-6. **`download: current` uses `$(Pipeline.Workspace)` not `$(Build.ArtifactStagingDirectory)`** -- artifacts downloaded in deployment jobs are at `$(Pipeline.Workspace)/artifactName`, not the staging directory.
-7. **Never hardcode registry credentials in pipeline YAML** -- use Docker service connections for ACR/DockerHub authentication; service connections store credentials securely and rotate independently.
-8. **Tag triggers require explicit `tags.include` in the trigger section** -- tags are not included by default CI triggers; add `tags: include: ['v*']` to trigger on version tags.
+1. **Use `PublishPipelineArtifact@1` over `PublishBuildArtifacts@1`** -- pipeline artifacts are faster, support
+   deduplication, and work with multi-stage YAML pipelines; build artifacts are legacy and required only for classic
+   release pipelines.
+2. **Azure Artifacts returns 409 for duplicate package versions** -- use `continueOnError: true` for idempotent reruns,
+   or handle duplicates in feed settings by allowing pre-release version overwrites.
+3. **`NuGetCommand@2` with `external` feed type requires a service connection** -- do not hardcode API keys in pipeline
+   YAML; create a NuGet service connection in Project Settings that stores the key securely.
+4. **SDK container publish requires Docker on the agent** -- `dotnet publish` with `PublishProfile=DefaultContainer`
+   needs Docker; hosted `ubuntu-latest` agents include Docker, but self-hosted agents may not.
+5. **AOT publish requires matching RID** -- `dotnet publish -r linux-x64` must match the agent OS; do not use
+   `-r win-x64` on a Linux agent.
+6. **`download: current` uses `$(Pipeline.Workspace)` not `$(Build.ArtifactStagingDirectory)`** -- artifacts downloaded
+   in deployment jobs are at `$(Pipeline.Workspace)/artifactName`, not the staging directory.
+7. **Never hardcode registry credentials in pipeline YAML** -- use Docker service connections for ACR/DockerHub
+   authentication; service connections store credentials securely and rotate independently.
+8. **Tag triggers require explicit `tags.include` in the trigger section** -- tags are not included by default CI
+   triggers; add `tags: include: ['v*']` to trigger on version tags.
+````

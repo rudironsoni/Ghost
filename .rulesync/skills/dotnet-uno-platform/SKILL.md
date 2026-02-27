@@ -2,21 +2,23 @@
 name: dotnet-uno-platform
 description: Builds Uno Platform cross-platform apps. Extensions, MVUX, Toolkit controls, Hot Reload.
 license: MIT
-targets: ["*"]
-tags: ["ui", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['ui', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for ui tasks"
+  short-description: '.NET skill guidance for ui tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-uno-platform
 
-Uno Platform core development: Extensions ecosystem (Navigation, DI, Configuration, Serialization, Localization, Logging, HTTP, Authentication), MVUX reactive pattern, Toolkit controls, Theme resources (Material/Cupertino/Fluent), Hot Reload, and single-project structure. Covers Uno Platform 5.x+ on .NET 8.0+ baseline.
+Uno Platform core development: Extensions ecosystem (Navigation, DI, Configuration, Serialization, Localization,
+Logging, HTTP, Authentication), MVUX reactive pattern, Toolkit controls, Theme resources (Material/Cupertino/Fluent),
+Hot Reload, and single-project structure. Covers Uno Platform 5.x+ on .NET 8.0+ baseline.
 
 ## Scope
 
@@ -35,15 +37,20 @@ Uno Platform core development: Extensions ecosystem (Navigation, DI, Configurati
 - AOT/trimming for WASM -- see [skill:dotnet-aot-wasm]
 - UI framework selection decision tree -- see [skill:dotnet-ui-chooser]
 
-Cross-references: [skill:dotnet-uno-targets] for per-target deployment, [skill:dotnet-uno-mcp] for MCP integration, [skill:dotnet-uno-testing] for testing patterns, [skill:dotnet-serialization] for serialization depth, [skill:dotnet-aot-wasm] for WASM AOT, [skill:dotnet-ui-chooser] for framework selection, [skill:dotnet-accessibility] for accessibility patterns (AutomationProperties, ARIA mapping on WASM).
+Cross-references: [skill:dotnet-uno-targets] for per-target deployment, [skill:dotnet-uno-mcp] for MCP integration,
+[skill:dotnet-uno-testing] for testing patterns, [skill:dotnet-serialization] for serialization depth,
+[skill:dotnet-aot-wasm] for WASM AOT, [skill:dotnet-ui-chooser] for framework selection, [skill:dotnet-accessibility]
+for accessibility patterns (AutomationProperties, ARIA mapping on WASM).
 
 ---
 
 ## Single-Project Structure
 
-Uno Platform 5.x uses a single-project structure with conditional TFMs for multi-targeting. One `.csproj` targets all platforms via multi-targeting.
+Uno Platform 5.x uses a single-project structure with conditional TFMs for multi-targeting. One `.csproj` targets all
+platforms via multi-targeting.
 
-```xml
+````xml
+
 <!-- MyApp.csproj -->
 <Project Sdk="Uno.Sdk">
   <PropertyGroup>
@@ -74,13 +81,15 @@ Uno Platform 5.x uses a single-project structure with conditional TFMs for multi
     </UnoFeatures>
   </PropertyGroup>
 </Project>
-```
+
+```text
 
 The `UnoFeatures` MSBuild property controls which Uno Extensions and theming packages are included. The Uno SDK resolves these features to the correct NuGet packages automatically.
 
 ### Project Layout
 
-```
+```text
+
 MyApp/
   MyApp/
     App.xaml / App.xaml.cs        # Application entry, resource dictionaries
@@ -98,7 +107,8 @@ MyApp/
       Wasm/
       Desktop/
   MyApp.Tests/                   # Unit tests (shared logic)
-```
+
+```text
 
 ---
 
@@ -109,6 +119,7 @@ Uno Extensions provide opinionated infrastructure on top of the platform. All mo
 ### Host Builder Setup
 
 ```csharp
+
 // App.xaml.cs
 public App()
 {
@@ -129,7 +140,8 @@ public App()
         })
         .Build();
 }
-```
+
+```text
 
 ### Navigation
 
@@ -138,6 +150,7 @@ public App()
 Region-based navigation with route maps, deep linking, and type-safe parameter passing. Navigation is driven declaratively from XAML or imperatively from code.
 
 ```csharp
+
 // Route registration
 private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 {
@@ -157,14 +170,17 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
             })
     );
 }
-```
+
+```text
 
 ```xml
+
 <!-- XAML-based navigation using attached properties -->
 <Button Content="View Product"
         uen:Navigation.Request="ProductDetail"
         uen:Navigation.Data="{Binding SelectedProduct}" />
-```
+
+```text
 
 **Key concepts:** Region-based navigation attaches navigation behavior to visual regions (Frame, NavigationView, TabBar). Route maps define the navigation graph. Deep linking maps URLs to routes for WASM.
 
@@ -175,6 +191,7 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 Uses Microsoft.Extensions.Hosting under the hood. Host builder pattern with service registration, keyed services, and scoped lifetimes.
 
 ```csharp
+
 .ConfigureServices((context, services) =>
 {
     // Standard DI registration
@@ -185,7 +202,8 @@ Uses Microsoft.Extensions.Hosting under the hood. Host builder pattern with serv
     services.AddKeyedSingleton<ICache>("memory", new MemoryCache());
     services.AddKeyedSingleton<ICache>("distributed", new RedisCache());
 })
-```
+
+```text
 
 ### Configuration
 
@@ -194,6 +212,7 @@ Uses Microsoft.Extensions.Hosting under the hood. Host builder pattern with serv
 Loads configuration from `appsettings.json` (embedded resource), environment-specific overrides, and runtime writeable options.
 
 ```json
+
 // appsettings.json
 {
   "AppConfig": {
@@ -201,9 +220,11 @@ Loads configuration from `appsettings.json` (embedded resource), environment-spe
     "MaxRetries": 3
   }
 }
-```
+
+```text
 
 ```csharp
+
 // Binding to strongly-typed options
 .UseConfiguration(configure: configBuilder =>
     configBuilder
@@ -216,7 +237,8 @@ public record AppConfig
     public string ApiBaseUrl { get; init; } = "";
     public int MaxRetries { get; init; } = 3;
 }
-```
+
+```text
 
 ### Serialization
 
@@ -225,11 +247,13 @@ public record AppConfig
 Integrates System.Text.Json with source generators for AOT compatibility. Configures JSON serialization across the Extensions ecosystem.
 
 ```csharp
+
 .UseSerialization(configure: serializerBuilder =>
     serializerBuilder
         .AddJsonTypeInfo(AppJsonContext.Default.ProductDto)
         .AddJsonTypeInfo(AppJsonContext.Default.OrderDto))
-```
+
+```json
 
 For general serialization patterns and AOT source-gen depth, see [skill:dotnet-serialization].
 
@@ -240,10 +264,13 @@ For general serialization patterns and AOT source-gen depth, see [skill:dotnet-s
 Resource-based localization using `.resw` files with runtime culture switching.
 
 ```csharp
+
 .UseLocalization()
-```
+
+```csharp
 
 ```xml
+
 <!-- Strings/en/Resources.resw -->
 <!-- name: MainPage_Title.Text, value: Welcome -->
 <!-- name: MainPage_LoginButton.Content, value: Log In -->
@@ -251,15 +278,18 @@ Resource-based localization using `.resw` files with runtime culture switching.
 <!-- XAML: use x:Uid for automatic resource binding -->
 <TextBlock x:Uid="MainPage_Title" />
 <Button x:Uid="MainPage_LoginButton" />
-```
+
+```text
 
 Culture switching at runtime:
 
 ```csharp
+
 // Switch culture programmatically
 var localizationService = serviceProvider.GetRequiredService<ILocalizationService>();
 await localizationService.SetCurrentCultureAsync(new CultureInfo("fr-FR"));
-```
+
+```csharp
 
 ### Logging
 
@@ -268,12 +298,14 @@ await localizationService.SetCurrentCultureAsync(new CultureInfo("fr-FR"));
 Integrates with Microsoft.Extensions.Logging. Serilog integration for platform-specific sinks.
 
 ```csharp
+
 .UseSerilog(loggerConfiguration: config =>
     config
         .MinimumLevel.Information()
         .WriteTo.Debug()
         .WriteTo.Console())
-```
+
+```text
 
 Platform-specific sinks: Debug output for desktop, browser console for WASM, platform logcat for Android, NSLog for iOS.
 
@@ -284,15 +316,18 @@ Platform-specific sinks: Debug output for desktop, browser console for WASM, pla
 HTTP client integration with endpoint configuration. Supports Refit for typed API clients and Kiota for OpenAPI-generated clients.
 
 ```csharp
+
 .UseHttp(configure: (context, services) =>
     services
         .AddRefitClient<IProductApi>(context,
             configure: builder => builder
                 .ConfigureHttpClient(client =>
                     client.BaseAddress = new Uri("https://api.example.com"))))
-```
+
+```text
 
 ```csharp
+
 // Refit interface
 public interface IProductApi
 {
@@ -302,7 +337,8 @@ public interface IProductApi
     [Get("/products/{id}")]
     Task<ProductDto> GetProductByIdAsync(int id, CancellationToken ct = default);
 }
-```
+
+```text
 
 ### Authentication
 
@@ -311,6 +347,7 @@ public interface IProductApi
 OIDC, custom auth providers, and token management. Integrates with navigation for login/logout flows.
 
 ```csharp
+
 .UseAuthentication(auth =>
     auth.AddOidc(oidc =>
     {
@@ -318,7 +355,8 @@ OIDC, custom auth providers, and token management. Integrates with navigation fo
         oidc.ClientId = "my-app";
         oidc.Scope = "openid profile email";
     }))
-```
+
+```text
 
 Token management is automatic: tokens are stored securely per platform (Keychain on iOS/macOS, KeyStore on Android, Credential Manager on Windows, browser storage on WASM) and refreshed transparently.
 
@@ -341,6 +379,7 @@ MVUX is Uno's recommended reactive pattern, distinct from MVVM. It uses immutabl
 ### Model Example
 
 ```csharp
+
 // ProductModel.cs -- MVUX model (source generators produce the bindable proxy)
 public partial record ProductModel(IProductService ProductService)
 {
@@ -364,9 +403,11 @@ public partial record ProductModel(IProductService ProductService)
         await ProductService.AddProductAsync(term, ct);
     }
 }
-```
+
+```text
 
 ```xml
+
 <!-- ProductPage.xaml -- binds to generated proxy -->
 <Page x:Class="MyApp.Views.ProductPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -402,7 +443,8 @@ public partial record ProductModel(IProductService ProductService)
         <Button Content="Add Product" Command="{Binding AddProduct}" />
     </StackPanel>
 </Page>
-```
+
+```bash
 
 ### MVUX vs MVVM
 
@@ -456,6 +498,7 @@ The Uno Toolkit provides cross-platform controls and helpers beyond stock WinUI 
 ### AutoLayout Example
 
 ```xml
+
 <!-- Vertical stack with spacing, padding, and alignment -->
 <utu:AutoLayout Spacing="16" Padding="24"
                 PrimaryAxisAlignment="Start"
@@ -474,7 +517,8 @@ The Uno Toolkit provides cross-platform controls and helpers beyond stock WinUI 
     <ListView ItemsSource="{Binding Products}"
               utu:AutoLayout.PrimaryLength="*" />
 </utu:AutoLayout>
-```
+
+```text
 
 ---
 
@@ -485,11 +529,14 @@ Uno supports Material, Cupertino, and Fluent design systems as theme packages. T
 ### Theme Configuration
 
 ```xml
+
 <!-- UnoFeatures in .csproj -->
 <UnoFeatures>Material</UnoFeatures>   <!-- or Cupertino, or both -->
-```
+
+```csharp
 
 ```xml
+
 <!-- App.xaml -- theme resource dictionaries -->
 <Application.Resources>
     <ResourceDictionary>
@@ -502,13 +549,15 @@ Uno supports Material, Cupertino, and Fluent design systems as theme packages. T
         </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
 </Application.Resources>
-```
+
+```text
 
 ### Color Customization
 
 Override Material theme colors through `ColorPaletteOverride.xaml`:
 
 ```xml
+
 <!-- Themes/ColorPaletteOverride.xaml -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
@@ -517,17 +566,20 @@ Override Material theme colors through `ColorPaletteOverride.xaml`:
     <Color x:Key="TertiaryColor">#7D5260</Color>
     <Color x:Key="ErrorColor">#B3261E</Color>
 </ResourceDictionary>
-```
+
+```text
 
 ### Typography
 
 Use existing TextBlock styles from the theme system. Never set explicit font sizes -- use the Material type scale:
 
 ```xml
+
 <TextBlock Text="Headline" Style="{StaticResource HeadlineMedium}" />
 <TextBlock Text="Body text" Style="{StaticResource BodyLarge}" />
 <TextBlock Text="Caption" Style="{StaticResource LabelSmall}" />
-```
+
+```xml
 
 | Style | Typical Use |
 |-------|------------|
@@ -542,10 +594,12 @@ Use existing TextBlock styles from the theme system. Never set explicit font siz
 Switch between light and dark themes programmatically:
 
 ```csharp
+
 var themeService = serviceProvider.GetRequiredService<IThemeService>();
 await themeService.SetThemeAsync(AppTheme.Dark);
 var currentTheme = themeService.Theme;
-```
+
+```csharp
 
 ---
 
@@ -566,12 +620,14 @@ Uno Platform provides Hot Reload across all targets via its custom implementatio
 ### Enabling Hot Reload
 
 ```bash
+
 # Set environment variable before dotnet run
 export DOTNET_MODIFIABLE_ASSEMBLIES=debug
 
 # Run with Hot Reload
 dotnet run -f net8.0-desktop --project MyApp/MyApp.csproj
-```
+
+```csharp
 
 Hot Reload is automatically configured by Visual Studio and VS Code (with Uno extension). For CLI usage, set `DOTNET_MODIFIABLE_ASSEMBLIES=debug` before running.
 
@@ -609,3 +665,4 @@ Hot Reload is automatically configured by Visual Studio and VS Code (with Uno ex
 - [Uno Toolkit](https://platform.uno/docs/articles/external/uno.toolkit.ui/)
 - [Uno Themes](https://platform.uno/docs/articles/external/uno.themes/)
 - [Uno SDK Features](https://platform.uno/docs/articles/features/uno-sdk.html)
+````

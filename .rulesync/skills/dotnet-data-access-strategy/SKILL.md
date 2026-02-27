@@ -2,21 +2,23 @@
 name: dotnet-data-access-strategy
 description: Chooses a data access approach. EF Core vs Dapper vs ADO.NET decision matrix, tradeoffs.
 license: MIT
-targets: ["*"]
-tags: ["architecture", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['architecture', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for architecture tasks"
+  short-description: '.NET skill guidance for architecture tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-data-access-strategy
 
-Decision framework for choosing between Entity Framework Core, Dapper, and raw ADO.NET in .NET applications. Covers performance tradeoffs, feature comparisons, AOT/trimming compatibility, hybrid approaches, and migration paths. Use this skill to make an informed technology decision before writing data access code.
+Decision framework for choosing between Entity Framework Core, Dapper, and raw ADO.NET in .NET applications. Covers
+performance tradeoffs, feature comparisons, AOT/trimming compatibility, hybrid approaches, and migration paths. Use this
+skill to make an informed technology decision before writing data access code.
 
 ## Scope
 
@@ -33,25 +35,27 @@ Decision framework for choosing between Entity Framework Core, Dapper, and raw A
 - Async patterns -- see [skill:dotnet-csharp-async-patterns]
 - Testing data access layers -- see [skill:dotnet-integration-testing]
 
-Cross-references: [skill:dotnet-efcore-patterns] for tactical EF Core usage, [skill:dotnet-efcore-architecture] for strategic EF Core patterns, [skill:dotnet-csharp-dependency-injection] for service registration, [skill:dotnet-csharp-async-patterns] for async query patterns.
+Cross-references: [skill:dotnet-efcore-patterns] for tactical EF Core usage, [skill:dotnet-efcore-architecture] for
+strategic EF Core patterns, [skill:dotnet-csharp-dependency-injection] for service registration,
+[skill:dotnet-csharp-async-patterns] for async query patterns.
 
 ---
 
 ## Decision Matrix
 
-| Factor | EF Core | Dapper | Raw ADO.NET |
-|--------|---------|--------|-------------|
-| **Learning curve** | Moderate (LINQ, migrations, config) | Low (SQL + mapping) | Low-moderate (SQL + manual mapping) |
-| **Productivity** | High (change tracking, migrations, scaffolding) | Moderate (write SQL, auto-map) | Low (everything manual) |
-| **Query performance** | Good with projections; overhead from tracking | Near-ADO.NET performance | Fastest possible |
-| **Startup time** | Higher (model building, compilation) | Minimal | Minimal |
-| **Memory allocation** | Higher (change tracker, proxy objects) | Low (direct mapping) | Lowest |
-| **AOT/trimming** | Limited (reflection-heavy, improving) | Good with source generators | Full support |
-| **Change tracking** | Built-in | None | None |
-| **Migrations** | Built-in | None (use FluentMigrator, DbUp, etc.) | None |
-| **LINQ support** | Full (translated to SQL) | None (raw SQL) | None (raw SQL) |
-| **Batch operations** | `ExecuteUpdate`/`ExecuteDelete` (EF Core 7+) | Manual batching | Manual batching |
-| **Complex mappings** | Excellent (owned types, TPH/TPT/TPC) | Simple POCO mapping | Manual |
+| Factor                | EF Core                                         | Dapper                                | Raw ADO.NET                         |
+| --------------------- | ----------------------------------------------- | ------------------------------------- | ----------------------------------- |
+| **Learning curve**    | Moderate (LINQ, migrations, config)             | Low (SQL + mapping)                   | Low-moderate (SQL + manual mapping) |
+| **Productivity**      | High (change tracking, migrations, scaffolding) | Moderate (write SQL, auto-map)        | Low (everything manual)             |
+| **Query performance** | Good with projections; overhead from tracking   | Near-ADO.NET performance              | Fastest possible                    |
+| **Startup time**      | Higher (model building, compilation)            | Minimal                               | Minimal                             |
+| **Memory allocation** | Higher (change tracker, proxy objects)          | Low (direct mapping)                  | Lowest                              |
+| **AOT/trimming**      | Limited (reflection-heavy, improving)           | Good with source generators           | Full support                        |
+| **Change tracking**   | Built-in                                        | None                                  | None                                |
+| **Migrations**        | Built-in                                        | None (use FluentMigrator, DbUp, etc.) | None                                |
+| **LINQ support**      | Full (translated to SQL)                        | None (raw SQL)                        | None (raw SQL)                      |
+| **Batch operations**  | `ExecuteUpdate`/`ExecuteDelete` (EF Core 7+)    | Manual batching                       | Manual batching                     |
+| **Complex mappings**  | Excellent (owned types, TPH/TPT/TPC)            | Simple POCO mapping                   | Manual                              |
 
 ---
 
@@ -66,7 +70,8 @@ Cross-references: [skill:dotnet-efcore-patterns] for tactical EF Core usage, [sk
 - You are building with .NET Aspire (EF Core has first-class Aspire integration)
 - Query performance is acceptable with projections and `AsNoTracking()`
 
-```csharp
+````csharp
+
 // EF Core: expressive, type-safe, with change tracking
 var order = await db.Orders
     .Include(o => o.Items)
@@ -74,7 +79,8 @@ var order = await db.Orders
 
 order!.Status = OrderStatus.Shipped;
 await db.SaveChangesAsync(ct); // Automatic dirty detection
-```
+
+```text
 
 ### Choose Dapper When
 
@@ -85,6 +91,7 @@ await db.SaveChangesAsync(ct); // Automatic dirty detection
 - You need AOT compatibility today (with Dapper.AOT source generator)
 
 ```csharp
+
 // Dapper: direct SQL, minimal overhead
 await using var connection = new NpgsqlConnection(connectionString);
 
@@ -101,7 +108,8 @@ var orders = await connection.QueryAsync<OrderDto>(
     LIMIT @PageSize
     """,
     new { CustomerId = customerId, PageSize = pageSize });
-```
+
+```text
 
 ### Choose Raw ADO.NET When
 
@@ -112,6 +120,7 @@ var orders = await connection.QueryAsync<OrderDto>(
 - You are working with stored procedures or database-specific features
 
 ```csharp
+
 // Raw ADO.NET: full control, zero abstraction overhead
 await using var connection = new NpgsqlConnection(connectionString);
 await connection.OpenAsync(ct);
@@ -132,7 +141,8 @@ while (await reader.ReadAsync(ct))
         Price = reader.GetDecimal(2)
     });
 }
-```
+
+```text
 
 ---
 
@@ -140,16 +150,19 @@ while (await reader.ReadAsync(ct))
 
 Approximate overhead per query (relative to raw ADO.NET baseline):
 
-| Operation | ADO.NET | Dapper | EF Core (NoTracking) | EF Core (Tracking) |
-|-----------|---------|--------|----------------------|-------------------|
-| Simple SELECT by PK | 1x | ~1.05x | ~1.3x | ~1.5x |
-| SELECT 100 rows | 1x | ~1.1x | ~1.4x | ~2x |
-| INSERT single row | 1x | ~1.1x | ~1.5x | ~2x |
-| Complex JOIN query | 1x | ~1.05x | ~1.3-2x (depends on LINQ translation) | ~1.5-2.5x |
+| Operation           | ADO.NET | Dapper | EF Core (NoTracking)                  | EF Core (Tracking) |
+| ------------------- | ------- | ------ | ------------------------------------- | ------------------ |
+| Simple SELECT by PK | 1x      | ~1.05x | ~1.3x                                 | ~1.5x              |
+| SELECT 100 rows     | 1x      | ~1.1x  | ~1.4x                                 | ~2x                |
+| INSERT single row   | 1x      | ~1.1x  | ~1.5x                                 | ~2x                |
+| Complex JOIN query  | 1x      | ~1.05x | ~1.3-2x (depends on LINQ translation) | ~1.5-2.5x          |
 
 **Notes:**
-- These are rough relative comparisons -- actual numbers depend on query complexity, database, network latency, and hardware.
-- Network latency to the database typically dwarfs ORM overhead. A 1ms query with 5ms network latency is 6ms regardless of ORM.
+
+- These are rough relative comparisons -- actual numbers depend on query complexity, database, network latency, and
+  hardware.
+- Network latency to the database typically dwarfs ORM overhead. A 1ms query with 5ms network latency is 6ms regardless
+  of ORM.
 - EF Core with `Select()` projections and `AsNoTracking()` approaches Dapper performance for most queries.
 - Measure your actual workload before choosing based on performance alone.
 
@@ -159,46 +172,61 @@ Approximate overhead per query (relative to raw ADO.NET baseline):
 
 ### EF Core
 
-EF Core relies heavily on reflection for model building, change tracking, and query translation. AOT compatibility is improving but not complete:
+EF Core relies heavily on reflection for model building, change tracking, and query translation. AOT compatibility is
+improving but not complete:
 
-| Feature | AOT Status (.NET 9+) |
-|---------|---------------------|
-| Model building | Partial -- requires compiled model (`dotnet ef dbcontext optimize`) |
-| Query translation | Not AOT-safe (expression tree compilation) |
-| Change tracking | Not AOT-safe (proxy generation, snapshot creation) |
-| Migrations | Design-time only -- not needed at runtime |
+| Feature           | AOT Status (.NET 9+)                                                |
+| ----------------- | ------------------------------------------------------------------- |
+| Model building    | Partial -- requires compiled model (`dotnet ef dbcontext optimize`) |
+| Query translation | Not AOT-safe (expression tree compilation)                          |
+| Change tracking   | Not AOT-safe (proxy generation, snapshot creation)                  |
+| Migrations        | Design-time only -- not needed at runtime                           |
 
-**Compiled models** pre-generate the model configuration at build time, reducing startup cost and improving trim-friendliness:
+**Compiled models** pre-generate the model configuration at build time, reducing startup cost and improving
+trim-friendliness:
 
 ```bash
+
 dotnet ef dbcontext optimize \
     --project src/MyApp.Infrastructure \
     --startup-project src/MyApp.Api \
     --output-dir CompiledModels
-```
+
+```text
 
 ```csharp
+
 options.UseNpgsql(connectionString)
        .UseModel(AppDbContextModel.Instance);  // Pre-compiled model
-```
 
-**Bottom line:** EF Core Native AOT support is partial and version-dependent. As of .NET 9, compiled models improve startup and trim-friendliness, but query translation and change tracking still rely on runtime code generation. Check the [current limitations](https://learn.microsoft.com/en-us/ef/core/performance/advanced-performance-topics#compiled-models) for your target version before committing to EF Core in an AOT deployment. Use compiled models to improve startup time where possible, but plan for Dapper.AOT or ADO.NET fallbacks on AOT-critical paths.
+```csharp
+
+**Bottom line:** EF Core Native AOT support is partial and version-dependent. As of .NET 9, compiled models improve
+startup and trim-friendliness, but query translation and change tracking still rely on runtime code generation. Check
+the
+[current limitations](https://learn.microsoft.com/en-us/ef/core/performance/advanced-performance-topics#compiled-models)
+for your target version before committing to EF Core in an AOT deployment. Use compiled models to improve startup time
+where possible, but plan for Dapper.AOT or ADO.NET fallbacks on AOT-critical paths.
 
 ### Dapper
 
-Dapper traditionally uses runtime reflection and emit for POCO mapping. The `Dapper.AOT` source generator provides a trim- and AOT-compatible alternative:
+Dapper traditionally uses runtime reflection and emit for POCO mapping. The `Dapper.AOT` source generator provides a
+trim- and AOT-compatible alternative:
 
-| Package | AOT Status |
-|---------|-----------|
+| Package             | AOT Status                          |
+| ------------------- | ----------------------------------- |
 | `Dapper` (standard) | Not AOT-safe (uses Reflection.Emit) |
-| `Dapper.AOT` | AOT-safe (source-generated mappers) |
+| `Dapper.AOT`        | AOT-safe (source-generated mappers) |
 
 ```xml
+
 <PackageReference Include="Dapper" Version="2.*" />
 <PackageReference Include="Dapper.AOT" Version="1.*" />
-```
+
+```xml
 
 ```csharp
+
 // Dapper.AOT generates the mapping code at compile time
 // Usage is the same as standard Dapper -- the source generator intercepts calls
 
@@ -213,7 +241,8 @@ public sealed class OrderRepository(NpgsqlDataSource dataSource)
             new { Id = id });
     }
 }
-```
+
+```text
 
 ### Raw ADO.NET
 
@@ -221,22 +250,24 @@ Full AOT and trimming support. No reflection, no code generation -- all mapping 
 
 ### AOT Decision Guide
 
-| Requirement | Recommendation |
-|-------------|---------------|
-| Must publish AOT today | Dapper.AOT or raw ADO.NET |
-| Prefer ORM, AOT not required | EF Core |
-| Prefer ORM, AOT planned for future | EF Core now, evaluate AOT support as it improves |
-| Building a library consumed by AOT apps | Raw ADO.NET or Dapper.AOT |
+| Requirement                             | Recommendation                                   |
+| --------------------------------------- | ------------------------------------------------ |
+| Must publish AOT today                  | Dapper.AOT or raw ADO.NET                        |
+| Prefer ORM, AOT not required            | EF Core                                          |
+| Prefer ORM, AOT planned for future      | EF Core now, evaluate AOT support as it improves |
+| Building a library consumed by AOT apps | Raw ADO.NET or Dapper.AOT                        |
 
 ---
 
 ## Hybrid Approaches
 
-Most production applications benefit from using multiple data access technologies. EF Core and Dapper can coexist in the same project, sharing the same database connection.
+Most production applications benefit from using multiple data access technologies. EF Core and Dapper can coexist in the
+same project, sharing the same database connection.
 
 ### EF Core for Commands, Dapper for Queries
 
 ```csharp
+
 // Command: use EF Core for change tracking and validation
 public sealed class CreateOrderHandler(WriteDbContext db)
 {
@@ -274,13 +305,16 @@ public sealed class OrderReportHandler(NpgsqlDataSource dataSource)
         return rows.AsList();
     }
 }
-```
+
+```text
 
 ### Sharing the Database Connection
 
-Use `DbContext.Database.GetDbConnection()` to get the underlying `DbConnection` for Dapper queries within an EF Core transaction:
+Use `DbContext.Database.GetDbConnection()` to get the underlying `DbConnection` for Dapper queries within an EF Core
+transaction:
 
 ```csharp
+
 public async Task ProcessWithBothAsync(int orderId, CancellationToken ct)
 {
     var connection = db.Database.GetDbConnection();
@@ -305,23 +339,30 @@ public async Task ProcessWithBothAsync(int orderId, CancellationToken ct)
 
     await transaction.CommitAsync(ct);
 }
-```
+
+```text
 
 ### NpgsqlDataSource Registration
 
-When using Dapper with PostgreSQL, register `NpgsqlDataSource` as a singleton in DI (it manages connection pooling internally):
+When using Dapper with PostgreSQL, register `NpgsqlDataSource` as a singleton in DI (it manages connection pooling
+internally):
 
 ```csharp
+
 builder.Services.AddNpgsqlDataSource(
     builder.Configuration.GetConnectionString("DefaultConnection")!);
-```
-
-The `Npgsql.DependencyInjection` package provides `AddNpgsqlDataSource()`. This also integrates with EF Core -- `UseNpgsql()` can accept the registered data source:
 
 ```csharp
+
+The `Npgsql.DependencyInjection` package provides `AddNpgsqlDataSource()`. This also integrates with EF Core --
+`UseNpgsql()` can accept the registered data source:
+
+```csharp
+
 builder.Services.AddDbContext<AppDbContext>((sp, options) =>
     options.UseNpgsql(sp.GetRequiredService<NpgsqlDataSource>()));
-```
+
+```csharp
 
 ---
 
@@ -352,42 +393,59 @@ Dapper wraps `IDbConnection` extension methods around existing ADO.NET code. Mig
 
 ## Package Reference
 
-| Package | Purpose | NuGet |
-|---------|---------|-------|
-| `Microsoft.EntityFrameworkCore` | Core EF framework | `Microsoft.EntityFrameworkCore` |
-| `Microsoft.EntityFrameworkCore.Design` | CLI tooling (migrations, scaffolding) | Design-time only |
-| `Npgsql.EntityFrameworkCore.PostgreSQL` | PostgreSQL EF Core provider | `Npgsql.EntityFrameworkCore.PostgreSQL` |
-| `Microsoft.EntityFrameworkCore.SqlServer` | SQL Server EF Core provider | `Microsoft.EntityFrameworkCore.SqlServer` |
-| `Microsoft.EntityFrameworkCore.Sqlite` | SQLite EF Core provider | `Microsoft.EntityFrameworkCore.Sqlite` |
-| `Dapper` | Micro-ORM | `Dapper` |
-| `Dapper.AOT` | AOT-compatible source generator for Dapper | `Dapper.AOT` |
-| `Npgsql.DependencyInjection` | `NpgsqlDataSource` DI registration | `Npgsql.DependencyInjection` |
-| `Npgsql` | PostgreSQL ADO.NET provider | `Npgsql` |
-| `Microsoft.Data.SqlClient` | SQL Server ADO.NET provider | `Microsoft.Data.SqlClient` |
-| `FluentMigrator` | Code-based migrations (non-EF) | `FluentMigrator` |
-| `DbUp` | SQL script-based migrations (non-EF) | `dbup` |
+| Package                                   | Purpose                                    | NuGet                                     |
+| ----------------------------------------- | ------------------------------------------ | ----------------------------------------- |
+| `Microsoft.EntityFrameworkCore`           | Core EF framework                          | `Microsoft.EntityFrameworkCore`           |
+| `Microsoft.EntityFrameworkCore.Design`    | CLI tooling (migrations, scaffolding)      | Design-time only                          |
+| `Npgsql.EntityFrameworkCore.PostgreSQL`   | PostgreSQL EF Core provider                | `Npgsql.EntityFrameworkCore.PostgreSQL`   |
+| `Microsoft.EntityFrameworkCore.SqlServer` | SQL Server EF Core provider                | `Microsoft.EntityFrameworkCore.SqlServer` |
+| `Microsoft.EntityFrameworkCore.Sqlite`    | SQLite EF Core provider                    | `Microsoft.EntityFrameworkCore.Sqlite`    |
+| `Dapper`                                  | Micro-ORM                                  | `Dapper`                                  |
+| `Dapper.AOT`                              | AOT-compatible source generator for Dapper | `Dapper.AOT`                              |
+| `Npgsql.DependencyInjection`              | `NpgsqlDataSource` DI registration         | `Npgsql.DependencyInjection`              |
+| `Npgsql`                                  | PostgreSQL ADO.NET provider                | `Npgsql`                                  |
+| `Microsoft.Data.SqlClient`                | SQL Server ADO.NET provider                | `Microsoft.Data.SqlClient`                |
+| `FluentMigrator`                          | Code-based migrations (non-EF)             | `FluentMigrator`                          |
+| `DbUp`                                    | SQL script-based migrations (non-EF)       | `dbup`                                    |
 
 ---
 
 ## Key Principles
 
-- **Choose based on your actual needs** -- not on performance benchmarks. Network latency to the database dwarfs ORM overhead for most applications.
-- **EF Core is the default choice** for .NET applications -- it provides productivity, safety, and migrations. Optimize with Dapper when profiling identifies specific bottlenecks.
-- **Hybrid is the pragmatic answer** -- use EF Core for commands and Dapper for complex queries. They share connections and transactions.
-- **AOT compatibility matters if you need it** -- if publishing AOT is a hard requirement today, use Dapper.AOT or raw ADO.NET. EF Core AOT support is improving but incomplete.
-- **Do not prematurely optimize** -- start with EF Core, use `AsNoTracking()` and `Select()` projections, and measure before introducing Dapper.
-- **Migrations are a real productivity feature** -- if you choose Dapper, plan your migration strategy separately (FluentMigrator, DbUp, or manual scripts).
+- **Choose based on your actual needs** -- not on performance benchmarks. Network latency to the database dwarfs ORM
+  overhead for most applications.
+- **EF Core is the default choice** for .NET applications -- it provides productivity, safety, and migrations. Optimize
+  with Dapper when profiling identifies specific bottlenecks.
+- **Hybrid is the pragmatic answer** -- use EF Core for commands and Dapper for complex queries. They share connections
+  and transactions.
+- **AOT compatibility matters if you need it** -- if publishing AOT is a hard requirement today, use Dapper.AOT or raw
+  ADO.NET. EF Core AOT support is improving but incomplete.
+- **Do not prematurely optimize** -- start with EF Core, use `AsNoTracking()` and `Select()` projections, and measure
+  before introducing Dapper.
+- **Migrations are a real productivity feature** -- if you choose Dapper, plan your migration strategy separately
+  (FluentMigrator, DbUp, or manual scripts).
 
 ---
 
 ## Agent Gotchas
 
-1. **Do not recommend Dapper purely for performance** without first checking whether EF Core with `AsNoTracking()` and `Select()` projections meets the performance requirement. The difference is often negligible when EF Core is used correctly.
-2. **Do not use standard `Dapper` in AOT-published applications** -- it uses `Reflection.Emit` which is not AOT-compatible. Use `Dapper.AOT` with the `[DapperAot]` attribute for AOT scenarios.
-3. **Do not forget to list required NuGet packages** -- both EF Core providers (e.g., `Npgsql.EntityFrameworkCore.PostgreSQL`) and Dapper packages must be explicitly referenced. Agents that generate code without package references produce non-compiling projects.
-4. **Do not create new `NpgsqlConnection` instances manually in DI-registered services** -- use `NpgsqlDataSource` (registered via `AddNpgsqlDataSource()`) which manages connection pooling. Creating connections manually bypasses pool management.
-5. **Do not mix EF Core and Dapper on separate connections within the same logical transaction** -- use `DbContext.Database.GetDbConnection()` to share the connection and `transaction.GetDbTransaction()` to share the transaction.
-6. **Do not assume EF Core LINQ translates all C# expressions to SQL** -- unsupported expressions silently evaluate client-side in older versions or throw in newer versions. Check the generated SQL with `ToQueryString()` during development.
+1. **Do not recommend Dapper purely for performance** without first checking whether EF Core with `AsNoTracking()` and
+   `Select()` projections meets the performance requirement. The difference is often negligible when EF Core is used
+   correctly.
+2. **Do not use standard `Dapper` in AOT-published applications** -- it uses `Reflection.Emit` which is not
+   AOT-compatible. Use `Dapper.AOT` with the `[DapperAot]` attribute for AOT scenarios.
+3. **Do not forget to list required NuGet packages** -- both EF Core providers (e.g.,
+   `Npgsql.EntityFrameworkCore.PostgreSQL`) and Dapper packages must be explicitly referenced. Agents that generate code
+   without package references produce non-compiling projects.
+4. **Do not create new `NpgsqlConnection` instances manually in DI-registered services** -- use `NpgsqlDataSource`
+   (registered via `AddNpgsqlDataSource()`) which manages connection pooling. Creating connections manually bypasses
+   pool management.
+5. **Do not mix EF Core and Dapper on separate connections within the same logical transaction** -- use
+   `DbContext.Database.GetDbConnection()` to share the connection and `transaction.GetDbTransaction()` to share the
+   transaction.
+6. **Do not assume EF Core LINQ translates all C# expressions to SQL** -- unsupported expressions silently evaluate
+   client-side in older versions or throw in newer versions. Check the generated SQL with `ToQueryString()` during
+   development.
 
 ---
 
@@ -400,3 +458,4 @@ Dapper wraps `IDbConnection` extension methods around existing ADO.NET code. Mig
 - [NpgsqlDataSource and dependency injection](https://www.npgsql.org/doc/basic-usage.html#data-source)
 - [ADO.NET overview](https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/)
 - [Native AOT deployment](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/)
+````

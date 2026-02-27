@@ -2,21 +2,22 @@
 name: dotnet-add-testing
 description: Adds test infrastructure to a .NET project. Scaffolds xUnit project, coverlet, layout.
 license: MIT
-targets: ["*"]
-tags: ["testing", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['testing', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for testing tasks"
+  short-description: '.NET skill guidance for testing tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-add-testing
 
-Add test infrastructure scaffolding to an existing .NET project. Creates test projects with xUnit, configures code coverage with coverlet, and sets up the conventional directory structure.
+Add test infrastructure scaffolding to an existing .NET project. Creates test projects with xUnit, configures code
+coverage with coverlet, and sets up the conventional directory structure.
 
 ## Scope
 
@@ -28,9 +29,12 @@ Add test infrastructure scaffolding to an existing .NET project. Creates test pr
 
 - In-depth testing patterns (xUnit v3, WebApplicationFactory, UI testing) -- see [skill:dotnet-testing-strategy]
 
-**Prerequisites:** Run [skill:dotnet-version-detection] first to determine SDK version and TFM. Run [skill:dotnet-project-analysis] to understand existing solution structure.
+**Prerequisites:** Run [skill:dotnet-version-detection] first to determine SDK version and TFM. Run
+[skill:dotnet-project-analysis] to understand existing solution structure.
 
-Cross-references: [skill:dotnet-project-structure] for overall solution layout conventions, [skill:dotnet-scaffold-project] which includes test scaffolding in new projects, [skill:dotnet-add-analyzers] for test-specific analyzer suppressions.
+Cross-references: [skill:dotnet-project-structure] for overall solution layout conventions,
+[skill:dotnet-scaffold-project] which includes test scaffolding in new projects, [skill:dotnet-add-analyzers] for
+test-specific analyzer suppressions.
 
 ---
 
@@ -38,7 +42,8 @@ Cross-references: [skill:dotnet-project-structure] for overall solution layout c
 
 Follow the convention of mirroring `src/` project names under `tests/`:
 
-```
+````text
+
 MyApp/
 ├── src/
 │   ├── MyApp.Core/
@@ -49,9 +54,11 @@ MyApp/
     ├── MyApp.Api.UnitTests/
     ├── MyApp.Api.IntegrationTests/
     └── Directory.Build.props          # Test-specific build settings
-```
+
+```xml
 
 Naming conventions:
+
 - `*.UnitTests` -- isolated tests with no external dependencies
 - `*.IntegrationTests` -- tests that use real infrastructure (database, HTTP, file system)
 - `*.FunctionalTests` -- end-to-end tests through the full application stack
@@ -61,6 +68,7 @@ Naming conventions:
 ## Step 1: Create the Test Project
 
 ```bash
+
 # Create xUnit test project
 dotnet new xunit -n MyApp.Core.UnitTests -o tests/MyApp.Core.UnitTests
 
@@ -70,13 +78,15 @@ dotnet sln add tests/MyApp.Core.UnitTests/MyApp.Core.UnitTests.csproj
 # Add reference to the project under test
 dotnet add tests/MyApp.Core.UnitTests/MyApp.Core.UnitTests.csproj \
   reference src/MyApp.Core/MyApp.Core.csproj
-```
+
+```csharp
 
 ### Clean Up Generated Project
 
 Remove properties already defined in `Directory.Build.props`:
 
 ```xml
+
 <!-- tests/MyApp.Core.UnitTests/MyApp.Core.UnitTests.csproj -->
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
@@ -89,7 +99,8 @@ Remove properties already defined in `Directory.Build.props`:
     <ProjectReference Include="..\..\src\MyApp.Core\MyApp.Core.csproj" />
   </ItemGroup>
 </Project>
-```
+
+```csharp
 
 With CPM, `Version` attributes are managed in `Directory.Packages.props`. Remove them from the generated `.csproj`.
 
@@ -100,6 +111,7 @@ With CPM, `Version` attributes are managed in `Directory.Packages.props`. Remove
 Create `tests/Directory.Build.props` to customize settings for all test projects:
 
 ```xml
+
 <!-- tests/Directory.Build.props -->
 <Project>
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
@@ -112,9 +124,11 @@ Create `tests/Directory.Build.props` to customize settings for all test projects
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 </Project>
-```
 
-This imports the root `Directory.Build.props` (for shared settings like `Nullable`, `ImplicitUsings`, `LangVersion`) and overrides test-specific properties.
+```text
+
+This imports the root `Directory.Build.props` (for shared settings like `Nullable`, `ImplicitUsings`, `LangVersion`) and
+overrides test-specific properties.
 
 ---
 
@@ -123,6 +137,7 @@ This imports the root `Directory.Build.props` (for shared settings like `Nullabl
 Add test package versions to `Directory.Packages.props`:
 
 ```xml
+
 <!-- In Directory.Packages.props -->
 <ItemGroup>
   <!-- Test packages -->
@@ -131,21 +146,26 @@ Add test package versions to `Directory.Packages.props`:
   <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
   <PackageVersion Include="coverlet.collector" Version="8.0.0" />
 </ItemGroup>
-```
+
+```text
 
 ### Optional: Mocking Library
 
 Add a mocking library if the project needs test doubles:
 
 ```xml
+
 <PackageVersion Include="NSubstitute" Version="5.3.0" />
-```
+
+```xml
 
 Or for assertion libraries:
 
 ```xml
+
 <PackageVersion Include="FluentAssertions" Version="8.0.1" />
-```
+
+```xml
 
 ---
 
@@ -153,39 +173,47 @@ Or for assertion libraries:
 
 ### Coverlet (Collector Mode)
 
-The `coverlet.collector` package integrates with `dotnet test` via the data collector. No additional configuration is needed for basic coverage.
+The `coverlet.collector` package integrates with `dotnet test` via the data collector. No additional configuration is
+needed for basic coverage.
 
 Generate coverage reports:
 
 ```bash
+
 # Collect coverage (Cobertura format by default)
 dotnet test --collect:"XPlat Code Coverage"
 
 # Results appear in TestResults/*/coverage.cobertura.xml
-```
+
+```xml
 
 ### Coverage Thresholds
 
 For CI enforcement, use `coverlet.msbuild` for threshold checks:
 
 ```xml
+
 <!-- In test csproj or tests/Directory.Build.props -->
 <PackageReference Include="coverlet.msbuild" />
-```
+
+```xml
 
 ```bash
+
 # Enforce minimum coverage threshold
 dotnet test /p:CollectCoverage=true \
   /p:CoverageOutputFormat=cobertura \
   /p:Threshold=80 \
   /p:ThresholdType=line
-```
+
+```text
 
 ### Coverage Report Generation
 
 Use `reportgenerator` for human-readable HTML reports:
 
 ```bash
+
 # Install globally
 dotnet tool install -g dotnet-reportgenerator-globaltool
 
@@ -194,7 +222,8 @@ reportgenerator \
   -reports:"tests/**/coverage.cobertura.xml" \
   -targetdir:coverage-report \
   -reporttypes:Html
-```
+
+```xml
 
 ---
 
@@ -203,6 +232,7 @@ reportgenerator \
 In the root `.editorconfig`, add test-specific relaxations:
 
 ```ini
+
 [tests/**.cs]
 # Allow underscores in test method names (Given_When_Then or Should_Behavior)
 dotnet_diagnostic.CA1707.severity = none
@@ -215,7 +245,8 @@ dotnet_diagnostic.CA2007.severity = none
 
 # Tests often have intentionally unused variables for assertions
 dotnet_diagnostic.IDE0059.severity = suggestion
-```
+
+```text
 
 ---
 
@@ -224,6 +255,7 @@ dotnet_diagnostic.IDE0059.severity = suggestion
 Replace the template-generated `UnitTest1.cs` with a properly structured test:
 
 ```csharp
+
 namespace MyApp.Core.UnitTests;
 
 public class SampleServiceTests
@@ -251,11 +283,13 @@ public class SampleServiceTests
         Assert.Equal(expected, result);
     }
 }
-```
+
+```text
 
 ### Test Naming Convention
 
 Use the pattern `Method_Condition_ExpectedResult`:
+
 - `CreateUser_WithValidInput_ReturnsUser`
 - `GetById_WhenNotFound_ReturnsNull`
 - `Delete_WithoutPermission_ThrowsUnauthorized`
@@ -267,6 +301,7 @@ Use the pattern `Method_Condition_ExpectedResult`:
 After adding test infrastructure, verify everything works:
 
 ```bash
+
 # Restore (regenerate lock files if using CPM)
 dotnet restore
 
@@ -278,7 +313,8 @@ dotnet test --no-build
 
 # Run with coverage
 dotnet test --collect:"XPlat Code Coverage"
-```
+
+```text
 
 ---
 
@@ -287,33 +323,42 @@ dotnet test --collect:"XPlat Code Coverage"
 For integration tests that need `WebApplicationFactory` or database access:
 
 ```bash
+
 dotnet new xunit -n MyApp.Api.IntegrationTests -o tests/MyApp.Api.IntegrationTests
 dotnet sln add tests/MyApp.Api.IntegrationTests/MyApp.Api.IntegrationTests.csproj
 dotnet add tests/MyApp.Api.IntegrationTests/MyApp.Api.IntegrationTests.csproj \
   reference src/MyApp.Api/MyApp.Api.csproj
-```
 
-Add integration test packages to CPM (match the `Microsoft.AspNetCore.Mvc.Testing` major version to the target framework -- e.g., `8.x` for `net8.0`, `9.x` for `net9.0`, `10.x` for `net10.0`):
+```csharp
+
+Add integration test packages to CPM (match the `Microsoft.AspNetCore.Mvc.Testing` major version to the target framework
+-- e.g., `8.x` for `net8.0`, `9.x` for `net9.0`, `10.x` for `net10.0`):
 
 ```xml
+
 <!-- Version must match the project's target framework major version -->
 <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
 <PackageVersion Include="Testcontainers" Version="4.3.0" />
-```
 
-Integration test depth (WebApplicationFactory patterns, test containers, database fixtures) -- see [skill:dotnet-integration-testing].
+```xml
+
+Integration test depth (WebApplicationFactory patterns, test containers, database fixtures) -- see
+[skill:dotnet-integration-testing].
 
 ---
 
 ## What's Next
 
 This skill covers test project scaffolding. For deeper testing guidance:
+
 - **xUnit v3 features and patterns** -- [skill:dotnet-xunit]
 - **Integration testing with WebApplicationFactory** -- [skill:dotnet-integration-testing]
-- **UI testing (Blazor, MAUI, Uno)** -- [skill:dotnet-blazor-testing], [skill:dotnet-maui-testing], [skill:dotnet-uno-testing]
+- **UI testing (Blazor, MAUI, Uno)** -- [skill:dotnet-blazor-testing], [skill:dotnet-maui-testing],
+  [skill:dotnet-uno-testing]
 - **Snapshot testing** -- [skill:dotnet-snapshot-testing]
 - **Test quality and coverage enforcement** -- [skill:dotnet-test-quality]
-- **CI test reporting** -- [skill:dotnet-add-ci] for starter, [skill:dotnet-gha-build-test] and [skill:dotnet-ado-build-test] for advanced
+- **CI test reporting** -- [skill:dotnet-add-ci] for starter, [skill:dotnet-gha-build-test] and
+  [skill:dotnet-ado-build-test] for advanced
 
 ---
 
@@ -324,3 +369,4 @@ This skill covers test project scaffolding. For deeper testing guidance:
 - [.NET Testing Best Practices](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices)
 - [Microsoft.NET.Test.Sdk](https://www.nuget.org/packages/Microsoft.NET.Test.Sdk)
 - [ReportGenerator](https://github.com/danielpalme/ReportGenerator)
+````

@@ -2,21 +2,24 @@
 name: dotnet-ui-chooser
 description: Selects a .NET UI framework. Decision tree across Blazor, MAUI, Uno, WinUI, WPF, WinForms.
 license: MIT
-targets: ["*"]
-tags: ["ui", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['ui', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for ui tasks"
+  short-description: '.NET skill guidance for ui tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-ui-chooser
 
-UI framework selection decision tree for .NET applications. Covers Web (Blazor Server, Blazor WebAssembly, Blazor Hybrid), cross-platform (MAUI, Uno Platform, Avalonia), and Windows-only (WinUI 3, WPF, WinForms) frameworks. Presents structured trade-off analysis across five decision factors to help teams evaluate options based on their specific constraints.
+UI framework selection decision tree for .NET applications. Covers Web (Blazor Server, Blazor WebAssembly, Blazor
+Hybrid), cross-platform (MAUI, Uno Platform, Avalonia), and Windows-only (WinUI 3, WPF, WinForms) frameworks. Presents
+structured trade-off analysis across five decision factors to help teams evaluate options based on their specific
+constraints.
 
 ## Scope
 
@@ -30,19 +33,23 @@ UI framework selection decision tree for .NET applications. Covers Web (Blazor S
 - Migration paths between frameworks -- see [skill:dotnet-wpf-migration]
 - Desktop UI testing -- see [skill:dotnet-ui-testing-core]
 
-Cross-references: [skill:dotnet-blazor-patterns] for Blazor hosting and render modes, [skill:dotnet-maui-development] for MAUI patterns, [skill:dotnet-uno-platform] for Uno Platform patterns, [skill:dotnet-winui] for WinUI 3 patterns, [skill:dotnet-wpf-modern] for modern WPF on .NET 8+, [skill:dotnet-winforms-basics] for WinForms modernization.
+Cross-references: [skill:dotnet-blazor-patterns] for Blazor hosting and render modes, [skill:dotnet-maui-development]
+for MAUI patterns, [skill:dotnet-uno-platform] for Uno Platform patterns, [skill:dotnet-winui] for WinUI 3 patterns,
+[skill:dotnet-wpf-modern] for modern WPF on .NET 8+, [skill:dotnet-winforms-basics] for WinForms modernization.
 
 ---
 
 ## Decision Tree
 
-Use this structured flow to narrow framework choices based on project constraints. Each branch presents trade-offs rather than definitive answers -- the right choice depends on the weight your team assigns to each factor.
+Use this structured flow to narrow framework choices based on project constraints. Each branch presents trade-offs
+rather than definitive answers -- the right choice depends on the weight your team assigns to each factor.
 
 ### Step 1: Target Platforms
 
 The most significant constraint. Identify which platforms the application must support.
 
-```
+````text
+
 Target platforms?
 |
 +-- Web browser only
@@ -69,7 +76,8 @@ Target platforms?
 +-- Desktop cross-platform (Windows + macOS + Linux)
     --> Uno Platform or Avalonia
         MAUI supports macOS/Windows but not Linux
-```
+
+```text
 
 ### Step 2: Team Expertise
 
@@ -273,3 +281,4 @@ Structured guidance for frequently encountered situations. Each scenario present
 - [WinForms Overview](https://learn.microsoft.com/en-us/dotnet/desktop/winforms/)
 - [Avalonia UI](https://docs.avaloniaui.net/)
 - [Choose Your .NET UI](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/migration/?)
+````

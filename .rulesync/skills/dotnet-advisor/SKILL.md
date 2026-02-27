@@ -2,21 +2,22 @@
 name: dotnet-advisor
 description: Routes .NET/C# work to domain skills. Loads coding-standards for code paths.
 license: MIT
-targets: ["*"]
-tags: ["foundation", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['foundation', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for foundation tasks"
+  short-description: '.NET skill guidance for foundation tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-advisor
 
-Router and index skill for **dotnet-agent-harness**. Always loaded. Routes .NET development queries to the appropriate specialist skills based on context.
+Router and index skill for **dotnet-agent-harness**. Always loaded. Routes .NET development queries to the appropriate
+specialist skills based on context.
 
 ## Scope
 
@@ -28,7 +29,8 @@ Router and index skill for **dotnet-agent-harness**. Always loaded. Routes .NET 
 
 ## Out of scope
 
-- Domain-specific implementation guidance -- see [skill:dotnet-architecture-patterns], [skill:dotnet-csharp-async-patterns], and other domain skills in the catalog below
+- Domain-specific implementation guidance -- see [skill:dotnet-architecture-patterns],
+  [skill:dotnet-csharp-async-patterns], and other domain skills in the catalog below
 - Project scaffolding -- see [skill:dotnet-scaffold-project]
 - Version detection -- see [skill:dotnet-version-detection]
 - Build system and MSBuild authoring -- see [skill:dotnet-msbuild-authoring]
@@ -36,6 +38,7 @@ Router and index skill for **dotnet-agent-harness**. Always loaded. Routes .NET 
 ## Immediate Routing Actions (Do First)
 
 For every .NET/C# request, execute this sequence before detailed planning:
+
 1. Invoke [skill:dotnet-csharp-coding-standards].
 2. Invoke the primary domain skill for the request (API, EF Core, testing, UI, CLI, architecture, etc.).
 3. Continue with any additional routed skills.
@@ -45,6 +48,7 @@ For generic "build me an app" requests, do not skip step 1 even when project sca
 ## Default Quality Rule
 
 For any task that may produce, change, or review C#/.NET code:
+
 1. Load [skill:dotnet-csharp-coding-standards] as a baseline dependency.
 2. Then load domain-specific skills (API, EF Core, testing, UI, etc.).
 3. Apply standards from coding-standards throughout planning and implementation, not only in final cleanup.
@@ -53,19 +57,22 @@ For any task that may produce, change, or review C#/.NET code:
 
 Before any .NET guidance, determine the project's target framework:
 
-> Load [skill:dotnet-version-detection] to read TFMs from `.csproj`, `Directory.Build.props`, and `global.json`. Adapt all guidance to the detected .NET version (net8.0, net9.0, net10.0, net11.0).
+> Load [skill:dotnet-version-detection] to read TFMs from `.csproj`, `Directory.Build.props`, and `global.json`. Adapt
+> all guidance to the detected .NET version (net8.0, net9.0, net10.0, net11.0).
 
 ---
 
 ## Skill Catalog
 
 ### 1. Foundation & Plugin Infrastructure `implemented`
+
 - **dotnet-advisor** -- this skill (router/index)
 - [skill:dotnet-version-detection] -- TFM/SDK detection, preview features
 - [skill:dotnet-project-analysis] -- solution structure, project refs, CPM
 - [skill:dotnet-file-based-apps] -- .NET 10 file-based apps, `#:` directives, no .csproj
 
 ### 2. Core C# & Language Patterns `implemented`
+
 - [skill:dotnet-csharp-modern-patterns] -- C# 14/15 features, records, pattern matching
 - [skill:dotnet-csharp-coding-standards] -- naming, conventions, file organization
 - [skill:dotnet-csharp-async-patterns] -- async/await best practices, common mistakes
@@ -81,6 +88,7 @@ Before any .NET guidance, determine the project's target framework:
 - [skill:dotnet-native-interop] -- P/Invoke, LibraryImport, marshalling, cross-platform native calls
 
 ### 3. Project Structure & Scaffolding `implemented`
+
 - [skill:dotnet-project-structure] -- .slnx, Directory.Build.props, CPM, analyzers
 - [skill:dotnet-artifacts-output] -- UseArtifactsOutput, ArtifactsPath, impact on CI and Docker
 - [skill:dotnet-scaffold-project] -- project scaffolding with best practices
@@ -90,6 +98,7 @@ Before any .NET guidance, determine the project's target framework:
 - [skill:dotnet-modernize] -- analyze code for modernization opportunities
 
 ### 4. Architecture Patterns `implemented`
+
 - [skill:dotnet-architecture-patterns] -- minimal API org, vertical slices, error handling
 - [skill:dotnet-background-services] -- BackgroundService, Channels, producer/consumer
 - [skill:dotnet-resilience] -- Polly v8 + MS.Extensions.Resilience (NOT Http.Polly)
@@ -106,26 +115,32 @@ Before any .NET guidance, determine the project's target framework:
 - [skill:dotnet-aspire-patterns] -- .NET Aspire: AppHost, service discovery, components, dashboard
 
 ### 5. Serialization & Communication `implemented`
+
 - [skill:dotnet-serialization] -- AOT source-gen: STJ, Protobuf, MessagePack
 - [skill:dotnet-grpc] -- service definition, streaming, auth, health checks
 - [skill:dotnet-realtime-communication] -- SignalR, JSON-RPC, SSE, gRPC streaming
 - [skill:dotnet-service-communication] -- routes to gRPC, real-time, or REST
 
 ### 6. API Development `implemented`
+
 - [skill:dotnet-minimal-apis] -- route groups, filters, validation, OpenAPI 3.1
 - [skill:dotnet-api-versioning] -- URL versioning, Asp.Versioning.Http/Mvc
-- [skill:dotnet-openapi] -- OpenAPI: MS.AspNetCore.OpenApi (built-in .NET 9+), Swashbuckle migration, NSwag, transformers
+- [skill:dotnet-openapi] -- OpenAPI: MS.AspNetCore.OpenApi (built-in .NET 9+), Swashbuckle migration, NSwag,
+  transformers
 - [skill:dotnet-api-security] -- Identity, OAuth/OIDC, JWT, passkeys (WebAuthn), CORS, CSP, rate limiting
-- [skill:dotnet-input-validation] -- .NET 10 AddValidation, FluentValidation, Data Annotations, endpoint filters, ProblemDetails
+- [skill:dotnet-input-validation] -- .NET 10 AddValidation, FluentValidation, Data Annotations, endpoint filters,
+  ProblemDetails
 - [skill:dotnet-library-api-compat] -- binary/source compatibility rules, type forwarders, SemVer impact
 - [skill:dotnet-api-surface-validation] -- PublicApiAnalyzers, Verify snapshot pattern, ApiCompat CI enforcement
 
 ### 7. Security `implemented`
+
 - [skill:dotnet-security-owasp] -- OWASP top 10 for .NET
 - [skill:dotnet-secrets-management] -- user secrets, secure config patterns
 - [skill:dotnet-cryptography] -- modern crypto incl. post-quantum (.NET 10)
 
 ### 8. Testing `implemented`
+
 - [skill:dotnet-testing-strategy] -- unit vs integration vs E2E, organization
 - [skill:dotnet-xunit] -- xUnit v3, theories, fixtures, parallelism
 - [skill:dotnet-integration-testing] -- WebApplicationFactory, Testcontainers
@@ -138,6 +153,7 @@ Before any .NET guidance, determine the project's target framework:
 - [skill:dotnet-test-quality] -- coverage, CRAP analysis, mutation testing
 
 ### 9. Performance & Benchmarking `implemented`
+
 - [skill:dotnet-benchmarkdotnet] -- BenchmarkDotNet setup, configs, CI
 - [skill:dotnet-performance-patterns] -- Span, pooling, zero-alloc, sealed
 - [skill:dotnet-profiling] -- dotnet-counters, trace, dump, memory
@@ -145,12 +161,14 @@ Before any .NET guidance, determine the project's target framework:
 - [skill:dotnet-gc-memory] -- GC modes, LOH/POH, Gen0/1/2 tuning, Span/Memory, ArrayPool, profiling
 
 ### 10. Native AOT & Trimming `implemented`
+
 - [skill:dotnet-native-aot] -- trimming, RD.xml, reflection-free, size opt
 - [skill:dotnet-aot-architecture] -- architect for AOT from start
 - [skill:dotnet-trimming] -- trim-safe annotations, linker config, testing
 - [skill:dotnet-aot-wasm] -- WASM AOT for Blazor and Uno
 
 ### 11. CLI Tool Development `implemented`
+
 - [skill:dotnet-system-commandline] -- System.CommandLine, middleware, hosting
 - [skill:dotnet-cli-architecture] -- layered CLI design, testability
 - [skill:dotnet-cli-distribution] -- Native AOT + cross-platform distribution strategy
@@ -159,6 +177,7 @@ Before any .NET guidance, determine the project's target framework:
 - [skill:dotnet-tool-management] -- install, manage, restore global/local .NET tools
 
 ### 12. UI Frameworks `implemented`
+
 - [skill:dotnet-blazor-patterns] -- Server, WASM, Hybrid, auto/streaming
 - [skill:dotnet-blazor-components] -- component architecture, JS interop
 - [skill:dotnet-blazor-auth] -- auth across hosting models
@@ -175,21 +194,26 @@ Before any .NET guidance, determine the project's target framework:
 - [skill:dotnet-ui-chooser] -- decision tree for UI framework selection
 
 ### 13. Multi-Targeting & Polyfills `implemented`
+
 - [skill:dotnet-multi-targeting] -- PolySharp, Polyfill, conditional compilation
 - [skill:dotnet-version-upgrade] -- .NET 8 -> 10 -> 11 upgrade guidance
 
 ### 14. Localization & Internationalization `implemented`
+
 - [skill:dotnet-localization] -- i18n: .resx, IStringLocalizer, RTL, pluralization
 
 ### 15. Packaging & Publishing `implemented`
+
 - [skill:dotnet-nuget-authoring] -- NuGet package authoring, signing, validation, source generators
 - [skill:dotnet-msix] -- MSIX creation, signing, distribution, auto-update
 - [skill:dotnet-github-releases] -- GitHub Releases with release notes
 
 ### 16. Release Management `implemented`
+
 - [skill:dotnet-release-management] -- NBGV, changelogs, SemVer strategy
 
 ### 17. CI/CD `implemented`
+
 - [skill:dotnet-gha-patterns] -- reusable workflows, composite actions, matrix
 - [skill:dotnet-gha-build-test] -- .NET build + test workflows
 - [skill:dotnet-gha-publish] -- NuGet/container publishing workflows
@@ -200,6 +224,7 @@ Before any .NET guidance, determine the project's target framework:
 - [skill:dotnet-ado-unique] -- ADO-specific: classic pipelines, service connections
 
 ### 18. Documentation `implemented`
+
 - [skill:dotnet-documentation-strategy] -- Starlight, Docusaurus, DocFX
 - [skill:dotnet-mermaid-diagrams] -- architecture/sequence/class diagrams
 - [skill:dotnet-github-docs] -- README, CONTRIBUTING, issue templates
@@ -207,15 +232,18 @@ Before any .NET guidance, determine the project's target framework:
 - [skill:dotnet-api-docs] -- API doc generation, OpenAPI specs
 
 ### 19. Agent Meta-Skills `implemented`
+
 - [skill:dotnet-agent-gotchas] -- common agent mistakes with .NET
 - [skill:dotnet-build-analysis] -- understand build output, MSBuild errors
 - [skill:dotnet-csproj-reading] -- read/modify .csproj, MSBuild properties
 - [skill:dotnet-solution-navigation] -- navigate solutions, find entry points
 
 ### 20. AI & LLM Integration `implemented`
+
 - [skill:dotnet-semantic-kernel] -- Semantic Kernel: plugins, prompt templates, memory, agents
 
 ### 21. Debugging `implemented`
+
 - [skill:dotnet-windbg-debugging] -- WinDbg MCP: crash dumps, hangs, high CPU, memory triage (any Windows app)
 
 ---
@@ -225,14 +253,17 @@ Before any .NET guidance, determine the project's target framework:
 Use this decision tree to load the right skills for the current task.
 
 ### Starting a New Project
+
 1. [skill:dotnet-version-detection] -- detect or choose target framework
 2. [skill:dotnet-project-analysis] -- understand existing solution (if any)
 3. [skill:dotnet-project-structure], [skill:dotnet-scaffold-project] -- scaffold project
 4. [skill:dotnet-architecture-patterns] -- design decisions
+
 - File-based app (no .csproj, .NET 10+) -> [skill:dotnet-file-based-apps]
 - Build output layout (UseArtifactsOutput, .NET 8+) -> [skill:dotnet-artifacts-output]
 
 ### Writing or Modifying C# Code
+
 - Always load first -> [skill:dotnet-csharp-coding-standards] (baseline for all C#/.NET code paths)
 - Modern C# patterns -> [skill:dotnet-csharp-modern-patterns]
 - NRT -> [skill:dotnet-csharp-nullable-reference-types]
@@ -248,6 +279,7 @@ Use this decision tree to load the right skills for the current task.
 - P/Invoke, native interop, LibraryImport, marshalling -> [skill:dotnet-native-interop]
 
 ### Building APIs
+
 - Minimal APIs (default for new) -> [skill:dotnet-minimal-apis]
 - API versioning -> [skill:dotnet-api-versioning]
 - OpenAPI/Swagger, Swashbuckle migration -> [skill:dotnet-openapi]
@@ -258,12 +290,14 @@ Use this decision tree to load the right skills for the current task.
 - Resilience/HTTP clients -> [skill:dotnet-resilience], [skill:dotnet-http-client]
 
 ### Working with Data
+
 - EF Core for working with databases -> [skill:dotnet-efcore-patterns], [skill:dotnet-efcore-architecture]
 - Choosing data access approach (EF Core vs Dapper vs ADO.NET) -> [skill:dotnet-data-access-strategy]
 - Serialization (JSON, Protobuf) -> [skill:dotnet-serialization]
 - Domain modeling, DDD patterns -> [skill:dotnet-domain-modeling]
 
 ### Building UI
+
 - Choosing a framework -> [skill:dotnet-ui-chooser]
 - Accessibility (any UI framework) -> [skill:dotnet-accessibility]
 - Blazor app architecture/components -> [skill:dotnet-blazor-patterns], [skill:dotnet-blazor-components]
@@ -275,6 +309,7 @@ Use this decision tree to load the right skills for the current task.
 - WinForms -> [skill:dotnet-winforms-basics]
 
 ### Testing
+
 - Strategy/what to test -> [skill:dotnet-testing-strategy]
 - xUnit v3 -> [skill:dotnet-xunit]
 - Integration tests -> [skill:dotnet-integration-testing]
@@ -283,6 +318,7 @@ Use this decision tree to load the right skills for the current task.
 - Coverage/quality -> [skill:dotnet-test-quality]
 
 ### Performance Work
+
 - Benchmarking -> [skill:dotnet-benchmarkdotnet]
 - Optimization patterns -> [skill:dotnet-performance-patterns]
 - Profiling -> [skill:dotnet-profiling]
@@ -290,50 +326,62 @@ Use this decision tree to load the right skills for the current task.
 - GC tuning, memory management -> [skill:dotnet-gc-memory]
 
 ### Native AOT / Trimming
+
 - AOT compilation -> [skill:dotnet-native-aot]
 - Architecting for AOT -> [skill:dotnet-aot-architecture]
 - Trimming -> [skill:dotnet-trimming]
 - WASM AOT -> [skill:dotnet-aot-wasm]
 
 ### CLI Tools
+
 - System.CommandLine -> [skill:dotnet-system-commandline]
 - CLI design -> [skill:dotnet-cli-architecture]
 - Distribution -> [skill:dotnet-cli-distribution], [skill:dotnet-cli-packaging], [skill:dotnet-cli-release-pipeline]
 - Tool install, manifest, restore -> [skill:dotnet-tool-management]
 
 ### Containers & Deployment
+
 - Dockerfiles -> [skill:dotnet-containers]
 - Kubernetes/Compose -> [skill:dotnet-container-deployment]
 
 ### Security
+
 - OWASP compliance -> [skill:dotnet-security-owasp]
 - Secrets management -> [skill:dotnet-secrets-management]
 - Cryptography -> [skill:dotnet-cryptography]
 
 ### Communication Patterns
+
 - gRPC -> [skill:dotnet-grpc]
 - Real-time (SignalR, SSE) -> [skill:dotnet-realtime-communication]
 - Choosing protocol -> [skill:dotnet-service-communication]
 - Messaging, event-driven (Service Bus, RabbitMQ) -> [skill:dotnet-messaging-patterns]
 
 ### CI/CD Setup
-- GitHub Actions -> [skill:dotnet-gha-patterns], [skill:dotnet-gha-build-test], [skill:dotnet-gha-publish], [skill:dotnet-gha-deploy]
-- Azure DevOps -> [skill:dotnet-ado-patterns], [skill:dotnet-ado-build-test], [skill:dotnet-ado-publish], [skill:dotnet-ado-unique]
+
+- GitHub Actions -> [skill:dotnet-gha-patterns], [skill:dotnet-gha-build-test], [skill:dotnet-gha-publish],
+  [skill:dotnet-gha-deploy]
+- Azure DevOps -> [skill:dotnet-ado-patterns], [skill:dotnet-ado-build-test], [skill:dotnet-ado-publish],
+  [skill:dotnet-ado-unique]
 
 ### Packaging & Releases
+
 - NuGet publishing -> [skill:dotnet-nuget-authoring]
 - MSIX -> [skill:dotnet-msix]
 - GitHub Releases -> [skill:dotnet-github-releases]
 - Versioning -> [skill:dotnet-release-management]
 
 ### Multi-Targeting
+
 - Multi-TFM builds -> [skill:dotnet-multi-targeting]
 - Version upgrades -> [skill:dotnet-version-upgrade]
 
 ### Localization
+
 - i18n/l10n -> [skill:dotnet-localization]
 
 ### Documentation
+
 - Doc strategy -> [skill:dotnet-documentation-strategy]
 - Diagrams -> [skill:dotnet-mermaid-diagrams]
 - GitHub docs -> [skill:dotnet-github-docs]
@@ -341,23 +389,28 @@ Use this decision tree to load the right skills for the current task.
 - API docs -> [skill:dotnet-api-docs]
 
 ### Agent Assistance
+
 - Agent making .NET mistakes -> [skill:dotnet-agent-gotchas]
 - Build errors -> [skill:dotnet-build-analysis]
 - Reading .csproj -> [skill:dotnet-csproj-reading]
 - Navigating solutions -> [skill:dotnet-solution-navigation]
 
 ### Background Work
+
 - Background services, queues -> [skill:dotnet-background-services]
 - Observability/logging -> [skill:dotnet-observability]
 - Log pipeline design, aggregation, PII scrubbing -> [skill:dotnet-structured-logging]
 
 ### Cloud & Orchestration
+
 - .NET Aspire, service discovery, AppHost -> [skill:dotnet-aspire-patterns]
 
 ### AI & LLM Integration
+
 - Semantic Kernel, LLM orchestration, plugins -> [skill:dotnet-semantic-kernel]
 
 ### Debugging
+
 - Windows app crash, hang, freeze, high CPU, memory leak, dump analysis, WinDbg, cdb -> [skill:dotnet-windbg-debugging]
 
 ### Specialist Agent Routing
@@ -366,6 +419,7 @@ For complex analysis that benefits from domain expertise, delegate to specialist
 
 - Async/await performance, ValueTask, ConfigureAwait, IO.Pipelines -> [skill:dotnet-async-performance-specialist]
 - ASP.NET Core middleware, request pipeline, DI lifetimes, diagnostic scenarios -> [skill:dotnet-aspnetcore-specialist]
-- Test architecture, test type selection, test data management, microservice testing -> [skill:dotnet-testing-specialist]
+- Test architecture, test type selection, test data management, microservice testing ->
+  [skill:dotnet-testing-specialist]
 - Cloud deployment, .NET Aspire, AKS, CI/CD pipelines, distributed tracing -> [skill:dotnet-cloud-specialist]
 - General code review (correctness, performance, security, architecture) -> [skill:dotnet-code-review-agent]

@@ -2,23 +2,26 @@
 name: dotnet-xunit
 description: Authors xUnit v3 tests -- Facts, Theories, fixtures, parallelism, IAsyncLifetime.
 license: MIT
-targets: ["*"]
-tags: ["testing", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['testing', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for testing tasks"
+  short-description: '.NET skill guidance for testing tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-xunit
 
-xUnit v3 testing framework features for .NET. Covers `[Fact]` and `[Theory]` attributes, test fixtures (`IClassFixture`, `ICollectionFixture`), parallel execution configuration, `IAsyncLifetime` for async setup/teardown, custom assertions, and xUnit analyzers. Includes v2 compatibility notes where behavior differs.
+xUnit v3 testing framework features for .NET. Covers `[Fact]` and `[Theory]` attributes, test fixtures (`IClassFixture`,
+`ICollectionFixture`), parallel execution configuration, `IAsyncLifetime` for async setup/teardown, custom assertions,
+and xUnit analyzers. Includes v2 compatibility notes where behavior differs.
 
-**Version assumptions:** xUnit v3 primary (.NET 8.0+ baseline). Where v3 behavior differs from v2, compatibility notes are provided inline. xUnit v2 remains widely used; many projects will encounter both versions during migration.
+**Version assumptions:** xUnit v3 primary (.NET 8.0+ baseline). Where v3 behavior differs from v2, compatibility notes
+are provided inline. xUnit v2 remains widely used; many projects will encounter both versions during migration.
 
 ## Scope
 
@@ -36,28 +39,32 @@ xUnit v3 testing framework features for .NET. Covers `[Fact]` and `[Theory]` att
 - Integration testing patterns (WebApplicationFactory, Testcontainers) -- see [skill:dotnet-integration-testing]
 - Snapshot testing with Verify -- see [skill:dotnet-snapshot-testing]
 
-**Prerequisites:** Test project already scaffolded via [skill:dotnet-add-testing] with xUnit packages referenced. Run [skill:dotnet-version-detection] to confirm .NET 8.0+ baseline for xUnit v3 support.
+**Prerequisites:** Test project already scaffolded via [skill:dotnet-add-testing] with xUnit packages referenced. Run
+[skill:dotnet-version-detection] to confirm .NET 8.0+ baseline for xUnit v3 support.
 
-Cross-references: [skill:dotnet-testing-strategy] for deciding what to test and how, [skill:dotnet-integration-testing] for combining xUnit with WebApplicationFactory and Testcontainers.
+Cross-references: [skill:dotnet-testing-strategy] for deciding what to test and how, [skill:dotnet-integration-testing]
+for combining xUnit with WebApplicationFactory and Testcontainers.
 
 ---
 
 ## xUnit v3 vs v2: Key Changes
 
-| Feature | xUnit v2 | xUnit v3 |
-|---------|----------|----------|
-| **Package** | `xunit` (2.x) | `xunit.v3` |
-| **Runner** | `xunit.runner.visualstudio` | `xunit.runner.visualstudio` (3.x) |
-| **Async lifecycle** | `IAsyncLifetime` | `IAsyncLifetime` (now returns `ValueTask`) |
-| **Assert package** | Bundled | Separate `xunit.v3.assert` (or `xunit.v3.assert.source` for extensibility) |
-| **Parallelism default** | Per-collection | Per-collection (same, but configurable per-assembly) |
-| **Timeout** | `Timeout` property on `[Fact]` and `[Theory]` | `Timeout` property on `[Fact]` and `[Theory]` (unchanged) |
-| **Test output** | `ITestOutputHelper` | `ITestOutputHelper` (unchanged) |
-| **`[ClassData]`** | Returns `IEnumerable<object[]>` | Returns `IEnumerable<TheoryDataRow<T>>` (strongly typed) |
-| **`[MemberData]`** | Returns `IEnumerable<object[]>` | Supports `TheoryData<T>` and `TheoryDataRow<T>` |
-| **Assertion messages** | Optional string parameter on Assert methods | Removed in favor of custom assertions (v3.0); use `Assert.Fail()` for explicit messages |
+| Feature                 | xUnit v2                                      | xUnit v3                                                                                |
+| ----------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **Package**             | `xunit` (2.x)                                 | `xunit.v3`                                                                              |
+| **Runner**              | `xunit.runner.visualstudio`                   | `xunit.runner.visualstudio` (3.x)                                                       |
+| **Async lifecycle**     | `IAsyncLifetime`                              | `IAsyncLifetime` (now returns `ValueTask`)                                              |
+| **Assert package**      | Bundled                                       | Separate `xunit.v3.assert` (or `xunit.v3.assert.source` for extensibility)              |
+| **Parallelism default** | Per-collection                                | Per-collection (same, but configurable per-assembly)                                    |
+| **Timeout**             | `Timeout` property on `[Fact]` and `[Theory]` | `Timeout` property on `[Fact]` and `[Theory]` (unchanged)                               |
+| **Test output**         | `ITestOutputHelper`                           | `ITestOutputHelper` (unchanged)                                                         |
+| **`[ClassData]`**       | Returns `IEnumerable<object[]>`               | Returns `IEnumerable<TheoryDataRow<T>>` (strongly typed)                                |
+| **`[MemberData]`**      | Returns `IEnumerable<object[]>`               | Supports `TheoryData<T>` and `TheoryDataRow<T>`                                         |
+| **Assertion messages**  | Optional string parameter on Assert methods   | Removed in favor of custom assertions (v3.0); use `Assert.Fail()` for explicit messages |
 
-**v2 compatibility note:** If migrating from v2, replace `xunit` package with `xunit.v3`. Most `[Fact]` and `[Theory]` tests work without changes. The primary migration effort is in `IAsyncLifetime` (return type changes to `ValueTask`), `[ClassData]` (strongly typed row format), and removed assertion message parameters.
+**v2 compatibility note:** If migrating from v2, replace `xunit` package with `xunit.v3`. Most `[Fact]` and `[Theory]`
+tests work without changes. The primary migration effort is in `IAsyncLifetime` (return type changes to `ValueTask`),
+`[ClassData]` (strongly typed row format), and removed assertion message parameters.
 
 ---
 
@@ -67,7 +74,8 @@ Cross-references: [skill:dotnet-testing-strategy] for deciding what to test and 
 
 Use `[Fact]` for tests with no parameters:
 
-```csharp
+````csharp
+
 public class DiscountCalculatorTests
 {
     [Fact]
@@ -91,7 +99,8 @@ public class DiscountCalculatorTests
         Assert.Equal(85m, result);
     }
 }
-```
+
+```text
 
 ### `[Theory]` -- Parameterized Tests
 
@@ -102,6 +111,7 @@ Use `[Theory]` to run the same test logic with different inputs.
 Best for simple value types:
 
 ```csharp
+
 [Theory]
 [InlineData(100, 10, 90)]      // 10% off 100 = 90
 [InlineData(200, 25, 150)]     // 25% off 200 = 150
@@ -116,13 +126,15 @@ public void Apply_VariousInputs_ReturnsExpectedPrice(
 
     Assert.Equal(expected, result);
 }
-```
+
+```text
 
 #### `[MemberData]` with `TheoryData<T>`
 
 Best for complex data or shared datasets:
 
 ```csharp
+
 public class OrderValidatorTests
 {
     public static TheoryData<Order, bool> ValidationCases => new()
@@ -143,13 +155,15 @@ public class OrderValidatorTests
         Assert.Equal(expected, result);
     }
 }
-```
+
+```text
 
 #### `[ClassData]`
 
 Best for data shared across multiple test classes:
 
 ```csharp
+
 // xUnit v3: use TheoryDataRow<T> for strongly-typed rows
 public class CurrencyConversionData : IEnumerable<TheoryDataRow<string, string, decimal>>
 {
@@ -184,7 +198,8 @@ public void Convert_KnownPairs_ReturnsExpectedRate(
 
     Assert.Equal(expectedRate, rate, precision: 2);
 }
-```
+
+```text
 
 ---
 
@@ -197,6 +212,7 @@ Fixtures provide shared, expensive resources across tests while maintaining test
 Use when multiple tests in the same class share an expensive resource (database connection, configuration):
 
 ```csharp
+
 public class DatabaseFixture : IAsyncLifetime
 {
     public string ConnectionString { get; private set; } = "";
@@ -237,7 +253,8 @@ public class OrderRepositoryTests : IClassFixture<DatabaseFixture>
         Assert.NotNull(result);
     }
 }
-```
+
+```text
 
 **v2 compatibility note:** In xUnit v2, `IAsyncLifetime.InitializeAsync()` and `DisposeAsync()` return `Task`. In v3, they return `ValueTask`. When migrating, change the return types accordingly.
 
@@ -246,6 +263,7 @@ public class OrderRepositoryTests : IClassFixture<DatabaseFixture>
 Use when multiple test classes need the same expensive resource:
 
 ```csharp
+
 // 1. Define the collection
 [CollectionDefinition("Database")]
 public class DatabaseCollection : ICollectionFixture<DatabaseFixture>
@@ -281,13 +299,15 @@ public class CustomerRepositoryTests
         _db = db;
     }
 }
-```
+
+```text
 
 ### `IAsyncLifetime` on Test Classes
 
 For per-test async setup/teardown without a shared fixture:
 
 ```csharp
+
 public class FileProcessorTests : IAsyncLifetime
 {
     private string _tempDir = "";
@@ -318,7 +338,8 @@ public class FileProcessorTests : IAsyncLifetime
         Assert.Equal(2, records.Count);
     }
 }
-```
+
+```text
 
 ---
 
@@ -335,6 +356,7 @@ xUnit runs test classes within a collection sequentially but runs different coll
 Place tests that share mutable state in the same collection:
 
 ```csharp
+
 [CollectionDefinition("Sequential", DisableParallelization = true)]
 public class SequentialCollection { }
 
@@ -343,28 +365,33 @@ public class StatefulServiceTests
 {
     // These tests run sequentially within this collection
 }
-```
+
+```text
 
 #### Assembly-Level Configuration
 
 Create `xunit.runner.json` in the test project root:
 
 ```json
+
 {
     "$schema": "https://xunit.net/schema/current/xunit.runner.schema.json",
     "parallelizeAssembly": false,
     "parallelizeTestCollections": true,
     "maxParallelThreads": 4
 }
-```
+
+```text
 
 Ensure it is copied to output:
 
 ```xml
+
 <ItemGroup>
   <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
 </ItemGroup>
-```
+
+```json
 
 **v2 compatibility note:** In v2, configuration was via `xunit.runner.json` or assembly attributes. v3 retains `xunit.runner.json` support with the same property names.
 
@@ -377,6 +404,7 @@ Ensure it is copied to output:
 Capture diagnostic output that appears in test results:
 
 ```csharp
+
 public class DiagnosticTests
 {
     private readonly ITestOutputHelper _output;
@@ -398,13 +426,15 @@ public class DiagnosticTests
         Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5));
     }
 }
-```
+
+```text
 
 ### Integrating with `ILogger`
 
 Bridge xUnit output to `Microsoft.Extensions.Logging` for integration tests:
 
 ```csharp
+
 // NuGet: Microsoft.Extensions.Logging (for LoggerFactory)
 // + a logging provider that writes to ITestOutputHelper
 // Common approach: use a simple adapter
@@ -433,7 +463,8 @@ public class XunitLogger(ITestOutputHelper output, string category) : ILogger
             output.WriteLine(exception.ToString());
     }
 }
-```
+
+```text
 
 ---
 
@@ -444,6 +475,7 @@ public class XunitLogger(ITestOutputHelper output, string category) : ILogger
 Create domain-specific assertions for cleaner test code:
 
 ```csharp
+
 public static class OrderAssert
 {
     public static void HasStatus(Order order, OrderStatus expected)
@@ -473,13 +505,15 @@ public void Complete_ValidOrder_SetsCompletedStatus()
 
     OrderAssert.HasStatus(order, OrderStatus.Completed);
 }
-```
+
+```text
 
 ### Using `Assert.Multiple` (xUnit v3)
 
 Group related assertions so all are evaluated even if one fails:
 
 ```csharp
+
 [Fact]
 public void CreateOrder_ValidRequest_SetsAllProperties()
 {
@@ -492,7 +526,8 @@ public void CreateOrder_ValidRequest_SetsAllProperties()
         () => Assert.NotEmpty(order.Items)
     );
 }
-```
+
+```text
 
 **v2 compatibility note:** `Assert.Multiple` is new in xUnit v3. In v2, use separate assertions -- the test stops at the first failure.
 
@@ -520,10 +555,12 @@ The `xunit.analyzers` package (included with xUnit v3) catches common test autho
 In `.editorconfig` for test projects:
 
 ```ini
+
 [tests/**.cs]
 # Allow skipped tests during development
 dotnet_diagnostic.xUnit1004.severity = suggestion
-```
+
+```csharp
 
 ---
 
@@ -555,3 +592,4 @@ dotnet_diagnostic.xUnit1004.severity = suggestion
 - [xUnit analyzers](https://xunit.net/xunit.analyzers/rules/)
 - [Shared context in xUnit](https://xunit.net/docs/shared-context)
 - [Configuring xUnit with JSON](https://xunit.net/docs/configuration-files)
+````

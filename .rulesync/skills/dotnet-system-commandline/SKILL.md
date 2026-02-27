@@ -2,25 +2,33 @@
 name: dotnet-system-commandline
 description: Builds .NET CLI apps with System.CommandLine 2.0. Commands, options, SetAction, parsing, testing.
 license: MIT
-targets: ["*"]
-tags: ["foundation", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['foundation', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for foundation tasks"
+  short-description: '.NET skill guidance for foundation tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-system-commandline
 
-System.CommandLine 2.0 stable API for building .NET CLI applications. Covers RootCommand, Command, Option\<T\>, Argument\<T\>, SetAction for handler binding, ParseResult-based value access, custom type parsing, validation, tab completion, and testing with TextWriter capture.
+System.CommandLine 2.0 stable API for building .NET CLI applications. Covers RootCommand, Command, Option\<T\>,
+Argument\<T\>, SetAction for handler binding, ParseResult-based value access, custom type parsing, validation, tab
+completion, and testing with TextWriter capture.
 
-**Version assumptions:** .NET 8.0+ baseline. System.CommandLine 2.0.0+ (stable NuGet package, GA since November 2025). All examples target the 2.0.0 GA API surface.
+**Version assumptions:** .NET 8.0+ baseline. System.CommandLine 2.0.0+ (stable NuGet package, GA since November 2025).
+All examples target the 2.0.0 GA API surface.
 
-**Breaking change note:** System.CommandLine 2.0.0 GA differs significantly from the pre-release beta4 API. Key changes: `SetHandler` replaced by `SetAction`, `ICommandHandler` removed in favor of `SynchronousCommandLineAction`/`AsynchronousCommandLineAction`, `InvocationContext` removed (ParseResult passed directly), `CommandLineBuilder` and `AddMiddleware` removed, `IConsole` removed in favor of TextWriter properties, and the `System.CommandLine.Hosting`/`System.CommandLine.NamingConventionBinder` packages discontinued. Do not use beta-era patterns.
+**Breaking change note:** System.CommandLine 2.0.0 GA differs significantly from the pre-release beta4 API. Key changes:
+`SetHandler` replaced by `SetAction`, `ICommandHandler` removed in favor of
+`SynchronousCommandLineAction`/`AsynchronousCommandLineAction`, `InvocationContext` removed (ParseResult passed
+directly), `CommandLineBuilder` and `AddMiddleware` removed, `IConsole` removed in favor of TextWriter properties, and
+the `System.CommandLine.Hosting`/`System.CommandLine.NamingConventionBinder` packages discontinued. Do not use beta-era
+patterns.
 
 ## Scope
 
@@ -35,7 +43,8 @@ System.CommandLine 2.0 stable API for building .NET CLI applications. Covers Roo
 
 ## Out of scope
 
-- CLI application architecture patterns (layered design, exit codes, stdin/stdout/stderr) -- see [skill:dotnet-cli-architecture]
+- CLI application architecture patterns (layered design, exit codes, stdin/stdout/stderr) -- see
+  [skill:dotnet-cli-architecture]
 - Native AOT compilation -- see [skill:dotnet-native-aot]
 - CLI distribution strategy -- see [skill:dotnet-cli-distribution]
 - General CI/CD patterns -- see [skill:dotnet-gha-patterns] and [skill:dotnet-ado-patterns]
@@ -43,17 +52,21 @@ System.CommandLine 2.0 stable API for building .NET CLI applications. Covers Roo
 - General coding standards -- see [skill:dotnet-csharp-coding-standards]
 - CLI packaging for Homebrew, apt, winget -- see [skill:dotnet-cli-packaging]
 
-Cross-references: [skill:dotnet-cli-architecture] for CLI design patterns, [skill:dotnet-native-aot] for AOT publishing CLI tools, [skill:dotnet-csharp-dependency-injection] for DI fundamentals, [skill:dotnet-csharp-configuration] for configuration integration, [skill:dotnet-csharp-coding-standards] for naming and style conventions.
+Cross-references: [skill:dotnet-cli-architecture] for CLI design patterns, [skill:dotnet-native-aot] for AOT publishing
+CLI tools, [skill:dotnet-csharp-dependency-injection] for DI fundamentals, [skill:dotnet-csharp-configuration] for
+configuration integration, [skill:dotnet-csharp-coding-standards] for naming and style conventions.
 
 ---
 
 ## Package Reference
 
-```xml
+````xml
+
 <ItemGroup>
   <PackageReference Include="System.CommandLine" Version="2.0.*" />
 </ItemGroup>
-```
+
+```bash
 
 System.CommandLine 2.0 targets .NET 8+ and .NET Standard 2.0. A single package provides all functionality -- the separate `System.CommandLine.Hosting`, `System.CommandLine.NamingConventionBinder`, and `System.CommandLine.Rendering` packages from the beta era are discontinued.
 
@@ -64,6 +77,7 @@ System.CommandLine 2.0 targets .NET 8+ and .NET Standard 2.0. A single package p
 ### Basic Command Structure
 
 ```csharp
+
 using System.CommandLine;
 
 // Root command -- the entry point
@@ -80,11 +94,13 @@ var downCommand = new Command("down", "Revert last migration");
 migrateCommand.Subcommands.Add(upCommand);
 migrateCommand.Subcommands.Add(downCommand);
 rootCommand.Subcommands.Add(migrateCommand);
-```
+
+```bash
 
 ### Collection Initializer Syntax
 
 ```csharp
+
 // Fluent collection initializer (commands, options, arguments)
 RootCommand rootCommand = new("My CLI tool")
 {
@@ -95,7 +111,8 @@ RootCommand rootCommand = new("My CLI tool")
         new Option<int>("--limit") { Description = "Max items to return" }
     }
 };
-```
+
+```text
 
 ---
 
@@ -104,6 +121,7 @@ RootCommand rootCommand = new("My CLI tool")
 ### Option\<T\> -- Named Parameters
 
 ```csharp
+
 // Option<T> -- named parameter (--output, -o)
 // name is the first parameter; additional params are aliases
 var outputOption = new Option<FileInfo>("--output", "-o")
@@ -118,11 +136,13 @@ var verbosityOption = new Option<int>("--verbosity")
     Description = "Verbosity level (0-3)",
     DefaultValueFactory = _ => 1
 };
-```
+
+```text
 
 ### Argument\<T\> -- Positional Parameters
 
 ```csharp
+
 // Argument<T> -- positional parameter
 // name is mandatory in 2.0 (used for help text)
 var fileArgument = new Argument<FileInfo>("file")
@@ -131,11 +151,13 @@ var fileArgument = new Argument<FileInfo>("file")
 };
 
 rootCommand.Arguments.Add(fileArgument);
-```
+
+```bash
 
 ### Constrained Values
 
 ```csharp
+
 var formatOption = new Option<string>("--format")
 {
     Description = "Output format"
@@ -143,11 +165,13 @@ var formatOption = new Option<string>("--format")
 formatOption.AcceptOnlyFromAmong("json", "csv", "table");
 
 rootCommand.Options.Add(formatOption);
-```
+
+```bash
 
 ### Aliases
 
 ```csharp
+
 // Aliases are separate from the name in 2.0
 // First constructor param is the name; rest are aliases
 var verboseOption = new Option<bool>("--verbose", "-v")
@@ -157,11 +181,13 @@ var verboseOption = new Option<bool>("--verbose", "-v")
 
 // Or add aliases after construction
 verboseOption.Aliases.Add("-V");
-```
+
+```text
 
 ### Global Options
 
 ```csharp
+
 // Global options are inherited by all subcommands
 var debugOption = new Option<bool>("--debug")
 {
@@ -169,7 +195,8 @@ var debugOption = new Option<bool>("--debug")
     Recursive = true  // makes it global (inherited by subcommands)
 };
 rootCommand.Options.Add(debugOption);
-```
+
+```bash
 
 ---
 
@@ -180,6 +207,7 @@ In 2.0.0 GA, `SetHandler` is replaced by `SetAction`. Actions receive a `ParseRe
 ### Synchronous Action
 
 ```csharp
+
 var outputOption = new Option<FileInfo>("--output", "-o")
 {
     Description = "Output file path",
@@ -200,11 +228,13 @@ rootCommand.SetAction(parseResult =>
     Console.WriteLine($"Output: {output.FullName}, Verbosity: {verbosity}");
     return 0; // exit code
 });
-```
+
+```text
 
 ### Asynchronous Action with CancellationToken
 
 ```csharp
+
 // Async actions receive ParseResult AND CancellationToken
 rootCommand.SetAction(async (ParseResult parseResult, CancellationToken ct) =>
 {
@@ -213,11 +243,13 @@ rootCommand.SetAction(async (ParseResult parseResult, CancellationToken ct) =>
     await ProcessAsync(output, verbosity, ct);
     return 0;
 });
-```
+
+```text
 
 ### Getting Values by Name
 
 ```csharp
+
 // Values can also be retrieved by symbol name (requires type parameter)
 rootCommand.SetAction(parseResult =>
 {
@@ -225,11 +257,13 @@ rootCommand.SetAction(parseResult =>
     string? message = parseResult.GetValue<string>("--message");
     Console.WriteLine($"Delay: {delay}, Message: {message}");
 });
-```
+
+```text
 
 ### Parsing and Invoking
 
 ```csharp
+
 // Program.cs entry point -- parse then invoke
 static int Main(string[] args)
 {
@@ -245,11 +279,13 @@ static async Task<int> Main(string[] args)
     ParseResult parseResult = rootCommand.Parse(args);
     return await parseResult.InvokeAsync();
 }
-```
+
+```bash
 
 ### Parse Without Invoking
 
 ```csharp
+
 // Parse-only mode: inspect results without running actions
 ParseResult parseResult = rootCommand.Parse(args);
 if (parseResult.Errors.Count > 0)
@@ -263,7 +299,8 @@ if (parseResult.Errors.Count > 0)
 
 FileInfo? file = parseResult.GetValue(fileOption);
 // Process directly without SetAction
-```
+
+```text
 
 ---
 
@@ -296,3 +333,4 @@ For detailed examples (custom parsing, validation, configuration, tab completion
 ## Attribution
 
 Adapted from [Aaronontheweb/dotnet-skills](https://github.com/Aaronontheweb/dotnet-skills) (MIT license).
+````

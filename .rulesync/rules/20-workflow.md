@@ -1,8 +1,8 @@
 ---
 root: false
-targets: ["*"]
-description: "Workflow for RuleSync-based multi-agent generation"
-globs: ["**/*"]
+targets: ['*']
+description: 'Workflow for RuleSync-based multi-agent generation'
+globs: ['**/*']
 antigravity:
   trigger: always_on
 ---

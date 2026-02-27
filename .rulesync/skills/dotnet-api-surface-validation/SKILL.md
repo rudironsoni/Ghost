@@ -2,23 +2,27 @@
 name: dotnet-api-surface-validation
 description: Detects API surface changes in CI. PublicApiAnalyzers, Verify snapshots, ApiCompat gating.
 license: MIT
-targets: ["*"]
-tags: ["api", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['api', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for api tasks"
+  short-description: '.NET skill guidance for api tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-api-surface-validation
 
-Tools and workflows for validating and tracking the public API surface of .NET libraries. Covers three complementary approaches: **PublicApiAnalyzers** for text-file tracking of shipped/unshipped APIs with Roslyn diagnostics, the **Verify snapshot pattern** for reflection-based API surface snapshot testing, and **ApiCompat CI enforcement** for gating pull requests on API surface changes.
+Tools and workflows for validating and tracking the public API surface of .NET libraries. Covers three complementary
+approaches: **PublicApiAnalyzers** for text-file tracking of shipped/unshipped APIs with Roslyn diagnostics, the
+**Verify snapshot pattern** for reflection-based API surface snapshot testing, and **ApiCompat CI enforcement** for
+gating pull requests on API surface changes.
 
-**Version assumptions:** .NET 8.0+ baseline. PublicApiAnalyzers 3.3+ (ships with `Microsoft.CodeAnalysis.Analyzers` or standalone `Microsoft.CodeAnalysis.PublicApiAnalyzers`). ApiCompat tooling included in .NET 8+ SDK.
+**Version assumptions:** .NET 8.0+ baseline. PublicApiAnalyzers 3.3+ (ships with `Microsoft.CodeAnalysis.Analyzers` or
+standalone `Microsoft.CodeAnalysis.PublicApiAnalyzers`). ApiCompat tooling included in .NET 8+ SDK.
 
 ## Scope
 
@@ -31,67 +35,85 @@ Tools and workflows for validating and tracking the public API surface of .NET l
 ## Out of scope
 
 - Binary vs source compatibility rules, type forwarders, SemVer impact -- see [skill:dotnet-library-api-compat]
-- NuGet packaging, `EnablePackageValidation` basics, and suppression file mechanics -- see [skill:dotnet-nuget-authoring] and [skill:dotnet-multi-targeting]
+- NuGet packaging, `EnablePackageValidation` basics, and suppression file mechanics -- see
+  [skill:dotnet-nuget-authoring] and [skill:dotnet-multi-targeting]
 - Verify library fundamentals (setup, scrubbing, converters) -- see [skill:dotnet-snapshot-testing]
 - General Roslyn analyzer configuration (EditorConfig, severity levels) -- see [skill:dotnet-roslyn-analyzers]
 - HTTP API versioning -- see [skill:dotnet-api-versioning]
 
-Cross-references: [skill:dotnet-library-api-compat] for binary/source compatibility rules, [skill:dotnet-nuget-authoring] for `EnablePackageValidation` and NuGet SemVer, [skill:dotnet-multi-targeting] for multi-TFM ApiCompat tool mechanics, [skill:dotnet-snapshot-testing] for Verify fundamentals, [skill:dotnet-roslyn-analyzers] for general analyzer configuration, [skill:dotnet-api-versioning] for HTTP API versioning.
+Cross-references: [skill:dotnet-library-api-compat] for binary/source compatibility rules,
+[skill:dotnet-nuget-authoring] for `EnablePackageValidation` and NuGet SemVer, [skill:dotnet-multi-targeting] for
+multi-TFM ApiCompat tool mechanics, [skill:dotnet-snapshot-testing] for Verify fundamentals,
+[skill:dotnet-roslyn-analyzers] for general analyzer configuration, [skill:dotnet-api-versioning] for HTTP API
+versioning.
 
 ---
 
 ## PublicApiAnalyzers
 
-PublicApiAnalyzers tracks every public API member in text files committed to source control. The analyzer enforces that new APIs go through an explicit "unshipped" phase before being marked "shipped," preventing accidental public API exposure and undocumented surface area changes.
+PublicApiAnalyzers tracks every public API member in text files committed to source control. The analyzer enforces that
+new APIs go through an explicit "unshipped" phase before being marked "shipped," preventing accidental public API
+exposure and undocumented surface area changes.
 
 ### Setup
 
 Install the analyzer package:
 
-```xml
+````xml
+
 <ItemGroup>
   <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.*" PrivateAssets="all" />
 </ItemGroup>
-```
+
+```xml
 
 Create the two tracking files at the project root (adjacent to the `.csproj`):
 
-```
+```csharp
+
 MyLib/
   MyLib.csproj
   PublicAPI.Shipped.txt    # APIs shipped in released versions
   PublicAPI.Unshipped.txt  # APIs added since last release
-```
+
+```csharp
 
 Both files must exist, even if empty. Each must contain a header comment:
 
-```
-#nullable enable
-```
+```text
 
-The `#nullable enable` header tells the analyzer to track nullable annotations in API signatures. Without it, nullable context differences are ignored.
+#nullable enable
+
+```text
+
+The `#nullable enable` header tells the analyzer to track nullable annotations in API signatures. Without it, nullable
+context differences are ignored.
 
 ### Diagnostic Rules
 
-| Rule | Severity | Meaning |
-|------|----------|---------|
-| RS0016 | Warning | Public API member not declared in API tracking files |
-| RS0017 | Warning | Public API member removed but still in tracking files |
-| RS0024 | Warning | Public API member has wrong nullable annotation |
-| RS0025 | Warning | Public API symbol marked shipped but has changed signature |
-| RS0026 | Warning | New public API added without `PublicAPI.Unshipped.txt` entry |
-| RS0036 | Warning | API file missing `#nullable enable` header |
-| RS0037 | Warning | Public API declared but does not exist in source |
+| Rule   | Severity | Meaning                                                      |
+| ------ | -------- | ------------------------------------------------------------ |
+| RS0016 | Warning  | Public API member not declared in API tracking files         |
+| RS0017 | Warning  | Public API member removed but still in tracking files        |
+| RS0024 | Warning  | Public API member has wrong nullable annotation              |
+| RS0025 | Warning  | Public API symbol marked shipped but has changed signature   |
+| RS0026 | Warning  | New public API added without `PublicAPI.Unshipped.txt` entry |
+| RS0036 | Warning  | API file missing `#nullable enable` header                   |
+| RS0037 | Warning  | Public API declared but does not exist in source             |
 
-**RS0016** is the most common diagnostic. When you add a new `public` or `protected` member, RS0016 fires until you add the member's signature to `PublicAPI.Unshipped.txt`. Use the code fix (lightbulb) in the IDE to automatically add the entry.
+**RS0016** is the most common diagnostic. When you add a new `public` or `protected` member, RS0016 fires until you add
+the member's signature to `PublicAPI.Unshipped.txt`. Use the code fix (lightbulb) in the IDE to automatically add the
+entry.
 
-**RS0017** fires when you remove or rename a `public` member but the old signature still exists in the tracking files. Remove the stale line from the appropriate file.
+**RS0017** fires when you remove or rename a `public` member but the old signature still exists in the tracking files.
+Remove the stale line from the appropriate file.
 
 ### File Format
 
 Each line in the tracking files represents one public API symbol using its documentation comment ID format:
 
-```
+```text
+
 #nullable enable
 MyLib.Widget
 MyLib.Widget.Widget() -> void
@@ -105,9 +127,11 @@ MyLib.WidgetOptions
 MyLib.WidgetOptions.WidgetOptions() -> void
 MyLib.WidgetOptions.MaxRetries.get -> int
 MyLib.WidgetOptions.MaxRetries.set -> void
-```
+
+```text
 
 Key formatting rules:
+
 - The `!` suffix denotes a non-nullable reference type in nullable-enabled context
 - The `?` suffix denotes a nullable reference type or nullable value type
 - Constructors use the type name (e.g., `Widget.Widget() -> void`)
@@ -147,9 +171,11 @@ The workflow across release cycles:
 
 ### Multi-TFM Projects
 
-For multi-targeted projects, PublicApiAnalyzers supports per-TFM tracking files when the API surface differs across targets:
+For multi-targeted projects, PublicApiAnalyzers supports per-TFM tracking files when the API surface differs across
+targets:
 
-```
+```text
+
 MyLib/
   MyLib.csproj
   PublicAPI.Shipped.txt           # Shared across all TFMs
@@ -158,48 +184,63 @@ MyLib/
   PublicAPI.Unshipped.net8.0.txt  # net8.0-specific APIs
   PublicAPI.Shipped.net10.0.txt   # net10.0-specific APIs
   PublicAPI.Unshipped.net10.0.txt # net10.0-specific APIs
-```
 
-The shared files contain APIs common to all TFMs. The TFM-specific files contain APIs that only exist on that target. The analyzer merges them at build time.
+```text
+
+The shared files contain APIs common to all TFMs. The TFM-specific files contain APIs that only exist on that target.
+The analyzer merges them at build time.
 
 To enable per-TFM files, add to the `.csproj`:
 
 ```xml
+
 <PropertyGroup>
   <RoslynPublicApiPerTfm>true</RoslynPublicApiPerTfm>
 </PropertyGroup>
-```
+
+```xml
 
 See [skill:dotnet-multi-targeting] for multi-TFM packaging mechanics.
 
 ### Integrating with CI
 
-PublicApiAnalyzers runs as part of the standard build. To enforce it in CI, ensure warnings are treated as errors for the RS-series rules:
+PublicApiAnalyzers runs as part of the standard build. To enforce it in CI, ensure warnings are treated as errors for
+the RS-series rules:
 
 ```xml
+
 <!-- In Directory.Build.props or the library .csproj -->
 <PropertyGroup>
   <WarningsAsErrors>$(WarningsAsErrors);RS0016;RS0017;RS0036;RS0037</WarningsAsErrors>
 </PropertyGroup>
-```
 
-This gates CI builds on any undeclared public API changes. Developers must explicitly update the tracking files before the build passes.
+```csharp
+
+This gates CI builds on any undeclared public API changes. Developers must explicitly update the tracking files before
+the build passes.
 
 ---
 
 ## Verify API Surface Snapshot Pattern
 
-Use the Verify library to snapshot-test the entire public API surface of an assembly. This approach uses reflection to enumerate all public types and members, producing a human-readable snapshot that is committed to source control and compared on every test run. Any change to the public API surface causes a test failure until the snapshot is explicitly approved.
+Use the Verify library to snapshot-test the entire public API surface of an assembly. This approach uses reflection to
+enumerate all public types and members, producing a human-readable snapshot that is committed to source control and
+compared on every test run. Any change to the public API surface causes a test failure until the snapshot is explicitly
+approved.
 
-This pattern complements PublicApiAnalyzers -- the analyzer catches changes at build time within the project, while the Verify snapshot catches changes from the perspective of a compiled assembly consumer.
+This pattern complements PublicApiAnalyzers -- the analyzer catches changes at build time within the project, while the
+Verify snapshot catches changes from the perspective of a compiled assembly consumer.
 
-For Verify fundamentals (setup, scrubbing, converters, diff tool integration, CI configuration), see [skill:dotnet-snapshot-testing].
+For Verify fundamentals (setup, scrubbing, converters, diff tool integration, CI configuration), see
+[skill:dotnet-snapshot-testing].
 
 ### Extracting the Public API Surface
 
-Create a helper method that reflects over an assembly to produce a stable, sorted representation of all public types and their members:
+Create a helper method that reflects over an assembly to produce a stable, sorted representation of all public types and
+their members:
 
 ```csharp
+
 using System.Reflection;
 using System.Text;
 
@@ -275,11 +316,13 @@ public static class PublicApiExtractor
         return string.Join(" ", parts);
     }
 }
-```
+
+```text
 
 ### Writing the Snapshot Test
 
 ```csharp
+
 [UsesVerify]
 public class PublicApiSurfaceTests
 {
@@ -292,9 +335,12 @@ public class PublicApiSurfaceTests
         return Verify(publicApi);
     }
 }
-```
 
-On first run, this creates a `.verified.txt` file containing the full public API listing. Subsequent runs compare the current API surface against the approved snapshot. Any addition, removal, or modification of public members causes a test failure with a clear diff.
+```text
+
+On first run, this creates a `.verified.txt` file containing the full public API listing. Subsequent runs compare the
+current API surface against the approved snapshot. Any addition, removal, or modification of public members causes a
+test failure with a clear diff.
 
 ### Reviewing API Surface Changes
 
@@ -305,45 +351,53 @@ When the snapshot test fails:
 3. If the changes are intentional, accept the new snapshot with `verify accept`
 4. If the changes are accidental, revert the code changes
 
-This creates a code-review checkpoint where every public API change must be explicitly approved by someone reviewing the snapshot diff in the pull request.
+This creates a code-review checkpoint where every public API change must be explicitly approved by someone reviewing the
+snapshot diff in the pull request.
 
 ### Combining with PublicApiAnalyzers
 
 The two approaches serve different purposes:
 
-| Concern | PublicApiAnalyzers | Verify Snapshot |
-|---------|-------------------|-----------------|
-| Detection timing | Build time (in-IDE) | Test time (post-compile) |
-| Granularity | Per-member signatures | Assembly-wide surface |
-| Nullable annotations | Tracked via `#nullable enable` | Requires explicit reflection |
-| Approval workflow | Edit text files (shipped/unshipped) | Accept snapshot diffs |
-| Multi-TFM | Per-TFM files | Per-TFM test targets |
-| CI gating | Warnings-as-errors | Test failures |
+| Concern              | PublicApiAnalyzers                  | Verify Snapshot              |
+| -------------------- | ----------------------------------- | ---------------------------- |
+| Detection timing     | Build time (in-IDE)                 | Test time (post-compile)     |
+| Granularity          | Per-member signatures               | Assembly-wide surface        |
+| Nullable annotations | Tracked via `#nullable enable`      | Requires explicit reflection |
+| Approval workflow    | Edit text files (shipped/unshipped) | Accept snapshot diffs        |
+| Multi-TFM            | Per-TFM files                       | Per-TFM test targets         |
+| CI gating            | Warnings-as-errors                  | Test failures                |
 
-Use both for maximum coverage: PublicApiAnalyzers catches changes during development, while Verify snapshots provide an end-to-end assembly-level validation in the test suite.
+Use both for maximum coverage: PublicApiAnalyzers catches changes during development, while Verify snapshots provide an
+end-to-end assembly-level validation in the test suite.
 
 ---
 
 ## ApiCompat CI Enforcement
 
-ApiCompat compares two assemblies (or a baseline NuGet package against the current build) and reports API differences. When integrated into CI, it gates pull requests on API surface changes -- any breaking change produces a build error that the author must explicitly acknowledge.
+ApiCompat compares two assemblies (or a baseline NuGet package against the current build) and reports API differences.
+When integrated into CI, it gates pull requests on API surface changes -- any breaking change produces a build error
+that the author must explicitly acknowledge.
 
-For `EnablePackageValidation` basics and suppression file mechanics, see [skill:dotnet-nuget-authoring] and [skill:dotnet-multi-targeting].
+For `EnablePackageValidation` basics and suppression file mechanics, see [skill:dotnet-nuget-authoring] and
+[skill:dotnet-multi-targeting].
 
 ### Package Validation in CI
 
 The simplest enforcement uses `EnablePackageValidation` during `dotnet pack`:
 
 ```xml
+
 <PropertyGroup>
   <EnablePackageValidation>true</EnablePackageValidation>
   <PackageValidationBaselineVersion>1.2.0</PackageValidationBaselineVersion>
 </PropertyGroup>
-```
+
+```text
 
 In a CI pipeline, `dotnet pack` runs package validation automatically:
 
 ```yaml
+
 # GitHub Actions -- gate PRs on API compatibility
 name: API Compatibility Check
 on:
@@ -373,13 +427,16 @@ jobs:
         run: dotnet pack --configuration Release --no-build
         # EnablePackageValidation runs during pack and fails
         # the build if breaking changes are detected
-```
+
+```text
 
 ### Standalone ApiCompat Tool for Assembly Comparison
 
-When you need to compare assemblies without packing (e.g., comparing a feature branch build against the main branch build), use the standalone ApiCompat tool:
+When you need to compare assemblies without packing (e.g., comparing a feature branch build against the main branch
+build), use the standalone ApiCompat tool:
 
 ```yaml
+
 # GitHub Actions -- compare assemblies directly
 name: API Diff Check
 on:
@@ -415,49 +472,58 @@ jobs:
         run: |
           apicompat --left-assembly artifacts/baseline/MyLib.dll \
                     --right-assembly artifacts/current/MyLib.dll
-```
+
+```text
 
 ### PR Labeling for API Changes
 
 Combine ApiCompat with PR labeling to surface API changes to reviewers:
 
 ```yaml
-      - name: Check for API changes
-        id: api-check
-        continue-on-error: true
-        run: |
-          apicompat --left-assembly artifacts/baseline/MyLib.dll \
-                    --right-assembly artifacts/current/MyLib.dll 2>&1 | tee api-diff.txt
-          echo "has_changes=$([[ -s api-diff.txt ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
-      - name: Label PR with API changes
-        if: steps.api-check.outputs.has_changes == 'true'
-        run: gh pr edit "${{ github.event.pull_request.number }}" --add-label "api-change"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-```
+- name: Check for API changes
+  id: api-check
+  continue-on-error: true
+  run: |
+    apicompat --left-assembly artifacts/baseline/MyLib.dll \
+              --right-assembly artifacts/current/MyLib.dll 2>&1 | tee api-diff.txt
+    echo "has_changes=$([[ -s api-diff.txt ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+- name: Label PR with API changes
+  if: steps.api-check.outputs.has_changes == 'true'
+  run: gh pr edit "${{ github.event.pull_request.number }}" --add-label "api-change"
+  env:
+    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+```text
 
 ### Handling Intentional Breaking Changes
 
 When a breaking change is intentional (new major version), generate a suppression file:
 
 ```bash
+
 dotnet pack /p:GenerateCompatibilitySuppressionFile=true
-```
+
+```bash
 
 This creates `CompatibilitySuppressions.xml` in the project directory. Reference it explicitly if stored elsewhere:
 
 ```xml
+
 <ItemGroup>
   <ApiCompatSuppressionFile Include="CompatibilitySuppressions.xml" />
 </ItemGroup>
-```
 
-Note: `ApiCompatSuppressionFile` is an **ItemGroup item**, not a PropertyGroup property. Using PropertyGroup syntax silently does nothing.
+```xml
+
+Note: `ApiCompatSuppressionFile` is an **ItemGroup item**, not a PropertyGroup property. Using PropertyGroup syntax
+silently does nothing.
 
 The suppression file documents the specific breaking changes that are accepted:
 
 ```xml
+
 <?xml version="1.0" encoding="utf-8"?>
 <Suppressions xmlns:xsd="http://www.w3.org/2001/XMLSchema"
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -468,32 +534,37 @@ The suppression file documents the specific breaking changes that are accepted:
     <Right>lib/net8.0/MyLib.dll</Right>
   </Suppression>
 </Suppressions>
-```
 
-Commit suppression files to source control. Reviewers can inspect the file to verify that breaking changes are documented and intentional.
+```text
+
+Commit suppression files to source control. Reviewers can inspect the file to verify that breaking changes are
+documented and intentional.
 
 ### Enforcing PublicApiAnalyzers Files in CI
 
 Combine PublicApiAnalyzers warnings-as-errors with a CI step that verifies tracking files are not stale:
 
 ```yaml
-      - name: Build with API tracking enforcement
-        run: dotnet build -c Release /p:TreatWarningsAsErrors=true /warnaserror:RS0016,RS0017,RS0036,RS0037
 
-      - name: Verify PublicAPI files are committed
-        run: |
-          if git diff --name-only | grep -q 'PublicAPI'; then
-            echo "::error::PublicAPI tracking files have uncommitted changes"
-            git diff -- '**/PublicAPI.*.txt'
-            exit 1
-          fi
-```
+- name: Build with API tracking enforcement
+  run: dotnet build -c Release /p:TreatWarningsAsErrors=true /warnaserror:RS0016,RS0017,RS0036,RS0037
+
+- name: Verify PublicAPI files are committed
+  run: |
+    if git diff --name-only | grep -q 'PublicAPI'; then
+      echo "::error::PublicAPI tracking files have uncommitted changes"
+      git diff -- '**/PublicAPI.*.txt'
+      exit 1
+    fi
+
+```text
 
 ### Multi-Library Monorepo Enforcement
 
 For repositories with multiple libraries, apply API validation at the solution level:
 
 ```xml
+
 <!-- Directory.Build.props -- applied to all library projects -->
 <Project>
   <PropertyGroup Condition="'$(IsPackable)' == 'true'">
@@ -506,22 +577,36 @@ For repositories with multiple libraries, apply API validation at the solution l
                       Version="3.3.*" PrivateAssets="all" />
   </ItemGroup>
 </Project>
-```
 
-This ensures every packable project in the repository has both PublicApiAnalyzers and package validation enabled without duplicating configuration.
+```text
+
+This ensures every packable project in the repository has both PublicApiAnalyzers and package validation enabled without
+duplicating configuration.
 
 ---
 
 ## Agent Gotchas
 
-1. **Do not forget to create both `PublicAPI.Shipped.txt` and `PublicAPI.Unshipped.txt`** -- PublicApiAnalyzers requires both files to exist, even if empty. Missing files cause RS0037 warnings on every public member.
-2. **Do not omit the `#nullable enable` header from PublicAPI tracking files** -- without it (RS0036), the analyzer ignores nullable annotation differences, missing real API surface changes in nullable-enabled libraries.
-3. **Do not put `ApiCompatSuppressionFile` in a PropertyGroup** -- it is an ItemGroup item (`<ApiCompatSuppressionFile Include="..." />`). PropertyGroup syntax is silently ignored, and suppression will not work.
-4. **Do not move entries from `PublicAPI.Unshipped.txt` to `PublicAPI.Shipped.txt` mid-development** -- move entries only at release time. Premature shipping makes it impossible to cleanly revert unreleased API additions.
-5. **Do not use the Verify API surface snapshot as the sole validation mechanism** -- it runs at test time, after compilation. Use PublicApiAnalyzers for immediate build-time feedback and ApiCompat for baseline comparison; add Verify snapshots as an additional safety net.
-6. **Do not hardcode TFM-specific paths in CI ApiCompat workflows** -- use MSBuild output path variables or parameterize the TFM to avoid breakage when TFMs are added or changed.
-7. **Do not suppress RS0016 globally with `<NoWarn>`** -- this silently disables all public API tracking. Instead, add the missing API entries to the tracking files. If an API is intentionally internal but must be `public` (e.g., for `InternalsVisibleTo` alternatives), use `[EditorBrowsable(EditorBrowsableState.Never)]` and add it to the tracking files.
-8. **Do not generate the suppression file with `GenerateCompatibilitySuppressionFile=true` and forget to review it** -- the file may suppress more changes than intended. Always review the generated XML before committing.
+1. **Do not forget to create both `PublicAPI.Shipped.txt` and `PublicAPI.Unshipped.txt`** -- PublicApiAnalyzers requires
+   both files to exist, even if empty. Missing files cause RS0037 warnings on every public member.
+2. **Do not omit the `#nullable enable` header from PublicAPI tracking files** -- without it (RS0036), the analyzer
+   ignores nullable annotation differences, missing real API surface changes in nullable-enabled libraries.
+3. **Do not put `ApiCompatSuppressionFile` in a PropertyGroup** -- it is an ItemGroup item
+   (`<ApiCompatSuppressionFile Include="..." />`). PropertyGroup syntax is silently ignored, and suppression will not
+   work.
+4. **Do not move entries from `PublicAPI.Unshipped.txt` to `PublicAPI.Shipped.txt` mid-development** -- move entries
+   only at release time. Premature shipping makes it impossible to cleanly revert unreleased API additions.
+5. **Do not use the Verify API surface snapshot as the sole validation mechanism** -- it runs at test time, after
+   compilation. Use PublicApiAnalyzers for immediate build-time feedback and ApiCompat for baseline comparison; add
+   Verify snapshots as an additional safety net.
+6. **Do not hardcode TFM-specific paths in CI ApiCompat workflows** -- use MSBuild output path variables or parameterize
+   the TFM to avoid breakage when TFMs are added or changed.
+7. **Do not suppress RS0016 globally with `<NoWarn>`** -- this silently disables all public API tracking. Instead, add
+   the missing API entries to the tracking files. If an API is intentionally internal but must be `public` (e.g., for
+   `InternalsVisibleTo` alternatives), use `[EditorBrowsable(EditorBrowsableState.Never)]` and add it to the tracking
+   files.
+8. **Do not generate the suppression file with `GenerateCompatibilitySuppressionFile=true` and forget to review it** --
+   the file may suppress more changes than intended. Always review the generated XML before committing.
 
 ---
 
@@ -531,7 +616,8 @@ This ensures every packable project in the repository has both PublicApiAnalyzer
 - `Microsoft.CodeAnalysis.PublicApiAnalyzers` NuGet package (for RS0016/RS0017 diagnostics)
 - `EnablePackageValidation` MSBuild property (for baseline API comparison during `dotnet pack`)
 - `Microsoft.DotNet.ApiCompat.Tool` (optional, for standalone assembly comparison outside of `dotnet pack`)
-- Verify test library and test framework integration package (for API surface snapshot testing) -- see [skill:dotnet-snapshot-testing] for setup
+- Verify test library and test framework integration package (for API surface snapshot testing) -- see
+  [skill:dotnet-snapshot-testing] for setup
 - Understanding of binary vs source compatibility rules -- see [skill:dotnet-library-api-compat]
 
 ---
@@ -544,3 +630,4 @@ This ensures every packable project in the repository has both PublicApiAnalyzer
 - [Microsoft.DotNet.ApiCompat.Tool](https://www.nuget.org/packages/Microsoft.DotNet.ApiCompat.Tool)
 - [Verify library](https://github.com/VerifyTests/Verify) -- snapshot testing framework
 - [PublicApiAnalyzers diagnostics reference](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/api-design-rules)
+````

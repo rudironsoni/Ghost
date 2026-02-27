@@ -2,23 +2,27 @@
 name: dotnet-wpf-migration
 description: Migrates desktop apps. WPF/WinForms to .NET 8+, WPF to WinUI or Uno, UWP to WinUI.
 license: MIT
-targets: ["*"]
-tags: ["ui", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['ui', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for ui tasks"
+  short-description: '.NET skill guidance for ui tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-wpf-migration
 
-Context-dependent migration guidance for Windows desktop applications. Covers WPF .NET Framework to .NET 8+, WPF to WinUI 3 (Windows-only modernization), WPF to Uno Platform (cross-platform), WinForms .NET Framework to .NET 8+, UWP to WinUI 3, UWP to Uno Platform (cross-ref), and a decision matrix for choosing the right migration target based on project constraints.
+Context-dependent migration guidance for Windows desktop applications. Covers WPF .NET Framework to .NET 8+, WPF to
+WinUI 3 (Windows-only modernization), WPF to Uno Platform (cross-platform), WinForms .NET Framework to .NET 8+, UWP to
+WinUI 3, UWP to Uno Platform (cross-ref), and a decision matrix for choosing the right migration target based on project
+constraints.
 
-**Version assumptions:** .NET 8.0+ baseline (current LTS). `dotnet-upgrade-assistant` for automated migration. .NET 9 features explicitly marked where applicable.
+**Version assumptions:** .NET 8.0+ baseline (current LTS). `dotnet-upgrade-assistant` for automated migration. .NET 9
+features explicitly marked where applicable.
 
 ## Scope
 
@@ -38,34 +42,39 @@ Context-dependent migration guidance for Windows desktop applications. Covers WP
 - Framework selection decision tree -- see [skill:dotnet-ui-chooser]
 - Desktop testing -- see [skill:dotnet-ui-testing-core]
 
-Cross-references: [skill:dotnet-wpf-modern] for WPF .NET 8+ patterns, [skill:dotnet-winui] for WinUI 3 patterns, [skill:dotnet-winforms-basics] for WinForms .NET 8+ patterns, [skill:dotnet-uno-platform] for Uno Platform patterns, [skill:dotnet-ui-chooser] for framework selection, [skill:dotnet-ui-testing-core] for desktop testing.
+Cross-references: [skill:dotnet-wpf-modern] for WPF .NET 8+ patterns, [skill:dotnet-winui] for WinUI 3 patterns,
+[skill:dotnet-winforms-basics] for WinForms .NET 8+ patterns, [skill:dotnet-uno-platform] for Uno Platform patterns,
+[skill:dotnet-ui-chooser] for framework selection, [skill:dotnet-ui-testing-core] for desktop testing.
 
 ---
 
 ## Migration Path Overview
 
-Choose a migration path based on your current framework and target goals. Each path has different trade-offs in effort, risk, and capability gain.
+Choose a migration path based on your current framework and target goals. Each path has different trade-offs in effort,
+risk, and capability gain.
 
-| Current | Target | Effort | Risk | When to Choose |
-|---|---|---|---|---|
-| WPF .NET Framework | WPF .NET 8+ | Low-Medium | Low | Modernize runtime, keep existing UI |
-| WPF .NET Framework | WinUI 3 | High | Medium | Modern Windows UI, touch/pen, Fluent |
-| WPF .NET Framework | Uno Platform | High | Medium-High | Cross-platform needed |
-| WinForms .NET Framework | WinForms .NET 8+ | Low | Low | Modernize runtime, keep existing UI |
-| UWP | WinUI 3 | Medium | Medium | Stay Windows-only, modern runtime |
-| UWP | Uno Platform | Medium-High | Medium | Cross-platform needed from UWP |
+| Current                 | Target           | Effort      | Risk        | When to Choose                       |
+| ----------------------- | ---------------- | ----------- | ----------- | ------------------------------------ |
+| WPF .NET Framework      | WPF .NET 8+      | Low-Medium  | Low         | Modernize runtime, keep existing UI  |
+| WPF .NET Framework      | WinUI 3          | High        | Medium      | Modern Windows UI, touch/pen, Fluent |
+| WPF .NET Framework      | Uno Platform     | High        | Medium-High | Cross-platform needed                |
+| WinForms .NET Framework | WinForms .NET 8+ | Low         | Low         | Modernize runtime, keep existing UI  |
+| UWP                     | WinUI 3          | Medium      | Medium      | Stay Windows-only, modern runtime    |
+| UWP                     | Uno Platform     | Medium-High | Medium      | Cross-platform needed from UWP       |
 
 ---
 
 ## WPF .NET Framework to .NET 8+
 
-The lowest-risk migration path. Keeps your existing XAML and code-behind intact while moving to modern .NET with better performance, DI support, and side-by-side deployment.
+The lowest-risk migration path. Keeps your existing XAML and code-behind intact while moving to modern .NET with better
+performance, DI support, and side-by-side deployment.
 
 ### Using dotnet-upgrade-assistant
 
 The .NET Upgrade Assistant automates the bulk of the migration:
 
-```bash
+````bash
+
 # Install the upgrade assistant
 dotnet tool install -g upgrade-assistant
 
@@ -74,7 +83,8 @@ upgrade-assistant analyze MyWpfApp.sln
 
 # Upgrade the project
 upgrade-assistant upgrade MyWpfApp.sln
-```
+
+```text
 
 **What the upgrade assistant handles:**
 - `.csproj` conversion from legacy format to SDK-style
@@ -109,13 +119,15 @@ Most WPF APIs are identical between .NET Framework and .NET 8+. Key differences:
 After migration, update NuGet packages to .NET 8-compatible versions:
 
 ```bash
+
 # List outdated packages
 dotnet list package --outdated
 
 # Update packages (one at a time for safer migration)
 dotnet add package Newtonsoft.Json --version 13.*
 dotnet add package MaterialDesignThemes --version 5.*
-```
+
+```json
 
 **Common package replacements:**
 - `Unity` container -> `Microsoft.Extensions.DependencyInjection` (built-in)
@@ -231,12 +243,14 @@ Similar to WPF migration but typically simpler due to WinForms' less complex pro
 ### Using dotnet-upgrade-assistant
 
 ```bash
+
 # Analyze first
 upgrade-assistant analyze MyWinFormsApp.sln
 
 # Upgrade
 upgrade-assistant upgrade MyWinFormsApp.sln
-```
+
+```text
 
 **What the upgrade assistant handles:**
 - `.csproj` conversion to SDK-style with `<UseWindowsForms>true</UseWindowsForms>`
@@ -395,3 +409,4 @@ This approach avoids the "big bang" rewrite risk and delivers incremental value 
 - [WinForms Migration to .NET](https://learn.microsoft.com/en-us/dotnet/desktop/winforms/migration/)
 - [Uno Platform Migration](https://platform.uno/docs/articles/howto-migrate-existing-code.html)
 - [Windows App SDK](https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/)
+````

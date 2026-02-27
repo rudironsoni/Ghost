@@ -2,21 +2,24 @@
 name: dotnet-realtime-communication
 description: Builds real-time features. SignalR hubs, SSE (.NET 10), JSON-RPC 2.0, gRPC streaming, scaling.
 license: MIT
-targets: ["*"]
-tags: ["api", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['api', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for api tasks"
+  short-description: '.NET skill guidance for api tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-realtime-communication
 
-Real-time communication patterns for .NET applications. Compares SignalR (full-duplex over WebSockets with automatic fallback), Server-Sent Events (SSE, built-in to ASP.NET Core in .NET 10), JSON-RPC 2.0 (structured request-response over any transport), and gRPC streaming (high-performance binary streaming). Provides decision guidance for choosing the right protocol based on requirements.
+Real-time communication patterns for .NET applications. Compares SignalR (full-duplex over WebSockets with automatic
+fallback), Server-Sent Events (SSE, built-in to ASP.NET Core in .NET 10), JSON-RPC 2.0 (structured request-response over
+any transport), and gRPC streaming (high-performance binary streaming). Provides decision guidance for choosing the
+right protocol based on requirements.
 
 ## Scope
 
@@ -32,25 +35,35 @@ Real-time communication patterns for .NET applications. Compares SignalR (full-d
 - Native AOT architecture and trimming -- see [skill:dotnet-native-aot] and [skill:dotnet-trimming]
 - Blazor-specific SignalR usage -- see [skill:dotnet-blazor-patterns]
 
-Cross-references: [skill:dotnet-grpc] for gRPC streaming implementation details and all four streaming patterns. See [skill:dotnet-integration-testing] for testing real-time communication endpoints. See [skill:dotnet-blazor-patterns] for Blazor-specific SignalR circuit management and render mode interaction.
+Cross-references: [skill:dotnet-grpc] for gRPC streaming implementation details and all four streaming patterns. See
+[skill:dotnet-integration-testing] for testing real-time communication endpoints. See [skill:dotnet-blazor-patterns] for
+Blazor-specific SignalR circuit management and render mode interaction.
 
 ---
 
 ## Protocol Comparison
 
-| Protocol | Direction | Transport | Format | Browser Support | Best For |
-|----------|-----------|-----------|--------|-----------------|----------|
-| **SignalR** | Full-duplex | WebSocket, SSE, Long Polling (auto-negotiation) | JSON or MessagePack | Yes (JS/TS client) | Interactive apps, chat, dashboards, collaborative editing |
-| **SSE (.NET 10)** | Server-to-client only | HTTP/1.1+ | Text (typically JSON lines) | Yes (native EventSource API) | Notifications, live feeds, status updates |
-| **JSON-RPC 2.0** | Request-response | Any (HTTP, WebSocket, stdio) | JSON | Depends on transport | Tooling protocols (LSP), structured RPC over simple transports |
-| **gRPC streaming** | All four patterns | HTTP/2 | Protobuf (binary) | Limited (gRPC-Web) | Service-to-service, high-throughput, low-latency streaming |
+| Protocol           | Direction             | Transport                                       | Format                      | Browser Support              | Best For                                                       |
+| ------------------ | --------------------- | ----------------------------------------------- | --------------------------- | ---------------------------- | -------------------------------------------------------------- |
+| **SignalR**        | Full-duplex           | WebSocket, SSE, Long Polling (auto-negotiation) | JSON or MessagePack         | Yes (JS/TS client)           | Interactive apps, chat, dashboards, collaborative editing      |
+| **SSE (.NET 10)**  | Server-to-client only | HTTP/1.1+                                       | Text (typically JSON lines) | Yes (native EventSource API) | Notifications, live feeds, status updates                      |
+| **JSON-RPC 2.0**   | Request-response      | Any (HTTP, WebSocket, stdio)                    | JSON                        | Depends on transport         | Tooling protocols (LSP), structured RPC over simple transports |
+| **gRPC streaming** | All four patterns     | HTTP/2                                          | Protobuf (binary)           | Limited (gRPC-Web)           | Service-to-service, high-throughput, low-latency streaming     |
 
 ### When to Choose What
 
-- **SignalR**: You need bidirectional real-time communication with browser clients. SignalR handles transport negotiation automatically (WebSocket preferred, falls back to SSE, then Long Polling). Use when clients need to both send and receive in real time.
-- **SSE (.NET 10 built-in)**: You only need server-to-client push. Simpler than SignalR when bidirectional communication is not required. Built into ASP.NET Core in .NET 10 -- no additional packages needed. Works with the browser's native `EventSource` API.
-- **JSON-RPC 2.0**: You need structured request-response semantics over a simple transport. Used by Language Server Protocol (LSP) and some .NET tooling. Not a streaming protocol -- use when you need named methods with typed parameters over WebSocket or stdio.
-- **gRPC streaming**: Service-to-service streaming with maximum performance. Supports all four streaming patterns (unary, server streaming, client streaming, bidirectional). Best when both endpoints are .NET services or gRPC-compatible. See [skill:dotnet-grpc] for implementation details.
+- **SignalR**: You need bidirectional real-time communication with browser clients. SignalR handles transport
+  negotiation automatically (WebSocket preferred, falls back to SSE, then Long Polling). Use when clients need to both
+  send and receive in real time.
+- **SSE (.NET 10 built-in)**: You only need server-to-client push. Simpler than SignalR when bidirectional communication
+  is not required. Built into ASP.NET Core in .NET 10 -- no additional packages needed. Works with the browser's native
+  `EventSource` API.
+- **JSON-RPC 2.0**: You need structured request-response semantics over a simple transport. Used by Language Server
+  Protocol (LSP) and some .NET tooling. Not a streaming protocol -- use when you need named methods with typed
+  parameters over WebSocket or stdio.
+- **gRPC streaming**: Service-to-service streaming with maximum performance. Supports all four streaming patterns
+  (unary, server streaming, client streaming, bidirectional). Best when both endpoints are .NET services or
+  gRPC-compatible. See [skill:dotnet-grpc] for implementation details.
 
 ---
 
@@ -60,7 +73,8 @@ SignalR provides real-time web functionality with automatic connection managemen
 
 ### Server Setup
 
-```csharp
+````csharp
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSignalR(options =>
@@ -73,11 +87,13 @@ builder.Services.AddSignalR(options =>
 var app = builder.Build();
 
 app.MapHub<NotificationHub>("/hubs/notifications");
-```
+
+```text
 
 ### Hub Implementation
 
 ```csharp
+
 public sealed class NotificationHub(
     ILogger<NotificationHub> logger) : Hub
 {
@@ -112,13 +128,15 @@ public sealed class NotificationHub(
         }
     }
 }
-```
+
+```text
 
 ### Strongly-Typed Hubs
 
 Use interfaces to get compile-time safety for client method calls:
 
 ```csharp
+
 public interface INotificationClient
 {
     Task ReceiveMessage(string user, string message);
@@ -135,13 +153,15 @@ public sealed class NotificationHub(
             Context.UserIdentifier!, message);
     }
 }
-```
+
+```text
 
 ### Sending from Outside Hubs
 
 Inject `IHubContext` to send messages from background services or controllers:
 
 ```csharp
+
 public sealed class OrderService(
     IHubContext<NotificationHub, INotificationClient> hubContext)
 {
@@ -152,7 +172,8 @@ public sealed class OrderService(
             .OrderStatusChanged(orderId, status);
     }
 }
-```
+
+```text
 
 ### Transport Negotiation
 
@@ -165,6 +186,7 @@ SignalR automatically negotiates the best transport:
 Force a specific transport when needed:
 
 ```csharp
+
 // Server: disable specific transports
 app.MapHub<NotificationHub>("/hubs/notifications", options =>
 {
@@ -172,13 +194,15 @@ app.MapHub<NotificationHub>("/hubs/notifications", options =>
                          HttpTransportType.ServerSentEvents;
     // Disables Long Polling
 });
-```
+
+```text
 
 ### MessagePack Protocol
 
 Use MessagePack for smaller payloads and faster serialization:
 
 ```csharp
+
 // Server
 builder.Services.AddSignalR()
     .AddMessagePackProtocol();
@@ -188,13 +212,15 @@ builder.Services.AddSignalR()
 //     .withUrl("/hubs/notifications")
 //     .withHubProtocol(new signalR.protocols.msgpack.MessagePackHubProtocol())
 //     .build();
-```
+
+```text
 
 ### Connection Lifecycle
 
 Override `OnConnectedAsync` and `OnDisconnectedAsync` to manage connection state:
 
 ```csharp
+
 public sealed class NotificationHub(
     ILogger<NotificationHub> logger,
     IConnectionTracker tracker) : Hub<INotificationClient>
@@ -236,13 +262,15 @@ public sealed class NotificationHub(
         await base.OnDisconnectedAsync(exception);
     }
 }
-```
+
+```text
 
 ### Groups Management
 
 Groups provide a lightweight pub/sub mechanism. Connections can belong to multiple groups and group membership is managed per-connection:
 
 ```csharp
+
 public sealed class ChatHub : Hub<IChatClient>
 {
     // Join a room (called by clients)
@@ -273,7 +301,8 @@ public sealed class ChatHub : Hub<IChatClient>
             Context.UserIdentifier!, message);
     }
 }
-```
+
+```text
 
 Groups are not persisted -- they are cleared when a connection disconnects. Re-add connections to groups in `OnConnectedAsync` if needed (e.g., from a database or cache).
 
@@ -282,6 +311,7 @@ Groups are not persisted -- they are cleared when a connection disconnects. Re-a
 Clients can stream data to the hub using `IAsyncEnumerable<T>` or `ChannelReader<T>`:
 
 ```csharp
+
 public sealed class UploadHub : Hub
 {
     // Accept a stream of items from the client
@@ -295,13 +325,15 @@ public sealed class UploadHub : Hub
         }
     }
 }
-```
+
+```text
 
 ### Authentication
 
 SignalR uses the same authentication as the ASP.NET Core host. For WebSocket connections, the access token is sent via query string because WebSocket does not support custom headers:
 
 ```csharp
+
 // Server: configure JWT for SignalR
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -333,11 +365,13 @@ app.UseAuthorization();
 
 app.MapHub<NotificationHub>("/hubs/notifications")
     .RequireAuthorization();
-```
+
+```text
 
 Access `Context.UserIdentifier` in the hub to identify the authenticated user. By default this maps to the `ClaimTypes.NameIdentifier` claim. Customize with `IUserIdProvider`:
 
 ```csharp
+
 public sealed class EmailUserIdProvider : IUserIdProvider
 {
     public string? GetUserId(HubConnectionContext connection)
@@ -348,7 +382,8 @@ public sealed class EmailUserIdProvider : IUserIdProvider
 
 // Register
 builder.Services.AddSingleton<IUserIdProvider, EmailUserIdProvider>();
-```
+
+```text
 
 ### Scaling with Backplane
 
@@ -357,6 +392,7 @@ For multi-server deployments, use a backplane to synchronize messages across ins
 **Redis backplane:**
 
 ```csharp
+
 builder.Services.AddSignalR()
     .AddStackExchangeRedis(builder.Configuration.GetConnectionString("Redis")!,
         options =>
@@ -364,14 +400,17 @@ builder.Services.AddSignalR()
             options.Configuration.ChannelPrefix =
                 RedisChannel.Literal("MyApp:");
         });
-```
+
+```text
 
 **Azure SignalR Service (managed backplane):**
 
 ```csharp
+
 builder.Services.AddSignalR()
     .AddAzureSignalR(builder.Configuration["Azure:SignalR:ConnectionString"]);
-```
+
+```csharp
 
 Azure SignalR Service offloads connection management entirely -- the ASP.NET Core server handles hub logic while Azure manages WebSocket connections, scaling, and message routing.
 
@@ -384,6 +423,7 @@ Azure SignalR Service offloads connection management entirely -- the ASP.NET Cor
 ### Minimal API Endpoint
 
 ```csharp
+
 app.MapGet("/events/orders", async (
     OrderEventService eventService,
     CancellationToken cancellationToken) =>
@@ -392,11 +432,13 @@ app.MapGet("/events/orders", async (
     return TypedResults.ServerSentEvents(
         eventService.GetOrderEventsAsync(cancellationToken));
 });
-```
+
+```text
 
 ### Event Source Implementation
 
 ```csharp
+
 public sealed class OrderEventService
 {
     public async IAsyncEnumerable<SseItem<OrderEvent>> GetOrderEventsAsync(
@@ -409,11 +451,13 @@ public sealed class OrderEventService
         }
     }
 }
-```
+
+```text
 
 ### Browser Client
 
 ```javascript
+
 const source = new EventSource('/events/orders');
 
 source.addEventListener('order-update', (event) => {
@@ -425,7 +469,8 @@ source.onerror = () => {
     // EventSource automatically reconnects
     console.log('SSE connection lost, reconnecting...');
 };
-```
+
+```text
 
 ### When to Use SSE Over SignalR
 
@@ -443,6 +488,7 @@ JSON-RPC 2.0 is a stateless, transport-agnostic remote procedure call protocol e
 ### Protocol Structure
 
 ```json
+
 // Request
 {"jsonrpc": "2.0", "method": "textDocument/completion", "params": {...}, "id": 1}
 
@@ -454,17 +500,21 @@ JSON-RPC 2.0 is a stateless, transport-agnostic remote procedure call protocol e
 
 // Error
 {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": 1}
-```
+
+```json
 
 ### StreamJsonRpc (.NET Library)
 
 `StreamJsonRpc` is the primary .NET library for JSON-RPC 2.0:
 
 ```xml
+
 <PackageReference Include="StreamJsonRpc" Version="2.*" />
-```
+
+```json
 
 ```csharp
+
 // Server: expose methods via JSON-RPC over a stream
 using StreamJsonRpc;
 
@@ -492,9 +542,11 @@ app.Map("/jsonrpc", async (HttpContext context) =>
     rpc.StartListening();
     await rpc.Completion;
 });
-```
+
+```text
 
 ```csharp
+
 // Client
 using var ws = new ClientWebSocket();
 await ws.ConnectAsync(new Uri("ws://localhost:5000/jsonrpc"),
@@ -505,7 +557,8 @@ rpc.StartListening();
 
 var result = await rpc.InvokeAsync<int>("Add", 2, 3);
 // result == 5
-```
+
+```text
 
 ### When to Use JSON-RPC 2.0
 
@@ -576,3 +629,4 @@ Adapted from [Aaronontheweb/dotnet-skills](https://github.com/Aaronontheweb/dotn
 - [SignalR scaling with Redis](https://learn.microsoft.com/en-us/aspnet/core/signalr/redis-backplane?view=aspnetcore-10.0)
 - [SignalR authentication and authorization](https://learn.microsoft.com/en-us/aspnet/core/signalr/authn-and-authz?view=aspnetcore-10.0)
 - [Azure SignalR Service](https://learn.microsoft.com/en-us/azure/azure-signalr/signalr-overview)
+````

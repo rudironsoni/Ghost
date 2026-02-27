@@ -2,23 +2,26 @@
 name: dotnet-wpf-modern
 description: Builds WPF on .NET 8+. Host builder, MVVM Toolkit, Fluent theme, performance, modern C# patterns.
 license: MIT
-targets: ["*"]
-tags: ["ui", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['ui', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for ui tasks"
+  short-description: '.NET skill guidance for ui tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-wpf-modern
 
-WPF on .NET 8+: Host builder and dependency injection, MVVM with CommunityToolkit.Mvvm source generators, hardware-accelerated rendering improvements, modern C# patterns (records, primary constructors, pattern matching), Fluent theme (.NET 9+), system theme detection, and what changed from .NET Framework WPF.
+WPF on .NET 8+: Host builder and dependency injection, MVVM with CommunityToolkit.Mvvm source generators,
+hardware-accelerated rendering improvements, modern C# patterns (records, primary constructors, pattern matching),
+Fluent theme (.NET 9+), system theme detection, and what changed from .NET Framework WPF.
 
-**Version assumptions:** .NET 8.0+ baseline (current LTS). TFM `net8.0-windows`. .NET 9 features (Fluent theme) explicitly marked.
+**Version assumptions:** .NET 8.0+ baseline (current LTS). TFM `net8.0-windows`. .NET 9 features (Fluent theme)
+explicitly marked.
 
 ## Scope
 
@@ -37,17 +40,22 @@ WPF on .NET 8+: Host builder and dependency injection, MVVM with CommunityToolki
 - General Native AOT patterns -- see [skill:dotnet-native-aot]
 - UI framework selection -- see [skill:dotnet-ui-chooser]
 
-Cross-references: [skill:dotnet-ui-testing-core] for desktop testing, [skill:dotnet-winui] for WinUI 3 patterns, [skill:dotnet-wpf-migration] for migration guidance, [skill:dotnet-native-aot] for general AOT, [skill:dotnet-ui-chooser] for framework selection, [skill:dotnet-accessibility] for accessibility patterns (AutomationProperties, AutomationPeer, UI Automation).
+Cross-references: [skill:dotnet-ui-testing-core] for desktop testing, [skill:dotnet-winui] for WinUI 3 patterns,
+[skill:dotnet-wpf-migration] for migration guidance, [skill:dotnet-native-aot] for general AOT,
+[skill:dotnet-ui-chooser] for framework selection, [skill:dotnet-accessibility] for accessibility patterns
+(AutomationProperties, AutomationPeer, UI Automation).
 
 ---
 
 ## .NET 8+ Differences
 
-WPF on .NET 8+ is a significant modernization from .NET Framework WPF. The project format, DI pattern, language features, and runtime behavior have all changed.
+WPF on .NET 8+ is a significant modernization from .NET Framework WPF. The project format, DI pattern, language
+features, and runtime behavior have all changed.
 
 ### New Project Template
 
-```xml
+````xml
+
 <!-- MyWpfApp.csproj (SDK-style) -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -63,7 +71,8 @@ WPF on .NET 8+ is a significant modernization from .NET Framework WPF. The proje
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.*" />
   </ItemGroup>
 </Project>
-```
+
+```text
 
 **Key differences from .NET Framework WPF:**
 - SDK-style `.csproj` (no `packages.config`, no `AssemblyInfo.cs`)
@@ -79,6 +88,7 @@ WPF on .NET 8+ is a significant modernization from .NET Framework WPF. The proje
 Modern WPF apps use the generic host for dependency injection, configuration, and logging -- replacing the legacy `ServiceLocator` or manual DI approaches.
 
 ```csharp
+
 // App.xaml.cs
 public partial class App : Application
 {
@@ -140,7 +150,8 @@ public partial class App : Application
         return app._host.Services.GetRequiredService<T>();
     }
 }
-```
+
+```text
 
 ---
 
@@ -149,6 +160,7 @@ public partial class App : Application
 CommunityToolkit.Mvvm (Microsoft MVVM Toolkit) is the recommended MVVM framework for modern WPF. It uses source generators to eliminate boilerplate.
 
 ```csharp
+
 // ViewModels/ProductListViewModel.cs
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -196,11 +208,13 @@ public partial class ProductListViewModel : ObservableObject
 
     private bool CanSearch() => !string.IsNullOrWhiteSpace(SearchTerm);
 }
-```
+
+```text
 
 ### XAML Binding with MVVM Toolkit
 
 ```xml
+
 <Window x:Class="MyApp.Views.ProductListWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -227,7 +241,8 @@ public partial class ProductListViewModel : ObservableObject
         </ListBox>
     </DockPanel>
 </Window>
-```
+
+```text
 
 **Key source generator attributes:**
 - `[ObservableProperty]` -- generates property with `INotifyPropertyChanged` from a backing field
@@ -254,13 +269,15 @@ WPF on .NET 8+ delivers significant performance improvements over .NET Framework
 - **Trimming readiness** -- `.NET 8+` WPF supports IL trimming for smaller deployment size
 
 ```xml
+
 <!-- Enable trimming for smaller deployment -->
 <PropertyGroup>
   <PublishTrimmed>true</PublishTrimmed>
   <TrimMode>partial</TrimMode>
   <!-- WPF apps need partial trim mode due to reflection usage -->
 </PropertyGroup>
-```
+
+```text
 
 **Trimming caveat:** WPF relies heavily on XAML reflection for data binding and resource resolution. Use `TrimMode=partial` (not `full`) and test thoroughly. Compiled bindings and `x:Type` references are safer than string-based bindings for trimming.
 
@@ -288,6 +305,7 @@ WPF on .NET 8 delivers measurable improvements over .NET Framework 4.8 across ke
 ### Records for Data Models
 
 ```csharp
+
 // Immutable data models
 public record Product(string Name, decimal Price, string Category);
 
@@ -297,11 +315,13 @@ public record ProductViewModel(Product Product)
     public string DisplayPrice => Product.Price.ToString("C");
     public string Summary => $"{Product.Name} - {DisplayPrice}";
 }
-```
+
+```text
 
 ### Primary Constructors in Services
 
 ```csharp
+
 // Service with primary constructor (C# 12)
 public class ProductService(HttpClient httpClient, ILogger<ProductService> logger)
     : IProductService
@@ -314,11 +334,13 @@ public class ProductService(HttpClient httpClient, ILogger<ProductService> logge
         return await response.Content.ReadFromJsonAsync<List<Product>>(ct) ?? [];
     }
 }
-```
+
+```json
 
 ### Pattern Matching in Converters
 
 ```csharp
+
 // Modern converter using pattern matching (C# 11+)
 public class StatusToColorConverter : IValueConverter
 {
@@ -337,18 +359,21 @@ public class StatusToColorConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
-```
+
+```text
 
 ### Collection Expressions
 
 ```csharp
+
 // C# 12 collection expressions
 [ObservableProperty]
 private ObservableCollection<Product> _products = [];
 
 // In methods
 List<string> categories = ["Electronics", "Clothing", "Books"];
-```
+
+```text
 
 ---
 
@@ -359,6 +384,7 @@ List<string> categories = ["Electronics", "Clothing", "Books"];
 .NET 9 introduces the Fluent theme for WPF, providing modern Windows 11-style visuals. It applies rounded corners, updated control templates, and Mica/Acrylic backdrop support.
 
 ```xml
+
 <!-- App.xaml: enable Fluent theme (.NET 9+) via ThemeMode property -->
 <Application x:Class="MyApp.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -366,17 +392,20 @@ List<string> categories = ["Electronics", "Clothing", "Books"];
              ThemeMode="System"
              StartupUri="MainWindow.xaml">
 </Application>
-```
+
+```xml
 
 Or in code-behind:
 
 ```csharp
+
 // App.xaml.cs: set theme programmatically (.NET 9+)
 Application.Current.ThemeMode = ThemeMode.System; // or ThemeMode.Light / ThemeMode.Dark
 
 // Per-window theming is also supported
 mainWindow.ThemeMode = ThemeMode.Dark;
-```
+
+```text
 
 **ThemeMode values:**
 - `None` -- classic WPF look (no Fluent styling)
@@ -396,6 +425,7 @@ mainWindow.ThemeMode = ThemeMode.Dark;
 Detect and respond to the Windows system light/dark theme:
 
 ```csharp
+
 // Detect system theme
 public static bool IsDarkTheme()
 {
@@ -414,13 +444,15 @@ SystemEvents.UserPreferenceChanged += (sender, args) =>
         ApplyTheme(IsDarkTheme() ? AppTheme.Dark : AppTheme.Light);
     }
 };
-```
+
+```text
 
 ### Custom Themes
 
 For pre-.NET 9 apps or custom branding, use resource dictionaries:
 
 ```xml
+
 <!-- Themes/DarkTheme.xaml -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
@@ -428,9 +460,11 @@ For pre-.NET 9 apps or custom branding, use resource dictionaries:
     <SolidColorBrush x:Key="TextForeground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="AccentBrush" Color="#0078D7" />
 </ResourceDictionary>
-```
+
+```text
 
 ```csharp
+
 // Switch themes at runtime
 public void ApplyTheme(AppTheme theme)
 {
@@ -445,7 +479,8 @@ public void ApplyTheme(AppTheme theme)
     Application.Current.Resources.MergedDictionaries.Add(
         new ResourceDictionary { Source = themeUri });
 }
-```
+
+```text
 
 ---
 
@@ -477,3 +512,4 @@ public void ApplyTheme(AppTheme theme)
 - [WPF Fluent Theme (.NET 9)](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/whats-new/net90)
 - [Microsoft.Extensions.Hosting](https://learn.microsoft.com/en-us/dotnet/core/extensions/generic-host)
 - [WPF Performance](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/optimizing-performance)
+````

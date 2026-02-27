@@ -10,9 +10,7 @@
         "serena",
         "start-mcp-server",
         "--context",
-        "ide-assistant",
-        "--enable-web-dashboard",
-        "false",
+        "ide",
         "--project",
         "."
       ],
@@ -22,7 +20,7 @@
       "description": "Library documentation search server",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp@latest"],
+      "args": ["-y", "@upstash/context7-mcp@2.1.2"],
       "env": {}
     },
     "microsoftdocs-mcp": {
@@ -34,11 +32,7 @@
       "description": "WinDbg crash and dump analysis MCP",
       "type": "stdio",
       "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/svnscha/mcp-windbg",
-        "mcp-windbg"
-      ],
+      "args": ["--from", "git+https://github.com/svnscha/mcp-windbg@v0.12.2", "mcp-windbg"],
       "env": {}
     }
   }

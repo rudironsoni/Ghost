@@ -2,23 +2,27 @@
 name: dotnet-trimming
 description: Trims .NET 8+ apps and libraries. Annotations, ILLink descriptors, IL2xxx warnings, IsTrimmable.
 license: MIT
-targets: ["*"]
-tags: ["aot", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['aot', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for aot tasks"
+  short-description: '.NET skill guidance for aot tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-trimming
 
-Trim-safe development for .NET 8+ applications and libraries: trimming annotations (`[RequiresUnreferencedCode]`, `[DynamicallyAccessedMembers]`, `[DynamicDependency]`), ILLink descriptor XML for type preservation, `TrimmerSingleWarn` for granular diagnostics, testing trimmed output, fixing IL2xxx/IL3xxx warnings, and library authoring with `IsTrimmable`.
+Trim-safe development for .NET 8+ applications and libraries: trimming annotations (`[RequiresUnreferencedCode]`,
+`[DynamicallyAccessedMembers]`, `[DynamicDependency]`), ILLink descriptor XML for type preservation, `TrimmerSingleWarn`
+for granular diagnostics, testing trimmed output, fixing IL2xxx/IL3xxx warnings, and library authoring with
+`IsTrimmable`.
 
-**Version assumptions:** .NET 8.0+ baseline. Trimming shipped in .NET 6, but .NET 8 provides the most complete annotation surface and analyzer coverage. .NET 9 improved warning accuracy and library compat.
+**Version assumptions:** .NET 8.0+ baseline. Trimming shipped in .NET 6, but .NET 8 provides the most complete
+annotation surface and analyzer coverage. .NET 9 improved warning accuracy and library compat.
 
 ## Scope
 
@@ -41,17 +45,21 @@ Trim-safe development for .NET 8+ applications and libraries: trimming annotatio
 - Container deployment -- see [skill:dotnet-containers]
 - Performance patterns (Span, pooling) -- see [skill:dotnet-performance-patterns]
 
-Cross-references: [skill:dotnet-native-aot] for AOT compilation pipeline, [skill:dotnet-aot-architecture] for AOT-safe design patterns, [skill:dotnet-serialization] for AOT-safe serialization, [skill:dotnet-csharp-source-generators] for source gen as trimming enabler.
+Cross-references: [skill:dotnet-native-aot] for AOT compilation pipeline, [skill:dotnet-aot-architecture] for AOT-safe
+design patterns, [skill:dotnet-serialization] for AOT-safe serialization, [skill:dotnet-csharp-source-generators] for
+source gen as trimming enabler.
 
 ---
 
 ## MSBuild Properties: Apps vs Libraries
 
-Apps and libraries use different MSBuild properties for trimming. This distinction is critical -- using the wrong property causes subtle issues.
+Apps and libraries use different MSBuild properties for trimming. This distinction is critical -- using the wrong
+property causes subtle issues.
 
 ### For Applications
 
-```xml
+````xml
+
 <PropertyGroup>
   <!-- Enable trimming on publish -->
   <PublishTrimmed>true</PublishTrimmed>
@@ -62,13 +70,15 @@ Apps and libraries use different MSBuild properties for trimming. This distincti
   <!-- Optional: also enable AOT analyzer if targeting AOT -->
   <EnableAotAnalyzer>true</EnableAotAnalyzer>
 </PropertyGroup>
-```
+
+```text
 
 `PublishTrimmed` tells the linker to remove unreachable code when publishing. `EnableTrimAnalyzer` enables Roslyn analyzers that warn about trim-unsafe patterns during development.
 
 ### For Libraries
 
 ```xml
+
 <PropertyGroup>
   <!-- Declare the library is trim-safe (auto-enables trim analyzer) -->
   <IsTrimmable>true</IsTrimmable>
@@ -76,7 +86,8 @@ Apps and libraries use different MSBuild properties for trimming. This distincti
   <!-- Declare AOT compatibility (auto-enables AOT analyzer) -->
   <IsAotCompatible>true</IsAotCompatible>
 </PropertyGroup>
-```
+
+```text
 
 **Key difference:** Libraries do not set `PublishTrimmed` -- they are not published as standalone applications. `IsTrimmable` tells consumers that the library's public API is annotated for trimming safety. Setting `IsTrimmable` automatically enables the trim analyzer for the library project.
 
@@ -99,6 +110,7 @@ Apps and libraries use different MSBuild properties for trimming. This distincti
 Marks a method as unsafe for trimming. The trimmer and analyzer produce IL2026 warnings when this method is called from trim-safe code.
 
 ```csharp
+
 [RequiresUnreferencedCode("Uses reflection to discover plugins")]
 public IPlugin LoadPlugin(string typeName)
 {
@@ -106,13 +118,15 @@ public IPlugin LoadPlugin(string typeName)
         ?? throw new InvalidOperationException($"Type {typeName} not found");
     return (IPlugin)Activator.CreateInstance(type)!;
 }
-```
+
+```text
 
 ### `[DynamicallyAccessedMembers]`
 
 Tells the trimmer which members of a type are accessed via reflection, so they are preserved:
 
 ```csharp
+
 public T CreateInstance<[DynamicallyAccessedMembers(
     DynamicallyAccessedMemberTypes.PublicConstructors)] T>()
     where T : class
@@ -120,13 +134,15 @@ public T CreateInstance<[DynamicallyAccessedMembers(
 
 // The trimmer preserves public constructors of T
 // because the constraint tells it what's needed
-```
+
+```text
 
 ### `[DynamicDependency]`
 
 Explicitly preserves a specific member from trimming:
 
 ```csharp
+
 // Preserve a method that is only called via reflection
 [DynamicDependency(nameof(OnConfigChanged), typeof(ConfigWatcher))]
 public void StartWatching() { /* reflects on OnConfigChanged */ }
@@ -135,18 +151,21 @@ public void StartWatching() { /* reflects on OnConfigChanged */ }
 [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties,
     typeof(LegacyDto))]
 public void SerializeLegacy(LegacyDto dto) { /* ... */ }
-```
+
+```text
 
 ### `[UnconditionalSuppressMessage]`
 
 Suppresses a specific trim warning when you have verified the code is safe despite the analyzer's concern:
 
 ```csharp
+
 [UnconditionalSuppressMessage("Trimming",
     "IL2026:RequiresUnreferencedCode",
     Justification = "Type is preserved via ILLink descriptor")]
 public void CallLegacyCode() { /* ... */ }
-```
+
+```text
 
 Use sparingly -- only when you have verified safety through ILLink descriptors or other means.
 
@@ -159,6 +178,7 @@ ILLink descriptor XML files tell the trimmer to preserve types, methods, or enti
 ### Descriptor Format
 
 ```xml
+
 <!-- ILLink.Descriptors.xml -->
 <linker>
   <!-- Preserve specific types -->
@@ -173,27 +193,32 @@ ILLink descriptor XML files tell the trimmer to preserve types, methods, or enti
   <!-- Preserve an entire third-party assembly -->
   <assembly fullname="LegacyLibrary" preserve="all" />
 </linker>
-```
+
+```text
 
 ### Registration
 
 ```xml
+
 <!-- In .csproj -->
 <ItemGroup>
   <TrimmerRootDescriptor Include="ILLink.Descriptors.xml" />
 </ItemGroup>
-```
+
+```csharp
 
 ### Alternative: TrimmerRootAssembly
 
 For entire assemblies that must not be trimmed:
 
 ```xml
+
 <ItemGroup>
   <!-- Preserve entire assembly (no trimming at all) -->
   <TrimmerRootAssembly Include="LegacyLibrary" />
 </ItemGroup>
-```
+
+```text
 
 ---
 
@@ -202,6 +227,7 @@ For entire assemblies that must not be trimmed:
 By default, the trimmer groups warnings per assembly, showing one summary line. `TrimmerSingleWarn=false` shows every individual warning, which is essential for fixing trim issues.
 
 ```bash
+
 # Default: one warning per assembly (hard to debug)
 dotnet publish -c Release /p:PublishTrimmed=true
 # warning IL2104: Assembly 'MyApp' produced trim warnings
@@ -213,7 +239,8 @@ dotnet publish -c Release /p:PublishTrimmed=true /p:TrimmerSingleWarn=false
 
 # Analysis without publishing
 dotnet build /p:EnableTrimAnalyzer=true /p:TrimmerSingleWarn=false
-```
+
+```text
 
 ---
 
@@ -248,6 +275,7 @@ dotnet build /p:EnableTrimAnalyzer=true /p:TrimmerSingleWarn=false
 ### Publish and Test
 
 ```bash
+
 # Publish with trimming
 dotnet publish -c Release -r linux-x64 /p:PublishTrimmed=true
 
@@ -259,11 +287,13 @@ dotnet publish -c Release -r linux-x64 /p:PublishTrimmed=true
 # 2. JSON deserialization produces populated objects
 # 3. DI-resolved services function
 # 4. No MissingMethodException or MissingMetadataException
-```
+
+```json
 
 ### Trim Test in CI
 
 ```bash
+
 # CI script: publish trimmed and run integration tests
 dotnet publish src/MyApp -c Release -r linux-x64 /p:PublishTrimmed=true -o ./publish
 
@@ -276,15 +306,18 @@ curl -f http://localhost:8080/health/live || (kill $APP_PID; exit 1)
 curl -f http://localhost:8080/api/products || (kill $APP_PID; exit 1)
 
 kill $APP_PID
-```
+
+```text
 
 ### Trim Warning CI Gate
 
 ```bash
+
 # Fail CI if any trim warnings exist
 dotnet build /p:EnableTrimAnalyzer=true /p:TrimmerSingleWarn=false \
   /warnaserror:IL2026,IL2057,IL2060,IL2067,IL2070,IL3050
-```
+
+```bash
 
 ---
 
@@ -299,6 +332,7 @@ dotnet build /p:EnableTrimAnalyzer=true /p:TrimmerSingleWarn=false \
 5. Test by consuming the library from a trimmed application
 
 ```xml
+
 <!-- Library .csproj -->
 <PropertyGroup>
   <!-- Auto-enables trim analyzer -->
@@ -306,11 +340,13 @@ dotnet build /p:EnableTrimAnalyzer=true /p:TrimmerSingleWarn=false \
   <!-- Auto-enables AOT analyzer; implies IsTrimmable in .NET 8+ -->
   <IsAotCompatible>true</IsAotCompatible>
 </PropertyGroup>
-```
+
+```text
 
 ### Annotating Public APIs
 
 ```csharp
+
 // Method that uses reflection internally -- annotate honestly
 [RequiresUnreferencedCode(
     "Uses reflection to discover plugin types. " +
@@ -324,13 +360,15 @@ public void RegisterPlugin<[DynamicallyAccessedMembers(
 {
     _plugins[typeof(T).Name] = () => (IPlugin)Activator.CreateInstance<T>();
 }
-```
+
+```text
 
 ### Conditional APIs
 
 Provide both reflection-based and trim-safe APIs when possible:
 
 ```csharp
+
 public class ServiceRegistry
 {
     // Trim-safe: explicit type
@@ -345,7 +383,8 @@ public class ServiceRegistry
     public void RegisterFromAssembly(Assembly assembly)
     { /* ... */ }
 }
-```
+
+```text
 
 ---
 
@@ -367,3 +406,4 @@ public class ServiceRegistry
 - [Introduction to trim warnings](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/fixing-warnings)
 - [Trimming annotation attributes](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/prepare-libraries-for-trimming#trimming-annotation-attributes)
 - [ILLink descriptor format](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/trimming-options#descriptor-format)
+````

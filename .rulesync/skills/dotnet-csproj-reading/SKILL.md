@@ -2,21 +2,23 @@
 name: dotnet-csproj-reading
 description: Reads and modifies SDK-style .csproj files. PropertyGroup, ItemGroup, CPM, props.
 license: MIT
-targets: ["*"]
-tags: ["foundation", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['foundation', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for foundation tasks"
+  short-description: '.NET skill guidance for foundation tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-csproj-reading
 
-Teaches agents to read and safely modify SDK-style .csproj files. Covers project structure, PropertyGroup conventions, ItemGroup patterns, conditional expressions, Directory.Build.props/.targets, and central package management (Directory.Packages.props). Each subsection provides annotated XML examples and common modification patterns.
+Teaches agents to read and safely modify SDK-style .csproj files. Covers project structure, PropertyGroup conventions,
+ItemGroup patterns, conditional expressions, Directory.Build.props/.targets, and central package management
+(Directory.Packages.props). Each subsection provides annotated XML examples and common modification patterns.
 
 ## Scope
 
@@ -35,17 +37,21 @@ Teaches agents to read and safely modify SDK-style .csproj files. Covers project
 
 .NET 8.0+ SDK. SDK-style projects only (legacy .csproj format is not covered). MSBuild (included with .NET SDK).
 
-Cross-references: [skill:dotnet-project-structure] for project organization and SDK selection, [skill:dotnet-build-analysis] for interpreting build errors from project misconfiguration, [skill:dotnet-agent-gotchas] for common project structure mistakes agents make.
+Cross-references: [skill:dotnet-project-structure] for project organization and SDK selection,
+[skill:dotnet-build-analysis] for interpreting build errors from project misconfiguration, [skill:dotnet-agent-gotchas]
+for common project structure mistakes agents make.
 
 ---
 
 ## Subsection 1: SDK-Style Project Structure
 
-SDK-style projects use a `<Project Sdk="...">` declaration that imports hundreds of default targets and props. Understanding what the SDK provides implicitly is essential to avoid redundant or conflicting declarations.
+SDK-style projects use a `<Project Sdk="...">` declaration that imports hundreds of default targets and props.
+Understanding what the SDK provides implicitly is essential to avoid redundant or conflicting declarations.
 
 ### Annotated XML Example
 
-```xml
+````xml
+
 <!-- The Sdk attribute imports default props at the top and targets at the bottom -->
 <!-- This single line replaces dozens of Import statements from legacy .csproj -->
 <Project Sdk="Microsoft.NET.Sdk">
@@ -67,48 +73,58 @@ SDK-style projects use a `<Project Sdk="...">` declaration that imports hundreds
   </PropertyGroup>
 
 </Project>
-```
+
+```text
 
 ### Common Modification Patterns
 
 **Changing SDK type** -- when an agent creates a web project with the wrong SDK:
 
 ```xml
+
 <!-- WRONG: console SDK for a web project -->
 <Project Sdk="Microsoft.NET.Sdk">
 
 <!-- CORRECT: Web SDK includes ASP.NET Core shared framework -->
 <Project Sdk="Microsoft.NET.Sdk.Web">
-```
 
-**Disabling default globs** -- rare, but needed when migrating from legacy format or when explicit file control is required:
+```text
+
+**Disabling default globs** -- rare, but needed when migrating from legacy format or when explicit file control is
+required:
 
 ```xml
+
 <PropertyGroup>
   <!-- Disable automatic inclusion of *.cs files -->
   <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   <!-- Disable all default items (Compile, EmbeddedResource, Content) -->
   <EnableDefaultItems>false</EnableDefaultItems>
 </PropertyGroup>
-```
+
+```text
 
 **Verifying which SDK a project uses:**
 
 ```bash
+
 # Check the first line of the .csproj for the Sdk attribute
 head -1 src/MyApp/MyApp.csproj
 # Output: <Project Sdk="Microsoft.NET.Sdk.Web">
-```
+
+```bash
 
 ---
 
 ## Subsection 2: PropertyGroup Conventions
 
-PropertyGroup elements contain scalar MSBuild properties. The most important properties control the target framework, language features, and output type.
+PropertyGroup elements contain scalar MSBuild properties. The most important properties control the target framework,
+language features, and output type.
 
 ### Annotated XML Example
 
 ```xml
+
 <PropertyGroup>
   <!-- Target Framework Moniker (TFM) -- determines runtime and API surface -->
   <!-- Use the latest LTS or STS release; prefer the repo's existing TFM. -->
@@ -137,44 +153,53 @@ PropertyGroup elements contain scalar MSBuild properties. The most important pro
   <!-- Only set explicitly when using preview features -->
   <LangVersion>preview</LangVersion>
 </PropertyGroup>
-```
+
+```text
 
 ### Common Modification Patterns
 
 **Enabling nullable for an existing project:**
 
 ```xml
+
 <!-- Add to the main PropertyGroup -->
 <Nullable>enable</Nullable>
 <!-- This enables nullable warnings project-wide. Existing code will produce warnings. -->
 <!-- To adopt incrementally, use #nullable enable in individual files instead. -->
-```
+
+```text
 
 **Setting output type for a console app:**
 
 ```xml
+
 <!-- Required for executable projects; without this, dotnet run fails -->
 <OutputType>Exe</OutputType>
-```
+
+```xml
 
 **Adding TreatWarningsAsErrors (recommended for CI parity):**
 
 ```xml
+
 <PropertyGroup>
   <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   <!-- Enable unconditionally -- do NOT use CI-only conditions -->
 </PropertyGroup>
-```
+
+```text
 
 ---
 
 ## Subsection 3: ItemGroup Patterns
 
-ItemGroup elements contain collections: package references, project references, file inclusions, and other build items. Understanding the three main item types prevents common agent mistakes.
+ItemGroup elements contain collections: package references, project references, file inclusions, and other build items.
+Understanding the three main item types prevents common agent mistakes.
 
 ### Annotated XML Example
 
 ```xml
+
 <ItemGroup>
   <!-- PackageReference: NuGet package dependency -->
   <!-- Version attribute is required unless using central package management -->
@@ -209,51 +234,64 @@ ItemGroup elements contain collections: package references, project references, 
   <!-- EmbeddedResource: files compiled into the assembly -->
   <EmbeddedResource Include="Resources/**/*.resx" />
 </ItemGroup>
-```
+
+```text
 
 ### Common Modification Patterns
 
 **Adding a NuGet package:**
 
 ```bash
+
 # Prefer CLI to avoid formatting issues
 dotnet add src/MyApp/MyApp.csproj package Microsoft.EntityFrameworkCore --version 9.0.0
-```
+
+```bash
 
 ```xml
+
 <!-- Or add manually -- ensure Version is specified -->
 <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
-```
+
+```xml
 
 **Adding a project reference:**
 
 ```bash
+
 # CLI ensures correct relative path
 dotnet add src/MyApp.Api/MyApp.Api.csproj reference src/MyApp.Core/MyApp.Core.csproj
-```
+
+```bash
 
 ```xml
+
 <!-- Verify path actually resolves to an existing .csproj -->
 <ProjectReference Include="../MyApp.Core/MyApp.Core.csproj" />
-```
+
+```csharp
 
 **Including non-compiled files in output:**
 
 ```xml
+
 <!-- Copy config files to output on build -->
 <None Update="config/*.json" CopyToOutputDirectory="PreserveNewest" />
 <!-- Note: Update (not Include) when the file is already matched by default globs -->
-```
+
+```json
 
 ---
 
 ## Subsection 4: Condition Expressions and Multi-Targeting
 
-MSBuild conditions enable TFM-specific properties, platform-specific package references, and build configuration logic. Understanding condition syntax prevents broken multi-targeting builds.
+MSBuild conditions enable TFM-specific properties, platform-specific package references, and build configuration logic.
+Understanding condition syntax prevents broken multi-targeting builds.
 
 ### Annotated XML Example
 
 ```xml
+
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
@@ -289,23 +327,27 @@ MSBuild conditions enable TFM-specific properties, platform-specific package ref
   </PropertyGroup>
 
 </Project>
-```
+
+```text
 
 ### Common Modification Patterns
 
 **Adding a TFM:**
 
 ```xml
+
 <!-- Change singular to plural and add new TFM -->
 <!-- Before: -->
 <TargetFramework>net8.0</TargetFramework>
 <!-- After: -->
 <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
-```
+
+```text
 
 **Using version-agnostic TFM patterns for platform detection:**
 
 ```xml
+
 <!-- CORRECT: version-agnostic glob handles net8.0-android, net9.0-android, etc. -->
 <ItemGroup Condition="$(TargetFramework.Contains('-android'))">
   <AndroidResource Include="Resources/**" />
@@ -313,28 +355,32 @@ MSBuild conditions enable TFM-specific properties, platform-specific package ref
 
 <!-- WRONG: hardcoded version misses other TFMs -->
 <ItemGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
-```
+
+```text
 
 **Condition syntax reference:**
 
-| Expression | Meaning |
-|-----------|---------|
-| `'$(Prop)' == 'value'` | Exact match (case-insensitive) |
-| `'$(Prop)' != 'value'` | Not equal |
-| `$(Prop.StartsWith('prefix'))` | String starts with |
-| `$(Prop.Contains('sub'))` | String contains |
-| `'$(Prop)' == ''` | Property is empty/not set |
-| `Exists('path')` | File or directory exists |
+| Expression                     | Meaning                        |
+| ------------------------------ | ------------------------------ |
+| `'$(Prop)' == 'value'`         | Exact match (case-insensitive) |
+| `'$(Prop)' != 'value'`         | Not equal                      |
+| `$(Prop.StartsWith('prefix'))` | String starts with             |
+| `$(Prop.Contains('sub'))`      | String contains                |
+| `'$(Prop)' == ''`              | Property is empty/not set      |
+| `Exists('path')`               | File or directory exists       |
 
 ---
 
 ## Subsection 5: Directory.Build.props and Directory.Build.targets
 
-These files centralize shared build configuration. MSBuild automatically imports `Directory.Build.props` (before the project) and `Directory.Build.targets` (after the project) from the current directory and all parent directories up to the filesystem root.
+These files centralize shared build configuration. MSBuild automatically imports `Directory.Build.props` (before the
+project) and `Directory.Build.targets` (after the project) from the current directory and all parent directories up to
+the filesystem root.
 
 ### Annotated XML: Directory.Build.props
 
 ```xml
+
 <!-- Directory.Build.props: imported BEFORE the project file -->
 <!-- Use for properties that projects inherit but can override -->
 <!-- Place at solution root to apply to all projects -->
@@ -360,11 +406,13 @@ These files centralize shared build configuration. MSBuild automatically imports
   </PropertyGroup>
 
 </Project>
-```
+
+```text
 
 ### Annotated XML: Directory.Build.targets
 
 ```xml
+
 <!-- Directory.Build.targets: imported AFTER the project file -->
 <!-- Use for targets, items, and properties that depend on project-level values -->
 <!-- Place at solution root alongside Directory.Build.props -->
@@ -388,24 +436,29 @@ These files centralize shared build configuration. MSBuild automatically imports
   </Target>
 
 </Project>
-```
+
+```text
 
 ### Common Modification Patterns
 
 **Hierarchy and override behavior:**
 
-```
+```text
+
 repo-root/
   Directory.Build.props     <-- applies to ALL projects
   src/
     Directory.Build.props   <-- applies to src/ projects only
     MyApp.Api/
       MyApp.Api.csproj      <-- inherits from src/ props (NOT repo-root/)
-```
 
-MSBuild imports the nearest `Directory.Build.props` found walking upward. If a nested `Directory.Build.props` exists, it shadows the parent. To chain both, the nested file must explicitly import the parent:
+```csharp
+
+MSBuild imports the nearest `Directory.Build.props` found walking upward. If a nested `Directory.Build.props` exists, it
+shadows the parent. To chain both, the nested file must explicitly import the parent:
 
 ```xml
+
 <!-- src/Directory.Build.props -- import parent first, then override -->
 <Project>
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
@@ -415,25 +468,28 @@ MSBuild imports the nearest `Directory.Build.props` found walking upward. If a n
     <RootNamespace>MyApp.$(MSBuildProjectName)</RootNamespace>
   </PropertyGroup>
 </Project>
-```
+
+```text
 
 **When to use .props vs .targets:**
 
-| Use .props for | Use .targets for |
-|---------------|-----------------|
-| Property defaults (TFM, nullable, etc.) | Items that depend on project properties |
-| Package metadata (authors, license) | Custom build targets (AfterTargets, BeforeTargets) |
-| Properties projects can override | Analyzer packages added to all projects |
+| Use .props for                          | Use .targets for                                   |
+| --------------------------------------- | -------------------------------------------------- |
+| Property defaults (TFM, nullable, etc.) | Items that depend on project properties            |
+| Package metadata (authors, license)     | Custom build targets (AfterTargets, BeforeTargets) |
+| Properties projects can override        | Analyzer packages added to all projects            |
 
 ---
 
 ## Subsection 6: Directory.Packages.props (Central Package Management)
 
-Central Package Management (CPM) centralizes NuGet package versions in a single `Directory.Packages.props` file. Individual projects reference packages without specifying versions.
+Central Package Management (CPM) centralizes NuGet package versions in a single `Directory.Packages.props` file.
+Individual projects reference packages without specifying versions.
 
 ### Annotated XML Example
 
 ```xml
+
 <!-- Directory.Packages.props: place at solution root -->
 <Project>
 
@@ -458,11 +514,13 @@ Central Package Management (CPM) centralizes NuGet package versions in a single 
   </ItemGroup>
 
 </Project>
-```
+
+```text
 
 **Project file with CPM enabled:**
 
 ```xml
+
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -474,66 +532,84 @@ Central Package Management (CPM) centralizes NuGet package versions in a single 
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
   </ItemGroup>
 </Project>
-```
+
+```text
 
 ### Common Modification Patterns
 
 **Enabling CPM in an existing solution:**
 
-1. Create `Directory.Packages.props` at the solution root with `<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>`.
+1. Create `Directory.Packages.props` at the solution root with
+   `<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>`.
 2. Move all `Version` attributes from `PackageReference` items into `PackageVersion` entries in the central file.
 3. Remove `Version` from all `PackageReference` items in individual `.csproj` files.
 
 ```bash
+
 # Find all PackageReference entries with Version attributes
 grep -rn 'PackageReference Include=.*Version=' --include="*.csproj" src/
-```
+
+```bash
 
 **Overriding a version in a specific project** (escape hatch):
 
 ```xml
+
 <!-- In the individual .csproj -- use VersionOverride when a project needs a different version -->
 <PackageReference Include="Microsoft.EntityFrameworkCore" VersionOverride="8.0.11" />
-```
 
-**Hierarchical resolution:** `Directory.Packages.props` resolves upward from the project directory, the same as `Directory.Build.props`. In monorepos, place the central file at the repo root. Sub-directories can have their own `Directory.Packages.props` -- the nearest one wins.
+```csharp
+
+**Hierarchical resolution:** `Directory.Packages.props` resolves upward from the project directory, the same as
+`Directory.Build.props`. In monorepos, place the central file at the repo root. Sub-directories can have their own
+`Directory.Packages.props` -- the nearest one wins.
 
 **Migrating from per-project versions:**
 
 ```bash
+
 # List all unique packages and versions across the solution
 dotnet list src/MyApp.sln package --format json
 # Use this output to build the central PackageVersion list
-```
+
+```bash
 
 ---
 
 ## Slopwatch Anti-Patterns
 
-These patterns in project files indicate an agent is hiding problems rather than fixing them. See [skill:dotnet-slopwatch] for the automated quality gate that detects these patterns.
+These patterns in project files indicate an agent is hiding problems rather than fixing them. See
+[skill:dotnet-slopwatch] for the automated quality gate that detects these patterns.
 
 ### NoWarn in .csproj
 
 ```xml
+
 <!-- RED FLAG: blanket warning suppression in project file -->
 <PropertyGroup>
   <NoWarn>CS8600;CS8602;CS8604;IL2026;IL2046;IL3050</NoWarn>
 </PropertyGroup>
-```
 
-`<NoWarn>` in the project file suppresses warnings for the entire project, making issues invisible. This is worse than `#pragma` because it has no scope boundary and cannot be audited per-file.
+```text
 
-**Fix:** Remove `<NoWarn>` entries and fix the underlying issues. For warnings that genuinely do not apply project-wide, configure severity in `.editorconfig` instead:
+`<NoWarn>` in the project file suppresses warnings for the entire project, making issues invisible. This is worse than
+`#pragma` because it has no scope boundary and cannot be audited per-file.
+
+**Fix:** Remove `<NoWarn>` entries and fix the underlying issues. For warnings that genuinely do not apply project-wide,
+configure severity in `.editorconfig` instead:
 
 ```ini
+
 # .editorconfig -- preferred over <NoWarn> for controlled suppression
 [*.cs]
 dotnet_diagnostic.CA2007.severity = none  # No SynchronizationContext in ASP.NET Core
-```
+
+```csharp
 
 ### Suppressed Analyzers in Directory.Build.props
 
 ```xml
+
 <!-- RED FLAG: disabling analyzers for all projects via shared props -->
 <PropertyGroup>
   <NoWarn>$(NoWarn);CA1062;CA1822;CA2007</NoWarn>
@@ -542,11 +618,15 @@ dotnet_diagnostic.CA2007.severity = none  # No SynchronizationContext in ASP.NET
   <!-- OR -->
   <EnableNETAnalyzers>false</EnableNETAnalyzers>
 </PropertyGroup>
-```
 
-Disabling analyzers in `Directory.Build.props` silences them across every project in the solution, including new projects added later. Agents sometimes do this to achieve a clean build quickly.
+```text
 
-**Fix:** Keep analyzers enabled globally. Address warnings per-project or per-file. If a specific rule category does not apply (e.g., CA2007 in ASP.NET Core apps), suppress it in `.editorconfig` at the appropriate scope with a comment explaining why.
+Disabling analyzers in `Directory.Build.props` silences them across every project in the solution, including new
+projects added later. Agents sometimes do this to achieve a clean build quickly.
+
+**Fix:** Keep analyzers enabled globally. Address warnings per-project or per-file. If a specific rule category does not
+apply (e.g., CA2007 in ASP.NET Core apps), suppress it in `.editorconfig` at the appropriate scope with a comment
+explaining why.
 
 ---
 
@@ -564,3 +644,4 @@ Disabling analyzers in `Directory.Build.props` silences them across every projec
 - [Directory.Build.props/targets](https://learn.microsoft.com/en-us/visualstudio/msbuild/customize-by-directory)
 - [MSBuild Conditions](https://learn.microsoft.com/en-us/visualstudio/msbuild/msbuild-conditions)
 - [SDK-style Project Format](https://learn.microsoft.com/en-us/dotnet/core/project-sdk/overview)
+````

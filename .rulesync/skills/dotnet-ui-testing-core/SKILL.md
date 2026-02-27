@@ -2,21 +2,23 @@
 name: dotnet-ui-testing-core
 description: Tests UI across frameworks. Page objects, test selectors, async waits, accessibility.
 license: MIT
-targets: ["*"]
-tags: ["testing", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['testing', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for testing tasks"
+  short-description: '.NET skill guidance for testing tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-ui-testing-core
 
-Core UI testing patterns applicable across .NET UI frameworks (Blazor, MAUI, Uno Platform). Covers the page object model for maintainable test structure, test selector strategies for reliable element identification, async wait patterns for non-deterministic UI, and accessibility testing approaches.
+Core UI testing patterns applicable across .NET UI frameworks (Blazor, MAUI, Uno Platform). Covers the page object model
+for maintainable test structure, test selector strategies for reliable element identification, async wait patterns for
+non-deterministic UI, and accessibility testing approaches.
 
 **Version assumptions:** .NET 8.0+ baseline. Framework-specific details are delegated to dedicated skills.
 
@@ -35,19 +37,25 @@ Core UI testing patterns applicable across .NET UI frameworks (Blazor, MAUI, Uno
 - Browser automation specifics -- see [skill:dotnet-playwright]
 - Test project scaffolding -- see [skill:dotnet-add-testing]
 
-**Prerequisites:** A test project scaffolded via [skill:dotnet-add-testing]. Familiarity with test strategy decisions from [skill:dotnet-testing-strategy].
+**Prerequisites:** A test project scaffolded via [skill:dotnet-add-testing]. Familiarity with test strategy decisions
+from [skill:dotnet-testing-strategy].
 
-Cross-references: [skill:dotnet-testing-strategy] for deciding when UI tests are appropriate, [skill:dotnet-playwright] for browser-based E2E automation, [skill:dotnet-blazor-testing] for Blazor component testing, [skill:dotnet-maui-testing] for mobile/desktop UI testing, [skill:dotnet-uno-testing] for Uno Platform testing.
+Cross-references: [skill:dotnet-testing-strategy] for deciding when UI tests are appropriate, [skill:dotnet-playwright]
+for browser-based E2E automation, [skill:dotnet-blazor-testing] for Blazor component testing,
+[skill:dotnet-maui-testing] for mobile/desktop UI testing, [skill:dotnet-uno-testing] for Uno Platform testing.
 
 ---
 
 ## Page Object Model
 
-The page object model (POM) encapsulates page structure and interactions behind a class, isolating tests from UI implementation details. When the UI changes, only the page object needs updating -- not every test that touches that page.
+The page object model (POM) encapsulates page structure and interactions behind a class, isolating tests from UI
+implementation details. When the UI changes, only the page object needs updating -- not every test that touches that
+page.
 
 ### Structure
 
-```
+````text
+
 PageObjects/
   LoginPage.cs           -- login form interactions
   DashboardPage.cs       -- dashboard navigation + widgets
@@ -55,11 +63,13 @@ PageObjects/
   Components/
     NavigationMenu.cs     -- shared nav component
     ConfirmDialog.cs      -- reusable confirmation modal
-```
+
+```csharp
 
 ### Example: Generic Page Object Base
 
 ```csharp
+
 /// <summary>
 /// Base class for page objects. Subclass per framework:
 /// Playwright uses IPage, bUnit uses IRenderedComponent, Appium uses AppiumDriver.
@@ -79,11 +89,13 @@ public abstract class PageObjectBase<TDriver>
     /// </summary>
     protected abstract void VerifyLoaded();
 }
-```
+
+```text
 
 ### Example: Playwright Page Object
 
 ```csharp
+
 public class LoginPage : PageObjectBase<IPage>
 {
     public LoginPage(IPage page) : base(page)
@@ -124,7 +136,8 @@ public async Task Login_ValidCredentials_RedirectsToDashboard()
 
     Assert.NotNull(dashboard);
 }
-```
+
+```text
 
 ### Page Object Principles
 
@@ -155,25 +168,35 @@ Selectors determine how tests find UI elements. Fragile selectors are the leadin
 Add `data-testid` attributes to elements that tests interact with. They are invisible to users and stable across refactors:
 
 **Blazor:**
+
 ```razor
+
 <button data-testid="submit-order" @onclick="SubmitOrder">Place Order</button>
 <input data-testid="search-input" @bind="SearchTerm" />
-```
+
+```text
 
 **MAUI XAML:**
+
 ```xml
+
 <Button AutomationId="submit-order" Text="Place Order" Clicked="OnSubmit" />
 <Entry AutomationId="search-input" Text="{Binding SearchTerm}" />
-```
+
+```xml
 
 **Uno Platform XAML:**
+
 ```xml
+
 <Button AutomationProperties.AutomationId="submit-order" Content="Place Order" />
-```
+
+```xml
 
 ### Selector Anti-Patterns
 
 ```csharp
+
 // BAD: Tied to CSS implementation
 await page.ClickAsync(".MuiButton-root.MuiButton-containedPrimary");
 
@@ -188,7 +211,8 @@ await page.ClickAsync("[data-testid='submit-order']");
 
 // GOOD: Accessibility-driven (Playwright)
 await page.GetByRole(AriaRole.Button, new() { Name = "Place Order" }).ClickAsync();
-```
+
+```text
 
 ---
 
@@ -198,7 +222,8 @@ UI tests deal with asynchronous rendering, network requests, and animations. Har
 
 ### Wait Strategy Decision Tree
 
-```
+```text
+
 Is the element already in the DOM?
 |
 +-- YES --> Is it visible and actionable?
@@ -212,12 +237,15 @@ Is the element already in the DOM?
             |
             +-- YES --> Wait for network idle or specific API response
             +-- NO  --> Wait for render cycle to complete
-```
+
+```text
 
 ### Framework-Specific Wait Patterns
 
 **Playwright (browser-based):**
+
 ```csharp
+
 // Auto-waiting: Playwright waits for actionability by default
 await page.ClickAsync("[data-testid='submit']"); // waits until visible + enabled
 
@@ -231,10 +259,13 @@ await page.Locator("[data-testid='results']")
 
 // Wait for specific text content
 await Expect(page.Locator("[data-testid='status']")).ToHaveTextAsync("Completed");
-```
+
+```text
 
 **bUnit (Blazor component testing):**
+
 ```csharp
+
 // Wait for async state changes to render
 var cut = RenderComponent<OrderList>();
 
@@ -246,11 +277,13 @@ cut.WaitForState(() => cut.Instance.Orders.Count > 0,
 cut.WaitForAssertion(() =>
     Assert.NotEmpty(cut.FindAll("[data-testid='order-row']")),
     timeout: TimeSpan.FromSeconds(5));
-```
+
+```text
 
 ### Wait Anti-Patterns
 
 ```csharp
+
 // BAD: Hardcoded delay -- slow and still flaky
 await Task.Delay(3000);
 await page.ClickAsync("[data-testid='results']");
@@ -267,7 +300,8 @@ await page.Locator("[data-testid='results']")
 
 // GOOD: Assertion with retry (Playwright)
 await Expect(page.Locator("[data-testid='count']")).ToHaveTextAsync("5");
-```
+
+```text
 
 ---
 
@@ -278,6 +312,7 @@ Accessibility testing verifies that UI components are usable by people with disa
 ### Automated Accessibility Checks with Playwright
 
 ```csharp
+
 // NuGet: Deque.AxeCore.Playwright
 [Fact]
 public async Task HomePage_PassesAccessibilityAudit()
@@ -313,7 +348,8 @@ public async Task OrderForm_NoAccessibilityViolations()
     }
     Assert.Empty(results.Violations);
 }
-```
+
+```text
 
 ### Accessibility Checklist for UI Tests
 
@@ -328,6 +364,7 @@ public async Task OrderForm_NoAccessibilityViolations()
 ### Keyboard Navigation Test Example
 
 ```csharp
+
 [Fact]
 public async Task OrderForm_TabOrder_FollowsLogicalSequence()
 {
@@ -347,7 +384,8 @@ public async Task OrderForm_TabOrder_FollowsLogicalSequence()
     await Page.Keyboard.PressAsync("Tab"); // focus submit button
     await Expect(Page.Locator("[data-testid='submit-order']")).ToBeFocusedAsync();
 }
-```
+
+```text
 
 ---
 
@@ -378,3 +416,4 @@ public async Task OrderForm_TabOrder_FollowsLogicalSequence()
 - [axe-core Accessibility Rules](https://dequeuniversity.com/rules/axe/)
 - [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
 - [Testing Library Guiding Principles](https://testing-library.com/docs/guiding-principles)
+````

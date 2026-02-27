@@ -2,23 +2,27 @@
 name: dotnet-native-interop
 description: Calls native libraries via P/Invoke. LibraryImport, marshalling, cross-platform resolution.
 license: MIT
-targets: ["*"]
-tags: ["csharp", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['csharp', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for csharp tasks"
+  short-description: '.NET skill guidance for csharp tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-native-interop
 
-Platform Invoke (P/Invoke) patterns for calling native C/C++ libraries from .NET: `[LibraryImport]` (preferred, .NET 7+) vs `[DllImport]` (legacy), struct marshalling, string marshalling, function pointer callbacks, `NativeLibrary.SetDllImportResolver` for cross-platform library resolution, and platform-specific considerations for Windows, macOS, Linux, iOS, and Android.
+Platform Invoke (P/Invoke) patterns for calling native C/C++ libraries from .NET: `[LibraryImport]` (preferred, .NET 7+)
+vs `[DllImport]` (legacy), struct marshalling, string marshalling, function pointer callbacks,
+`NativeLibrary.SetDllImportResolver` for cross-platform library resolution, and platform-specific considerations for
+Windows, macOS, Linux, iOS, and Android.
 
-**Version assumptions:** .NET 7.0+ baseline for `[LibraryImport]`. `[DllImport]` available in all .NET versions. `NativeLibrary` API available since .NET Core 3.0.
+**Version assumptions:** .NET 7.0+ baseline for `[LibraryImport]`. `[DllImport]` available in all .NET versions.
+`NativeLibrary` API available since .NET Core 3.0.
 
 ## Scope
 
@@ -33,28 +37,34 @@ Platform Invoke (P/Invoke) patterns for calling native C/C++ libraries from .NET
 - COM interop and CsWin32 source generator -- see [skill:dotnet-winui]
 - WASM JavaScript interop (JSImport/JSExport) -- see [skill:dotnet-aot-wasm]
 
-Cross-references: [skill:dotnet-native-aot] for AOT-specific P/Invoke and `[LibraryImport]` in publish scenarios, [skill:dotnet-aot-architecture] for AOT-first design patterns including source-generated interop, [skill:dotnet-winui] for CsWin32 source generator and COM interop, [skill:dotnet-aot-wasm] for WASM JavaScript interop (not native P/Invoke).
+Cross-references: [skill:dotnet-native-aot] for AOT-specific P/Invoke and `[LibraryImport]` in publish scenarios,
+[skill:dotnet-aot-architecture] for AOT-first design patterns including source-generated interop, [skill:dotnet-winui]
+for CsWin32 source generator and COM interop, [skill:dotnet-aot-wasm] for WASM JavaScript interop (not native P/Invoke).
 
 ---
 
 ## LibraryImport vs DllImport
 
-`[LibraryImport]` (.NET 7+) is the preferred attribute for new P/Invoke declarations. It uses source generation to produce marshalling code at compile time, making it fully AOT-compatible and eliminating runtime codegen overhead.
+`[LibraryImport]` (.NET 7+) is the preferred attribute for new P/Invoke declarations. It uses source generation to
+produce marshalling code at compile time, making it fully AOT-compatible and eliminating runtime codegen overhead.
 
-`[DllImport]` is the legacy attribute. It relies on runtime marshalling, which may require codegen not available in AOT scenarios. Use `[DllImport]` only when targeting .NET 6 or earlier, or when the SYSLIB1054 analyzer indicates `[LibraryImport]` cannot handle a specific signature.
+`[DllImport]` is the legacy attribute. It relies on runtime marshalling, which may require codegen not available in AOT
+scenarios. Use `[DllImport]` only when targeting .NET 6 or earlier, or when the SYSLIB1054 analyzer indicates
+`[LibraryImport]` cannot handle a specific signature.
 
 ### Decision Guide
 
-| Scenario | Use |
-|----------|-----|
-| New code targeting .NET 7+ | `[LibraryImport]` |
-| Targeting .NET 6 or earlier | `[DllImport]` |
-| SYSLIB1054 analyzer flags incompatibility | `[DllImport]` (with comment explaining why) |
-| Publishing with Native AOT | `[LibraryImport]` (required for full AOT compat) |
+| Scenario                                  | Use                                              |
+| ----------------------------------------- | ------------------------------------------------ |
+| New code targeting .NET 7+                | `[LibraryImport]`                                |
+| Targeting .NET 6 or earlier               | `[DllImport]`                                    |
+| SYSLIB1054 analyzer flags incompatibility | `[DllImport]` (with comment explaining why)      |
+| Publishing with Native AOT                | `[LibraryImport]` (required for full AOT compat) |
 
 ### LibraryImport Declaration
 
-```csharp
+````csharp
+
 using System.Runtime.InteropServices;
 
 public static partial class NativeApi
@@ -71,7 +81,8 @@ public static partial class NativeApi
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool CloseResource(nint handle);
 }
-```
+
+```text
 
 Key requirements for `[LibraryImport]`:
 - Method must be `static partial` in a `partial` class
@@ -82,6 +93,7 @@ Key requirements for `[LibraryImport]`:
 ### DllImport Declaration (Legacy)
 
 ```csharp
+
 using System.Runtime.InteropServices;
 
 public static class NativeApiLegacy
@@ -95,7 +107,8 @@ public static class NativeApiLegacy
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static extern bool CloseResource(IntPtr handle);
 }
-```
+
+```text
 
 ### Migrating DllImport to LibraryImport
 
@@ -109,6 +122,7 @@ The `SYSLIB1054` analyzer suggests converting `[DllImport]` to `[LibraryImport]`
 6. Add explicit `[MarshalAs]` for `bool` parameters and returns
 
 ```csharp
+
 // Before (DllImport)
 [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
 static extern IntPtr LoadLibrary(string lpLibFileName);
@@ -117,7 +131,8 @@ static extern IntPtr LoadLibrary(string lpLibFileName);
 [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16,
     SetLastError = true)]
 internal static partial nint LoadLibrary(string lpLibFileName);
-```
+
+```text
 
 ---
 
@@ -130,34 +145,40 @@ Native library names differ across platforms. Use `NativeLibrary.SetDllImportRes
 Windows uses `.dll` files. The loader searches the application directory, system directories, and `PATH`.
 
 ```csharp
+
 // Windows library name includes .dll extension
 [LibraryImport("sqlite3.dll")]
 internal static partial int sqlite3_open(
     [MarshalAs(UnmanagedType.LPUTF8Str)] string filename,
     out nint db);
-```
+
+```text
 
 Windows also supports omitting the extension -- the loader appends `.dll` automatically:
 
 ```csharp
+
 [LibraryImport("sqlite3")]
 internal static partial int sqlite3_open(
     [MarshalAs(UnmanagedType.LPUTF8Str)] string filename,
     out nint db);
-```
+
+```text
 
 ### macOS and Linux
 
 macOS uses `.dylib` files; Linux uses `.so` files. The .NET runtime automatically probes common name variations (with and without `lib` prefix, with platform-specific extensions).
 
 ```csharp
+
 // Use the logical name without extension -- .NET probes:
 // libsqlite3.dylib (macOS), libsqlite3.so (Linux), sqlite3.dll (Windows)
 [LibraryImport("libsqlite3")]
 internal static partial int sqlite3_open(
     [MarshalAs(UnmanagedType.LPUTF8Str)] string filename,
     out nint db);
-```
+
+```text
 
 .NET probing order for library name `"foo"`:
 1. `foo` (exact name)
@@ -169,40 +190,48 @@ internal static partial int sqlite3_open(
 iOS does not allow loading dynamic libraries at runtime. Native code must be statically linked into the application binary. Use `__Internal` as the library name to call functions linked into the main executable:
 
 ```csharp
+
 // Calls a function statically linked into the iOS app binary
 [LibraryImport("__Internal")]
 internal static partial int NativeFunction(int input);
-```
+
+```csharp
 
 For iOS, the native library must be compiled as a static library (`.a`) and linked during the Xcode build phase. MAUI and Xamarin handle this through native references in the project file:
 
 ```xml
+
 <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
   <NativeReference Include="libs/libmynative.a">
     <Kind>Static</Kind>
     <ForceLoad>true</ForceLoad>
   </NativeReference>
 </ItemGroup>
-```
+
+```text
 
 ### Android
 
 Android uses `.so` files loaded from the app's native library directory. The library name typically omits the `lib` prefix and `.so` extension in the P/Invoke declaration:
 
 ```csharp
+
 // Android loads libmynative.so from the APK's lib/<abi>/ directory
 [LibraryImport("mynative")]
 internal static partial int NativeFunction(int input);
-```
+
+```csharp
 
 Include platform-specific `.so` files for each target ABI in the project:
 
 ```xml
+
 <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
   <AndroidNativeLibrary Include="libs/arm64-v8a/libmynative.so" Abi="arm64-v8a" />
   <AndroidNativeLibrary Include="libs/x86_64/libmynative.so" Abi="x86_64" />
 </ItemGroup>
-```
+
+```text
 
 ### WASM
 
@@ -215,6 +244,7 @@ WebAssembly does not support traditional P/Invoke. Native C/C++ code cannot be c
 `NativeLibrary.SetDllImportResolver` (.NET Core 3.0+) provides runtime control over library resolution. This is the recommended approach for cross-platform library loading when static name probing is insufficient.
 
 ```csharp
+
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -240,7 +270,8 @@ static nint DllImportResolver(string libraryName, Assembly assembly, DllImportSe
     // Fall back to default resolution
     return nint.Zero;
 }
-```
+
+```text
 
 ### Common Use Cases for DllImportResolver
 
@@ -256,6 +287,7 @@ static nint DllImportResolver(string libraryName, Assembly assembly, DllImportSe
 The `NativeLibrary` class provides low-level library management:
 
 ```csharp
+
 // Load a library explicitly
 nint handle = NativeLibrary.Load("mylib");
 
@@ -273,7 +305,8 @@ if (NativeLibrary.TryLoad("mylib", out nint h))
 
     NativeLibrary.Free(h);
 }
-```
+
+```text
 
 ---
 
@@ -284,6 +317,7 @@ if (NativeLibrary.TryLoad("mylib", out nint h))
 Structs passed to native code must have a well-defined memory layout. Use `[StructLayout]` to control layout and alignment.
 
 ```csharp
+
 using System.Runtime.InteropServices;
 
 // Sequential layout -- fields laid out in declaration order
@@ -311,7 +345,8 @@ public struct PackedHeader
     public int Length;     // No padding before this field
     public short Version;
 }
-```
+
+```text
 
 **Blittable structs** (containing only primitive value types with sequential/explicit layout) are passed directly to native code without copying. Non-blittable structs require marshalling, which incurs overhead.
 
@@ -324,6 +359,7 @@ Blittable primitive types: `byte`, `sbyte`, `short`, `ushort`, `int`, `uint`, `l
 Specify string encoding explicitly. Never rely on default marshalling behavior.
 
 ```csharp
+
 // UTF-8 strings (most common for cross-platform C APIs)
 [LibraryImport("mylib", StringMarshalling = StringMarshalling.Utf8)]
 internal static partial int ProcessText(string input);
@@ -337,11 +373,13 @@ internal static partial int ProcessTextW(string input);
 internal static partial int MixedApi(
     [MarshalAs(UnmanagedType.LPUTF8Str)] string utf8Param,
     [MarshalAs(UnmanagedType.LPWStr)] string utf16Param);
-```
+
+```text
 
 For output string buffers, use `char[]` or `byte[]` from `ArrayPool` instead of `StringBuilder`:
 
 ```csharp
+
 [LibraryImport("mylib")]
 internal static partial int GetName(
     [Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] char[] buffer,
@@ -358,7 +396,8 @@ finally
 {
     ArrayPool<char>.Shared.Return(buffer);
 }
-```
+
+```text
 
 ### Function Pointer Callbacks
 
@@ -367,6 +406,7 @@ Modern .NET (.NET 5+) prefers unmanaged function pointers over delegate-based ca
 **Preferred: Unmanaged function pointers with `[UnmanagedCallersOnly]`**
 
 ```csharp
+
 using System.Runtime.InteropServices;
 
 // Native callback signature: int (*callback)(int value, void* context)
@@ -388,11 +428,13 @@ unsafe
 {
     RegisterCallback(&MyCallback, nint.Zero);
 }
-```
+
+```text
 
 **Alternative: Delegate-based callbacks (when managed state is needed)**
 
 ```csharp
+
 // Define delegate matching native signature
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 delegate int NativeCallback(int value, nint context);
@@ -416,13 +458,15 @@ static int MyManagedCallback(int value, nint context)
 {
     return value * 2;
 }
-```
+
+```text
 
 ### SafeHandle for Resource Lifetime
 
 Use `SafeHandle` subclasses to manage native resource lifetimes instead of raw `IntPtr`/`nint`. This prevents resource leaks and use-after-free bugs.
 
 ```csharp
+
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
@@ -451,7 +495,8 @@ public static partial class NativeApi
     internal static partial int ReadResource(NativeResourceHandle handle,
         Span<byte> buffer, int count);
 }
-```
+
+```text
 
 ---
 
@@ -520,3 +565,4 @@ Do not use C# `long` for C/C++ `long` -- they have different sizes on Unix 64-bi
 - [Type marshalling](https://learn.microsoft.com/en-us/dotnet/standard/native-interop/type-marshalling)
 - [Customizing struct marshalling](https://learn.microsoft.com/en-us/dotnet/standard/native-interop/customize-struct-marshalling)
 - [NativeLibrary class](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.nativelibrary)
+````

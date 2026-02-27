@@ -2,21 +2,23 @@
 name: dotnet-csharp-nullable-reference-types
 description: Enables nullable reference types. Annotation strategies, migration, common agent mistakes.
 license: MIT
-targets: ["*"]
-tags: ["csharp", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['csharp', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for csharp tasks"
+  short-description: '.NET skill guidance for csharp tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-csharp-nullable-reference-types
 
-Nullable reference type (NRT) annotation strategies, migration guidance for legacy codebases, and the most common annotation mistakes AI agents make. NRT is enabled by default in all modern .NET templates (net6.0+), but many existing codebases still need migration.
+Nullable reference type (NRT) annotation strategies, migration guidance for legacy codebases, and the most common
+annotation mistakes AI agents make. NRT is enabled by default in all modern .NET templates (net6.0+), but many existing
+codebases still need migration.
 
 ## Scope
 
@@ -30,20 +32,22 @@ Nullable reference type (NRT) annotation strategies, migration guidance for lega
 - Null-handling style (pattern matching, null-conditional) -- see [skill:dotnet-csharp-coding-standards]
 - Pattern matching language features -- see [skill:dotnet-csharp-modern-patterns]
 
-Cross-references: [skill:dotnet-csharp-coding-standards] for null-handling style, [skill:dotnet-csharp-modern-patterns] for pattern matching with nulls.
+Cross-references: [skill:dotnet-csharp-coding-standards] for null-handling style, [skill:dotnet-csharp-modern-patterns]
+for pattern matching with nulls.
 
 ---
 
 ## Quick Reference: NRT Defaults by TFM
 
-| TFM | `<Nullable>` default | Notes |
-|-----|---------------------|-------|
-| net8.0+ | `enable` (in templates) | New projects have NRT enabled by default |
-| net6.0/net7.0 | `enable` (in templates) | Same as net8.0 |
-| netstandard2.0/2.1 | not set | Must opt in explicitly |
-| net48 / older | not set | Must opt in explicitly |
+| TFM                | `<Nullable>` default    | Notes                                    |
+| ------------------ | ----------------------- | ---------------------------------------- |
+| net8.0+            | `enable` (in templates) | New projects have NRT enabled by default |
+| net6.0/net7.0      | `enable` (in templates) | Same as net8.0                           |
+| netstandard2.0/2.1 | not set                 | Must opt in explicitly                   |
+| net48 / older      | not set                 | Must opt in explicitly                   |
 
-**Important:** The TFM does not enforce NRT -- the `<Nullable>enable</Nullable>` MSBuild property does. Legacy projects upgraded to net8.0 may not have it enabled.
+**Important:** The TFM does not enforce NRT -- the `<Nullable>enable</Nullable>` MSBuild property does. Legacy projects
+upgraded to net8.0 may not have it enabled.
 
 ---
 
@@ -51,18 +55,22 @@ Cross-references: [skill:dotnet-csharp-coding-standards] for null-handling style
 
 ### Project-Wide (Recommended)
 
-```xml
+````xml
+
 <!-- In .csproj or Directory.Build.props -->
 <PropertyGroup>
   <Nullable>enable</Nullable>
 </PropertyGroup>
-```
+
+```csharp
 
 ### Per-File (Migration)
 
 ```csharp
+
 #nullable enable   // top of file -- enables NRT for this file only
-```
+
+```csharp
 
 ### Migration Strategy
 
@@ -80,6 +88,7 @@ For large codebases, enable NRT incrementally:
 ### Nullable and Non-Nullable
 
 ```csharp
+
 public class UserService
 {
     // Non-nullable: must never be null
@@ -98,13 +107,15 @@ public class UserService
             ?? throw new NotFoundException($"User {id} not found");
     }
 }
-```
+
+```text
 
 ### Nullable Attributes
 
 Use attributes from `System.Diagnostics.CodeAnalysis` to express nullability contracts the compiler cannot infer:
 
 ```csharp
+
 using System.Diagnostics.CodeAnalysis;
 
 // Output is non-null when method returns true
@@ -149,23 +160,24 @@ public static void ThrowNotFound(string message)
 {
     throw new NotFoundException(message);
 }
-```
+
+```text
 
 ### Common Attributes Summary
 
-| Attribute | Where | Meaning |
-|-----------|-------|---------|
-| `[NotNullWhen(true)]` | `out` parameter | Non-null when method returns `true` |
-| `[NotNullWhen(false)]` | `out` parameter | Non-null when method returns `false` |
-| `[MemberNotNull]` | method | Named member is non-null after call |
-| `[MemberNotNullWhen(true)]` | method | Named member is non-null when returns `true` |
-| `[NotNullIfNotNull]` | return | Return is non-null if named param is non-null |
-| `[NotNull]` | parameter | Parameter is non-null after call (assertion) |
-| `[DoesNotReturn]` | method | Method never returns (always throws) |
-| `[AllowNull]` | parameter/property | Caller may pass null even if type is non-nullable |
-| `[DisallowNull]` | parameter/property | Caller must not pass null even if type is nullable |
-| `[MaybeNull]` | return/out | Return may be null even if type is non-nullable |
-| `[MaybeNullWhen(false)]` | `out` parameter | May be null when method returns `false` |
+| Attribute                   | Where              | Meaning                                            |
+| --------------------------- | ------------------ | -------------------------------------------------- |
+| `[NotNullWhen(true)]`       | `out` parameter    | Non-null when method returns `true`                |
+| `[NotNullWhen(false)]`      | `out` parameter    | Non-null when method returns `false`               |
+| `[MemberNotNull]`           | method             | Named member is non-null after call                |
+| `[MemberNotNullWhen(true)]` | method             | Named member is non-null when returns `true`       |
+| `[NotNullIfNotNull]`        | return             | Return is non-null if named param is non-null      |
+| `[NotNull]`                 | parameter          | Parameter is non-null after call (assertion)       |
+| `[DoesNotReturn]`           | method             | Method never returns (always throws)               |
+| `[AllowNull]`               | parameter/property | Caller may pass null even if type is non-nullable  |
+| `[DisallowNull]`            | parameter/property | Caller must not pass null even if type is nullable |
+| `[MaybeNull]`               | return/out         | Return may be null even if type is non-nullable    |
+| `[MaybeNullWhen(false)]`    | `out` parameter    | May be null when method returns `false`            |
 
 ---
 
@@ -176,6 +188,7 @@ These are the most common NRT mistakes AI agents make when generating C# code.
 ### 1. Using `!` (Null-Forgiving Operator) to Silence Warnings
 
 ```csharp
+
 // WRONG -- hides real null bugs
 var user = _repo.FindByEmail(email)!;  // will throw NRE if null
 string name = user!.Name!;            // double suppression is a red flag
@@ -183,13 +196,16 @@ string name = user!.Name!;            // double suppression is a red flag
 // CORRECT -- handle null explicitly
 var user = _repo.FindByEmail(email)
     ?? throw new NotFoundException($"User with email {email} not found");
-```
 
-The `!` operator should only be used when you have knowledge the compiler cannot verify (e.g., after a debug assertion, in test code with known data).
+```text
+
+The `!` operator should only be used when you have knowledge the compiler cannot verify (e.g., after a debug assertion,
+in test code with known data).
 
 ### 2. Ignoring Nullable Warnings
 
 ```csharp
+
 // WRONG -- warning CS8602: Dereference of a possibly null reference
 public string GetDisplayName(User? user)
 {
@@ -201,11 +217,13 @@ public string GetDisplayName(User? user)
 {
     return user?.Name ?? "Unknown";
 }
-```
+
+```text
 
 ### 3. Wrong Nullability on Interface Implementations
 
 ```csharp
+
 // Interface says nullable
 public interface IRepository
 {
@@ -229,11 +247,13 @@ public class UserRepository : IRepository
         return _db.Users.FirstOrDefault(u => u.Id == id);
     }
 }
-```
+
+```text
 
 ### 4. Missing `[NotNullWhen]` on Try-Pattern Methods
 
 ```csharp
+
 // WRONG -- compiler doesn't know result is non-null on success
 public bool TryParse(string input, out Order? result)
 {
@@ -249,23 +269,27 @@ public bool TryParse(string input, [NotNullWhen(true)] out Order? result)
 }
 
 // After call: result is Order (non-nullable) when method returned true
-```
+
+```text
 
 ### 5. Nullable Value Types vs Nullable Reference Types Confusion
 
 ```csharp
+
 // These are different systems!
 int? nullableInt = null;       // Nullable<int> -- always existed
 string? nullableStr = null;    // NRT annotation -- compile-time only, no runtime type change
 
 // typeof(int?) != typeof(int), but typeof(string?) == typeof(string)
-```
+
+```text
 
 ---
 
 ## Generic Constraints for Nullability
 
 ```csharp
+
 // Constrain to non-nullable reference types
 public class Repository<T> where T : class
 {
@@ -284,13 +308,15 @@ public class Wrapper<T>
 {
     public T? Value { get; set; }  // T? behavior depends on whether T is value or reference type
 }
-```
+
+```text
 
 ---
 
 ## Collections and Nullability
 
 ```csharp
+
 // Dictionary: value might not exist
 Dictionary<string, User> users = new();
 if (users.TryGetValue(key, out var user))
@@ -311,7 +337,8 @@ foreach (var name in names)
 // Non-nullable collection with nullable lookup
 IReadOnlyList<Order> orders = GetOrders();
 Order? first = orders.FirstOrDefault(); // FirstOrDefault returns T? for reference types
-```
+
+```text
 
 ---
 
@@ -320,6 +347,7 @@ Order? first = orders.FirstOrDefault(); // FirstOrDefault returns T? for referen
 EF Core respects NRT annotations for required vs optional columns:
 
 ```csharp
+
 public class Order
 {
     public int Id { get; set; }
@@ -327,9 +355,11 @@ public class Order
     public string? Notes { get; set; }               // NULL column
     public Address Address { get; set; } = null!;    // Required navigation (EF convention)
 }
-```
 
-**Note:** `= null!` is acceptable for EF Core navigation properties where EF guarantees initialization. This is one of the few valid uses of the null-forgiving operator.
+```text
+
+**Note:** `= null!` is acceptable for EF Core navigation properties where EF guarantees initialization. This is one of
+the few valid uses of the null-forgiving operator.
 
 ---
 
@@ -339,3 +369,4 @@ public class Order
 - [Attributes for null-state static analysis](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/attributes/nullable-analysis)
 - [Nullable reference type migration](https://learn.microsoft.com/en-us/dotnet/csharp/nullable-migration-strategies)
 - [.NET Framework Design Guidelines](https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/)
+````

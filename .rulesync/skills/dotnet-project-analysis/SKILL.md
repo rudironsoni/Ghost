@@ -2,21 +2,23 @@
 name: dotnet-project-analysis
 description: Analyzes .NET solution layout and build config -- .sln, .csproj, CPM.
 license: MIT
-targets: ["*"]
-tags: ["foundation", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['foundation', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
   model: haiku
 codexcli:
-  short-description: ".NET skill guidance for foundation tasks"
+  short-description: '.NET skill guidance for foundation tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
-```! find . -maxdepth 3 \( -name "*.csproj" -o -name "*.sln" -o -name "*.slnx" \) 2>/dev/null | head -20
-```
+````! find . -maxdepth 3 ( -name "*.csproj" -o -name "*.sln" -o -name "*.slnx" ) 2>/dev/null | head -20
+
+
+```bash
 
 # dotnet-project-analysis
 
@@ -47,13 +49,15 @@ Look for solution files in the workspace, starting from the current directory an
 
 The traditional MSBuild solution format. Contains project paths and build configurations.
 
-```
+```text
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyApp", "src\MyApp\MyApp.csproj", "{GUID}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyApp.Tests", "tests\MyApp.Tests\MyApp.Tests.csproj", "{GUID}"
 EndProject
-```
+
+```csharp
 
 Extract project entries from `Project("...")` lines. The second quoted value is the project name, the third is the relative path to the `.csproj`.
 
@@ -62,6 +66,7 @@ Extract project entries from `Project("...")` lines. The second quoted value is 
 The new XML-based solution format (supported in .NET 10+ SDK, Visual Studio 17.13+). Preferred for new projects.
 
 ```xml
+
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/MyApp/MyApp.csproj" />
@@ -70,7 +75,8 @@ The new XML-based solution format (supported in .NET 10+ SDK, Visual Studio 17.1
     <Project Path="tests/MyApp.Tests/MyApp.Tests.csproj" />
   </Folder>
 </Solution>
-```
+
+```csharp
 
 Extract project entries from `<Project Path="..." />` elements. Solution folders (`<Folder>`) indicate logical grouping.
 
@@ -144,15 +150,18 @@ A project is Uno Platform if:
 Read `<ProjectReference>` elements from each `.csproj` to build the dependency graph.
 
 ```xml
+
 <ItemGroup>
   <ProjectReference Include="..\MyApp.Core\MyApp.Core.csproj" />
   <ProjectReference Include="..\MyApp.Infrastructure\MyApp.Infrastructure.csproj" />
 </ItemGroup>
-```
+
+```csharp
 
 Build a dependency graph and report it:
 
-```
+```text
+
 Project Dependency Graph
 ========================
 MyApp.Web (Web API)
@@ -162,7 +171,8 @@ MyApp.Web (Web API)
 MyApp.Tests (Test)
   -> MyApp.Web (Web API)
   -> MyApp.Core (Library)
-```
+
+```text
 
 Flag issues:
 - **Circular references**: "Project A -> B -> A detected. This will cause build failures."
@@ -202,13 +212,15 @@ Report: "Found Directory.Build.targets at `<path>`. Contains: [summarize content
 
 If multiple `Directory.Build.props` files exist at different levels (e.g., root and `src/`), report the hierarchy:
 
-```
+```xml
+
 Build Configuration Hierarchy
 ==============================
 /repo/Directory.Build.props           (root: Nullable, ImplicitUsings, LangVersion)
   /repo/src/Directory.Build.props     (src: TargetFramework, TreatWarningsAsErrors)
   /repo/tests/Directory.Build.props   (tests: IsTestProject, test-specific settings)
-```
+
+```xml
 
 Note: Inner files do NOT automatically import outer files. Check for `<Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />` to see if chaining is configured.
 
@@ -221,6 +233,7 @@ Note: Inner files do NOT automatically import outer files. Check for `<Import Pr
 Search for `Directory.Packages.props` starting from the solution root and walking **upward** toward the repository root (or filesystem root). NuGet resolves CPM hierarchically -- a monorepo may have `Directory.Packages.props` in a parent directory that governs multiple solutions. Also check for `<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>` in any `Directory.Build.props` in the hierarchy, as CPM can be enabled there instead.
 
 ```xml
+
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -230,7 +243,8 @@ Search for `Directory.Packages.props` starting from the solution root and walkin
     <PackageVersion Include="xunit.v3" Version="3.2.2" />
   </ItemGroup>
 </Project>
-```
+
+```text
 
 Report:
 - **CPM enabled**: "Central Package Management is active. Package versions are defined in `Directory.Packages.props` at `<path>`. Individual `.csproj` files use `<PackageReference Include="..." />` without `Version` attributes."
@@ -324,7 +338,8 @@ Guide the agent to the most important files based on project type.
 
 After completing analysis, present results in this format:
 
-```
+```text
+
 .NET Project Analysis Results
 ==============================
 Solution:         MyApp.slnx (or MyApp.sln)
@@ -354,7 +369,8 @@ Key Files
 - Package versions: /repo/Directory.Packages.props
 - API entry point:  /repo/src/MyApp.Api/Program.cs
 - API config:       /repo/src/MyApp.Api/appsettings.json
-```
+
+```csharp
 
 ---
 
@@ -371,11 +387,16 @@ If `.csproj` files exist that are not referenced by any solution file, report th
 
 ### Conditional ProjectReferences
 If `<ProjectReference>` is inside a `<When>` or has a `Condition` attribute:
+
 ```xml
+
 <ProjectReference Include="..\MyApp.DevTools\MyApp.DevTools.csproj"
                   Condition="'$(Configuration)' == 'Debug'" />
-```
+
+```csharp
+
 Report: "Conditional reference to MyApp.DevTools (Debug only)."
 
 ### Web Project Without launchSettings.json
 If a web project has no `Properties/launchSettings.json`, note: "No `launchSettings.json` found. The project uses default Kestrel settings. Consider adding launch profiles for development."
+````

@@ -2,23 +2,28 @@
 name: dotnet-resilience
 description: Adds fault tolerance. Polly v8 + MS.Extensions.Http.Resilience, retry/circuit breaker/timeout.
 license: MIT
-targets: ["*"]
-tags: ["architecture", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['architecture', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for architecture tasks"
+  short-description: '.NET skill guidance for architecture tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-resilience
 
-Modern resilience patterns for .NET applications using Polly v8 and `Microsoft.Extensions.Http.Resilience`. Covers the standard resilience pipeline (rate limiter, total timeout, retry, circuit breaker, attempt timeout), custom pipeline configuration, and integration with the .NET dependency injection system.
+Modern resilience patterns for .NET applications using Polly v8 and `Microsoft.Extensions.Http.Resilience`. Covers the
+standard resilience pipeline (rate limiter, total timeout, retry, circuit breaker, attempt timeout), custom pipeline
+configuration, and integration with the .NET dependency injection system.
 
-**Superseded package:** `Microsoft.Extensions.Http.Polly` is superseded by `Microsoft.Extensions.Http.Resilience`. Do not use `Microsoft.Extensions.Http.Polly` for new projects. See the [migration guide](https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/resilience/migration-guide) for upgrading existing code.
+**Superseded package:** `Microsoft.Extensions.Http.Polly` is superseded by `Microsoft.Extensions.Http.Resilience`. Do
+not use `Microsoft.Extensions.Http.Polly` for new projects. See the
+[migration guide](https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/resilience/migration-guide) for
+upgrading existing code.
 
 ## Scope
 
@@ -34,32 +39,38 @@ Modern resilience patterns for .NET applications using Polly v8 and `Microsoft.E
 - HTTP client factory patterns (typed clients, DelegatingHandlers) -- see [skill:dotnet-http-client]
 - Testing resilience policies -- see [skill:dotnet-integration-testing] and [skill:dotnet-xunit]
 
-Cross-references: [skill:dotnet-csharp-dependency-injection] for service registration, [skill:dotnet-csharp-async-patterns] for cancellation token propagation, [skill:dotnet-http-client] for applying resilience to HTTP clients.
+Cross-references: [skill:dotnet-csharp-dependency-injection] for service registration,
+[skill:dotnet-csharp-async-patterns] for cancellation token propagation, [skill:dotnet-http-client] for applying
+resilience to HTTP clients.
 
 ---
 
 ## Package Landscape
 
-| Package | Status | Purpose |
-|---------|--------|---------|
-| `Polly` (v8+) | **Current** | Core resilience library -- strategies, pipelines, telemetry |
-| `Microsoft.Extensions.Resilience` | **Current** | DI integration for non-HTTP resilience pipelines |
-| `Microsoft.Extensions.Http.Resilience` | **Current** | DI integration for `IHttpClientFactory` resilience pipelines |
-| `Microsoft.Extensions.Http.Polly` | **Superseded** | Legacy HTTP resilience -- migrate to `Microsoft.Extensions.Http.Resilience` |
-| `Polly` (v7 and earlier) | **Legacy** | Older API -- migrate to v8 |
+| Package                                | Status         | Purpose                                                                     |
+| -------------------------------------- | -------------- | --------------------------------------------------------------------------- |
+| `Polly` (v8+)                          | **Current**    | Core resilience library -- strategies, pipelines, telemetry                 |
+| `Microsoft.Extensions.Resilience`      | **Current**    | DI integration for non-HTTP resilience pipelines                            |
+| `Microsoft.Extensions.Http.Resilience` | **Current**    | DI integration for `IHttpClientFactory` resilience pipelines                |
+| `Microsoft.Extensions.Http.Polly`      | **Superseded** | Legacy HTTP resilience -- migrate to `Microsoft.Extensions.Http.Resilience` |
+| `Polly` (v7 and earlier)               | **Legacy**     | Older API -- migrate to v8                                                  |
 
 Install the modern stack:
 
-```xml
+````xml
+
 <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="9.*" />
 <!-- Transitively brings in Polly v8 and Microsoft.Extensions.Resilience -->
-```
+
+```xml
 
 For non-HTTP scenarios only:
 
 ```xml
+
 <PackageReference Include="Microsoft.Extensions.Resilience" Version="9.*" />
-```
+
+```xml
 
 ---
 
@@ -67,7 +78,8 @@ For non-HTTP scenarios only:
 
 `Microsoft.Extensions.Http.Resilience` provides a standard resilience pipeline that follows the recommended order. The pipeline layers execute from outermost to innermost:
 
-```
+```text
+
 Request
   --> Rate Limiter        (1. shed excess load)
     --> Total Timeout      (2. cap total wall-clock time)
@@ -75,7 +87,8 @@ Request
         --> Circuit Breaker  (4. stop calling failing services)
           --> Attempt Timeout (5. cap individual attempt time)
             --> HTTP call
-```
+
+```text
 
 ### Why This Order Matters
 
@@ -88,13 +101,15 @@ Request
 ### Standard Pipeline with Defaults
 
 ```csharp
+
 builder.Services
     .AddHttpClient("catalog-api", client =>
     {
         client.BaseAddress = new Uri("https://catalog.internal");
     })
     .AddStandardResilienceHandler();
-```
+
+```text
 
 This applies the standard pipeline with sensible defaults:
 - **Rate limiter**: 1000 concurrent requests
@@ -106,6 +121,7 @@ This applies the standard pipeline with sensible defaults:
 ### Standard Pipeline with Custom Options
 
 ```csharp
+
 builder.Services
     .AddHttpClient("catalog-api", client =>
     {
@@ -136,13 +152,15 @@ builder.Services
         // Per-attempt timeout
         options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
     });
-```
+
+```text
 
 ### Configuration via appsettings.json
 
 Bind resilience options from configuration for environment-specific tuning:
 
 ```csharp
+
 builder.Services
     .AddHttpClient("catalog-api", client =>
     {
@@ -154,9 +172,11 @@ builder.Services
             .GetSection("Resilience:CatalogApi")
             .Bind(options);
     });
-```
+
+```text
 
 ```json
+
 {
   "Resilience": {
     "CatalogApi": {
@@ -174,7 +194,8 @@ builder.Services
     }
   }
 }
-```
+
+```text
 
 ---
 
@@ -185,6 +206,7 @@ When the standard pipeline does not fit, build custom pipelines with Polly v8 di
 ### Retry Strategy
 
 ```csharp
+
 builder.Services.AddResiliencePipeline("db-retry", pipelineBuilder =>
 {
     pipelineBuilder.AddRetry(new RetryStrategyOptions
@@ -226,11 +248,13 @@ public sealed class OrderRepository(
         }, ct);
     }
 }
-```
+
+```text
 
 ### Circuit Breaker Strategy
 
 ```csharp
+
 builder.Services.AddResiliencePipeline("payment-gateway", pipelineBuilder =>
 {
     pipelineBuilder.AddCircuitBreaker(new CircuitBreakerStrategyOptions
@@ -244,11 +268,13 @@ builder.Services.AddResiliencePipeline("payment-gateway", pipelineBuilder =>
             .Handle<TimeoutException>()
     });
 });
-```
+
+```text
 
 ### Timeout Strategy
 
 ```csharp
+
 builder.Services.AddResiliencePipeline("external-api", pipelineBuilder =>
 {
     // Total timeout for the entire pipeline execution
@@ -262,13 +288,15 @@ builder.Services.AddResiliencePipeline("external-api", pipelineBuilder =>
         }
     });
 });
-```
+
+```text
 
 ### Composing Multiple Strategies
 
 Build a composite pipeline by chaining strategies. Order matters -- outermost strategy is added first:
 
 ```csharp
+
 builder.Services.AddResiliencePipeline("composed", pipelineBuilder =>
 {
     // 1. Total timeout (outermost -- caps entire operation)
@@ -307,7 +335,8 @@ builder.Services.AddResiliencePipeline("composed", pipelineBuilder =>
         Timeout = TimeSpan.FromSeconds(10)
     });
 });
-```
+
+```text
 
 ---
 
@@ -316,6 +345,7 @@ builder.Services.AddResiliencePipeline("composed", pipelineBuilder =>
 For result-bearing operations, use `ResiliencePipeline<T>`:
 
 ```csharp
+
 builder.Services.AddResiliencePipeline<string, HttpResponseMessage>(
     "typed-http",
     pipelineBuilder =>
@@ -330,7 +360,8 @@ builder.Services.AddResiliencePipeline<string, HttpResponseMessage>(
                 .HandleResult(r => r.StatusCode >= HttpStatusCode.InternalServerError)
         });
     });
-```
+
+```text
 
 ---
 
@@ -339,6 +370,7 @@ builder.Services.AddResiliencePipeline<string, HttpResponseMessage>(
 Send parallel requests to reduce tail latency. The hedging strategy dispatches additional attempts if the initial request is slow:
 
 ```csharp
+
 builder.Services
     .AddHttpClient("search-api")
     .AddStandardHedgingHandler(options =>
@@ -348,7 +380,8 @@ builder.Services
         // Hedging sends a parallel request if the first hasn't
         // responded within 500ms
     });
-```
+
+```text
 
 **Use hedging when:**
 - Operations are idempotent (GET requests, read-only queries)
@@ -381,6 +414,7 @@ These integrate with OpenTelemetry automatically when the OpenTelemetry SDK is c
 Resilience telemetry is enabled automatically when using the DI-based registration (`AddResiliencePipeline`, `AddStandardResilienceHandler`). The `Microsoft.Extensions.Resilience` package registers a `MeteringEnricher` and `LoggingEnricher` that emit structured logs and metrics through the standard `ILoggerFactory` and `IMeterFactory` from DI:
 
 ```csharp
+
 // Telemetry is automatic -- no extra configuration needed.
 // Structured logs appear via ILogger; metrics via IMeter.
 builder.Services
@@ -396,7 +430,8 @@ builder.Services
 //     }
 //   }
 // }
-```
+
+```text
 
 ---
 
@@ -407,6 +442,7 @@ If upgrading from the superseded `Microsoft.Extensions.Http.Polly` package:
 ### Before (Legacy)
 
 ```csharp
+
 // Using Microsoft.Extensions.Http.Polly (superseded)
 builder.Services
     .AddHttpClient("catalog-api")
@@ -415,11 +451,13 @@ builder.Services
             TimeSpan.FromSeconds(Math.Pow(2, attempt))))
     .AddTransientHttpErrorPolicy(p =>
         p.CircuitBreakerAsync(5, TimeSpan.FromSeconds(30)));
-```
+
+```text
 
 ### After (Modern)
 
 ```csharp
+
 // Using Microsoft.Extensions.Http.Resilience (current)
 builder.Services
     .AddHttpClient("catalog-api")
@@ -432,7 +470,8 @@ builder.Services
         options.CircuitBreaker.MinimumThroughput = 5;
         options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(30);
     });
-```
+
+```text
 
 ### Migration Steps
 
@@ -474,3 +513,4 @@ builder.Services
 - [Migration from Http.Polly to Http.Resilience](https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/resilience/migration-guide)
 - [Standard resilience pipeline](https://learn.microsoft.com/en-us/dotnet/core/resilience/http-resilience#standard-resilience-handler)
 - [Polly v8 strategy options](https://www.pollydocs.org/strategies/)
+````

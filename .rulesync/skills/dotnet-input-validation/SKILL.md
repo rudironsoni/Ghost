@@ -2,21 +2,23 @@
 name: dotnet-input-validation
 description: Validates HTTP request inputs. .NET 10 AddValidation, FluentValidation, ProblemDetails.
 license: MIT
-targets: ["*"]
-tags: ["csharp", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['csharp', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for csharp tasks"
+  short-description: '.NET skill guidance for csharp tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-input-validation
 
-Comprehensive input validation patterns for .NET APIs. Covers the .NET 10 built-in validation system, FluentValidation for complex business rules, Data Annotations for simple models, endpoint filters for Minimal API integration, ProblemDetails error responses, and security-focused validation techniques.
+Comprehensive input validation patterns for .NET APIs. Covers the .NET 10 built-in validation system, FluentValidation
+for complex business rules, Data Annotations for simple models, endpoint filters for Minimal API integration,
+ProblemDetails error responses, and security-focused validation techniques.
 
 ## Scope
 
@@ -34,7 +36,9 @@ Comprehensive input validation patterns for .NET APIs. Covers the .NET 10 built-
 - Architectural patterns for validation placement -- see [skill:dotnet-architecture-patterns]
 - Options pattern ValidateDataAnnotations -- see [skill:dotnet-csharp-configuration]
 
-Cross-references: [skill:dotnet-security-owasp] for OWASP injection prevention, [skill:dotnet-architecture-patterns] for architectural validation strategy, [skill:dotnet-minimal-apis] for Minimal API pipeline integration, [skill:dotnet-csharp-configuration] for Options pattern validation.
+Cross-references: [skill:dotnet-security-owasp] for OWASP injection prevention, [skill:dotnet-architecture-patterns] for
+architectural validation strategy, [skill:dotnet-minimal-apis] for Minimal API pipeline integration,
+[skill:dotnet-csharp-configuration] for Options pattern validation.
 
 ---
 
@@ -42,34 +46,46 @@ Cross-references: [skill:dotnet-security-owasp] for OWASP injection prevention, 
 
 Choose the validation framework based on project requirements:
 
-1. **.NET 10 Built-in Validation (`AddValidation`)** -- default for new .NET 10+ projects. Source-generator-based, AOT-compatible, auto-discovers types from Minimal API handlers. Best for: greenfield projects targeting .NET 10+.
-2. **FluentValidation** -- when validation rules are complex (cross-property, conditional, database-dependent). Rich fluent API with testable validator classes. Best for: complex business rules, domain validation.
-3. **Data Annotations** -- when models need simple declarative validation (`[Required]`, `[Range]`). Widely understood, works with MVC model binding and `IValidatableObject` for cross-property checks. Best for: simple DTOs, shared models.
-4. **MiniValidation** -- lightweight Data Annotations runner without MVC model binding overhead. Best for: micro-services with simple validation (see [skill:dotnet-architecture-patterns] for details).
+1. **.NET 10 Built-in Validation (`AddValidation`)** -- default for new .NET 10+ projects. Source-generator-based,
+   AOT-compatible, auto-discovers types from Minimal API handlers. Best for: greenfield projects targeting .NET 10+.
+2. **FluentValidation** -- when validation rules are complex (cross-property, conditional, database-dependent). Rich
+   fluent API with testable validator classes. Best for: complex business rules, domain validation.
+3. **Data Annotations** -- when models need simple declarative validation (`[Required]`, `[Range]`). Widely understood,
+   works with MVC model binding and `IValidatableObject` for cross-property checks. Best for: simple DTOs, shared
+   models.
+4. **MiniValidation** -- lightweight Data Annotations runner without MVC model binding overhead. Best for:
+   micro-services with simple validation (see [skill:dotnet-architecture-patterns] for details).
 
-General guidance: prefer .NET 10 built-in validation for new projects. Use FluentValidation when rules outgrow annotations. Do not mix multiple frameworks in the same request DTO -- pick one per model type and stay consistent.
+General guidance: prefer .NET 10 built-in validation for new projects. Use FluentValidation when rules outgrow
+annotations. Do not mix multiple frameworks in the same request DTO -- pick one per model type and stay consistent.
 
 ---
 
 ## .NET 10 Built-in Validation
 
-.NET 10 introduces `Microsoft.Extensions.Validation` with source-generator-based validation that integrates directly into the Minimal API pipeline. It auto-discovers validatable types from endpoint handler parameters and runs validation via an endpoint filter.
+.NET 10 introduces `Microsoft.Extensions.Validation` with source-generator-based validation that integrates directly
+into the Minimal API pipeline. It auto-discovers validatable types from endpoint handler parameters and runs validation
+via an endpoint filter.
 
 ### Setup
 
-```csharp
+````csharp
+
 // <PackageReference Include="Microsoft.Extensions.Validation" Version="10.*" />
 builder.Services.AddValidation();
 
 var app = builder.Build();
 // Validation runs automatically via endpoint filter for Minimal API handlers
-```
 
-`AddValidation()` scans for types annotated with `[ValidatableType]` and generates validation logic at compile time using source generators, ensuring Native AOT compatibility.
+```text
+
+`AddValidation()` scans for types annotated with `[ValidatableType]` and generates validation logic at compile time
+using source generators, ensuring Native AOT compatibility.
 
 ### Defining Validatable Types
 
 ```csharp
+
 [ValidatableType]
 public partial class CreateProductRequest
 {
@@ -84,9 +100,11 @@ public partial class CreateProductRequest
     [RegularExpression(@"^[A-Z]{2,4}-\d{4,8}$", ErrorMessage = "SKU format: AA-0000")]
     public required string Sku { get; set; }
 }
-```
 
-The `partial` keyword is required because the source generator emits validation logic into the same type. The `[ValidatableType]` attribute triggers code generation at compile time -- no reflection at runtime.
+```text
+
+The `partial` keyword is required because the source generator emits validation logic into the same type. The
+`[ValidatableType]` attribute triggers code generation at compile time -- no reflection at runtime.
 
 ### How It Works
 
@@ -95,17 +113,21 @@ The `partial` keyword is required because the source generator emits validation 
 3. When a request arrives, the filter validates parameters before the handler executes.
 4. On failure, returns a `ValidationProblem` response automatically.
 
-**Gotcha:** `AddValidation()` integrates with Minimal APIs via endpoint filters. MVC controllers use their own model validation pipeline and do not participate in this filter-based system. For controllers, Data Annotations and `ModelState.IsValid` remain the standard approach.
+**Gotcha:** `AddValidation()` integrates with Minimal APIs via endpoint filters. MVC controllers use their own model
+validation pipeline and do not participate in this filter-based system. For controllers, Data Annotations and
+`ModelState.IsValid` remain the standard approach.
 
 ---
 
 ## FluentValidation
 
-FluentValidation provides a fluent API for building strongly-typed validation rules. It excels at complex business validation with cross-property rules, conditional logic, and database-dependent checks.
+FluentValidation provides a fluent API for building strongly-typed validation rules. It excels at complex business
+validation with cross-property rules, conditional logic, and database-dependent checks.
 
 ### Validator Definition
 
 ```csharp
+
 // <PackageReference Include="FluentValidation" Version="11.*" />
 // <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.*" />
 public sealed class CreateOrderValidator : AbstractValidator<CreateOrderRequest>
@@ -141,20 +163,25 @@ public sealed class CreateOrderValidator : AbstractValidator<CreateOrderRequest>
         });
     }
 }
-```
+
+```text
 
 ### DI Registration with Assembly Scanning
 
 ```csharp
+
 // Registers all AbstractValidator<T> implementations from the assembly
 builder.Services.AddValidatorsFromAssemblyContaining<Program>(ServiceLifetime.Scoped);
-```
+
+```csharp
 
 ### Manual Validation Pattern (Recommended)
 
-FluentValidation's ASP.NET pipeline auto-validation is deprecated. Use manual validation in endpoint handlers or endpoint filters instead:
+FluentValidation's ASP.NET pipeline auto-validation is deprecated. Use manual validation in endpoint handlers or
+endpoint filters instead:
 
 ```csharp
+
 app.MapPost("/api/orders", async (
     CreateOrderRequest request,
     IValidator<CreateOrderRequest> validator,
@@ -171,13 +198,16 @@ app.MapPost("/api/orders", async (
     await db.SaveChangesAsync();
     return TypedResults.Created($"/api/orders/{order.Id}", order);
 });
-```
+
+```text
 
 ### FluentValidation Endpoint Filter
 
-For reusable validation across multiple endpoints, create a generic endpoint filter (see also [skill:dotnet-minimal-apis] for filter pipeline details):
+For reusable validation across multiple endpoints, create a generic endpoint filter (see also
+[skill:dotnet-minimal-apis] for filter pipeline details):
 
 ```csharp
+
 public sealed class FluentValidationFilter<T>(IValidator<T> validator) : IEndpointFilter
     where T : class
 {
@@ -200,19 +230,23 @@ public sealed class FluentValidationFilter<T>(IValidator<T> validator) : IEndpoi
 // Apply to endpoints
 products.MapPost("/", CreateProduct)
     .AddEndpointFilter<FluentValidationFilter<CreateProductDto>>();
-```
 
-**Gotcha:** Do not use the deprecated `FluentValidation.AspNetCore` auto-validation pipeline. It was removed in FluentValidation 11. Use manual validation or endpoint filters as shown above.
+```text
+
+**Gotcha:** Do not use the deprecated `FluentValidation.AspNetCore` auto-validation pipeline. It was removed in
+FluentValidation 11. Use manual validation or endpoint filters as shown above.
 
 ---
 
 ## Data Annotations
 
-Data Annotations provide declarative validation through attributes. They work with MVC model binding, Minimal API binding, and the .NET 10 `AddValidation()` source generator.
+Data Annotations provide declarative validation through attributes. They work with MVC model binding, Minimal API
+binding, and the .NET 10 `AddValidation()` source generator.
 
 ### Standard Attributes
 
 ```csharp
+
 public sealed class UpdateProductDto
 {
     [Required(ErrorMessage = "Product name is required")]
@@ -234,11 +268,13 @@ public sealed class UpdateProductDto
     [Phone]
     public string? SupportPhone { get; set; }
 }
-```
+
+```text
 
 ### Custom ValidationAttribute
 
 ```csharp
+
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter)]
 public sealed class FutureDateAttribute : ValidationAttribute
 {
@@ -264,11 +300,13 @@ public sealed class CreateEventDto
     [FutureDate(ErrorMessage = "Event date must be in the future")]
     public DateOnly EventDate { get; set; }
 }
-```
+
+```text
 
 ### IValidatableObject for Cross-Property Validation
 
 ```csharp
+
 public sealed class DateRangeDto : IValidatableObject
 {
     [Required]
@@ -297,19 +335,24 @@ public sealed class DateRangeDto : IValidatableObject
         }
     }
 }
-```
 
-**Gotcha:** Options pattern classes must use `{ get; set; }` not `{ get; init; }` because the configuration binder needs to mutate properties after construction. Validation attributes on `init`-only properties work for request DTOs but fail for options classes bound via `IConfiguration`. See [skill:dotnet-csharp-configuration] for Options pattern validation.
+```text
+
+**Gotcha:** Options pattern classes must use `{ get; set; }` not `{ get; init; }` because the configuration binder needs
+to mutate properties after construction. Validation attributes on `init`-only properties work for request DTOs but fail
+for options classes bound via `IConfiguration`. See [skill:dotnet-csharp-configuration] for Options pattern validation.
 
 ---
 
 ## Endpoint Filters for Validation
 
-Endpoint filters integrate validation into the Minimal API request pipeline as a cross-cutting concern. Filters execute before the handler, enabling centralized validation logic.
+Endpoint filters integrate validation into the Minimal API request pipeline as a cross-cutting concern. Filters execute
+before the handler, enabling centralized validation logic.
 
 ### Generic Data Annotations Filter
 
 ```csharp
+
 public sealed class DataAnnotationsValidationFilter<T> : IEndpointFilter
     where T : class
 {
@@ -346,28 +389,35 @@ products.MapPost("/", CreateProduct)
 
 products.MapPut("/{id:int}", UpdateProduct)
     .AddEndpointFilter<DataAnnotationsValidationFilter<UpdateProductDto>>();
-```
+
+```text
 
 ### Combining with Route Groups
 
-Apply validation filters at the route group level for consistent validation across all endpoints in a group (see [skill:dotnet-minimal-apis] for route group patterns):
+Apply validation filters at the route group level for consistent validation across all endpoints in a group (see
+[skill:dotnet-minimal-apis] for route group patterns):
 
 ```csharp
+
 var orders = app.MapGroup("/api/orders")
     .AddEndpointFilter<FluentValidationFilter<CreateOrderRequest>>();
-```
 
-**Gotcha:** Filter execution order matters -- first-registered filter is outermost. Register validation filters after logging but before authorization enrichment so that invalid requests are rejected early without unnecessary processing.
+```csharp
+
+**Gotcha:** Filter execution order matters -- first-registered filter is outermost. Register validation filters after
+logging but before authorization enrichment so that invalid requests are rejected early without unnecessary processing.
 
 ---
 
 ## Error Responses
 
-Use the ProblemDetails standard (RFC 9457) for consistent API error responses. ASP.NET Core has built-in support via `TypedResults.ValidationProblem()` and `IProblemDetailsService`.
+Use the ProblemDetails standard (RFC 9457) for consistent API error responses. ASP.NET Core has built-in support via
+`TypedResults.ValidationProblem()` and `IProblemDetailsService`.
 
 ### ValidationProblem Response
 
 ```csharp
+
 // Returns HTTP 400 with RFC 9457-compliant body
 app.MapPost("/api/products", async (CreateProductDto dto, IValidator<CreateProductDto> validator) =>
 {
@@ -381,11 +431,13 @@ app.MapPost("/api/products", async (CreateProductDto dto, IValidator<CreateProdu
     // ... create product
     return TypedResults.Created($"/api/products/{product.Id}", product);
 });
-```
+
+```text
 
 ### Customizing ProblemDetails
 
 ```csharp
+
 builder.Services.AddProblemDetails(options =>
 {
     options.CustomizeProblemDetails = context =>
@@ -400,11 +452,13 @@ builder.Services.AddProblemDetails(options =>
 var app = builder.Build();
 app.UseStatusCodePages();
 app.UseExceptionHandler();
-```
+
+```text
 
 ### IProblemDetailsService for Global Error Handling
 
 ```csharp
+
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
@@ -428,21 +482,27 @@ app.UseExceptionHandler(exceptionApp =>
         });
     });
 });
-```
 
-**Gotcha:** `ConfigureHttpJsonOptions` applies to Minimal APIs only, not MVC controllers. Validation error formatting (e.g., camelCase property names in the `errors` dictionary) may differ between Minimal APIs and MVC if JSON options are not configured consistently. For MVC controllers, configure via `builder.Services.AddControllers().AddJsonOptions(...)`.
+```text
+
+**Gotcha:** `ConfigureHttpJsonOptions` applies to Minimal APIs only, not MVC controllers. Validation error formatting
+(e.g., camelCase property names in the `errors` dictionary) may differ between Minimal APIs and MVC if JSON options are
+not configured consistently. For MVC controllers, configure via `builder.Services.AddControllers().AddJsonOptions(...)`.
 
 ---
 
 ## Security-Focused Validation
 
-Input validation is a first line of defense against injection and abuse. These patterns complement the OWASP security principles in [skill:dotnet-security-owasp] with practical validation techniques.
+Input validation is a first line of defense against injection and abuse. These patterns complement the OWASP security
+principles in [skill:dotnet-security-owasp] with practical validation techniques.
 
 ### ReDoS Prevention
 
-Regular expressions with backtracking can be exploited to cause catastrophic performance degradation (Regular Expression Denial of Service). Always apply timeouts or use source-generated regex.
+Regular expressions with backtracking can be exploited to cause catastrophic performance degradation (Regular Expression
+Denial of Service). Always apply timeouts or use source-generated regex.
 
 ```csharp
+
 // PREFERRED: [GeneratedRegex] -- compiled at build time, AOT-compatible (.NET 7+).
 // Combine with RegexOptions.NonBacktracking or a timeout for ReDoS safety.
 public static partial class InputPatterns
@@ -464,9 +524,11 @@ if (!InputPatterns.EmailPattern().IsMatch(input))
             ["email"] = ["Invalid email format"]
         });
 }
-```
+
+```text
 
 ```csharp
+
 // FALLBACK: Regex with explicit timeout (when source generation is not available)
 var pattern = new Regex(
     @"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$",
@@ -482,13 +544,16 @@ catch (RegexMatchTimeoutException)
 {
     return TypedResults.BadRequest("Input validation timed out");
 }
-```
+
+```text
 
 ### Allowlist vs Denylist
 
-Always prefer allowlist validation over denylist. Denylists are inherently incomplete because new attack vectors bypass them.
+Always prefer allowlist validation over denylist. Denylists are inherently incomplete because new attack vectors bypass
+them.
 
 ```csharp
+
 // CORRECT: Allowlist -- only permit known-good values
 private static readonly FrozenSet<string> AllowedFileExtensions =
     new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -500,20 +565,24 @@ public static bool IsAllowedExtension(string filename) =>
 
 // WRONG: Denylist -- attackers find extensions not in the list
 // private static readonly string[] BlockedExtensions = [".exe", ".bat", ".cmd", ".ps1"];
-```
+
+```powershell
 
 ```csharp
+
 // Allowlist for input characters
 public static bool IsValidUsername(string username) =>
     username.Length is >= 3 and <= 50
     && username.All(c => char.IsLetterOrDigit(c) || c is '_' or '-');
-```
+
+```text
 
 ### Max Length Enforcement
 
 Enforce maximum length on all user-controlled string inputs to prevent memory exhaustion and buffer-based attacks:
 
 ```csharp
+
 [ValidatableType]
 public partial class SearchRequest
 {
@@ -524,24 +593,29 @@ public partial class SearchRequest
     [Range(1, 100)]
     public int PageSize { get; set; } = 20;
 }
-```
+
+```text
 
 Also enforce at the Kestrel level for defense in depth:
 
 ```csharp
+
 // Configure BEFORE builder.Build()
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10 MB
     options.Limits.MaxRequestHeadersTotalSize = 32 * 1024; // 32 KB
 });
-```
+
+```text
 
 ### File Upload Validation
 
-Validate file uploads by content type, size, and extension -- never trust the client-provided `Content-Type` header alone:
+Validate file uploads by content type, size, and extension -- never trust the client-provided `Content-Type` header
+alone:
 
 ```csharp
+
 app.MapPost("/api/uploads", async (IFormFile file) =>
 {
     // 1. Validate extension (allowlist)
@@ -600,21 +674,30 @@ static bool IsValidImageHeader(ReadOnlySpan<byte> header) =>
     || header[..8].SequenceEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }) // PNG
     || header[..4].SequenceEqual("GIF8"u8)                                                  // GIF
     || (header[..4].SequenceEqual("RIFF"u8) && header[8..12].SequenceEqual("WEBP"u8));      // WebP
-```
 
-For OWASP injection prevention beyond input validation (SQL injection, XSS, command injection), see [skill:dotnet-security-owasp].
+```text
+
+For OWASP injection prevention beyond input validation (SQL injection, XSS, command injection), see
+[skill:dotnet-security-owasp].
 
 ---
 
 ## Agent Gotchas
 
-1. **Do not use FluentValidation auto-validation pipeline** -- it was deprecated and removed in FluentValidation 11. Use manual validation or endpoint filters with `IValidator<T>` instead.
-2. **Do not mix validation frameworks on the same DTO** -- pick one (Data Annotations OR FluentValidation OR .NET 10 built-in) per model type. Mixing causes confusing partial validation.
-3. **Do not use `Regex` without a timeout or `[GeneratedRegex]`** -- unbounded regex matching on user input enables ReDoS attacks. Always set `matchTimeout` or use source-generated regex.
-4. **Do not trust client-provided `Content-Type` headers** -- validate file content by reading magic bytes. Attackers rename executables with image extensions.
-5. **Do not forget `validateAllProperties: true`** -- `Validator.TryValidateObject` without this flag only validates `[Required]` attributes, silently skipping `[Range]`, `[StringLength]`, and others.
-6. **Do not use denylist validation for security** -- denylists are inherently incomplete. Always validate against an allowlist of known-good values.
-7. **Do not omit max length on string inputs** -- unbounded strings enable memory exhaustion. Apply `[StringLength]` or `[MaxLength]` to every user-controlled string property.
+1. **Do not use FluentValidation auto-validation pipeline** -- it was deprecated and removed in FluentValidation 11. Use
+   manual validation or endpoint filters with `IValidator<T>` instead.
+2. **Do not mix validation frameworks on the same DTO** -- pick one (Data Annotations OR FluentValidation OR .NET 10
+   built-in) per model type. Mixing causes confusing partial validation.
+3. **Do not use `Regex` without a timeout or `[GeneratedRegex]`** -- unbounded regex matching on user input enables
+   ReDoS attacks. Always set `matchTimeout` or use source-generated regex.
+4. **Do not trust client-provided `Content-Type` headers** -- validate file content by reading magic bytes. Attackers
+   rename executables with image extensions.
+5. **Do not forget `validateAllProperties: true`** -- `Validator.TryValidateObject` without this flag only validates
+   `[Required]` attributes, silently skipping `[Range]`, `[StringLength]`, and others.
+6. **Do not use denylist validation for security** -- denylists are inherently incomplete. Always validate against an
+   allowlist of known-good values.
+7. **Do not omit max length on string inputs** -- unbounded strings enable memory exhaustion. Apply `[StringLength]` or
+   `[MaxLength]` to every user-controlled string property.
 
 ---
 
@@ -637,3 +720,4 @@ For OWASP injection prevention beyond input validation (SQL injection, XSS, comm
 - [Handle Errors in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/error-handling?view=aspnetcore-10.0)
 - [OWASP Input Validation Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html)
 - [.NET Regular Expression Source Generators](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-source-generators)
+````

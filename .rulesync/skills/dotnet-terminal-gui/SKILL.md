@@ -2,25 +2,29 @@
 name: dotnet-terminal-gui
 description: Builds full TUI apps. Terminal.Gui v2 -- views, layout (Pos/Dim), menus, dialogs, bindings, themes.
 license: MIT
-targets: ["*"]
-tags: ["foundation", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['foundation', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for foundation tasks"
+  short-description: '.NET skill guidance for foundation tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-terminal-gui
 
-Terminal.Gui v2 for building full terminal user interfaces with windows, menus, dialogs, views, layout, event handling, color themes, and mouse support. Cross-platform across Windows, macOS, and Linux terminals.
+Terminal.Gui v2 for building full terminal user interfaces with windows, menus, dialogs, views, layout, event handling,
+color themes, and mouse support. Cross-platform across Windows, macOS, and Linux terminals.
 
-**Version assumptions:** .NET 8.0+ baseline. Terminal.Gui 2.0.0-alpha (v2 Alpha is the active development line for new projects -- API is stable with comprehensive features; breaking changes possible before Beta but core architecture is solid). v1.x (1.19.0) is in maintenance mode with no new features.
+**Version assumptions:** .NET 8.0+ baseline. Terminal.Gui 2.0.0-alpha (v2 Alpha is the active development line for new
+projects -- API is stable with comprehensive features; breaking changes possible before Beta but core architecture is
+solid). v1.x (1.19.0) is in maintenance mode with no new features.
 
-For detailed code examples (views, menus, dialogs, events, themes, complete editor), see `examples.md` in this skill directory.
+For detailed code examples (views, menus, dialogs, events, themes, complete editor), see `examples.md` in this skill
+directory.
 
 ## Scope
 
@@ -32,19 +36,25 @@ For detailed code examples (views, menus, dialogs, events, themes, complete edit
 
 - Rich console output (tables, progress bars, prompts) -- see [skill:dotnet-spectre-console]
 - CLI command-line parsing -- see [skill:dotnet-system-commandline]
-- CLI application architecture and distribution -- see [skill:dotnet-cli-architecture] and [skill:dotnet-cli-distribution]
+- CLI application architecture and distribution -- see [skill:dotnet-cli-architecture] and
+  [skill:dotnet-cli-distribution]
 
-Cross-references: [skill:dotnet-spectre-console] for rich console output alternative, [skill:dotnet-csharp-async-patterns] for async TUI patterns, [skill:dotnet-native-aot] for AOT compilation considerations, [skill:dotnet-system-commandline] for CLI parsing, [skill:dotnet-csharp-dependency-injection] for DI in TUI apps, [skill:dotnet-accessibility] for TUI accessibility limitations and screen reader considerations.
+Cross-references: [skill:dotnet-spectre-console] for rich console output alternative,
+[skill:dotnet-csharp-async-patterns] for async TUI patterns, [skill:dotnet-native-aot] for AOT compilation
+considerations, [skill:dotnet-system-commandline] for CLI parsing, [skill:dotnet-csharp-dependency-injection] for DI in
+TUI apps, [skill:dotnet-accessibility] for TUI accessibility limitations and screen reader considerations.
 
 ---
 
 ## Package Reference
 
-```xml
+````xml
+
 <ItemGroup>
   <PackageReference Include="Terminal.Gui" Version="2.0.0-alpha.*" />
 </ItemGroup>
-```
+
+```xml
 
 ---
 
@@ -55,6 +65,7 @@ Terminal.Gui v2 uses an instance-based model with `IApplication` and `IDisposabl
 ### Basic Application
 
 ```csharp
+
 using Terminal.Gui;
 
 using IApplication app = Application.Create().Init();
@@ -75,7 +86,8 @@ var label = new Label
 window.Add(label);
 
 app.Run(window);
-```
+
+```text
 
 ---
 
@@ -86,6 +98,7 @@ Terminal.Gui v2 unifies layout into a single model. Position is controlled by `P
 ### Pos Types (Positioning)
 
 ```csharp
+
 view.X = 5;                          // Absolute
 view.X = Pos.Percent(25);            // 25% from left
 view.X = Pos.Center();               // Centered
@@ -94,11 +107,13 @@ view.X = Pos.Right(otherView) + 1;   // Relative to another view
 view.Y = Pos.Bottom(otherView) + 1;
 view.X = Pos.Align(Alignment.End);   // Align groups
 view.X = Pos.Func(() => CalculateX());
-```
+
+```text
 
 ### Dim Types (Sizing)
 
 ```csharp
+
 view.Width = 40;                       // Absolute
 view.Width = Dim.Percent(50);          // 50% of parent
 view.Width = Dim.Fill();               // Fill remaining space
@@ -106,7 +121,8 @@ view.Width = Dim.Auto();               // Size based on content
 view.Width = Dim.Auto(minimumContentDim: 20);
 view.Width = Dim.Width(otherView);     // Relative to another view
 view.Width = Dim.Func(() => CalculateWidth());
-```
+
+```text
 
 ### Frame vs. Viewport
 
@@ -164,3 +180,4 @@ view.Width = Dim.Func(() => CalculateWidth());
 - [Terminal.Gui NuGet](https://www.nuget.org/packages/Terminal.Gui)
 - [Terminal.Gui v2 What's New](https://gui-cs.github.io/Terminal.Gui/docs/newinv2)
 - [v1 to v2 Migration Guide](https://github.com/gui-cs/Terminal.Gui/blob/v2_develop/docfx/docs/migratingfromv1.md)
+````

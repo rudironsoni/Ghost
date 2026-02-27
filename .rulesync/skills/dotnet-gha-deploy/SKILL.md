@@ -2,23 +2,27 @@
 name: dotnet-gha-deploy
 description: Deploys .NET from GitHub Actions. Azure Web Apps, GitHub Pages, container registries.
 license: MIT
-targets: ["*"]
-tags: ["cicd", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['cicd', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for cicd tasks"
+  short-description: '.NET skill guidance for cicd tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-gha-deploy
 
-Deployment patterns for .NET applications in GitHub Actions: GitHub Pages deployment for documentation sites (Starlight/Docusaurus), container registry push patterns for GHCR and ACR, Azure Web Apps deployment via `azure/webapps-deploy`, GitHub Environments with protection rules for staged rollouts, and rollback strategies for failed deployments.
+Deployment patterns for .NET applications in GitHub Actions: GitHub Pages deployment for documentation sites
+(Starlight/Docusaurus), container registry push patterns for GHCR and ACR, Azure Web Apps deployment via
+`azure/webapps-deploy`, GitHub Environments with protection rules for staged rollouts, and rollback strategies for
+failed deployments.
 
-**Version assumptions:** GitHub Actions workflow syntax v2. `azure/webapps-deploy@v3` for Azure App Service. `azure/login@v2` for Azure credential management. GitHub Environments for deployment gates.
+**Version assumptions:** GitHub Actions workflow syntax v2. `azure/webapps-deploy@v3` for Azure App Service.
+`azure/login@v2` for Azure credential management. GitHub Environments for deployment gates.
 
 ## Scope
 
@@ -37,7 +41,9 @@ Deployment patterns for .NET applications in GitHub Actions: GitHub Pages deploy
 - Azure DevOps deployment -- see [skill:dotnet-ado-unique] and [skill:dotnet-ado-publish]
 - CLI release pipelines -- see [skill:dotnet-cli-release-pipeline]
 
-Cross-references: [skill:dotnet-container-deployment] for container orchestration patterns, [skill:dotnet-containers] for container image authoring, [skill:dotnet-add-ci] for starter CI templates, [skill:dotnet-cli-release-pipeline] for CLI-specific release automation.
+Cross-references: [skill:dotnet-container-deployment] for container orchestration patterns, [skill:dotnet-containers]
+for container image authoring, [skill:dotnet-add-ci] for starter CI templates, [skill:dotnet-cli-release-pipeline] for
+CLI-specific release automation.
 
 ---
 
@@ -47,7 +53,8 @@ Cross-references: [skill:dotnet-container-deployment] for container orchestratio
 
 Deploy a .NET project's documentation site to GitHub Pages:
 
-```yaml
+````yaml
+
 name: Deploy Docs
 
 on:
@@ -103,7 +110,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-```
+
+```text
 
 **Key decisions:**
 
@@ -116,6 +124,7 @@ jobs:
 Generate and deploy API reference documentation from .NET XML comments:
 
 ```yaml
+
 - name: Setup .NET
   uses: actions/setup-dotnet@v4
   with:
@@ -138,7 +147,8 @@ Generate and deploy API reference documentation from .NET XML comments:
   uses: actions/upload-pages-artifact@v3
   with:
     path: docs/_site
-```
+
+```text
 
 ---
 
@@ -147,6 +157,7 @@ Generate and deploy API reference documentation from .NET XML comments:
 ### Push to GHCR with Environment Gates
 
 ```yaml
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -194,13 +205,15 @@ jobs:
         run: |
           set -euo pipefail
           echo "Deploying ghcr.io/${{ github.repository }}@${{ needs.build.outputs.image-digest }} to production"
-```
+
+```text
 
 ### Promote by Digest (Immutable Deployments)
 
 Use image digest references for immutable deployments across environments:
 
 ```yaml
+
 - name: Retag for production
   run: |
     set -euo pipefail
@@ -209,7 +222,8 @@ Use image digest references for immutable deployments across environments:
     docker tag ghcr.io/${{ github.repository }}@${{ needs.build.outputs.image-digest }} \
       ghcr.io/${{ github.repository }}:production
     docker push ghcr.io/${{ github.repository }}:production
-```
+
+```text
 
 Digest-based promotion ensures the exact same image bytes are deployed to production, regardless of tag mutations.
 
@@ -220,6 +234,7 @@ Digest-based promotion ensures the exact same image bytes are deployed to produc
 ### Deploy via `azure/webapps-deploy`
 
 ```yaml
+
 name: Deploy to Azure
 
 on:
@@ -305,13 +320,15 @@ jobs:
         with:
           app-name: myapp-production
           package: ./publish
-```
+
+```text
 
 ### Azure Web App with Deployment Slots
 
 Use deployment slots for zero-downtime deployments with pre-swap validation:
 
 ```yaml
+
 - name: Deploy to staging slot
   uses: azure/webapps-deploy@v3
   with:
@@ -339,22 +356,26 @@ Use deployment slots for zero-downtime deployments with pre-swap validation:
         --name myapp-production \
         --slot staging \
         --target-slot production
-```
+
+```text
 
 ### OIDC Authentication (Federated Credentials)
 
 Use OIDC for passwordless Azure authentication instead of service principal secrets:
 
 ```yaml
+
 - name: Login to Azure (OIDC)
   uses: azure/login@v2
   with:
     client-id: ${{ secrets.AZURE_CLIENT_ID }}
     tenant-id: ${{ secrets.AZURE_TENANT_ID }}
     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-```
 
-OIDC requires configuring a federated credential in Azure AD that trusts the GitHub Actions OIDC provider. No client secret is stored in GitHub Secrets.
+```text
+
+OIDC requires configuring a federated credential in Azure AD that trusts the GitHub Actions OIDC provider. No client
+secret is stored in GitHub Secrets.
 
 ---
 
@@ -363,6 +384,7 @@ OIDC requires configuring a federated credential in Azure AD that trusts the Git
 ### Multi-Environment Pipeline
 
 ```yaml
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -407,23 +429,25 @@ jobs:
         with:
           name: app
       - run: echo "Deploy to production"
-```
+
+```text
 
 ### Protection Rule Configuration
 
 Configure in GitHub Settings > Environments for each environment:
 
-| Environment | Required Reviewers | Wait Timer | Branch Policy |
-|-------------|-------------------|------------|---------------|
-| development | None | None | Any branch |
-| staging | 1 reviewer | None | `main`, `release/*` |
-| production | 2 reviewers | 15 minutes | `main` only |
+| Environment | Required Reviewers | Wait Timer | Branch Policy       |
+| ----------- | ------------------ | ---------- | ------------------- |
+| development | None               | None       | Any branch          |
+| staging     | 1 reviewer         | None       | `main`, `release/*` |
+| production  | 2 reviewers        | 15 minutes | `main` only         |
 
 ### Environment-Specific Secrets and Variables
 
 Each environment can override repository-level secrets:
 
 ```yaml
+
 jobs:
   deploy:
     environment: production
@@ -437,7 +461,8 @@ jobs:
         run: |
           set -euo pipefail
           echo "Deploying to $APP_URL"
-```
+
+```text
 
 ---
 
@@ -448,6 +473,7 @@ jobs:
 Re-deploy the previous known-good version on failure:
 
 ```yaml
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -490,13 +516,15 @@ jobs:
       - name: Fail the job if rollback was needed
         if: steps.deploy.outcome == 'failure' || steps.health.outcome == 'failure'
         run: exit 1
-```
+
+```text
 
 ### Azure Deployment Slot Rollback
 
 Swap back to the previous slot on health check failure:
 
 ```yaml
+
 - name: Swap to production
   id: swap
   uses: azure/cli@v2
@@ -532,13 +560,15 @@ Swap back to the previous slot on health check failure:
         --slot staging \
         --target-slot production
       echo "Rolled back: swapped staging back to production"
-```
+
+```text
 
 ### Manual Rollback via workflow_dispatch
 
 Provide a manual trigger for emergency rollbacks:
 
 ```yaml
+
 on:
   workflow_dispatch:
     inputs:
@@ -573,17 +603,27 @@ jobs:
           set -euo pipefail
           echo "Rolling back ${{ inputs.environment }} to ${{ inputs.version }}"
           # Platform-specific deployment
-```
+
+```text
 
 ---
 
 ## Agent Gotchas
 
-1. **Use `set -euo pipefail` in all multi-line bash steps** -- without `pipefail`, failures in piped commands are silently swallowed, producing false-green deployments.
-2. **Never use `cancel-in-progress: true` for deployment concurrency groups** -- cancelling an in-progress deployment can leave infrastructure in a partially deployed state.
-3. **Always run health checks after deployment** -- a successful `deploy` step does not guarantee the application is running correctly; verify with HTTP health checks.
-4. **Use `id-token: write` permission for OIDC Azure login** -- without it, the federated credential exchange fails with a cryptic 403 error.
-5. **Deployment slot swaps are atomic** -- if the swap fails, both slots retain their original deployments; no partial state.
-6. **Never hardcode Azure credentials in workflow files** -- use OIDC federated credentials or environment-scoped secrets; hardcoded secrets in YAML are visible in repository history.
-7. **Use digest-based image references for production deployments** -- tags are mutable and can be overwritten; digests are immutable and guarantee the exact image bytes.
-8. **Separate build and deploy jobs** -- build artifacts once, deploy to multiple environments from the same artifact to ensure consistency.
+1. **Use `set -euo pipefail` in all multi-line bash steps** -- without `pipefail`, failures in piped commands are
+   silently swallowed, producing false-green deployments.
+2. **Never use `cancel-in-progress: true` for deployment concurrency groups** -- cancelling an in-progress deployment
+   can leave infrastructure in a partially deployed state.
+3. **Always run health checks after deployment** -- a successful `deploy` step does not guarantee the application is
+   running correctly; verify with HTTP health checks.
+4. **Use `id-token: write` permission for OIDC Azure login** -- without it, the federated credential exchange fails with
+   a cryptic 403 error.
+5. **Deployment slot swaps are atomic** -- if the swap fails, both slots retain their original deployments; no partial
+   state.
+6. **Never hardcode Azure credentials in workflow files** -- use OIDC federated credentials or environment-scoped
+   secrets; hardcoded secrets in YAML are visible in repository history.
+7. **Use digest-based image references for production deployments** -- tags are mutable and can be overwritten; digests
+   are immutable and guarantee the exact image bytes.
+8. **Separate build and deploy jobs** -- build artifacts once, deploy to multiple environments from the same artifact to
+   ensure consistency.
+````

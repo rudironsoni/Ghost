@@ -2,23 +2,27 @@
 name: dotnet-gha-build-test
 description: Configures GitHub Actions .NET build/test -- setup-dotnet, NuGet cache, reporting.
 license: MIT
-targets: ["*"]
-tags: ["testing", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['testing', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for testing tasks"
+  short-description: '.NET skill guidance for testing tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-gha-build-test
 
-.NET build and test workflow patterns for GitHub Actions: `actions/setup-dotnet@v4` configuration with multi-version installs and NuGet authentication, NuGet restore caching for fast CI, `dotnet test` with result publishing via `dorny/test-reporter`, code coverage upload to Codecov and Coveralls, multi-TFM matrix testing across net8.0 and net9.0, and test sharding strategies for large projects.
+.NET build and test workflow patterns for GitHub Actions: `actions/setup-dotnet@v4` configuration with multi-version
+installs and NuGet authentication, NuGet restore caching for fast CI, `dotnet test` with result publishing via
+`dorny/test-reporter`, code coverage upload to Codecov and Coveralls, multi-TFM matrix testing across net8.0 and net9.0,
+and test sharding strategies for large projects.
 
-**Version assumptions:** `actions/setup-dotnet@v4` for .NET 8/9/10 support. `dorny/test-reporter@v1` for test result visualization. Codecov and Coveralls GitHub Apps for coverage reporting.
+**Version assumptions:** `actions/setup-dotnet@v4` for .NET 8/9/10 support. `dorny/test-reporter@v1` for test result
+visualization. Codecov and Coveralls GitHub Apps for coverage reporting.
 
 ## Scope
 
@@ -37,7 +41,9 @@ opencode:
 - Azure DevOps build/test pipelines -- see [skill:dotnet-ado-build-test]
 - Reusable workflow and composite action patterns -- see [skill:dotnet-gha-patterns]
 
-Cross-references: [skill:dotnet-add-ci] for starter build/test templates, [skill:dotnet-testing-strategy] for test architecture guidance, [skill:dotnet-ci-benchmarking] for benchmark CI integration, [skill:dotnet-artifacts-output] for artifact upload path adjustments when using centralized build output layout.
+Cross-references: [skill:dotnet-add-ci] for starter build/test templates, [skill:dotnet-testing-strategy] for test
+architecture guidance, [skill:dotnet-ci-benchmarking] for benchmark CI integration, [skill:dotnet-artifacts-output] for
+artifact upload path adjustments when using centralized build output layout.
 
 ---
 
@@ -45,7 +51,8 @@ Cross-references: [skill:dotnet-add-ci] for starter build/test templates, [skill
 
 ### Basic Setup
 
-```yaml
+````yaml
+
 steps:
   - uses: actions/checkout@v4
 
@@ -53,28 +60,33 @@ steps:
     uses: actions/setup-dotnet@v4
     with:
       dotnet-version: '8.0.x'
-```
+
+```text
 
 ### Multi-Version Install
 
 Install multiple SDK versions for multi-TFM builds within a single job:
 
 ```yaml
+
 - name: Setup .NET SDKs
   uses: actions/setup-dotnet@v4
   with:
     dotnet-version: |
       8.0.x
       9.0.x
-```
 
-The first listed version becomes the default `dotnet` on PATH. All installed versions are available via `--framework` targeting.
+```text
+
+The first listed version becomes the default `dotnet` on PATH. All installed versions are available via `--framework`
+targeting.
 
 ### NuGet Authentication for Private Feeds
 
 Configure NuGet source authentication via `actions/setup-dotnet@v4`:
 
 ```yaml
+
 - name: Setup .NET with NuGet auth
   uses: actions/setup-dotnet@v4
   with:
@@ -82,11 +94,13 @@ Configure NuGet source authentication via `actions/setup-dotnet@v4`:
     source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
   env:
     NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-```
+
+```json
 
 For multiple private feeds, configure additional sources after setup:
 
 ```yaml
+
 - name: Setup .NET
   uses: actions/setup-dotnet@v4
   with:
@@ -100,7 +114,8 @@ For multiple private feeds, configure additional sources after setup:
       --username az \
       --password ${{ secrets.AZURE_ARTIFACTS_PAT }} \
       --store-password-in-clear-text
-```
+
+```text
 
 The `--store-password-in-clear-text` flag is required on Linux runners where DPAPI encryption is unavailable.
 
@@ -109,11 +124,13 @@ The `--store-password-in-clear-text` flag is required on Linux runners where DPA
 When `global.json` exists in the repository root, `actions/setup-dotnet@v4` can read it automatically:
 
 ```yaml
+
 - name: Setup .NET from global.json
   uses: actions/setup-dotnet@v4
   with:
     global-json-file: global.json
-```
+
+```json
 
 This ensures CI uses the same SDK version as local development.
 
@@ -124,6 +141,7 @@ This ensures CI uses the same SDK version as local development.
 ### Standard Cache Configuration
 
 ```yaml
+
 - name: Cache NuGet packages
   uses: actions/cache@v4
   with:
@@ -134,31 +152,35 @@ This ensures CI uses the same SDK version as local development.
 
 - name: Restore dependencies
   run: dotnet restore MySolution.sln
-```
+
+```text
 
 ### Built-in Cache with setup-dotnet
 
 `actions/setup-dotnet@v4` has built-in caching support using `packages.lock.json`:
 
 ```yaml
+
 - name: Setup .NET with caching
   uses: actions/setup-dotnet@v4
   with:
     dotnet-version: '8.0.x'
     cache: true
     cache-dependency-path: '**/packages.lock.json'
-```
 
-Generate lock files locally first: `dotnet restore --use-lock-file`. Commit `packages.lock.json` files for deterministic restore.
+```json
+
+Generate lock files locally first: `dotnet restore --use-lock-file`. Commit `packages.lock.json` files for deterministic
+restore.
 
 ### Cache Key Strategy
 
-| Key Component | Purpose |
-|---------------|---------|
-| `runner.os` | Prevent cross-OS cache collisions |
-| `hashFiles('**/*.csproj')` | Invalidate when package references change |
+| Key Component                              | Purpose                                           |
+| ------------------------------------------ | ------------------------------------------------- |
+| `runner.os`                                | Prevent cross-OS cache collisions                 |
+| `hashFiles('**/*.csproj')`                 | Invalidate when package references change         |
 | `hashFiles('**/Directory.Packages.props')` | Invalidate when centrally managed versions change |
-| `restore-keys` prefix | Partial match for incremental cache reuse |
+| `restore-keys` prefix                      | Partial match for incremental cache reuse         |
 
 ---
 
@@ -169,6 +191,7 @@ Generate lock files locally first: `dotnet restore --use-lock-file`. Commit `pac
 Publish `dotnet test` results as GitHub Actions check annotations with inline failure details:
 
 ```yaml
+
 - name: Test
   run: |
     set -euo pipefail
@@ -187,7 +210,8 @@ Publish `dotnet test` results as GitHub Actions check annotations with inline fa
     path: 'test-results/**/*.trx'
     reporter: dotnet-trx
     fail-on-error: true
-```
+
+```text
 
 **Key decisions:**
 
@@ -200,13 +224,15 @@ Publish `dotnet test` results as GitHub Actions check annotations with inline fa
 For richer PR comment integration with test counts:
 
 ```yaml
+
 - name: Publish test results
   uses: EnricoMi/publish-unit-test-result-action@v2
   if: always()
   with:
     files: 'test-results/**/*.trx'
     check_name: 'Test Results'
-```
+
+```text
 
 ---
 
@@ -215,6 +241,7 @@ For richer PR comment integration with test counts:
 ### Codecov
 
 ```yaml
+
 - name: Test with coverage
   run: |
     set -euo pipefail
@@ -229,11 +256,13 @@ For richer PR comment integration with test counts:
     directory: ./coverage
     fail_ci_if_error: false
     token: ${{ secrets.CODECOV_TOKEN }}
-```
+
+```text
 
 ### Coveralls
 
 ```yaml
+
 - name: Test with coverage
   run: |
     set -euo pipefail
@@ -248,13 +277,15 @@ For richer PR comment integration with test counts:
     file: coverage/**/coverage.cobertura.xml
     format: cobertura
     github-token: ${{ secrets.GITHUB_TOKEN }}
-```
+
+```xml
 
 ### Coverage Report Generation with ReportGenerator
 
 Generate human-readable HTML coverage reports alongside CI upload:
 
 ```yaml
+
 - name: Generate coverage report
   run: |
     set -euo pipefail
@@ -270,7 +301,8 @@ Generate human-readable HTML coverage reports alongside CI upload:
     name: coverage-report
     path: coverage-report/
     retention-days: 30
-```
+
+```text
 
 ---
 
@@ -279,6 +311,7 @@ Generate human-readable HTML coverage reports alongside CI upload:
 ### Matrix Strategy for TFMs
 
 ```yaml
+
 jobs:
   test:
     strategy:
@@ -321,13 +354,15 @@ jobs:
           name: 'Tests (${{ matrix.os }} / ${{ matrix.tfm }})'
           path: 'test-results/**/*.trx'
           reporter: dotnet-trx
-```
+
+```text
 
 ### Install All Required SDKs
 
 When running multi-TFM tests in a single job instead of a matrix, install all required SDKs upfront:
 
 ```yaml
+
 - name: Setup .NET SDKs
   uses: actions/setup-dotnet@v4
   with:
@@ -337,7 +372,8 @@ When running multi-TFM tests in a single job instead of a matrix, install all re
 
 - name: Test all TFMs
   run: dotnet test MySolution.sln --configuration Release
-```
+
+```text
 
 Without the matching SDK installed, `dotnet test` cannot build for that TFM and fails with `NETSDK1045`.
 
@@ -350,6 +386,7 @@ Without the matching SDK installed, `dotnet test` cannot build for that TFM and 
 For large test suites, split test projects across parallel runners to reduce total CI time:
 
 ```yaml
+
 jobs:
   discover:
     runs-on: ubuntu-latest
@@ -394,13 +431,15 @@ jobs:
           name: 'Tests - ${{ matrix.project }}'
           path: 'test-results/**/*.trx'
           reporter: dotnet-trx
-```
+
+```text
 
 ### Sharding by Test Class Within a Project
 
 For a single large test project, use `dotnet test --filter` to split by namespace:
 
 ```yaml
+
 jobs:
   test:
     strategy:
@@ -424,17 +463,27 @@ jobs:
             --filter "FullyQualifiedName~${{ matrix.shard }}" \
             --logger "trx;LogFileName=${{ matrix.shard }}-results.trx" \
             --results-directory ./test-results
-```
+
+```text
 
 ---
 
 ## Agent Gotchas
 
-1. **Always set `set -euo pipefail` in multi-line bash `run` blocks** -- without `pipefail`, piped commands that fail do not propagate the error, producing false-green CI.
-2. **Use `continue-on-error: true` on the test step, not on the reporter** -- the test step must not fail the job prematurely so the reporter can publish results, but the reporter should fail the check when tests fail.
-3. **Include `runner.os` in NuGet cache keys** -- NuGet packages have OS-specific native assets; cross-OS cache hits cause restore failures.
-4. **Install all required SDK versions for multi-TFM** -- `dotnet test` without the matching SDK produces `NETSDK1045`; list every required version in `dotnet-version`.
-5. **Do not hardcode TFM strings in workflow files** -- use matrix variables to keep workflow files in sync with project configuration; hardcoded `net8.0` in CI breaks when the project moves to `net9.0`.
-6. **Coverage collection requires `--collect:"XPlat Code Coverage"`** -- the default `dotnet test` does not produce coverage files; the `XPlat Code Coverage` collector is built into the .NET SDK.
-7. **TRX logger path must match reporter glob** -- if the logger writes to `test-results/results.trx`, the reporter `path` must include that directory in its glob pattern.
-8. **Never commit NuGet credentials to workflow files** -- use `${{ secrets.* }}` references for all authentication tokens; the `NUGET_AUTH_TOKEN` environment variable is the standard pattern.
+1. **Always set `set -euo pipefail` in multi-line bash `run` blocks** -- without `pipefail`, piped commands that fail do
+   not propagate the error, producing false-green CI.
+2. **Use `continue-on-error: true` on the test step, not on the reporter** -- the test step must not fail the job
+   prematurely so the reporter can publish results, but the reporter should fail the check when tests fail.
+3. **Include `runner.os` in NuGet cache keys** -- NuGet packages have OS-specific native assets; cross-OS cache hits
+   cause restore failures.
+4. **Install all required SDK versions for multi-TFM** -- `dotnet test` without the matching SDK produces `NETSDK1045`;
+   list every required version in `dotnet-version`.
+5. **Do not hardcode TFM strings in workflow files** -- use matrix variables to keep workflow files in sync with project
+   configuration; hardcoded `net8.0` in CI breaks when the project moves to `net9.0`.
+6. **Coverage collection requires `--collect:"XPlat Code Coverage"`** -- the default `dotnet test` does not produce
+   coverage files; the `XPlat Code Coverage` collector is built into the .NET SDK.
+7. **TRX logger path must match reporter glob** -- if the logger writes to `test-results/results.trx`, the reporter
+   `path` must include that directory in its glob pattern.
+8. **Never commit NuGet credentials to workflow files** -- use `${{ secrets.* }}` references for all authentication
+   tokens; the `NUGET_AUTH_TOKEN` environment variable is the standard pattern.
+````

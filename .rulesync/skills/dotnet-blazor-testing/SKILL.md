@@ -2,23 +2,26 @@
 name: dotnet-blazor-testing
 description: Tests Blazor components. bUnit rendering, events, cascading params, JS interop mocking.
 license: MIT
-targets: ["*"]
-tags: ["testing", "dotnet", "skill"]
-version: "0.0.1"
-author: "dotnet-agent-harness"
+targets: ['*']
+tags: ['testing', 'dotnet', 'skill']
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: ".NET skill guidance for testing tasks"
+  short-description: '.NET skill guidance for testing tasks'
 opencode:
-  allowed-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
 
 # dotnet-blazor-testing
 
-bUnit testing for Blazor components. Covers component rendering and markup assertions, event handling, cascading parameters and cascading values, JavaScript interop mocking, and async component lifecycle testing. bUnit provides an in-memory Blazor renderer that executes components without a browser.
+bUnit testing for Blazor components. Covers component rendering and markup assertions, event handling, cascading
+parameters and cascading values, JavaScript interop mocking, and async component lifecycle testing. bUnit provides an
+in-memory Blazor renderer that executes components without a browser.
 
-**Version assumptions:** .NET 8.0+ baseline, bUnit 1.x (stable). Examples use the latest bUnit APIs. bUnit supports both Blazor Server and Blazor WebAssembly components.
+**Version assumptions:** .NET 8.0+ baseline, bUnit 1.x (stable). Examples use the latest bUnit APIs. bUnit supports both
+Blazor Server and Blazor WebAssembly components.
 
 ## Scope
 
@@ -34,22 +37,28 @@ bUnit testing for Blazor components. Covers component rendering and markup asser
 - Shared UI testing patterns (page object model, selectors, wait strategies) -- see [skill:dotnet-ui-testing-core]
 - Test project scaffolding -- see [skill:dotnet-add-testing]
 
-**Prerequisites:** A Blazor test project scaffolded via [skill:dotnet-add-testing] with bUnit packages referenced. The component under test must be in a referenced Blazor project.
+**Prerequisites:** A Blazor test project scaffolded via [skill:dotnet-add-testing] with bUnit packages referenced. The
+component under test must be in a referenced Blazor project.
 
-Cross-references: [skill:dotnet-ui-testing-core] for shared UI testing patterns (POM, selectors, wait strategies), [skill:dotnet-xunit] for xUnit fixtures and test organization, [skill:dotnet-blazor-patterns] for hosting models and render modes, [skill:dotnet-blazor-components] for component architecture and state management.
+Cross-references: [skill:dotnet-ui-testing-core] for shared UI testing patterns (POM, selectors, wait strategies),
+[skill:dotnet-xunit] for xUnit fixtures and test organization, [skill:dotnet-blazor-patterns] for hosting models and
+render modes, [skill:dotnet-blazor-components] for component architecture and state management.
 
 ---
 
 ## Package Setup
 
-```xml
+````xml
+
 <PackageReference Include="bunit" Version="1.*" />
 <!-- bUnit depends on xunit internally; ensure compatible xUnit version -->
-```
+
+```xml
 
 bUnit test classes inherit from `TestContext` (or use it via composition):
 
 ```csharp
+
 using Bunit;
 using Xunit;
 
@@ -79,7 +88,8 @@ public class CounterCompositionTests : IDisposable
 
     public void Dispose() => _ctx.Dispose();
 }
-```
+
+```text
 
 ---
 
@@ -88,6 +98,7 @@ public class CounterCompositionTests : IDisposable
 ### Basic Rendering and Markup Assertions
 
 ```csharp
+
 public class AlertTests : TestContext
 {
     [Fact]
@@ -115,11 +126,13 @@ public class AlertTests : TestContext
         Assert.Empty(cut.Markup.Trim());
     }
 }
-```
+
+```text
 
 ### Rendering with Child Content
 
 ```csharp
+
 [Fact]
 public void Card_WithChildContent_RendersChildren()
 {
@@ -143,13 +156,15 @@ public void Card_WithRenderFragment_RendersTemplate()
 
     cut.Find("h2").MarkupMatches("<h2>Card Title</h2>");
 }
-```
+
+```text
 
 ### Rendering with Dependency Injection
 
 Register services before rendering components that depend on them:
 
 ```csharp
+
 public class OrderListTests : TestContext
 {
     [Fact]
@@ -175,7 +190,8 @@ public class OrderListTests : TestContext
         Assert.Contains("Alice", rows[0].TextContent);
     }
 }
-```
+
+```text
 
 ---
 
@@ -184,6 +200,7 @@ public class OrderListTests : TestContext
 ### Click Events
 
 ```csharp
+
 [Fact]
 public void Counter_ClickIncrement_IncreasesCount()
 {
@@ -206,11 +223,13 @@ public void Counter_MultipleClicks_AccumulatesCount()
 
     Assert.Equal("3", cut.Find("[data-testid='count']").TextContent);
 }
-```
+
+```text
 
 ### Form Input Events
 
 ```csharp
+
 [Fact]
 public void SearchBox_TypeText_UpdatesResults()
 {
@@ -242,11 +261,13 @@ public async Task LoginForm_SubmitValid_CallsAuthService()
 
     await authService.Received(1).LoginAsync("user@example.com", "P@ssw0rd!");
 }
-```
+
+```text
 
 ### EventCallback Parameters
 
 ```csharp
+
 [Fact]
 public void DeleteButton_Click_InvokesOnDeleteCallback()
 {
@@ -260,7 +281,8 @@ public void DeleteButton_Click_InvokesOnDeleteCallback()
 
     Assert.Equal(42, deletedId);
 }
-```
+
+```text
 
 ---
 
@@ -269,6 +291,7 @@ public void DeleteButton_Click_InvokesOnDeleteCallback()
 ### CascadingValue Setup
 
 ```csharp
+
 [Fact]
 public void ThemedButton_WithDarkTheme_AppliesDarkClass()
 {
@@ -297,11 +320,13 @@ public void UserDisplay_WithCascadedAuthState_ShowsUserName()
 
     Assert.Contains("Alice", cut.Find("[data-testid='user-name']").TextContent);
 }
-```
+
+```text
 
 ### Named Cascading Values
 
 ```csharp
+
 [Fact]
 public void LayoutComponent_ReceivesNamedCascadingValues()
 {
@@ -311,17 +336,20 @@ public void LayoutComponent_ReceivesNamedCascadingValues()
 
     Assert.Contains("Dashboard", cut.Find("[data-testid='widget-title']").TextContent);
 }
-```
+
+```text
 
 ---
 
 ## JavaScript Interop Mocking
 
-Blazor components that call JavaScript via `IJSRuntime` require mock setup in bUnit. bUnit provides a built-in JS interop mock.
+Blazor components that call JavaScript via `IJSRuntime` require mock setup in bUnit. bUnit provides a built-in JS
+interop mock.
 
 ### Basic JSInterop Setup
 
 ```csharp
+
 public class ClipboardButtonTests : TestContext
 {
     [Fact]
@@ -339,11 +367,13 @@ public class ClipboardButtonTests : TestContext
         JSInterop.VerifyInvoke("navigator.clipboard.writeText", calledTimes: 1);
     }
 }
-```
+
+```text
 
 ### JSInterop with Return Values
 
 ```csharp
+
 [Fact]
 public void GeoLocation_OnLoad_DisplaysCoordinates()
 {
@@ -356,13 +386,15 @@ public void GeoLocation_OnLoad_DisplaysCoordinates()
     cut.WaitForState(() => cut.Find("[data-testid='coordinates']").TextContent.Contains("47.6"));
     Assert.Contains("47.6062", cut.Find("[data-testid='coordinates']").TextContent);
 }
-```
+
+```text
 
 ### Catch-All JSInterop Mode
 
 For components with many JS calls, use loose mode to avoid setting up every call:
 
 ```csharp
+
 [Fact]
 public void RichEditor_Render_DoesNotThrowJSErrors()
 {
@@ -375,7 +407,8 @@ public void RichEditor_Render_DoesNotThrowJSErrors()
     // Component renders without JS exceptions
     Assert.NotEmpty(cut.Markup);
 }
-```
+
+```text
 
 ---
 
@@ -384,6 +417,7 @@ public void RichEditor_Render_DoesNotThrowJSErrors()
 ### Testing OnInitializedAsync
 
 ```csharp
+
 [Fact]
 public void ProductList_WhileLoading_ShowsSpinner()
 {
@@ -406,11 +440,13 @@ public void ProductList_WhileLoading_ShowsSpinner()
         () => cut.Find("[data-testid='loading-spinner']"));
     Assert.Single(cut.FindAll("[data-testid='product-item']"));
 }
-```
+
+```text
 
 ### Testing Error States
 
 ```csharp
+
 [Fact]
 public void ProductList_ServiceError_ShowsErrorMessage()
 {
@@ -427,27 +463,38 @@ public void ProductList_ServiceError_ShowsErrorMessage()
     Assert.Contains("Service unavailable",
         cut.Find("[data-testid='error-message']").TextContent);
 }
-```
+
+```text
 
 ---
 
 ## Key Principles
 
-- **Render components in isolation.** bUnit tests individual components without a browser, making them fast and deterministic. Use this for component logic; use [skill:dotnet-playwright] for full-app E2E flows.
-- **Register all dependencies before rendering.** Any service the component injects via `[Inject]` must be registered in `Services` before `RenderComponent` is called.
-- **Use `WaitForState` and `WaitForAssertion` for async components.** Do not use `Task.Delay` -- bUnit provides purpose-built waiting mechanisms.
-- **Mock JS interop explicitly.** Unhandled JS interop calls throw by default in bUnit strict mode. Set up expected calls or switch to loose mode for JS-heavy components.
-- **Test the rendered output, not component internals.** Assert on markup, text content, and element attributes -- not on private fields or internal state.
+- **Render components in isolation.** bUnit tests individual components without a browser, making them fast and
+  deterministic. Use this for component logic; use [skill:dotnet-playwright] for full-app E2E flows.
+- **Register all dependencies before rendering.** Any service the component injects via `[Inject]` must be registered in
+  `Services` before `RenderComponent` is called.
+- **Use `WaitForState` and `WaitForAssertion` for async components.** Do not use `Task.Delay` -- bUnit provides
+  purpose-built waiting mechanisms.
+- **Mock JS interop explicitly.** Unhandled JS interop calls throw by default in bUnit strict mode. Set up expected
+  calls or switch to loose mode for JS-heavy components.
+- **Test the rendered output, not component internals.** Assert on markup, text content, and element attributes -- not
+  on private fields or internal state.
 
 ---
 
 ## Agent Gotchas
 
-1. **Do not forget to register services before `RenderComponent`.** bUnit throws at render time if an `[Inject]`-ed service is missing. Register mocks or fakes for every injected dependency.
-2. **Do not use `cut.Instance` to access private members.** `Instance` exposes the component's public API only. If you need to test internal state, expose it through public properties or test through rendered output.
-3. **Do not forget to call `cut.WaitForState()` after triggering async operations.** Without it, assertions run before the component re-renders, causing false failures.
-4. **Do not mix bUnit and Playwright in the same test class.** bUnit runs components in-memory (no browser); Playwright runs in a real browser. They serve different purposes and have incompatible lifecycles.
-5. **Do not forget cascading values for components that expect them.** A component with `[CascadingParameter]` will receive `null` if no `CascadingValue` is provided, which may cause `NullReferenceException` during rendering.
+1. **Do not forget to register services before `RenderComponent`.** bUnit throws at render time if an `[Inject]`-ed
+   service is missing. Register mocks or fakes for every injected dependency.
+2. **Do not use `cut.Instance` to access private members.** `Instance` exposes the component's public API only. If you
+   need to test internal state, expose it through public properties or test through rendered output.
+3. **Do not forget to call `cut.WaitForState()` after triggering async operations.** Without it, assertions run before
+   the component re-renders, causing false failures.
+4. **Do not mix bUnit and Playwright in the same test class.** bUnit runs components in-memory (no browser); Playwright
+   runs in a real browser. They serve different purposes and have incompatible lifecycles.
+5. **Do not forget cascading values for components that expect them.** A component with `[CascadingParameter]` will
+   receive `null` if no `CascadingValue` is provided, which may cause `NullReferenceException` during rendering.
 
 ---
 
@@ -458,3 +505,4 @@ public void ProductList_ServiceError_ShowsErrorMessage()
 - [bUnit JS Interop](https://bunit.dev/docs/test-doubles/emulating-ijsruntime)
 - [Blazor Component Testing](https://learn.microsoft.com/en-us/aspnet/core/blazor/test)
 - [Testing Blazor Components with bUnit (tutorial)](https://bunit.dev/docs/providing-input/)
+````
