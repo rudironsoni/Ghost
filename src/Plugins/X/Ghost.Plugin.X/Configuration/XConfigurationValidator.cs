@@ -103,7 +103,7 @@ public partial class XConfigurationValidator : IValidateOptions<XOptions>
             }
 
             // Validate JSON format
-            string content = File.ReadAllText(path);
+            string content = File.ReadAllText(path); // Sync I/O acceptable for small validation file at startup
             if (string.IsNullOrWhiteSpace(content))
             {
                 return (false, $"Storage state file '{path}' is empty");

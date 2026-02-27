@@ -8,7 +8,7 @@ namespace Ghost.Sdk.Middleware;
 /// In-memory implementation of <see cref="ICookieMiddleware"/> with thread-safe cookie storage by domain.
 /// Supports loading and saving cookies to JSON files for persistence.
 /// </summary>
-public sealed class CookieMiddleware : ICookieMiddleware
+public sealed class CookieMiddleware : ICookieMiddleware, IDisposable
 {
     private static readonly JsonSerializerOptions s_jsonOptions = new()
     {
@@ -16,7 +16,7 @@ public sealed class CookieMiddleware : ICookieMiddleware
     };
 
     private readonly ConcurrentDictionary<string, List<Cookie>> _cookies = new();
-    private readonly object _fileLock = new();
+    private readonly SemaphoreSlim _fileLock = new(1, 1);
     private const int MaxCookiesPerDomain = 1000;
 
     /// <summary>
@@ -103,9 +103,14 @@ public sealed class CookieMiddleware : ICookieMiddleware
         }
 
         string json;
-        lock (_fileLock)
+        await _fileLock.WaitAsync(ct).ConfigureAwait(false);
+        try
         {
-            json = File.ReadAllText(filePath);
+            json = await File.ReadAllTextAsync(filePath, ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            _fileLock.Release();
         }
 
         Dictionary<string, List<Cookie>>? cookieData = JsonSerializer.Deserialize<Dictionary<string, List<Cookie>>>(json);
@@ -143,12 +148,15 @@ public sealed class CookieMiddleware : ICookieMiddleware
 
         string json = JsonSerializer.Serialize(cookieData, s_jsonOptions);
 
-        lock (_fileLock)
+        await _fileLock.WaitAsync(ct).ConfigureAwait(false);
+        try
         {
-            File.WriteAllText(filePath, json);
+            await File.WriteAllTextAsync(filePath, json, ct).ConfigureAwait(false);
         }
-
-        await Task.CompletedTask.ConfigureAwait(false);
+        finally
+        {
+            _fileLock.Release();
+        }
     }
 
     /// <summary>
@@ -169,5 +177,11 @@ public sealed class CookieMiddleware : ICookieMiddleware
     {
         _cookies.Clear();
         return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        _fileLock.Dispose();
     }
 }

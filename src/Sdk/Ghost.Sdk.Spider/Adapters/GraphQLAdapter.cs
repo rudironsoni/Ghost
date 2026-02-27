@@ -1,9 +1,9 @@
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Adapters.GraphQL;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Ghost.Sdk.Spider.Adapters;
 
@@ -97,7 +97,7 @@ public class GraphQLAdapter : IContentAdapter
             GraphQLRequest graphQLRequest;
             if (!string.IsNullOrEmpty(request.Body))
             {
-                graphQLRequest = JsonConvert.DeserializeObject<GraphQLRequest>(request.Body)
+                graphQLRequest = JsonSerializer.Deserialize<GraphQLRequest>(request.Body)
                     ?? throw new InvalidOperationException("Failed to parse GraphQL request from body");
             }
             else if (request.Metadata.TryGetValue("Query", out object? queryObj))
@@ -126,7 +126,7 @@ public class GraphQLAdapter : IContentAdapter
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, request.Url)
             {
                 Content = new StringContent(
-                    JsonConvert.SerializeObject(graphQLRequest),
+                    JsonSerializer.Serialize(graphQLRequest),
                     Encoding.UTF8,
                     "application/json")
             };
@@ -146,7 +146,7 @@ public class GraphQLAdapter : IContentAdapter
             string responseContent = await httpResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
             // Parse GraphQL response
-            GraphQLResponse graphQLResponse = JsonConvert.DeserializeObject<GraphQLResponse>(responseContent)
+            GraphQLResponse graphQLResponse = JsonSerializer.Deserialize<GraphQLResponse>(responseContent)
                 ?? throw new InvalidOperationException("Failed to parse GraphQL response");
 
             var contentResult = new ContentResult

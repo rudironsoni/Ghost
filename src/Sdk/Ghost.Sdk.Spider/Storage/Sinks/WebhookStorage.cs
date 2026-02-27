@@ -1,9 +1,9 @@
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Storage.Contracts;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Ghost.Sdk.Spider.Storage.Sinks;
 
@@ -46,7 +46,7 @@ public class WebhookStorage : IStorage
     private readonly HttpClient _httpClient;
     private readonly string _webhookUrl;
     private readonly ILogger<WebhookStorage>? _logger;
-    private readonly JsonSerializerSettings _jsonSettings;
+    private readonly JsonSerializerOptions _jsonOptions;
 
     /// <inheritdoc/>
     public string Name => "Webhook";
@@ -68,11 +68,11 @@ public class WebhookStorage : IStorage
         _webhookUrl = webhookUrl;
         _logger = logger;
 
-        _jsonSettings = new JsonSerializerSettings
+        _jsonOptions = new JsonSerializerOptions
         {
-            Formatting = Formatting.None,
-            NullValueHandling = NullValueHandling.Ignore,
-            ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
         };
     }
 
@@ -103,7 +103,7 @@ public class WebhookStorage : IStorage
                 tags = context.Tags
             };
 
-            string json = JsonConvert.SerializeObject(payload, _jsonSettings);
+            string json = JsonSerializer.Serialize(payload, _jsonOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             HttpResponseMessage response = await _httpClient.PostAsync(_webhookUrl, content, cancellationToken).ConfigureAwait(false);
@@ -152,7 +152,7 @@ public class WebhookStorage : IStorage
                 tags = context.Tags
             };
 
-            string json = JsonConvert.SerializeObject(payload, _jsonSettings);
+            string json = JsonSerializer.Serialize(payload, _jsonOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             HttpResponseMessage response = await _httpClient.PostAsync(_webhookUrl, content, cancellationToken).ConfigureAwait(false);
