@@ -610,7 +610,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
             content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             LogResponseContent(_logger, content, null);
 
-            TryWriteDebugLog(content, attempt);
+            await TryWriteDebugLogAsync(content, attempt).ConfigureAwait(false);
 
             response.EnsureSuccessStatusCode();
 
@@ -649,11 +649,11 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         }
     }
 
-    private static void TryWriteDebugLog(string content, int attempt)
+    private static async Task TryWriteDebugLogAsync(string content, int attempt)
     {
         try
         {
-            System.IO.File.WriteAllText($"logs/indeed_jobs_search_{attempt}.json", content);
+            await System.IO.File.WriteAllTextAsync($"logs/indeed_jobs_search_{attempt}.json", content).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -810,7 +810,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
             content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             LogResponseContent(_logger, content, null);
 
-            TryWriteDebugLog(content, attempt);
+            await TryWriteDebugLogAsync(content, attempt).ConfigureAwait(false);
 
             response.EnsureSuccessStatusCode();
 

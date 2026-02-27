@@ -343,7 +343,7 @@ public class GoogleJobsApiClient : IDisposable
             try
             {
                 System.IO.Directory.CreateDirectory("logs");
-                System.IO.File.WriteAllText("logs/google_jobs_search.html", html);
+                await System.IO.File.WriteAllTextAsync("logs/google_jobs_search.html", html, ct).ConfigureAwait(false);
                 LogWroteHtmlDebugFile(_logger, null);
             }
             catch (Exception ex)
@@ -404,7 +404,7 @@ public class GoogleJobsApiClient : IDisposable
                             try
                             {
                                 System.IO.Directory.CreateDirectory("logs");
-                                System.IO.File.WriteAllText("logs/google_jobs_search_after_consent.html", html);
+                                await System.IO.File.WriteAllTextAsync("logs/google_jobs_search_after_consent.html", html, ct).ConfigureAwait(false);
                                 LogWroteHtmlDebugFile(_logger, null);
                             }
                             catch (Exception ex)
@@ -495,7 +495,7 @@ public class GoogleJobsApiClient : IDisposable
                                 {
                                     System.IO.Directory.CreateDirectory("logs");
                                     long ticks = DateTime.Now.Ticks;
-                                    System.IO.File.WriteAllText($"logs/google_jobs_search_retry_{ticks}.html", html);
+                                    await System.IO.File.WriteAllTextAsync($"logs/google_jobs_search_retry_{ticks}.html", html, ct).ConfigureAwait(false);
                                     LogWroteRetryHtmlDebugFile(_logger, ticks, null);
                                 }
                                 catch (Exception ex)
