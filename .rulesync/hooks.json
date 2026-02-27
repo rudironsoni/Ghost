@@ -1,12 +1,33 @@
 {
   "version": 1,
+  "description": "dotnet-agent-harness: smart defaults for .NET development",
   "hooks": {
-    "postToolUse": [
+    "sessionStart": [
       {
         "type": "command",
-        "command": "./.rulesync/hooks/format.sh",
-        "matcher": "Write|Edit"
+        "command": ".rulesync/hooks/session-start-context.sh",
+        "timeout": 10
+      }
+    ],
+    "postToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "type": "command",
+        "command": ".rulesync/hooks/post-edit-dotnet.sh",
+        "async": true,
+        "timeout": 60
       }
     ]
+  },
+  "claudecode": {
+    "hooks": {
+      "beforeSubmitPrompt": [
+        {
+          "type": "command",
+          "command": ".rulesync/hooks/user-prompt-dotnet-reminder.sh",
+          "timeout": 10
+        }
+      ]
+    }
   }
 }

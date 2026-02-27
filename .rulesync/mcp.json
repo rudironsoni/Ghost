@@ -1,6 +1,7 @@
 {
   "mcpServers": {
     "serena": {
+      "description": "Semantic code analysis and editing toolkit",
       "type": "stdio",
       "command": "uvx",
       "args": [
@@ -18,11 +19,25 @@
       "env": {}
     },
     "context7": {
+      "description": "Library documentation search server",
       "type": "stdio",
       "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"],
+      "env": {}
+    },
+    "microsoftdocs-mcp": {
+      "description": "Microsoft Learn documentation MCP",
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp"
+    },
+    "mcp-windbg": {
+      "description": "WinDbg crash and dump analysis MCP",
+      "type": "stdio",
+      "command": "uvx",
       "args": [
-        "-y",
-        "@upstash/context7-mcp"
+        "--from",
+        "git+https://github.com/svnscha/mcp-windbg",
+        "mcp-windbg"
       ],
       "env": {}
     }

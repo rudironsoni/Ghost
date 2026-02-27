@@ -1,31 +1,63 @@
 ---
 root: true
-targets:
-  - '*'
-globs:
-  - '**/*'
+targets: ["*"]
+description: "dotnet-agent-harness: Comprehensive .NET development skills for all AI agents"
+globs: ["**/*"]
+antigravity:
+  trigger: always_on
 ---
-# Project Overview
 
-## General Guidelines
+# dotnet-agent-harness
 
-- Use TypeScript for all new code
-- Follow consistent naming conventions
-- Write self-documenting code with clear variable and function names
-- Prefer composition over inheritance
-- Use meaningful comments for complex business logic
+Comprehensive .NET development guidance for modern C#, ASP.NET Core, MAUI, Blazor, and cloud-native apps.
 
-## Code Style
+## Overview
 
-- Use 2 spaces for indentation
-- Use semicolons
-- Use double quotes for strings
-- Use trailing commas in multi-line objects and arrays
+This toolkit provides:
 
-## Architecture Principles
+- 131 skills
+- 14 specialist agents/subagents
+- shared RuleSync rules, commands, hooks, and MCP config
 
-- Organize code by feature, not by file type
-- Keep related files close together
-- Use dependency injection for better testability
-- Implement proper error handling
-- Follow single responsibility principle
+Compatible targets include Claude Code, GitHub Copilot CLI, OpenCode, Codex CLI, Gemini CLI, and Antigravity.
+
+## Recommended install
+
+For full toolkit installation in a project:
+
+```bash
+rulesync fetch rudironsoni/dotnet-agent-harness:.rulesync
+rulesync generate --targets "*" --features "*"
+```
+
+If you use declarative sources:
+
+```jsonc
+{
+  "sources": [
+    { "source": "rudironsoni/dotnet-agent-harness", "path": ".rulesync" }
+  ]
+}
+```
+
+```bash
+rulesync install && rulesync generate --targets "*" --features "*"
+```
+
+## OpenCode behavior
+
+- Tab cycles **primary** agents only.
+- `@mention` invokes subagents.
+- `dotnet-architect` is configured as a primary OpenCode agent in this toolkit so it can appear in Tab rotation.
+
+## Troubleshooting
+
+If RuleSync reports `Multiple root rulesync rules found`, ensure only one root overview rule exists in `.rulesync/rules/`.
+
+## Contributing
+
+Edit source files in `.rulesync/` and validate with `npm run ci:rulesync`.
+
+## License
+
+MIT License. See `LICENSE`.
