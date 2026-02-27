@@ -591,7 +591,6 @@ public class SpiderEngineTests : ReliabilityTestBase
     #region Spider Options Tests
 
     [Fact]
-    [SlopwatchSuppress("SW004", "Test uses FakeTimeProvider for deterministic time-based throttling verification")]
     public async Task Engine_WithRequestDelay_ShouldThrottle()
     {
         // Arrange - Use TimeProvider for deterministic throttling test
@@ -600,24 +599,21 @@ public class SpiderEngineTests : ReliabilityTestBase
         ConfigurableTestSpider spider = new ConfigurableTestSpider(options: options);
 
         DateTimeOffset startTime = timeProvider.GetUtcNow();
+        List<Task> pendingDelays = [];
 
         // Simulate processing 3 requests with delay
-        // Advance time in background while delays are pending
-        Task advanceTask = Task.Run(async () =>
-        {
-            for (int i = 0; i < 3; i++)
-            {
-                await Task.Delay(10); // Small real delay
-                timeProvider.Advance(TimeSpan.FromMilliseconds(100));
-            }
-        });
-
+        // Create pending delay operations using time provider's CreateDelay
         for (int i = 0; i < 3; i++)
         {
-            await Task.Delay(options.RequestDelay, timeProvider, CancellationToken.None);
+            pendingDelays.Add(timeProvider.CreateDelay(options.RequestDelay, CancellationToken.None));
         }
 
-        await advanceTask;
+        // Advance time to satisfy all pending delays
+        timeProvider.Advance(TimeSpan.FromMilliseconds(300));
+
+        // Wait for all delays to complete
+        await Task.WhenAll(pendingDelays);
+
         TimeSpan elapsed = timeProvider.GetUtcNow() - startTime;
 
         // Assert - Total delay should be 300ms (3 x 100ms)

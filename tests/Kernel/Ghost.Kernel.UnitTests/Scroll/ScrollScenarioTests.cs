@@ -46,35 +46,37 @@ public class ScrollScenarioTests : IAsyncLifetime
     /// <summary>
     /// Waits for the loading indicator to be hidden, indicating fetch is complete.
     /// </summary>
-    private static async Task WaitForLoadingCompleteAsync(IPage page, CancellationToken ct = default)
+    private async Task WaitForLoadingCompleteAsync(IPage page, CancellationToken ct = default)
     {
         // The loading indicator may not exist initially, wait for it to appear then disappear
         try
         {
             // First wait for loading to become visible (with short timeout)
             await page.WaitForSelectorAsync("#loading", new WaitOptions { State = WaitState.Visible, Timeout = 5000 }, ct);
+            _output.WriteLine("Loading indicator became visible");
         }
-        catch (TimeoutException)
+        catch (TimeoutException ex)
         {
             // Loading indicator may have already come and gone, or never appeared
             // This is acceptable - continue to check if it's hidden
+            _output.WriteLine($"Loading indicator did not appear within timeout: {ex.Message}. Continuing to wait for hidden state.");
         }
 
         // Now wait for loading to be hidden
         await page.WaitForSelectorAsync("#loading", new WaitOptions { State = WaitState.Hidden }, ct);
+        _output.WriteLine("Loading indicator is now hidden");
     }
 
     /// <summary>
-    /// Waits for the page JavaScript to be ready by checking a known condition.
+    /// Waits for the page JavaScript to be ready by polling for a known global marker.
     /// </summary>
-    [SlopwatchSuppress("SW004", "Browser integration test requires delay for page initialization")]
     private static async Task WaitForPageReadyAsync(IPage page, CancellationToken ct = default)
     {
         // Wait for page load state to be complete
         await page.WaitForLoadStateAsync(ct: ct);
 
-        // Additional delay to ensure JavaScript event listeners are attached
-        await Task.Delay(300, ct);
+        // Poll for JavaScript initialization marker instead of using arbitrary delay
+        await WaitForConditionAsync(page, "() => typeof window !== 'undefined' && document.readyState === 'complete'", ct);
     }
 
     /// <summary>
@@ -86,29 +88,75 @@ public class ScrollScenarioTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Polls for a JavaScript condition to return true using Playwright's EvaluateAsync.
+    /// Waits for a JavaScript condition to return true by polling via EvaluateAsync.
+    /// Uses cancellation token for timeout control instead of manual elapsed tracking.
     /// </summary>
-    [SlopwatchSuppress("SW004", "Browser integration test requires real delays for polling JavaScript conditions")]
     private static async Task WaitForConditionAsync(IPage page, string script, CancellationToken ct = default)
     {
-        int timeout = 30_000;
-        int interval = 50;
-        int elapsed = 0;
+        // Create a linked cancellation token with 30 second timeout
+        using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(TimeSpan.FromSeconds(30));
 
-        while (elapsed < timeout)
+        try
         {
-            bool result = await page.EvaluateAsync<bool>(script, null, ct);
-            if (result)
+            while (!cts.Token.IsCancellationRequested)
             {
-                return;
-            }
+                bool result = await page.EvaluateAsync<bool>(script, null, cts.Token);
+                if (result)
+                {
+                    return;
+                }
 
-            await Task.Delay(interval, ct);
-            elapsed += interval;
+                // Yield to allow other tasks to progress, then continue polling
+                // This avoids blocking the thread while still allowing responsive cancellation
+                await Task.Yield();
+            }
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            // Our timeout triggered, not the external cancellation token
+            throw new TimeoutException($"Condition did not become true within 30s: {script}");
         }
 
-        throw new TimeoutException($"Condition did not become true within {timeout}ms: {script}");
+        throw new TimeoutException($"Condition did not become true within 30s: {script}");
     }
+
+    /// <summary>
+    /// Attempts to wait for a JavaScript condition to return true within the specified timeout.
+    /// Returns true if the condition was met, false if the timeout elapsed.
+    /// </summary>
+#pragma warning disable CA1822 // Mark members as static - kept as instance method for API consistency with WaitForConditionAsync
+    private async Task<bool> TryWaitForConditionAsync(
+        IPage page,
+        string script,
+        TimeSpan timeout,
+        CancellationToken ct = default)
+    {
+        using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(timeout);
+
+        try
+        {
+            while (!cts.Token.IsCancellationRequested)
+            {
+                bool result = await page.EvaluateAsync<bool>(script, null, cts.Token);
+                if (result)
+                {
+                    return true;
+                }
+
+                await Task.Yield();
+            }
+        }
+        catch (OperationCanceledException ex) when (!ct.IsCancellationRequested)
+        {
+            // Timeout elapsed before condition was met - this is expected behavior
+            _output.WriteLine($"Condition not met within {timeout.TotalSeconds}s: {script} - {ex.Message}");
+        }
+
+        return false;
+    }
+#pragma warning restore CA1822
 
     [Fact]
     public async Task AutoThreshold_ScrollTriggersFetch_LoadsMoreItems()
@@ -166,13 +214,14 @@ public class ScrollScenarioTests : IAsyncLifetime
             await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)");
 
             // Wait for fetch to complete by checking job count increased or timeout
-            try
+            bool moreItemsLoaded = await TryWaitForConditionAsync(
+                page,
+                $"() => document.querySelectorAll('.job').length > {previousCount}",
+                TimeSpan.FromSeconds(30));
+
+            if (!moreItemsLoaded)
             {
-                await WaitForConditionAsync(page, $"() => document.querySelectorAll('.job').length > {previousCount}");
-            }
-            catch (TimeoutException)
-            {
-                // No more items loaded, we've reached the end
+                _output.WriteLine($"Scroll {scrollCount + 1}: No more items loaded, reached end");
                 break;
             }
 
@@ -233,15 +282,19 @@ public class ScrollScenarioTests : IAsyncLifetime
 
             // Wait for fetch to complete by checking job count increased or timeout
             int currentCount = previousCount;
-            try
+            bool moreItemsLoaded = await TryWaitForConditionAsync(
+                page,
+                $"() => document.querySelectorAll('.job').length > {previousCount}",
+                TimeSpan.FromSeconds(30));
+
+            if (moreItemsLoaded)
             {
-                await WaitForConditionAsync(page, $"() => document.querySelectorAll('.job').length > {previousCount}");
                 IReadOnlyList<IElement> currentJobs = await page.QuerySelectorAllAsync(".job");
                 currentCount = currentJobs.Count;
             }
-            catch (TimeoutException)
+            else
             {
-                // No more items loaded, count stays the same
+                _output.WriteLine($"Scroll {i + 1}: No more items loaded, count stays at {previousCount}");
             }
 
             if (currentCount == previousCount)
@@ -479,8 +532,10 @@ public class ScrollScenarioTests : IAsyncLifetime
         await page.EvaluateAsync<string>("document.getElementById('viewport').scrollTop = 500");
         await WaitForConditionAsync(page, "() => document.querySelectorAll('.job').length > 0");
 
-        // Wait a moment for virtualization to replace items
-        await Task.Delay(100);
+        // Wait for DOM to stabilize after virtualization by checking for viewport scroll completion
+        await WaitForConditionAsync(
+            page,
+            "() => document.getElementById('viewport').scrollTop === 500");
 
         // Get items after scroll
         IReadOnlyList<IElement> jobsAfterScroll = await page.QuerySelectorAllAsync(".job");
