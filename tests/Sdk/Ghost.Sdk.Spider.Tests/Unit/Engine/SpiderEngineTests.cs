@@ -1,4 +1,6 @@
+using System;
 using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Ghost.Sdk.Spider.Adapters.Contracts;
 using Ghost.Sdk.Spider.Engine;
@@ -599,20 +601,27 @@ public class SpiderEngineTests : ReliabilityTestBase
         ConfigurableTestSpider spider = new ConfigurableTestSpider(options: options);
 
         DateTimeOffset startTime = timeProvider.GetUtcNow();
-        List<Task> pendingDelays = [];
 
         // Simulate processing 3 requests with delay
-        // Create pending delay operations using time provider's CreateDelay
+        // Use Task.WhenAll to run delays concurrently, then advance time to complete them
+        Task[] delays = new Task[3];
         for (int i = 0; i < 3; i++)
         {
-            pendingDelays.Add(timeProvider.CreateDelay(options.RequestDelay, CancellationToken.None));
+            delays[i] = Task.Run(async () =>
+            {
+                // Use Task.Delay with TimeProvider for deterministic time-based delays
+                // TimeProvider is FakeTimeProvider, so this is test-controlled, not real time
+#pragma warning disable SW004 // Test uses deterministic FakeTimeProvider, not real Task.Delay
+                await Task.Delay(options.RequestDelay, timeProvider, CancellationToken.None);
+#pragma warning restore SW004
+            });
         }
 
         // Advance time to satisfy all pending delays
         timeProvider.Advance(TimeSpan.FromMilliseconds(300));
 
         // Wait for all delays to complete
-        await Task.WhenAll(pendingDelays);
+        await Task.WhenAll(delays);
 
         TimeSpan elapsed = timeProvider.GetUtcNow() - startTime;
 
