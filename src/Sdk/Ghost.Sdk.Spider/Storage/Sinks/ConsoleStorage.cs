@@ -1,7 +1,7 @@
 using System.Diagnostics;
+using System.Text.Json;
 using Ghost.Sdk.Spider.Storage.Contracts;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Ghost.Sdk.Spider.Storage.Sinks;
 
@@ -30,7 +30,7 @@ internal static partial class ConsoleStorageLogMessages
 public class ConsoleStorage : IStorage
 {
     private readonly ILogger<ConsoleStorage>? _logger;
-    private readonly JsonSerializerSettings _jsonSettings;
+    private readonly JsonSerializerOptions _jsonOptions;
 
     /// <inheritdoc/>
     public string Name => "Console";
@@ -45,11 +45,12 @@ public class ConsoleStorage : IStorage
     public ConsoleStorage(ILogger<ConsoleStorage>? logger = null)
     {
         _logger = logger;
-        _jsonSettings = new JsonSerializerSettings
+        _jsonOptions = new JsonSerializerOptions
         {
-            Formatting = Formatting.Indented,
-            NullValueHandling = NullValueHandling.Ignore,
-            ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
         };
     }
 
@@ -70,7 +71,7 @@ public class ConsoleStorage : IStorage
 
         try
         {
-            string json = JsonConvert.SerializeObject(item, _jsonSettings);
+            string json = JsonSerializer.Serialize(item, _jsonOptions);
 
             Console.WriteLine("=".PadRight(80, '='));
             Console.WriteLine($"Spider: {context.SpiderName}");

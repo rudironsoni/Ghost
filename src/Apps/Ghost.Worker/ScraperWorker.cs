@@ -1,7 +1,7 @@
 using Ghost.Contracts.Jobs;
 using Ghost.Redis;
-using Newtonsoft.Json;
 using StackExchange.Redis;
+using System.Text.Json;
 
 namespace Ghost.Worker;
 
@@ -121,7 +121,7 @@ public sealed partial class ScraperWorker : BackgroundService
         try
         {
             // Deserialize job request
-            JobRequest jobRequest = JsonConvert.DeserializeObject<JobRequest>(jobJson)
+            JobRequest jobRequest = JsonSerializer.Deserialize<JobRequest>(jobJson)
                 ?? throw new ArgumentNullException(nameof(jobJson));
 
             jobId = jobRequest.JobId;
@@ -183,7 +183,7 @@ public sealed partial class ScraperWorker : BackgroundService
         string resultsKey = $"job:results:{jobId}";
 
         // Store results as JSON in Redis (with expiration)
-        string resultsJson = JsonConvert.SerializeObject(results);
+        string resultsJson = JsonSerializer.Serialize(results);
         await db.StringSetAsync(resultsKey, resultsJson, TimeSpan.FromHours(_config.ResultsExpirationHours)).ConfigureAwait(false);
 
         LogResultsStored(results.Count, jobId);
@@ -206,7 +206,7 @@ public sealed partial class ScraperWorker : BackgroundService
             ErrorMessage = errorMessage
         };
 
-        string statusJson = JsonConvert.SerializeObject(statusData);
+        string statusJson = JsonSerializer.Serialize(statusData);
         await db.StringSetAsync(statusKey, statusJson, TimeSpan.FromHours(_config.ResultsExpirationHours)).ConfigureAwait(false);
     }
 
