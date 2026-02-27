@@ -100,12 +100,55 @@ public sealed class ConfigurationLoader
     }
 
     /// <summary>
+    /// Tries to load a configuration from a file asynchronously.
+    /// </summary>
+    /// <param name="filePath">The path to the configuration file.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A result object containing success status, configuration (if successful), and errors (if unsuccessful).</returns>
+    public async Task<ConfigurationLoadResult> TryLoadFromFileAsync(
+        string filePath,
+        CancellationToken cancellationToken = default)
+    {
+        List<string> errorList = [];
+
+        try
+        {
+            if (!File.Exists(filePath))
+            {
+                errorList.Add($"Configuration file not found: {filePath}");
+                return ConfigurationLoadResult.Failure(errorList);
+            }
+
+            string content = await File.ReadAllTextAsync(filePath, cancellationToken).ConfigureAwait(false);
+            string extension = Path.GetExtension(filePath).ToLowerInvariant();
+
+            ConfigurationCompilationResult result = extension switch
+            {
+                ".yaml" or ".yml" => _compiler.CompileFromYaml(content),
+                ".json" => _compiler.CompileFromJson(content),
+                _ => ConfigurationCompilationResult.Failure(
+                    $"Unsupported configuration file format: {extension}")
+            };
+
+            return result.IsSuccess
+                ? ConfigurationLoadResult.Success(result.Configuration!)
+                : ConfigurationLoadResult.Failure(result.Errors);
+        }
+        catch (Exception ex)
+        {
+            errorList.Add($"Unexpected error loading configuration: {ex.Message}");
+            return ConfigurationLoadResult.Failure(errorList);
+        }
+    }
+
+    /// <summary>
     /// Tries to load a configuration from a file.
     /// </summary>
     /// <param name="filePath">The path to the configuration file.</param>
     /// <param name="configuration">The loaded configuration if successful.</param>
     /// <param name="errors">The list of errors if unsuccessful.</param>
     /// <returns>True if loading was successful; otherwise, false.</returns>
+    [Obsolete("Use TryLoadFromFileAsync instead. This synchronous method will be removed in a future version.")]
     public bool TryLoadFromFile(
         string filePath,
         out SpiderConfiguration? configuration,
@@ -123,6 +166,7 @@ public sealed class ConfigurationLoader
                 return false;
             }
 
+            // Sync-over-async is intentional for backward compatibility
             string content = File.ReadAllText(filePath);
             string extension = Path.GetExtension(filePath).ToLowerInvariant();
 
@@ -181,4 +225,44 @@ public sealed class ConfigurationLoader
             return new[] { $"Unexpected error validating configuration: {ex.Message}" };
         }
     }
+}
+
+/// <summary>
+/// Represents the result of a configuration load operation.
+/// </summary>
+public sealed class ConfigurationLoadResult
+{
+    /// <summary>
+    /// Gets whether the load operation was successful.
+    /// </summary>
+    public bool IsSuccess { get; }
+
+    /// <summary>
+    /// Gets the loaded configuration if successful; otherwise, null.
+    /// </summary>
+    public SpiderConfiguration? Configuration { get; }
+
+    /// <summary>
+    /// Gets the list of errors if unsuccessful; otherwise, an empty list.
+    /// </summary>
+    public IReadOnlyList<string> Errors { get; }
+
+    private ConfigurationLoadResult(bool isSuccess, SpiderConfiguration? configuration, IReadOnlyList<string> errors)
+    {
+        IsSuccess = isSuccess;
+        Configuration = configuration;
+        Errors = errors;
+    }
+
+    /// <summary>
+    /// Creates a successful result with the loaded configuration.
+    /// </summary>
+    public static ConfigurationLoadResult Success(SpiderConfiguration configuration)
+        => new(true, configuration, Array.Empty<string>());
+
+    /// <summary>
+    /// Creates a failed result with the specified errors.
+    /// </summary>
+    public static ConfigurationLoadResult Failure(IReadOnlyList<string> errors)
+        => new(false, null, errors);
 }
