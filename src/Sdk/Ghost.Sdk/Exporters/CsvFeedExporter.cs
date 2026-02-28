@@ -48,10 +48,7 @@ public sealed class CsvFeedExporter : IFeedExporter
             return;
         }
 
-        // CA2007 false positive: StreamWriter constructor is synchronous, only disposal is async
-#pragma warning disable CA2007
         await using StreamWriter writer = new StreamWriter(output, _encoding, leaveOpen: true);
-#pragma warning restore CA2007
 
         // Get properties from the first item
         PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)

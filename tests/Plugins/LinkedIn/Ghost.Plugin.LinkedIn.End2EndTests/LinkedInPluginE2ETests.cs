@@ -209,10 +209,7 @@ public sealed class LinkedInPluginE2ETests
         services.AddLogging();
 
         // Mock required services
-#pragma warning disable CS0618 // IGhostKernel may be obsolete
-        global::Ghost.Kernel.IGhostKernel mockKernel = Substitute.For<global::Ghost.Kernel.IGhostKernel>();
-#pragma warning restore CS0618
-        services.AddSingleton(mockKernel);
+global::Ghost.Kernel.IGhostKernel mockKernel = Substitute.For<global::Ghost.Kernel.IGhostKernel>();        services.AddSingleton(mockKernel);
         services.AddSingleton(Substitute.For<IProxyProvider>());
 
         var plugin = new LinkedInPlugin();

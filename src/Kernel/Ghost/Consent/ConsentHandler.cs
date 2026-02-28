@@ -5,8 +5,6 @@ using Microsoft.Playwright;
 
 namespace Ghost.Consent;
 
-#pragma warning disable CA1848
-
 /// <summary>
 /// Default implementation of IConsentHandler for automated consent management.
 /// Detects and handles 25+ Consent Management Platforms (CMPs) with advanced features:

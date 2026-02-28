@@ -107,10 +107,7 @@ public class MediaPipeline : IMediaPipeline
         _logger?.LogDebug("Saving file content ({ContentLength} bytes) to: {LocalPath}",
             response.Content.Headers.ContentLength ?? -1, localPath);
 
-        // CA2007 false positive: File.Create is synchronous, only disposal is async
-#pragma warning disable CA2007
         await using (FileStream fs = File.Create(localPath))
-#pragma warning restore CA2007
         {
             await response.Content.CopyToAsync(fs, ct).ConfigureAwait(false);
         }
@@ -428,10 +425,7 @@ public class MediaPipeline : IMediaPipeline
 
     private static async Task<string> CalculateChecksumAsync(string path, CancellationToken ct)
     {
-        // CA2007 false positive: File.OpenRead is synchronous, only disposal is async
-#pragma warning disable CA2007
         await using FileStream fs = File.OpenRead(path);
-#pragma warning restore CA2007
         byte[] hash = await SHA256.HashDataAsync(fs, ct).ConfigureAwait(false);
         return Convert.ToHexString(hash);
     }

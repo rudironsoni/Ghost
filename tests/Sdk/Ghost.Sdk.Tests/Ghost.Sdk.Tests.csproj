@@ -3,8 +3,6 @@
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <NoWarn>$(NoWarn);CA1707;CA2201;CA1822;CA2012;CA2252;xUnit1031;CA1001;CA1861;CA1848;CA1873;IDE0008;IDE0007;CA1852;CA1515;CA1305;CA1050;CA1062;CA1307;CA1309;CA1310;CA1825;CA2007;CA1816;CA1806;CA1725;CA1716;CA1720;CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8625;CS8629;CS8632;CS8765;CS8767</NoWarn>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../../src/Sdk/Ghost.Sdk/Ghost.Sdk.csproj" />

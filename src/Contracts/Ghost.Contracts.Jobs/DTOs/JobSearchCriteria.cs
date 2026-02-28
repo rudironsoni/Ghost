@@ -15,9 +15,7 @@ public enum TimePosted
 /// </summary>
 public sealed record JobSearchCriteria
 {
-#pragma warning disable IDE0032 // Use auto property - backing field is required for fallback logic
     private string? _query;
-#pragma warning restore IDE0032
 
     /// <summary>
     /// Text query matching title, company, or description.

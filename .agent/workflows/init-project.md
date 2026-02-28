@@ -1,11 +1,11 @@
 ---
-description: Initialize dotnet-agent-harness context for this repository
+description: Initialize dotnet-harness context for this repository
 trigger: /init-project
 turbo: true
 ---
 # Workflow: /init-project
 
-Initialize dotnet-agent-harness context for this repository.
+Initialize dotnet-harness context for this repository.
 
 1. Invoke [skill:dotnet-advisor].
 2. Invoke [skill:dotnet-version-detection].

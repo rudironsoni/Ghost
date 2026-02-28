@@ -96,7 +96,6 @@ public class MetricsCollector : IMetricsCollector
     }
 }
 
-#pragma warning disable CA1051
 public class PlatformMetrics
 {
     public long ScrapeAttempts;
@@ -106,7 +105,6 @@ public class PlatformMetrics
     public long CacheMisses;
     public string CircuitBreakerState = "Closed";
 }
-#pragma warning restore CA1051
 
 public class MetricsSnapshot
 {

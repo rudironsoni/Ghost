@@ -6,7 +6,6 @@
     <IsPackable>false</IsPackable>
     <RootNamespace>Ghost.Plugin.LinkedIn.Integration</RootNamespace>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
-    <NoWarn>$(NoWarn);CA1707</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

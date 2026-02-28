@@ -82,14 +82,9 @@ public static class GhostKernelInstrumentation
         activity.SetTag("exception.message", exception.Message);
         activity.SetTag("exception.stacktrace", exception.StackTrace);
 
-#pragma warning disable IDE0031 // Null check cannot be simplified here
         if (logger is not null)
-#pragma warning restore IDE0031
         {
-            // Suppress CA1848 analyzer warning
-#pragma warning disable CA1848
             logger.LogError(exception, "Operation failed: {Operation}", activity.DisplayName);
-#pragma warning restore CA1848
         }
     }
 
@@ -104,17 +99,12 @@ public static class GhostKernelInstrumentation
         }
 
         activity.SetStatus(ActivityStatusCode.Ok);
-#pragma warning disable IDE0031 // Null check cannot be simplified here
         if (logger is not null)
-#pragma warning restore IDE0031
         {
-            // Suppress CA1848 analyzer warning
-#pragma warning disable CA1848
             if (logger.IsEnabled(LogLevel.Debug))
             {
                 logger.LogDebug("Operation completed: {Operation}", activity.DisplayName);
             }
-#pragma warning restore CA1848
         }
         activity.Dispose();
     }

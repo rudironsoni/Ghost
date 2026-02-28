@@ -128,9 +128,7 @@ public partial class XAccountManager : IXAccountManager
                 DisplayName = options.DisplayName ?? accountId,
                 MaxPostsPerHour = options.MaxPostsPerHour,
                 IsEnabled = options.IsEnabled,
-#pragma warning disable CA1805
                 Priority = options.Priority
-#pragma warning restore CA1805
             };
 
             _accounts[accountId] = account;

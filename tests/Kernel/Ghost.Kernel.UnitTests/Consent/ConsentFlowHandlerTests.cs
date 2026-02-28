@@ -37,10 +37,8 @@ public class ConsentFlowHandlerTests : ReliabilityTestBase
         };
 
         // Act & Assert
-#pragma warning disable CS8604 // Possible null reference argument
-        await Assert.ThrowsAsync<ArgumentNullException>(
+await Assert.ThrowsAsync<ArgumentNullException>(
             async () => await handler.ExecuteMultiStepFlowAsync(page, config));
-#pragma warning restore CS8604
     }
 
     [Fact]
@@ -52,10 +50,8 @@ public class ConsentFlowHandlerTests : ReliabilityTestBase
         CMPConfig? config = null;
 
         // Act & Assert
-#pragma warning disable CS8604 // Possible null reference argument
-        await Assert.ThrowsAsync<ArgumentNullException>(
+await Assert.ThrowsAsync<ArgumentNullException>(
             async () => await handler.ExecuteMultiStepFlowAsync(mockPage.Object, config));
-#pragma warning restore CS8604
     }
 
     [Fact]
@@ -109,10 +105,8 @@ public class ConsentFlowHandlerTests : ReliabilityTestBase
         IPage? page = null;
 
         // Act & Assert
-#pragma warning disable CS8604 // Possible null reference argument
-        await Assert.ThrowsAsync<ArgumentNullException>(
+await Assert.ThrowsAsync<ArgumentNullException>(
             async () => await ConsentFlowHandler.DetectElementAsync(page, ".test"));
-#pragma warning restore CS8604
     }
 
     [Fact]
@@ -122,10 +116,8 @@ public class ConsentFlowHandlerTests : ReliabilityTestBase
         var mockPage = new Mock<IPage>();
 
         // Act & Assert
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type
-        await Assert.ThrowsAsync<ArgumentNullException>(
+await Assert.ThrowsAsync<ArgumentNullException>(
             async () => await ConsentFlowHandler.DetectElementAsync(mockPage.Object, null));
-#pragma warning restore CS8625
     }
 
     [Fact]

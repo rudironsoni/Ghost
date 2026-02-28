@@ -1,30 +1,46 @@
 {
   "version": 1,
-  "description": "dotnet-agent-harness: smart defaults for .NET development",
+  "description": "dotnet-harness: smart defaults for .NET development",
   "hooks": {
     "sessionStart": [
       {
         "type": "command",
-        "command": ".rulesync/hooks/session-start-context.sh",
+        "command": "# Inline session-start-context.sh: Detect .NET project and inject context. set -uo pipefail; SLN_COUNT=\"$(find . -maxdepth 3 \\( -name '*.sln' -o -name '*.slnx' \\) 2>/dev/null | wc -l | tr -d ' ')\" || SLN_COUNT=0; CSPROJ_COUNT=\"$(find . -maxdepth 3 -name '*.csproj' 2>/dev/null | wc -l | tr -d ' ')\" || CSPROJ_COUNT=0; HAS_GLOBAL_JSON=false; [ -f \"global.json\" ] && HAS_GLOBAL_JSON=true; TFM=\"\"; FIRST_CSPROJ=\"$(find . -maxdepth 3 -name '*.csproj' -print -quit 2>/dev/null)\" || true; [ -n \"$FIRST_CSPROJ\" ] && TFM=\"$(sed -n 's/.*<TargetFramework[s]\\{0,1\\}>\\([^<;]*\\).*/\\1/p' \"$FIRST_CSPROJ\" 2>/dev/null | head -1)\" || true; CONTEXT=\"\"; if [ \"$SLN_COUNT\" -gt 0 ] || [ \"$CSPROJ_COUNT\" -gt 0 ] || [ \"$HAS_GLOBAL_JSON\" = true ]; then CONTEXT=\"Mandatory first action for every task: invoke [skill:dotnet-advisor]. Do not plan, reason, design, or implement until it has been invoked, then follow its routing to load additional skills and apply their standards.\"; PROJECT_CONTEXT=\"This is a .NET project\"; [ -n \"$TFM\" ] && PROJECT_CONTEXT=\"This is a .NET project ($TFM)\"; [ \"$CSPROJ_COUNT\" -gt 0 ] && PROJECT_CONTEXT=\"$PROJECT_CONTEXT with $CSPROJ_COUNT project(s)\"; [ \"$SLN_COUNT\" -gt 0 ] && PROJECT_CONTEXT=\"$PROJECT_CONTEXT in $SLN_COUNT solution(s)\"; PROJECT_CONTEXT=\"$PROJECT_CONTEXT.\"; CONTEXT=\"$CONTEXT $PROJECT_CONTEXT\"; fi; if command -v jq >/dev/null 2>&1; then jq -Rn --arg additionalContext \"$CONTEXT\" '{additionalContext: $additionalContext}'; else ESCAPED_CONTEXT=\"$(printf '%s' \"$CONTEXT\" | sed 's/\\\\/\\\\\\\\/g; s/\"/\\\\\"/g; s/\\r/\\\\r/g; s/\\t/\\\\t/g')\"; printf '{\"additionalContext\":\"%s\"}\\n' \"$ESCAPED_CONTEXT\"; fi; exit 0",
         "timeout": 10
+      },
+      {
+        "type": "command",
+        "command": "# Inline mcp-health-check.sh: Validate MCP server connectivity. set -uo pipefail; MCP_CONFIG=\"${MCP_CONFIG:-.rulesync/mcp.json}\"; [ ! -f \"$MCP_CONFIG\" ] && exit 0; if ! command -v jq >/dev/null 2>&1; then echo \"{\\\"info\\\":\\\"jq not found - skipping MCP health check\\\"}\"; exit 0; fi; FAILED_MCP=\"\"; while IFS= read -r mcp_name; do mcp_type=$(jq -r \".mcpServers.\\\"$mcp_name\\\".type\" \"$MCP_CONFIG\" 2>/dev/null || echo \"\"); case \"$mcp_type\" in http) url=$(jq -r \".mcpServers.\\\"$mcp_name\\\".url\" \"$MCP_CONFIG\" 2>/dev/null); if [ -n \"$url\" ]; then if ! curl -s --connect-timeout 3 -o /dev/null \"$url/health\" 2>/dev/null; then FAILED_MCP=\"$FAILED_MCP $mcp_name\"; fi; fi ;; stdio) cmd=$(jq -r \".mcpServers.\\\"$mcp_name\\\".command\" \"$MCP_CONFIG\" 2>/dev/null); if [ -n \"$cmd\" ] && ! command -v \"$cmd\" >/dev/null 2>&1; then case \"$cmd\" in uvx) command -v uvx || command -v pipx || FAILED_MCP=\"$FAILED_MCP $mcp_name\" ;; npx) command -v npx || FAILED_MCP=\"$FAILED_MCP $mcp_name\" ;; *) FAILED_MCP=\"$FAILED_MCP $mcp_name\" ;; esac; fi ;; esac; done < <(jq -r '.mcpServers | keys[]' \"$MCP_CONFIG\" 2>/dev/null || true); if [ -n \"$FAILED_MCP\" ]; then echo \"{\\\"warning\\\":\\\"MCP servers unavailable:$FAILED_MCP. Run [mcp-health:report] for details.\\\"}\"; else echo \"{\\\"info\\\":\\\"All MCP servers healthy\\\"}\"; fi; exit 0",
+        "timeout": 30
       }
     ],
     "postToolUse": [
       {
         "matcher": "Write|Edit",
         "type": "command",
-        "command": ".rulesync/hooks/post-edit-dotnet.sh",
+        "command": "# Inline post-edit-dotnet.sh: Handle file edits with dotnet-specific actions. set -uo pipefail; [ -t 0 ] && INPUT=\"\" || INPUT=\"$(cat)\"; if ! command -v jq >/dev/null 2>&1 || [ -z \"$INPUT\" ]; then exit 0; fi; FILE_PATH=\"$(echo \"$INPUT\" | jq -r '.tool_input.file_path // empty')\"; [ -z \"$FILE_PATH\" ] && exit 0; FILENAME=\"$(basename \"$FILE_PATH\")\"; emit_message() { jq -n --arg msg \"$1\" '{ systemMessage: $msg }'; }; case \"$FILE_PATH\" in *Tests.cs|*Test.cs) TEST_CLASS=\"${FILENAME%.cs}\"; emit_message \"Test file modified: $FILENAME. Consider running: dotnet test --filter $TEST_CLASS\" ;; *.cs) if command -v dotnet >/dev/null 2>&1; then dotnet format --include \"$FILE_PATH\" --verbosity quiet >/dev/null 2>&1 || true; emit_message \"dotnet format applied to $FILENAME\"; else emit_message \"dotnet not found in PATH -- skipping format. Install .NET SDK to enable auto-formatting.\"; fi ;; *.csproj) emit_message \"Project file modified: $FILENAME. Consider running: dotnet restore\" ;; *.xaml) if command -v xmllint >/dev/null 2>&1; then if xmllint --noout \"$FILE_PATH\" 2>/dev/null; then emit_message \"XAML validation: $FILENAME is well-formed\"; else emit_message \"XAML validation: $FILENAME has XML errors. Check for unclosed tags or invalid syntax.\"; fi; else emit_message \"No XML validator found (xmllint) -- skipping XAML validation for $FILENAME\"; fi ;; *) exit 0 ;; esac; exit 0",
         "async": true,
         "timeout": 60
       }
     ]
+  },
+  "copilot": {
+    "hooks": {
+      "sessionStart": [
+        {
+          "type": "command",
+          "command": "# Inline session-start-context.sh for Copilot: Detect .NET project. set -uo pipefail; SLN_COUNT=\"$(find . -maxdepth 3 \\( -name '*.sln' -o -name '*.slnx' \\) 2>/dev/null | wc -l | tr -d ' ')\" || SLN_COUNT=0; CSPROJ_COUNT=\"$(find . -maxdepth 3 -name '*.csproj' 2>/dev/null | wc -l | tr -d ' ')\" || CSPROJ_COUNT=0; HAS_GLOBAL_JSON=false; [ -f \"global.json\" ] && HAS_GLOBAL_JSON=true; TFM=\"\"; FIRST_CSPROJ=\"$(find . -maxdepth 3 -name '*.csproj' -print -quit 2>/dev/null)\" || true; [ -n \"$FIRST_CSPROJ\" ] && TFM=\"$(sed -n 's/.*<TargetFramework[s]\\{0,1\\}>\\([^<;]*\\).*/\\1/p' \"$FIRST_CSPROJ\" 2>/dev/null | head -1)\" || true; CONTEXT=\"\"; if [ \"$SLN_COUNT\" -gt 0 ] || [ \"$CSPROJ_COUNT\" -gt 0 ] || [ \"$HAS_GLOBAL_JSON\" = true ]; then CONTEXT=\"Mandatory first action for every task: invoke [skill:dotnet-advisor]. Do not plan, reason, design, or implement until it has been invoked, then follow its routing to load additional skills and apply their standards.\"; PROJECT_CONTEXT=\"This is a .NET project\"; [ -n \"$TFM\" ] && PROJECT_CONTEXT=\"This is a .NET project ($TFM)\"; [ \"$CSPROJ_COUNT\" -gt 0 ] && PROJECT_CONTEXT=\"$PROJECT_CONTEXT with $CSPROJ_COUNT project(s)\"; [ \"$SLN_COUNT\" -gt 0 ] && PROJECT_CONTEXT=\"$PROJECT_CONTEXT in $SLN_COUNT solution(s)\"; PROJECT_CONTEXT=\"$PROJECT_CONTEXT.\"; CONTEXT=\"$CONTEXT $PROJECT_CONTEXT\"; fi; if command -v jq >/dev/null 2>&1; then jq -Rn --arg additionalContext \"$CONTEXT\" '{additionalContext: $additionalContext}'; else ESCAPED_CONTEXT=\"$(printf '%s' \"$CONTEXT\" | sed 's/\\\\/\\\\\\\\/g; s/\"/\\\\\"/g; s/\\r/\\\\r/g; s/\\t/\\\\t/g')\"; printf '{\"additionalContext\":\"%s\"}\\n' \"$ESCAPED_CONTEXT\"; fi; exit 0",
+          "timeout": 10
+        }
+      ]
+    }
   },
   "claudecode": {
     "hooks": {
       "beforeSubmitPrompt": [
         {
           "type": "command",
-          "command": ".rulesync/hooks/user-prompt-dotnet-reminder.sh",
+          "command": "# Inline user-prompt-dotnet-reminder.sh: Inject XML reminder for .NET projects. set -uo pipefail; SLN_COUNT=\"$(find . -maxdepth 3 \\( -name '*.sln' -o -name '*.slnx' \\) 2>/dev/null | wc -l | tr -d ' ')\" || SLN_COUNT=0; CSPROJ_COUNT=\"$(find . -maxdepth 3 -name '*.csproj' 2>/dev/null | wc -l | tr -d ' ')\" || CSPROJ_COUNT=0; CS_COUNT=\"$(find . -maxdepth 4 -name '*.cs' 2>/dev/null | wc -l | tr -d ' ')\" || CS_COUNT=0; HAS_GLOBAL_JSON=false; [ -f \"global.json\" ] && HAS_GLOBAL_JSON=true; MSG=\"\"; if [ \"$SLN_COUNT\" -gt 0 ] || [ \"$CSPROJ_COUNT\" -gt 0 ] || [ \"$CS_COUNT\" -gt 0 ] || [ \"$HAS_GLOBAL_JSON\" = true ]; then MSG='<system-reminder><dotnet-harness-routing>1. Mandatory first action: invoke [skill:dotnet-advisor]. 2. Do not plan, reason, design, or implement until [skill:dotnet-advisor] has been invoked. 3. Follow advisor routing and invoke the relevant downstream skills. 4. Apply standards defined by the routed skills.</dotnet-harness-routing></system-reminder>'; fi; if command -v jq &>/dev/null; then jq -n --arg ctx \"$MSG\" '{hookSpecificOutput: {hookEventName: \"UserPromptSubmit\", additionalContext: $ctx}}'; else ESCAPED=\"$(printf '%s' \"$MSG\" | sed 's/\\\\/\\\\\\\\/g; s/\"/\\\\\"/g' | tr '\\n' ' ')\"; printf '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"%s\"}}\\n' \"$ESCAPED\"; fi; exit 0",
           "timeout": 10
         }
       ]

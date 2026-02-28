@@ -63,6 +63,45 @@ curl -L https://github.com/dyoshikawa/rulesync/releases/latest/download/rulesync
 
 ```bash
 
+## Docker
+
+Run rulesync in a containerized environment:
+
+```bash
+# Pull image
+docker pull ghcr.io/rudironsoni/dotnet-harness:latest
+
+# Run rulesync commands
+docker run --rm -v $(pwd):/workspace ghcr.io/rudironsoni/dotnet-harness:latest rulesync --version
+
+# Interactive shell
+docker run --rm -it -v $(pwd):/workspace ghcr.io/rudironsoni/dotnet-harness:latest bash
+```
+
+### Docker Compose
+
+```yaml
+version: '3.8'
+services:
+  rulesync:
+    image: ghcr.io/rudironsoni/dotnet-harness:latest
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command: rulesync validate
+```
+
+## GitHub Actions
+
+Use the official dotnet-harness action:
+
+```yaml
+- uses: rudironsoni/dotnet-harness/.github/actions/dotnet-harness@main
+  with:
+    targets: '*'
+    features: '*'
+```
+
 ### macOS (Intel)
 
 ```bash

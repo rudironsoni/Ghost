@@ -609,8 +609,7 @@ public sealed class FreeProxyScraperTests : ReliabilityTestBase
     #region Logging Tests
 
     [Fact]
-#pragma warning disable CA1873 // Justification: Test mock verification - intentional evaluation
-    public async Task FetchProxiesAsync_Success_LogsScrapedCount()
+public async Task FetchProxiesAsync_Success_LogsScrapedCount()
     {
         var mockLogger = new Mock<ILogger<FreeProxyScraper>>();
         mockLogger.Setup(x => x.IsEnabled(It.IsAny<LogLevel>())).Returns(true);

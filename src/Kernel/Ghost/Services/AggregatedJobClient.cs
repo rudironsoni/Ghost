@@ -9,8 +9,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Ghost.Kernel.Services;
 
-#pragma warning disable CA1848 // Use LoggerMessage delegates for high-performance logging
-
 public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
 {
     private readonly List<IJobScraper> _scrapers;

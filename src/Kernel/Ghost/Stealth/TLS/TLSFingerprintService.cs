@@ -1,8 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 
-#pragma warning disable CA1848 // Use the LoggerMessage delegates - Performance not critical for TLS fingerprinting
-
 namespace Ghost.Stealth.TLS;
 
 /// <summary>

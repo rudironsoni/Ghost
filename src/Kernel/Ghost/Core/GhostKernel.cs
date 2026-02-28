@@ -260,7 +260,6 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
         }
     }
 
-#pragma warning disable IDE1006 // Naming rule violation: DisposeAsyncCore follows IAsyncDisposable pattern
     private async ValueTask DisposeAsyncCore()
     {
         try
@@ -309,7 +308,6 @@ public sealed class GhostKernel : IGhostKernel, IAsyncDisposable, IDisposable
         }
     }
 
-#pragma warning restore IDE1006
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;

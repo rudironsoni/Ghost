@@ -52,12 +52,10 @@ public sealed class CorrelationIdMiddleware
             ["CorrelationId"] = correlationId
         }))
         {
-#pragma warning disable CA1848 // Use LoggerMessage delegates for performance
-            if (_logger.IsEnabled(LogLevel.Debug))
+if (_logger.IsEnabled(LogLevel.Debug))
             {
                 _logger.LogDebug("Processing request with correlation ID: {CorrelationId}", correlationId);
             }
-#pragma warning restore CA1848
             await _next(context).ConfigureAwait(false);
         }
     }

@@ -18,10 +18,8 @@ public class RegionDetectorTests : ReliabilityTestBase
         IPage? page = null;
 
         // Act & Assert
-#pragma warning disable CS8604 // Possible null reference argument
-        await Assert.ThrowsAsync<ArgumentNullException>(
+await Assert.ThrowsAsync<ArgumentNullException>(
             async () => await RegionDetector.DetectRegulationAsync(page));
-#pragma warning restore CS8604
     }
 
     [Fact]
