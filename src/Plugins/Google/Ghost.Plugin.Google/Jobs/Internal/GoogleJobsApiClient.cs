@@ -128,10 +128,8 @@ public class GoogleJobsApiClient : IDisposable
     private static readonly Action<ILogger, string, Exception?> LogFollowingConsentContinueUrl =
         LoggerMessage.Define<string>(LogLevel.Information, new EventId(34, "FollowingConsentContinueUrl"), "Following consent continue URL: {Url}");
 
-    // Track request count if needed for session rotation logic. Suppress unused/analysis warnings for now.
-#pragma warning disable CS0169, CS0414, CA1805
+    // Track request count if needed for session rotation logic.
     private int _requestCount;
-#pragma warning restore CS0169, CS0414, CA1805
     private const int MaxRequestsPerSession = 5;
 
     // Additional existing eventId gap avoided

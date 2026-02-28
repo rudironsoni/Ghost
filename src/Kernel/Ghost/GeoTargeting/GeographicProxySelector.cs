@@ -9,8 +9,6 @@ using Ghost.ProxyManagement;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-#pragma warning disable IDE0032, CA1822
-
 namespace Ghost.GeoTargeting;
 
 /// <summary>

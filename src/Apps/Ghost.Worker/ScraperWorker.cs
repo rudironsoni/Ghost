@@ -131,9 +131,7 @@ public sealed partial class ScraperWorker : BackgroundService
             await UpdateJobStatusAsync(jobRequest.JobId, JobStatus.Processing, cancellationToken).ConfigureAwait(false);
 
             // Resolve the appropriate job client for the platform
-#pragma warning disable CA2007 // CreateAsyncScope returns AsyncServiceScope, not Task - await applies to disposal only
             await using AsyncServiceScope scope = _serviceProvider.CreateAsyncScope();
-#pragma warning restore CA2007
             IJobClient jobClient = ResolveJobClient(scope.ServiceProvider, jobRequest.Platform)
                 ?? throw new NotSupportedException($"Platform '{jobRequest.Platform}' is not supported");
 

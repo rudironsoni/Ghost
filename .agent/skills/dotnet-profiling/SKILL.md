@@ -494,3 +494,30 @@ After profiling identifies the bottleneck, use [skill:dotnet-benchmarkdotnet] to
 6. **Interpret GC counter data with [skill:dotnet-observability]** -- runtime GC/threadpool counters overlap with OpenTelemetry metrics. Use the observability skill for correlating profiling findings with distributed trace context.
 7. **Do not confuse dotnet-trace gc-collect with dotnet-dump** -- gc-collect traces allocation events over time (which methods allocate); dotnet-dump captures a point-in-time heap snapshot (what objects exist). Use gc-collect for allocation rate analysis; use dotnet-dump for retention/leak analysis.
 ````
+
+## Code Navigation (Serena MCP)
+
+**Primary approach:** Use Serena symbol operations for efficient code navigation:
+
+1. **Find definitions**: `serena_find_symbol` instead of text search
+2. **Understand structure**: `serena_get_symbols_overview` for file organization
+3. **Track references**: `serena_find_referencing_symbols` for impact analysis
+4. **Precise edits**: `serena_replace_symbol_body` for clean modifications
+
+**When to use Serena vs traditional tools:**
+
+- **Use Serena**: Navigation, refactoring, dependency analysis, precise edits
+- **Use Read/Grep**: Reading full files, pattern matching, simple text operations
+- **Fallback**: If Serena unavailable, traditional tools work fine
+
+**Example workflow:**
+
+```text
+# Instead of:
+Read: src/Services/OrderService.cs
+Grep: "public void ProcessOrder"
+
+# Use:
+serena_find_symbol: "OrderService/ProcessOrder"
+serena_get_symbols_overview: "src/Services/OrderService.cs"
+```

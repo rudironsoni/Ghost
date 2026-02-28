@@ -9,8 +9,6 @@ using Microsoft.Playwright;
 
 namespace Ghost.ConsentManagement;
 
-#pragma warning disable CA1848, CA1852
-
 /// <summary>
 /// Service for detecting and handling consent/cookie banners on websites.
 /// Uses selectors from consentcrawl database.

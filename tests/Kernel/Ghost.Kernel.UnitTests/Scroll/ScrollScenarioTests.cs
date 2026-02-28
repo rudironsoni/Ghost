@@ -125,8 +125,7 @@ public class ScrollScenarioTests : IAsyncLifetime
     /// Attempts to wait for a JavaScript condition to return true within the specified timeout.
     /// Returns true if the condition was met, false if the timeout elapsed.
     /// </summary>
-#pragma warning disable CA1822 // Mark members as static - kept as instance method for API consistency with WaitForConditionAsync
-    private async Task<bool> TryWaitForConditionAsync(
+private async Task<bool> TryWaitForConditionAsync(
         IPage page,
         string script,
         TimeSpan timeout,

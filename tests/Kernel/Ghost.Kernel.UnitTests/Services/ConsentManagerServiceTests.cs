@@ -865,8 +865,7 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
     #region Logging Tests
 
     [Fact]
-#pragma warning disable CA1873 // Justification: Test mock verification - intentional evaluation
-    public async Task HandleConsentAsync_LogsDebugMessages()
+public async Task HandleConsentAsync_LogsDebugMessages()
     {
         var mockLogger = new Mock<ILogger<ConsentManagerService>>();
         mockLogger.Setup(x => x.IsEnabled(LogLevel.Debug)).Returns(true);
@@ -886,11 +885,8 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
             It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)),
             Times.AtLeastOnce);
     }
-#pragma warning restore CA1873
-
     [Fact]
-#pragma warning disable CA1873 // Justification: Test mock verification - intentional evaluation
-    public async Task HandleConsentAsync_Detected_LogsInfoMessage()
+public async Task HandleConsentAsync_Detected_LogsInfoMessage()
     {
         var mockLogger = new Mock<ILogger<ConsentManagerService>>();
         mockLogger.Setup(x => x.IsEnabled(LogLevel.Information)).Returns(true);
@@ -914,11 +910,8 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
             It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)),
             Times.AtLeastOnce);
     }
-#pragma warning restore CA1873
-
     [Fact]
-#pragma warning disable CA1873 // Justification: Test mock verification - intentional evaluation
-    public async Task HandleConsentAsync_WarningBannerStillPresent_LogsWarning()
+public async Task HandleConsentAsync_WarningBannerStillPresent_LogsWarning()
     {
         var mockLogger = new Mock<ILogger<ConsentManagerService>>();
         mockLogger.Setup(x => x.IsEnabled(LogLevel.Warning)).Returns(true);
@@ -942,7 +935,5 @@ public sealed class ConsentManagerServiceTests : ReliabilityTestBase
             It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)),
             Times.AtLeastOnce);
     }
-#pragma warning restore CA1873
-
     #endregion
 }

@@ -5,7 +5,6 @@
     <Description>Ghost SDK - Meta-package for quick setup</Description>
     <LangVersion>preview</LangVersion>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
-    <NoWarn>$(NoWarn);CA1848;CA1873</NoWarn>
   </PropertyGroup>
 
   <!-- Expose internals to test project -->

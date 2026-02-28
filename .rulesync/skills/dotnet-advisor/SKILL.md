@@ -5,7 +5,8 @@ license: MIT
 targets: ['*']
 tags: ['foundation', 'dotnet', 'skill']
 version: '0.0.1'
-author: 'dotnet-agent-harness'
+author: 'dotnet-harness'
+invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
@@ -16,7 +17,7 @@ opencode:
 
 # dotnet-advisor
 
-Router and index skill for **dotnet-agent-harness**. Always loaded. Routes .NET development queries to the appropriate
+Router and index skill for **dotnet-harness**. Always loaded. Routes .NET development queries to the appropriate
 specialist skills based on context.
 
 ## Scope
@@ -240,13 +241,63 @@ Before any .NET guidance, determine the project's target framework:
 
 ### 20. AI & LLM Integration `implemented`
 
-- [skill:dotnet-semantic-kernel] -- Semantic Kernel: plugins, prompt templates, memory, agents
+- [skill:dotnet-microsoft-agent-framework] -- Microsoft Agent Framework: agents, workflows, tools, MCP servers,
+  multi-agent orchestration
+- [skill:microsoft-learn-mcp] -- Microsoft Learn documentation via MCP
+- [skill:github] -- GitHub operations: repos, PRs, issues, Actions via MCP
+- [skill:mcp-health] -- Validate MCP server connectivity and health status
+- [skill:mcp-discovery] -- Discover and catalog available MCP servers from registries
 
-### 21. Debugging `implemented`
+### 21. Intelligence & Recommendations `implemented`
+
+- [skill:dotnet-harness-recommender] -- AI-powered skill recommendations
+
+**Commands:**
+
+- `/dotnet-harness:search` -- Semantic skill search (see commands/)
+
+### 22. Skill Management `implemented`
+
+- [skill:dotnet-harness-manifest] -- Skill manifest management: dependencies, conflicts, version resolution
+
+### 23. Serena MCP Integration `implemented`
+
+- [skill:dotnet-serena-code-navigation] -- Efficient code navigation using symbol operations
+- [skill:dotnet-serena-refactoring] -- Symbol-level refactoring with automatic reference updates
+- [skill:dotnet-serena-analysis-patterns] -- Architecture validation and pattern detection
+
+### 24. Testing & Debugging `implemented`
 
 - [skill:dotnet-windbg-debugging] -- WinDbg MCP: crash dumps, hangs, high CPU, memory triage (any Windows app)
 
 ---
+
+## Code Navigation (Serena MCP)
+
+**Primary approach:** Use Serena symbol operations for efficient code navigation:
+
+1. **Find definitions**: `serena_find_symbol` instead of text search
+2. **Understand structure**: `serena_get_symbols_overview` for file organization
+3. **Track references**: `serena_find_referencing_symbols` for impact analysis
+4. **Precise edits**: `serena_replace_symbol_body` for clean modifications
+
+**When to use Serena vs traditional tools:**
+
+- ✅ **Use Serena**: Navigation, refactoring, dependency analysis, precise edits
+- ✅ **Use Read/Grep**: Reading full files, pattern matching, simple text operations
+- ✅ **Fallback**: If Serena unavailable, traditional tools work fine
+
+**Example workflow:**
+
+```text
+# Instead of:
+Read: src/Services/OrderService.cs
+Grep: "public void ProcessOrder"
+
+# Use:
+serena_find_symbol: "OrderService/ProcessOrder"
+serena_get_symbols_overview: "src/Services/OrderService.cs"
+```
 
 ## Routing Logic
 
@@ -407,7 +458,7 @@ Use this decision tree to load the right skills for the current task.
 
 ### AI & LLM Integration
 
-- Semantic Kernel, LLM orchestration, plugins -> [skill:dotnet-semantic-kernel]
+- Microsoft Agent Framework, AI agents, workflows, tools -> [skill:dotnet-microsoft-agent-framework]
 
 ### Debugging
 
@@ -422,4 +473,6 @@ For complex analysis that benefits from domain expertise, delegate to specialist
 - Test architecture, test type selection, test data management, microservice testing ->
   [skill:dotnet-testing-specialist]
 - Cloud deployment, .NET Aspire, AKS, CI/CD pipelines, distributed tracing -> [skill:dotnet-cloud-specialist]
+- Microsoft Agent Framework: agent design, workflow orchestration, multi-agent patterns, tool integration ->
+  [skill:dotnet-microsoft-agent-framework-specialist]
 - General code review (correctness, performance, security, architecture) -> [skill:dotnet-code-review-agent]

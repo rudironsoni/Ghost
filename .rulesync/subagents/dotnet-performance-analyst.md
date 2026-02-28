@@ -7,23 +7,26 @@ description:
 targets: ['*']
 tags: ['dotnet', 'subagent']
 version: '0.0.1'
-author: 'dotnet-agent-harness'
+author: 'dotnet-harness'
 claudecode:
   model: inherit
   allowed-tools:
     - Read
     - Grep
     - Glob
+    - Bash
+    - Write
+    - Edit
 opencode:
   mode: 'subagent'
   tools:
-    bash: false
-    edit: false
-    write: false
+    bash: true
+    edit: true
+    write: true
 copilot:
-  tools: ['read', 'search']
+  tools: ['read', 'search', 'execute', 'edit']
 codexcli:
-  sandbox_mode: 'read-only'
+  sandbox_mode: 'inherit'
 ---
 
 # dotnet-performance-analyst

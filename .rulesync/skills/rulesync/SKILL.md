@@ -3,6 +3,7 @@ name: rulesync
 description: >-
   Rulesync CLI tool documentation - unified AI rule file management for various AI coding tools
 targets: ['*']
+invocable: true
 ---
 
 # Rulesync

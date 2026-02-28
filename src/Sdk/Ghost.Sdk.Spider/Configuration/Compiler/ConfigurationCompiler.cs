@@ -325,8 +325,7 @@ public sealed class ConfigurationCompiler
     /// </summary>
     /// <param name="yamlContent">The YAML configuration content.</param>
     /// <returns>A result containing the compiled configuration or validation errors.</returns>
-#pragma warning disable CA1848, CA1873 // Logging performance warnings not critical for configuration loading
-    public ConfigurationCompilationResult CompileFromYaml(string yamlContent)
+public ConfigurationCompilationResult CompileFromYaml(string yamlContent)
     {
         _logger?.LogDebug("Starting YAML configuration compilation");
 
@@ -588,8 +587,7 @@ public sealed class ConfigurationCompiler
     /// </summary>
     /// <param name="jsonContent">The JSON configuration content.</param>
     /// <returns>A result containing the compiled configuration or validation errors.</returns>
-#pragma warning disable CA1848, CA1873 // Logging performance warnings not critical for configuration loading
-    public ConfigurationCompilationResult CompileFromJson(string jsonContent)
+public ConfigurationCompilationResult CompileFromJson(string jsonContent)
     {
         _logger?.LogDebug("Starting JSON configuration compilation");
 

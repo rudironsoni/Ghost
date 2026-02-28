@@ -15,10 +15,7 @@ namespace Ghost.Plugin.Google.End2EndTests.Fixtures;
 /// <summary>
 /// Fixture for Google End-to-End tests using real browser infrastructure.
 /// </summary>
-#pragma warning disable CA1001 // IAsyncLifetime handles disposal
-public sealed class GoogleE2EFixture : IAsyncLifetime
-#pragma warning restore CA1001
-{
+public sealed class GoogleE2EFixture : IAsyncLifetime{
     private IServiceProvider? _serviceProvider;
     private HttpClient? _httpClient;
 

@@ -26,9 +26,7 @@ public sealed class RotatingWebProxy : IWebProxy, IDisposable
         _timeProvider = timeProvider ?? TimeProvider.System;
 
         // Start background refresh timer - fire-and-forget is intentional
-#pragma warning disable CS4014
         _refreshTimer = new Timer(_ => RefreshProxyAsync(), null, TimeSpan.Zero, _cacheDuration);
-#pragma warning restore CS4014
     }
 
     public ICredentials? Credentials { get; set; }

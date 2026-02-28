@@ -8,13 +8,6 @@
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
 
-  <!-- CA2007 disabled: await using statements are properly handled by the compiler-generated disposal -->
-  <!-- Approval: Temporary suppression for Infrastructure project only, awaiting upstream analyzer fix -->
-  <!-- Expiry: 2025-03-01 -->
-  <PropertyGroup>
-    <NoWarn>$(NoWarn);CA2007</NoWarn>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Npgsql" />
     <PackageReference Include="Microsoft.Orleans.Sdk" />

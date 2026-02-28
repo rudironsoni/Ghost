@@ -7,10 +7,6 @@
     <Nullable>enable</Nullable>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
-  <PropertyGroup>
-    <NoWarn>$(NoWarn);CA1866;CA1310;CA1822;CA1707;CA1826;CA2201</NoWarn>
-    <WarningsNotAsErrors>CA1866;CA1310;CA1822;CA1707;CA1826;CA2201</WarningsNotAsErrors>
-  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\Platform\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
     <ProjectReference Include="..\..\..\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />

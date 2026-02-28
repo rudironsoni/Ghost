@@ -1,6 +1,3 @@
-#pragma warning disable CA1848  // Use LoggerMessage delegates
-#pragma warning disable CA1873  // Avoid expensive logging evaluation
-
 using Microsoft.Extensions.Logging;
 
 namespace Ghost.Plugin.Common;

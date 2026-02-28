@@ -1,8 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-#pragma warning disable IDE0032 // Use auto property
-
 namespace Ghost.Plugin.X.Internal;
 
 /// <summary>

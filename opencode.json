@@ -1,4 +1,5 @@
 {
+  "$schema": "https://opencode.ai/config.json",
   "mcp": {
     "serena": {
       "type": "local",
@@ -17,14 +18,12 @@
       "environment": {}
     },
     "context7": {
-      "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "@upstash/context7-mcp@2.1.2"
-      ],
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
       "enabled": true,
-      "environment": {}
+      "headers": {
+        "CONTEXT7_API_KEY": "YOUR_API_KEY"
+      }
     },
     "microsoftdocs-mcp": {
       "type": "remote",
@@ -41,6 +40,16 @@
       ],
       "enabled": true,
       "environment": {}
+    },
+    "deepwiki": {
+      "type": "remote",
+      "url": "https://mcp.deepwiki.com/mcp",
+      "enabled": true
+    },
+    "github": {
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "enabled": true
     }
   }
 }

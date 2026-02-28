@@ -4,8 +4,6 @@
     <IsTestProject>false</IsTestProject>
     <IsPackable>false</IsPackable>
     <OutputType>Library</OutputType>
-    <!-- Suppress performance logging warnings for test infrastructure -->
-    <NoWarn>$(NoWarn);CA1848</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

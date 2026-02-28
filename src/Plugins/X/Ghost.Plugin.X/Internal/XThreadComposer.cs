@@ -3,8 +3,6 @@ using Ghost.Contracts.Social;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-#pragma warning disable IDE0032 // Use auto property
-
 namespace Ghost.Plugin.X.Internal;
 
 /// <summary>

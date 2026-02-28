@@ -7,7 +7,7 @@ description:
 targets: ['*']
 tags: ['dotnet', 'subagent']
 version: '0.0.1'
-author: 'dotnet-agent-harness'
+author: 'dotnet-harness'
 claudecode:
   model: inherit
   allowed-tools:
@@ -15,8 +15,8 @@ claudecode:
     - Grep
     - Glob
     - Bash
-    - Edit
     - Write
+    - Edit
 opencode:
   mode: 'subagent'
   tools:

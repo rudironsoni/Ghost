@@ -4,8 +4,6 @@ using Ghost.Contracts.Simulation;
 using Ghost.Contracts.Social;
 using Microsoft.Extensions.Options;
 
-#pragma warning disable CA1305 // Specify IFormatProvider for locale-sensitive operations
-
 namespace Ghost.Plugin.X.Internal;
 
 /// <summary>

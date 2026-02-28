@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Ghost.Kernel;
 
-#pragma warning disable CA1711
 public interface IGenericDeadLetterQueue
 {
     public Task EnqueueAsync<T>(T item, string reason, Exception? exception = null, CancellationToken cancellationToken = default);
@@ -27,7 +26,6 @@ public class DeadLetterItem
     public int RetryCount { get; init; }
 }
 
-#pragma warning disable CA1711
 public class InMemoryDeadLetterQueue : IGenericDeadLetterQueue
 {
     private static readonly Action<ILogger, Guid, string, string, Exception?> _itemEnqueued = LoggerMessage.Define<Guid, string, string>(

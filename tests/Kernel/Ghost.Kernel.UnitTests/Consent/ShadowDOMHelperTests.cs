@@ -18,10 +18,8 @@ public class ShadowDOMHelperTests : ReliabilityTestBase
         IPage? page = null;
 
         // Act & Assert
-#pragma warning disable CS8604 // Possible null reference argument
-        await Assert.ThrowsAsync<ArgumentNullException>(
+await Assert.ThrowsAsync<ArgumentNullException>(
             async () => await ShadowDOMHelper.FindInShadowDOMAsync(page, ".test"));
-#pragma warning restore CS8604
     }
 
     [Fact]
@@ -31,10 +29,8 @@ public class ShadowDOMHelperTests : ReliabilityTestBase
         var mockPage = new Mock<IPage>();
 
         // Act & Assert
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type
-        await Assert.ThrowsAsync<ArgumentNullException>(
+await Assert.ThrowsAsync<ArgumentNullException>(
             async () => await ShadowDOMHelper.FindInShadowDOMAsync(mockPage.Object, null));
-#pragma warning restore CS8625
     }
 
     [Fact]
@@ -44,10 +40,8 @@ public class ShadowDOMHelperTests : ReliabilityTestBase
         IPage? page = null;
 
         // Act & Assert
-#pragma warning disable CS8604 // Possible null reference argument
-        await Assert.ThrowsAsync<ArgumentNullException>(
+await Assert.ThrowsAsync<ArgumentNullException>(
             async () => await ShadowDOMHelper.ClickInShadowDOMAsync(page, ".test"));
-#pragma warning restore CS8604
     }
 
     [Fact]
@@ -57,10 +51,8 @@ public class ShadowDOMHelperTests : ReliabilityTestBase
         var mockPage = new Mock<IPage>();
 
         // Act & Assert
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type
-        await Assert.ThrowsAsync<ArgumentNullException>(
+await Assert.ThrowsAsync<ArgumentNullException>(
             async () => await ShadowDOMHelper.ClickInShadowDOMAsync(mockPage.Object, null));
-#pragma warning restore CS8625
     }
 
     [Fact]
@@ -70,10 +62,8 @@ public class ShadowDOMHelperTests : ReliabilityTestBase
         IPage? page = null;
 
         // Act & Assert
-#pragma warning disable CS8604 // Possible null reference argument
-        await Assert.ThrowsAsync<ArgumentNullException>(
+await Assert.ThrowsAsync<ArgumentNullException>(
             async () => await ShadowDOMHelper.GetShadowRootCountAsync(page));
-#pragma warning restore CS8604
     }
 
     [Fact]

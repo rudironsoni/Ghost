@@ -5,8 +5,6 @@ using Microsoft.Playwright;
 
 namespace Ghost.Consent;
 
-#pragma warning disable CA1848
-
 /// <summary>
 /// Handles complex multi-step consent flows with support for shadow DOM and iframes.
 /// </summary>

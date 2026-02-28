@@ -161,10 +161,7 @@ public sealed class GhostWebApiFixture : WebApplicationFactory<Program>, IAsyncL
 /// Collection definition for HTTP smoke tests using the GhostWebApiFixture.
 /// </summary>
 [CollectionDefinition("GhostWebApiSmokeTests")]
-#pragma warning disable CA1711 // Identifiers should not have incorrect suffix
-public class GhostWebApiSmokeTestCollection : ICollectionFixture<GhostWebApiFixture>
-#pragma warning restore CA1711 // Identifiers should not have incorrect suffix
-{
+public class GhostWebApiSmokeTestCollection : ICollectionFixture<GhostWebApiFixture>{
     // This class has no code, and is never created. Its purpose is simply
     // to be the place to apply [CollectionDefinition] and all the
     // ICollectionFixture<> interfaces.

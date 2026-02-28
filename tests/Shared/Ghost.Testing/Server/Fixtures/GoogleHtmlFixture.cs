@@ -3,9 +3,6 @@ using System.Text;
 
 namespace Ghost.Testing.Server.Fixtures;
 
-#pragma warning disable CA1305 // Culture-specific formatting in test fixtures
-#pragma warning disable CA1822 // Member can be static in test fixtures
-
 /// <summary>
 /// Generates realistic Google-style HTML for E2E testing.
 /// </summary>

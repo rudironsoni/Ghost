@@ -5,7 +5,8 @@ license: MIT
 targets: ['*']
 tags: ['cicd', 'dotnet', 'skill']
 version: '0.0.1'
-author: 'dotnet-agent-harness'
+author: 'dotnet-harness'
+invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
@@ -612,6 +613,32 @@ NuGet/npm/Maven formats:
 
 ---
 
+
+
+## Code Navigation (Serena MCP)
+
+**Primary approach:** Use Serena symbol operations for efficient code navigation:
+
+1. **Find definitions**: `serena_find_symbol` instead of text search
+2. **Understand structure**: `serena_get_symbols_overview` for file organization
+3. **Track references**: `serena_find_referencing_symbols` for impact analysis
+4. **Precise edits**: `serena_replace_symbol_body` for clean modifications
+
+**When to use Serena vs traditional tools:**
+- ✅ **Use Serena**: Navigation, refactoring, dependency analysis, precise edits
+- ✅ **Use Read/Grep**: Reading full files, pattern matching, simple text operations
+- ✅ **Fallback**: If Serena unavailable, traditional tools work fine
+
+**Example workflow:**
+```text
+# Instead of:
+Read: src/Services/OrderService.cs
+Grep: "public void ProcessOrder"
+
+# Use:
+serena_find_symbol: "OrderService/ProcessOrder"
+serena_get_symbols_overview: "src/Services/OrderService.cs"
+```
 ## Agent Gotchas
 
 1. **Environment checks (approvals, gates) are configured in the UI, not YAML** -- the YAML pipeline references the

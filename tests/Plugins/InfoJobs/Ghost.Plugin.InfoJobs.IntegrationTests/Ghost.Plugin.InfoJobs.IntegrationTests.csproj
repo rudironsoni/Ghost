@@ -7,7 +7,6 @@
     <IsPackable>false</IsPackable>
     <RootNamespace>Ghost.Plugin.InfoJobs.Integration</RootNamespace>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
-    <NoWarn>$(NoWarn);CA1707</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

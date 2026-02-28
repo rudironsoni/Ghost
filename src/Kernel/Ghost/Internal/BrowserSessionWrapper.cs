@@ -65,7 +65,6 @@ internal sealed class BrowserSessionWrapper : IBrowserSession, IDisposable
         _disposed = true;
     }
 
-#pragma warning disable IDE1006 // Naming rule violation: DisposeAsyncCore follows IAsyncDisposable pattern
     private async ValueTask DisposeAsyncCore()
     {
         // perform async cleanup
@@ -81,7 +80,6 @@ internal sealed class BrowserSessionWrapper : IBrowserSession, IDisposable
         _onDispose?.Invoke();
     }
 
-#pragma warning restore IDE1006
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
