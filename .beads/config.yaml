@@ -6,6 +6,12 @@ dolt:
   # Use Dolt in remote mode so hooks do not require a local Dolt server.
   # Valid values: server | remote
   mode: remote
+  # When a local Dolt server is preferred for development, these values
+  # point bd/hooks to the local server address. They are intentionally
+  # simple overrides so CI can still use remote mode by leaving this out.
+  server:
+    host: 127.0.0.1
+    port: 3307
   # When running in remote mode, server-specific connection settings are
   # ignored. The remote repository is defined below under `remote.url`.
 

@@ -24,5 +24,7 @@ fi
 # Ensure remote mode for hooks
 export BD_DOLT_MODE=remote
 export BD_REMOTE_URL="https://doltremote.dolthub.com/r/rudironsoni/Ghost"
+export BD_DOLT_HOST=127.0.0.1
+export BD_DOLT_PORT=3307
 
 exec bd hooks run prepare-commit-msg "$@"
