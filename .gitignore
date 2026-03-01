@@ -330,3 +330,4 @@ rulesync.local.jsonc
 
 # Dolt database files (added by bd init)
 .dolt/
+.beads/dolt-server.log
