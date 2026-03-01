@@ -3,25 +3,22 @@ database: dolt
 
 # Dolt-specific settings
 dolt:
-  mode: server
+  mode: remote
   host: 127.0.0.1
   port: 3307
-  user: root
-  db: beads_Ghost
+  database: beads_Ghost
 
-# Sync mode (dolt-native keeps Dolt as source-of-truth with JSONL export)
+# Sync mode
 sync:
   mode: dolt-native
 
 # Enforced DoltHub remote for shared Beads state.
-# Branches MUST use this remote configuration.
 remote:
   name: dolthub
-  url: https://doltremoteapi.dolthub.com/rudironsoni/ghost
+  url: rudironsoni/Ghost
 
 sync-branch: "beads-sync"
 
-# Federation configuration
 federation:
   enabled: false
   peers: []
