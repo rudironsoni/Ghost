@@ -23,10 +23,7 @@ public partial class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         new EventId(1400, nameof(AggregatedJobClient)),
         "AggregatedJobClient constructed with {Count} scrapers: {Names}");
 
-    private static readonly Action<ILogger<AggregatedJobClient>, string, Exception?> _scraperFailed = LoggerMessage.Define<string>(
-        LogLevel.Warning,
-        new EventId(1401, nameof(AggregatedJobClient)),
-        "Scraper {Platform} failed");
+    // Removed duplicate/unused delegate _scraperFailed (EventId 1401) - use _scraperFailedLog below
 
     private static readonly Action<ILogger<AggregatedJobClient>, int, Exception?> _scraperCount = LoggerMessage.Define<int>(
         LogLevel.Information,
@@ -55,7 +52,7 @@ public partial class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
 
     private static readonly Action<ILogger<AggregatedJobClient>, string, Exception?> _scraperFailedLog = LoggerMessage.Define<string>(
         LogLevel.Warning,
-        new EventId(1401, nameof(AggregatedJobClient)),
+        new EventId(1407, nameof(AggregatedJobClient)),
         "Scraper {Platform} failed");
 
     public AggregatedJobClient(IEnumerable<IJobScraper> scrapers, IDeduplicationService dedupe, ILogger<AggregatedJobClient> logger, TimeProvider? timeProvider = null, ErrorCategorizationService? errorCategorizationService = null)
