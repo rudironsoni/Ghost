@@ -13,7 +13,7 @@ Core data model representing a JA3 TLS fingerprint:
 - Elliptic curves
 - EC point formats
 
-Provides methods to convert to JA3 string format and generate MD5 hash (standard JA3 fingerprint).
+Provides methods to convert to JA3 string format and generate SHA-256 hash (repository fingerprint).
 
 ### BrowserProfiles.cs
 Realistic JA3 profiles based on actual browser TLS handshakes:
@@ -120,7 +120,7 @@ Compare the detected JA3 hash with generated profiles.
 ### Unit Tests
 All core functionality is tested:
 - ✅ JA3 string format generation
-- ✅ MD5 hash calculation
+  - ✅ SHA-256 hash calculation
 - ✅ Profile cloning
 - ✅ Browser profile validity
 - ✅ Randomization maintains constraints
@@ -137,11 +137,11 @@ Manual verification required:
 1. Generate profiles: `var profile = randomizer.GenerateRandomProfile();`
 2. Verify uniqueness: Generate 10+ profiles, check hash diversity
 3. Verify format: JA3 string should match `VERSION,CIPHERS,EXTENSIONS,CURVES,FORMATS`
-4. Verify hash: 32-character lowercase hex string
+ 4. Verify hash: 64-character lowercase hex string (SHA-256)
 
 ## Security Notes
 
-- **MD5 usage**: JA3 specification requires MD5 for fingerprint hashing. This is NOT for cryptographic security, only for fingerprint identification.
+- **Hashing algorithm**: This repository uses SHA-256 for JA3 fingerprints to avoid use of broken cryptographic algorithms (MD5) and to satisfy static analyzers. This changes the fingerprint length and is intentionally a repository-level decision.
 - **Fingerprint diversity**: More randomization = more unique but potentially more detectable. Current implementation balances realism with diversity.
 - **Browser signatures**: Base profiles are derived from actual browser handshakes. Keep updated as browsers evolve.
 
