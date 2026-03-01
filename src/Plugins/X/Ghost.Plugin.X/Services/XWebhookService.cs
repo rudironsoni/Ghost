@@ -101,7 +101,7 @@ public class XWebhookService : IXWebhookService
         await Task.WhenAll(tasks).ConfigureAwait(false);
     }
 
-    private async Task ExecuteCallbackAsync(Func<XEventArgs, Task> callback, XEventArgs args)
+    private static async Task ExecuteCallbackAsync(Func<XEventArgs, Task> callback, XEventArgs args)
     {
         try
         {

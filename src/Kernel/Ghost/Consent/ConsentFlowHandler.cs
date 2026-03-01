@@ -8,11 +8,54 @@ namespace Ghost.Consent;
 /// <summary>
 /// Handles complex multi-step consent flows with support for shadow DOM and iframes.
 /// </summary>
-public class ConsentFlowHandler
+public partial class ConsentFlowHandler
 {
     private readonly ILogger<ConsentFlowHandler> _logger;
     private readonly int _stepDelayMs;
     private readonly TimeProvider _timeProvider;
+
+    // LoggerMessage source generators (EventIds 2000-2099 for Consent)
+    [LoggerMessage(EventId = 2000, Level = LogLevel.Warning, Message = "No steps defined for multi-step flow: {CmpName}")]
+    private static partial void LogNoStepsDefined(ILogger<ConsentFlowHandler> logger, string cmpName);
+
+    [LoggerMessage(EventId = 2001, Level = LogLevel.Debug, Message = "Starting multi-step consent flow for {CmpName} ({StepCount} steps)")]
+    private static partial void LogMultiStepStart(ILogger<ConsentFlowHandler> logger, string cmpName, int stepCount);
+
+    [LoggerMessage(EventId = 2002, Level = LogLevel.Debug, Message = "Executing step {StepNumber}/{TotalSteps}: {Selector}")]
+    private static partial void LogExecutingStep(ILogger<ConsentFlowHandler> logger, int stepNumber, int totalSteps, string selector);
+
+    [LoggerMessage(EventId = 2003, Level = LogLevel.Warning, Message = "Failed to execute step {StepNumber}: {Selector}")]
+    private static partial void LogStepFailed(ILogger<ConsentFlowHandler> logger, int stepNumber, string selector);
+
+    [LoggerMessage(EventId = 2004, Level = LogLevel.Information, Message = "Successfully completed multi-step consent flow for {CmpName}")]
+    private static partial void LogMultiStepComplete(ILogger<ConsentFlowHandler> logger, string cmpName);
+
+    [LoggerMessage(EventId = 2005, Level = LogLevel.Debug, Message = "Clicked element in regular DOM: {Selector}")]
+    private static partial void LogClickedRegularDom(ILogger<ConsentFlowHandler> logger, string selector);
+
+    [LoggerMessage(EventId = 2006, Level = LogLevel.Debug, Message = "Clicked element in shadow DOM: {Selector}")]
+    private static partial void LogClickedShadowDom(ILogger<ConsentFlowHandler> logger, string selector);
+
+    [LoggerMessage(EventId = 2007, Level = LogLevel.Debug, Message = "Clicked element in iframe: {Selector}")]
+    private static partial void LogClickedIframe(ILogger<ConsentFlowHandler> logger, string selector);
+
+    [LoggerMessage(EventId = 2008, Level = LogLevel.Debug, Message = "Could not find element for selector: {Selector}")]
+    private static partial void LogElementNotFound(ILogger<ConsentFlowHandler> logger, string selector);
+
+    [LoggerMessage(EventId = 2009, Level = LogLevel.Warning, Message = "Invalid CSS selector rejected: {Selector}")]
+    private static partial void LogInvalidSelector(ILogger<ConsentFlowHandler> logger, string selector);
+
+    [LoggerMessage(EventId = 2010, Level = LogLevel.Debug, Message = "Regular DOM click failed for: {Selector}")]
+    private static partial void LogRegularDomClickFailed(ILogger<ConsentFlowHandler> logger, Exception ex, string selector);
+
+    [LoggerMessage(EventId = 2011, Level = LogLevel.Debug, Message = "Shadow DOM click failed for: {Selector}")]
+    private static partial void LogShadowDomClickFailed(ILogger<ConsentFlowHandler> logger, Exception ex, string selector);
+
+    [LoggerMessage(EventId = 2012, Level = LogLevel.Warning, Message = "Invalid CSS selector rejected for iframe interaction")]
+    private static partial void LogInvalidIframeSelector(ILogger<ConsentFlowHandler> logger);
+
+    [LoggerMessage(EventId = 2013, Level = LogLevel.Debug, Message = "Iframe click failed for: {Selector}")]
+    private static partial void LogIframeClickFailed(ILogger<ConsentFlowHandler> logger, Exception ex, string selector);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConsentFlowHandler"/> class.
@@ -40,35 +83,21 @@ public class ConsentFlowHandler
 
         if (config.Steps == null || config.Steps.Length == 0)
         {
-            if (_logger.IsEnabled(LogLevel.Warning))
-            {
-                _logger.LogWarning("No steps defined for multi-step flow: {CmpName}", config.Name);
-            }
+            LogNoStepsDefined(_logger, config.Name);
             return false;
         }
 
-        if (_logger.IsEnabled(LogLevel.Debug))
-        {
-            _logger.LogDebug("Starting multi-step consent flow for {CmpName} ({StepCount} steps)",
-                config.Name, config.Steps.Length);
-        }
+        LogMultiStepStart(_logger, config.Name, config.Steps.Length);
 
         for (int i = 0; i < config.Steps.Length; i++)
         {
             string stepSelector = config.Steps[i];
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug("Executing step {StepNumber}/{TotalSteps}: {Selector}",
-                    i + 1, config.Steps.Length, stepSelector);
-            }
+            LogExecutingStep(_logger, i + 1, config.Steps.Length, stepSelector);
 
             bool success = await ExecuteStepAsync(page, stepSelector, config).ConfigureAwait(false);
             if (!success)
             {
-                if (_logger.IsEnabled(LogLevel.Warning))
-                {
-                    _logger.LogWarning("Failed to execute step {StepNumber}: {Selector}", i + 1, stepSelector);
-                }
+                LogStepFailed(_logger, i + 1, stepSelector);
                 return false;
             }
 
@@ -79,10 +108,7 @@ public class ConsentFlowHandler
             }
         }
 
-        if (_logger.IsEnabled(LogLevel.Information))
-        {
-            _logger.LogInformation("Successfully completed multi-step consent flow for {CmpName}", config.Name);
-        }
+        LogMultiStepComplete(_logger, config.Name);
         return true;
     }
 
@@ -96,10 +122,7 @@ public class ConsentFlowHandler
         bool clicked = await TryClickRegularAsync(page, selector).ConfigureAwait(false);
         if (clicked)
         {
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug("Clicked element in regular DOM: {Selector}", selector);
-            }
+            LogClickedRegularDom(_logger, selector);
             return true;
         }
 
@@ -107,10 +130,7 @@ public class ConsentFlowHandler
         clicked = await TryClickShadowDOMAsync(page, selector).ConfigureAwait(false);
         if (clicked)
         {
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug("Clicked element in shadow DOM: {Selector}", selector);
-            }
+            LogClickedShadowDom(_logger, selector);
             return true;
         }
 
@@ -120,18 +140,12 @@ public class ConsentFlowHandler
             clicked = await TryClickIframeAsync(page, selector, config).ConfigureAwait(false);
             if (clicked)
             {
-                if (_logger.IsEnabled(LogLevel.Debug))
-                {
-                    _logger.LogDebug("Clicked element in iframe: {Selector}", selector);
-                }
+                LogClickedIframe(_logger, selector);
                 return true;
             }
         }
 
-        if (_logger.IsEnabled(LogLevel.Debug))
-        {
-            _logger.LogDebug("Could not find element for selector: {Selector}", selector);
-        }
+        LogElementNotFound(_logger, selector);
         return false;
     }
 
@@ -197,10 +211,7 @@ public class ConsentFlowHandler
         // Validate selector to prevent injection
         if (!IsValidCssSelector(selector))
         {
-            if (_logger.IsEnabled(LogLevel.Warning))
-            {
-                _logger.LogWarning("Invalid CSS selector rejected: {Selector}", selector);
-            }
+            LogInvalidSelector(_logger, selector);
             return false;
         }
 
@@ -232,10 +243,7 @@ public class ConsentFlowHandler
         }
         catch (Exception ex)
         {
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug(ex, "Regular DOM click failed for: {Selector}", selector);
-            }
+            LogRegularDomClickFailed(_logger, ex, selector);
         }
 
         return false;
@@ -252,10 +260,7 @@ public class ConsentFlowHandler
         }
         catch (Exception ex)
         {
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug(ex, "Shadow DOM click failed for: {Selector}", selector);
-            }
+            LogShadowDomClickFailed(_logger, ex, selector);
             return false;
         }
     }
@@ -277,10 +282,7 @@ public class ConsentFlowHandler
             // Validate both selectors to prevent injection
             if (!IsValidCssSelector(iframeSelector) || !IsValidCssSelector(selector))
             {
-                if (_logger.IsEnabled(LogLevel.Warning))
-                {
-                    _logger.LogWarning("Invalid CSS selector rejected for iframe interaction");
-                }
+                LogInvalidIframeSelector(_logger);
                 return false;
             }
 
@@ -307,10 +309,7 @@ public class ConsentFlowHandler
         }
         catch (Exception ex)
         {
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug(ex, "Iframe click failed for: {Selector}", selector);
-            }
+            LogIframeClickFailed(_logger, ex, selector);
             return false;
         }
     }

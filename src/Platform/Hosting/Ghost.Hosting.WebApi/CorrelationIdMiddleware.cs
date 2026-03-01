@@ -5,6 +5,15 @@ using Microsoft.Extensions.Logging;
 namespace Ghost.Hosting.WebApi;
 
 /// <summary>
+/// Logger messages for CorrelationIdMiddleware.
+/// </summary>
+public static partial class CorrelationIdMiddlewareLogMessages
+{
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Processing request with correlation ID: {CorrelationId}")]
+    public static partial void ProcessingRequest(this ILogger logger, string correlationId);
+}
+
+/// <summary>
 /// Middleware for correlation ID propagation.
 /// </summary>
 public sealed class CorrelationIdMiddleware
@@ -52,10 +61,10 @@ public sealed class CorrelationIdMiddleware
             ["CorrelationId"] = correlationId
         }))
         {
-if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug("Processing request with correlation ID: {CorrelationId}", correlationId);
-            }
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.ProcessingRequest(correlationId);
+        }
             await _next(context).ConfigureAwait(false);
         }
     }

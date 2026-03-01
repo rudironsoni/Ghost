@@ -773,7 +773,7 @@ public sealed class GlassdoorApiClient : IDisposable
     /// Simple HTTP-based scraper that directly fetches Glassdoor job search HTML
     /// without requiring SOCKS5 proxies, browser automation, or CSRF tokens.
     /// </summary>
-    private async Task<string?> SearchWithSimpleHttpAsync(string keyword, string? location, CancellationToken ct)
+    private static async Task<string?> SearchWithSimpleHttpAsync(string keyword, string? location, CancellationToken ct)
     {
         try
         {

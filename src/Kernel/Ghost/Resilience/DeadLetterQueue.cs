@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Ghost.Kernel;
 
-public interface IGenericDeadLetterQueue
+public interface IGenericDeadLetterStore
 {
     public Task EnqueueAsync<T>(T item, string reason, Exception? exception = null, CancellationToken cancellationToken = default);
     public Task<List<DeadLetterItem>> PeekAsync(int count = 10, CancellationToken cancellationToken = default);
@@ -26,7 +26,7 @@ public class DeadLetterItem
     public int RetryCount { get; init; }
 }
 
-public class InMemoryDeadLetterQueue : IGenericDeadLetterQueue
+public class InMemoryDeadLetterStore : IGenericDeadLetterStore
 {
     private static readonly Action<ILogger, Guid, string, string, Exception?> _itemEnqueued = LoggerMessage.Define<Guid, string, string>(
         LogLevel.Warning,
@@ -44,11 +44,11 @@ public class InMemoryDeadLetterQueue : IGenericDeadLetterQueue
         "Cleared {Count} items from DLQ");
 
     private readonly ConcurrentQueue<DeadLetterItem> _queue = new();
-    private readonly ILogger<InMemoryDeadLetterQueue> _logger;
+    private readonly ILogger<InMemoryDeadLetterStore> _logger;
     private readonly object _lock = new();
     private readonly TimeProvider _timeProvider;
 
-    public InMemoryDeadLetterQueue(ILogger<InMemoryDeadLetterQueue> logger, TimeProvider? timeProvider = null)
+    public InMemoryDeadLetterStore(ILogger<InMemoryDeadLetterStore> logger, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;

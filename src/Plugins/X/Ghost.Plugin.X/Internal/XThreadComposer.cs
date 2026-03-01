@@ -12,7 +12,7 @@ public partial class XThreadComposer
 {
     private readonly XOptions _options;
     private readonly ILogger<XThreadComposer> _logger;
-    private readonly XPostContentSplitter _contentSplitter;
+    private XPostContentSplitter ContentSplitter { get; }
 
     public XThreadComposer(
         IOptions<XOptions> options,
@@ -20,7 +20,7 @@ public partial class XThreadComposer
     {
         _options = options?.Value ?? new XOptions();
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<XThreadComposer>.Instance;
-        _contentSplitter = new XPostContentSplitter(_options.MaxTweetLength);
+        ContentSplitter = new XPostContentSplitter(_options.MaxTweetLength);
     }
 
     /// <summary>
@@ -32,7 +32,7 @@ public partial class XThreadComposer
         CancellationToken ct = default)
     {
         // Split content into tweet-sized parts
-        IReadOnlyList<string> parts = _contentSplitter.Split(request.Content);
+        IReadOnlyList<string> parts = ContentSplitter.Split(request.Content);
 
         if (parts.Count == 0)
         {
@@ -302,8 +302,5 @@ public partial class XThreadComposer
         }
     }
 
-    /// <summary>
-    /// Gets the content splitter instance.
-    /// </summary>
-    public XPostContentSplitter ContentSplitter => _contentSplitter;
+
 }

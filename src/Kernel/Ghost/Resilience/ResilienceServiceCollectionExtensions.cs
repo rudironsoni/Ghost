@@ -16,7 +16,7 @@ public static class ResilienceServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddSingleton<IRetryPolicy, RetryPolicy>();
-        services.AddSingleton<IGenericDeadLetterQueue, InMemoryDeadLetterQueue>();
+        services.AddSingleton<IGenericDeadLetterStore, InMemoryDeadLetterStore>();
         services.AddSingleton<IMetricsCollector, MetricsCollector>();
         services.AddSingleton<INordVpnCredentialProvider, ConfigurationNordVpnCredentialProvider>();
         services.AddMemoryCache();

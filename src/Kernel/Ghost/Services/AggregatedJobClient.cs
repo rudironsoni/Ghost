@@ -9,15 +9,35 @@ using Microsoft.Extensions.Logging;
 
 namespace Ghost.Kernel.Services;
 
-public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
+public partial class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
 {
     private readonly List<IJobScraper> _scrapers;
     private readonly IDeduplicationService _dedupe;
     private readonly ILogger<AggregatedJobClient> _logger;
     private readonly TimeProvider _timeProvider;
     private readonly ErrorCategorizationService _errorCategorizationService;
-    private static readonly Action<ILogger, string, Exception?> s_logScraperFailed =
-        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(1, nameof(AggregatedJobClient)), "Scraper {Platform} failed");
+
+    // LoggerMessage source generators (EventIds 2000-2099 for JobClient)
+    [LoggerMessage(EventId = 2000, Level = LogLevel.Warning, Message = "AggregatedJobClient constructed with {Count} scrapers: {Names}")]
+    private static partial void LogConstructed(ILogger<AggregatedJobClient> logger, int count, string names);
+
+    [LoggerMessage(EventId = 2001, Level = LogLevel.Warning, Message = "Scraper {Platform} failed")]
+    private static partial void LogScraperFailed(ILogger<AggregatedJobClient> logger, string platform, Exception ex);
+
+    [LoggerMessage(EventId = 2002, Level = LogLevel.Information, Message = "Injected scrapers count: {Count}")]
+    private static partial void LogScraperCount(ILogger<AggregatedJobClient> logger, int count);
+
+    [LoggerMessage(EventId = 2003, Level = LogLevel.Information, Message = "Available scraper: '{Name}' (Type: {Type})")]
+    private static partial void LogAvailableScraper(ILogger<AggregatedJobClient> logger, string name, string type);
+
+    [LoggerMessage(EventId = 2004, Level = LogLevel.Information, Message = "Search criteria sources: {Sources}")]
+    private static partial void LogSearchSources(ILogger<AggregatedJobClient> logger, string sources);
+
+    [LoggerMessage(EventId = 2005, Level = LogLevel.Information, Message = "Requested sources (normalized): {Sources}")]
+    private static partial void LogNormalizedSources(ILogger<AggregatedJobClient> logger, string sources);
+
+    [LoggerMessage(EventId = 2006, Level = LogLevel.Information, Message = "Selected scrapers: {Scrapers}")]
+    private static partial void LogSelectedScrapers(ILogger<AggregatedJobClient> logger, string scrapers);
 
     public AggregatedJobClient(IEnumerable<IJobScraper> scrapers, IDeduplicationService dedupe, ILogger<AggregatedJobClient> logger, TimeProvider? timeProvider = null, ErrorCategorizationService? errorCategorizationService = null)
     {
@@ -32,7 +52,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         // log exactly what was injected so we can diagnose missing scrapers
         try
         {
-            _logger.LogWarning("AggregatedJobClient constructed with {Count} scrapers: {Names}", _scrapers.Count, string.Join(", ", _scrapers.Select(s => s.GetType().Name)));
+            LogConstructed(_logger, _scrapers.Count, string.Join(", ", _scrapers.Select(s => s.GetType().Name)));
         }
         catch (Exception ex)
         {
@@ -59,10 +79,10 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         {
             if (_logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation("Injected scrapers count: {Count}", _scrapers?.Count ?? 0);
+                LogScraperCount(_logger, _scrapers?.Count ?? 0);
                 foreach (IJobScraper s in _scrapers ?? Enumerable.Empty<IJobScraper>())
                 {
-                    _logger.LogInformation("Available scraper: '{Name}' (Type: {Type})", s.PlatformName, s.GetType().Name);
+                    LogAvailableScraper(_logger, s.PlatformName ?? "Unknown", s.GetType().Name);
                 }
             }
         }
@@ -80,7 +100,8 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             {
                 if (_logger.IsEnabled(LogLevel.Information))
                 {
-                    _logger.LogInformation("Search criteria sources: {Sources}", string.Join(", ", criteriaNonNull.Sources));
+                    string sources = string.Join(", ", criteriaNonNull.Sources);
+                    LogSearchSources(_logger, sources);
                 }
             }
             catch (Exception ex)
@@ -93,7 +114,8 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             {
                 if (_logger.IsEnabled(LogLevel.Information))
                 {
-                    _logger.LogInformation("Requested sources (normalized): {Sources}", string.Join(", ", lower));
+                    string normalizedSources = string.Join(", ", lower);
+                    LogNormalizedSources(_logger, normalizedSources);
                 }
             }
             catch (Exception ex)
@@ -113,7 +135,8 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         {
             if (_logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation("Selected scrapers: {Scrapers}", string.Join(", ", (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => s.PlatformName)));
+                string selectedScrapers = string.Join(", ", (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => s.PlatformName ?? "Unknown"));
+                LogSelectedScrapers(_logger, selectedScrapers);
             }
         }
         catch (Exception ex)
@@ -139,7 +162,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             {
                 PlatformError error = _errorCategorizationService.CategorizeError(ex, s.PlatformName ?? "Unknown");
                 platformErrors.Add(error);
-                s_logScraperFailed(_logger, s.PlatformName ?? "Unknown", ex);
+                LogScraperFailed(_logger, s.PlatformName ?? "Unknown", ex);
                 return (IReadOnlyList<JobListing>)new List<JobListing>();
             }
         }, ct)).ToArray();
@@ -187,11 +210,11 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         {
             if (_logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation("Injected scrapers count: {Count}", _scrapers?.Count ?? 0);
+                LogScraperCount(_logger, _scrapers?.Count ?? 0);
                 // log each injected scraper name and type for debugging
                 foreach (IJobScraper s in _scrapers ?? Enumerable.Empty<IJobScraper>())
                 {
-                    _logger.LogInformation("Available scraper: '{Name}' (Type: {Type})", s.PlatformName, s.GetType().Name);
+                    LogAvailableScraper(_logger, s.PlatformName ?? "Unknown", s.GetType().Name);
                 }
             }
         }
@@ -210,7 +233,8 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             {
                 if (_logger.IsEnabled(LogLevel.Information))
                 {
-                    _logger.LogInformation("Search criteria sources: {Sources}", string.Join(", ", criteriaNonNull.Sources));
+                    string sources = string.Join(", ", criteriaNonNull.Sources);
+                    LogSearchSources(_logger, sources);
                 }
             }
             catch (Exception ex)
@@ -224,7 +248,8 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             {
                 if (_logger.IsEnabled(LogLevel.Information))
                 {
-                    _logger.LogInformation("Requested sources (normalized): {Sources}", string.Join(", ", lower));
+                    string normalizedSources = string.Join(", ", lower);
+                    LogNormalizedSources(_logger, normalizedSources);
                 }
             }
             catch (Exception ex)
@@ -245,7 +270,8 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         {
             if (_logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation("Selected scrapers: {Scrapers}", string.Join(", ", (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => s.PlatformName)));
+                string selectedScrapers = string.Join(", ", (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => s.PlatformName ?? "Unknown"));
+                LogSelectedScrapers(_logger, selectedScrapers);
             }
         }
         catch (Exception ex)
@@ -263,7 +289,7 @@ public class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             catch (OperationCanceledException) { throw; }
             catch (Exception ex)
             {
-                if (_logger != null) s_logScraperFailed(_logger, s.PlatformName, ex);
+                LogScraperFailed(_logger, s.PlatformName ?? "Unknown", ex);
                 return (IReadOnlyList<JobListing>)new List<JobListing>();
             }
         }, ct)).ToArray();

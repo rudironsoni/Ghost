@@ -147,7 +147,7 @@ public class IndeedJobDetailsScraper
         };
     }
 
-    private async Task<JobListing> ExtractFromDomAsync(
+    private static async Task<JobListing> ExtractFromDomAsync(
         IPage page,
         string jobId,
         string jobUrl,

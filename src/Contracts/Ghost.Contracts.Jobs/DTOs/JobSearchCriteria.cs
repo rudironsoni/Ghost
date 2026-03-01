@@ -2,6 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace Ghost.Contracts.Jobs;
 
+// Backing field required for Query property fallback logic (Query returns Keywords when _query is null).
+// IDE0032 (Use auto property) is suppressed because auto-properties cannot implement this fallback pattern.
+
 public enum TimePosted
 {
     Any,
@@ -15,7 +18,12 @@ public enum TimePosted
 /// </summary>
 public sealed record JobSearchCriteria
 {
+    // Backing field required for fallback logic in Query property getter.
+    // IDE0032 (Use auto property) is suppressed here because we need custom logic:
+    // Query returns Keywords when _query is null.
+#pragma warning disable IDE0032
     private string? _query;
+#pragma warning restore IDE0032
 
     /// <summary>
     /// Text query matching title, company, or description.

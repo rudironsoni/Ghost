@@ -13,7 +13,7 @@ namespace Ghost.ConsentManagement;
 /// Service for detecting and handling consent/cookie banners on websites.
 /// Uses selectors from consentcrawl database.
 /// </summary>
-public class ConsentManagerService
+public partial class ConsentManagerService
 {
     private readonly ILogger<ConsentManagerService> _logger;
     private readonly TimeProvider _timeProvider;
@@ -23,6 +23,52 @@ public class ConsentManagerService
         _logger = logger ?? NullLogger<ConsentManagerService>.Instance;
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
+
+    // LoggerMessage source generators (EventIds 2100-2199 for ConsentManagement)
+    [LoggerMessage(EventId = 2100, Level = LogLevel.Debug, Message = "Checking for consent banners...")]
+    private static partial void LogCheckingBanners(ILogger<ConsentManagerService> logger);
+
+    [LoggerMessage(EventId = 2101, Level = LogLevel.Information, Message = "Detected consent manager: {ManagerId}")]
+    private static partial void LogManagerDetected(ILogger<ConsentManagerService> logger, string managerId);
+
+    [LoggerMessage(EventId = 2102, Level = LogLevel.Information, Message = "Successfully handled consent for: {ManagerId}")]
+    private static partial void LogConsentHandled(ILogger<ConsentManagerService> logger, string managerId);
+
+    [LoggerMessage(EventId = 2103, Level = LogLevel.Information, Message = "Consent banner successfully dismissed")]
+    private static partial void LogBannerDismissed(ILogger<ConsentManagerService> logger);
+
+    [LoggerMessage(EventId = 2104, Level = LogLevel.Warning, Message = "Consent banner still present after acceptance attempt")]
+    private static partial void LogBannerStillPresent(ILogger<ConsentManagerService> logger);
+
+    [LoggerMessage(EventId = 2105, Level = LogLevel.Debug, Message = "No consent banners detected or handled")]
+    private static partial void LogNoBannersDetected(ILogger<ConsentManagerService> logger);
+
+    [LoggerMessage(EventId = 2106, Level = LogLevel.Debug, Message = "Found iframe consent manager: {Selector}")]
+    private static partial void LogIframeFound(ILogger<ConsentManagerService> logger, string selector);
+
+    [LoggerMessage(EventId = 2107, Level = LogLevel.Debug, Message = "Found consent element: {Selector}")]
+    private static partial void LogConsentElementFound(ILogger<ConsentManagerService> logger, string selector);
+
+    [LoggerMessage(EventId = 2108, Level = LogLevel.Debug, Message = "Error handling consent manager {ManagerId}")]
+    private static partial void LogManagerError(ILogger<ConsentManagerService> logger, Exception ex, string managerId);
+
+    [LoggerMessage(EventId = 2109, Level = LogLevel.Debug, Message = "Clicked iframe consent button: {Selector}")]
+    private static partial void LogIframeButtonClicked(ILogger<ConsentManagerService> logger, string selector);
+
+    [LoggerMessage(EventId = 2110, Level = LogLevel.Debug, Message = "Clicking consent button: {Selector}")]
+    private static partial void LogClickingConsentButton(ILogger<ConsentManagerService> logger, string selector);
+
+    [LoggerMessage(EventId = 2111, Level = LogLevel.Debug, Message = "Clicking detected element as fallback")]
+    private static partial void LogClickingFallback(ILogger<ConsentManagerService> logger);
+
+    [LoggerMessage(EventId = 2112, Level = LogLevel.Debug, Message = "Failed to click selector {Selector}")]
+    private static partial void LogClickFailed(ILogger<ConsentManagerService> logger, Exception ex, string selector);
+
+    [LoggerMessage(EventId = 2113, Level = LogLevel.Debug, Message = "Failed to click detected element as fallback")]
+    private static partial void LogFallbackClickFailed(ILogger<ConsentManagerService> logger, Exception ex);
+
+    [LoggerMessage(EventId = 2114, Level = LogLevel.Warning, Message = "Consent banner not detected within {MaxWaitMs}ms")]
+    private static partial void LogBannerNotDetected(ILogger<ConsentManagerService> logger, int maxWaitMs);
 
     /// <summary>
     /// Consent manager definitions with their detection and acceptance selectors
@@ -145,7 +191,7 @@ public class ConsentManagerService
     {
         ArgumentNullException.ThrowIfNull(page);
 
-        _logger.LogDebug("Checking for consent banners...");
+        LogCheckingBanners(_logger);
 
         foreach (ConsentManagerDefinition manager in ConsentManagers)
         {
@@ -156,19 +202,13 @@ public class ConsentManagerService
                 if (detectedElement == null)
                     continue;
 
-                if (_logger.IsEnabled(LogLevel.Information))
-                {
-                    _logger.LogInformation("Detected consent manager: {ManagerId}", manager.Id);
-                }
+                LogManagerDetected(_logger, manager.Id);
 
                 // Try to accept/click the consent
                 bool handled = await AcceptConsentAsync(page, manager, detectedElement, timeoutMs).ConfigureAwait(false);
                 if (handled)
                 {
-                    if (_logger.IsEnabled(LogLevel.Information))
-                    {
-                        _logger.LogInformation("Successfully handled consent for: {ManagerId}", manager.Id);
-                    }
+                    LogConsentHandled(_logger, manager.Id);
 
                     // Wait a moment for the banner to disappear and page to settle
                     await Task.Delay(TimeSpan.FromMilliseconds(1000), _timeProvider, CancellationToken.None).ConfigureAwait(false);
@@ -177,31 +217,22 @@ public class ConsentManagerService
                     IElement? stillPresent = await DetectConsentManagerAsync(page, manager, 1000).ConfigureAwait(false);
                     if (stillPresent == null)
                     {
-                        if (_logger.IsEnabled(LogLevel.Information))
-                        {
-                            _logger.LogInformation("Consent banner successfully dismissed");
-                        }
+                        LogBannerDismissed(_logger);
                         return true;
                     }
                     else
                     {
-                        if (_logger.IsEnabled(LogLevel.Warning))
-                        {
-                            _logger.LogWarning("Consent banner still present after acceptance attempt");
-                        }
+                        LogBannerStillPresent(_logger);
                     }
                 }
             }
             catch (Exception ex)
             {
-                if (_logger.IsEnabled(LogLevel.Debug))
-                {
-                    _logger.LogDebug(ex, "Error handling consent manager {ManagerId}", manager.Id);
-                }
+                LogManagerError(_logger, ex, manager.Id);
             }
         }
 
-        _logger.LogDebug("No consent banners detected or handled");
+        LogNoBannersDetected(_logger);
         return false;
     }
 
@@ -221,10 +252,7 @@ public class ConsentManagerService
                     IElement? frame = await page.QuerySelectorAsync(selector).ConfigureAwait(false);
                     if (frame != null)
                     {
-                        if (_logger.IsEnabled(LogLevel.Debug))
-                        {
-                            _logger.LogDebug("Found iframe consent manager: {Selector}", selector);
-                        }
+                        LogIframeFound(_logger, selector);
                         return frame;
                     }
                 }
@@ -238,10 +266,7 @@ public class ConsentManagerService
                         bool isVisible = await element.IsVisibleAsync().ConfigureAwait(false);
                         if (isVisible)
                         {
-                            if (_logger.IsEnabled(LogLevel.Debug))
-                            {
-                                _logger.LogDebug("Found consent element: {Selector}", selector);
-                            }
+                            LogConsentElementFound(_logger, selector);
                             return element;
                         }
                     }
@@ -281,10 +306,7 @@ public class ConsentManagerService
 
                     if (clicked)
                     {
-                        if (_logger.IsEnabled(LogLevel.Debug))
-                        {
-                            _logger.LogDebug("Clicked iframe consent button: {Selector}", selector);
-                        }
+                        LogIframeButtonClicked(_logger, selector);
                         return true;
                     }
                 }
@@ -298,10 +320,7 @@ public class ConsentManagerService
 
                         if (isVisible && isEnabled)
                         {
-                            if (_logger.IsEnabled(LogLevel.Debug))
-                            {
-                                _logger.LogDebug("Clicking consent button: {Selector}", selector);
-                            }
+                            LogClickingConsentButton(_logger, selector);
 
                             try
                             {
@@ -319,10 +338,7 @@ public class ConsentManagerService
             }
             catch (Exception ex)
             {
-                if (_logger.IsEnabled(LogLevel.Debug))
-                {
-                    _logger.LogDebug(ex, "Failed to click selector {Selector}", selector);
-                }
+                LogClickFailed(_logger, ex, selector);
             }
         }
 
@@ -337,10 +353,7 @@ public class ConsentManagerService
 
                 if (isVisible && isEnabled)
                 {
-                    if (_logger.IsEnabled(LogLevel.Debug))
-                    {
-                        _logger.LogDebug("Clicking detected element as fallback");
-                    }
+                    LogClickingFallback(_logger);
 
                     try
                     {
@@ -357,10 +370,7 @@ public class ConsentManagerService
             }
             catch (Exception ex)
             {
-                if (_logger.IsEnabled(LogLevel.Debug))
-                {
-                    _logger.LogDebug(ex, "Failed to click detected element as fallback");
-                }
+                LogFallbackClickFailed(_logger, ex);
             }
         }
 
@@ -383,14 +393,15 @@ public class ConsentManagerService
             await Task.Delay(TimeSpan.FromMilliseconds(checkIntervalMs), _timeProvider, CancellationToken.None).ConfigureAwait(false);
         }
 
-        _logger.LogWarning("Consent banner not detected within {MaxWaitMs}ms", maxWaitMs);
+        LogBannerNotDetected(_logger, maxWaitMs);
         return false;
     }
 
     /// <summary>
     /// Definition of a consent manager with its selectors
     /// </summary>
-    private class ConsentManagerDefinition
+// Made sealed per CA1852. If extensibility is needed in future, remove sealed and document.
+    private sealed class ConsentManagerDefinition
     {
         public string Id { get; }
         public string[] DetectionSelectors { get; }

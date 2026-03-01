@@ -40,7 +40,7 @@ public sealed class DeadLetterQueueOptions
 /// File-system based dead letter queue implementation using JSON storage.
 /// </summary>
 [SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "Dead letter queue naming aligns with domain terminology.")]
-public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterQueue
+public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterStore
 {
     private static readonly Action<ILogger, string, Exception?> s_logReadFailed =
         LoggerMessage.Define<string>(LogLevel.Warning, new EventId(1, nameof(ReadJobAsync)), "Failed to read dead letter job file {Path}");

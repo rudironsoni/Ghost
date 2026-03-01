@@ -53,17 +53,17 @@ public class XOptions
     /// <summary>
     /// Gets the maximum tweet length (280 characters).
     /// </summary>
-    public int MaxTweetLength => 280;
+    public static int MaxTweetLength => 280;
 
     /// <summary>
     /// Gets the maximum number of media attachments per tweet (4 for images).
     /// </summary>
-    public int MaxMediaAttachments => 4;
+    public static int MaxMediaAttachments => 4;
 
     /// <summary>
     /// Gets the maximum number of video attachments per tweet (1).
     /// </summary>
-    public int MaxVideoAttachments => 1;
+    public static int MaxVideoAttachments => 1;
 
     /// <summary>
     /// Gets or sets the maximum file size for images in MB.

@@ -558,7 +558,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         return new SearchPageResult { Success = true, Document = document };
     }
 
-    private string BuildSearchQuery(string query, string location, int remaining)
+    private static string BuildSearchQuery(string query, string location, int remaining)
     {
         return string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, remaining));
     }
@@ -752,7 +752,7 @@ public class IndeedApiClient : IAsyncDisposable, IDisposable
         return new LegacyPageResult { Success = true, Document = document };
     }
 
-    private string FormatSearchQueryWithCursor(string query, string location, string? cursor, int remaining)
+    private static string FormatSearchQueryWithCursor(string query, string location, string? cursor, int remaining)
     {
         string formattedQuery = string.Format(System.Globalization.CultureInfo.InvariantCulture, JobSearchQueryFormat, query, location, Math.Min(25, remaining));
 

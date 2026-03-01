@@ -11,7 +11,7 @@ public sealed class IndeedResponseParser
     /// <summary>
     /// Extracts the next cursor from a search response for pagination.
     /// </summary>
-    public string? ExtractNextCursor(JsonDocument document)
+    public static string? ExtractNextCursor(JsonDocument document)
     {
         if (!document.RootElement.TryGetProperty("data", out JsonElement data))
         {
@@ -39,7 +39,7 @@ public sealed class IndeedResponseParser
     /// <summary>
     /// Checks if the response indicates a block or consent requirement.
     /// </summary>
-    public bool IsBlockedOrConsentRequired(string responseContent)
+    public static bool IsBlockedOrConsentRequired(string responseContent)
     {
         if (string.IsNullOrEmpty(responseContent))
             return true;
@@ -71,7 +71,7 @@ public sealed class IndeedResponseParser
     /// <summary>
     /// Validates that the response contains job search data.
     /// </summary>
-    public bool ContainsJobData(JsonDocument document)
+    public static bool ContainsJobData(JsonDocument document)
     {
         if (!document.RootElement.TryGetProperty("data", out JsonElement data))
         {
@@ -94,7 +94,7 @@ public sealed class IndeedResponseParser
     /// <summary>
     /// Extracts job results from a response document.
     /// </summary>
-    public IEnumerable<JsonElement> ExtractJobs(JsonDocument document)
+    public static IEnumerable<JsonElement> ExtractJobs(JsonDocument document)
     {
         if (!document.RootElement.TryGetProperty("data", out JsonElement data))
         {

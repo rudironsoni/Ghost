@@ -8,6 +8,15 @@ using Microsoft.Extensions.Logging;
 namespace Ghost.Testing.Scenarios.Server;
 
 /// <summary>
+/// Logger messages for ScenarioServer.
+/// </summary>
+public static partial class ScenarioServerLogMessages
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario server started at {BaseUrl}")]
+    public static partial void ServerStarted(this ILogger logger, string baseUrl);
+}
+
+/// <summary>
 /// Kestrel-based synthetic scenario server for browser testing.
 /// Provides deterministic web scenarios without external dependencies.
 /// </summary>
@@ -74,7 +83,7 @@ public sealed class ScenarioServer : IDisposable
         ILogger<ScenarioServer> logger = app.Services.GetRequiredService<ILogger<ScenarioServer>>();
         if (logger.IsEnabled(LogLevel.Information))
         {
-            logger.LogInformation("Scenario server started at {BaseUrl}", baseUrl);
+            logger.ServerStarted(baseUrl);
         }
 
         return new ScenarioServer(app, baseUrl, selectedPort);

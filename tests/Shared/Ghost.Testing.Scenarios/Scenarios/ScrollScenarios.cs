@@ -7,13 +7,40 @@ using Microsoft.Extensions.Logging;
 namespace Ghost.Testing.Scenarios.Scenarios;
 
 /// <summary>
+/// Logger messages for ScrollScenarios.
+/// </summary>
+public static partial class ScrollScenariosLogMessages
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario: scroll/auto-threshold")]
+    public static partial void AutoThreshold(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario: scroll/button-driven")]
+    public static partial void ButtonDriven(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario: scroll/virtualized")]
+    public static partial void Virtualized(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "API: scroll/load-more offset={Offset} limit={Limit}")]
+    public static partial void LoadMore(this ILogger logger, int offset, int limit);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario: scroll/duplicate-chunk")]
+    public static partial void DuplicateChunk(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "API: scroll/load-more-duplicates offset={Offset} limit={Limit}")]
+    public static partial void LoadMoreDuplicates(this ILogger logger, int offset, int limit);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "API: Returning duplicate chunk at offset {Offset}")]
+    public static partial void ReturningDuplicateChunk(this ILogger logger, int offset);
+}
+
+/// <summary>
 /// Infinite scroll scenarios for testing various scroll-loading patterns.
 /// </summary>
 public static class ScrollScenarios
 {
     public static IResult AutoThresholdHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Scenario: scroll/auto-threshold");
+        logger.AutoThreshold();
 
         int offset = context.Items["ScrollOffset"] as int? ?? 0;
         int limit = context.Items["ScrollLimit"] as int? ?? 20;
@@ -97,7 +124,7 @@ public static class ScrollScenarios
 
     public static IResult ButtonDrivenHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Scenario: scroll/button-driven");
+        logger.ButtonDriven();
 
         List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 15);
 
@@ -179,7 +206,7 @@ public static class ScrollScenarios
 
     public static IResult VirtualizedHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Scenario: scroll/virtualized");
+        logger.Virtualized();
 
         string html = """
 <!DOCTYPE html>
@@ -281,7 +308,7 @@ public static class ScrollScenarios
 
     public static IResult DuplicateChunkReplayHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Scenario: scroll/duplicate-chunk");
+        logger.DuplicateChunk();
 
         List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 15);
 

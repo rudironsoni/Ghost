@@ -7,13 +7,52 @@ using Microsoft.Extensions.Primitives;
 namespace Ghost.Testing.Scenarios.Scenarios;
 
 /// <summary>
+/// Logger messages for ConsentScenarios.
+/// </summary>
+public static partial class ConsentScenariosLogMessages
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario: consent/modal-blocking")]
+    public static partial void ModalBlocking(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario: consent/banner-soft")]
+    public static partial void BannerSoft(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario: consent/iframe-cmp")]
+    public static partial void IframeCmp(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Consent accepted via POST")]
+    public static partial void ConsentAcceptedPost(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario: consent/banner-dismiss")]
+    public static partial void BannerDismiss(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario: consent/iframe-cmp-advanced")]
+    public static partial void IframeCmpAdvanced(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario: consent/region-gdpr")]
+    public static partial void RegionGdpr(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario: consent/region-ccpa")]
+    public static partial void RegionCcpa(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario: consent/region-lgpd")]
+    public static partial void RegionLgpd(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario: consent/stateful-persistence")]
+    public static partial void StatefulPersistence(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario: consent/reconsent-policy-change")]
+    public static partial void ReconsentPolicyChange(this ILogger logger);
+}
+
+/// <summary>
 /// Consent-related scenarios for testing cookie banners, modals, and CMP integrations.
 /// </summary>
 public static class ConsentScenarios
 {
     public static IResult ModalBlockingHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Scenario: consent/modal-blocking");
+        logger.ModalBlocking();
 
         bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
         List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
@@ -110,7 +149,7 @@ public static class ConsentScenarios
 
     public static IResult BannerSoftHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Scenario: consent/banner-soft");
+        logger.BannerSoft();
 
         bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
         List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
@@ -184,7 +223,7 @@ public static class ConsentScenarios
 
     public static IResult IframeCmpHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Scenario: consent/iframe-cmp");
+        logger.IframeCmp();
 
         bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
         List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
@@ -244,7 +283,7 @@ public static class ConsentScenarios
 
     public static IResult AcceptConsentHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Consent accepted via POST");
+        logger.ConsentAcceptedPost();
 
         context.Response.Cookies.Append("ghost_consent", "accepted", new CookieOptions
         {
@@ -257,7 +296,7 @@ public static class ConsentScenarios
 
     public static IResult BannerDismissHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Scenario: consent/banner-dismiss");
+        logger.BannerDismiss();
 
         bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
         List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
@@ -338,7 +377,7 @@ public static class ConsentScenarios
 
     public static IResult IframeCmpAdvancedHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Scenario: consent/iframe-cmp-advanced");
+        logger.IframeCmpAdvanced();
 
         bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
         List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
@@ -399,7 +438,7 @@ public static class ConsentScenarios
 
     public static IResult RegionGdprHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Scenario: consent/region-gdpr");
+        logger.RegionGdpr();
 
         bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
         List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
@@ -514,7 +553,7 @@ public static class ConsentScenarios
 
     public static IResult RegionCcpaHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Scenario: consent/region-ccpa");
+        logger.RegionCcpa();
 
         bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
         List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
@@ -603,7 +642,7 @@ public static class ConsentScenarios
 
     public static IResult RegionLgpdHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Scenario: consent/region-lgpd");
+        logger.RegionLgpd();
 
         bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
         List<SyntheticJobPosting> jobs = TestData.GetJobPostings(0, 10);
@@ -709,7 +748,7 @@ public static class ConsentScenarios
 
     public static IResult StatefulPersistenceHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Scenario: consent/stateful-persistence");
+        logger.StatefulPersistence();
 
         bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
         int page = context.Request.Query.TryGetValue("page", out StringValues pageValue) ? int.Parse(pageValue!, System.Globalization.CultureInfo.InvariantCulture) : 1;
@@ -809,7 +848,7 @@ public static class ConsentScenarios
 
     public static IResult ReconsentPolicyChangeHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Scenario: consent/reconsent-policy-change");
+        logger.ReconsentPolicyChange();
 
         bool hasConsent = context.Items["HasConsent"] as bool? ?? false;
         string? consentCookie = context.Request.Cookies.TryGetValue("ghost_consent", out string? consentValue) ? consentValue : null;

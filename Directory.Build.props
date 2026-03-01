@@ -21,6 +21,7 @@
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <!-- Zero tolerance for warnings - Principal Engineer standard -->
     <!-- All warnings must be fixed, not suppressed -->
+    <!-- Zero tolerance: All warnings must be fixed, not suppressed -->
   </PropertyGroup>
 
   <PropertyGroup>
@@ -95,6 +96,8 @@
   <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('tests'))">
     <GhostLayer>Tests</GhostLayer>
     <IsPackable>false</IsPackable>
+    <!-- Test projects use preview features extensively -->
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('samples'))">

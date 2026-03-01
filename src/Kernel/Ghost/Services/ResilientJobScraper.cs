@@ -24,7 +24,7 @@ public class ResilientJobScraper : IJobScraper
 
     private readonly IJobScraper _innerScraper;
     private readonly ICircuitBreaker _circuitBreaker;
-    private readonly IGenericDeadLetterQueue _deadLetterQueue;
+    private readonly IGenericDeadLetterStore _deadLetterQueue;
     private readonly ILogger<ResilientJobScraper> _logger;
 
     public string PlatformName => _innerScraper.PlatformName;
@@ -32,7 +32,7 @@ public class ResilientJobScraper : IJobScraper
     public ResilientJobScraper(
         IJobScraper innerScraper,
         ICircuitBreaker circuitBreaker,
-        IGenericDeadLetterQueue deadLetterQueue,
+        IGenericDeadLetterStore deadLetterQueue,
         ILogger<ResilientJobScraper> logger)
     {
         ArgumentNullException.ThrowIfNull(innerScraper);

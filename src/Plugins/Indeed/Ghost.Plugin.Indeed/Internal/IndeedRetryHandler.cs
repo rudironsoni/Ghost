@@ -106,7 +106,7 @@ public sealed class IndeedRetryHandler
     /// <summary>
     /// Delays for the specified retry attempt using exponential backoff with custom base.
     /// </summary>
-    public async Task DelayForRetryAsync(int attempt, int baseMs, CancellationToken ct)
+    public static async Task DelayForRetryAsync(int attempt, int baseMs, CancellationToken ct)
     {
         int delayMs = (int)(Math.Pow(2, attempt) * baseMs);
         await Task.Delay(TimeSpan.FromMilliseconds(delayMs), ct).ConfigureAwait(false);

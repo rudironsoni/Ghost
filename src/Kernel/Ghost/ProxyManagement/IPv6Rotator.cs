@@ -54,7 +54,7 @@ public sealed class IPv6RotatorOptions
 /// Each address can be used as a unique egress IP for web scraping, making
 /// detection and blocking extremely difficult for anti-bot systems.
 /// </remarks>
-public sealed class IPv6Rotator : IDisposable
+public sealed partial class IPv6Rotator : IDisposable
 {
     private readonly IPv6RotatorOptions _options;
     private readonly SemaphoreSlim _lock = new(1, 1);
@@ -62,6 +62,28 @@ public sealed class IPv6Rotator : IDisposable
     private readonly ILogger<IPv6Rotator> _logger;
     private readonly int _maxRetries = 10;
     private bool _disposed;
+
+    // LoggerMessage source generators (EventIds 3000-3099 for Proxy)
+    [LoggerMessage(EventId = 3000, Level = LogLevel.Information, Message = "Executing command: {Command} {Address} {Subnet} dev {InterfaceName}")]
+    private static partial void LogExecutingCommand(ILogger<IPv6Rotator> logger, string command, string address, string subnet, string interfaceName);
+
+    [LoggerMessage(EventId = 3001, Level = LogLevel.Error, Message = "Failed to start ip command process")]
+    private static partial void LogIpCommandStartFailed(ILogger<IPv6Rotator> logger);
+
+    [LoggerMessage(EventId = 3002, Level = LogLevel.Error, Message = "ip command failed with exit code {ExitCode}: {Error}")]
+    private static partial void LogIpCommandFailed(ILogger<IPv6Rotator> logger, int exitCode, string error);
+
+    [LoggerMessage(EventId = 3003, Level = LogLevel.Information, Message = "Successfully bound address to interface {InterfaceName}")]
+    private static partial void LogAddressBound(ILogger<IPv6Rotator> logger, string interfaceName);
+
+    [LoggerMessage(EventId = 3004, Level = LogLevel.Error, Message = "Exception while binding address to interface")]
+    private static partial void LogBindException(ILogger<IPv6Rotator> logger, Exception ex);
+
+    [LoggerMessage(EventId = 3005, Level = LogLevel.Information, Message = "Successfully unbound address from interface {InterfaceName}")]
+    private static partial void LogAddressUnbound(ILogger<IPv6Rotator> logger, string interfaceName);
+
+    [LoggerMessage(EventId = 3006, Level = LogLevel.Error, Message = "Exception while unbinding address from interface")]
+    private static partial void LogUnbindException(ILogger<IPv6Rotator> logger, Exception ex);
 
     // Security: Whitelist patterns for input validation
     // These regex patterns prevent command injection by only allowing safe characters
@@ -308,17 +330,14 @@ public sealed class IPv6Rotator : IDisposable
             processStartInfo.ArgumentList.Add(_options.NetworkInterface);
 
             // Audit logging: log the command being executed for security audit trail
-            _logger.LogInformation(
-                "Executing command: {Command} {Address} {Subnet} dev {Interface}",
-                "ip -6 addr add",
-                address,
-                "/128",
-                _options.NetworkInterface);
+            string cmd = "ip -6 addr add";
+            string subnet = "/128";
+            LogExecutingCommand(_logger, cmd, address, subnet, _options.NetworkInterface);
 
             using var process = Process.Start(processStartInfo);
             if (process == null)
             {
-                _logger.LogError("Failed to start ip command process");
+                LogIpCommandStartFailed(_logger);
                 return false;
             }
 
@@ -327,16 +346,17 @@ public sealed class IPv6Rotator : IDisposable
             if (process.ExitCode != 0)
             {
                 string error = await process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
-                _logger.LogError("ip command failed with exit code {ExitCode}: {Error}", process.ExitCode, error);
+                string errorMsg = await process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+                LogIpCommandFailed(_logger, process.ExitCode, errorMsg);
                 return false;
             }
 
-            _logger.LogInformation("Successfully bound address to interface {Interface}", _options.NetworkInterface);
+            LogAddressBound(_logger, _options.NetworkInterface);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Exception while binding address to interface");
+            LogBindException(_logger, ex);
             return false;
         }
     }
@@ -392,17 +412,14 @@ public sealed class IPv6Rotator : IDisposable
             processStartInfo.ArgumentList.Add(_options.NetworkInterface);
 
             // Audit logging: log the command being executed for security audit trail
-            _logger.LogInformation(
-                "Executing command: {Command} {Address} {Subnet} dev {Interface}",
-                "ip -6 addr del",
-                address,
-                "/128",
-                _options.NetworkInterface);
+            string cmd2 = "ip -6 addr del";
+            string subnet2 = "/128";
+            LogExecutingCommand(_logger, cmd2, address, subnet2, _options.NetworkInterface);
 
             using var process = Process.Start(processStartInfo);
             if (process == null)
             {
-                _logger.LogError("Failed to start ip command process");
+                LogIpCommandStartFailed(_logger);
                 return false;
             }
 
@@ -411,16 +428,17 @@ public sealed class IPv6Rotator : IDisposable
             if (process.ExitCode != 0)
             {
                 string error = await process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
-                _logger.LogError("ip command failed with exit code {ExitCode}: {Error}", process.ExitCode, error);
+                string errorMsg = await process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+                LogIpCommandFailed(_logger, process.ExitCode, errorMsg);
                 return false;
             }
 
-            _logger.LogInformation("Successfully unbound address from interface {Interface}", _options.NetworkInterface);
+            LogAddressUnbound(_logger, _options.NetworkInterface);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Exception while unbinding address from interface");
+            LogUnbindException(_logger, ex);
             return false;
         }
     }
