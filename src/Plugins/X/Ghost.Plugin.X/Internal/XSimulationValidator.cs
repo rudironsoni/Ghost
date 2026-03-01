@@ -213,7 +213,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
             string content = request.Content.ToLowerInvariant();
 
             // Check for excessive hashtags
-            int hashtagCount = Regex.Matches(request.Content ?? string.Empty, @"#\w+").Count;
+            int hashtagCount = Regex.Count(request.Content ?? string.Empty, @"#\w+");
             if (hashtagCount > 5)
             {
                 warnings.Add(new ValidationError
@@ -226,7 +226,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
             }
 
             // Check for excessive mentions
-            int mentionCount = Regex.Matches(request.Content ?? string.Empty, @"@\w+").Count;
+            int mentionCount = Regex.Count(request.Content ?? string.Empty, @"@\w+");
             if (mentionCount > 5)
             {
                 warnings.Add(new ValidationError
