@@ -5,43 +5,64 @@ using System.Text;
 namespace Ghost.Stealth.TLS;
 
 /// <summary>
-/// Internal helper to compute the JA3 MD5 hash.
-/// MD5 is required by the JA3 specification for fingerprinting TLS ClientHello messages.
-/// The helper is internal and limits the scope of MD5 usage to this purpose only.
-/// TODO: Open a follow-up issue to audit MD5 usage if analyzers still flag it.
+/// Internal helper for computing the JA3 MD5 fingerprint hex string.
+///
+/// Rationale: The JA3 specification explicitly uses MD5 for generating a
+/// 32-character hex fingerprint of a TLS ClientHello. Although MD5 is
+/// cryptographically broken for security-sensitive scenarios, this helper
+/// encapsulates and documents a very narrow, auditable use of MD5 strictly
+/// for deterministic fingerprinting per the JA3 spec.
+///
+/// The helper exposes span-based and string-based overloads and uses the
+/// runtime-provided MD5 hashing APIs (TryHashData / HashData) together with
+/// Convert.ToHexString to avoid custom/hand-rolled MD5 implementations.
 /// </summary>
 internal static class JA3HashHelper
 {
-    internal static string ComputeJa3Md5Hex(ReadOnlySpan<byte> input)
+    /// <summary>
+    /// Compute the JA3 MD5 digest as a lowercase hex string from the provided bytes.
+    /// </summary>
+    /// <param name="data">The input bytes (JA3 string encoded as UTF-8, or raw ClientHello bytes).</param>
+    /// <returns>Lowercase 32-character MD5 hex digest.</returns>
+    internal static string ComputeJa3Md5Hex(ReadOnlySpan<byte> data)
     {
-        // MD5 is used here because the JA3 fingerprint specification requires it.
-        // This usage is non-cryptographic and intended only for deterministic
-        // fingerprinting of TLS ClientHello bytes.
-        Span<byte> hash = stackalloc byte[16];
-#if NET6_0_OR_GREATER
-        // Use static HashData API when available
-        byte[] result = MD5.HashData(input);
+        // Early exit for empty input is still a valid MD5 computation.
+        // Allocate a 16-byte stack buffer for the MD5 digest (MD5 outputs 16 bytes).
+        Span<byte> dest = stackalloc byte[16];
+
+        // Prefer the TryHashData API which writes directly into the destination
+        // span without extra allocations when available. Fall back to HashData
+        // which returns a byte[] if TryHashData isn't supported on a specific runtime.
+        try
+        {
+            if (MD5.TryHashData(data, dest, out _))
+            {
+                return Convert.ToHexString(dest).ToLowerInvariant();
+            }
+        }
+        catch (MissingMethodException)
+        {
+            // Some older runtimes may not expose TryHashData as a static method on MD5.
+            // Fall through to the HashData call below which is broadly available.
+        }
+
+        // Fallback: use HashData which returns a byte[] and then convert to hex.
+        byte[] result = MD5.HashData(data);
         return Convert.ToHexString(result).ToLowerInvariant();
-#else
-        using MD5 md5 = MD5.Create();
-        byte[] result = md5.ComputeHash(input.ToArray());
-        return Convert.ToHexString(result).ToLowerInvariant();
-#endif
     }
 
-    internal static string ComputeJa3Md5Hex(ReadOnlySpan<char> input)
+    /// <summary>
+    /// Compute the JA3 MD5 digest as a lowercase hex string from the provided JA3 string.
+    /// </summary>
+    /// <param name="ja3String">The JA3 string (ASCII/UTF-8) to hash.</param>
+    /// <returns>Lowercase 32-character MD5 hex digest.</returns>
+    internal static string ComputeJa3Md5Hex(string ja3String)
     {
-        byte[] bytes = Encoding.UTF8.GetBytes(input.ToString());
+        if (ja3String is null)
+            throw new ArgumentNullException(nameof(ja3String));
+
+        // Encode to UTF8 bytes and reuse the span-based implementation.
+        byte[] bytes = Encoding.UTF8.GetBytes(ja3String);
         return ComputeJa3Md5Hex(bytes);
-    }
-
-    internal static string ComputeJa3Md5Hex(ReadOnlySpan<byte> inputBytes, bool unused = false)
-    {
-        return ComputeJa3Md5Hex(inputBytes);
-    }
-
-    internal static string ComputeJa3Md5Hex(ReadOnlySpan<char> input, int dummy)
-    {
-        return ComputeJa3Md5Hex(input);
     }
 }
