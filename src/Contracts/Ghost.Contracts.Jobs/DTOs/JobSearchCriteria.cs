@@ -2,9 +2,8 @@ using System.Text.Json.Serialization;
 
 namespace Ghost.Contracts.Jobs;
 
-// Backing field required for Query property fallback logic (Query returns Keywords when _query is null).
-// IDE0032 (Use auto property) is suppressed because auto-properties cannot implement this fallback pattern.
-
+// Query is implemented as a forwarding property to Keywords to allow callers to use
+// either 'query' or 'keywords' while sharing the same underlying value.
 public enum TimePosted
 {
     Any,

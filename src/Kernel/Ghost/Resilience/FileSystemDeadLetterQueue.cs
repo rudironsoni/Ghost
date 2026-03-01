@@ -38,12 +38,13 @@ public sealed class DeadLetterQueueOptions
 
 /// <summary>
 /// File-system based dead letter queue implementation using JSON storage.
-///
-/// Note: The class name intentionally uses the "Queue" suffix to align with
-/// domain terminology (dead letter queue). While some analyzers warn about the
-/// "Queue" suffix for types, renaming would be a breaking API change for
-/// consumers. We keep the name for clarity and compatibility.
 /// </summary>
+/// <remarks>
+/// The term "DeadLetterQueue" is intentionally used because it is the well-known
+/// domain term for storage of failed messages. Renaming this type would be a
+/// breaking API change for existing consumers; therefore we keep the name and
+/// provide this documentation to explain the choice.
+/// </remarks>
 public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterStore
 {
     private static readonly Action<ILogger, string, Exception?> s_logReadFailed =
