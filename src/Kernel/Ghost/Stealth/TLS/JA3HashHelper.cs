@@ -58,8 +58,7 @@ internal static class JA3HashHelper
     /// <returns>Lowercase 32-character MD5 hex digest.</returns>
     internal static string ComputeJa3Md5Hex(string ja3String)
     {
-        if (ja3String is null)
-            throw new ArgumentNullException(nameof(ja3String));
+        ArgumentNullException.ThrowIfNull(ja3String);
 
         // Encode to UTF8 bytes and reuse the span-based implementation.
         byte[] bytes = Encoding.UTF8.GetBytes(ja3String);
