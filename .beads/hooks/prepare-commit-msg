@@ -21,9 +21,8 @@ if ! command -v bd >/dev/null 2>&1; then
     exit 0
 fi
 
-# Ensure remote mode for hooks
-export BD_DOLT_MODE=remote
-export BD_REMOTE_URL="https://doltremote.dolthub.com/r/rudironsoni/Ghost"
+# Ensure bd runs in local mode pointing at the local Dolt server.
+export BD_DOLT_MODE=local
 export BD_DOLT_HOST=127.0.0.1
 export BD_DOLT_PORT=3307
 
