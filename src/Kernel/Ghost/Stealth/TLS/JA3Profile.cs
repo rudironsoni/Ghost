@@ -54,7 +54,9 @@ public sealed class JA3Profile
     /// NOTE: This repository historically used MD5 to match the JA3 specification.
     /// To eliminate usages of broken algorithms (CA5351) we now produce a
     /// SHA-256-based fingerprint encoded as a lowercase 64-character hex string.
-    /// Callers should be aware this changes the fingerprint semantics and length.
+    /// This is an intentional, breaking change that alters the fingerprint
+    /// semantics and length; callers depending on the 32-character MD5 value
+    /// must be updated accordingly.
     public string ToJA3Hash()
     {
         string ja3String = ToJA3String();
