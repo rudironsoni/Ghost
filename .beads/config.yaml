@@ -4,28 +4,22 @@ database: dolt
 # Dolt-specific settings
 dolt:
   # Use Dolt in remote mode to connect directly to DoltHub.
-  # Valid values: server | remote | local
   mode: remote
   # Local server connection details (not used in remote mode)
   # host: 127.0.0.1
   # port: 13929
-  # When running in remote mode, server-specific connection settings are
-  # ignored. The remote repository is defined below under `remote.url`.
 
 # Sync mode (dolt-native keeps Dolt as source-of-truth with JSONL export)
 sync:
   mode: dolt-native
 
 # Enforced DoltHub remote for shared Beads state.
-# Branches MUST use this remote configuration.
 remote:
   name: dolthub
-  # Use DoltHub remote (org/repo format - Dolt expands to full URL)
   url: rudironsoni/Ghost
 
 sync-branch: "beads-sync"
 
-# Federation configuration
 federation:
   enabled: false
   peers: []
