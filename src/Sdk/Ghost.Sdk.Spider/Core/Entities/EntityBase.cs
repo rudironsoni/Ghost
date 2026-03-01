@@ -35,10 +35,9 @@ public abstract class EntityBase<T> where T : EntityBase<T>, new()
     // implementation has been moved into a non-generic helper below. The public
     // static method is retained as a thin compatibility facade to avoid breaking
     // existing callers.
-    // Note: The metadata helper is implemented in EntityBaseHelpers to avoid static
-    // members on generic types (CA1000). We expose a thin compatibility facade so
-    // existing callers using EntityBase<T>.GetMetadata() continue to work.
-    public static EntityMetadata GetMetadata() => EntityBaseHelpers.GetMetadata<T>();
+    // Note: Metadata retrieval has been moved to a central provider to avoid
+    // static members on generic types. Callers should use EntityMetadataProvider.GetMetadata<T>().
+    // The public facade is removed in favor of the provider.
 
     /// <summary>
     /// Validates the entity instance according to any validation rules defined by attributes.
