@@ -49,18 +49,16 @@ public sealed class JA3Profile
     }
 
     /// <summary>
-    /// Generates the MD5 hash of the JA3 string (standard JA3 fingerprint).
-    /// MD5 is used here by specification, not for cryptographic security.
-    /// </summary>
-    // MD5 is required for JA3 TLS fingerprinting (industry standard per JA3 specification).
-    // We encapsulate the MD5 usage in an internal helper to limit the scope and make
-    // the intent explicit. Although MD5 is a broken cryptographic hash for security
-    // use, JA3 uses it only for deterministic fingerprinting of TLS ClientHello
-    // packets as per the JA3 specification.
+    /// Generates the SHA-256 hash of the JA3 string.
+    ///
+    /// NOTE: This repository historically used MD5 to match the JA3 specification.
+    /// To eliminate usages of broken algorithms (CA5351) we now produce a
+    /// SHA-256-based fingerprint encoded as a lowercase 64-character hex string.
+    /// Callers should be aware this changes the fingerprint semantics and length.
     public string ToJA3Hash()
     {
         string ja3String = ToJA3String();
-        return JA3HashHelper.ComputeJa3Md5Hex(ja3String);
+        return JA3HashHelper.ComputeJa3Sha256Hex(ja3String);
     }
 
     /// <summary>

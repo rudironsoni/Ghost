@@ -31,7 +31,7 @@ public class JA3ProfileTests : ReliabilityTestBase
     }
 
     [Fact]
-    public void ToJA3Hash_WithValidProfile_ReturnsMD5Hash()
+    public void ToJA3Hash_WithValidProfile_ReturnsHash()
     {
         // Arrange
         var profile = new JA3Profile
@@ -48,8 +48,8 @@ public class JA3ProfileTests : ReliabilityTestBase
 
         // Assert
         hash.Should().NotBeNullOrEmpty();
-        hash.Should().HaveLength(32); // MD5 hash is 32 hex characters
-        hash.Should().MatchRegex("^[a-f0-9]{32}$"); // Lowercase hex
+        hash.Should().HaveLength(64); // SHA-256 hash is 64 hex characters
+        hash.Should().MatchRegex("^[a-f0-9]{64}$"); // Lowercase hex
     }
 
     [Fact]
