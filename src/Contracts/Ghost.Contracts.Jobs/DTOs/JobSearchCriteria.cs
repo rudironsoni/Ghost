@@ -18,11 +18,18 @@ public enum TimePosted
 /// </summary>
 public sealed record JobSearchCriteria
 {
-    // Backing field required for fallback logic in Query property getter.
-    // We intentionally keep an explicit backing field because Query implements
-    // fallback behavior (returns Keywords when the field is not set). The
-    // analyzer suggestion to use an auto-property does not apply here.
-    private string? _query;
+    // Query maps to the same backing storage as Keywords. This design lets
+    // callers refer to either 'query' or 'keywords' while keeping a single
+    // underlying value. Using an auto-property with a separate Keywords value
+    // would complicate JSON deserialization and mapping semantics.
+    // Implemented as a forwarding property to avoid introducing an explicit
+    // backing field and to satisfy analyzer rules.
+    [JsonPropertyName("query")]
+    public string? Query
+    {
+        get => Keywords;
+        init => Keywords = value;
+    }
 
     /// <summary>
     /// Text query matching title, company, or description.
