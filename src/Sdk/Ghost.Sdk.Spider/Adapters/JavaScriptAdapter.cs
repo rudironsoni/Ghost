@@ -238,7 +238,8 @@ public class JavaScriptAdapter : IContentAdapter
     /// <summary>
     /// Releases resources used by the adapter.
     /// </summary>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA1816:Dispose methods should call SuppressFinalize", Justification = "This is an async-only disposable class following the IAsyncDisposable pattern. GC.SuppressFinalize is appropriately called in DisposeAsync.")]
+    // Follow recommended dispose pattern for async disposables: ensure GC.SuppressFinalize
+    // is called when disposing to avoid finalizer overhead if one is ever added.
     public async ValueTask DisposeAsync()
     {
         await DisposeAsyncCore().ConfigureAwait(false);

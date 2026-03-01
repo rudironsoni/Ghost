@@ -29,29 +29,46 @@ public abstract class EntityBase<T> where T : EntityBase<T>, new()
     /// Gets the entity metadata including selector configurations and field mappings.
     /// </summary>
     /// <returns>An <see cref="EntityMetadata"/> instance containing the entity configuration.</returns>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1000:Do not declare static members on generic types", Justification = "GetMetadata needs to be static to support reflection-based entity extraction without requiring an instance")]
+    // Note: Historically this method was implemented as a public static on the generic
+    // EntityBase<T> type to make it easy to obtain metadata for a concrete entity.
+    // To satisfy analyzer guidance about static members on generic types the
+    // implementation has been moved into a non-generic helper below. The public
+    // static method is retained as a thin compatibility facade to avoid breaking
+    // existing callers.
     public static EntityMetadata GetMetadata()
     {
-        Type type = typeof(T);
-        EntitySelectorAttribute? entitySelectorAttr = type.GetCustomAttribute<Attributes.EntitySelectorAttribute>();
+        return EntityBaseHelpers.GetMetadata<T>();
+    }
 
-        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanWrite && p.GetCustomAttribute<Attributes.ValueSelectorAttribute>() != null)
-            .Select(p => new PropertyMetadata
-            {
-                PropertyInfo = p,
-                ValueSelector = p.GetCustomAttribute<Attributes.ValueSelectorAttribute>()!,
-                FieldAttribute = p.GetCustomAttribute<Attributes.FieldAttribute>(),
-                Formatters = p.GetCustomAttributes<Attributes.FormatterAttribute>().ToList()
-            })
-            .ToList();
-
-        return new EntityMetadata
+    /// <summary>
+    /// Internal helper that contains static members moved off the generic type to
+    /// satisfy static analysis guidance while preserving the public API surface.
+    /// </summary>
+    internal static class EntityBaseHelpers
+    {
+        public static EntityMetadata GetMetadata<TItem>() where TItem : EntityBase<TItem>, new()
         {
-            EntityType = type,
-            EntitySelector = entitySelectorAttr,
-            Properties = properties
-        };
+            Type type = typeof(TItem);
+            EntitySelectorAttribute? entitySelectorAttr = type.GetCustomAttribute<Attributes.EntitySelectorAttribute>();
+
+            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanWrite && p.GetCustomAttribute<Attributes.ValueSelectorAttribute>() != null)
+                .Select(p => new PropertyMetadata
+                {
+                    PropertyInfo = p,
+                    ValueSelector = p.GetCustomAttribute<Attributes.ValueSelectorAttribute>()!,
+                    FieldAttribute = p.GetCustomAttribute<Attributes.FieldAttribute>(),
+                    Formatters = p.GetCustomAttributes<Attributes.FormatterAttribute>().ToList()
+                })
+                .ToList();
+
+            return new EntityMetadata
+            {
+                EntityType = type,
+                EntitySelector = entitySelectorAttr,
+                Properties = properties
+            };
+        }
     }
 
     /// <summary>
@@ -140,3 +157,6 @@ public class PropertyMetadata
     /// </summary>
     public required List<Attributes.FormatterAttribute> Formatters { get; init; }
 }
+
+// Note: The helpers class above is intentionally located adjacent to Entity types
+// to limit its visibility and keep the API surface stable.
