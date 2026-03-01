@@ -37,15 +37,9 @@ public sealed class DeadLetterQueueOptions
 }
 
 /// <summary>
-/// File-system based dead letter queue implementation using JSON storage.
+/// File-system based dead letter store implementation using JSON storage.
 /// </summary>
-/// <remarks>
-/// The term "DeadLetterQueue" is intentionally used because it is the well-known
-/// domain term for storage of failed messages. Renaming this type would be a
-/// breaking API change for existing consumers; therefore we keep the name and
-/// provide this documentation to explain the choice.
-/// </remarks>
-public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterStore
+public sealed class FileSystemDeadLetterStore : IGenericDeadLetterStore
 {
     private static readonly Action<ILogger, string, Exception?> s_logReadFailed =
         LoggerMessage.Define<string>(LogLevel.Warning, new EventId(1, nameof(ReadJobAsync)), "Failed to read dead letter job file {Path}");
@@ -57,7 +51,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterStore
         LoggerMessage.Define<string>(LogLevel.Warning, new EventId(3, nameof(ArchiveAsync)), "Failed to archive dead letter job file {Path}");
 
     private readonly DeadLetterQueueOptions _options;
-    private readonly ILogger<FileSystemDeadLetterQueue> _logger;
+    private readonly ILogger<FileSystemDeadLetterStore> _logger;
     private readonly TimeProvider _timeProvider;
     private readonly JsonSerializerOptions _serializerOptions;
     private readonly string _activePath;
@@ -66,21 +60,21 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterStore
     private DateTime _lastArchiveCheckUtc = DateTime.MinValue;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FileSystemDeadLetterQueue"/> class.
+    /// Initializes a new instance of the <see cref="FileSystemDeadLetterStore"/> class.
     /// </summary>
     /// <param name="rootPath">The root path for DLQ storage.</param>
-    public FileSystemDeadLetterQueue(string rootPath)
+    public FileSystemDeadLetterStore(string rootPath)
         : this(new DeadLetterQueueOptions { RootPath = rootPath })
     {
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FileSystemDeadLetterQueue"/> class.
+    /// Initializes a new instance of the <see cref="FileSystemDeadLetterStore"/> class.
     /// </summary>
     /// <param name="options">Dead letter queue options.</param>
     /// <param name="logger">Optional logger instance.</param>
     /// <param name="timeProvider">Optional time provider instance.</param>
-    public FileSystemDeadLetterQueue(DeadLetterQueueOptions options, ILogger<FileSystemDeadLetterQueue>? logger = null, TimeProvider? timeProvider = null)
+    public FileSystemDeadLetterStore(DeadLetterQueueOptions options, ILogger<FileSystemDeadLetterStore>? logger = null, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(options);
 
@@ -96,7 +90,7 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterStore
             AutoArchiveAfter = options.AutoArchiveAfter,
             ArchiveCheckInterval = options.ArchiveCheckInterval
         };
-        _logger = logger ?? NullLogger<FileSystemDeadLetterQueue>.Instance;
+        _logger = logger ?? NullLogger<FileSystemDeadLetterStore>.Instance;
         _timeProvider = timeProvider ?? TimeProvider.System;
         _activePath = Path.Combine(_options.RootPath, "active");
         _archivePath = Path.Combine(_options.RootPath, "archived");
@@ -109,12 +103,12 @@ public sealed class FileSystemDeadLetterQueue : IGenericDeadLetterStore
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FileSystemDeadLetterQueue"/> class.
+    /// Initializes a new instance of the <see cref="FileSystemDeadLetterStore"/> class.
     /// </summary>
     /// <param name="options">Dead letter queue options.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="timeProvider">Optional time provider instance.</param>
-    public FileSystemDeadLetterQueue(IOptions<DeadLetterQueueOptions> options, ILogger<FileSystemDeadLetterQueue> logger, TimeProvider? timeProvider = null)
+    public FileSystemDeadLetterStore(IOptions<DeadLetterQueueOptions> options, ILogger<FileSystemDeadLetterStore> logger, TimeProvider? timeProvider = null)
         : this(options?.Value ?? new DeadLetterQueueOptions(), logger, timeProvider)
     {
     }
