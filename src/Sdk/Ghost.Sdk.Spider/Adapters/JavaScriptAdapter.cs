@@ -29,7 +29,7 @@ internal static partial class JavaScriptAdapterLogMessages
 /// This adapter uses headless browsers to execute JavaScript and wait for dynamic content.
 /// It's suitable for single-page applications and sites that rely heavily on client-side rendering.
 /// </remarks>
-public class JavaScriptAdapter : IContentAdapter, IDisposable, IAsyncDisposable
+public class JavaScriptAdapter : IContentAdapter, IAsyncDisposable
 {
     private static readonly string[] BrowserArgs = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"];
     private readonly ILogger<JavaScriptAdapter>? _logger;
@@ -270,23 +270,6 @@ public class JavaScriptAdapter : IContentAdapter, IDisposable, IAsyncDisposable
         }
 
         _disposed = true;
-    }
-
-    /// <summary>
-    /// Standard synchronous dispose pattern. Disposes managed resources.
-    /// </summary>
-    public void Dispose()
-    {
-        lock (_disposeGate)
-        {
-            if (_disposed)
-                return;
-
-            // Run async core synchronously as a best-effort cleanup for callers
-            DisposeAsyncCore().AsTask().GetAwaiter().GetResult();
-            _disposed = true;
-            GC.SuppressFinalize(this);
-        }
     }
 
 #pragma warning restore IDE1006
