@@ -19,11 +19,10 @@ public enum TimePosted
 public sealed record JobSearchCriteria
 {
     // Backing field required for fallback logic in Query property getter.
-    // IDE0032 (Use auto property) is suppressed here because we need custom logic:
-    // Query returns Keywords when _query is null.
-#pragma warning disable IDE0032
+    // We intentionally keep an explicit backing field because Query implements
+    // fallback behavior (returns Keywords when the field is not set). The
+    // analyzer suggestion to use an auto-property does not apply here.
     private string? _query;
-#pragma warning restore IDE0032
 
     /// <summary>
     /// Text query matching title, company, or description.

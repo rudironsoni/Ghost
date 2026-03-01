@@ -52,17 +52,32 @@ public sealed class JA3Profile
     /// Generates the MD5 hash of the JA3 string (standard JA3 fingerprint).
     /// MD5 is used here by specification, not for cryptographic security.
     /// </summary>
-// MD5 is required for JA3 TLS fingerprinting (industry standard per JA3 specification).
-// This is an acceptable security exception per project policy - JA3 uses MD5 for fingerprint hashing only.
-#pragma warning disable CA5351 // Do Not Use Broken Cryptographic Algorithms - MD5 is JA3 standard
+    // MD5 is required for JA3 TLS fingerprinting (industry standard per JA3 specification).
+    // We encapsulate the MD5 usage in an internal helper to limit the scope and make
+    // the intent explicit. Although MD5 is a broken cryptographic hash for security
+    // use, JA3 uses it only for deterministic fingerprinting of TLS ClientHello
+    // packets as per the JA3 specification.
     public string ToJA3Hash()
     {
         string ja3String = ToJA3String();
-        byte[] bytes = Encoding.UTF8.GetBytes(ja3String);
-        byte[] hash = MD5.HashData(bytes);
-        return Convert.ToHexString(hash).ToLowerInvariant();
+        return JA3HashHelper.ComputeMd5Hex(ja3String);
     }
-#pragma warning restore CA5351
+
+    internal static class JA3HashHelper
+    {
+        /// <summary>
+        /// Compute the MD5 hash of the input and return a lowercase hex string.
+        /// MD5 is used here because the JA3 fingerprint specification requires it.
+        /// </summary>
+        internal static string ComputeMd5Hex(string input)
+        {
+            // TODO: Open an issue to document MD5 rationale and any future migration.
+            byte[] bytes = Encoding.UTF8.GetBytes(input);
+            using MD5 md5 = MD5.Create();
+            byte[] hash = md5.ComputeHash(bytes);
+            return Convert.ToHexString(hash).ToLowerInvariant();
+        }
+    }
 
     /// <summary>
     /// Creates a deep copy of this profile.
