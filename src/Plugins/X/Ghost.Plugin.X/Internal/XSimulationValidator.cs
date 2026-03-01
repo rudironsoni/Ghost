@@ -17,17 +17,17 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
     public XSimulationValidator(IOptions<XOptions> options)
     {
         _options = options?.Value ?? new XOptions();
-        ContentSplitter = new XPostContentSplitter(_options.MaxTweetLength);
+        ContentSplitter = new XPostContentSplitter(XOptions.MaxTweetLength);
     }
 
     /// <inheritdoc />
     public string PlatformName => "X";
 
     /// <inheritdoc />
-    public int MaxContentLength => _options.MaxTweetLength;
+    public int MaxContentLength => XOptions.MaxTweetLength;
 
     /// <inheritdoc />
-    public int MaxMediaAttachments => _options.MaxMediaAttachments;
+    public int MaxMediaAttachments => XOptions.MaxMediaAttachments;
 
     /// <inheritdoc />
     public IReadOnlyList<string> SupportedMediaTypes =>
@@ -60,22 +60,22 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
             {
                 int effectiveLength = CalculateEffectiveLength(part);
 
-                if (effectiveLength > _options.MaxTweetLength)
+                if (effectiveLength > XOptions.MaxTweetLength)
                 {
                     errors.Add(new ValidationError
                     {
                         Code = "CONTENT_TOO_LONG",
-                        Message = $"Tweet {index + 1} exceeds {_options.MaxTweetLength} characters (actual: {effectiveLength})",
+                        Message = $"Tweet {index + 1} exceeds {XOptions.MaxTweetLength} characters (actual: {effectiveLength})",
                         Field = nameof(request.Content),
                         Severity = ValidationSeverity.Error
                     });
                 }
-                else if (effectiveLength > _options.MaxTweetLength * 0.9)
+                else if (effectiveLength > XOptions.MaxTweetLength * 0.9)
                 {
                     warnings.Add(new ValidationError
                     {
                         Code = "CONTENT_NEAR_LIMIT",
-                        Message = $"Tweet {index + 1} is near character limit ({effectiveLength}/{_options.MaxTweetLength})",
+                        Message = $"Tweet {index + 1} is near character limit ({effectiveLength}/{XOptions.MaxTweetLength})",
                         Field = nameof(request.Content),
                         Severity = ValidationSeverity.Warning
                     });
@@ -165,23 +165,23 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
             }
 
             // Check media limits
-            if (imageCount > _options.MaxMediaAttachments)
+            if (imageCount > XOptions.MaxMediaAttachments)
             {
                 errors.Add(new ValidationError
                 {
                     Code = "TOO_MANY_IMAGES",
-                    Message = $"Maximum {_options.MaxMediaAttachments} images allowed per tweet",
+                    Message = $"Maximum {XOptions.MaxMediaAttachments} images allowed per tweet",
                     Field = nameof(request.MediaUrls),
                     Severity = ValidationSeverity.Error
                 });
             }
 
-            if (videoCount > _options.MaxVideoAttachments)
+            if (videoCount > XOptions.MaxVideoAttachments)
             {
                 errors.Add(new ValidationError
                 {
                     Code = "TOO_MANY_VIDEOS",
-                    Message = $"Maximum {_options.MaxVideoAttachments} video allowed per tweet",
+                    Message = $"Maximum {XOptions.MaxVideoAttachments} video allowed per tweet",
                     Field = nameof(request.MediaUrls),
                     Severity = ValidationSeverity.Error
                 });

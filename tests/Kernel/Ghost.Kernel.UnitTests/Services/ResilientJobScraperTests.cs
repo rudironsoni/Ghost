@@ -25,12 +25,12 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
     private static ResilientJobScraper CreateScraper(
         IJobScraper? innerScraper = null,
         ICircuitBreaker? circuitBreaker = null,
-        IGenericDeadLetterQueue? deadLetterQueue = null)
+        IGenericDeadLetterStore? deadLetterQueue = null)
     {
         return new ResilientJobScraper(
             innerScraper ?? Mock.Of<IJobScraper>(),
             circuitBreaker ?? Mock.Of<ICircuitBreaker>(),
-            deadLetterQueue ?? Mock.Of<IGenericDeadLetterQueue>(),
+            deadLetterQueue ?? Mock.Of<IGenericDeadLetterStore>(),
             NullLogger<ResilientJobScraper>.Instance);
     }
 
@@ -44,7 +44,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
             _ = new ResilientJobScraper(
                 null!,
                 Mock.Of<ICircuitBreaker>(),
-                Mock.Of<IGenericDeadLetterQueue>(),
+                Mock.Of<IGenericDeadLetterStore>(),
                 NullLogger<ResilientJobScraper>.Instance);
         };
 
@@ -59,7 +59,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
             _ = new ResilientJobScraper(
                 Mock.Of<IJobScraper>(),
                 null!,
-                Mock.Of<IGenericDeadLetterQueue>(),
+                Mock.Of<IGenericDeadLetterStore>(),
                 NullLogger<ResilientJobScraper>.Instance);
         };
 
@@ -87,7 +87,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         var scraper = new ResilientJobScraper(
             Mock.Of<IJobScraper>(),
             Mock.Of<ICircuitBreaker>(),
-            Mock.Of<IGenericDeadLetterQueue>(),
+            Mock.Of<IGenericDeadLetterStore>(),
             null!);
 
         scraper.Should().NotBeNull();
@@ -153,7 +153,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         mockCircuit.Setup(x => x.ExecuteAsync(It.IsAny<Func<Task<IReadOnlyList<JobListing>>>>()))
             .ThrowsAsync(exception);
 
-        var mockDlq = new Mock<IGenericDeadLetterQueue>();
+        var mockDlq = new Mock<IGenericDeadLetterStore>();
 
         ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
 
@@ -179,7 +179,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         mockCircuit.Setup(x => x.ExecuteAsync(It.IsAny<Func<Task<IReadOnlyList<JobListing>>>>()))
             .ThrowsAsync(new OperationCanceledException());
 
-        var mockDlq = new Mock<IGenericDeadLetterQueue>();
+        var mockDlq = new Mock<IGenericDeadLetterStore>();
 
         ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
 
@@ -233,7 +233,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         mockCircuit.Setup(x => x.ExecuteAsync(It.IsAny<Func<Task<JobListing>>>()))
             .ThrowsAsync(exception);
 
-        var mockDlq = new Mock<IGenericDeadLetterQueue>();
+        var mockDlq = new Mock<IGenericDeadLetterStore>();
 
         ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
 
@@ -289,7 +289,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         mockCircuit.Setup(x => x.ExecuteAsync(It.IsAny<Func<Task<JobApplication>>>()))
             .ThrowsAsync(exception);
 
-        var mockDlq = new Mock<IGenericDeadLetterQueue>();
+        var mockDlq = new Mock<IGenericDeadLetterStore>();
 
         ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
 
@@ -397,7 +397,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         mockCircuit.Setup(x => x.ExecuteAsync(It.IsAny<Func<Task<bool>>>()))
             .ThrowsAsync(exception);
 
-        var mockDlq = new Mock<IGenericDeadLetterQueue>();
+        var mockDlq = new Mock<IGenericDeadLetterStore>();
 
         ResilientJobScraper scraper = CreateScraper(mockInner.Object, mockCircuit.Object, mockDlq.Object);
 
@@ -459,7 +459,7 @@ public sealed class ResilientJobScraperTests : ReliabilityTestBase
         mockCircuit.Setup(x => x.ExecuteAsync(It.IsAny<Func<Task<IReadOnlyList<JobListing>>>>()))
             .ThrowsAsync(originalException);
 
-        var mockDlq = new Mock<IGenericDeadLetterQueue>();
+        var mockDlq = new Mock<IGenericDeadLetterStore>();
         mockDlq.Setup(x => x.EnqueueAsync(
                 It.IsAny<object>(),
                 It.IsAny<string>(),

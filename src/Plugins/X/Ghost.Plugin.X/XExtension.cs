@@ -72,7 +72,7 @@ public class XExtension : Ghost.Contracts.IExtension
         services.AddSingleton<XPostContentSplitter>(sp =>
         {
             IOptions<XOptions> options = sp.GetRequiredService<IOptions<XOptions>>();
-            return new XPostContentSplitter(options.Value.MaxTweetLength);
+            return new XPostContentSplitter(XOptions.MaxTweetLength);
         });
 
         services.AddScoped<XAuthenticator>();
@@ -124,7 +124,7 @@ public static class XServiceCollectionExtensions
         services.AddSingleton<XPostContentSplitter>(sp =>
         {
             XOptions options = sp.GetService<IOptions<XOptions>>()?.Value ?? new XOptions();
-            return new XPostContentSplitter(options.MaxTweetLength);
+            return new XPostContentSplitter(XOptions.MaxTweetLength);
         });
 
         services.AddScoped<XAuthenticator>();
@@ -163,7 +163,7 @@ public static class XServiceCollectionExtensions
         services.AddSingleton<XPostContentSplitter>(sp =>
         {
             IOptions<XOptions> options = sp.GetRequiredService<IOptions<XOptions>>();
-            return new XPostContentSplitter(options.Value.MaxTweetLength);
+            return new XPostContentSplitter(XOptions.MaxTweetLength);
         });
 
         services.AddScoped<XAuthenticator>();

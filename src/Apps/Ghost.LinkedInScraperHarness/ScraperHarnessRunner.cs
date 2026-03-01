@@ -13,11 +13,35 @@ namespace Ghost.LinkedInScraperHarness;
 /// <summary>
 /// Hosted service that runs the LinkedIn scraper harness.
 /// </summary>
-public sealed class ScraperHarnessRunner : IHostedService
+public sealed partial class ScraperHarnessRunner : IHostedService
 {
     private readonly ILogger<ScraperHarnessRunner> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly ScraperHarnessOptions _options;
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Information, Message = "LinkedIn Scraper Harness starting...")]
+        public static partial void Starting(ILogger logger);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "LinkedIn Scraper Harness completed")]
+        public static partial void Completed(ILogger logger);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Error running scraper harness")]
+        public static partial void Error(ILogger logger, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Searching for jobs with keywords: {Keywords}, location: {Location}")]
+        public static partial void Searching(ILogger logger, string keywords, string location);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Found {Count} jobs")]
+        public static partial void Found(ILogger logger, int count);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Fetching detailed information for {Count} jobs...")]
+        public static partial void FetchingDetails(ILogger logger, int count);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to fetch details for job {JobId}: {Title}")]
+        public static partial void FetchDetailsFailed(ILogger logger, Exception ex, string jobId, string title);
+    }
 
     public ScraperHarnessRunner(
         ILogger<ScraperHarnessRunner> logger,
@@ -31,13 +55,13 @@ public sealed class ScraperHarnessRunner : IHostedService
         _options = options?.Value ?? new ScraperHarnessOptions();
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("LinkedIn Scraper Harness starting...");
+        public async Task StartAsync(CancellationToken cancellationToken)
+        {
+        Log.Starting(_logger);
 
         try
         {
-            await using AsyncServiceScope scope = _serviceProvider.CreateAsyncScope();
+            IServiceScope scope = _serviceProvider.CreateScope();
 
             LinkedInJobClient jobClient = scope.ServiceProvider.GetRequiredService<LinkedInJobClient>();
 
@@ -50,11 +74,11 @@ public sealed class ScraperHarnessRunner : IHostedService
                 await RunSingleSearchAsync(jobClient, cancellationToken).ConfigureAwait(false);
             }
 
-            _logger.LogInformation("LinkedIn Scraper Harness completed");
+            Log.Completed(_logger);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error running scraper harness");
+            Log.Error(_logger, ex);
             throw;
         }
 
@@ -70,8 +94,7 @@ public sealed class ScraperHarnessRunner : IHostedService
 
     private async Task RunSingleSearchAsync(LinkedInJobClient jobClient, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Searching for jobs with keywords: {Keywords}, location: {Location}",
-            _options.SearchKeywords, _options.Location);
+        Log.Searching(_logger, _options.SearchKeywords, _options.Location);
 
         JobSearchCriteria criteria = new()
         {
@@ -83,7 +106,7 @@ public sealed class ScraperHarnessRunner : IHostedService
         IReadOnlyList<JobListing> jobs = await jobClient.SearchJobsAsync(criteria, cancellationToken)
             .ConfigureAwait(false);
 
-        _logger.LogInformation("Found {Count} jobs", jobs.Count);
+        Log.Found(_logger, jobs.Count);
 
         if (_options.FetchDetails && jobs.Count > 0)
         {
@@ -98,7 +121,7 @@ public sealed class ScraperHarnessRunner : IHostedService
         IReadOnlyList<JobListing> jobs,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Fetching detailed information for {Count} jobs...", jobs.Count);
+        Log.FetchingDetails(_logger, jobs.Count);
 
         List<JobListing> detailedJobs = [];
 
@@ -114,7 +137,7 @@ public sealed class ScraperHarnessRunner : IHostedService
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to fetch details for job {JobId}: {Title}", job.Id, job.Title);
+                Log.FetchDetailsFailed(_logger, ex, job.Id, job.Title);
                 detailedJobs.Add(job);
             }
         }
@@ -141,15 +164,15 @@ public sealed class ScraperHarnessRunner : IHostedService
         }
     }
 
-    private static void OutputJson(IReadOnlyList<JobListing> jobs)
-    {
-        JsonSerializerOptions options = new(JsonSerializerDefaults.General)
+        private static readonly JsonSerializerOptions s_jsonOptions = new(JsonSerializerDefaults.General)
         {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        string json = JsonSerializer.Serialize(jobs, options);
+        private static void OutputJson(IReadOnlyList<JobListing> jobs)
+        {
+        string json = JsonSerializer.Serialize(jobs, s_jsonOptions);
         Console.WriteLine(json);
     }
 
@@ -244,13 +267,12 @@ public sealed class ScraperHarnessRunner : IHostedService
                 MaxResults = maxResults
             };
 
-            _logger.LogInformation("Searching for jobs with keywords: {Keywords}, location: {Location}",
-                keywords, location);
+            Log.Searching(_logger, keywords, location);
 
             IReadOnlyList<JobListing> jobs = await jobClient.SearchJobsAsync(criteria, cancellationToken)
                 .ConfigureAwait(false);
 
-            _logger.LogInformation("Found {Count} jobs", jobs.Count);
+            Log.Found(_logger, jobs.Count);
 
             await OutputResultsAsync(jobs, cancellationToken).ConfigureAwait(false);
         }
