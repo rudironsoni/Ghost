@@ -22,7 +22,7 @@ public class EntityParser
     /// <returns>A list of extracted entities.</returns>
     public static List<T> Parse<T>(ExtractionContext context) where T : EntityBase<T>, new()
     {
-        EntityMetadata metadata = EntityBase<T>.GetMetadata();
+        EntityMetadata metadata = EntityMetadataProvider.GetMetadata<T>();
         List<T> entities = [];
 
         // If no entity selector is defined, treat the entire content as a single entity
@@ -55,7 +55,7 @@ public class EntityParser
     /// <returns>The extracted entity, or null if extraction fails.</returns>
     public static T? ParseSingle<T>(ExtractionContext context) where T : EntityBase<T>, new()
     {
-        EntityMetadata metadata = EntityBase<T>.GetMetadata();
+        EntityMetadata metadata = EntityMetadataProvider.GetMetadata<T>();
 
         // If an entity selector is defined, use it to find the first matching entity
         if (metadata.EntitySelector != null)
