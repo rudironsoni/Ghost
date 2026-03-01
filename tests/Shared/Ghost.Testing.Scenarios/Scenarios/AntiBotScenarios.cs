@@ -6,13 +6,25 @@ using Microsoft.Extensions.Logging;
 namespace Ghost.Testing.Scenarios.Scenarios;
 
 /// <summary>
+/// Logger messages for AntiBotScenarios.
+/// </summary>
+public static partial class AntiBotScenariosLogMessages
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Scenario: antibot/simple-challenge")]
+    public static partial void SimpleChallenge(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Anti-bot challenge verified")]
+    public static partial void ChallengeVerified(this ILogger logger);
+}
+
+/// <summary>
 /// Anti-bot scenarios for testing JavaScript challenges and bot detection.
 /// </summary>
 public static class AntiBotScenarios
 {
     public static IResult SimpleChallengeHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Scenario: antibot/simple-challenge");
+        logger.SimpleChallenge();
 
         bool verified = context.Request.Cookies.ContainsKey("ghost_verified");
 
@@ -129,7 +141,7 @@ public static class AntiBotScenarios
 
     public static IResult VerifyChallengeHandler(HttpContext context, ILogger<ScenarioRegistry> logger)
     {
-        logger.LogInformation("Anti-bot challenge verified");
+        logger.ChallengeVerified();
 
         context.Response.Cookies.Append("ghost_verified", "true", new CookieOptions
         {

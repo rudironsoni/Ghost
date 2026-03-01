@@ -48,36 +48,38 @@ public sealed class CsvFeedExporter : IFeedExporter
             return;
         }
 
-        await using StreamWriter writer = new StreamWriter(output, _encoding, leaveOpen: true);
-
-        // Get properties from the first item
-        PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanRead)
-            .ToArray();
-
-        // Write headers if requested
-        if (_includeHeaders)
+        StreamWriter writer = new StreamWriter(output, _encoding, leaveOpen: true);
+        await using (writer.ConfigureAwait(false))
         {
-            string headers = string.Join(_delimiter, properties.Select(p => EscapeField(p.Name)));
-            await writer.WriteLineAsync(headers).ConfigureAwait(false);
-        }
+            // Get properties from the first item
+            PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanRead)
+                .ToArray();
 
-        // Write data rows
-        foreach (T? item in itemsList)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            IEnumerable<string> values = properties.Select(p =>
+            // Write headers if requested
+            if (_includeHeaders)
             {
-                object? value = p.GetValue(item);
-                return EscapeField(FormatValue(value));
-            });
+                string headers = string.Join(_delimiter, properties.Select(p => EscapeField(p.Name)));
+                await writer.WriteLineAsync(headers).ConfigureAwait(false);
+            }
 
-            string row = string.Join(_delimiter, values);
-            await writer.WriteLineAsync(row).ConfigureAwait(false);
+            // Write data rows
+            foreach (T? item in itemsList)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                IEnumerable<string> values = properties.Select(p =>
+                {
+                    object? value = p.GetValue(item);
+                    return EscapeField(FormatValue(value));
+                });
+
+                string row = string.Join(_delimiter, values);
+                await writer.WriteLineAsync(row).ConfigureAwait(false);
+            }
+
+            await writer.FlushAsync(ct).ConfigureAwait(false);
         }
-
-        await writer.FlushAsync(ct).ConfigureAwait(false);
     }
 
     /// <summary>

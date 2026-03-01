@@ -258,12 +258,70 @@ internal sealed class SecureTypeResolver : ITypeResolver
 /// <summary>
 /// Compiles spider configurations from YAML or JSON into C# objects.
 /// </summary>
-public sealed class ConfigurationCompiler
+public sealed partial class ConfigurationCompiler
 {
     private readonly IDeserializer _yamlDeserializer;
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly SpiderConfigurationValidator _validator;
     private readonly ILogger<ConfigurationCompiler>? _logger;
+
+    // LoggerMessage source generators for high-performance logging (EventIds 1000-1099 for Configuration)
+    [LoggerMessage(EventId = 1000, Level = LogLevel.Debug, Message = "Starting YAML configuration compilation")]
+    private static partial void LogYamlCompilationStart(ILogger<ConfigurationCompiler> logger);
+
+    [LoggerMessage(EventId = 1001, Level = LogLevel.Warning, Message = "Configuration compilation failed: content is empty")]
+    private static partial void LogYamlContentEmpty(ILogger<ConfigurationCompiler> logger);
+
+    [LoggerMessage(EventId = 1002, Level = LogLevel.Warning, Message = "Configuration compilation failed: YAML structure validation failed - {Error}")]
+    private static partial void LogYamlStructureValidationFailed(ILogger<ConfigurationCompiler> logger, string error);
+
+    [LoggerMessage(EventId = 1003, Level = LogLevel.Debug, Message = "Deserializing YAML configuration with type constraints")]
+    private static partial void LogYamlDeserializing(ILogger<ConfigurationCompiler> logger);
+
+    [LoggerMessage(EventId = 1004, Level = LogLevel.Warning, Message = "Configuration compilation failed: deserialization returned null")]
+    private static partial void LogYamlDeserializationNull(ILogger<ConfigurationCompiler> logger);
+
+    [LoggerMessage(EventId = 1005, Level = LogLevel.Information, Message = "Successfully deserialized YAML configuration for spider '{SpiderName}'")]
+    private static partial void LogYamlDeserialized(ILogger<ConfigurationCompiler> logger, string spiderName);
+
+    [LoggerMessage(EventId = 1006, Level = LogLevel.Debug, Message = "Generated new ID for configuration: {ConfigId}")]
+    private static partial void LogConfigIdGenerated(ILogger<ConfigurationCompiler> logger, string configId);
+
+    [LoggerMessage(EventId = 1007, Level = LogLevel.Warning, Message = "Configuration validation failed with {ErrorCount} errors: {Errors}")]
+    private static partial void LogValidationFailed(ILogger<ConfigurationCompiler> logger, int errorCount, string errors);
+
+    [LoggerMessage(EventId = 1008, Level = LogLevel.Information, Message = "Configuration compilation successful for spider '{SpiderName}' (ID: {ConfigId})")]
+    private static partial void LogCompilationSuccess(ILogger<ConfigurationCompiler> logger, string spiderName, string configId);
+
+    [LoggerMessage(EventId = 1009, Level = LogLevel.Error, Message = "Security violation during YAML deserialization")]
+    private static partial void LogYamlSecurityViolation(ILogger<ConfigurationCompiler> logger, Exception ex);
+
+    [LoggerMessage(EventId = 1010, Level = LogLevel.Warning, Message = "YAML parsing error during configuration compilation")]
+    private static partial void LogYamlParsingError(ILogger<ConfigurationCompiler> logger, Exception ex);
+
+    [LoggerMessage(EventId = 1011, Level = LogLevel.Error, Message = "Unexpected error during YAML configuration compilation")]
+    private static partial void LogYamlUnexpectedError(ILogger<ConfigurationCompiler> logger, Exception ex);
+
+    [LoggerMessage(EventId = 1012, Level = LogLevel.Debug, Message = "Starting JSON configuration compilation")]
+    private static partial void LogJsonCompilationStart(ILogger<ConfigurationCompiler> logger);
+
+    [LoggerMessage(EventId = 1013, Level = LogLevel.Warning, Message = "Configuration compilation failed: content is empty")]
+    private static partial void LogJsonContentEmpty(ILogger<ConfigurationCompiler> logger);
+
+    [LoggerMessage(EventId = 1014, Level = LogLevel.Debug, Message = "Deserializing JSON configuration")]
+    private static partial void LogJsonDeserializing(ILogger<ConfigurationCompiler> logger);
+
+    [LoggerMessage(EventId = 1015, Level = LogLevel.Warning, Message = "Configuration compilation failed: deserialization returned null")]
+    private static partial void LogJsonDeserializationNull(ILogger<ConfigurationCompiler> logger);
+
+    [LoggerMessage(EventId = 1016, Level = LogLevel.Information, Message = "Successfully deserialized JSON configuration for spider '{SpiderName}'")]
+    private static partial void LogJsonDeserialized(ILogger<ConfigurationCompiler> logger, string spiderName);
+
+    [LoggerMessage(EventId = 1017, Level = LogLevel.Warning, Message = "JSON parsing error during configuration compilation")]
+    private static partial void LogJsonParsingError(ILogger<ConfigurationCompiler> logger, Exception ex);
+
+    [LoggerMessage(EventId = 1018, Level = LogLevel.Error, Message = "Unexpected error during JSON configuration compilation")]
+    private static partial void LogJsonUnexpectedError(ILogger<ConfigurationCompiler> logger, Exception ex);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConfigurationCompiler"/> class.
@@ -327,41 +385,62 @@ public sealed class ConfigurationCompiler
     /// <returns>A result containing the compiled configuration or validation errors.</returns>
 public ConfigurationCompilationResult CompileFromYaml(string yamlContent)
     {
-        _logger?.LogDebug("Starting YAML configuration compilation");
+        if (_logger is not null)
+        {
+            LogYamlCompilationStart(_logger);
+        }
 
         if (string.IsNullOrWhiteSpace(yamlContent))
         {
-            _logger?.LogWarning("Configuration compilation failed: content is empty");
+            if (_logger is not null)
+            {
+                LogYamlContentEmpty(_logger);
+            }
             return ConfigurationCompilationResult.Failure("Configuration content is empty");
         }
 
         // Security: Validate YAML structure before deserialization to block malicious tags
         if (!ValidateYamlStructure(yamlContent, out string? structureError))
         {
-            _logger?.LogWarning("Configuration compilation failed: YAML structure validation failed - {Error}", structureError);
+            if (_logger is not null)
+            {
+                LogYamlStructureValidationFailed(_logger, structureError ?? "unknown error");
+            }
             return ConfigurationCompilationResult.Failure($"YAML structure validation failed: {structureError}");
         }
 
         try
         {
-            _logger?.LogDebug("Deserializing YAML configuration with type constraints");
+            if (_logger is not null)
+            {
+                LogYamlDeserializing(_logger);
+            }
 
             // Security: Use Deserialize<T> with specific expected type to prevent arbitrary object instantiation
             SpiderConfiguration config = _yamlDeserializer.Deserialize<SpiderConfiguration>(yamlContent);
 
             if (config == null)
             {
-                _logger?.LogWarning("Configuration compilation failed: deserialization returned null");
+                if (_logger is not null)
+                {
+                    LogYamlDeserializationNull(_logger);
+                }
                 return ConfigurationCompilationResult.Failure("Failed to deserialize YAML configuration");
             }
 
-            _logger?.LogInformation("Successfully deserialized YAML configuration for spider '{SpiderName}'", config.Name ?? "(unnamed)");
+            if (_logger is not null)
+            {
+                LogYamlDeserialized(_logger, config.Name ?? "(unnamed)");
+            }
 
             // Auto-generate ID if not provided
             if (string.IsNullOrWhiteSpace(config.Id))
             {
                 config.Id = Guid.NewGuid().ToString();
-                _logger?.LogDebug("Generated new ID for configuration: {ConfigId}", config.Id);
+                if (_logger is not null)
+                {
+                    LogConfigIdGenerated(_logger, config.Id);
+                }
             }
 
             ValidationResult validationResult = _validator.Validate(config);
@@ -369,33 +448,45 @@ public ConfigurationCompilationResult CompileFromYaml(string yamlContent)
             if (!validationResult.IsValid)
             {
                 var errors = validationResult.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}").ToList();
-                _logger?.LogWarning("Configuration validation failed with {ErrorCount} errors: {Errors}",
-                    errors.Count, string.Join("; ", errors));
+                if (_logger is not null)
+                {
+                    LogValidationFailed(_logger, errors.Count, string.Join("; ", errors));
+                }
                 return ConfigurationCompilationResult.Failure(validationResult);
             }
 
-            _logger?.LogInformation("Configuration compilation successful for spider '{SpiderName}' (ID: {ConfigId})",
-                config.Name, config.Id);
+            if (_logger is not null)
+            {
+                LogCompilationSuccess(_logger, config.Name ?? "(unnamed)", config.Id);
+            }
             return ConfigurationCompilationResult.Success(config);
         }
         catch (YamlDotNet.Core.YamlException ex) when (ex.Message.Contains("Security violation") || ex.Message.Contains("type"))
         {
             // Security: Log and report type constraint violations
-            _logger?.LogError(ex, "Security violation during YAML deserialization");
+            if (_logger is not null)
+            {
+                LogYamlSecurityViolation(_logger, ex);
+            }
             return ConfigurationCompilationResult.Failure($"Security error: Unauthorized type in YAML. {ex.Message}");
         }
         catch (YamlDotNet.Core.YamlException ex)
         {
-            _logger?.LogWarning(ex, "YAML parsing error during configuration compilation");
+            if (_logger is not null)
+            {
+                LogYamlParsingError(_logger, ex);
+            }
             return ConfigurationCompilationResult.Failure($"YAML parsing error: {ex.Message}");
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Unexpected error during YAML configuration compilation");
+            if (_logger is not null)
+            {
+                LogYamlUnexpectedError(_logger, ex);
+            }
             return ConfigurationCompilationResult.Failure($"Unexpected error: {ex.Message}");
         }
     }
-#pragma warning restore CA1848, CA1873
 
     /// <summary>
     /// Validates YAML structure for security concerns before deserialization.
@@ -589,33 +680,51 @@ public ConfigurationCompilationResult CompileFromYaml(string yamlContent)
     /// <returns>A result containing the compiled configuration or validation errors.</returns>
 public ConfigurationCompilationResult CompileFromJson(string jsonContent)
     {
-        _logger?.LogDebug("Starting JSON configuration compilation");
+        if (_logger is not null)
+        {
+            LogJsonCompilationStart(_logger);
+        }
 
         if (string.IsNullOrWhiteSpace(jsonContent))
         {
-            _logger?.LogWarning("Configuration compilation failed: content is empty");
+            if (_logger is not null)
+            {
+                LogJsonContentEmpty(_logger);
+            }
             return ConfigurationCompilationResult.Failure("Configuration content is empty");
         }
 
         try
         {
-            _logger?.LogDebug("Deserializing JSON configuration");
+            if (_logger is not null)
+            {
+                LogJsonDeserializing(_logger);
+            }
 
             SpiderConfiguration? config = JsonSerializer.Deserialize<SpiderConfiguration>(jsonContent, _jsonOptions);
 
             if (config == null)
             {
-                _logger?.LogWarning("Configuration compilation failed: deserialization returned null");
+                if (_logger is not null)
+                {
+                    LogJsonDeserializationNull(_logger);
+                }
                 return ConfigurationCompilationResult.Failure("Failed to deserialize JSON configuration");
             }
 
-            _logger?.LogInformation("Successfully deserialized JSON configuration for spider '{SpiderName}'", config.Name ?? "(unnamed)");
+            if (_logger is not null)
+            {
+                LogJsonDeserialized(_logger, config.Name ?? "(unnamed)");
+            }
 
             // Auto-generate ID if not provided
             if (string.IsNullOrWhiteSpace(config.Id))
             {
                 config.Id = Guid.NewGuid().ToString();
-                _logger?.LogDebug("Generated new ID for configuration: {ConfigId}", config.Id);
+                if (_logger is not null)
+                {
+                    LogConfigIdGenerated(_logger, config.Id);
+                }
             }
 
             ValidationResult validationResult = _validator.Validate(config);
@@ -623,27 +732,36 @@ public ConfigurationCompilationResult CompileFromJson(string jsonContent)
             if (!validationResult.IsValid)
             {
                 var errors = validationResult.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}").ToList();
-                _logger?.LogWarning("Configuration validation failed with {ErrorCount} errors: {Errors}",
-                    errors.Count, string.Join("; ", errors));
+                if (_logger is not null)
+                {
+                    LogValidationFailed(_logger, errors.Count, string.Join("; ", errors));
+                }
                 return ConfigurationCompilationResult.Failure(validationResult);
             }
 
-            _logger?.LogInformation("Configuration compilation successful for spider '{SpiderName}' (ID: {ConfigId})",
-                config.Name, config.Id);
+            if (_logger is not null)
+            {
+                LogCompilationSuccess(_logger, config.Name ?? "(unnamed)", config.Id);
+            }
             return ConfigurationCompilationResult.Success(config);
         }
         catch (JsonException ex)
         {
-            _logger?.LogWarning(ex, "JSON parsing error during configuration compilation");
+            if (_logger is not null)
+            {
+                LogJsonParsingError(_logger, ex);
+            }
             return ConfigurationCompilationResult.Failure($"JSON parsing error: {ex.Message}");
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Unexpected error during JSON configuration compilation");
+            if (_logger is not null)
+            {
+                LogJsonUnexpectedError(_logger, ex);
+            }
             return ConfigurationCompilationResult.Failure($"Unexpected error: {ex.Message}");
         }
     }
-#pragma warning restore CA1848, CA1873
 
     /// <summary>
     /// Validates a configuration without compilation.

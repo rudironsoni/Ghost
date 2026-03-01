@@ -13,6 +13,18 @@ using Microsoft.Extensions.Logging;
 namespace Ghost.Testing.Server;
 
 /// <summary>
+/// Logger messages for TestScraperServer.
+/// </summary>
+public static partial class TestScraperServerLogMessages
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "TestScraperServer started at {BaseUrl}")]
+    public static partial void ServerStarted(this ILogger logger, string baseUrl);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "TestScraperServer disposed")]
+    public static partial void ServerDisposed(this ILogger logger);
+}
+
+/// <summary>
 /// Kestrel-based test server for serving realistic HTML fixtures for E2E plugin testing.
 /// Mimics the structure of job sites like LinkedIn, Indeed, Glassdoor, Google, and InfoJobs.
 /// </summary>
@@ -90,8 +102,8 @@ public sealed class TestScraperServer : IAsyncDisposable
         // Start the server
         await app.StartAsync(cancellationToken);
 
-        ILogger<TestScraperServer> logger = app.Services.GetRequiredService<ILogger<TestScraperServer>>();
-        logger.LogInformation("TestScraperServer started at {BaseUrl}", baseUrl);
+    ILogger<TestScraperServer> logger = app.Services.GetRequiredService<ILogger<TestScraperServer>>();
+    logger.ServerStarted(baseUrl);
 
         return new TestScraperServer(app, baseUrl, selectedPort, logger);
     }
@@ -113,11 +125,11 @@ public sealed class TestScraperServer : IAsyncDisposable
             return Results.Content(html, "text/html");
         });
 
-        app.MapGet("/linkedin/jobs/{id}", (string id, HttpContext context) =>
-        {
-            string html = fixtures.LinkedIn.GenerateJobDetailPage(id);
-            return Results.Content(html, "text/html");
-        });
+    app.MapGet("/linkedin/jobs/{id}", (string id, HttpContext context) =>
+    {
+        string html = LinkedInHtmlFixture.GenerateJobDetailPage(id);
+        return Results.Content(html, "text/html");
+    });
 
         // Additional LinkedIn routes for client compatibility
         app.MapGet("/linkedin/jobs/search", (HttpContext context) =>
@@ -131,11 +143,11 @@ public sealed class TestScraperServer : IAsyncDisposable
             return Results.Content(html, "text/html");
         });
 
-        app.MapGet("/linkedin/jobs/view/{id}", (string id, HttpContext context) =>
-        {
-            string html = fixtures.LinkedIn.GenerateJobDetailPage(id);
-            return Results.Content(html, "text/html");
-        });
+    app.MapGet("/linkedin/jobs/view/{id}", (string id, HttpContext context) =>
+    {
+        string html = LinkedInHtmlFixture.GenerateJobDetailPage(id);
+        return Results.Content(html, "text/html");
+    });
 
         // LinkedIn Guest API routes (used by LinkedInQueryBuilder and GuestJobSearch)
         app.MapGet("/linkedin/jobs-guest/jobs/api/seeMoreJobPostings/search", (HttpContext context) =>
@@ -150,11 +162,11 @@ public sealed class TestScraperServer : IAsyncDisposable
             return Results.Content(html, "text/html");
         });
 
-        app.MapGet("/linkedin/jobs-guest/jobs/api/jobPosting/{id}", (string id, HttpContext context) =>
-        {
-            string html = fixtures.LinkedIn.GenerateJobDetailPage(id);
-            return Results.Content(html, "text/html");
-        });
+    app.MapGet("/linkedin/jobs-guest/jobs/api/jobPosting/{id}", (string id, HttpContext context) =>
+    {
+        string html = LinkedInHtmlFixture.GenerateJobDetailPage(id);
+        return Results.Content(html, "text/html");
+    });
 
         // Indeed routes
         app.MapGet("/indeed/jobs", (HttpContext context) =>
@@ -168,12 +180,12 @@ public sealed class TestScraperServer : IAsyncDisposable
             return Results.Content(html, "text/html");
         });
 
-        app.MapGet("/indeed/viewjob", (HttpContext context) =>
-        {
-            string? jobId = context.Request.Query["jk"].FirstOrDefault() ?? "default-job";
-            string html = fixtures.Indeed.GenerateJobDetailPage(jobId);
-            return Results.Content(html, "text/html");
-        });
+    app.MapGet("/indeed/viewjob", (HttpContext context) =>
+    {
+        string? jobId = context.Request.Query["jk"].FirstOrDefault() ?? "default-job";
+        string html = IndeedHtmlFixture.GenerateJobDetailPage(jobId);
+        return Results.Content(html, "text/html");
+    });
 
         // Indeed GraphQL API endpoint for job search
         app.MapPost("/indeed/graphql", (HttpContext context) =>
@@ -270,11 +282,11 @@ public sealed class TestScraperServer : IAsyncDisposable
             return Results.Content(html, "text/html");
         });
 
-        app.MapGet("/glassdoor/job/{id}", (string id) =>
-        {
-            string html = fixtures.Glassdoor.GenerateJobDetailPage(id);
-            return Results.Content(html, "text/html");
-        });
+    app.MapGet("/glassdoor/job/{id}", (string id) =>
+    {
+        string html = GlassdoorHtmlFixture.GenerateJobDetailPage(id);
+        return Results.Content(html, "text/html");
+    });
 
         // Google routes
         app.MapGet("/google/jobs", (HttpContext context) =>
@@ -297,11 +309,11 @@ public sealed class TestScraperServer : IAsyncDisposable
             return Results.Content(html, "text/html");
         });
 
-        app.MapGet("/infojobs/oferta/{id}", (string id) =>
-        {
-            string html = fixtures.InfoJobs.GenerateJobDetailPage(id);
-            return Results.Content(html, "text/html");
-        });
+    app.MapGet("/infojobs/oferta/{id}", (string id) =>
+    {
+        string html = InfoJobsHtmlFixture.GenerateJobDetailPage(id);
+        return Results.Content(html, "text/html");
+    });
 
         // Health check endpoint
         app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTimeOffset.UtcNow }));
@@ -395,10 +407,10 @@ public sealed class TestScraperServer : IAsyncDisposable
             return;
         }
 
-        _disposed = true;
-        await _host.StopAsync();
-        _host.Dispose();
-        _logger.LogInformation("TestScraperServer disposed");
+    _disposed = true;
+    await _host.StopAsync();
+    _host.Dispose();
+    _logger.ServerDisposed();
     }
 }
 

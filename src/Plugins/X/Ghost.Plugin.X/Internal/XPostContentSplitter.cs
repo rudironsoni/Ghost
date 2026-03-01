@@ -10,6 +10,7 @@ public sealed class XPostContentSplitter
 {
     private readonly int _maxLength;
     private readonly string _urlPlaceholder;
+    public int MaxLength => _maxLength;
 
     public XPostContentSplitter(int maxLength = 280)
     {
@@ -94,7 +95,7 @@ public sealed class XPostContentSplitter
     /// <summary>
     /// Extracts sentences from content while preserving URLs.
     /// </summary>
-    private List<string> ExtractSentences(string content)
+    private static List<string> ExtractSentences(string content)
     {
         List<string> sentences = [];
         string urlPattern = @"https?://[^\s]+";
@@ -251,10 +252,7 @@ public sealed class XPostContentSplitter
         return numbered;
     }
 
-    /// <summary>
-    /// Gets the maximum tweet length.
-    /// </summary>
-    public int MaxLength => _maxLength;
+
 
     /// <summary>
     /// Checks if content requires a thread (multiple tweets).

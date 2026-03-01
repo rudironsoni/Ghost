@@ -12,12 +12,12 @@ namespace Ghost.Plugin.X.Internal;
 public sealed class XSimulationValidator : IXPlatformSimulationValidator
 {
     private readonly XOptions _options;
-    private readonly XPostContentSplitter _contentSplitter;
+    private XPostContentSplitter ContentSplitter { get; }
 
     public XSimulationValidator(IOptions<XOptions> options)
     {
         _options = options?.Value ?? new XOptions();
-        _contentSplitter = new XPostContentSplitter(_options.MaxTweetLength);
+        ContentSplitter = new XPostContentSplitter(_options.MaxTweetLength);
     }
 
     /// <inheritdoc />
@@ -54,7 +54,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         // Validate content length per tweet
         if (!string.IsNullOrWhiteSpace(request.Content))
         {
-            IReadOnlyList<string> parts = _contentSplitter.Split(request.Content);
+            IReadOnlyList<string> parts = ContentSplitter.Split(request.Content);
 
             foreach ((string? part, int index) in parts.Select((p, i) => (p, i)))
             {
@@ -311,7 +311,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
     /// <inheritdoc />
     public async Task<string> GeneratePreviewAsync(CreatePostRequest request)
     {
-        IReadOnlyList<string> parts = _contentSplitter.Split(request.Content);
+        IReadOnlyList<string> parts = ContentSplitter.Split(request.Content);
         var html = new System.Text.StringBuilder();
 
         html.AppendLine("<!DOCTYPE html>");
@@ -341,7 +341,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
 
         if (parts.Count > 1)
         {
-            html.AppendLine($"<p><strong>Thread with {parts.Count} tweets</strong></p>");
+            html.Append("<p><strong>Thread with ").Append(parts.Count).AppendLine(" tweets</strong></p>");
         }
 
         for (int i = 0; i < parts.Count; i++)
@@ -350,7 +350,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
 
             if (parts.Count > 1)
             {
-                html.AppendLine($"<div class='thread-indicator'>🧵 Tweet {i + 1} of {parts.Count}</div>");
+                html.Append("<div class='thread-indicator'>🧵 Tweet ").Append(i + 1).Append(" of ").Append(parts.Count).AppendLine("</div>");
             }
 
             html.AppendLine("<div class='header'>");
@@ -374,14 +374,14 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
                     if (File.Exists(url))
                     {
                         string extension = Path.GetExtension(url).ToLowerInvariant();
-                        if (_options.SupportedImageFormats.Contains(extension))
-                        {
-                            html.AppendLine($"<img src='file://{url}' alt='Media' />");
-                        }
-                        else
-                        {
-                            html.AppendLine($"<p>📹 Video: {Path.GetFileName(url)}</p>");
-                        }
+                if (_options.SupportedImageFormats.Contains(extension))
+                {
+                    html.Append("<img src='file://").Append(url).AppendLine("' alt='Media' />");
+                }
+                else
+                {
+                    html.Append("<p>📹 Video: ").Append(Path.GetFileName(url)).AppendLine("</p>");
+                }
                     }
                 }
                 html.AppendLine("</div>");
@@ -393,11 +393,11 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
 
         // Add character count info
         int totalChars = parts.Sum(p => CalculateEffectiveLength(p));
-        html.AppendLine($"<p><strong>Total character count: {totalChars}</strong></p>");
+        html.Append("<p><strong>Total character count: ").Append(totalChars).AppendLine("</strong></p>");
 
         if (request.MediaUrls?.Count > 0)
         {
-            html.AppendLine($"<p>Media attachments: {request.MediaUrls.Count}</p>");
+            html.Append("<p>Media attachments: ").Append(request.MediaUrls.Count).AppendLine("</p>");
         }
 
         html.AppendLine("</body>");
@@ -422,7 +422,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
         }
 
         // Simulate the posting process
-        IReadOnlyList<string> parts = _contentSplitter.Split(request.Content);
+        IReadOnlyList<string> parts = ContentSplitter.Split(request.Content);
         List<string> simulatedIds = [];
 
         // Generate simulated tweet IDs
@@ -467,7 +467,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
     /// <summary>
     /// Calculates the effective character length of content, treating URLs as 23 characters.
     /// </summary>
-    private int CalculateEffectiveLength(string content)
+    private static int CalculateEffectiveLength(string content)
     {
         if (string.IsNullOrEmpty(content))
         {

@@ -97,13 +97,9 @@ public sealed class InfoJobsHtmlFixture
     /// <summary>
     /// Generates an InfoJobs-style job detail page.
     /// </summary>
-    public string GenerateJobDetailPage(string jobId)
+    public static string GenerateJobDetailPage(string jobId)
     {
-        SampleJob? job = SampleJobData.GetJobById(jobId);
-        if (job is null)
-        {
-            job = SampleJobData.Jobs[0];
-        }
+        SampleJob? job = SampleJobData.GetJobById(jobId) ?? SampleJobData.Jobs[0];
 
         StringBuilder sb = new();
         sb.AppendLine("<!DOCTYPE html>");

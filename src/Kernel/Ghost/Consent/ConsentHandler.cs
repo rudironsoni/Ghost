@@ -13,7 +13,7 @@ namespace Ghost.Consent;
 /// - Iframe-based CMPs
 /// - Region-aware detection (GDPR, CCPA, LGPD)
 /// </summary>
-public class ConsentHandler : IConsentHandler
+public partial class ConsentHandler : IConsentHandler
 {
     private readonly ILogger<ConsentHandler> _logger;
     private readonly int _timeoutMs;
@@ -34,15 +34,76 @@ public class ConsentHandler : IConsentHandler
         _flowHandler = new ConsentFlowHandler(timeProvider: _timeProvider);
     }
 
+    // LoggerMessage source generators (EventIds 2200-2299 for ConsentHandler)
+    [LoggerMessage(EventId = 2200, Level = LogLevel.Debug, Message = "Detecting CMP on page: {Url}")]
+    private static partial void LogDetectingCmp(ILogger<ConsentHandler> logger, string url);
+
+    [LoggerMessage(EventId = 2201, Level = LogLevel.Information, Message = "Detected CMP: {CmpName}")]
+    private static partial void LogCmpDetected(ILogger<ConsentHandler> logger, string cmpName);
+
+    [LoggerMessage(EventId = 2202, Level = LogLevel.Debug, Message = "No CMP detected on page")]
+    private static partial void LogNoCmpDetected(ILogger<ConsentHandler> logger);
+
+    [LoggerMessage(EventId = 2203, Level = LogLevel.Warning, Message = "Unknown CMP type: {CmpType}")]
+    private static partial void LogUnknownCmpType(ILogger<ConsentHandler> logger, string cmpType);
+
+    [LoggerMessage(EventId = 2204, Level = LogLevel.Debug, Message = "Attempting to accept consent for CMP: {CmpType}")]
+    private static partial void LogAcceptingConsent(ILogger<ConsentHandler> logger, string cmpType);
+
+    [LoggerMessage(EventId = 2205, Level = LogLevel.Information, Message = "Successfully accepted consent for CMP: {CmpType}")]
+    private static partial void LogConsentAccepted(ILogger<ConsentHandler> logger, string cmpType);
+
+    [LoggerMessage(EventId = 2206, Level = LogLevel.Information, Message = "Consent banner successfully dismissed")]
+    private static partial void LogBannerDismissed(ILogger<ConsentHandler> logger);
+
+    [LoggerMessage(EventId = 2207, Level = LogLevel.Warning, Message = "Consent banner still present after acceptance")]
+    private static partial void LogBannerStillPresent(ILogger<ConsentHandler> logger);
+
+    [LoggerMessage(EventId = 2208, Level = LogLevel.Error, Message = "Error accepting consent for CMP: {CmpType}")]
+    private static partial void LogAcceptConsentError(ILogger<ConsentHandler> logger, Exception ex, string cmpType);
+
+    [LoggerMessage(EventId = 2209, Level = LogLevel.Debug, Message = "Checking for consent banners on page: {Url}")]
+    private static partial void LogCheckingBanners(ILogger<ConsentHandler> logger, string url);
+
+    [LoggerMessage(EventId = 2210, Level = LogLevel.Information, Message = "Detected privacy regulation: {Regulation}")]
+    private static partial void LogRegulationDetected(ILogger<ConsentHandler> logger, string regulation);
+
+    [LoggerMessage(EventId = 2211, Level = LogLevel.Debug, Message = "Strategy: {Strategy}")]
+    private static partial void LogStrategy(ILogger<ConsentHandler> logger, string strategy);
+
+    [LoggerMessage(EventId = 2212, Level = LogLevel.Debug, Message = "No consent banner detected")]
+    private static partial void LogNoBannerDetected(ILogger<ConsentHandler> logger);
+
+    [LoggerMessage(EventId = 2213, Level = LogLevel.Debug, Message = "Error detecting CMP {CmpName}")]
+    private static partial void LogCmpDetectionError(ILogger<ConsentHandler> logger, Exception ex, string cmpName);
+
+    [LoggerMessage(EventId = 2214, Level = LogLevel.Debug, Message = "Found iframe CMP: {Selector}")]
+    private static partial void LogIframeCmpFound(ILogger<ConsentHandler> logger, string selector);
+
+    [LoggerMessage(EventId = 2215, Level = LogLevel.Debug, Message = "Found CMP element in regular DOM: {Selector}")]
+    private static partial void LogCmpElementFound(ILogger<ConsentHandler> logger, string selector);
+
+    [LoggerMessage(EventId = 2216, Level = LogLevel.Debug, Message = "Found CMP element in shadow DOM: {Selector}")]
+    private static partial void LogCmpElementFoundInShadow(ILogger<ConsentHandler> logger, string selector);
+
+    [LoggerMessage(EventId = 2217, Level = LogLevel.Debug, Message = "Clicked iframe consent button: {Selector}")]
+    private static partial void LogIframeButtonClicked(ILogger<ConsentHandler> logger, string selector);
+
+    [LoggerMessage(EventId = 2218, Level = LogLevel.Debug, Message = "Clicking consent button in regular DOM: {Selector}")]
+    private static partial void LogClickingConsentButton(ILogger<ConsentHandler> logger, string selector);
+
+    [LoggerMessage(EventId = 2219, Level = LogLevel.Debug, Message = "Clicked consent button in shadow DOM: {Selector}")]
+    private static partial void LogClickedInShadow(ILogger<ConsentHandler> logger, string selector);
+
+    [LoggerMessage(EventId = 2220, Level = LogLevel.Debug, Message = "Failed to click selector: {Selector}")]
+    private static partial void LogClickFailed(ILogger<ConsentHandler> logger, Exception ex, string selector);
+
     /// <inheritdoc/>
     public async Task<string?> DetectCMPAsync(IPage page)
     {
         ArgumentNullException.ThrowIfNull(page);
 
-        if (_logger.IsEnabled(LogLevel.Debug))
-        {
-            _logger.LogDebug("Detecting CMP on page: {Url}", page.Url);
-        }
+        LogDetectingCmp(_logger, page.Url);
 
         IReadOnlyList<CMPConfig> configs = CMPDatabase.GetAllConfigs();
 
@@ -53,23 +114,17 @@ public class ConsentHandler : IConsentHandler
                 bool detected = await DetectCMPInternalAsync(page, config).ConfigureAwait(false);
                 if (detected)
                 {
-                    if (_logger.IsEnabled(LogLevel.Information))
-                    {
-                        _logger.LogInformation("Detected CMP: {CmpName}", config.Name);
-                    }
+                    LogCmpDetected(_logger, config.Name);
                     return config.Name;
                 }
             }
             catch (Exception ex)
             {
-                if (_logger.IsEnabled(LogLevel.Debug))
-                {
-                    _logger.LogDebug(ex, "Error detecting CMP {CmpName}", config.Name);
-                }
+                LogCmpDetectionError(_logger, ex, config.Name);
             }
         }
 
-        _logger.LogDebug("No CMP detected on page");
+        LogNoCmpDetected(_logger);
         return null;
     }
 
@@ -82,24 +137,18 @@ public class ConsentHandler : IConsentHandler
         CMPConfig? config = CMPDatabase.GetConfig(cmpType);
         if (config == null)
         {
-            _logger.LogWarning("Unknown CMP type: {CmpType}", cmpType);
+            LogUnknownCmpType(_logger, cmpType);
             return false;
         }
 
-        if (_logger.IsEnabled(LogLevel.Debug))
-        {
-            _logger.LogDebug("Attempting to accept consent for CMP: {CmpType}", cmpType);
-        }
+        LogAcceptingConsent(_logger, cmpType);
 
         try
         {
             bool accepted = await AcceptConsentInternalAsync(page, config).ConfigureAwait(false);
             if (accepted)
             {
-                if (_logger.IsEnabled(LogLevel.Information))
-                {
-                    _logger.LogInformation("Successfully accepted consent for CMP: {CmpType}", cmpType);
-                }
+                LogConsentAccepted(_logger, cmpType);
 
                 // Wait for banner to disappear
                 await Task.Delay(TimeSpan.FromMilliseconds(1000), _timeProvider, CancellationToken.None).ConfigureAwait(false);
@@ -108,16 +157,16 @@ public class ConsentHandler : IConsentHandler
                 bool stillPresent = await DetectCMPInternalAsync(page, config).ConfigureAwait(false);
                 if (!stillPresent)
                 {
-                    _logger.LogInformation("Consent banner successfully dismissed");
+                    LogBannerDismissed(_logger);
                     return true;
                 }
 
-                _logger.LogWarning("Consent banner still present after acceptance");
+                LogBannerStillPresent(_logger);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error accepting consent for CMP: {CmpType}", cmpType);
+            LogAcceptConsentError(_logger, ex, cmpType);
         }
 
         return false;
@@ -128,29 +177,22 @@ public class ConsentHandler : IConsentHandler
     {
         ArgumentNullException.ThrowIfNull(page);
 
-        if (_logger.IsEnabled(LogLevel.Debug))
-        {
-            _logger.LogDebug("Checking for consent banners on page: {Url}", page.Url);
-        }
+        LogCheckingBanners(_logger, page.Url);
 
         // Detect privacy regulation for context
         RegionDetector.PrivacyRegulation regulation = await RegionDetector.DetectRegulationAsync(page).ConfigureAwait(false);
         if (regulation != RegionDetector.PrivacyRegulation.Unknown)
         {
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation("Detected privacy regulation: {Regulation}", regulation);
-            }
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug("Strategy: {Strategy}", RegionDetector.GetConsentStrategy(regulation));
-            }
+            string regulationStr = regulation.ToString();
+            string strategy = RegionDetector.GetConsentStrategy(regulation);
+            LogRegulationDetected(_logger, regulationStr);
+            LogStrategy(_logger, strategy);
         }
 
         string? cmpType = await DetectCMPAsync(page).ConfigureAwait(false);
         if (cmpType == null)
         {
-            _logger.LogDebug("No consent banner detected");
+            LogNoBannerDetected(_logger);
             return false;
         }
 
@@ -173,10 +215,7 @@ public class ConsentHandler : IConsentHandler
                     IElement? frame = await page.QuerySelectorAsync(selector).ConfigureAwait(false);
                     if (frame != null)
                     {
-                        if (_logger.IsEnabled(LogLevel.Debug))
-                        {
-                            _logger.LogDebug("Found iframe CMP: {Selector}", selector);
-                        }
+                        LogIframeCmpFound(_logger, selector);
                         return true;
                     }
                 }
@@ -189,10 +228,7 @@ public class ConsentHandler : IConsentHandler
                         bool isVisible = await element.IsVisibleAsync().ConfigureAwait(false);
                         if (isVisible)
                         {
-                            if (_logger.IsEnabled(LogLevel.Debug))
-                            {
-                                _logger.LogDebug("Found CMP element in regular DOM: {Selector}", selector);
-                            }
+                            LogCmpElementFound(_logger, selector);
                             return true;
                         }
                     }
@@ -201,10 +237,7 @@ public class ConsentHandler : IConsentHandler
                     bool foundInShadow = await ShadowDOMHelper.FindInShadowDOMAsync(page, selector).ConfigureAwait(false);
                     if (foundInShadow)
                     {
-                        if (_logger.IsEnabled(LogLevel.Debug))
-                        {
-                            _logger.LogDebug("Found CMP element in shadow DOM: {Selector}", selector);
-                        }
+                        LogCmpElementFoundInShadow(_logger, selector);
                         return true;
                     }
                 }
@@ -256,10 +289,7 @@ public class ConsentHandler : IConsentHandler
 
                     if (clicked)
                     {
-                        if (_logger.IsEnabled(LogLevel.Debug))
-                        {
-                            _logger.LogDebug("Clicked iframe consent button: {Selector}", selector);
-                        }
+                        LogIframeButtonClicked(_logger, selector);
                         return true;
                     }
                 }
@@ -274,10 +304,7 @@ public class ConsentHandler : IConsentHandler
 
                         if (isVisible && isEnabled)
                         {
-                            if (_logger.IsEnabled(LogLevel.Debug))
-                            {
-                                _logger.LogDebug("Clicking consent button in regular DOM: {Selector}", selector);
-                            }
+                            LogClickingConsentButton(_logger, selector);
 
                             try
                             {
@@ -297,20 +324,14 @@ public class ConsentHandler : IConsentHandler
                     bool clickedInShadow = await ShadowDOMHelper.ClickInShadowDOMAsync(page, selector).ConfigureAwait(false);
                     if (clickedInShadow)
                     {
-                        if (_logger.IsEnabled(LogLevel.Debug))
-                        {
-                            _logger.LogDebug("Clicked consent button in shadow DOM: {Selector}", selector);
-                        }
+                        LogClickedInShadow(_logger, selector);
                         return true;
                     }
                 }
             }
             catch (Exception ex)
             {
-                if (_logger.IsEnabled(LogLevel.Debug))
-                {
-                    _logger.LogDebug(ex, "Failed to click selector: {Selector}", selector);
-                }
+                LogClickFailed(_logger, ex, selector);
             }
         }
 

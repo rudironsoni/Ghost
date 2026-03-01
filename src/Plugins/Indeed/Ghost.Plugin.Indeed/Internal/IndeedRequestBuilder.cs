@@ -107,7 +107,7 @@ public sealed class IndeedRequestBuilder
     /// <summary>
     /// Builds a search query string with the specified parameters.
     /// </summary>
-    public string BuildSearchQuery(string query, string location, int limit, string? cursor)
+    public static string BuildSearchQuery(string query, string location, int limit, string? cursor)
     {
         var sb = new StringBuilder();
         sb.Append(CultureInfo.InvariantCulture, $"query: \"{EscapeGraphQLString(query)}\" location: \"{EscapeGraphQLString(location)}\" limit: {Math.Min(25, limit)}");

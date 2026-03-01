@@ -130,8 +130,10 @@ public sealed partial class ScraperWorker : BackgroundService
             // Update job status to processing
             await UpdateJobStatusAsync(jobRequest.JobId, JobStatus.Processing, cancellationToken).ConfigureAwait(false);
 
-            // Resolve the appropriate job client for the platform
-            await using AsyncServiceScope scope = _serviceProvider.CreateAsyncScope();
+        // Resolve the appropriate job client for the platform
+        AsyncServiceScope scope = _serviceProvider.CreateAsyncScope();
+        try
+        {
             IJobClient jobClient = ResolveJobClient(scope.ServiceProvider, jobRequest.Platform)
                 ?? throw new NotSupportedException($"Platform '{jobRequest.Platform}' is not supported");
 
@@ -154,7 +156,12 @@ public sealed partial class ScraperWorker : BackgroundService
             TimeSpan duration = new DateTimeOffset(_timeProvider.GetUtcNow().DateTime, TimeSpan.Zero) - startTime;
             LogJobCompleted(jobRequest.JobId, duration.TotalMilliseconds, results.Count);
         }
-        catch (Exception ex)
+        finally
+        {
+            await scope.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+    catch (Exception ex)
         {
             TimeSpan duration = new DateTimeOffset(_timeProvider.GetUtcNow().DateTime, TimeSpan.Zero) - startTime;
             LogJobFailed(ex, jobId, duration.TotalMilliseconds);

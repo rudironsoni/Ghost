@@ -7,8 +7,14 @@ namespace Ghost.Monitoring;
 /// <summary>
 /// Provides instrumentation helpers for GhostKernel operations.
 /// </summary>
-public static class GhostKernelInstrumentation
+public static partial class GhostKernelInstrumentation
 {
+    // LoggerMessage source generators (EventIds 4000-4099 for Monitoring)
+    [LoggerMessage(EventId = 4000, Level = LogLevel.Error, Message = "Operation failed: {Operation}")]
+    private static partial void LogOperationFailed(ILogger logger, Exception ex, string operation);
+
+    [LoggerMessage(EventId = 4001, Level = LogLevel.Debug, Message = "Operation completed: {Operation}")]
+    private static partial void LogOperationCompleted(ILogger logger, string operation);
     private const string SessionTag = "ghost.session.id";
     private const string OperationTag = "ghost.operation";
     private const string StealthTag = "ghost.stealth.enabled";
@@ -84,7 +90,7 @@ public static class GhostKernelInstrumentation
 
         if (logger is not null)
         {
-            logger.LogError(exception, "Operation failed: {Operation}", activity.DisplayName);
+            LogOperationFailed(logger, exception, activity.DisplayName);
         }
     }
 
@@ -103,7 +109,7 @@ public static class GhostKernelInstrumentation
         {
             if (logger.IsEnabled(LogLevel.Debug))
             {
-                logger.LogDebug("Operation completed: {Operation}", activity.DisplayName);
+                LogOperationCompleted(logger, activity.DisplayName);
             }
         }
         activity.Dispose();

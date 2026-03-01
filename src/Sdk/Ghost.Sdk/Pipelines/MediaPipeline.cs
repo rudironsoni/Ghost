@@ -11,6 +11,36 @@ using Microsoft.Extensions.Logging;
 namespace Ghost.Sdk.Pipelines;
 
 /// <summary>
+/// Logger messages for MediaPipeline.
+/// </summary>
+public static partial class MediaPipelineLogMessages
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Processing media download from URL: {Url}")]
+    public static partial void LogProcessingMedia(this ILogger logger, string url);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "File size ({ContentLength} bytes) exceeds maximum allowed size ({MaxFileSize} bytes)")]
+    public static partial void LogFileSizeExceeded(this ILogger logger, long contentLength, long maxFileSize);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Sanitized filename: {FileName}")]
+    public static partial void LogSanitizedFilename(this ILogger logger, string fileName);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "File extension '{Extension}' is not in allowed list")]
+    public static partial void LogExtensionNotAllowed(this ILogger logger, string extension);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Downloading file to: {LocalPath}")]
+    public static partial void LogDownloadingFile(this ILogger logger, string localPath);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Saving file content ({ContentLength} bytes) to: {LocalPath}")]
+    public static partial void LogSavingFile(this ILogger logger, long contentLength, string localPath);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Successfully saved file: {LocalPath} ({Size} bytes)")]
+    public static partial void LogFileSaved(this ILogger logger, string localPath, long size);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Calculated checksum for {LocalPath}: {Checksum}")]
+    public static partial void LogChecksumCalculated(this ILogger logger, string localPath, string checksum);
+}
+
+/// <summary>
 /// Implementation of media pipeline for downloading and processing files.
 /// </summary>
 public class MediaPipeline : IMediaPipeline
@@ -58,7 +88,7 @@ public class MediaPipeline : IMediaPipeline
         // Validate output path exists and is within allowed boundaries
         ValidateOutputPath(request.OutputPath);
 
-        _logger?.LogInformation("Processing media download from URL: {Url}", request.Url);
+        _logger?.LogProcessingMedia(request.Url);
 
         // Download file
         using HttpResponseMessage response = await _httpClient.GetAsync(request.Url, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
@@ -70,15 +100,14 @@ public class MediaPipeline : IMediaPipeline
             long contentLength = response.Content.Headers.ContentLength.Value;
             if (contentLength > _options.MaxFileSize)
             {
-                _logger?.LogWarning("File size ({ContentLength} bytes) exceeds maximum allowed size ({MaxFileSize} bytes)",
-                    contentLength, _options.MaxFileSize);
+                _logger?.LogFileSizeExceeded(contentLength, _options.MaxFileSize);
                 throw new InvalidOperationException($"File size ({contentLength} bytes) exceeds maximum allowed size ({_options.MaxFileSize} bytes).");
             }
         }
 
         // Extract and validate filename from URL or request
         string fileName = ValidateAndSanitizeFileName(request.FileName ?? GetFileNameFromUrl(request.Url));
-        _logger?.LogDebug("Sanitized filename: {FileName}", fileName);
+        _logger?.LogSanitizedFilename(fileName);
 
         // Validate extension if AllowedExtensions is specified
         if (_options.AllowedExtensions.Count > 0)
@@ -86,7 +115,7 @@ public class MediaPipeline : IMediaPipeline
             string extension = Path.GetExtension(fileName);
             if (string.IsNullOrEmpty(extension) || !_options.AllowedExtensions.Contains(extension.ToLowerInvariant()))
             {
-                _logger?.LogWarning("File extension '{Extension}' is not in allowed list", extension);
+                _logger?.LogExtensionNotAllowed(extension);
                 throw new InvalidOperationException($"File extension '{extension}' is not allowed.");
             }
         }
@@ -94,7 +123,7 @@ public class MediaPipeline : IMediaPipeline
         // Validate and construct secure local path
         string localPath = GetSecureLocalPath(request.OutputPath, fileName);
 
-        _logger?.LogInformation("Downloading file to: {LocalPath}", localPath);
+        _logger?.LogDownloadingFile(localPath);
 
         // Ensure directory exists
         string? directoryName = Path.GetDirectoryName(localPath);
@@ -104,22 +133,30 @@ public class MediaPipeline : IMediaPipeline
         }
 
         // Save file
-        _logger?.LogDebug("Saving file content ({ContentLength} bytes) to: {LocalPath}",
-            response.Content.Headers.ContentLength ?? -1, localPath);
+        _logger?.LogSavingFile(response.Content.Headers.ContentLength ?? -1, localPath);
 
-        await using (FileStream fs = File.Create(localPath))
+        FileStream fs = File.Create(localPath);
+        try
         {
             await response.Content.CopyToAsync(fs, ct).ConfigureAwait(false);
         }
+        finally
+        {
+            await fs.DisposeAsync().ConfigureAwait(false);
+        }
 
-        _logger?.LogInformation("Successfully saved file: {LocalPath} ({Size} bytes)", localPath, new FileInfo(localPath).Length);
+        long fileLength = new FileInfo(localPath).Length;
+        _logger?.LogFileSaved(localPath, fileLength);
 
         // Calculate checksum if enabled
         string? checksum = null;
         if (_options.CalculateChecksum)
         {
             checksum = await CalculateChecksumAsync(localPath, ct).ConfigureAwait(false);
-            _logger?.LogDebug("Calculated checksum for {LocalPath}: {Checksum}", localPath, checksum);
+            if (checksum != null)
+            {
+                _logger?.LogChecksumCalculated(localPath, checksum);
+            }
         }
 
         return new MediaItem
@@ -425,8 +462,15 @@ public class MediaPipeline : IMediaPipeline
 
     private static async Task<string> CalculateChecksumAsync(string path, CancellationToken ct)
     {
-        await using FileStream fs = File.OpenRead(path);
-        byte[] hash = await SHA256.HashDataAsync(fs, ct).ConfigureAwait(false);
-        return Convert.ToHexString(hash);
+        FileStream fs = File.OpenRead(path);
+        try
+        {
+            byte[] hash = await SHA256.HashDataAsync(fs, ct).ConfigureAwait(false);
+            return Convert.ToHexString(hash);
+        }
+        finally
+        {
+            await fs.DisposeAsync().ConfigureAwait(false);
+        }
     }
 }

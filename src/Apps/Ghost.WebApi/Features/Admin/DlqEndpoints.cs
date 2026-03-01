@@ -36,20 +36,20 @@ public static class DlqEndpoints
 
     private static async Task<IResult> GetJobsAsync(
         [FromQuery] int count,
-        [FromServices] IGenericDeadLetterQueue dlq)
+        [FromServices] IGenericDeadLetterStore dlq)
     {
         count = count > 0 ? Math.Min(count, 100) : 10;
         List<DeadLetterItem> items = await dlq.PeekAsync(count).ConfigureAwait(false);
         return Results.Ok(items);
     }
 
-    private static async Task<IResult> GetStatsAsync([FromServices] IGenericDeadLetterQueue dlq)
+    private static async Task<IResult> GetStatsAsync([FromServices] IGenericDeadLetterStore dlq)
     {
         int depth = await dlq.GetCountAsync().ConfigureAwait(false);
         return Results.Ok(new { ActiveCount = depth, Timestamp = DateTime.UtcNow });
     }
 
-    private static async Task<IResult> ClearQueueAsync([FromServices] IGenericDeadLetterQueue dlq)
+    private static async Task<IResult> ClearQueueAsync([FromServices] IGenericDeadLetterStore dlq)
     {
         await dlq.ClearAsync().ConfigureAwait(false);
         return Results.Ok(new { Message = "DLQ cleared successfully" });

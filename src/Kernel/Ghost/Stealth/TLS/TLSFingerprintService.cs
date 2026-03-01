@@ -7,10 +7,31 @@ namespace Ghost.Stealth.TLS;
 /// Service for applying TLS fingerprint randomization to browser contexts.
 /// Integrates JA3 profile generation with Patchright browser instances.
 /// </summary>
-public sealed class TLSFingerprintService
+public sealed partial class TLSFingerprintService
 {
     private readonly JA3Randomizer _randomizer;
     private readonly ILogger<TLSFingerprintService> _logger;
+
+    [LoggerMessage(EventId = 1, Level = LogLevel.Debug, Message = "Generated JA3 profile: {JA3String} (Hash: {JA3Hash})")]
+    private static partial void LogGeneratedProfile(ILogger logger, string ja3String, string ja3Hash);
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Debug, Message = "Applying TLS fingerprint for browser context")]
+    private static partial void LogApplyingFingerprint(ILogger logger);
+
+    [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "TLS fingerprint randomized successfully")]
+    private static partial void LogRandomizationSuccess(ILogger logger);
+
+    [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "JA3 profile prepared for context: {JA3Hash}. Full TLS modification requires proxy integration or browser kernel patches.")]
+    private static partial void LogProfilePrepared(ILogger logger, string ja3Hash);
+
+    [LoggerMessage(EventId = 5, Level = LogLevel.Debug, Message = "Configured network emulation for TLS version {TLSVersion} (HTTP/2: {HTTP2})")]
+    private static partial void LogNetworkEmulationConfigured(ILogger logger, int tlsVersion, bool http2);
+
+    [LoggerMessage(EventId = 6, Level = LogLevel.Information, Message = "JA3 verification requires actual browser page navigation (not yet implemented)")]
+    private static partial void LogVerificationNotImplemented(ILogger logger);
+
+    [LoggerMessage(EventId = 7, Level = LogLevel.Error, Message = "Failed to apply TLS fingerprint to context")]
+    private static partial void LogApplyFailed(ILogger logger, Exception ex);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TLSFingerprintService"/> class.
@@ -32,11 +53,9 @@ public sealed class TLSFingerprintService
 
         if (_logger.IsEnabled(LogLevel.Debug))
         {
-            _logger.LogDebug(
-                "Generated JA3 profile: {JA3String} (Hash: {JA3Hash})",
-                profile.ToJA3String(),
-                profile.ToJA3Hash()
-            );
+            string ja3String = profile.ToJA3String();
+            string ja3Hash = profile.ToJA3Hash();
+            LogGeneratedProfile(_logger, ja3String, ja3Hash);
         }
 
         return profile;
@@ -70,22 +89,19 @@ public sealed class TLSFingerprintService
             // 2. Browser launch arguments (limited effect)
             // 3. Patchright kernel modifications (future enhancement)
 
-            // For now, log the JA3 profile that should be applied
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation(
-                    "JA3 profile prepared for context: {JA3Hash}. " +
-                    "Full TLS modification requires proxy integration or browser kernel patches.",
-                    profile.ToJA3Hash()
-                );
-            }
+        // For now, log the JA3 profile that should be applied
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            string ja3Hash = profile.ToJA3Hash();
+            LogProfilePrepared(_logger, ja3Hash);
+        }
 
             // We can set some related fingerprints via CDP
             await ConfigureNetworkEmulationAsync(client, profile).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to apply TLS fingerprint to context");
+            LogApplyFailed(_logger, ex);
             throw;
         }
     }
@@ -99,14 +115,7 @@ public sealed class TLSFingerprintService
         // Modern browsers with TLS 1.3 support HTTP/2
         bool supportsHttp2 = profile.TLSVersion >= 771;
 
-        if (_logger.IsEnabled(LogLevel.Debug))
-        {
-            _logger.LogDebug(
-                "Configured network emulation for TLS version {TLSVersion} (HTTP/2: {HTTP2})",
-                profile.TLSVersion,
-                supportsHttp2
-            );
-        }
+        LogNetworkEmulationConfigured(_logger, profile.TLSVersion, supportsHttp2);
 
         // Additional CDP commands for network behavior can be added here
         await Task.CompletedTask.ConfigureAwait(false);
@@ -124,7 +133,7 @@ public sealed class TLSFingerprintService
 
         // This method is a placeholder for future integration with actual page navigation
         // The current implementation would require resolving IPage interface usage issues
-        _logger.LogInformation("JA3 verification requires actual browser page navigation (not yet implemented)");
+        LogVerificationNotImplemented(_logger);
 
         return Task.FromResult(string.Empty);
     }

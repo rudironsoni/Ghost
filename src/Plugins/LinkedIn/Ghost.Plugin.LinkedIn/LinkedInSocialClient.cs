@@ -113,7 +113,7 @@ public sealed class LinkedInSocialClient : ISocialClient
         }
     }
 
-    private async Task<SocialProfile> ExtractProfileDataAsync(IPage page, string profileId, CancellationToken ct)
+    private static async Task<SocialProfile> ExtractProfileDataAsync(IPage page, string profileId, CancellationToken ct)
     {
         string name = await GetElementTextAsync(page, ".text-heading-xlarge", ct).ConfigureAwait(false);
         string bio = await GetElementTextAsync(page, ".text-body-medium", ct).ConfigureAwait(false);
@@ -176,7 +176,7 @@ public sealed class LinkedInSocialClient : ISocialClient
         };
     }
 
-    private async Task ExpandSeeMoreAsync(Ghost.IPage page, Ghost.IElement? container, CancellationToken ct)
+    private static async Task ExpandSeeMoreAsync(Ghost.IPage page, Ghost.IElement? container, CancellationToken ct)
     {
         try
         {

@@ -25,7 +25,7 @@ public sealed class CassetteStore
         Directory.CreateDirectory(_baseDirectory);
     }
 
-    public string BuildKey(HttpMethod method, Uri requestUri)
+    public static string BuildKey(HttpMethod method, Uri requestUri)
     {
         ArgumentNullException.ThrowIfNull(method);
         ArgumentNullException.ThrowIfNull(requestUri);
@@ -43,8 +43,16 @@ public sealed class CassetteStore
             return null;
         }
 
-        await using FileStream stream = File.OpenRead(path);
-        return await JsonSerializer.DeserializeAsync<CassetteEnvelope>(stream, SerializerOptions, cancellationToken)
+        FileStream stream = File.OpenRead(path);
+        try
+        {
+            return await JsonSerializer.DeserializeAsync<CassetteEnvelope>(stream, SerializerOptions, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            await stream.DisposeAsync().ConfigureAwait(false);
+        }
             ;
     }
 
@@ -55,9 +63,14 @@ public sealed class CassetteStore
         string path = GetPath(key);
         string tempPath = $"{path}.tmp";
 
-        await using (FileStream stream = File.Create(tempPath))
+        FileStream stream = File.Create(tempPath);
+        try
         {
-            await JsonSerializer.SerializeAsync(stream, envelope, SerializerOptions, cancellationToken);
+            await JsonSerializer.SerializeAsync(stream, envelope, SerializerOptions, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            await stream.DisposeAsync().ConfigureAwait(false);
         }
 
         File.Move(tempPath, path, overwrite: true);

@@ -426,7 +426,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
         }
     }
 
-    private async Task<JobListing?> EnrichJobListingAsync(
+    private static async Task<JobListing?> EnrichJobListingAsync(
         IPage page,
         JobListing? parsed,
         string jobId,
@@ -448,7 +448,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
                !string.IsNullOrEmpty(parsed.Location);
     }
 
-    private async Task<ScrapedJobData> ScrapeJobDataAsync(IPage page, string html, CancellationToken ct)
+    private static async Task<ScrapedJobData> ScrapeJobDataAsync(IPage page, string html, CancellationToken ct)
     {
         var data = new ScrapedJobData
         {

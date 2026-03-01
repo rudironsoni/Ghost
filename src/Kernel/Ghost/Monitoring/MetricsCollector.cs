@@ -98,12 +98,12 @@ public class MetricsCollector : IMetricsCollector
 
 public class PlatformMetrics
 {
-    public long ScrapeAttempts;
-    public long ScrapeSuccesses;
-    public long ScrapeFailures;
-    public long CacheHits;
-    public long CacheMisses;
-    public string CircuitBreakerState = "Closed";
+    internal long ScrapeAttempts;
+    internal long ScrapeSuccesses;
+    internal long ScrapeFailures;
+    internal long CacheHits;
+    internal long CacheMisses;
+    internal string CircuitBreakerState = "Closed";
 }
 
 public class MetricsSnapshot

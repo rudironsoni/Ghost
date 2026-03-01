@@ -45,30 +45,30 @@ public sealed class CassetteDelegatingHandler : DelegatingHandler
 
     private async Task<HttpResponseMessage> ReplayAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        string key = _store.BuildKey(request.Method, request.RequestUri!);
+        string key = CassetteStore.BuildKey(request.Method, request.RequestUri!);
         CassetteEnvelope? cassette = await _store.ReadAsync(key, cancellationToken);
 
-        if (cassette is null)
+        if (cassette is not null)
         {
-            throw new CassetteNotFoundException(
-                $"Cassette not found for {request.Method} {request.RequestUri}. " +
-                $"Missing key: {key}. Run with GHOST_CASSETTES=record to capture this request.");
+            HttpResponseMessage response = new((HttpStatusCode)cassette.Response.StatusCode)
+            {
+                ReasonPhrase = cassette.Response.ReasonPhrase,
+                RequestMessage = request
+            };
+
+            byte[] body = string.IsNullOrEmpty(cassette.Response.BodyBase64)
+                ? []
+                : Convert.FromBase64String(cassette.Response.BodyBase64);
+
+            response.Content = new ByteArrayContent(body);
+            ApplyHeaders(response, cassette.Response.Headers);
+
+            return response;
         }
 
-        HttpResponseMessage response = new((HttpStatusCode)cassette.Response.StatusCode)
-        {
-            ReasonPhrase = cassette.Response.ReasonPhrase,
-            RequestMessage = request
-        };
-
-        byte[] body = string.IsNullOrEmpty(cassette.Response.BodyBase64)
-            ? []
-            : Convert.FromBase64String(cassette.Response.BodyBase64);
-
-        response.Content = new ByteArrayContent(body);
-        ApplyHeaders(response, cassette.Response.Headers);
-
-        return response;
+        throw new CassetteNotFoundException(
+            $"Cassette not found for {request.Method} {request.RequestUri}. " +
+            $"Missing key: {key}. Run with GHOST_CASSETTES=record to capture this request.");
     }
 
     private async Task<HttpResponseMessage> RecordAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -84,7 +84,7 @@ public sealed class CassetteDelegatingHandler : DelegatingHandler
             ? []
             : await response.Content.ReadAsByteArrayAsync(cancellationToken);
 
-        string key = _store.BuildKey(request.Method, request.RequestUri!);
+        string key = CassetteStore.BuildKey(request.Method, request.RequestUri!);
         CassetteEnvelope envelope = new()
         {
             Key = key,

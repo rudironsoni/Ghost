@@ -423,7 +423,7 @@ public class CountryRegionMapping
             .Select(kvp => kvp.Key);
     }
 
-    private Dictionary<string, string> InitializeCountryRegionMap()
+    private static Dictionary<string, string> InitializeCountryRegionMap()
     {
         return InitializeCountryRegionMapInternal();
     }
@@ -586,12 +586,11 @@ public class CountryRegionMapping
 /// </summary>
 public class GeographicProxyPool
 {
-    private readonly string _regionCode;
     private readonly GeographicTargetingOptions _options;
     private readonly List<ProxyInfo> _proxies = [];
     private readonly object _proxyLock = new();
 
-    public string RegionCode => _regionCode;
+    public string RegionCode { get; }
     public int ProxyCount
     {
         get
@@ -605,7 +604,7 @@ public class GeographicProxyPool
 
     public GeographicProxyPool(string regionCode, GeographicTargetingOptions options)
     {
-        _regionCode = regionCode ?? throw new ArgumentNullException(nameof(regionCode));
+        RegionCode = regionCode ?? throw new ArgumentNullException(nameof(regionCode));
         _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
