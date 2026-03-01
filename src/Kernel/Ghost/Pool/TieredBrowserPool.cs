@@ -7,9 +7,78 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ghost.Pool;
 
-[SuppressMessage("Performance", "CA1848:Use LoggerMessage delegates", Justification = "Pool infrastructure - readability over performance")]
 public sealed class TieredBrowserPool : ITieredBrowserPool
 {
+    // LoggerMessage delegates (EventIds 1000-1019)
+    private static readonly Action<ILogger, int, int, Exception?> _initialized = LoggerMessage.Define<int, int>(
+        LogLevel.Information,
+        new EventId(1000, nameof(TieredBrowserPool)),
+        "Tiered browser pool initialized: Hot={HotCount}, Warm={WarmCount}");
+
+    private static readonly Action<ILogger, Exception?> _failedInitialize = LoggerMessage.Define(
+        LogLevel.Error,
+        new EventId(1001, nameof(TieredBrowserPool)),
+        "Failed to initialize browser pools");
+
+    private static readonly Action<ILogger, Tier, double, string, Exception?> _acquired = LoggerMessage.Define<Tier, double, string>(
+        LogLevel.Debug,
+        new EventId(1002, nameof(TieredBrowserPool)),
+        "Acquired browser from {Tier} pool in {ElapsedMs}ms (SessionId={SessionId})");
+
+    private static readonly Action<ILogger, Tier, Exception?> _failedAcquire = LoggerMessage.Define<Tier>(
+        LogLevel.Error,
+        new EventId(1003, nameof(TieredBrowserPool)),
+        "Failed to acquire browser from {Tier} pool");
+
+    private static readonly Action<ILogger, double, Exception?> _highMemoryPressure = LoggerMessage.Define<double>(
+        LogLevel.Warning,
+        new EventId(1004, nameof(TieredBrowserPool)),
+        "High memory pressure: {Pressure:P0}, triggering cleanup");
+
+    private static readonly Action<ILogger, string, Exception?> _sessionExpired = LoggerMessage.Define<string>(
+        LogLevel.Debug,
+        new EventId(1005, nameof(TieredBrowserPool)),
+        "Session expired, disposing (SessionId={SessionId})");
+
+    private static readonly Action<ILogger, Tier, string, Exception?> _returnedSession = LoggerMessage.Define<Tier, string>(
+        LogLevel.Debug,
+        new EventId(1006, nameof(TieredBrowserPool)),
+        "Returned session to {Tier} pool (SessionId={SessionId})");
+
+    private static readonly Action<ILogger, Exception?> _errorReturningSession = LoggerMessage.Define(
+        LogLevel.Error,
+        new EventId(1007, nameof(TieredBrowserPool)),
+        "Error returning session to pool");
+
+    private static readonly Action<ILogger, Tier, Exception?> _failedWarmUp = LoggerMessage.Define<Tier>(
+        LogLevel.Error,
+        new EventId(1008, nameof(TieredBrowserPool)),
+        "Failed to warm up {Tier} pool");
+
+    private static readonly Action<ILogger, bool, bool, bool, double, Exception?> _poolDegraded = LoggerMessage.Define<bool, bool, bool, double>(
+        LogLevel.Warning,
+        new EventId(1009, nameof(TieredBrowserPool)),
+        "Pool health degraded: Hot={HotHealthy}, Warm={WarmHealthy}, Cold={ColdHealthy}, Memory={MemoryPressure:P0}");
+
+    private static readonly Action<ILogger, Exception?> _healthCheckFailed = LoggerMessage.Define(
+        LogLevel.Error,
+        new EventId(1010, nameof(TieredBrowserPool)),
+        "Health check failed");
+
+    private static readonly Action<ILogger, int, int, Exception?> _cleanedUpExpired = LoggerMessage.Define<int, int>(
+        LogLevel.Information,
+        new EventId(1011, nameof(TieredBrowserPool)),
+        "Cleaned up expired sessions: Hot={HotExpired}, Warm={WarmExpired}");
+
+    private static readonly Action<ILogger, Exception?> _errorDisposingSession = LoggerMessage.Define(
+        LogLevel.Error,
+        new EventId(1012, nameof(TieredBrowserPool)),
+        "Error disposing session");
+
+    private static readonly Action<ILogger, Exception?> _disposedLog = LoggerMessage.Define(
+        LogLevel.Information,
+        new EventId(1013, nameof(TieredBrowserPool)),
+        "Tiered browser pool disposed");
     private readonly GhostKernel _kernel;
     private readonly TieredBrowserPoolOptions _options;
     private readonly ILogger<TieredBrowserPool> _logger;
@@ -68,15 +137,12 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
             if (_logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation(
-                    "Tiered browser pool initialized: Hot={HotCount}, Warm={WarmCount}",
-                    _options.Hot.MinimumSize,
-                    _options.Warm.MinimumSize);
+                _initialized(_logger, _options.Hot.MinimumSize, _options.Warm.MinimumSize, null);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to initialize browser pools");
+            _failedInitialize(_logger, ex);
         }
     }
 
@@ -110,18 +176,14 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
             if (_logger.IsEnabled(LogLevel.Debug))
             {
-                _logger.LogDebug(
-                    "Acquired browser from {Tier} pool in {ElapsedMs}ms (SessionId={SessionId})",
-                    tier,
-                    stopwatch.Elapsed.TotalMilliseconds,
-                    session.SessionId);
+                _acquired(_logger, tier, stopwatch.Elapsed.TotalMilliseconds, session.SessionId, null);
             }
 
             return session;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to acquire browser from {Tier} pool", tier);
+            _failedAcquire(_logger, tier, ex);
             throw;
         }
     }
@@ -189,9 +251,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
         if (memoryPressure > _options.MemoryPressureThreshold)
         {
-            _logger.LogWarning(
-                "High memory pressure: {Pressure:P0}, triggering cleanup",
-                memoryPressure);
+            _highMemoryPressure(_logger, memoryPressure, null);
 
             await CleanupExpiredSessionsAsync().ConfigureAwait(false);
         }
@@ -213,10 +273,10 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
         {
             if (pooled.IsExpired(_options.SessionTtl))
             {
-                if (_logger.IsEnabled(LogLevel.Debug))
-                {
-                    _logger.LogDebug("Session expired, disposing (SessionId={SessionId})", session.SessionId);
-                }
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _sessionExpired(_logger, session.SessionId, null);
+            }
                 await session.DisposeAsync().ConfigureAwait(false);
                 return;
             }
@@ -241,10 +301,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
                     targetPool.Add(pooled);
                     if (_logger.IsEnabled(LogLevel.Debug))
                     {
-                        _logger.LogDebug(
-                            "Returned session to {Tier} pool (SessionId={SessionId})",
-                            pooled.Tier,
-                            session.SessionId);
+                        _returnedSession(_logger, pooled.Tier, session.SessionId, null);
                     }
                     return;
                 }
@@ -259,7 +316,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error returning session to pool");
+            _errorReturningSession(_logger, ex);
             await session.DisposeAsync().ConfigureAwait(false);
         }
     }
@@ -357,7 +414,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to warm up {Tier} pool", tier);
+                    _failedWarmUp(_logger, tier, ex);
                 }
             }, ct));
         }
@@ -413,12 +470,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
                 if (!health.IsHealthy)
                 {
-                    _logger.LogWarning(
-                        "Pool health degraded: Hot={HotHealthy}, Warm={WarmHealthy}, Cold={ColdHealthy}, Memory={MemoryPressure:P0}",
-                        health.Hot.IsHealthy,
-                        health.Warm.IsHealthy,
-                        health.Cold.IsHealthy,
-                        health.MemoryPressure);
+                    _poolDegraded(_logger, health.Hot.IsHealthy, health.Warm.IsHealthy, health.Cold.IsHealthy, health.MemoryPressure, null);
                 }
 
                 if (health.Hot.Total < _options.Hot.MinimumSize)
@@ -433,7 +485,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Health check failed");
+                _healthCheckFailed(_logger, ex);
             }
         });
     }
@@ -479,10 +531,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
         {
             if (_logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation(
-                    "Cleaned up expired sessions: Hot={HotExpired}, Warm={WarmExpired}",
-                    hotExpired.Count,
-                    warmExpired.Count);
+                _cleanedUpExpired(_logger, hotExpired.Count, warmExpired.Count, null);
             }
         }
 
@@ -530,7 +579,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error disposing session");
+                _errorDisposingSession(_logger, ex);
             }
         }
 
@@ -542,6 +591,6 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
         _warmPoolLock.Dispose();
         _coldPoolSemaphore.Dispose();
 
-        _logger.LogInformation("Tiered browser pool disposed");
+        _disposedLog(_logger, null);
     }
 }
