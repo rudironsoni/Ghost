@@ -60,24 +60,7 @@ public sealed class JA3Profile
     public string ToJA3Hash()
     {
         string ja3String = ToJA3String();
-        return JA3HashHelper.ComputeMd5Hex(ja3String);
-    }
-
-    internal static class JA3HashHelper
-    {
-        /// <summary>
-        /// Compute the MD5 hash of the input and return a lowercase hex string.
-        /// MD5 is used here because the JA3 fingerprint specification requires it.
-        /// </summary>
-        internal static string ComputeMd5Hex(string input)
-        {
-            // TODO: Open an issue to document MD5 rationale and any future migration.
-            byte[] bytes = Encoding.UTF8.GetBytes(input);
-            // Use the static API preferred by analyzers when available.
-            // MD5 is used per JA3 spec for fingerprinting only.
-            byte[] hash = MD5.HashData(bytes);
-            return Convert.ToHexString(hash).ToLowerInvariant();
-        }
+        return JA3HashHelper.ComputeJa3Md5Hex(ja3String);
     }
 
     /// <summary>

@@ -29,12 +29,13 @@ internal static partial class JavaScriptAdapterLogMessages
 /// This adapter uses headless browsers to execute JavaScript and wait for dynamic content.
 /// It's suitable for single-page applications and sites that rely heavily on client-side rendering.
 /// </remarks>
-public class JavaScriptAdapter : IContentAdapter
+public class JavaScriptAdapter : IContentAdapter, IDisposable, IAsyncDisposable
 {
     private static readonly string[] BrowserArgs = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"];
     private readonly ILogger<JavaScriptAdapter>? _logger;
     private readonly Lazy<Task<IBrowser>> _browserLazy;
     private bool _disposed;
+    private readonly object _disposeGate = new();
 
     /// <inheritdoc/>
     public string Name => "JavaScript";
@@ -249,7 +250,7 @@ public class JavaScriptAdapter : IContentAdapter
     /// <summary>
     /// Releases unmanaged resources and performs async cleanup.
     /// </summary>
-protected virtual async ValueTask DisposeAsyncCore()
+    protected virtual async ValueTask DisposeAsyncCore()
     {
         if (_disposed)
             return;
@@ -257,11 +258,35 @@ protected virtual async ValueTask DisposeAsyncCore()
         if (_browserLazy.IsValueCreated)
         {
             IBrowser browser = await _browserLazy.Value.ConfigureAwait(false);
-            await browser.CloseAsync().ConfigureAwait(false);
-            await browser.DisposeAsync().ConfigureAwait(false);
+            try
+            {
+                await browser.CloseAsync().ConfigureAwait(false);
+                await browser.DisposeAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // best-effort cleanup
+            }
         }
 
         _disposed = true;
+    }
+
+    /// <summary>
+    /// Standard synchronous dispose pattern. Disposes managed resources.
+    /// </summary>
+    public void Dispose()
+    {
+        lock (_disposeGate)
+        {
+            if (_disposed)
+                return;
+
+            // Run async core synchronously as a best-effort cleanup for callers
+            DisposeAsyncCore().AsTask().GetAwaiter().GetResult();
+            _disposed = true;
+            GC.SuppressFinalize(this);
+        }
     }
 
 #pragma warning restore IDE1006

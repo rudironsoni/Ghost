@@ -1,30 +1,43 @@
 using System.Reflection;
-using Ghost.Sdk.Spider.Core.Entities.Attributes;
 
 namespace Ghost.Sdk.Spider.Core.Entities;
 
+/// <summary>
+/// Internal helpers for EntityBase to host static members that would otherwise
+/// be declared on a generic type to satisfy analyzer guidance (CA1000).
+/// </summary>
 internal static class EntityBaseHelpers
 {
-    public static EntityMetadata GetMetadata<TItem>() where TItem : EntityBase<TItem>, new()
+    internal static EntityMetadata GetMetadata<T>() where T : EntityBase<T>, new()
     {
-        Type type = typeof(TItem);
-        EntitySelectorAttribute? entitySelectorAttr = type.GetCustomAttribute<EntitySelectorAttribute>();
+        Type type = typeof(T);
 
-        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanWrite && p.GetCustomAttribute<ValueSelectorAttribute>() != null)
-            .Select(p => new PropertyMetadata
+        var selector = type.GetCustomAttribute<Attributes.EntitySelectorAttribute>();
+
+        var properties = new List<PropertyMetadata>();
+
+        foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            var valueSelector = prop.GetCustomAttribute<Attributes.ValueSelectorAttribute>();
+            if (valueSelector is null)
+                continue;
+
+            var formatters = prop.GetCustomAttributes<Attributes.FormatterAttribute>().ToList();
+            var fieldAttr = prop.GetCustomAttribute<Attributes.FieldAttribute>();
+
+            properties.Add(new PropertyMetadata
             {
-                PropertyInfo = p,
-                ValueSelector = p.GetCustomAttribute<ValueSelectorAttribute>()!,
-                FieldAttribute = p.GetCustomAttribute<FieldAttribute>(),
-                Formatters = p.GetCustomAttributes<FormatterAttribute>().ToList()
-            })
-            .ToList();
+                PropertyInfo = prop,
+                ValueSelector = valueSelector,
+                FieldAttribute = fieldAttr,
+                Formatters = formatters
+            });
+        }
 
         return new EntityMetadata
         {
             EntityType = type,
-            EntitySelector = entitySelectorAttr,
+            EntitySelector = selector,
             Properties = properties
         };
     }
