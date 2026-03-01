@@ -25,19 +25,8 @@ public abstract class EntityBase<T> where T : EntityBase<T>, new()
     /// </summary>
     public DateTime? ExtractedAt { get; set; }
 
-    /// <summary>
-    /// Gets the entity metadata including selector configurations and field mappings.
-    /// </summary>
-    /// <returns>An <see cref="EntityMetadata"/> instance containing the entity configuration.</returns>
-    // Note: Historically this method was implemented as a public static on the generic
-    // EntityBase<T> type to make it easy to obtain metadata for a concrete entity.
-    // To satisfy analyzer guidance about static members on generic types the
-    // implementation has been moved into a non-generic helper below. The public
-    // static method is retained as a thin compatibility facade to avoid breaking
-    // existing callers.
-    // Note: Metadata retrieval has been moved to a central provider to avoid
-    // static members on generic types. Callers should use EntityMetadataProvider.GetMetadata<T>().
-    // The public facade is removed in favor of the provider.
+    // Metadata retrieval has been moved to a central provider to avoid static
+    // members on generic types. Callers should use EntityMetadataProvider.GetMetadata<T>().
 
     /// <summary>
     /// Validates the entity instance according to any validation rules defined by attributes.
