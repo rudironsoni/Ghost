@@ -346,7 +346,7 @@ public partial class XSocialClient : ISocialClient
         int maxResults,
         CancellationToken ct)
     {
-        List<SocialProfile> profiles = [];
+        List<SocialProfile> profiles = new List<SocialProfile>();
 
         try
         {
@@ -395,7 +395,7 @@ public partial class XSocialClient : ISocialClient
         int maxPosts,
         CancellationToken ct)
     {
-        List<SocialPost> posts = [];
+            List<SocialPost> posts = new List<SocialPost>();
 
         try
         {
@@ -472,7 +472,7 @@ public partial class XSocialClient : ISocialClient
         string profileId,
         CancellationToken ct)
     {
-        List<SocialConnection> connections = [];
+        List<SocialConnection> connections = new List<SocialConnection>();
 
         try
         {

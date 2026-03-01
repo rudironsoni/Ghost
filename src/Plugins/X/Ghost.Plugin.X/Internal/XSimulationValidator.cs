@@ -1,8 +1,13 @@
 using System.Reflection;
-using System.Text.RegularExpressions;
+// using System.Text.RegularExpressions; // already included above
 using Ghost.Contracts.Simulation;
 using Ghost.Contracts.Social;
 using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Ghost.Plugin.X.Internal;
 
@@ -20,17 +25,17 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
     public XSimulationValidator(IOptions<XOptions> options)
     {
         _options = options?.Value ?? new XOptions();
-        ContentSplitter = new XPostContentSplitter(XOptions.MaxTweetLength);
+        ContentSplitter = new XPostContentSplitter(_options.MaxTweetLength);
     }
 
     /// <inheritdoc />
     public string PlatformName => "X";
 
     /// <inheritdoc />
-    public int MaxContentLength => XOptions.MaxTweetLength;
+    public int MaxContentLength => _options.MaxTweetLength;
 
     /// <inheritdoc />
-    public int MaxMediaAttachments => XOptions.MaxMediaAttachments;
+    public int MaxMediaAttachments => _options.MaxMediaAttachments;
 
     /// <inheritdoc />
     public IReadOnlyList<string> SupportedMediaTypes =>
@@ -39,8 +44,8 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
     /// <inheritdoc />
     public async Task<ValidationResult> ValidatePostAsync(CreatePostRequest request)
     {
-        List<ValidationError> errors = [];
-        List<ValidationError> warnings = [];
+        List<ValidationError> errors = new List<ValidationError>();
+        List<ValidationError> warnings = new List<ValidationError>();
 
         // Validate content is not empty
         if (string.IsNullOrWhiteSpace(request.Content))
@@ -63,22 +68,22 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
             {
                 int effectiveLength = CalculateEffectiveLength(part);
 
-                if (effectiveLength > XOptions.MaxTweetLength)
+                if (effectiveLength > _options.MaxTweetLength)
                 {
                     errors.Add(new ValidationError
                     {
                         Code = "CONTENT_TOO_LONG",
-                        Message = $"Tweet {index + 1} exceeds {XOptions.MaxTweetLength} characters (actual: {effectiveLength})",
+                        Message = $"Tweet {index + 1} exceeds {_options.MaxTweetLength} characters (actual: {effectiveLength})",
                         Field = nameof(request.Content),
                         Severity = ValidationSeverity.Error
                     });
                 }
-                else if (effectiveLength > XOptions.MaxTweetLength * 0.9)
+                else if (effectiveLength > _options.MaxTweetLength * 0.9)
                 {
                     warnings.Add(new ValidationError
                     {
                         Code = "CONTENT_NEAR_LIMIT",
-                        Message = $"Tweet {index + 1} is near character limit ({effectiveLength}/{XOptions.MaxTweetLength})",
+                        Message = $"Tweet {index + 1} is near character limit ({effectiveLength}/{_options.MaxTweetLength})",
                         Field = nameof(request.Content),
                         Severity = ValidationSeverity.Warning
                     });
@@ -168,23 +173,23 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
             }
 
             // Check media limits
-            if (imageCount > XOptions.MaxMediaAttachments)
+            if (imageCount > _options.MaxMediaAttachments)
             {
                 errors.Add(new ValidationError
                 {
                     Code = "TOO_MANY_IMAGES",
-                    Message = $"Maximum {XOptions.MaxMediaAttachments} images allowed per tweet",
+                    Message = $"Maximum {_options.MaxMediaAttachments} images allowed per tweet",
                     Field = nameof(request.MediaUrls),
                     Severity = ValidationSeverity.Error
                 });
             }
 
-            if (videoCount > XOptions.MaxVideoAttachments)
+            if (videoCount > _options.MaxVideoAttachments)
             {
                 errors.Add(new ValidationError
                 {
                     Code = "TOO_MANY_VIDEOS",
-                    Message = $"Maximum {XOptions.MaxVideoAttachments} video allowed per tweet",
+                    Message = $"Maximum {_options.MaxVideoAttachments} video allowed per tweet",
                     Field = nameof(request.MediaUrls),
                     Severity = ValidationSeverity.Error
                 });
@@ -208,7 +213,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
             string content = request.Content.ToLowerInvariant();
 
             // Check for excessive hashtags
-            int hashtagCount = Regex.Count(request.Content, @"#\w+");
+            int hashtagCount = Regex.Matches(request.Content, @"#\w+").Count;
             if (hashtagCount > 5)
             {
                 warnings.Add(new ValidationError
@@ -221,7 +226,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
             }
 
             // Check for excessive mentions
-            int mentionCount = Regex.Count(request.Content, @"@\w+");
+            int mentionCount = Regex.Matches(request.Content, @"@\w+").Count;
             if (mentionCount > 5)
             {
                 warnings.Add(new ValidationError
@@ -254,7 +259,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
     /// <inheritdoc />
     public async Task<ValidationResult> ValidateSelectorsAsync(object page)
     {
-        List<ValidationError> errors = [];
+        List<ValidationError> errors = new List<ValidationError>();
 
         if (page is not IPage browserPage)
         {
@@ -426,7 +431,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
 
         // Simulate the posting process
         IReadOnlyList<string> parts = ContentSplitter.Split(request.Content);
-        List<string> simulatedIds = [];
+        List<string> simulatedIds = new List<string>();
 
         // Generate simulated tweet IDs
         for (int i = 0; i < parts.Count; i++)

@@ -2,6 +2,12 @@ using System.Text.RegularExpressions;
 using Ghost.Contracts.Social;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ghost.Plugin.X.Internal;
 
@@ -24,7 +30,7 @@ public partial class XThreadComposer
     {
         _options = options?.Value ?? new XOptions();
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<XThreadComposer>.Instance;
-        ContentSplitter = new XPostContentSplitter(XOptions.MaxTweetLength);
+        ContentSplitter = new XPostContentSplitter(_options.MaxTweetLength);
     }
 
     /// <summary>
@@ -223,7 +229,7 @@ public partial class XThreadComposer
         }
 
         // Validate and set files
-        List<string> validFiles = [];
+        List<string> validFiles = new List<string>();
         foreach (string url in mediaUrls)
         {
             if (!File.Exists(url))
@@ -250,10 +256,10 @@ public partial class XThreadComposer
             return;
         }
 
-        if (validFiles.Count > XOptions.MaxMediaAttachments)
+        if (validFiles.Count > _options.MaxMediaAttachments)
         {
-            Log.TruncatingMediaFiles(_logger, XOptions.MaxMediaAttachments);
-            validFiles = validFiles.Take(XOptions.MaxMediaAttachments).ToList();
+            Log.TruncatingMediaFiles(_logger, _options.MaxMediaAttachments);
+            validFiles = validFiles.Take(_options.MaxMediaAttachments).ToList();
         }
 
         // Set files on input
