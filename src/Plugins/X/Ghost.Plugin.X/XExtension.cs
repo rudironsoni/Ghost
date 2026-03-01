@@ -15,6 +15,10 @@ using Microsoft.Extensions.Options;
 
 namespace Ghost.Plugin.X;
 
+// NOTE: This file registers XPostContentSplitter using the static
+// XOptions.MaxTweetLength where appropriate. No instance-based access to
+// static members should occur in this file.
+
 /// <summary>
 /// Extension for integrating X (Twitter) platform with Ghost.
 /// </summary>

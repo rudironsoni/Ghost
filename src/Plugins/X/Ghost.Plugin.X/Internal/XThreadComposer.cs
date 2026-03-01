@@ -5,6 +5,10 @@ using Microsoft.Extensions.Options;
 
 namespace Ghost.Plugin.X.Internal;
 
+// NOTE: Reviewed for CS0176 (static access via instance). Static members
+// on XOptions are referenced via the type (XOptions) throughout this file.
+// No instance-to-static access required here.
+
 /// <summary>
 /// Composes and posts single tweets or multi-tweet threads.
 /// </summary>

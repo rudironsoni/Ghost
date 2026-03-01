@@ -6,6 +6,9 @@ using Microsoft.Extensions.Options;
 
 namespace Ghost.Plugin.X.Internal;
 
+// NOTE: Reviewed for CS0176 (static access via instance). Static members
+// on XOptions are referenced via the type (XOptions) throughout this file.
+
 /// <summary>
 /// Validates content and simulates actions for the X platform.
 /// </summary>
