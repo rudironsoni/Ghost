@@ -35,41 +35,9 @@ public abstract class EntityBase<T> where T : EntityBase<T>, new()
     // implementation has been moved into a non-generic helper below. The public
     // static method is retained as a thin compatibility facade to avoid breaking
     // existing callers.
-    public static EntityMetadata GetMetadata()
-    {
-        return EntityBaseHelpers.GetMetadata<T>();
-    }
-
-    /// <summary>
-    /// Internal helper that contains static members moved off the generic type to
-    /// satisfy static analysis guidance while preserving the public API surface.
-    /// </summary>
-    internal static class EntityBaseHelpers
-    {
-        public static EntityMetadata GetMetadata<TItem>() where TItem : EntityBase<TItem>, new()
-        {
-            Type type = typeof(TItem);
-            EntitySelectorAttribute? entitySelectorAttr = type.GetCustomAttribute<Attributes.EntitySelectorAttribute>();
-
-            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p.CanWrite && p.GetCustomAttribute<Attributes.ValueSelectorAttribute>() != null)
-                .Select(p => new PropertyMetadata
-                {
-                    PropertyInfo = p,
-                    ValueSelector = p.GetCustomAttribute<Attributes.ValueSelectorAttribute>()!,
-                    FieldAttribute = p.GetCustomAttribute<Attributes.FieldAttribute>(),
-                    Formatters = p.GetCustomAttributes<Attributes.FormatterAttribute>().ToList()
-                })
-                .ToList();
-
-            return new EntityMetadata
-            {
-                EntityType = type,
-                EntitySelector = entitySelectorAttr,
-                Properties = properties
-            };
-        }
-    }
+    // Note: The metadata helper has been moved to a non-generic top-level helper to
+    // avoid static members on generic types (CA1000). Use EntityBaseHelpers.GetMetadata<T>()
+    // to obtain metadata for a concrete entity type.
 
     /// <summary>
     /// Validates the entity instance according to any validation rules defined by attributes.
