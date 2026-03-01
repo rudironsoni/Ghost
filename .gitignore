@@ -327,3 +327,7 @@ bd_test
 .rulesync/rules/*.local.md
 rulesync.local.jsonc
 !.rulesync/.aiignore
+
+# Dolt database files (added by bd init)
+.dolt/
+.beads/dolt-server.log
