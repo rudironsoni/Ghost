@@ -216,7 +216,8 @@ public sealed class StatsCollector : IStatsCollector
         long items = counters is null ? 0 : Interlocked.Read(ref counters.ItemCount);
 
         // Create a snapshot copy - copy concurrent collections into fresh ones
-        var statusCopy = new System.Collections.Concurrent.ConcurrentDictionary<int, long>(stats.StatusCodeDistribution);
+        System.Collections.Concurrent.ConcurrentDictionary<int, long> statusCopy =
+            new System.Collections.Concurrent.ConcurrentDictionary<int, long>(stats.StatusCodeDistribution);
 
         return new SpiderStats
         {
@@ -248,7 +249,7 @@ public sealed class StatsCollector : IStatsCollector
         // Return snapshot copies for every tracked spider so callers receive
         // consistent, atomic views of the counters rather than live references.
         Dictionary<string, SpiderStats> result = new Dictionary<string, SpiderStats>();
-        foreach (var kv in _stats)
+        foreach (KeyValuePair<string, SpiderStats> kv in _stats)
         {
             result[kv.Key] = GetStats(kv.Key);
         }
