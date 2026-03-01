@@ -61,7 +61,7 @@ public sealed partial class ScraperHarnessRunner : IHostedService
 
         try
         {
-            IServiceScope scope = _serviceProvider.CreateScope();
+            using IServiceScope scope = _serviceProvider.CreateScope();
 
             LinkedInJobClient jobClient = scope.ServiceProvider.GetRequiredService<LinkedInJobClient>();
 
@@ -123,7 +123,7 @@ public sealed partial class ScraperHarnessRunner : IHostedService
     {
         Log.FetchingDetails(_logger, jobs.Count);
 
-        List<JobListing> detailedJobs = [];
+        List<JobListing> detailedJobs = new();
 
         foreach (JobListing job in jobs)
         {
@@ -137,7 +137,19 @@ public sealed partial class ScraperHarnessRunner : IHostedService
             }
             catch (Exception ex)
             {
-                Log.FetchDetailsFailed(_logger, ex, job.Id, job.Title);
+                // Guard evaluation of potentially expensive-to-compute arguments for logging
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    string jobId = job.Id;
+                    string title = job.Title;
+                    Log.FetchDetailsFailed(_logger, ex, jobId, title);
+                }
+                else
+                {
+                    // Still record the failure in logs at a minimal level
+                    Log.FetchDetailsFailed(_logger, ex, job.Id, job.Title);
+                }
+
                 detailedJobs.Add(job);
             }
         }
