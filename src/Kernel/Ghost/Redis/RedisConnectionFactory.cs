@@ -10,7 +10,7 @@ namespace Ghost.Redis;
 /// This factory provides async-first Redis connection establishment,
 /// preventing sync-over-async deadlocks during DI container initialization.
 /// </remarks>
-public sealed class RedisConnectionFactory : IDisposable
+public class RedisConnectionFactory : IDisposable
 {
     private readonly ConfigurationOptions _options;
     private ConnectionMultiplexer? _connection;
@@ -30,7 +30,7 @@ public sealed class RedisConnectionFactory : IDisposable
     /// </summary>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The Redis connection multiplexer.</returns>
-    public async Task<IConnectionMultiplexer> ConnectAsync(CancellationToken ct = default)
+    public virtual async Task<IConnectionMultiplexer> ConnectAsync(CancellationToken ct = default)
     {
         if (_connection is not null)
         {
@@ -63,5 +63,6 @@ public sealed class RedisConnectionFactory : IDisposable
     {
         _connection?.Dispose();
         _connectLock.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

@@ -171,16 +171,25 @@ public sealed partial class ScraperWorker : BackgroundService
         }
     }
 
-    private static IJobClient? ResolveJobClient(IServiceProvider scopedProvider, string platform)
-    {
-        return platform.ToLowerInvariant() switch
+        private static IJobClient? ResolveJobClient(IServiceProvider scopedProvider, string platform)
         {
-            "linkedin" => scopedProvider.GetKeyedService<IJobClient>("linkedin"),
-            "indeed" => scopedProvider.GetKeyedService<IJobClient>("indeed"),
-            "glassdoor" => scopedProvider.GetKeyedService<IJobClient>("glassdoor"),
-            _ => null
-        };
-    }
+            // Try keyed resolution first (when platform-specific keyed registrations are present).
+            IJobClient? keyed = platform.ToLowerInvariant() switch
+            {
+                "linkedin" => scopedProvider.GetKeyedService<IJobClient>("linkedin"),
+                "indeed" => scopedProvider.GetKeyedService<IJobClient>("indeed"),
+                "glassdoor" => scopedProvider.GetKeyedService<IJobClient>("glassdoor"),
+                _ => null
+            };
+
+            if (keyed is not null)
+            {
+                return keyed;
+            }
+
+            // Fallback: resolve any registered IJobClient (useful for tests or simple registrations)
+            return scopedProvider.GetService<IJobClient>();
+        }
 
     private async Task StoreResultsAsync(string jobId, IReadOnlyList<JobListing> results, CancellationToken cancellationToken)
     {
