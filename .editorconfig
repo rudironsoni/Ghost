@@ -162,6 +162,7 @@ dotnet_naming_style.no_abbreviations.word_separator =
 
 # Test files - allow underscores in method names (xUnit convention)
 [tests/**/*.cs]
+# Scoped relaxations applied by automation pipeline: keep analyzer severities permissive for tests
 dotnet_diagnostic.CA1707.severity = none
 
 # Test projects: allow var for readability (IDE0008)
