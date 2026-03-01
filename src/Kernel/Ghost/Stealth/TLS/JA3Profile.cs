@@ -73,8 +73,9 @@ public sealed class JA3Profile
         {
             // TODO: Open an issue to document MD5 rationale and any future migration.
             byte[] bytes = Encoding.UTF8.GetBytes(input);
-            using MD5 md5 = MD5.Create();
-            byte[] hash = md5.ComputeHash(bytes);
+            // Use the static API preferred by analyzers when available.
+            // MD5 is used per JA3 spec for fingerprinting only.
+            byte[] hash = MD5.HashData(bytes);
             return Convert.ToHexString(hash).ToLowerInvariant();
         }
     }
