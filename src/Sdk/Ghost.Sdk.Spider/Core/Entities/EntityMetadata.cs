@@ -20,18 +20,18 @@ public static class EntityMetadataProvider
     {
         Type type = typeof(T);
 
-        var selector = type.GetCustomAttribute<Attributes.EntitySelectorAttribute>();
+        Attributes.EntitySelectorAttribute? selector = type.GetCustomAttribute<Attributes.EntitySelectorAttribute>();
 
-        var properties = new List<PropertyMetadata>();
+        List<PropertyMetadata> properties = new List<PropertyMetadata>();
 
         foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
-            var valueSelector = prop.GetCustomAttribute<Attributes.ValueSelectorAttribute>();
+            Attributes.ValueSelectorAttribute? valueSelector = prop.GetCustomAttribute<Attributes.ValueSelectorAttribute>();
             if (valueSelector is null)
                 continue;
 
-            var formatters = prop.GetCustomAttributes<Attributes.FormatterAttribute>().ToList();
-            var fieldAttr = prop.GetCustomAttribute<Attributes.FieldAttribute>();
+            List<Attributes.FormatterAttribute> formatters = prop.GetCustomAttributes<Attributes.FormatterAttribute>().ToList();
+            Attributes.FieldAttribute? fieldAttr = prop.GetCustomAttribute<Attributes.FieldAttribute>();
 
             properties.Add(new PropertyMetadata
             {
