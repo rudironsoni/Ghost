@@ -29,12 +29,26 @@ public class ScraperWorkerTests
         services.AddKeyedScoped<IJobClient>("linkedin", (sp, _) =>
             new FakeJobClient(sp.GetRequiredService<ScopedDependency>(), cts));
 
+        // Also register a non-keyed IJobClient fallback so resolution works in tests
+        services.AddScoped<IJobClient>(sp => new FakeJobClient(sp.GetRequiredService<ScopedDependency>(), cts));
+
         ServiceProvider serviceProvider = services.BuildServiceProvider(validateScopes: true);
 
         var db = new Mock<IDatabase>();
-        db.SetupSequence(x => x.ListRightPopAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
-            .ReturnsAsync((RedisValue)"{\"jobId\":\"job-1\",\"platform\":\"linkedin\",\"searchQuery\":\"dotnet\",\"maxResults\":1}")
-            .ReturnsAsync(RedisValue.Null);
+        // Provide a dequeued sequence so we can observe what was popped.
+        var responses = new Queue<RedisValue>(new[] {
+            (RedisValue)"{\"jobId\":\"job-1\",\"platform\":\"linkedin\",\"searchQuery\":\"dotnet\",\"maxResults\":1}",
+            RedisValue.Null
+        });
+
+        RedisValue? popped = null;
+        db.Setup(x => x.ListRightPopAsync(It.IsAny<RedisKey>()))
+            .ReturnsAsync(() =>
+            {
+                var v = responses.Dequeue();
+                popped = v;
+                return v;
+            });
 
         db.Setup(x => x.StringSetAsync(
                 It.IsAny<RedisKey>(),
@@ -48,9 +62,8 @@ public class ScraperWorkerTests
         var redis = new Mock<IConnectionMultiplexer>();
         redis.Setup(x => x.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(db.Object);
 
-        // Create a mock factory that returns the mocked connection
-        var redisFactory = new Mock<RedisConnectionFactory>(new ConfigurationOptions());
-        redisFactory.Setup(x => x.ConnectAsync(It.IsAny<CancellationToken>())).ReturnsAsync(redis.Object);
+        // Create a simple test factory that returns the mocked connection
+        var redisFactory = new TestRedisConnectionFactory(new ConfigurationOptions(), redis.Object);
 
         var config = new Ghost.Worker.WorkerConfiguration
         {
@@ -62,11 +75,11 @@ public class ScraperWorkerTests
             ResultsExpirationHours = 1
         };
 
-        var worker = new Ghost.Worker.ScraperWorker(
-            NullLogger<Ghost.Worker.ScraperWorker>.Instance,
-            redisFactory.Object,
-            serviceProvider,
-            config);
+            var worker = new Ghost.Worker.ScraperWorker(
+                NullLogger<Ghost.Worker.ScraperWorker>.Instance,
+                redisFactory,
+                serviceProvider,
+                config);
 
         MethodInfo? executeAsync = typeof(Ghost.Worker.ScraperWorker).GetMethod("ExecuteAsync", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         executeAsync.Should().NotBeNull();
@@ -140,5 +153,19 @@ public class ScraperWorkerTests
         {
             return Task.FromResult<IReadOnlyList<JobListing>>(Array.Empty<JobListing>());
         }
+    }
+
+    private sealed class TestRedisConnectionFactory : RedisConnectionFactory
+    {
+        private readonly IConnectionMultiplexer _conn;
+
+        public TestRedisConnectionFactory(ConfigurationOptions options, IConnectionMultiplexer conn)
+            : base(options)
+        {
+            _conn = conn;
+        }
+
+        public override Task<IConnectionMultiplexer> ConnectAsync(CancellationToken ct = default)
+            => Task.FromResult<IConnectionMultiplexer>(_conn);
     }
 }

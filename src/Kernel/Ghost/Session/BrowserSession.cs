@@ -73,6 +73,14 @@ public sealed class BrowserSession
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
+    // Parameterless constructor required for System.Text.Json deserialization
+    // Some serializers require a true parameterless ctor (no parameters at all)
+    // — providing this keeps deserialization predictable and preserves the
+    // TimeProvider defaulting behavior.
+    public BrowserSession() : this(null)
+    {
+    }
+
     /// <summary>
     /// Check if this session has expired using the system clock.
     /// </summary>

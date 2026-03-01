@@ -172,8 +172,8 @@ public sealed class SessionManager : ISessionManager, IDisposable
                 SessionId = id,
                 Platform = platform,
                 Cookies = cookies.ToList(),
-                LocalStorage = [],
-                SessionStorage = [],
+                LocalStorage = new Dictionary<string, string>(),
+                SessionStorage = new Dictionary<string, string>(),
                 CreatedAt = now.UtcDateTime,
                 ExpiresAt = now.Add(expiry).UtcDateTime
             };
@@ -195,7 +195,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
             }
 
             // Serialize session
-            string json = JsonSerializer.Serialize(session, KernelSerializerContext.Default.BrowserSession);
+            string json = JsonSerializer.Serialize(session, JsonOptions);
 
             // Optionally compress
             if (_options.EnableCompression)
@@ -317,7 +317,7 @@ public sealed class SessionManager : ISessionManager, IDisposable
                 json = await DecompressAsync(json).ConfigureAwait(false);
             }
 
-            BrowserSession? session = JsonSerializer.Deserialize(json, KernelSerializerContext.Default.BrowserSession);
+            BrowserSession? session = JsonSerializer.Deserialize<BrowserSession>(json, JsonOptions);
 
             if (session == null)
             {
@@ -617,14 +617,15 @@ public sealed class SessionManager : ISessionManager, IDisposable
         return System.Text.Encoding.UTF8.GetString(outputStream.ToArray());
     }
 
-    public void Dispose()
-    {
-        if (_disposed) return;
+        public void Dispose()
+        {
+            if (_disposed) return;
 
-        _redis?.Dispose();
-        _redisConnectLock?.Dispose();
-        _disposed = true;
-    }
+            _redis?.Dispose();
+            _redisConnectLock?.Dispose();
+            _disposed = true;
+            GC.SuppressFinalize(this);
+        }
 
     // Helper class for deserializing storage state
     private sealed class StorageStateJson
