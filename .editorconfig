@@ -216,8 +216,5 @@ dotnet_diagnostic.CA1507.severity = warning
 dotnet_diagnostic.CA1508.severity = warning
 dotnet_diagnostic.CA1509.severity = warning
 
-# Narrow exception: JA3 helper files use MD5 for fingerprinting
-# JA3 requires MD5 for creating fingerprints; allow CA5351 only in these helper files
-[src/Kernel/Ghost/Stealth/TLS/*.cs]
-# JA3 requires MD5 for fingerprinting
-dotnet_diagnostic.CA5351.severity = none
+# NOTE: No analyzer relaxations for CA5351 should remain in editorconfig.
+# MD5 usage for JA3 is audited and documented in docs/JA3-MD5-AUDIT.md.
