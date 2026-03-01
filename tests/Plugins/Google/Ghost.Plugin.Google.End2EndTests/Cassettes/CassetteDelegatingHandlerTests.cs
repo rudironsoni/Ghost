@@ -40,7 +40,7 @@ public class CassetteDelegatingHandlerTests : ReliabilityTestBase
         string cassetteDirectory = CreateTempDirectory();
         CassetteStore store = new(cassetteDirectory);
         Uri requestUri = new("https://example.test/search?b=2&a=1");
-        string key = store.BuildKey(HttpMethod.Get, requestUri);
+        string key = CassetteStore.BuildKey(HttpMethod.Get, requestUri);
 
         await store.WriteAsync(key, new CassetteEnvelope
         {
@@ -105,7 +105,7 @@ public class CassetteDelegatingHandlerTests : ReliabilityTestBase
         HttpResponseMessage response = await client.SendAsync(request);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        string key = store.BuildKey(HttpMethod.Get, new Uri("https://example.test/jobs?api_key=plain-secret&q=dev"));
+        string key = CassetteStore.BuildKey(HttpMethod.Get, new Uri("https://example.test/jobs?api_key=plain-secret&q=dev"));
         CassetteEnvelope? cassette = await store.ReadAsync(key);
 
         Assert.NotNull(cassette);

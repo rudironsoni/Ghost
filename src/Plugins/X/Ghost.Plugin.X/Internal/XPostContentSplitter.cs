@@ -8,13 +8,12 @@ namespace Ghost.Plugin.X.Internal;
 /// </summary>
 public sealed class XPostContentSplitter
 {
-    private readonly int _maxLength;
     private readonly string _urlPlaceholder;
-    public int MaxLength => _maxLength;
+    public int MaxLength { get; }
 
     public XPostContentSplitter(int maxLength = 280)
     {
-        _maxLength = maxLength;
+        MaxLength = maxLength;
         _urlPlaceholder = "https://t.co/XXXXXXXXXX"; // X's URL shortener format
     }
 
@@ -31,7 +30,7 @@ public sealed class XPostContentSplitter
         }
 
         // If content fits in one tweet, return it as-is
-        if (EstimateLength(content) <= _maxLength)
+        if (EstimateLength(content) <= MaxLength)
         {
             return new[] { content };
         }
@@ -45,7 +44,7 @@ public sealed class XPostContentSplitter
         {
             int estimatedLength = EstimateLength(currentPart.ToString() + sentence);
 
-            if (estimatedLength <= _maxLength)
+            if (estimatedLength <= MaxLength)
             {
                 // Sentence fits, add it
                 if (currentPart.Length > 0)
@@ -64,7 +63,7 @@ public sealed class XPostContentSplitter
                 }
 
                 // Check if sentence itself is too long
-                if (EstimateLength(sentence) > _maxLength)
+                if (EstimateLength(sentence) > MaxLength)
                 {
                     // Split long sentence at word boundaries
                     List<string> chunks = SplitLongSentence(sentence);
@@ -168,7 +167,7 @@ public sealed class XPostContentSplitter
                 ? currentChunk + " " + word
                 : word;
 
-            if (EstimateLength(testChunk) <= _maxLength)
+            if (EstimateLength(testChunk) <= MaxLength)
             {
                 if (currentChunk.Length > 0)
                 {
@@ -185,7 +184,7 @@ public sealed class XPostContentSplitter
                 }
 
                 // If single word is too long, split it into chunks
-                if (EstimateLength(word) > _maxLength)
+                if (EstimateLength(word) > MaxLength)
                 {
                     List<string> wordChunks = SplitLongWord(word);
                     chunks.AddRange(wordChunks);
@@ -216,7 +215,7 @@ public sealed class XPostContentSplitter
         while (position < word.Length)
         {
             int remainingLength = word.Length - position;
-            int chunkSize = Math.Min(_maxLength, remainingLength);
+            int chunkSize = Math.Min(MaxLength, remainingLength);
 
             chunks.Add(word.Substring(position, chunkSize));
             position += chunkSize;
@@ -240,9 +239,9 @@ public sealed class XPostContentSplitter
 
             // Check if we need to trim content to fit the numbering
             string content = parts[i];
-            if (EstimateLength(content + suffix) > _maxLength)
+            if (EstimateLength(content + suffix) > MaxLength)
             {
-                int maxContentLength = _maxLength - suffix.Length - 3; // -3 for "..."
+                int maxContentLength = MaxLength - suffix.Length - 3; // -3 for "..."
                 content = content[..maxContentLength] + "...";
             }
 
@@ -264,7 +263,7 @@ public sealed class XPostContentSplitter
             return false;
         }
 
-        return EstimateLength(content) > _maxLength;
+        return EstimateLength(content) > MaxLength;
     }
 
     /// <summary>
