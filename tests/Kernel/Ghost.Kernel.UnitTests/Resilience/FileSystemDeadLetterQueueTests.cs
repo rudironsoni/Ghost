@@ -11,15 +11,15 @@ using Xunit.Abstractions;
 
 namespace Ghost.Kernel.Tests.Resilience;
 
-public class FileSystemDeadLetterQueueTests : ReliabilityTestBase
+public class FileSystemDeadLetterStoreTests : ReliabilityTestBase
 {
-    public FileSystemDeadLetterQueueTests(ITestOutputHelper output) : base(output) { }
+    public FileSystemDeadLetterStoreTests(ITestOutputHelper output) : base(output) { }
 
     [Fact]
     public async Task EnqueueAsyncPersistsJobWithDefaults()
     {
         string root = CreateTempRoot();
-        FileSystemDeadLetterQueue dlq = CreateQueue(root);
+        FileSystemDeadLetterStore dlq = CreateQueue(root);
         var job = new FailedScrapeJob { Platform = "LinkedIn", Query = "dev", Location = "remote", Error = "err" };
 
         await dlq.EnqueueAsync(job);
@@ -34,7 +34,7 @@ public class FileSystemDeadLetterQueueTests : ReliabilityTestBase
     public async Task GetFailedJobsByPlatformAsyncFiltersByPlatform()
     {
         string root = CreateTempRoot();
-        FileSystemDeadLetterQueue dlq = CreateQueue(root);
+        FileSystemDeadLetterStore dlq = CreateQueue(root);
 
         await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "LinkedIn", Query = "q1", Location = "r", Error = "e" });
         await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "Indeed", Query = "q2", Location = "r", Error = "e" });
@@ -49,7 +49,7 @@ public class FileSystemDeadLetterQueueTests : ReliabilityTestBase
     public async Task GetFailedJobsAsyncRespectsSinceWindow()
     {
         string root = CreateTempRoot();
-        FileSystemDeadLetterQueue dlq = CreateQueue(root);
+        FileSystemDeadLetterStore dlq = CreateQueue(root);
         var job = new FailedScrapeJob
         {
             Platform = "LinkedIn",
@@ -71,7 +71,7 @@ public class FileSystemDeadLetterQueueTests : ReliabilityTestBase
     public async Task GetJobAsyncReturnsJobWhenFound()
     {
         string root = CreateTempRoot();
-        FileSystemDeadLetterQueue dlq = CreateQueue(root);
+        FileSystemDeadLetterStore dlq = CreateQueue(root);
         var job = new FailedScrapeJob { Platform = "Indeed", Query = "q", Location = "l", Error = "e" };
 
         await dlq.EnqueueAsync(job);
@@ -85,7 +85,7 @@ public class FileSystemDeadLetterQueueTests : ReliabilityTestBase
     public async Task RetryAsyncIncrementsRetryCountAndTimestamp()
     {
         string root = CreateTempRoot();
-        FileSystemDeadLetterQueue dlq = CreateQueue(root);
+        FileSystemDeadLetterStore dlq = CreateQueue(root);
         var job = new FailedScrapeJob { Platform = "Indeed", Query = "q", Location = "l", Error = "e" };
 
         await dlq.EnqueueAsync(job);
@@ -100,7 +100,7 @@ public class FileSystemDeadLetterQueueTests : ReliabilityTestBase
     public async Task RetryAllAsyncIncrementsForMatchingWindow()
     {
         string root = CreateTempRoot();
-        FileSystemDeadLetterQueue dlq = CreateQueue(root);
+        FileSystemDeadLetterStore dlq = CreateQueue(root);
 
         var recent = new FailedScrapeJob { Platform = "LinkedIn", Query = "q", Location = "l", Error = "e" };
         var older = new FailedScrapeJob
@@ -128,7 +128,7 @@ public class FileSystemDeadLetterQueueTests : ReliabilityTestBase
     public async Task ArchiveAsyncMovesJobToArchive()
     {
         string root = CreateTempRoot();
-        FileSystemDeadLetterQueue dlq = CreateQueue(root);
+        FileSystemDeadLetterStore dlq = CreateQueue(root);
         var job = new FailedScrapeJob { Platform = "LinkedIn", Query = "q", Location = "l", Error = "e" };
 
         await dlq.EnqueueAsync(job);
@@ -146,7 +146,7 @@ public class FileSystemDeadLetterQueueTests : ReliabilityTestBase
     public async Task ArchiveAllAsyncMovesOldJobsOnly()
     {
         string root = CreateTempRoot();
-        FileSystemDeadLetterQueue dlq = CreateQueue(root);
+        FileSystemDeadLetterStore dlq = CreateQueue(root);
 
         var oldJob = new FailedScrapeJob
         {
@@ -178,7 +178,7 @@ public class FileSystemDeadLetterQueueTests : ReliabilityTestBase
     public async Task GetQueueDepthAsyncReturnsActiveCount()
     {
         string root = CreateTempRoot();
-        FileSystemDeadLetterQueue dlq = CreateQueue(root);
+        FileSystemDeadLetterStore dlq = CreateQueue(root);
 
         await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "LinkedIn", Query = "q", Location = "l", Error = "e" });
         await dlq.EnqueueAsync(new FailedScrapeJob { Platform = "Indeed", Query = "q", Location = "l", Error = "e" });
@@ -192,7 +192,7 @@ public class FileSystemDeadLetterQueueTests : ReliabilityTestBase
     public async Task EnqueueAsyncUsesDeterministicFileName()
     {
         string root = CreateTempRoot();
-        FileSystemDeadLetterQueue dlq = CreateQueue(root);
+        FileSystemDeadLetterStore dlq = CreateQueue(root);
         var job = new FailedScrapeJob
         {
             Id = "abc12345",
@@ -213,7 +213,7 @@ public class FileSystemDeadLetterQueueTests : ReliabilityTestBase
     public async Task EnqueueAsyncThrowsWhenJobIsNull()
     {
         string root = CreateTempRoot();
-        FileSystemDeadLetterQueue dlq = CreateQueue(root);
+        FileSystemDeadLetterStore dlq = CreateQueue(root);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => dlq.EnqueueAsync(null!));
     }
@@ -222,7 +222,7 @@ public class FileSystemDeadLetterQueueTests : ReliabilityTestBase
     public async Task GetFailedJobsAsyncThrowsOnNegativeSince()
     {
         string root = CreateTempRoot();
-        FileSystemDeadLetterQueue dlq = CreateQueue(root);
+        FileSystemDeadLetterStore dlq = CreateQueue(root);
 
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => dlq.GetFailedJobsAsync(TimeSpan.FromSeconds(-1)));
     }
@@ -234,13 +234,13 @@ public class FileSystemDeadLetterQueueTests : ReliabilityTestBase
         return root;
     }
 
-    private static FileSystemDeadLetterQueue CreateQueue(string root)
+    private static FileSystemDeadLetterStore CreateQueue(string root)
     {
-        return new FileSystemDeadLetterQueue(new DeadLetterQueueOptions
+        return new FileSystemDeadLetterStore(new DeadLetterQueueOptions
         {
             RootPath = root,
             AutoArchiveAfter = TimeSpan.Zero,
             ArchiveCheckInterval = TimeSpan.Zero
-        }, NullLogger<FileSystemDeadLetterQueue>.Instance);
+        }, NullLogger<FileSystemDeadLetterStore>.Instance);
     }
 }
