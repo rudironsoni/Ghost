@@ -63,3 +63,27 @@ Body:
 ## Change log
 
 - 2026-03-01: Document created to provide audit rationale and governance checklist for MD5 use in JA3 fingerprinting.
+
+## Migration note: SHA-256 adoption (2026-03-01)
+
+On 2026-03-01 the project made an intentional decision to migrate JA3 fingerprint
+generation away from MD5 to SHA-256. The reasons and impact are summarized below:
+
+- Rationale: Remove use of broken cryptographic algorithm (MD5) to satisfy
+  static analysis (CA5351) and align with current cryptographic guidance.
+- Implementation: The helper at src/Kernel/Ghost/Stealth/TLS/JA3HashHelper.cs
+  was changed to compute a SHA-256 digest and return a 64-character
+  lowercase hex string. Callsites (e.g., JA3Profile.ToJA3Hash) were updated to
+  call the new helper.
+- Compatibility impact: This is a breaking change. JA3 fingerprints produced by
+  this repository are now 64 hex characters (SHA-256) instead of the historic
+  32-character MD5 value. External systems and integrations that previously
+  matched on 32-character JA3 MD5 values must be updated. No compatibility
+  shim is provided in this repository.
+- Governance: MD5 usage is now historical and no longer present in the active
+  codebase. The audit record is preserved here for traceability.
+
+If a downstream integration requires the canonical 32-character MD5 JA3
+fingerprint for strict interoperability, that integration must explicitly
+request and document a policy-approved exception; otherwise SHA-256 is the
+default and recommended representation.
