@@ -1,0 +1,54 @@
+info:
+  name: Boolean Search - Complex Query
+  type: http
+  seq: 10
+  description: Test LinkedIn complex Boolean query with multiple operators
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/linkedin/jobs/search"
+
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "keywords": "\"software engineer\" AND (python OR java) NOT intern",
+        "location": "United States",
+        "maxResults": 5
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Response is array", function() {
+          expect(res.body).to.be.an('array');
+        });
+
+docs: |-
+  ## Boolean Search - Complex Query
+
+  Tests a complex LinkedIn Boolean query combining all operators.
+
+  ### Query
+  `"software engineer" AND (python OR java) NOT intern`
+
+  ### Expected Behavior
+  - Finds "software engineer" (exact phrase)
+  - AND requires either "python" OR "java"
+  - NOT excludes "intern" positions
+  - Order of precedence: Quotes > Parentheses > NOT > AND > OR
+
+  ### Equivalent Interpretation
+  `("software engineer") AND ((python) OR (java)) AND (NOT intern)`
+
+  ### Real-world Usage
+  This type of query is useful for finding experienced software engineer
+  positions requiring Python or Java skills, while excluding internship roles.

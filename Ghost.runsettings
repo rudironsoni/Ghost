@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <!--
+    Lane-Based Parallelization Policy
+    ==================================
+    
+    This runsettings file now enables assembly-level parallelism.
+    Individual test projects control their own parallelization via xunit.runner.json:
+    
+    Lane A - Unit (High Parallel):
+      - tests/Unit/**/*.Tests: Full parallelism enabled
+      - No shared mutable state, CPU-bound only
+      
+    Lane B - Integration Mocked (Medium Parallel):
+      - tests/Integration/**/*.Tests: Controlled parallelism (4 threads)
+      - Isolated WireMock per test class
+      
+    Lane C - System Browser (Controlled):
+      - tests/System/**/*.Tests: Shared browser, isolated contexts
+      - Collection fixtures for expensive resources
+      
+    Lane D - Live E2E (Sequential):
+      - tests/E2E/**/*.E2E: Sequential execution
+      - Provider rate limit compliance
+      
+    See: docs/rfc/testing-lanes.md for complete policy
+  -->
+  <RunConfiguration>
+    <!-- Enable assembly-level parallelism. Individual test projects control their own threading via xunit.runner.json -->
+    <TestSessionTimeout>300000</TestSessionTimeout>
+  </RunConfiguration>
+  <MSBuild>
+    <NodeReuse>false</NodeReuse>
+  </MSBuild>
+</RunSettings>

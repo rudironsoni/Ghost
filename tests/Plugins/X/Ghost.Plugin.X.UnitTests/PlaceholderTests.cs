@@ -1,0 +1,15 @@
+using Ghost.Testing.Reliability;
+using Xunit;
+using Xunit.Abstractions;
+
+namespace Ghost.Plugin.X.UnitTests;
+
+public class PlaceholderTests : ReliabilityTestBase
+{
+    public PlaceholderTests(ITestOutputHelper output) : base(output) { }
+    [Fact]
+    public void Project_Loads_Successfully()
+    {
+        Assert.True(true);
+    }
+}

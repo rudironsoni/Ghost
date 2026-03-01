@@ -1,0 +1,281 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ghost-default-deny-all
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: ghost-platform
+    policy-type: deny-all
+  annotations:
+    description: "Default deny all ingress and egress traffic"
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ghost-webapi-ingress
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost-webapi
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: ghost-platform
+    policy-type: ingress
+  annotations:
+    description: "Allow ingress traffic to Ghost WebAPI from ingress controller and within namespace"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ghost-webapi
+      app.kubernetes.io/component: api
+
+  policyTypes:
+  - Ingress
+
+  ingress:
+  # Allow traffic from ingress controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 5000
+    - protocol: TCP
+      port: 9090
+
+  # Allow traffic from other pods in the same namespace
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 5000
+    - protocol: TCP
+      port: 9090
+
+  # Allow traffic from monitoring namespace (Prometheus)
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: observability
+      podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 9090
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ghost-webapi-egress
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost-webapi
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: ghost-platform
+    policy-type: egress
+  annotations:
+    description: "Allow egress traffic from Ghost WebAPI to required services"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ghost-webapi
+      app.kubernetes.io/component: api
+
+  policyTypes:
+  - Egress
+
+  egress:
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+
+  # Allow traffic to database namespace
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: database
+    ports:
+    - protocol: TCP
+      port: 5432 # PostgreSQL
+    - protocol: TCP
+      port: 3306 # MySQL (if needed)
+
+  # Allow traffic to cache namespace
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: cache
+    ports:
+    - protocol: TCP
+      port: 6379 # Redis
+
+  # Allow traffic to observability namespace (Jaeger, etc.)
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: observability
+    ports:
+    - protocol: TCP
+      port: 14268 # Jaeger collector
+    - protocol: TCP
+      port: 9411 # Zipkin
+    - protocol: TCP
+      port: 4317 # OTLP gRPC
+    - protocol: TCP
+      port: 4318 # OTLP HTTP
+
+  # Allow HTTPS traffic to external services
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+
+  # Allow HTTP traffic to external services (if needed)
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 80
+
+  # Allow traffic within the same namespace
+  - to:
+    - podSelector: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ghost-database-access
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: ghost-platform
+    policy-type: database-access
+  annotations:
+    description: "Restrict database access to only Ghost WebAPI pods"
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres # Adjust based on your database labels
+
+  policyTypes:
+  - Ingress
+
+  ingress:
+  # Only allow Ghost WebAPI to access database
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ghost-webapi
+          app.kubernetes.io/component: api
+    ports:
+    - protocol: TCP
+      port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ghost-cache-access
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: ghost-platform
+    policy-type: cache-access
+  annotations:
+    description: "Restrict cache access to only Ghost WebAPI pods"
+spec:
+  podSelector:
+    matchLabels:
+      app: redis # Adjust based on your cache labels
+
+  policyTypes:
+  - Ingress
+
+  ingress:
+  # Only allow Ghost WebAPI to access cache
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ghost-webapi
+          app.kubernetes.io/component: api
+    ports:
+    - protocol: TCP
+      port: 6379
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ghost-monitoring-access
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: ghost-platform
+    policy-type: monitoring-access
+  annotations:
+    description: "Allow monitoring tools to scrape metrics"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: ghost-platform
+
+  policyTypes:
+  - Ingress
+
+  ingress:
+  # Allow Prometheus to scrape metrics
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: observability
+      podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 9090
+---
+# Cilium Network Policy (optional - for advanced features)
+# apiVersion: "cilium.io/v2"
+# kind: CiliumNetworkPolicy
+# metadata:
+#   name: ghost-l7-policy
+#   namespace: ghost
+# spec:
+#   endpointSelector:
+#     matchLabels:
+#       app.kubernetes.io/name: ghost-webapi
+#   ingress:
+#   - fromEndpoints:
+#     - matchLabels:
+#         role: frontend
+#     toPorts:
+#     - ports:
+#       - port: "5000"
+#         protocol: TCP
+#       rules:
+#         http:
+#         - method: "GET"
+#           path: "/api/.*"
+#         - method: "POST"
+#           path: "/api/.*"

@@ -1,0 +1,47 @@
+info:
+  name: Boolean Search - Exact Phrase
+  type: http
+  seq: 8
+  description: Test LinkedIn exact phrase search with quotes
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/linkedin/jobs/search"
+
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "keywords": "\"machine learning\"",
+        "location": "San Francisco, CA",
+        "maxResults": 5
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Response is array", function() {
+          expect(res.body).to.be.an('array');
+        });
+
+docs: |-
+  ## Boolean Search - Exact Phrase
+
+  Tests LinkedIn's exact phrase search using quotation marks.
+
+  ### Query
+  `"machine learning"`
+
+  ### Expected Behavior
+  - Returns jobs containing the exact phrase "machine learning" together
+  - Without quotes: finds jobs with "machine" OR "learning" separately
+  - With quotes: finds only jobs where both words appear together as a phrase
+  - Quotes have the highest precedence in Boolean search

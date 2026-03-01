@@ -1,0 +1,193 @@
+using FluentAssertions;
+using Ghost.Sdk.Spider.Adapters;
+using Ghost.Sdk.Spider.Adapters.Contracts;
+using Microsoft.Extensions.Logging;
+using Patchright;
+using Moq;
+using Xunit;
+using Ghost.Testing.Reliability;
+using Xunit.Abstractions;
+
+namespace Ghost.Sdk.Spider.Tests.Unit.Adapters;
+
+/// <summary>
+/// Unit tests for JavaScriptAdapter with mocked Playwright dependencies.
+/// </summary>
+public class JavaScriptAdapterMockTests : ReliabilityTestBase
+{
+    public JavaScriptAdapterMockTests(ITestOutputHelper output) : base(output) { }
+    [Fact]
+    public void Name_ShouldReturnJavaScript()
+    {
+        // Arrange
+        var adapter = new JavaScriptAdapter();
+
+        // Act & Assert
+        adapter.Name.Should().Be("JavaScript");
+    }
+
+    [Fact]
+    public void ContentType_ShouldReturnJavaScript()
+    {
+        // Arrange
+        var adapter = new JavaScriptAdapter();
+
+        // Act & Assert
+        adapter.ContentType.Should().Be(ContentType.JavaScript);
+    }
+
+    [Fact]
+    public void IsAvailable_ShouldReturnTrue()
+    {
+        // Arrange
+        var adapter = new JavaScriptAdapter();
+
+        // Act & Assert
+        adapter.IsAvailable.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CanHandleAsync_WithHttpUrl_ShouldReturnTrue()
+    {
+        // Arrange
+        var adapter = new JavaScriptAdapter();
+        var request = new Request("https://example.com");
+
+        // Act
+        var result = await adapter.CanHandleAsync(request);
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CanHandleAsync_WithNullRequest_ShouldReturnFalse()
+    {
+        // Arrange
+        var adapter = new JavaScriptAdapter();
+
+        // Act
+        var result = await adapter.CanHandleAsync(null!);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CanHandleAsync_WithInvalidUrl_ShouldReturnFalse()
+    {
+        // Arrange
+        var adapter = new JavaScriptAdapter();
+        var request = new Request("not-a-valid-url");
+
+        // Act
+        var result = await adapter.CanHandleAsync(request);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CanHandleAsync_WithFtpScheme_ShouldReturnFalse()
+    {
+        // Arrange
+        var adapter = new JavaScriptAdapter();
+        var request = new Request("ftp://example.com");
+
+        // Act
+        var result = await adapter.CanHandleAsync(request);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CanHandleAsync_WithJavaScriptContentType_ShouldReturnTrue()
+    {
+        // Arrange
+        var adapter = new JavaScriptAdapter();
+        var request = new Request("https://example.com")
+        {
+            ExpectedContentType = ContentType.JavaScript
+        };
+
+        // Act
+        var result = await adapter.CanHandleAsync(request);
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CanHandleAsync_WithNonJavaScriptContentType_ShouldReturnFalse()
+    {
+        // Arrange
+        var adapter = new JavaScriptAdapter();
+        var request = new Request("https://example.com")
+        {
+            ExpectedContentType = ContentType.StaticHtml
+        };
+
+        // Act
+        var result = await adapter.CanHandleAsync(request);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ExtractAsync_WithNullRequest_ShouldThrowArgumentNullException()
+    {
+        // Arrange
+        var adapter = new JavaScriptAdapter();
+
+        // Act & Assert
+        await adapter.Invoking(a => a.ExtractAsync(null!))
+            .Should().ThrowAsync<ArgumentNullException>();
+    }
+
+    [Fact]
+    public async Task ExtractAsync_WithNullOptions_ShouldThrowArgumentNullException()
+    {
+        // Arrange
+        var adapter = new JavaScriptAdapter();
+        var request = new Request("https://example.com");
+
+        // Act & Assert
+        await adapter.Invoking(a => a.ExtractAsync(request, null!))
+            .Should().ThrowAsync<ArgumentNullException>();
+    }
+
+    [Fact]
+    public async Task DisposeAsync_WhenCalledMultipleTimes_ShouldNotThrow()
+    {
+        // Arrange
+        var adapter = new JavaScriptAdapter();
+
+        // Act & Assert
+        await adapter.Invoking(a => a.DisposeAsync().AsTask())
+            .Should().NotThrowAsync();
+
+        await adapter.Invoking(a => a.DisposeAsync().AsTask())
+            .Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public void Constructor_WithLogger_ShouldNotThrow()
+    {
+        // Arrange
+        var mockLogger = new Mock<ILogger<JavaScriptAdapter>>();
+
+        // Act & Assert
+        var adapter = new JavaScriptAdapter(mockLogger.Object);
+        adapter.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void Constructor_WithoutLogger_ShouldNotThrow()
+    {
+        // Act & Assert
+        var adapter = new JavaScriptAdapter();
+        adapter.Should().NotBeNull();
+    }
+}

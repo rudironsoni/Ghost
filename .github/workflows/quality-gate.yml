@@ -1,0 +1,59 @@
+name: Quality Gate
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  no-suppressions:
+    name: No Warning Suppressions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for NoWarn in .csproj files
+        run: |
+          if grep -r "<NoWarn>" --include="*.csproj" .; then
+            echo "ERROR: Found <NoWarn> elements in .csproj files. Remove all warning suppressions."
+            exit 1
+          fi
+
+      - name: Check for WarningsNotAsErrors in .csproj files
+        run: |
+          if grep -r "<WarningsNotAsErrors>" --include="*.csproj" .; then
+            echo "ERROR: Found <WarningsNotAsErrors> elements in .csproj files. Remove all warning suppressions."
+            exit 1
+          fi
+
+      - name: Check for #pragma warning disable in production code
+        run: |
+          # Allow CA5351 in specific JA3/TLS files (industry standard)
+          # Allow justified suppressions with explicit comments
+          files_with_suppressions=$(grep -r "#pragma warning disable" --include="*.cs" src/ | grep -v "CA5351" | grep -v "IDE0032" || true)
+          if [ -n "$files_with_suppressions" ]; then
+            echo "ERROR: Found unauthorized #pragma warning disable in production code:"
+            echo "$files_with_suppressions"
+            exit 1
+          fi
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore Ghost.sln
+
+      - name: Build
+        run: dotnet build Ghost.sln --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test Ghost.sln --no-build --verbosity normal

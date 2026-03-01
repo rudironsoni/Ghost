@@ -1,0 +1,463 @@
+### JavaScript Rendering - Basic SPA
+# Render JavaScript-heavy single-page application
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "SPA Rendering Spider",
+  "adapter": "javascript",
+  "content": {
+    "type": "javascript",
+    "javascript": {
+      "enableJavaScript": true,
+      "waitFor": ".app-loaded",
+      "waitTimeout": 10000
+    }
+  },
+  "targets": [
+    { "url": "https://spa.example.com" }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "Content",
+        "fields": [
+          {
+            "name": "Title",
+            "selector": { "type": "css", "expression": ".dynamic-title" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### JavaScript Rendering - Click Interactions
+# Interact with page elements through clicks
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Click Interaction Spider",
+  "adapter": "javascript",
+  "content": {
+    "type": "javascript",
+    "javascript": {
+      "actions": [
+        {
+          "type": "click",
+          "selector": "#load-more-button"
+        },
+        {
+          "type": "waitFor",
+          "selector": ".new-content"
+        }
+      ]
+    }
+  },
+  "targets": [
+    { "url": "https://example.com/loadmore" }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "Item",
+        "selector": ".item",
+        "fields": [
+          {
+            "name": "Title",
+            "selector": { "type": "css", "expression": ".item-title" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### JavaScript Rendering - Form Filling
+# Fill forms and submit
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Form Filling Spider",
+  "adapter": "javascript",
+  "content": {
+    "type": "javascript",
+    "javascript": {
+      "actions": [
+        {
+          "type": "fill",
+          "selector": "#username",
+          "value": "testuser"
+        },
+        {
+          "type": "fill",
+          "selector": "#password",
+          "value": "testpass"
+        },
+        {
+          "type": "click",
+          "selector": "#login-button"
+        },
+        {
+          "type": "waitForNavigation"
+        }
+      ]
+    }
+  },
+  "targets": [
+    { "url": "https://example.com/login" }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "Dashboard",
+        "fields": [
+          {
+            "name": "WelcomeMessage",
+            "selector": { "type": "css", "expression": ".welcome" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### JavaScript Rendering - Scroll to Load
+# Scroll down to trigger lazy loading
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Scroll Loading Spider",
+  "adapter": "javascript",
+  "content": {
+    "type": "javascript",
+    "javascript": {
+      "actions": [
+        {
+          "type": "scroll",
+          "direction": "down",
+          "iterations": 10,
+          "delay": 500
+        },
+        {
+          "type": "wait",
+          "duration": 2000
+        }
+      ]
+    }
+  },
+  "targets": [
+    { "url": "https://example.com/infinite-scroll" }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "Item",
+        "selector": ".scroll-item",
+        "fields": [
+          {
+            "name": "Content",
+            "selector": { "type": "css", "expression": "." }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### JavaScript Rendering - Dropdown Selection
+# Select options from dropdowns
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Dropdown Selection Spider",
+  "adapter": "javascript",
+  "content": {
+    "type": "javascript",
+    "javascript": {
+      "actions": [
+        {
+          "type": "select",
+          "selector": "#category-dropdown",
+          "value": "electronics"
+        },
+        {
+          "type": "click",
+          "selector": "#apply-filter"
+        },
+        {
+          "type": "waitFor",
+          "selector": ".filtered-results"
+        }
+      ]
+    }
+  },
+  "targets": [
+    { "url": "https://example.com/products" }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "Product",
+        "selector": ".product",
+        "fields": [
+          {
+            "name": "Name",
+            "selector": { "type": "css", "expression": ".product-name" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### JavaScript Rendering - Hover Actions
+# Trigger hover menus and tooltips
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Hover Action Spider",
+  "adapter": "javascript",
+  "content": {
+    "type": "javascript",
+    "javascript": {
+      "actions": [
+        {
+          "type": "hover",
+          "selector": ".menu-item"
+        },
+        {
+          "type": "waitFor",
+          "selector": ".submenu"
+        },
+        {
+          "type": "click",
+          "selector": ".submenu-item"
+        }
+      ]
+    }
+  },
+  "targets": [
+    { "url": "https://example.com/menu" }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "MenuItem",
+        "fields": [
+          {
+            "name": "Title",
+            "selector": { "type": "css", "expression": ".submenu-title" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### JavaScript Rendering - Execute Custom Script
+# Run custom JavaScript code
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Custom Script Spider",
+  "adapter": "javascript",
+  "content": {
+    "type": "javascript",
+    "javascript": {
+      "actions": [
+        {
+          "type": "executeScript",
+          "script": "window.scrollTo(0, document.body.scrollHeight);"
+        },
+        {
+          "type": "wait",
+          "duration": 1000
+        },
+        {
+          "type": "executeScript",
+          "script": "document.querySelector('.hidden-content').style.display = 'block';"
+        }
+      ]
+    }
+  },
+  "targets": [
+    { "url": "https://example.com/complex" }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "Content",
+        "fields": [
+          {
+            "name": "Text",
+            "selector": { "type": "css", "expression": ".hidden-content" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### JavaScript Rendering - Wait for Network Idle
+# Wait for network requests to complete
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Network Idle Spider",
+  "adapter": "javascript",
+  "content": {
+    "type": "javascript",
+    "javascript": {
+      "waitUntil": "networkidle",
+      "waitTimeout": 30000
+    }
+  },
+  "targets": [
+    { "url": "https://api-heavy-app.example.com" }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "Data",
+        "fields": [
+          {
+            "name": "Content",
+            "selector": { "type": "css", "expression": ".api-data" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### JavaScript Rendering - Modal Interaction
+# Handle modal dialogs
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Modal Interaction Spider",
+  "adapter": "javascript",
+  "content": {
+    "type": "javascript",
+    "javascript": {
+      "actions": [
+        {
+          "type": "click",
+          "selector": "#open-modal"
+        },
+        {
+          "type": "waitFor",
+          "selector": ".modal-content"
+        },
+        {
+          "type": "fill",
+          "selector": "#modal-input",
+          "value": "test data"
+        },
+        {
+          "type": "click",
+          "selector": ".modal-submit"
+        }
+      ]
+    }
+  },
+  "targets": [
+    { "url": "https://example.com/modal" }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "Result",
+        "fields": [
+          {
+            "name": "Message",
+            "selector": { "type": "css", "expression": ".success-message" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+
+### JavaScript Rendering - Multiple Tabs
+# Handle multiple browser tabs
+POST {{BASE_URL}}/api/spider/execute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{API_KEY}}
+
+{
+  "name": "Multi-Tab Spider",
+  "adapter": "javascript",
+  "content": {
+    "type": "javascript",
+    "javascript": {
+      "actions": [
+        {
+          "type": "click",
+          "selector": "a[target='_blank']"
+        },
+        {
+          "type": "switchToNewTab"
+        },
+        {
+          "type": "waitFor",
+          "selector": ".new-page-content"
+        }
+      ]
+    }
+  },
+  "targets": [
+    { "url": "https://example.com/links" }
+  ],
+  "extraction": {
+    "entities": [
+      {
+        "name": "NewPageContent",
+        "fields": [
+          {
+            "name": "Title",
+            "selector": { "type": "css", "expression": "h1" }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###

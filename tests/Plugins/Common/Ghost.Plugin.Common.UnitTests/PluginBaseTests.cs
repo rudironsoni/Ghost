@@ -1,0 +1,43 @@
+using Ghost.Contracts;
+using Ghost.Testing.Reliability;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Xunit;
+using Xunit.Abstractions;
+
+namespace Ghost.Plugin.Common.Tests;
+
+public class PluginBaseTests : ReliabilityTestBase
+{
+    public PluginBaseTests(ITestOutputHelper output) : base(output) { }
+    [Fact]
+    public void PluginBase_Implements_IExtension()
+    {
+        // Arrange
+        var plugin = new TestPlugin();
+
+        // Assert
+        Assert.IsAssignableFrom<IExtension>(plugin);
+    }
+
+    [Fact]
+    public void PluginBase_ConfigureServices_DoesNotThrow()
+    {
+        // Arrange
+        var plugin = new TestPlugin();
+        var services = new ServiceCollection();
+        IConfigurationRoot configuration = new ConfigurationBuilder().Build();
+
+        // Act & Assert
+        Exception exception = Record.Exception(() =>
+            plugin.ConfigureServices(services, configuration));
+
+        Assert.Null(exception);
+    }
+
+    private sealed class TestPlugin : PluginBase
+    {
+        public override string Name => "TestPlugin";
+        public override System.Version Version => new System.Version(1, 0, 0);
+    }
+}

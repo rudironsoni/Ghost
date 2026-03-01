@@ -1,0 +1,51 @@
+# Ghost - Lockstep Versioning Configuration
+mode: Mainline
+assembly-versioning-scheme: MajorMinorPatch
+assembly-file-versioning-scheme: MajorMinorPatch
+
+branches:
+  main:
+    regex: ^main$
+    mode: ContinuousDelivery
+    tag: ''
+    increment: Minor
+    prevent-increment-of-merged-branch-version: true
+    track-merge-target: false
+    is-release-branch: true
+
+  release:
+    regex: ^release[/-]
+    mode: ContinuousDelivery
+    tag: rc
+    increment: None
+    prevent-increment-of-merged-branch-version: true
+    track-merge-target: false
+    is-release-branch: true
+
+  feature:
+    regex: ^feature[/-]
+    mode: ContinuousDelivery
+    tag: alpha
+    increment: Patch
+    source-branches: ['main']
+
+  hotfix:
+    regex: ^hotfix[/-]
+    mode: ContinuousDelivery
+    tag: beta
+    increment: Patch
+    source-branches: ['main', 'release']
+
+  pull-request:
+    regex: ^(pull|pr)[/-]
+    mode: ContinuousDelivery
+    tag: pr
+    increment: Inherit
+    tag-number-pattern: '[/-](?<number>\d+)'
+
+tag-prefix: 'v'
+major-version-bump-message: '^\+semver:\s*(breaking|major)'
+minor-version-bump-message: '^\+semver:\s*(feature|minor)'
+patch-version-bump-message: '^\+semver:\s*(fix|patch)'
+no-bump-message: '^\+semver:\s*(none|skip)'
+commit-date-format: 'yyyy-MM-dd'

@@ -1,0 +1,786 @@
+using System.Globalization;
+using Ghost.Kernel;
+using Ghost.Testing.Attributes;
+using Ghost.Testing.Fixtures;
+using Ghost.Testing.Scenarios.Server;
+using Xunit;
+using Xunit.Abstractions;
+
+namespace Ghost.Tests.Scroll;
+
+/// <summary>
+/// Integration tests for infinite scroll and virtualization scenarios using the synthetic scenario server.
+/// Tests various scroll-loading patterns: auto-fetch on threshold, button-driven loads,
+/// virtualized DOM replacements, and duplicate chunk replay.
+/// </summary>
+[Collection("Browser")]
+[Trait("Category", "End2End")]
+[Trait("Capability", "RequiresSyntheticServer")]
+public class ScrollScenarioTests : IAsyncLifetime
+{
+    private readonly ITestOutputHelper _output;
+    private readonly RealBrowserFixture _browserFixture;
+    private ScenarioServer? _scenarioServer;
+
+    public ScrollScenarioTests(ITestOutputHelper output, RealBrowserFixture browserFixture)
+    {
+        _output = output;
+        _browserFixture = browserFixture;
+    }
+
+    public async Task InitializeAsync()
+    {
+        _scenarioServer = await ScenarioServer.CreateAsync();
+        _output.WriteLine($"Scenario server started at {_scenarioServer.BaseUrl}");
+    }
+
+    public async Task DisposeAsync()
+    {
+        if (_scenarioServer != null)
+        {
+            await _scenarioServer.StopAsync();
+            _scenarioServer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Waits for the loading indicator to be hidden, indicating fetch is complete.
+    /// </summary>
+    private async Task WaitForLoadingCompleteAsync(IPage page, CancellationToken ct = default)
+    {
+        // The loading indicator may not exist initially, wait for it to appear then disappear
+        try
+        {
+            // First wait for loading to become visible (with short timeout)
+            await page.WaitForSelectorAsync("#loading", new WaitOptions { State = WaitState.Visible, Timeout = 5000 }, ct);
+            _output.WriteLine("Loading indicator became visible");
+        }
+        catch (TimeoutException ex)
+        {
+            // Loading indicator may have already come and gone, or never appeared
+            // This is acceptable - continue to check if it's hidden
+            _output.WriteLine($"Loading indicator did not appear within timeout: {ex.Message}. Continuing to wait for hidden state.");
+        }
+
+        // Now wait for loading to be hidden
+        await page.WaitForSelectorAsync("#loading", new WaitOptions { State = WaitState.Hidden }, ct);
+        _output.WriteLine("Loading indicator is now hidden");
+    }
+
+    /// <summary>
+    /// Waits for the page JavaScript to be ready by polling for a known global marker.
+    /// </summary>
+    private static async Task WaitForPageReadyAsync(IPage page, CancellationToken ct = default)
+    {
+        // Wait for page load state to be complete
+        await page.WaitForLoadStateAsync(ct: ct);
+
+        // Poll for JavaScript initialization marker instead of using arbitrary delay
+        await WaitForConditionAsync(page, "() => typeof window !== 'undefined' && document.readyState === 'complete'", ct);
+    }
+
+    /// <summary>
+    /// Waits for the load more button to be enabled (not disabled).
+    /// </summary>
+    private static async Task WaitForButtonEnabledAsync(IPage page, CancellationToken ct = default)
+    {
+        await WaitForConditionAsync(page, "() => !document.getElementById('load-more-btn')?.disabled", ct);
+    }
+
+    /// <summary>
+    /// Waits for a JavaScript condition to return true by polling via EvaluateAsync.
+    /// Uses cancellation token for timeout control instead of manual elapsed tracking.
+    /// </summary>
+    private static async Task WaitForConditionAsync(IPage page, string script, CancellationToken ct = default)
+    {
+        // Create a linked cancellation token with 30 second timeout
+        using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(TimeSpan.FromSeconds(30));
+
+        try
+        {
+            while (!cts.Token.IsCancellationRequested)
+            {
+                bool result = await page.EvaluateAsync<bool>(script, null, cts.Token);
+                if (result)
+                {
+                    return;
+                }
+
+                // Yield to allow other tasks to progress, then continue polling
+                // This avoids blocking the thread while still allowing responsive cancellation
+                await Task.Yield();
+            }
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            // Our timeout triggered, not the external cancellation token
+            throw new TimeoutException($"Condition did not become true within 30s: {script}");
+        }
+
+        throw new TimeoutException($"Condition did not become true within 30s: {script}");
+    }
+
+    /// <summary>
+    /// Attempts to wait for a JavaScript condition to return true within the specified timeout.
+    /// Returns true if the condition was met, false if the timeout elapsed.
+    /// </summary>
+private async Task<bool> TryWaitForConditionAsync(
+        IPage page,
+        string script,
+        TimeSpan timeout,
+        CancellationToken ct = default)
+    {
+        using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(timeout);
+
+        try
+        {
+            while (!cts.Token.IsCancellationRequested)
+            {
+                bool result = await page.EvaluateAsync<bool>(script, null, cts.Token);
+                if (result)
+                {
+                    return true;
+                }
+
+                await Task.Yield();
+            }
+        }
+        catch (OperationCanceledException ex) when (!ct.IsCancellationRequested)
+        {
+            // Timeout elapsed before condition was met - this is expected behavior
+            _output.WriteLine($"Condition not met within {timeout.TotalSeconds}s: {script} - {ex.Message}");
+        }
+
+        return false;
+    }
+#pragma warning restore CA1822
+
+    [Fact]
+    public async Task AutoThreshold_ScrollTriggersFetch_LoadsMoreItems()
+    {
+        // Arrange
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/auto-threshold";
+
+        // Act
+        await page.NavigateAsync(url);
+        await WaitForPageReadyAsync(page);
+
+        // Verify initial items are loaded
+        IReadOnlyList<IElement> initialJobs = await page.QuerySelectorAllAsync(".job");
+        Assert.True(initialJobs.Count >= 15, $"Expected at least 15 initial jobs, got {initialJobs.Count}");
+        _output.WriteLine($"Initial jobs loaded: {initialJobs.Count}");
+
+        // Scroll to trigger auto-fetch
+        await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)");
+
+        // Wait for fetch to complete by checking job count increased
+        await WaitForConditionAsync(page, $"() => document.querySelectorAll('.job').length > {initialJobs.Count}");
+
+        // Assert - More items should be loaded
+        IReadOnlyList<IElement> jobsAfterScroll = await page.QuerySelectorAllAsync(".job");
+        Assert.True(jobsAfterScroll.Count > initialJobs.Count,
+            $"Expected more jobs after scroll. Initial: {initialJobs.Count}, After: {jobsAfterScroll.Count}");
+
+        _output.WriteLine($"Jobs after scroll: {jobsAfterScroll.Count}");
+    }
+
+    [Fact]
+    public async Task AutoThreshold_MultipleScrolls_LoadsAllItems()
+    {
+        // Arrange
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/auto-threshold";
+
+        // Act
+        await page.NavigateAsync(url);
+        await WaitForPageReadyAsync(page);
+
+        int previousCount = 0;
+        int scrollCount = 0;
+        int maxScrolls = 10; // Prevent infinite loop
+
+        // Wait for initial load to complete
+        await WaitForConditionAsync(page, "() => document.querySelectorAll('.job').length > 0");
+
+        // Scroll until no more items are loaded
+        while (scrollCount < maxScrolls)
+        {
+            await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)");
+
+            // Wait for fetch to complete by checking job count increased or timeout
+            bool moreItemsLoaded = await TryWaitForConditionAsync(
+                page,
+                $"() => document.querySelectorAll('.job').length > {previousCount}",
+                TimeSpan.FromSeconds(30));
+
+            if (!moreItemsLoaded)
+            {
+                _output.WriteLine($"Scroll {scrollCount + 1}: No more items loaded, reached end");
+                break;
+            }
+
+            IReadOnlyList<IElement> currentJobs = await page.QuerySelectorAllAsync(".job");
+            int currentCount = currentJobs.Count;
+
+            _output.WriteLine($"Scroll {scrollCount + 1}: {currentCount} jobs");
+
+            if (currentCount == previousCount)
+            {
+                // No more items loaded, we've reached the end
+                break;
+            }
+
+            previousCount = currentCount;
+            scrollCount++;
+        }
+
+        // Assert - Completeness: All items should be extracted
+        IReadOnlyList<IElement> finalJobs = await page.QuerySelectorAllAsync(".job");
+        Assert.True(finalJobs.Count >= 100, $"Expected at least 100 jobs, got {finalJobs.Count}");
+
+        // Assert - Dedupe: No duplicates
+        HashSet<string> jobIds = [];
+        foreach (IElement job in finalJobs)
+        {
+            string? jobId = await job.GetAttributeAsync("data-job-id");
+            Assert.NotNull(jobId);
+            Assert.False(jobIds.Contains(jobId), $"Duplicate job ID found: {jobId}");
+            jobIds.Add(jobId);
+        }
+
+        _output.WriteLine($"Total unique jobs loaded: {jobIds.Count}");
+    }
+
+    [Fact]
+    public async Task AutoThreshold_Termination_StopsAtEnd()
+    {
+        // Arrange
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/auto-threshold";
+
+        // Act
+        await page.NavigateAsync(url);
+        await WaitForPageReadyAsync(page);
+
+        // Wait for initial load
+        await WaitForConditionAsync(page, "() => document.querySelectorAll('.job').length > 0");
+
+        // Scroll to the end
+        int previousCount = 0;
+        int stableCount = 0;
+
+        for (int i = 0; i < 20; i++)
+        {
+            await page.EvaluateAsync<string>("window.scrollTo(0, document.body.scrollHeight)");
+
+            // Wait for fetch to complete by checking job count increased or timeout
+            int currentCount = previousCount;
+            bool moreItemsLoaded = await TryWaitForConditionAsync(
+                page,
+                $"() => document.querySelectorAll('.job').length > {previousCount}",
+                TimeSpan.FromSeconds(30));
+
+            if (moreItemsLoaded)
+            {
+                IReadOnlyList<IElement> currentJobs = await page.QuerySelectorAllAsync(".job");
+                currentCount = currentJobs.Count;
+            }
+            else
+            {
+                _output.WriteLine($"Scroll {i + 1}: No more items loaded, count stays at {previousCount}");
+            }
+
+            if (currentCount == previousCount)
+            {
+                stableCount++;
+                if (stableCount >= 3)
+                {
+                    // Count has been stable for 3 scrolls, we've reached the end
+                    break;
+                }
+            }
+            else
+            {
+                stableCount = 0;
+            }
+
+            previousCount = currentCount;
+        }
+
+        // Assert - Termination: Loading indicator should be hidden
+        IElement? loadingIndicator = await page.QuerySelectorAsync("#loading");
+        Assert.NotNull(loadingIndicator);
+
+        string? loadingStyle = await loadingIndicator.GetAttributeAsync("style");
+        Assert.Contains("display: none;", loadingStyle ?? "");
+
+        _output.WriteLine("Auto-threshold termination test passed");
+    }
+
+    [Fact]
+    public async Task ButtonDriven_ClickLoadMore_LoadsMoreItems()
+    {
+        // Arrange
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/button-driven";
+
+        // Act
+        await page.NavigateAsync(url);
+
+        // Verify initial items are loaded
+        IReadOnlyList<IElement> initialJobs = await page.QuerySelectorAllAsync(".job");
+        Assert.True(initialJobs.Count >= 10, $"Expected at least 10 initial jobs, got {initialJobs.Count}");
+        _output.WriteLine($"Initial jobs loaded: {initialJobs.Count}");
+
+        // Click "Load More" button
+        IElement? loadMoreButton = await page.QuerySelectorAsync("#load-more-btn");
+        Assert.NotNull(loadMoreButton);
+
+        await loadMoreButton.ClickAsync();
+        await WaitForButtonEnabledAsync(page); // Wait for fetch to complete
+
+        // Assert - More items should be loaded
+        IReadOnlyList<IElement> jobsAfterClick = await page.QuerySelectorAllAsync(".job");
+        Assert.True(jobsAfterClick.Count > initialJobs.Count,
+            $"Expected more jobs after click. Initial: {initialJobs.Count}, After: {jobsAfterClick.Count}");
+
+        _output.WriteLine($"Jobs after click: {jobsAfterClick.Count}");
+    }
+
+    [Fact]
+    public async Task ButtonDriven_MultipleClicks_LoadsAllItems()
+    {
+        // Arrange
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/button-driven";
+
+        // Act
+        await page.NavigateAsync(url);
+
+        int clickCount = 0;
+        int maxClicks = 20;
+
+        // Click "Load More" until button is disabled or text changes
+        while (clickCount < maxClicks)
+        {
+            IElement? loadMoreBtn = await page.QuerySelectorAsync("#load-more-btn");
+            if (loadMoreBtn == null)
+            {
+                break;
+            }
+
+            string? btnText = await loadMoreBtn.GetTextContentAsync();
+            if (btnText?.Contains("No More") == true)
+            {
+                break;
+            }
+
+            // Check if button is disabled by checking the disabled attribute
+            string? isDisabledAttr = await loadMoreBtn.GetAttributeAsync("disabled");
+            if (isDisabledAttr != null)
+            {
+                await WaitForButtonEnabledAsync(page); // Wait for loading to complete
+                continue;
+            }
+
+            await loadMoreBtn.ClickAsync();
+            await WaitForButtonEnabledAsync(page);
+            clickCount++;
+
+            IReadOnlyList<IElement> currentJobs = await page.QuerySelectorAllAsync(".job");
+            _output.WriteLine($"Click {clickCount}: {currentJobs.Count} jobs");
+        }
+
+        // Assert - Completeness: All items should be extracted
+        IReadOnlyList<IElement> finalJobs = await page.QuerySelectorAllAsync(".job");
+        Assert.True(finalJobs.Count >= 100, $"Expected at least 100 jobs, got {finalJobs.Count}");
+
+        // Assert - Dedupe: No duplicates
+        HashSet<string> jobIds = [];
+        foreach (IElement job in finalJobs)
+        {
+            string? jobId = await job.GetAttributeAsync("data-job-id");
+            Assert.NotNull(jobId);
+            Assert.False(jobIds.Contains(jobId), $"Duplicate job ID found: {jobId}");
+            jobIds.Add(jobId);
+        }
+
+        _output.WriteLine($"Total unique jobs loaded: {jobIds.Count}");
+    }
+
+    [Fact]
+    public async Task ButtonDriven_Termination_DisablesButtonAtEnd()
+    {
+        // Arrange
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/button-driven";
+
+        // Act
+        await page.NavigateAsync(url);
+        await WaitForPageReadyAsync(page);
+
+        // Wait for button to be present and initial load to complete
+        await WaitForConditionAsync(page, "() => document.getElementById('load-more-btn') !== null");
+        await WaitForConditionAsync(page, "() => document.querySelectorAll('.job').length > 0");
+
+        // Click until end
+        for (int i = 0; i < 50; i++)
+        {
+            IElement? loadMoreBtn = await page.QuerySelectorAsync("#load-more-btn");
+            if (loadMoreBtn == null)
+            {
+                break;
+            }
+
+            string? btnText = await loadMoreBtn.GetTextContentAsync();
+            if (btnText?.Contains("No More") == true)
+            {
+                break;
+            }
+
+            // Check if button is disabled (loading state) - wait for it to become enabled
+            string? isDisabledAttr = await loadMoreBtn.GetAttributeAsync("disabled");
+            if (isDisabledAttr != null)
+            {
+                // Button is disabled, wait for loading to complete
+                try
+                {
+                    await WaitForButtonEnabledAsync(page);
+                }
+                catch (TimeoutException)
+                {
+                    // Button stayed disabled, might be at end - check text
+                    string? currentText = await loadMoreBtn.GetTextContentAsync();
+                    if (currentText?.Contains("No More") == true)
+                    {
+                        break;
+                    }
+                    throw;
+                }
+                continue;
+            }
+
+            // Get job count before click
+            IReadOnlyList<IElement> jobsBeforeClick = await page.QuerySelectorAllAsync(".job");
+            int countBefore = jobsBeforeClick.Count;
+
+            await loadMoreBtn.ClickAsync();
+
+            // Wait for jobs to increase or button to show "No More"
+            try
+            {
+                await WaitForConditionAsync(page, $"() => document.querySelectorAll('.job').length > {countBefore} || document.getElementById('load-more-btn')?.textContent?.includes('No More')");
+            }
+            catch (TimeoutException)
+            {
+                // Check if we've reached the end
+                string? currentText = await loadMoreBtn.GetTextContentAsync();
+                if (currentText?.Contains("No More") != true)
+                {
+                    throw;
+                }
+            }
+        }
+
+        // Assert - Termination: Button should show "No More Jobs"
+        IElement? finalBtn = await page.QuerySelectorAsync("#load-more-btn");
+        Assert.NotNull(finalBtn);
+
+        string? finalBtnText = await finalBtn.GetTextContentAsync();
+        Assert.Contains("No More", finalBtnText ?? "");
+
+        _output.WriteLine("Button-driven termination test passed");
+    }
+
+    [Fact]
+    public async Task Virtualized_ScrollUpdatesDOM_ReplacesItems()
+    {
+        // Arrange
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/virtualized";
+
+        // Act
+        await page.NavigateAsync(url);
+
+        // Get initial visible items
+        IReadOnlyList<IElement> initialJobs = await page.QuerySelectorAllAsync(".job");
+        List<string> initialJobIds = [];
+
+        foreach (IElement job in initialJobs)
+        {
+            string? jobId = await job.GetAttributeAsync("data-job-id");
+            if (jobId != null)
+            {
+                initialJobIds.Add(jobId);
+            }
+        }
+
+        _output.WriteLine($"Initial visible jobs: {initialJobIds.Count}");
+
+        // Scroll down
+        await page.EvaluateAsync<string>("document.getElementById('viewport').scrollTop = 500");
+        await WaitForConditionAsync(page, "() => document.querySelectorAll('.job').length > 0");
+
+        // Wait for DOM to stabilize after virtualization by checking for viewport scroll completion
+        await WaitForConditionAsync(
+            page,
+            "() => document.getElementById('viewport').scrollTop === 500");
+
+        // Get items after scroll
+        IReadOnlyList<IElement> jobsAfterScroll = await page.QuerySelectorAllAsync(".job");
+        List<string> afterScrollJobIds = [];
+
+        foreach (IElement job in jobsAfterScroll)
+        {
+            string? jobId = await job.GetAttributeAsync("data-job-id");
+            if (jobId != null)
+            {
+                afterScrollJobIds.Add(jobId);
+            }
+        }
+
+        _output.WriteLine($"Jobs after scroll: {afterScrollJobIds.Count}");
+
+        // Assert - Virtualized DOM replacements: Items should be different
+        var commonIds = initialJobIds.Intersect(afterScrollJobIds).ToList();
+        Assert.True(commonIds.Count < initialJobIds.Count,
+            $"Expected different items after scroll. Common: {commonIds.Count}, Initial: {initialJobIds.Count}");
+
+        _output.WriteLine($"Common items: {commonIds.Count}, New items: {afterScrollJobIds.Count - commonIds.Count}");
+    }
+
+    [Fact]
+    public async Task Virtualized_MultipleScrolls_CoversAllRange()
+    {
+        // Arrange
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/virtualized";
+
+        // Act
+        await page.NavigateAsync(url);
+
+        HashSet<string> allSeenJobIds = [];
+        int[] scrollPositions = new[] { 0, 500, 1000, 2000, 4000, 6000, 8000 };
+
+        foreach (int scrollPos in scrollPositions)
+        {
+            await page.EvaluateAsync<string>($"document.getElementById('viewport').scrollTop = {scrollPos}");
+            await WaitForConditionAsync(page, "() => document.querySelectorAll('.job').length > 0");
+
+            IReadOnlyList<IElement> jobs = await page.QuerySelectorAllAsync(".job");
+            foreach (IElement job in jobs)
+            {
+                string? jobId = await job.GetAttributeAsync("data-job-id");
+                if (jobId != null)
+                {
+                    allSeenJobIds.Add(jobId);
+                }
+            }
+
+            _output.WriteLine($"Scroll position {scrollPos}: {jobs.Count} visible jobs, {allSeenJobIds.Count} unique seen");
+        }
+
+        // Assert - Completeness: Should see many different items across scrolls
+        Assert.True(allSeenJobIds.Count >= 50, $"Expected at least 50 unique jobs across scrolls, got {allSeenJobIds.Count}");
+
+        _output.WriteLine($"Total unique jobs seen across all scrolls: {allSeenJobIds.Count}");
+    }
+
+    [Fact]
+    public async Task Virtualized_Dedupe_NoDuplicatesInViewport()
+    {
+        // Arrange
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/virtualized";
+
+        // Act
+        await page.NavigateAsync(url);
+
+        // Check multiple scroll positions for duplicates
+        int[] scrollPositions = new[] { 0, 500, 1000, 2000, 4000 };
+
+        foreach (int scrollPos in scrollPositions)
+        {
+            await page.EvaluateAsync<string>($"document.getElementById('viewport').scrollTop = {scrollPos}");
+            await WaitForConditionAsync(page, "() => document.querySelectorAll('.job').length > 0");
+
+            IReadOnlyList<IElement> jobs = await page.QuerySelectorAllAsync(".job");
+            HashSet<string> jobIds = [];
+
+            foreach (IElement job in jobs)
+            {
+                string? jobId = await job.GetAttributeAsync("data-job-id");
+                Assert.NotNull(jobId);
+                Assert.False(jobIds.Contains(jobId), $"Duplicate job ID found at scroll {scrollPos}: {jobId}");
+                jobIds.Add(jobId);
+            }
+
+            _output.WriteLine($"Scroll position {scrollPos}: {jobIds.Count} unique jobs (no duplicates)");
+        }
+
+        _output.WriteLine("Virtualized dedupe test passed");
+    }
+
+    [Fact]
+    public async Task DuplicateChunkReplay_LoadsChunks_DetectsDuplicates()
+    {
+        // Arrange
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/duplicate-chunk";
+
+        // Act
+        await page.NavigateAsync(url);
+
+        // Get initial stats
+        string initialTotal = await page.EvaluateAsync<string>("document.getElementById('total-count').textContent");
+        string initialUnique = await page.EvaluateAsync<string>("document.getElementById('unique-count').textContent");
+        string initialDuplicates = await page.EvaluateAsync<string>("document.getElementById('duplicate-count').textContent");
+
+        _output.WriteLine($"Initial - Total: {initialTotal}, Unique: {initialUnique}, Duplicates: {initialDuplicates}");
+
+        // Click "Load More" multiple times to trigger duplicate chunks
+        for (int i = 0; i < 5; i++)
+        {
+            IElement? loadMoreBtn = await page.QuerySelectorAsync("#load-more-btn");
+            if (loadMoreBtn == null)
+            {
+                break;
+            }
+
+            string? btnText = await loadMoreBtn.GetTextContentAsync();
+            if (btnText?.Contains("No More") == true)
+            {
+                break;
+            }
+
+            await loadMoreBtn.ClickAsync();
+            await WaitForButtonEnabledAsync(page);
+
+            string total = await page.EvaluateAsync<string>("document.getElementById('total-count').textContent");
+            string unique = await page.EvaluateAsync<string>("document.getElementById('unique-count').textContent");
+            string duplicates = await page.EvaluateAsync<string>("document.getElementById('duplicate-count').textContent");
+
+            _output.WriteLine($"After click {i + 1} - Total: {total}, Unique: {unique}, Duplicates: {duplicates}");
+        }
+
+        // Assert - Duplicates should be detected
+        string? finalTotal = await page.EvaluateAsync<string>("document.getElementById('total-count').textContent");
+        string? finalUnique = await page.EvaluateAsync<string>("document.getElementById('unique-count').textContent");
+        string? finalDuplicates = await page.EvaluateAsync<string>("document.getElementById('duplicate-count').textContent");
+
+        Assert.True(int.Parse(finalDuplicates ?? "0", CultureInfo.InvariantCulture) > 0, $"Expected duplicates to be detected, got {finalDuplicates}");
+        Assert.True(int.Parse(finalUnique ?? "0", CultureInfo.InvariantCulture) < int.Parse(finalTotal ?? "0", CultureInfo.InvariantCulture), $"Unique count should be less than total. Unique: {finalUnique}, Total: {finalTotal}");
+
+        _output.WriteLine($"Final - Total: {finalTotal}, Unique: {finalUnique}, Duplicates: {finalDuplicates}");
+    }
+
+    [Fact]
+    public async Task DuplicateChunkReplay_Dedupe_HighlightsDuplicateItems()
+    {
+        // Arrange
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/duplicate-chunk";
+
+        // Act
+        await page.NavigateAsync(url);
+
+        // Click "Load More" to trigger duplicate chunks
+        for (int i = 0; i < 4; i++)
+        {
+            IElement? loadMoreBtn = await page.QuerySelectorAsync("#load-more-btn");
+            if (loadMoreBtn == null)
+            {
+                break;
+            }
+
+            await loadMoreBtn.ClickAsync();
+            await WaitForButtonEnabledAsync(page);
+        }
+
+        // Assert - Duplicate items should be highlighted
+        IReadOnlyList<IElement> duplicateJobs = await page.QuerySelectorAllAsync(".job.duplicate");
+        Assert.True(duplicateJobs.Count > 0, $"Expected duplicate jobs to be highlighted, got {duplicateJobs.Count}");
+
+        _output.WriteLine($"Duplicate jobs highlighted: {duplicateJobs.Count}");
+    }
+
+    [Fact]
+    public async Task DuplicateChunkReplay_Completeness_AllItemsExtracted()
+    {
+        // Arrange
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
+        string url = $"{_scenarioServer!.BaseUrl}/scenario/scroll/duplicate-chunk";
+
+        // Act
+        await page.NavigateAsync(url);
+
+        // Click until end
+        for (int i = 0; i < 20; i++)
+        {
+            IElement? loadMoreBtn = await page.QuerySelectorAsync("#load-more-btn");
+            if (loadMoreBtn == null)
+            {
+                break;
+            }
+
+            string? btnText = await loadMoreBtn.GetTextContentAsync();
+            if (btnText?.Contains("No More") == true)
+            {
+                break;
+            }
+
+            await loadMoreBtn.ClickAsync();
+            await WaitForButtonEnabledAsync(page);
+        }
+
+        // Assert - Completeness: All unique items should be extracted
+        string? finalUnique = await page.EvaluateAsync<string>("document.getElementById('unique-count').textContent");
+        Assert.True(int.Parse(finalUnique ?? "0", CultureInfo.InvariantCulture) >= 50, $"Expected at least 50 unique jobs, got {finalUnique}");
+
+        _output.WriteLine($"Total unique jobs extracted: {finalUnique}");
+    }
+
+    [Fact]
+    public async Task AllScrollVariants_AreAccessibleViaServer()
+    {
+        // Arrange
+        string[] expectedScenarios = new[]
+        {
+            "/scenario/scroll/auto-threshold",
+            "/scenario/scroll/button-driven",
+            "/scenario/scroll/virtualized",
+            "/scenario/scroll/duplicate-chunk"
+        };
+
+        // Act
+        await using IBrowserSession session = await _browserFixture.CreateSessionAsync();
+        IPage page = await session.NewPageAsync();
+
+        foreach (string? scenario in expectedScenarios)
+        {
+            string url = $"{_scenarioServer!.BaseUrl}{scenario}";
+            await page.NavigateAsync(url);
+            string? title = await page.GetTitleAsync();
+            Assert.NotNull(title);
+            _output.WriteLine($"✓ {scenario} is accessible");
+        }
+
+        // Assert
+        _output.WriteLine($"All {expectedScenarios.Length} scroll variants are accessible");
+    }
+}

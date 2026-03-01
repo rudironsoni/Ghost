@@ -1,0 +1,265 @@
+using Ghost.Sdk.Spider.Adapters.Contracts;
+using Ghost.Sdk.Spider.Strategies.Contracts;
+using Microsoft.Extensions.Logging;
+
+namespace Ghost.Sdk.Spider.Strategies;
+
+internal static partial class StrategyRouterLogMessages
+{
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Registered strategy: {StrategyName}")]
+    public static partial void LogStrategyRegistered(this ILogger logger, string strategyName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Executing strategies for URL: {Url}")]
+    public static partial void LogExecutingStrategies(this ILogger logger, string url);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Strategy {StrategyName} succeeded for {Url}")]
+    public static partial void LogStrategySucceeded(this ILogger logger, string strategyName, string url);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Strategy {StrategyName} failed for {Url}: {Error}")]
+    public static partial void LogStrategyFailed(this ILogger logger, string strategyName, string url, string? error);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Strategy {StrategyName} threw exception for {Url}")]
+    public static partial void LogStrategyException(this ILogger logger, Exception ex, string strategyName, string url);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Strategy {StrategyName} not found in chain")]
+    public static partial void LogStrategyNotFoundInChain(this ILogger logger, string strategyName);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Chain execution stopped at {StrategyName} due to failure")]
+    public static partial void LogChainExecutionStopped(this ILogger logger, string strategyName);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Strategy metrics reset")]
+    public static partial void LogMetricsReset(this ILogger logger);
+}
+
+/// <summary>
+/// Router for executing extraction strategies with fallback and chaining support.
+/// </summary>
+/// <remarks>
+/// The strategy router manages multiple extraction strategies, executing them in priority
+/// order with automatic fallback when strategies fail. It tracks metrics for each strategy
+/// to aid in performance analysis and optimization.
+/// </remarks>
+public class StrategyRouter : IStrategyRouter
+{
+    private readonly Dictionary<string, Func<StrategyContext, CancellationToken, Task<ExtractionResult>>> _strategies;
+    private readonly Dictionary<string, StrategyMetrics> _metrics;
+    private readonly ILogger<StrategyRouter>? _logger;
+    private readonly object _metricsLock = new();
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StrategyRouter"/> class.
+    /// </summary>
+    /// <param name="logger">Optional logger for diagnostic information.</param>
+    public StrategyRouter(ILogger<StrategyRouter>? logger = null)
+    {
+        _strategies = new Dictionary<string, Func<StrategyContext, CancellationToken, Task<ExtractionResult>>>();
+        _metrics = [];
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Registers a strategy with the router.
+    /// </summary>
+    /// <param name="name">The unique name for the strategy.</param>
+    /// <param name="strategy">The strategy execution function.</param>
+    public void RegisterStrategy(
+        string name,
+        Func<StrategyContext, CancellationToken, Task<ExtractionResult>> strategy)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(strategy);
+
+        _strategies[name] = strategy;
+
+        lock (_metricsLock)
+        {
+            if (!_metrics.ContainsKey(name))
+            {
+                _metrics[name] = new StrategyMetrics { StrategyName = name };
+            }
+        }
+
+        _logger?.LogStrategyRegistered(name);
+    }
+
+    /// <inheritdoc/>
+    public async Task<ExtractionResult> ExecuteAsync(
+        StrategyContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        _logger?.LogExecutingStrategies(context.Url);
+
+        // Execute strategies in order until one succeeds
+        foreach ((string? name, Func<StrategyContext, CancellationToken, Task<ExtractionResult>>? strategy) in _strategies.OrderBy(s => s.Key))
+        {
+            try
+            {
+                ExtractionResult result = await ExecuteStrategyInternalAsync(name, strategy, context, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (result.Success)
+                {
+                    _logger?.LogStrategySucceeded(name, context.Url);
+                    return result;
+                }
+
+                _logger?.LogStrategyFailed(name, context.Url, result.ErrorMessage);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogStrategyException(ex, name, context.Url);
+                UpdateMetrics(name, false, TimeSpan.Zero);
+            }
+        }
+
+        // All strategies failed
+        return ExtractionResult.CreateFailure(
+            "All strategies failed",
+            "StrategyRouter",
+            TimeSpan.Zero);
+    }
+
+    /// <inheritdoc/>
+    public async Task<ExtractionResult> ExecuteStrategyAsync(
+        string strategyName,
+        StrategyContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(strategyName);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (!_strategies.TryGetValue(strategyName, out Func<StrategyContext, CancellationToken, Task<ExtractionResult>>? strategy))
+        {
+            throw new InvalidOperationException($"Strategy not found: {strategyName}");
+        }
+
+        return await ExecuteStrategyInternalAsync(strategyName, strategy, context, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async Task<ExtractionResult> ExecuteChainAsync(
+        StrategyChain chain,
+        StrategyContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(chain);
+        ArgumentNullException.ThrowIfNull(context);
+
+        DateTimeOffset chainStartTime = DateTimeOffset.UtcNow;
+        List<ExtractionResult> results = [];
+        Dictionary<string, object> aggregatedData = [];
+
+        foreach (StrategyConfiguration strategyConfig in chain.Strategies)
+        {
+            string strategyName = strategyConfig.Name;
+            if (!_strategies.TryGetValue(strategyName, out Func<StrategyContext, CancellationToken, Task<ExtractionResult>>? strategy))
+            {
+                _logger?.LogStrategyNotFoundInChain(strategyName);
+                continue;
+            }
+
+            ExtractionResult result = await ExecuteStrategyInternalAsync(strategyName, strategy, context, cancellationToken)
+                .ConfigureAwait(false);
+
+            results.Add(result);
+
+            if (result.Success && result.Data != null)
+            {
+                aggregatedData[strategyName] = result.Data;
+            }
+
+            // Stop chain on failure if configured
+            if (!result.Success && chain.StopOnFailure)
+            {
+                _logger?.LogChainExecutionStopped(strategyName);
+                break;
+            }
+        }
+
+        TimeSpan chainDuration = DateTimeOffset.UtcNow - chainStartTime;
+        bool allSucceeded = results.All(r => r.Success);
+
+        return new ExtractionResult
+        {
+            Success = allSucceeded,
+            Data = aggregatedData,
+            StrategyName = $"Chain:{chain.Name}",
+            Duration = chainDuration,
+            Metadata = new Dictionary<string, object>
+            {
+                ["ChainResults"] = results,
+                ["StrategiesExecuted"] = results.Count
+            }
+        };
+    }
+
+    /// <inheritdoc/>
+    public IReadOnlyDictionary<string, StrategyMetrics> GetMetrics()
+    {
+        lock (_metricsLock)
+        {
+            return new Dictionary<string, StrategyMetrics>(_metrics);
+        }
+    }
+
+    /// <inheritdoc/>
+    public void ResetMetrics()
+    {
+        lock (_metricsLock)
+        {
+            foreach (StrategyMetrics metric in _metrics.Values)
+            {
+                metric.Reset();
+            }
+        }
+
+        _logger?.LogMetricsReset();
+    }
+
+    private async Task<ExtractionResult> ExecuteStrategyInternalAsync(
+        string name,
+        Func<StrategyContext, CancellationToken, Task<ExtractionResult>> strategy,
+        StrategyContext context,
+        CancellationToken cancellationToken)
+    {
+        DateTimeOffset startTime = DateTimeOffset.UtcNow;
+
+        try
+        {
+            ExtractionResult result = await strategy(context, cancellationToken).ConfigureAwait(false);
+            TimeSpan duration = DateTimeOffset.UtcNow - startTime;
+
+            UpdateMetrics(name, result.Success, duration);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            TimeSpan duration = DateTimeOffset.UtcNow - startTime;
+            UpdateMetrics(name, false, duration);
+
+            return ExtractionResult.CreateFailure(
+                $"Strategy execution failed: {ex.Message}",
+                name,
+                duration,
+                ex);
+        }
+    }
+
+    private void UpdateMetrics(string strategyName, bool success, TimeSpan duration)
+    {
+        lock (_metricsLock)
+        {
+            if (_metrics.TryGetValue(strategyName, out StrategyMetrics? metrics))
+            {
+                if (success)
+                    metrics.RecordSuccess(duration, DateTime.UtcNow);
+                else
+                    metrics.RecordFailure(duration, DateTime.UtcNow);
+            }
+        }
+    }
+}

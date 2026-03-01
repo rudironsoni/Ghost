@@ -1,0 +1,301 @@
+# OPA Gatekeeper Constraint: Required Labels
+# Enforces mandatory labels on all Kubernetes resources for governance and tracking
+
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredLabels
+metadata:
+  name: required-labels-all-resources
+  annotations:
+    description: "Enforce required labels on all Ghost application resources"
+spec:
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod", "Service", "ConfigMap", "Secret", "PersistentVolumeClaim"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet", "ReplicaSet"]
+      - apiGroups: ["batch"]
+        kinds: ["Job", "CronJob"]
+      - apiGroups: ["networking.k8s.io"]
+        kinds: ["Ingress", "NetworkPolicy"]
+
+    # Exclude system namespaces
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+      - kube-node-lease
+      - gatekeeper-system
+
+  parameters:
+    labels:
+      # Application identification
+      - "app.kubernetes.io/name"
+      - "app.kubernetes.io/instance"
+      - "app.kubernetes.io/version"
+      - "app.kubernetes.io/component"
+      - "app.kubernetes.io/part-of"
+      - "app.kubernetes.io/managed-by"
+
+      # Environment and ownership
+      - "environment"
+      - "team"
+      - "owner"
+
+      # Cost allocation
+      - "cost-center"
+      - "project"
+
+---
+# Constraint: Production-specific labels
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredLabels
+metadata:
+  name: required-labels-production
+  annotations:
+    description: "Additional required labels for production environment"
+spec:
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet"]
+
+    namespaceSelector:
+      matchLabels:
+        environment: production
+
+  parameters:
+    labels:
+      # Standard labels
+      - "app.kubernetes.io/name"
+      - "app.kubernetes.io/version"
+      - "environment"
+      - "team"
+
+      # Production-specific
+      - "backup-policy"
+      - "data-classification"
+      - "compliance-scope"
+      - "sla-tier"
+
+---
+# Label validation template (enforce valid values)
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8slabelvalues
+  annotations:
+    description: "Validates that labels have allowed values"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sLabelValues
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            labels:
+              type: array
+              items:
+                type: object
+                properties:
+                  key:
+                    type: string
+                  allowedValues:
+                    type: array
+                    items:
+                      type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8slabelvalues
+
+        violation[{"msg": msg}] {
+          input.review.object.metadata.labels
+          some label
+          expected := input.parameters.labels[_]
+          actual := input.review.object.metadata.labels[expected.key]
+          not allowed_value(expected.allowedValues, actual)
+          msg := sprintf("Label '%v' has invalid value '%v'. Allowed values: %v", [expected.key, actual, expected.allowedValues])
+        }
+
+        allowed_value(allowed, actual) {
+          allowed[_] == actual
+        }
+
+---
+# Constraint: Validate label values
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sLabelValues
+metadata:
+  name: validate-label-values
+  annotations:
+    description: "Ensure labels have valid values from allowed list"
+spec:
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+      - apiGroups: [""]
+        kinds: ["Service"]
+
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+
+  parameters:
+    labels:
+      # Environment must be one of these
+      - key: "environment"
+        allowedValues:
+          - "production"
+          - "staging"
+          - "development"
+          - "test"
+
+      # SLA tier
+      - key: "sla-tier"
+        allowedValues:
+          - "critical"
+          - "high"
+          - "medium"
+          - "low"
+
+      # Data classification
+      - key: "data-classification"
+        allowedValues:
+          - "public"
+          - "internal"
+          - "confidential"
+          - "restricted"
+
+      # Backup policy
+      - key: "backup-policy"
+        allowedValues:
+          - "daily"
+          - "weekly"
+          - "none"
+
+      # Team
+      - key: "team"
+        allowedValues:
+          - "platform"
+          - "product"
+          - "data"
+          - "security"
+          - "devops"
+
+      # Managed by
+      - key: "app.kubernetes.io/managed-by"
+        allowedValues:
+          - "Helm"
+          - "kubectl"
+          - "ArgoCD"
+          - "Terraform"
+          - "Flux"
+
+---
+# ConfigMap: Label standards documentation
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: label-standards
+  namespace: gatekeeper-system
+data:
+  standards.yaml: |
+    # Ghost Application Label Standards
+
+    ## Required Labels (All Resources)
+
+    ### Kubernetes Recommended Labels
+    - app.kubernetes.io/name: Application name (e.g., "ghost")
+    - app.kubernetes.io/instance: Unique instance name (e.g., "ghost-production")
+    - app.kubernetes.io/version: Application version (e.g., "5.73.0")
+    - app.kubernetes.io/component: Component role (e.g., "frontend", "api", "admin")
+    - app.kubernetes.io/part-of: Larger application (e.g., "ghost-platform")
+    - app.kubernetes.io/managed-by: Tool managing the resource (e.g., "Helm", "ArgoCD")
+
+    ### Custom Labels
+    - environment: Deployment environment (production|staging|development|test)
+    - team: Owning team (platform|product|data|security|devops)
+    - owner: Team email or Slack channel (e.g., "platform-team@ghost.com")
+    - cost-center: Cost allocation code (e.g., "CC-1234")
+    - project: Project or initiative (e.g., "ghost-v5-migration")
+
+    ## Production-Only Labels
+
+    - backup-policy: Backup frequency (daily|weekly|none)
+    - data-classification: Data sensitivity (public|internal|confidential|restricted)
+    - compliance-scope: Compliance requirements (soc2|gdpr|hipaa|pci|none)
+    - sla-tier: Service level (critical|high|medium|low)
+
+    ## Optional Labels
+
+    - monitoring: Enable monitoring (true|false)
+    - logging: Log retention days (7|30|90|365)
+    - alert-channel: Slack channel for alerts (e.g., "#ghost-alerts")
+    - runbook: Link to runbook (e.g., "https://wiki.ghost.com/runbooks/ghost-app")
+
+    ## Example: Complete Label Set
+
+    ```yaml
+    metadata:
+      labels:
+        # Kubernetes recommended
+        app.kubernetes.io/name: ghost
+        app.kubernetes.io/instance: ghost-production
+        app.kubernetes.io/version: "5.73.0"
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/part-of: ghost-platform
+        app.kubernetes.io/managed-by: Helm
+
+        # Custom required
+        environment: production
+        team: platform
+        owner: platform-team@ghost.com
+        cost-center: CC-1234
+        project: ghost-v5
+
+        # Production specific
+        backup-policy: daily
+        data-classification: confidential
+        compliance-scope: soc2
+        sla-tier: critical
+
+        # Optional
+        monitoring: "true"
+        logging: "90"
+        alert-channel: "#ghost-prod-alerts"
+        runbook: "https://wiki.ghost.com/runbooks/ghost"
+    ```
+
+    ## Label Validation
+
+    Labels are enforced by OPA Gatekeeper. Invalid resources will be rejected.
+
+    View violations:
+    ```bash
+    kubectl get k8srequiredlabels -A
+    kubectl get k8slabelvalues -A
+    ```
+
+    ## Exceptions
+
+    To request an exception:
+    1. Create ticket in Jira (PROJECT-SEC)
+    2. Provide justification
+    3. Get approval from security team
+    4. Update constraint with annotation:
+       ```yaml
+       annotations:
+         exception: "TICKET-123"
+         exception-reason: "Legacy system, migration planned"
+         exception-expires: "2026-12-31"
+       ```

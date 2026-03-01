@@ -1,0 +1,490 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ghost-cms
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/part-of: ghost-platform
+    managed-by: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+    notifications.argoproj.io/subscribe.on-deployed.slack: ghost-deployments
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: ghost-alerts
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: ghost-production
+
+  # Source configuration
+  source:
+    repoURL: https://github.com/rudironsoni/Ghost.git
+    targetRevision: HEAD
+    path: infrastructure/automation/templates/helm-chart
+
+    helm:
+      releaseName: ghost-cms
+
+      # Values files from repository
+      valueFiles:
+        - ../../environments/production/values.yaml
+
+      # Runtime parameter overrides
+      parameters:
+        - name: image.repository
+          value: "ghcr.io/rudironsoni/ghost"
+        - name: image.tag
+          value: "latest"
+        - name: replicaCount
+          value: "3"
+        - name: autoscaling.enabled
+          value: "true"
+        - name: autoscaling.minReplicas
+          value: "3"
+        - name: autoscaling.maxReplicas
+          value: "10"
+        - name: ingress.enabled
+          value: "true"
+        - name: ingress.className
+          value: "nginx"
+        - name: ingress.hosts[0].host
+          value: "ghost.example.com"
+        - name: ingress.tls[0].secretName
+          value: "ghost-tls"
+
+      # Helm-specific options
+      valuesObject:
+        global:
+          environment: production
+          region: us-east-1
+
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+          requests:
+            cpu: 1000m
+            memory: 2Gi
+
+        persistence:
+          enabled: true
+          storageClass: "gp3-encrypted"
+          size: 100Gi
+          accessMode: ReadWriteOnce
+
+        mysql:
+          enabled: true
+          auth:
+            existingSecret: ghost-mysql-secret
+          primary:
+            persistence:
+              enabled: true
+              size: 100Gi
+              storageClass: "gp3-encrypted"
+          metrics:
+            enabled: true
+
+        redis:
+          enabled: true
+          auth:
+            enabled: true
+            existingSecret: ghost-redis-secret
+          master:
+            persistence:
+              enabled: true
+              size: 20Gi
+          metrics:
+            enabled: true
+
+        monitoring:
+          enabled: true
+          serviceMonitor:
+            enabled: true
+            interval: 30s
+          prometheusRule:
+            enabled: true
+
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          fsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
+
+        podSecurityContext:
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+
+        networkPolicy:
+          enabled: true
+          policyTypes:
+            - Ingress
+            - Egress
+
+  # Destination cluster
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ghost-production
+
+  # Sync policy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - RespectIgnoreDifferences=true
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+    managedNamespaceMetadata:
+      labels:
+        app: ghost
+        environment: production
+        managed-by: argocd
+      annotations:
+        argocd.argoproj.io/tracking-id: ghost-cms
+
+  # Ignore differences for fields that change frequently
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: ""
+      kind: Secret
+      jsonPointers:
+        - /data
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+      jsonPointers:
+        - /spec/minReplicas
+        - /spec/maxReplicas
+
+  # Health assessment
+  revisionHistoryLimit: 10
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ghost-cms-staging
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/part-of: ghost-platform
+    environment: staging
+    managed-by: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+    notifications.argoproj.io/subscribe.on-deployed.slack: ghost-staging
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: ghost-staging
+
+  source:
+    repoURL: https://github.com/rudironsoni/Ghost.git
+    targetRevision: develop
+    path: infrastructure/automation/templates/helm-chart
+
+    helm:
+      releaseName: ghost-cms-staging
+
+      valueFiles:
+        - ../../environments/staging/values.yaml
+
+      parameters:
+        - name: image.repository
+          value: "ghcr.io/rudironsoni/ghost"
+        - name: image.tag
+          value: "develop"
+        - name: replicaCount
+          value: "2"
+        - name: autoscaling.enabled
+          value: "true"
+        - name: autoscaling.minReplicas
+          value: "2"
+        - name: autoscaling.maxReplicas
+          value: "5"
+        - name: ingress.enabled
+          value: "true"
+        - name: ingress.hosts[0].host
+          value: "ghost-staging.example.com"
+
+      valuesObject:
+        global:
+          environment: staging
+          region: us-east-1
+
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+
+        persistence:
+          enabled: true
+          storageClass: "gp3"
+          size: 50Gi
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ghost-staging
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - ApplyOutOfSyncOnly=true
+
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m
+
+  revisionHistoryLimit: 5
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ghost-cms-development
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/part-of: ghost-platform
+    environment: development
+    managed-by: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: ghost-development
+
+  source:
+    repoURL: https://github.com/rudironsoni/Ghost.git
+    targetRevision: develop
+    path: infrastructure/automation/templates/helm-chart
+
+    helm:
+      releaseName: ghost-cms-dev
+
+      valueFiles:
+        - ../../environments/development/values.yaml
+
+      parameters:
+        - name: image.repository
+          value: "ghcr.io/rudironsoni/ghost"
+        - name: image.tag
+          value: "develop"
+        - name: replicaCount
+          value: "1"
+        - name: autoscaling.enabled
+          value: "false"
+        - name: ingress.enabled
+          value: "true"
+        - name: ingress.hosts[0].host
+          value: "ghost-dev.example.com"
+
+      valuesObject:
+        global:
+          environment: development
+          region: us-east-1
+
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+
+        persistence:
+          enabled: true
+          storageClass: "gp3"
+          size: 20Gi
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ghost-development
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+
+    retry:
+      limit: 2
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
+
+  revisionHistoryLimit: 3
+
+---
+# ArgoCD AppProject for Production
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ghost-production
+  namespace: argocd
+  labels:
+    environment: production
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Ghost CMS Production Environment
+
+  sourceRepos:
+    - https://github.com/rudironsoni/Ghost.git
+    - https://charts.bitnami.com/bitnami
+
+  destinations:
+    - namespace: ghost-production
+      server: https://kubernetes.default.svc
+    - namespace: ghost-production-*
+      server: https://kubernetes.default.svc
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: ''
+      kind: PersistentVolume
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRole
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRoleBinding
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  roles:
+    - name: production-admin
+      description: Full access to production applications
+      policies:
+        - p, proj:ghost-production:production-admin, applications, *, ghost-production/*, allow
+      groups:
+        - ghost-production-admins
+
+    - name: production-readonly
+      description: Read-only access to production applications
+      policies:
+        - p, proj:ghost-production:production-readonly, applications, get, ghost-production/*, allow
+      groups:
+        - ghost-production-viewers
+
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: ConfigMap
+        name: kube-root-ca.crt
+
+---
+# ArgoCD AppProject for Staging
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ghost-staging
+  namespace: argocd
+  labels:
+    environment: staging
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Ghost CMS Staging Environment
+
+  sourceRepos:
+    - https://github.com/rudironsoni/Ghost.git
+    - https://charts.bitnami.com/bitnami
+
+  destinations:
+    - namespace: ghost-staging
+      server: https://kubernetes.default.svc
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  roles:
+    - name: staging-admin
+      description: Full access to staging applications
+      policies:
+        - p, proj:ghost-staging:staging-admin, applications, *, ghost-staging/*, allow
+      groups:
+        - ghost-staging-admins
+        - ghost-production-admins
+
+---
+# ArgoCD AppProject for Development
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ghost-development
+  namespace: argocd
+  labels:
+    environment: development
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Ghost CMS Development Environment
+
+  sourceRepos:
+    - https://github.com/rudironsoni/Ghost.git
+    - https://charts.bitnami.com/bitnami
+
+  destinations:
+    - namespace: ghost-development
+      server: https://kubernetes.default.svc
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  roles:
+    - name: developer
+      description: Full access to development applications
+      policies:
+        - p, proj:ghost-development:developer, applications, *, ghost-development/*, allow
+      groups:
+        - ghost-developers

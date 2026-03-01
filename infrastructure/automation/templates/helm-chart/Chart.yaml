@@ -1,0 +1,30 @@
+apiVersion: v2
+name: ghost-cms
+description: Enterprise-grade Helm chart for Ghost CMS with MySQL, Redis, and comprehensive monitoring
+type: application
+version: 1.0.0
+appVersion: "5.87.0"
+keywords:
+  - ghost
+  - cms
+  - blog
+  - content-management
+home: https://ghost.org
+sources:
+  - https://github.com/TryGhost/Ghost
+maintainers:
+  - name: Ghost Platform Team
+    email: platform@ghost.example.com
+icon: https://ghost.org/images/logos/ghost-logo.svg
+dependencies:
+  - name: mysql
+    version: "9.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: mysql.enabled
+  - name: redis
+    version: "18.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+annotations:
+  category: CMS
+  licenses: MIT

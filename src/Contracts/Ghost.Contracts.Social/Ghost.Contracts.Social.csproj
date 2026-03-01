@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ghost.Contracts.Social</RootNamespace>
+    <Description>Ghost social platform contracts</Description>
+  </PropertyGroup>
+</Project>

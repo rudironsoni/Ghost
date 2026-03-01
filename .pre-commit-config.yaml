@@ -1,0 +1,64 @@
+# Pre-commit hooks for Ghost project
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+repos:
+  - repo: local
+    hooks:
+      # Test trait governance check (taxonomy + lane capability ownership)
+      - id: validate-test-traits
+        name: Validate test trait taxonomy and capabilities
+        entry: tests/scripts/validate-test-traits.sh
+        language: system
+        pass_filenames: false
+        files: '\.cs$'
+        stages: [pre-commit]
+
+      # C# code formatting check
+      - id: dotnet-format-check
+        name: Check C# formatting
+        entry: dotnet format Ghost.sln --verify-no-changes --verbosity diagnostic
+        language: system
+        pass_filenames: false
+        files: '\.(cs|csproj|sln)$'
+        stages: [pre-commit]
+
+      # Build the solution (catches compilation errors)
+      - id: dotnet-build
+        name: Build solution
+        entry: dotnet build Ghost.sln --no-restore --warnaserror
+        language: system
+        pass_filenames: false
+        files: '\.(cs|csproj|sln)$'
+        stages: [pre-commit]
+
+      # Run deterministic PR-lane tests only.
+      # Excludes Smoke, End2End, and explicit live-provider capability tests.
+      - id: dotnet-test-quick
+        name: Run non-smoke tests
+        entry: dotnet test Ghost.sln --no-build --filter "Category!=Smoke&Category!=End2End&Capability!=RequiresProviderLive"
+        language: system
+        pass_filenames: false
+        files: '\.(cs|csproj)$'
+        stages: [pre-commit]
+
+  # Standard pre-commit hooks for file hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.(md|txt)$'
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: ['--unsafe']  # Allow custom YAML tags
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+# Global settings
+default_stages: [pre-commit]
+fail_fast: false  # Run all hooks even if one fails

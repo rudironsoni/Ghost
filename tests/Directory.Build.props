@@ -1,0 +1,24 @@
+<Project>
+  <!-- Test-specific build configuration -->
+  <PropertyGroup>
+    <!-- TreatWarningsAsErrors is inherited from root, but we need test-specific exceptions -->
+  </PropertyGroup>
+
+  <!--
+    Test-specific analyzer suppressions:
+    
+    xUnit1030: Do not call ConfigureAwait(false) in test methods
+    CA2007: Consider calling ConfigureAwait on the awaited task
+    These rules conflict. xUnit recommends NOT using ConfigureAwait(false) in tests.
+    
+    CA1506: Avoid excessive class coupling
+    Integration tests naturally use many types from different namespaces.
+    This rule is not practical for test projects.
+  -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CA2007;CA1506</NoWarn>
+  </PropertyGroup>
+
+  <!-- Import parent Directory.Build.props -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+</Project>

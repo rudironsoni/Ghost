@@ -1,0 +1,833 @@
+# OPA Gatekeeper Constraint Templates
+# Consolidated template definitions for policy enforcement
+# These templates define the schema and logic for constraints
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gatekeeper-system
+  labels:
+    app.kubernetes.io/name: gatekeeper
+    app.kubernetes.io/part-of: ghost-security
+
+---
+# Template: Require specific labels
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequiredlabels
+  namespace: gatekeeper-system
+  annotations:
+    description: "Requires resources to have specified labels"
+    version: "1.0.0"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequiredLabels
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            labels:
+              type: array
+              description: "List of required labels"
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequiredlabels
+
+        violation[{"msg": msg, "details": {"missing_labels": missing}}] {
+          provided := {label | input.review.object.metadata.labels[label]}
+          required := {label | label := input.parameters.labels[_]}
+          missing := required - provided
+          count(missing) > 0
+          msg := sprintf("Resource is missing required labels: %v", [missing])
+        }
+
+---
+# Template: Block privileged containers
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8spsprivilegedcontainer
+  namespace: gatekeeper-system
+  annotations:
+    description: "Blocks creation of privileged containers"
+    version: "1.0.0"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPPrivilegedContainer
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spsprivilegedcontainer
+
+        violation[{"msg": msg, "details": {}}] {
+          c := input_containers[_]
+          c.securityContext.privileged
+          msg := sprintf("Privileged container is not allowed: %v", [c.name])
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.initContainers[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.ephemeralContainers[_]
+        }
+
+---
+# Template: Enforce resource limits
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequiredresources
+  namespace: gatekeeper-system
+  annotations:
+    description: "Requires containers to have resource requests and limits"
+    version: "1.0.0"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequiredResources
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequiredresources
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          not container.resources.requests.memory
+          msg := sprintf("Container %v has no memory request", [container.name])
+        }
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          not container.resources.requests.cpu
+          msg := sprintf("Container %v has no CPU request", [container.name])
+        }
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          not container.resources.limits.memory
+          msg := sprintf("Container %v has no memory limit", [container.name])
+        }
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          not container.resources.limits.cpu
+          msg := sprintf("Container %v has no CPU limit", [container.name])
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.initContainers[_]
+        }
+
+---
+# Template: Allowed container registries
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8sallowedrepos
+  namespace: gatekeeper-system
+  annotations:
+    description: "Requires container images to come from allowed registries"
+    version: "1.0.0"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sAllowedRepos
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            repos:
+              type: array
+              description: "List of allowed container registries"
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sallowedrepos
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          not strings.any_prefix_match(container.image, input.parameters.repos)
+          msg := sprintf("Container %v has an invalid image registry %v", [container.name, container.image])
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.initContainers[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.ephemeralContainers[_]
+        }
+
+---
+# Template: Block host namespaces
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8spsphostnamespace
+  namespace: gatekeeper-system
+  annotations:
+    description: "Blocks use of host namespaces (PID, IPC, Network)"
+    version: "1.0.0"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPHostNamespace
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spsphostnamespace
+
+        violation[{"msg": msg, "details": {}}] {
+          input.review.object.spec.hostPID
+          msg := "Using host PID namespace is not allowed"
+        }
+
+        violation[{"msg": msg, "details": {}}] {
+          input.review.object.spec.hostIPC
+          msg := "Using host IPC namespace is not allowed"
+        }
+
+        violation[{"msg": msg, "details": {}}] {
+          input.review.object.spec.hostNetwork
+          msg := "Using host network is not allowed"
+        }
+
+---
+# Template: Require read-only root filesystem
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8spspreadonlyrootfilesystem
+  namespace: gatekeeper-system
+  annotations:
+    description: "Requires containers to run with a read-only root filesystem"
+    version: "1.0.0"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPReadOnlyRootFilesystem
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spspreadonlyrootfilesystem
+
+        violation[{"msg": msg, "details": {}}] {
+          c := input_containers[_]
+          not input_read_only_root_fs(c)
+          msg := sprintf("Container %v must set readOnlyRootFilesystem to true", [c.name])
+        }
+
+        input_read_only_root_fs(c) {
+          c.securityContext.readOnlyRootFilesystem == true
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.initContainers[_]
+        }
+
+---
+# Template: Disallow privilege escalation
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8spspallowprivilegeescalationcontainer
+  namespace: gatekeeper-system
+  annotations:
+    description: "Requires containers to disallow privilege escalation"
+    version: "1.0.0"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPAllowPrivilegeEscalationContainer
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spspallowprivilegeescalationcontainer
+
+        violation[{"msg": msg, "details": {}}] {
+          c := input_containers[_]
+          input_allow_privilege_escalation(c)
+          msg := sprintf("Container %v must set allowPrivilegeEscalation to false", [c.name])
+        }
+
+        input_allow_privilege_escalation(c) {
+          not has_field(c.securityContext, "allowPrivilegeEscalation")
+        }
+
+        input_allow_privilege_escalation(c) {
+          c.securityContext.allowPrivilegeEscalation == true
+        }
+
+        has_field(obj, field) {
+          obj[field]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.initContainers[_]
+        }
+
+---
+# Template: Require non-root user
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8spsprunasnonroot
+  namespace: gatekeeper-system
+  annotations:
+    description: "Requires containers to run as non-root user"
+    version: "1.0.0"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPRunAsNonRoot
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spsprunasnonroot
+
+        violation[{"msg": msg, "details": {}}] {
+          c := input_containers[_]
+          not input_run_as_non_root(c)
+          msg := sprintf("Container %v must set runAsNonRoot to true", [c.name])
+        }
+
+        input_run_as_non_root(c) {
+          c.securityContext.runAsNonRoot == true
+        }
+
+        input_run_as_non_root(c) {
+          input.review.object.spec.securityContext.runAsNonRoot == true
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.initContainers[_]
+        }
+
+---
+# Template: Block host paths
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8spsphostfilesystem
+  namespace: gatekeeper-system
+  annotations:
+    description: "Blocks use of host filesystem paths"
+    version: "1.0.0"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPHostFilesystem
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            allowedHostPaths:
+              type: array
+              description: "List of allowed host paths (if any)"
+              items:
+                type: object
+                properties:
+                  pathPrefix:
+                    type: string
+                  readOnly:
+                    type: boolean
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spsphostfilesystem
+
+        violation[{"msg": msg, "details": {}}] {
+          volume := input_hostpath_volumes[_]
+          not input_hostpath_allowed(volume)
+          msg := sprintf("HostPath volume %v is not allowed", [volume.name])
+        }
+
+        input_hostpath_volumes[v] {
+          v := input.review.object.spec.volumes[_]
+          has_field(v, "hostPath")
+        }
+
+        input_hostpath_allowed(volume) {
+          allowed := input.parameters.allowedHostPaths[_]
+          startswith(volume.hostPath.path, allowed.pathPrefix)
+        }
+
+        has_field(obj, field) {
+          obj[field]
+        }
+
+---
+# Template: Block dangerous capabilities
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8spspcapabilities
+  namespace: gatekeeper-system
+  annotations:
+    description: "Controls Linux capabilities that can be added to containers"
+    version: "1.0.0"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPCapabilities
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            allowedCapabilities:
+              type: array
+              items:
+                type: string
+            requiredDropCapabilities:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spspcapabilities
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          has_disallowed_capabilities(container)
+          msg := sprintf("Container %v has disallowed capabilities", [container.name])
+        }
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          missing_drop_capabilities(container)
+          msg := sprintf("Container %v must drop all capabilities and add only those required", [container.name])
+        }
+
+        has_disallowed_capabilities(container) {
+          allowed := {c | c := input.parameters.allowedCapabilities[_]}
+          added := {c | c := container.securityContext.capabilities.add[_]}
+          disallowed := added - allowed
+          count(disallowed) > 0
+        }
+
+        missing_drop_capabilities(container) {
+          required := {c | c := input.parameters.requiredDropCapabilities[_]}
+          provided := {c | c := container.securityContext.capabilities.drop[_]}
+          missing := required - provided
+          count(missing) > 0
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.initContainers[_]
+        }
+
+---
+# Template: Block host ports
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8spsphostports
+  namespace: gatekeeper-system
+  annotations:
+    description: "Blocks use of host ports in containers"
+    version: "1.0.0"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPHostPorts
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            allowedHostPorts:
+              type: array
+              items:
+                type: object
+                properties:
+                  min:
+                    type: integer
+                  max:
+                    type: integer
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spsphostports
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          port := container.ports[_]
+          hostPort := port.hostPort
+          hostPort > 0
+          not is_allowed_port(hostPort)
+          msg := sprintf("Container %v uses disallowed hostPort %v", [container.name, hostPort])
+        }
+
+        is_allowed_port(port) {
+          range := input.parameters.allowedHostPorts[_]
+          port >= range.min
+          port <= range.max
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+---
+# Template: Enforce seccomp profile
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8spspseccomp
+  namespace: gatekeeper-system
+  annotations:
+    description: "Requires seccomp profile to be set"
+    version: "1.0.0"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPSeccomp
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            allowedProfiles:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spspseccomp
+
+        violation[{"msg": msg}] {
+          not input_seccomp_allowed
+          msg := "Seccomp profile is not set or not allowed"
+        }
+
+        input_seccomp_allowed {
+          profile := input.review.object.spec.securityContext.seccompProfile.type
+          profile == input.parameters.allowedProfiles[_]
+        }
+
+        input_seccomp_allowed {
+          container := input_containers[_]
+          profile := container.securityContext.seccompProfile.type
+          profile == input.parameters.allowedProfiles[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+---
+# Template: Block :latest image tag
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8sblocklatestimages
+  namespace: gatekeeper-system
+  annotations:
+    description: "Blocks use of :latest tag in container images"
+    version: "1.0.0"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sBlockLatestImages
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sblocklatestimages
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          image := container.image
+          endswith(image, ":latest")
+          msg := sprintf("Container %v uses :latest tag which is not allowed: %v", [container.name, image])
+        }
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          image := container.image
+          not contains(image, ":")
+          msg := sprintf("Container %v has no tag specified (implicit :latest): %v", [container.name, image])
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.initContainers[_]
+        }
+
+---
+# Template: Enforce AppArmor profiles
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8spspapparmor
+  namespace: gatekeeper-system
+  annotations:
+    description: "Requires AppArmor profile annotations"
+    version: "1.0.0"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPAppArmor
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            allowedProfiles:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spspapparmor
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          not input_apparmor_allowed(container.name)
+          msg := sprintf("Container %v does not have an allowed AppArmor profile", [container.name])
+        }
+
+        input_apparmor_allowed(container_name) {
+          profile := input.review.object.metadata.annotations[sprintf("container.apparmor.security.beta.kubernetes.io/%v", [container_name])]
+          profile == input.parameters.allowedProfiles[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+---
+# Template: Enforce resource quotas
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8sresourceratio
+  namespace: gatekeeper-system
+  annotations:
+    description: "Enforces resource request/limit ratios"
+    version: "1.0.0"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sResourceRatio
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            maxRatio:
+              type: number
+              description: "Maximum ratio of limit to request"
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sresourceratio
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          cpu_ratio := to_number(container.resources.limits.cpu) / to_number(container.resources.requests.cpu)
+          cpu_ratio > input.parameters.maxRatio
+          msg := sprintf("Container %v CPU limit/request ratio %.2f exceeds maximum %.2f", [container.name, cpu_ratio, input.parameters.maxRatio])
+        }
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          mem_limit := parse_memory(container.resources.limits.memory)
+          mem_request := parse_memory(container.resources.requests.memory)
+          mem_ratio := mem_limit / mem_request
+          mem_ratio > input.parameters.maxRatio
+          msg := sprintf("Container %v memory limit/request ratio %.2f exceeds maximum %.2f", [container.name, mem_ratio, input.parameters.maxRatio])
+        }
+
+        parse_memory(mem_str) = result {
+          endswith(mem_str, "Gi")
+          result := to_number(trim_suffix(mem_str, "Gi")) * 1024
+        }
+
+        parse_memory(mem_str) = result {
+          endswith(mem_str, "Mi")
+          result := to_number(trim_suffix(mem_str, "Mi"))
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+---
+# ConfigMap: Template deployment guide
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gatekeeper-templates-guide
+  namespace: gatekeeper-system
+  labels:
+    app.kubernetes.io/name: gatekeeper
+    app.kubernetes.io/component: documentation
+data:
+  README.md: |
+    # OPA Gatekeeper Constraint Templates
+
+    ## Overview
+
+    This file contains all constraint templates used by OPA Gatekeeper for
+    enforcing security and operational policies in the Ghost Kubernetes cluster.
+
+    ## Deployment
+
+    Deploy all templates:
+    ```bash
+    kubectl apply -f constraint-templates.yaml
+    ```
+
+    Verify templates are installed:
+    ```bash
+    kubectl get constrainttemplates
+    ```
+
+    ## Available Templates
+
+    ### Security Templates
+    - **K8sPSPPrivilegedContainer**: Block privileged containers
+    - **K8sPSPHostNamespace**: Block host namespace usage
+    - **K8sPSPReadOnlyRootFilesystem**: Require read-only root filesystem
+    - **K8sPSPAllowPrivilegeEscalationContainer**: Block privilege escalation
+    - **K8sPSPRunAsNonRoot**: Require non-root user
+    - **K8sPSPHostFilesystem**: Block host path volumes
+    - **K8sPSPCapabilities**: Control Linux capabilities
+    - **K8sPSPHostPorts**: Block host port usage
+    - **K8sPSPSeccomp**: Enforce seccomp profiles
+    - **K8sPSPAppArmor**: Enforce AppArmor profiles
+
+    ### Operational Templates
+    - **K8sRequiredLabels**: Require specific labels
+    - **K8sRequiredResources**: Require resource requests/limits
+    - **K8sAllowedRepos**: Restrict container registries
+    - **K8sBlockLatestImages**: Block :latest tag
+    - **K8sResourceRatio**: Enforce resource ratios
+
+    ## Creating Constraints
+
+    After deploying templates, create constraints to enforce policies:
+
+    ```yaml
+    apiVersion: constraints.gatekeeper.sh/v1beta1
+    kind: K8sPSPPrivilegedContainer
+    metadata:
+      name: block-privileged-containers
+    spec:
+      enforcementAction: deny
+      match:
+        kinds:
+          - apiGroups: [""]
+            kinds: ["Pod"]
+    ```
+
+    ## Enforcement Actions
+
+    - **deny**: Block resource creation (recommended for production)
+    - **dryrun**: Log violations without blocking
+    - **warn**: Allow creation but log warning
+
+    ## Testing
+
+    Test policies before enforcing:
+    ```bash
+    # Deploy with dryrun mode
+    kubectl apply -f test-constraint.yaml
+
+    # Check audit violations
+    kubectl get constraint <constraint-name> -o yaml
+
+    # Review violations in status
+    kubectl describe constraint <constraint-name>
+    ```
+
+    ## Monitoring
+
+    View all constraints:
+    ```bash
+    kubectl get constraints --all-namespaces
+    ```
+
+    Check violations:
+    ```bash
+    kubectl get <constraint-kind> <constraint-name> -o jsonpath='{.status.violations}'
+    ```
+
+    ## Troubleshooting
+
+    ### Template not found
+    Ensure templates are deployed before constraints:
+    ```bash
+    kubectl get constrainttemplates
+    ```
+
+    ### Constraint not enforcing
+    Check enforcement action and match criteria:
+    ```bash
+    kubectl get constraint <name> -o yaml
+    ```
+
+    ### False positives
+    Use namespace exclusions or adjust match criteria in constraints.
+
+    ## Documentation
+
+    - OPA Gatekeeper: https://open-policy-agent.github.io/gatekeeper/
+    - Rego Language: https://www.openpolicyagent.org/docs/latest/policy-language/
+    - Kubernetes PSP: https://kubernetes.io/docs/concepts/policy/pod-security-policy/

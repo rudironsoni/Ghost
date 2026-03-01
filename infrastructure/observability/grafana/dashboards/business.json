@@ -1,0 +1,345 @@
+{
+  "dashboard": {
+    "title": "Business Metrics - Ghost Jobs",
+    "tags": ["business", "jobs", "scraping"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "1m",
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Job Processing Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "ghost:job_processing_rate:5m",
+            "legendFormat": "{{job_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "jobs/s"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Job Success Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "ghost:job_success_rate:5m * 100",
+            "legendFormat": "{{job_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "min": 0, "max": 100},
+          {"format": "short"}
+        ],
+        "thresholds": [
+          {"value": 90, "colorMode": "critical", "op": "lt", "fill": true, "line": true}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Jobs Scraped (24h)",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 6, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "sum(increase(jobs_processed_total{status='success'}[24h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto"
+        }
+      },
+      {
+        "id": 4,
+        "title": "Failed Jobs (24h)",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 6, "x": 6, "y": 8},
+        "targets": [
+          {
+            "expr": "sum(increase(jobs_processed_total{status='failure'}[24h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": null, "color": "green"},
+                {"value": 10, "color": "yellow"},
+                {"value": 100, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Average Job Duration",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 6, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "avg(rate(job_duration_seconds_sum[5m]) / rate(job_duration_seconds_count[5m]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Jobs In Progress",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 6, "x": 18, "y": 8},
+        "targets": [
+          {
+            "expr": "sum(jobs_in_progress)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto"
+        }
+      },
+      {
+        "id": 7,
+        "title": "Job Success/Failure by Type",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+        "targets": [
+          {
+            "expr": "sum(rate(jobs_processed_total{status='success'}[5m])) by (job_type)",
+            "legendFormat": "Success - {{job_type}}",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(jobs_processed_total{status='failure'}[5m])) by (job_type)",
+            "legendFormat": "Failure - {{job_type}}",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "jobs/s"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Job Duration Histogram",
+        "type": "heatmap",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+        "targets": [
+          {
+            "expr": "rate(job_duration_seconds_bucket[5m])",
+            "format": "heatmap",
+            "legendFormat": "{{le}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Jobs Processed by Source",
+        "type": "piechart",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22},
+        "targets": [
+          {
+            "expr": "sum(increase(jobs_processed_total[24h])) by (source)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "pieType": "donut",
+          "legend": {
+            "displayMode": "table",
+            "placement": "right",
+            "values": ["value", "percent"]
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Job Retry Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 22},
+        "targets": [
+          {
+            "expr": "rate(jobs_retried_total[5m])",
+            "legendFormat": "{{job_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "retries/s"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Data Extracted (Records)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 30},
+        "targets": [
+          {
+            "expr": "rate(records_extracted_total[5m])",
+            "legendFormat": "{{source}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "records/s"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Scraping Errors by Type",
+        "type": "table",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 30},
+        "targets": [
+          {
+            "expr": "sum(increase(job_errors_total[1h])) by (error_type, job_type)",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {"Time": true},
+              "indexByName": {},
+              "renameByName": {"error_type": "Error Type", "job_type": "Job Type", "Value": "Count"}
+            }
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "title": "Active Workers",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 38},
+        "targets": [
+          {
+            "expr": "count(up{job='ghost-workers'} == 1)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "none",
+          "orientation": "auto"
+        }
+      },
+      {
+        "id": 14,
+        "title": "Total Records (24h)",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 38},
+        "targets": [
+          {
+            "expr": "sum(increase(records_extracted_total[24h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "none",
+          "orientation": "auto"
+        }
+      },
+      {
+        "id": 15,
+        "title": "Avg Success Rate (24h)",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 38},
+        "targets": [
+          {
+            "expr": "sum(increase(jobs_processed_total{status='success'}[24h])) / sum(increase(jobs_processed_total[24h])) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "none",
+          "orientation": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": null, "color": "red"},
+                {"value": 90, "color": "yellow"},
+                {"value": 95, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 16,
+        "title": "Queue Backlog",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 38},
+        "targets": [
+          {
+            "expr": "sum(ghost:queue_depth:current{queue=~'.*job.*'})",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": null, "color": "green"},
+                {"value": 500, "color": "yellow"},
+                {"value": 1000, "color": "red"}
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}

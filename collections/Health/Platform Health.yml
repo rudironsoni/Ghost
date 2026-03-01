@@ -1,0 +1,23 @@
+info:
+  name: Platform Health
+  type: http
+  seq: 4
+  description: Health status of all platform scrapers
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/health/platforms"
+
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+docs: |-
+  ## Platform Health
+
+  Returns health status of all job platform scrapers.

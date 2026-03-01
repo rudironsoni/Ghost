@@ -1,0 +1,48 @@
+{
+  "user": {
+    "id": 1001,
+    "profile": {
+      "firstName": "Alice",
+      "lastName": "Johnson",
+      "email": "alice@example.com",
+      "address": {
+        "street": "123 Main St",
+        "city": "Springfield",
+        "state": "IL",
+        "zipCode": "62701",
+        "coordinates": {
+          "lat": 39.7817,
+          "lng": -89.6501
+        }
+      }
+    },
+    "preferences": {
+      "notifications": {
+        "email": true,
+        "sms": false,
+        "push": true
+      },
+      "theme": "dark",
+      "language": "en-US"
+    },
+    "orders": [
+      {
+        "orderId": "ORD-001",
+        "date": "2026-01-15",
+        "total": 149.99,
+        "items": [
+          { "productId": "P1", "quantity": 2, "price": 49.99 },
+          { "productId": "P2", "quantity": 1, "price": 50.01 }
+        ]
+      },
+      {
+        "orderId": "ORD-002",
+        "date": "2026-02-01",
+        "total": 299.98,
+        "items": [
+          { "productId": "P3", "quantity": 3, "price": 99.99 }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,513 @@
+---
+# Backup Verification Playbook for Ghost Platform
+# This playbook verifies backup integrity and tests restore procedures
+#
+# Usage:
+#   ansible-playbook -i inventory/hosts.yml backup-verification.yml
+#   ansible-playbook -i inventory/hosts.yml backup-verification.yml --tags postgres
+#   ansible-playbook -i inventory/hosts.yml backup-verification.yml --extra-vars "backup_file=postgres-20260203.gz"
+
+- name: Ghost Platform Backup Verification
+  hosts: ghost_servers
+  become: true
+  gather_facts: true
+
+  vars:
+    ghost_backup_dir: "/var/lib/ghost/backups"
+    verification_db: "ghost_verify"
+    verification_dir: "/tmp/backup-verify"
+    retention_days: 30
+
+  pre_tasks:
+    - name: Display backup verification information
+      debug:
+        msg:
+          - "==================================================="
+          - "Ghost Platform Backup Verification"
+          - "==================================================="
+          - "Target Host: {{ inventory_hostname }}"
+          - "Backup Directory: {{ ghost_backup_dir }}"
+          - "Verification Database: {{ verification_db }}"
+          - "==================================================="
+      tags: always
+
+    - name: Create verification directory
+      file:
+        path: "{{ verification_dir }}"
+        state: directory
+        mode: '0700'
+      tags: always
+
+  tasks:
+    # ========================================
+    # 1. List and Validate Backups
+    # ========================================
+    - name: List Available Backups
+      block:
+        - name: Find PostgreSQL backups
+          find:
+            paths: "{{ ghost_backup_dir }}/postgres"
+            patterns: "*.gz"
+            age: "-{{ retention_days }}d"
+          register: postgres_backups
+          tags:
+            - list
+            - postgres
+
+        - name: Find Redis backups
+          find:
+            paths: "{{ ghost_backup_dir }}/redis"
+            patterns: "*.rdb"
+            age: "-{{ retention_days }}d"
+          register: redis_backups
+          tags:
+            - list
+            - redis
+
+        - name: Find application data backups
+          find:
+            paths: "{{ ghost_backup_dir }}/data"
+            patterns: "*.tar.gz"
+            age: "-{{ retention_days }}d"
+          register: data_backups
+          tags:
+            - list
+            - data
+
+        - name: Display backup inventory
+          debug:
+            msg:
+              - "PostgreSQL Backups: {{ postgres_backups.files | length }}"
+              - "Redis Backups: {{ redis_backups.files | length }}"
+              - "Data Backups: {{ data_backups.files | length }}"
+              - "Total Backup Size: {{ (postgres_backups.files | map(attribute='size') | sum + redis_backups.files | map(attribute='size') | sum + data_backups.files | map(attribute='size') | sum) | filesizeformat }}"
+          tags: list
+
+    # ========================================
+    # 2. PostgreSQL Backup Verification
+    # ========================================
+    - name: Verify PostgreSQL Backups
+      block:
+        - name: Get latest PostgreSQL backup
+          set_fact:
+            latest_pg_backup: "{{ postgres_backups.files | sort(attribute='mtime', reverse=true) | first }}"
+          when: postgres_backups.files | length > 0
+          tags: postgres
+
+        - name: Test PostgreSQL backup file integrity
+          command: "gunzip -t {{ latest_pg_backup.path }}"
+          register: pg_integrity_check
+          failed_when: pg_integrity_check.rc != 0
+          changed_when: false
+          when: latest_pg_backup is defined
+          tags: postgres
+
+        - name: Create verification database
+          postgresql_db:
+            name: "{{ verification_db }}"
+            state: present
+          become_user: postgres
+          when: latest_pg_backup is defined
+          tags: postgres
+
+        - name: Extract and restore backup to verification database
+          shell: |
+            gunzip -c {{ latest_pg_backup.path }} | \
+            psql -U postgres {{ verification_db }}
+          become_user: postgres
+          register: pg_restore_result
+          when: latest_pg_backup is defined
+          tags: postgres
+
+        - name: Verify restored database structure
+          postgresql_query:
+            db: "{{ verification_db }}"
+            query: |
+              SELECT schemaname, tablename
+              FROM pg_tables
+              WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+              ORDER BY schemaname, tablename;
+          become_user: postgres
+          register: pg_tables
+          when: latest_pg_backup is defined
+          tags: postgres
+
+        - name: Verify record counts in key tables
+          postgresql_query:
+            db: "{{ verification_db }}"
+            query: |
+              SELECT
+                'users' as table_name,
+                COUNT(*) as record_count
+              FROM users
+              UNION ALL
+              SELECT
+                'jobs' as table_name,
+                COUNT(*) as record_count
+              FROM jobs
+              UNION ALL
+              SELECT
+                'applications' as table_name,
+                COUNT(*) as record_count
+              FROM applications;
+          become_user: postgres
+          register: pg_counts
+          when: latest_pg_backup is defined
+          tags: postgres
+
+        - name: Display PostgreSQL verification results
+          debug:
+            msg:
+              - "Backup File: {{ latest_pg_backup.path | basename }}"
+              - "Backup Size: {{ latest_pg_backup.size | filesizeformat }}"
+              - "Backup Age: {{ ((ansible_date_time.epoch | int) - latest_pg_backup.mtime) / 3600 | round(1) }} hours"
+              - "Integrity Check: {{ 'PASSED' if pg_integrity_check.rc == 0 else 'FAILED' }}"
+              - "Restore Status: {{ 'SUCCESS' if pg_restore_result.rc == 0 else 'FAILED' }}"
+              - "Tables Found: {{ pg_tables.rowcount }}"
+              - "Record Counts:"
+              - "{{ pg_counts.query_result }}"
+          when: latest_pg_backup is defined
+          tags: postgres
+
+        - name: Compare with production database counts
+          postgresql_query:
+            db: ghost
+            query: |
+              SELECT
+                'users' as table_name,
+                COUNT(*) as record_count
+              FROM users
+              UNION ALL
+              SELECT
+                'jobs' as table_name,
+                COUNT(*) as record_count
+              FROM jobs
+              UNION ALL
+              SELECT
+                'applications' as table_name,
+                COUNT(*) as record_count
+              FROM applications;
+          become_user: postgres
+          register: prod_counts
+          when: latest_pg_backup is defined
+          tags: postgres
+
+        - name: Calculate backup data drift
+          set_fact:
+            data_drift: |
+              {% set backup_users = pg_counts.query_result | selectattr('table_name', 'equalto', 'users') | map(attribute='record_count') | first %}
+              {% set prod_users = prod_counts.query_result | selectattr('table_name', 'equalto', 'users') | map(attribute='record_count') | first %}
+              Users: {{ prod_users - backup_users }} records since backup
+          when: latest_pg_backup is defined and prod_counts is defined
+          tags: postgres
+
+        - name: Verify database constraints and indexes
+          postgresql_query:
+            db: "{{ verification_db }}"
+            query: |
+              SELECT
+                conname as constraint_name,
+                contype as constraint_type
+              FROM pg_constraint
+              WHERE connamespace = 'public'::regnamespace
+              ORDER BY conname;
+          become_user: postgres
+          register: pg_constraints
+          when: latest_pg_backup is defined
+          tags: postgres
+
+        - name: Run database consistency checks
+          postgresql_query:
+            db: "{{ verification_db }}"
+            query: VACUUM ANALYZE;
+          become_user: postgres
+          when: latest_pg_backup is defined
+          tags: postgres
+
+        - name: Cleanup verification database
+          postgresql_db:
+            name: "{{ verification_db }}"
+            state: absent
+          become_user: postgres
+          when: latest_pg_backup is defined
+          tags: postgres
+
+    # ========================================
+    # 3. Redis Backup Verification
+    # ========================================
+    - name: Verify Redis Backups
+      block:
+        - name: Get latest Redis backup
+          set_fact:
+            latest_redis_backup: "{{ redis_backups.files | sort(attribute='mtime', reverse=true) | first }}"
+          when: redis_backups.files | length > 0
+          tags: redis
+
+        - name: Test Redis backup file
+          command: "file {{ latest_redis_backup.path }}"
+          register: redis_file_check
+          changed_when: false
+          when: latest_redis_backup is defined
+          tags: redis
+
+        - name: Start temporary Redis instance for verification
+          docker_container:
+            name: redis-verify
+            image: redis:7-alpine
+            state: started
+            ports:
+              - "6380:6379"
+            volumes:
+              - "{{ verification_dir }}:/data"
+          when: latest_redis_backup is defined
+          tags: redis
+
+        - name: Copy backup to verification directory
+          copy:
+            src: "{{ latest_redis_backup.path }}"
+            dest: "{{ verification_dir }}/dump.rdb"
+            remote_src: yes
+          when: latest_redis_backup is defined
+          tags: redis
+
+        - name: Restart Redis with backup data
+          docker_container:
+            name: redis-verify
+            state: started
+            restart: yes
+          when: latest_redis_backup is defined
+          tags: redis
+
+        - name: Wait for Redis to load data
+          wait_for:
+            host: localhost
+            port: 6380
+            timeout: 30
+          when: latest_redis_backup is defined
+          tags: redis
+
+        - name: Verify Redis data
+          command: docker exec redis-verify redis-cli DBSIZE
+          register: redis_dbsize
+          changed_when: false
+          when: latest_redis_backup is defined
+          tags: redis
+
+        - name: Get Redis info
+          command: docker exec redis-verify redis-cli INFO stats
+          register: redis_info
+          changed_when: false
+          when: latest_redis_backup is defined
+          tags: redis
+
+        - name: Display Redis verification results
+          debug:
+            msg:
+              - "Backup File: {{ latest_redis_backup.path | basename }}"
+              - "Backup Size: {{ latest_redis_backup.size | filesizeformat }}"
+              - "Backup Age: {{ ((ansible_date_time.epoch | int) - latest_redis_backup.mtime) / 3600 | round(1) }} hours"
+              - "File Type: {{ redis_file_check.stdout }}"
+              - "Keys in Backup: {{ redis_dbsize.stdout }}"
+              - "Redis Stats: {{ redis_info.stdout_lines }}"
+          when: latest_redis_backup is defined
+          tags: redis
+
+        - name: Stop and remove verification Redis instance
+          docker_container:
+            name: redis-verify
+            state: absent
+          when: latest_redis_backup is defined
+          tags: redis
+
+    # ========================================
+    # 4. Application Data Backup Verification
+    # ========================================
+    - name: Verify Application Data Backups
+      block:
+        - name: Get latest data backup
+          set_fact:
+            latest_data_backup: "{{ data_backups.files | sort(attribute='mtime', reverse=true) | first }}"
+          when: data_backups.files | length > 0
+          tags: data
+
+        - name: Test data backup file integrity
+          command: "tar -tzf {{ latest_data_backup.path }}"
+          register: data_integrity_check
+          failed_when: data_integrity_check.rc != 0
+          changed_when: false
+          when: latest_data_backup is defined
+          tags: data
+
+        - name: Extract backup to verification directory
+          unarchive:
+            src: "{{ latest_data_backup.path }}"
+            dest: "{{ verification_dir }}"
+            remote_src: yes
+          when: latest_data_backup is defined
+          tags: data
+
+        - name: Verify extracted files
+          find:
+            paths: "{{ verification_dir }}"
+            recurse: yes
+          register: extracted_files
+          when: latest_data_backup is defined
+          tags: data
+
+        - name: Display data backup verification results
+          debug:
+            msg:
+              - "Backup File: {{ latest_data_backup.path | basename }}"
+              - "Backup Size: {{ latest_data_backup.size | filesizeformat }}"
+              - "Backup Age: {{ ((ansible_date_time.epoch | int) - latest_data_backup.mtime) / 3600 | round(1) }} hours"
+              - "Archive Integrity: {{ 'PASSED' if data_integrity_check.rc == 0 else 'FAILED' }}"
+              - "Files in Backup: {{ extracted_files.files | length }}"
+              - "Total Extracted Size: {{ extracted_files.files | map(attribute='size') | sum | filesizeformat }}"
+          when: latest_data_backup is defined
+          tags: data
+
+    # ========================================
+    # 5. S3 Backup Verification (if configured)
+    # ========================================
+    - name: Verify S3/Cloud Backups
+      block:
+        - name: Check if S3 backup is configured
+          stat:
+            path: /usr/local/bin/ghost-backup/backup-s3-sync.sh
+          register: s3_config
+          tags: s3
+
+        - name: List S3 backups
+          command: aws s3 ls s3://{{ backup_s3_bucket }}/postgres/ --recursive
+          register: s3_backups
+          when: s3_config.stat.exists and backup_s3_bucket is defined
+          changed_when: false
+          tags: s3
+
+        - name: Verify S3 backup synchronization
+          shell: |
+            LOCAL_LATEST=$(ls -t {{ ghost_backup_dir }}/postgres/*.gz | head -1 | xargs basename)
+            S3_LATEST=$(aws s3 ls s3://{{ backup_s3_bucket }}/postgres/ | sort | tail -1 | awk '{print $4}')
+            if [ "$LOCAL_LATEST" == "$S3_LATEST" ]; then
+              echo "SYNCHRONIZED"
+            else
+              echo "OUT_OF_SYNC: Local=$LOCAL_LATEST, S3=$S3_LATEST"
+            fi
+          register: s3_sync_status
+          when: s3_config.stat.exists and backup_s3_bucket is defined
+          changed_when: false
+          tags: s3
+
+        - name: Display S3 verification results
+          debug:
+            msg:
+              - "S3 Bucket: {{ backup_s3_bucket }}"
+              - "S3 Backups Found: {{ s3_backups.stdout_lines | length }}"
+              - "Sync Status: {{ s3_sync_status.stdout }}"
+          when: s3_config.stat.exists and backup_s3_bucket is defined
+          tags: s3
+
+    # ========================================
+    # 6. Backup Monitoring Metrics
+    # ========================================
+    - name: Generate Backup Metrics
+      block:
+        - name: Calculate backup statistics
+          set_fact:
+            backup_stats:
+              total_backups: "{{ (postgres_backups.files | length) + (redis_backups.files | length) + (data_backups.files | length) }}"
+              total_size_bytes: "{{ (postgres_backups.files | map(attribute='size') | sum) + (redis_backups.files | map(attribute='size') | sum) + (data_backups.files | map(attribute='size') | sum) }}"
+              oldest_backup_age_hours: "{{ ((ansible_date_time.epoch | int) - ([postgres_backups.files, redis_backups.files, data_backups.files] | flatten | map(attribute='mtime') | min)) / 3600 | round(1) }}"
+              newest_backup_age_hours: "{{ ((ansible_date_time.epoch | int) - ([postgres_backups.files, redis_backups.files, data_backups.files] | flatten | map(attribute='mtime') | max)) / 3600 | round(1) }}"
+          tags: metrics
+
+        - name: Push metrics to Prometheus Pushgateway (if available)
+          uri:
+            url: "http://localhost:9091/metrics/job/backup_verification"
+            method: POST
+            body: |
+              # TYPE ghost_backup_count gauge
+              ghost_backup_count{type="postgres"} {{ postgres_backups.files | length }}
+              ghost_backup_count{type="redis"} {{ redis_backups.files | length }}
+              ghost_backup_count{type="data"} {{ data_backups.files | length }}
+
+              # TYPE ghost_backup_size_bytes gauge
+              ghost_backup_size_bytes{type="postgres"} {{ postgres_backups.files | map(attribute='size') | sum }}
+              ghost_backup_size_bytes{type="redis"} {{ redis_backups.files | map(attribute='size') | sum }}
+              ghost_backup_size_bytes{type="data"} {{ data_backups.files | map(attribute='size') | sum }}
+
+              # TYPE ghost_backup_age_hours gauge
+              ghost_backup_newest_age_hours {{ backup_stats.newest_backup_age_hours }}
+              ghost_backup_oldest_age_hours {{ backup_stats.oldest_backup_age_hours }}
+
+              # TYPE ghost_backup_verification_status gauge
+              ghost_backup_verification_status{type="postgres"} {{ 1 if pg_integrity_check is defined and pg_integrity_check.rc == 0 else 0 }}
+              ghost_backup_verification_status{type="redis"} {{ 1 if redis_dbsize is defined else 0 }}
+              ghost_backup_verification_status{type="data"} {{ 1 if data_integrity_check is defined and data_integrity_check.rc == 0 else 0 }}
+
+              # TYPE ghost_backup_verification_timestamp gauge
+              ghost_backup_verification_timestamp {{ ansible_date_time.epoch }}
+            body_format: raw
+            status_code: [200, 202]
+          ignore_errors: yes
+          tags: metrics
+
+  post_tasks:
+    - name: Cleanup verification directory
+      file:
+        path: "{{ verification_dir }}"
+        state: absent
+      tags: always
+
+    - name: Generate verification report
+      copy:
+        dest: "{{ ghost_backup_dir }}/verification-report-{{ ansible_date_time.epoch }}.json"
+        content: |
+          {
+            "verification_date": "{{ ansible_date_time.iso8601 }}",
+            "host": "{{ inventory_hostname }}",
+            "backup_statistics": {
+              "total_backups": {{ backup_stats.total_backups | default(0) }},
+              "total_size_bytes": {{ backup_stats.total_size_bytes | default(0) }},
+              "total_size_human": "{{ backup_stats.total_size_bytes | default(0) | filesizeformat }}",
+              "newest_backup_age_hours": {{ backup_stats.newest_backup_age_hours | default(0) }},
+              "oldest_backup_age_hours": {{ backup_stats.oldest_backup_age_hours | default(0) }}
+            },
+            "postgres_verification": {
+              "backup_file": "{{ latest_pg_backup.path | default('N/A') | basename }}",
+              "integrity_check": "{{ 'PASSED' if pg_integrity_check is defined and pg_integrity_check.rc == 0 else 'FAILED' }}",
+              "restore_test": "{{ 'SUCCESS' if pg_restore_result is defined and pg_restore_result.rc == 0 else 'FAILED' }}",
+              "tables_found": {{ pg_tables.rowcount | default(0) }}
+            },
+            "redis_verification": {
+              "backup_file": "{{ latest_redis_backup.path | default('N/A') | basename }}",
+              "keys_count": "{{ redis_dbsize.stdout | default('N/A') }}"
+            },
+            "data_verification": {
+              "backup_file": "{{ latest_data_backup.path | default('N/A') | basename }}",
+              "integrity_check": "{{ 'PASSED' if data_integrity_check is defined and data_integrity_check.rc == 0 else 'FAILED' }}",
+              "files_count": {{ extracted_files.files | default([]) | length }}
+            },
+            "overall_status": "{{ 'PASSED' if (pg_integrity_check is defined and pg_integrity_check.rc == 0) and (data_integrity_check is defined and data_integrity_check.rc == 0) else 'FAILED' }}"
+          }
+        mode: '0644'
+      tags: always
+
+    - name: Display completion message
+      debug:
+        msg:
+          - "==================================================="
+          - "Backup Verification Complete!"
+          - "==================================================="
+          - "Total Backups: {{ backup_stats.total_backups | default(0) }}"
+          - "Total Size: {{ backup_stats.total_size_bytes | default(0) | filesizeformat }}"
+          - "Newest Backup: {{ backup_stats.newest_backup_age_hours | default(0) }} hours ago"
+          - "Oldest Backup: {{ backup_stats.oldest_backup_age_hours | default(0) }} hours ago"
+          - ""
+          - "PostgreSQL: {{ 'PASSED' if pg_integrity_check is defined and pg_integrity_check.rc == 0 else 'FAILED' }}"
+          - "Redis: {{ 'PASSED' if redis_dbsize is defined else 'N/A' }}"
+          - "Data: {{ 'PASSED' if data_integrity_check is defined and data_integrity_check.rc == 0 else 'FAILED' }}"
+          - ""
+          - "Report saved to: {{ ghost_backup_dir }}/verification-report-{{ ansible_date_time.epoch }}.json"
+          - "==================================================="
+      tags: always

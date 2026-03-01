@@ -1,0 +1,23 @@
+info:
+  name: Metrics Snapshot
+  type: http
+  seq: 6
+  description: Current metrics snapshot
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/health/metrics"
+
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+docs: |-
+  ## Metrics Snapshot
+
+  Returns current metrics snapshot.

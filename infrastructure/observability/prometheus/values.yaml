@@ -1,0 +1,190 @@
+# Prometheus Helm Values for Ghost Enterprise Observability
+# Chart: prometheus-community/kube-prometheus-stack
+
+nameOverride: ghost-prometheus
+fullnameOverride: ghost-prometheus
+
+## Prometheus Configuration
+prometheus:
+  enabled: true
+
+  prometheusSpec:
+    # Resource requests and limits
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+
+    # Data retention
+    retention: 30d
+    retentionSize: "45GB"
+
+    # Storage configuration
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: fast-ssd
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+
+    # Scrape interval
+    scrapeInterval: 30s
+    evaluationInterval: 30s
+
+    # ServiceMonitor selector
+    serviceMonitorSelector:
+      matchLabels:
+        prometheus: ghost-monitoring
+
+    # Pod monitor selector
+    podMonitorSelector:
+      matchLabels:
+        prometheus: ghost-monitoring
+
+    # Rule selector
+    ruleSelector:
+      matchLabels:
+        prometheus: ghost-monitoring
+
+    # Additional scrape configs
+    additionalScrapeConfigsSecret:
+      enabled: true
+      name: additional-scrape-configs
+      key: prometheus-additional.yaml
+
+    # External labels for federation/remote write
+    externalLabels:
+      cluster: ghost-production
+      environment: production
+      region: us-east-1
+
+    # Remote write (optional - for long-term storage)
+    # remoteWrite:
+    #   - url: "https://prometheus-remote-storage.example.com/api/v1/write"
+    #     basicAuth:
+    #       username:
+    #         name: remote-write-credentials
+    #         key: username
+    #       password:
+    #         name: remote-write-credentials
+    #         key: password
+
+    # High availability
+    replicas: 2
+
+    # Pod anti-affinity
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - prometheus
+          topologyKey: kubernetes.io/hostname
+
+## Alertmanager Configuration
+alertmanager:
+  enabled: true
+
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: fast-ssd
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+    replicas: 3
+
+    # Config from secret
+    configSecret: alertmanager-config
+
+## Grafana Configuration (Disabled - using separate installation)
+grafana:
+  enabled: false
+
+## Prometheus Operator
+prometheusOperator:
+  enabled: true
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Create default service monitors
+  serviceMonitor:
+    selfMonitor: true
+
+## Default exporters
+kubeStateMetrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+## Additional components
+defaultRules:
+  create: true
+  rules:
+    alertmanager: true
+    etcd: true
+    general: true
+    k8s: true
+    kubeApiserver: true
+    kubeApiserverAvailability: true
+    kubeApiserverBurnrate: true
+    kubeApiserverHistogram: true
+    kubeApiserverSlos: true
+    kubelet: true
+    kubePrometheusGeneral: true
+    kubePrometheusNodeAlerting: true
+    kubePrometheusNodeRecording: true
+    kubernetesAbsent: true
+    kubernetesApps: true
+    kubernetesResources: true
+    kubernetesStorage: true
+    kubernetesSystem: true
+    kubeScheduler: true
+    kubeStateMetrics: true
+    network: true
+    node: true
+    prometheus: true
+    prometheusOperator: true
+
+## Global settings
+global:
+  rbac:
+    create: true
+
+  ## Reference to one or more secrets for image pull
+  # imagePullSecrets:
+  #   - name: registry-credentials

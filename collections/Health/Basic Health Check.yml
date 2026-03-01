@@ -1,0 +1,31 @@
+info:
+  name: Basic Health Check
+  type: http
+  seq: 1
+  description: Basic ASP.NET Core health check endpoint
+
+http:
+  method: GET
+  url: "{{baseUrl}}/health"
+
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+docs: |-
+  ## Basic Health Check
+
+  Returns the health status of the application.
+
+  ### Response Example (200 OK)
+  ```json
+  {
+    "status": "Healthy",
+    "checks": []
+  }
+  ```

@@ -1,0 +1,133 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+  labels:
+    app.kubernetes.io/name: cert-manager
+    app.kubernetes.io/component: cluster-issuer
+    app.kubernetes.io/part-of: ghost-platform
+    environment: staging
+spec:
+  acme:
+    # Staging ACME server URL for testing
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+
+    # Email address for ACME registration
+    email: admin@ghost.example.com
+
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-staging-account-key
+
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+
+    # Enable DNS-01 challenge provider (optional, for wildcard certificates)
+    # - dns01:
+    #     cloudflare:
+    #       email: admin@ghost.example.com
+    #       apiTokenSecretRef:
+    #         name: cloudflare-api-token
+    #         key: api-token
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  labels:
+    app.kubernetes.io/name: cert-manager
+    app.kubernetes.io/component: cluster-issuer
+    app.kubernetes.io/part-of: ghost-platform
+    environment: production
+spec:
+  acme:
+    # Production ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+
+    # Email address for ACME registration
+    email: admin@ghost.example.com
+
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+
+    # Enable DNS-01 challenge provider (optional, for wildcard certificates)
+    # - dns01:
+    #     cloudflare:
+    #       email: admin@ghost.example.com
+    #       apiTokenSecretRef:
+    #         name: cloudflare-api-token
+    #         key: api-token
+    #     selector:
+    #       dnsNames:
+    #       - '*.ghost.example.com'
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ghost-tls-certificate
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: certificate
+    app.kubernetes.io/part-of: ghost-platform
+spec:
+  # Secret name to store the certificate
+  secretName: ghost-tls-certificate
+
+  # Certificate duration and renewal
+  duration: 2160h # 90 days
+  renewBefore: 720h # 30 days
+
+  # Subject configuration
+  subject:
+    organizations:
+    - Ghost Platform
+
+  # Common name (optional, uses first dnsName if not specified)
+  commonName: ghost.example.com
+
+  # DNS names for the certificate
+  dnsNames:
+  - ghost.example.com
+  - www.ghost.example.com
+  - api.ghost.example.com
+
+  # Issuer reference
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+    group: cert-manager.io
+
+  # Private key configuration
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+    rotationPolicy: Always
+
+  # Usages
+  usages:
+  - digital signature
+  - key encipherment
+  - server auth
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cert-manager
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: cert-manager
+    app.kubernetes.io/component: service-account
+    app.kubernetes.io/part-of: ghost-platform

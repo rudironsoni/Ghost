@@ -1,0 +1,26 @@
+{
+  "Ghost": {
+    "Plugins": {
+      "Google": {
+        "Jobs": {
+          "Enabled": true,
+          "ApiKey": "test-api-key",
+          "BaseUrl": "https://jobs.googleapis.com",
+          "Strategy": "HttpFirst"
+        },
+        "Gemini": {
+          "Enabled": true,
+          "ApiKey": "test-api-key",
+          "BaseUrl": "https://gemini.google.com",
+          "DefaultModel": "gemini-pro",
+          "ResponseTimeout": "00:02:00"
+        }
+      }
+    }
+  },
+  "TestSettings": {
+    "MockExternalServices": true,
+    "UseWireMock": true,
+    "WireMockPort": 9092
+  }
+}

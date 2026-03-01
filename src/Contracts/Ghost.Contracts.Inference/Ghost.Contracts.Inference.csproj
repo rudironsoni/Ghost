@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ghost.Contracts.Inference</RootNamespace>
+    <Description>Ghost inference contracts</Description>
+  </PropertyGroup>
+</Project>

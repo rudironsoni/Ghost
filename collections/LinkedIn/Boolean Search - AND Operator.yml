@@ -1,0 +1,46 @@
+info:
+  name: Boolean Search - AND Operator
+  type: http
+  seq: 5
+  description: Test LinkedIn AND operator - finds jobs containing all keywords
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/linkedin/jobs/search"
+
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "keywords": "software AND engineer AND python",
+        "location": "United States",
+        "maxResults": 5
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Response is array", function() {
+          expect(res.body).to.be.an('array');
+        });
+
+docs: |-
+  ## Boolean Search - AND Operator
+
+  Tests LinkedIn's AND operator which finds jobs containing ALL keywords.
+
+  ### Query
+  `software AND engineer AND python`
+
+  ### Expected Behavior
+  - Returns jobs containing ALL three terms: "software", "engineer", AND "python"
+  - Narrows search results compared to OR operator
+  - LinkedIn treats AND as the default operator (space between words)

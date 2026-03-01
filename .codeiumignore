@@ -1,0 +1,35 @@
+# RuleSync ignore patterns
+
+# Build outputs
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# IDE
+.vs/
+.vscode/
+*.user
+
+# Dependencies
+node_modules/
+packages/
+
+# Test results
+TestResults/
+coverage/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Secrets
+*.key
+*.pem
+*.pfx
+*.snk
+appsettings.*.json
+launchSettings.json
+.env

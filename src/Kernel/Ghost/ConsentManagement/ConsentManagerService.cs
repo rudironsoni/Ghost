@@ -1,0 +1,419 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Playwright;
+
+namespace Ghost.ConsentManagement;
+
+/// <summary>
+/// Service for detecting and handling consent/cookie banners on websites.
+/// Uses selectors from consentcrawl database.
+/// </summary>
+public partial class ConsentManagerService
+{
+    private readonly ILogger<ConsentManagerService> _logger;
+    private readonly TimeProvider _timeProvider;
+
+    public ConsentManagerService(ILogger<ConsentManagerService>? logger = null, TimeProvider? timeProvider = null)
+    {
+        _logger = logger ?? NullLogger<ConsentManagerService>.Instance;
+        _timeProvider = timeProvider ?? TimeProvider.System;
+    }
+
+    // LoggerMessage source generators (EventIds 2100-2199 for ConsentManagement)
+    [LoggerMessage(EventId = 2100, Level = LogLevel.Debug, Message = "Checking for consent banners...")]
+    private static partial void LogCheckingBanners(ILogger<ConsentManagerService> logger);
+
+    [LoggerMessage(EventId = 2101, Level = LogLevel.Information, Message = "Detected consent manager: {ManagerId}")]
+    private static partial void LogManagerDetected(ILogger<ConsentManagerService> logger, string managerId);
+
+    [LoggerMessage(EventId = 2102, Level = LogLevel.Information, Message = "Successfully handled consent for: {ManagerId}")]
+    private static partial void LogConsentHandled(ILogger<ConsentManagerService> logger, string managerId);
+
+    [LoggerMessage(EventId = 2103, Level = LogLevel.Information, Message = "Consent banner successfully dismissed")]
+    private static partial void LogBannerDismissed(ILogger<ConsentManagerService> logger);
+
+    [LoggerMessage(EventId = 2104, Level = LogLevel.Warning, Message = "Consent banner still present after acceptance attempt")]
+    private static partial void LogBannerStillPresent(ILogger<ConsentManagerService> logger);
+
+    [LoggerMessage(EventId = 2105, Level = LogLevel.Debug, Message = "No consent banners detected or handled")]
+    private static partial void LogNoBannersDetected(ILogger<ConsentManagerService> logger);
+
+    [LoggerMessage(EventId = 2106, Level = LogLevel.Debug, Message = "Found iframe consent manager: {Selector}")]
+    private static partial void LogIframeFound(ILogger<ConsentManagerService> logger, string selector);
+
+    [LoggerMessage(EventId = 2107, Level = LogLevel.Debug, Message = "Found consent element: {Selector}")]
+    private static partial void LogConsentElementFound(ILogger<ConsentManagerService> logger, string selector);
+
+    [LoggerMessage(EventId = 2108, Level = LogLevel.Debug, Message = "Error handling consent manager {ManagerId}")]
+    private static partial void LogManagerError(ILogger<ConsentManagerService> logger, Exception ex, string managerId);
+
+    [LoggerMessage(EventId = 2109, Level = LogLevel.Debug, Message = "Clicked iframe consent button: {Selector}")]
+    private static partial void LogIframeButtonClicked(ILogger<ConsentManagerService> logger, string selector);
+
+    [LoggerMessage(EventId = 2110, Level = LogLevel.Debug, Message = "Clicking consent button: {Selector}")]
+    private static partial void LogClickingConsentButton(ILogger<ConsentManagerService> logger, string selector);
+
+    [LoggerMessage(EventId = 2111, Level = LogLevel.Debug, Message = "Clicking detected element as fallback")]
+    private static partial void LogClickingFallback(ILogger<ConsentManagerService> logger);
+
+    [LoggerMessage(EventId = 2112, Level = LogLevel.Debug, Message = "Failed to click selector {Selector}")]
+    private static partial void LogClickFailed(ILogger<ConsentManagerService> logger, Exception ex, string selector);
+
+    [LoggerMessage(EventId = 2113, Level = LogLevel.Debug, Message = "Failed to click detected element as fallback")]
+    private static partial void LogFallbackClickFailed(ILogger<ConsentManagerService> logger, Exception ex);
+
+    [LoggerMessage(EventId = 2114, Level = LogLevel.Warning, Message = "Consent banner not detected within {MaxWaitMs}ms")]
+    private static partial void LogBannerNotDetected(ILogger<ConsentManagerService> logger, int maxWaitMs);
+
+    /// <summary>
+    /// Consent manager definitions with their detection and acceptance selectors
+    /// </summary>
+    private static readonly List<ConsentManagerDefinition> ConsentManagers = new()
+    {
+        // Google Funding Choices
+        new ConsentManagerDefinition(
+            "google-funding-choices",
+            new[] { ".fc-cta-consent", ".fc-consent-root", "[aria-label*='consent' i]", "[data-ved*='consent']" },
+            new[] { ".fc-cta-consent", "button.fc-cta-consent", ".fc-consent-root .fc-button.fc-cta-consent" }
+        ),
+
+        // OneTrust variants
+        new ConsentManagerDefinition(
+            "onetrust-cookiepro",
+            new[] { "#onetrust-consent-sdk", "#onetrust-banner-sdk", "[class*='onetrust']" },
+            new[] { ".cmp-button__accept", "#onetrust-accept-btn-handler", "#accept-recommended-btn-handler", "[class*='onetrust'] .accept-btn" }
+        ),
+
+        new ConsentManagerDefinition(
+            "onetrust-optanon",
+            new[] { "#onetrust-banner-sdk", "#optanon-root", "#onetrust-pc-sdk" },
+            new[] { ".optanon-allow-all", "#accept-recommended-btn-handler", ".save-preference-btn-handler" }
+        ),
+
+        new ConsentManagerDefinition(
+            "onetrust-cookielaw",
+            new[] { "#onetrust-banner-sdk", "[id*='onetrust']" },
+            new[] { "#cookielaw_accept", "#accept-recommended-btn-handler" }
+        ),
+
+        // CookieBot
+        new ConsentManagerDefinition(
+            "cookiebot",
+            new[] { "#CybotCookiebotDialog", "[data-cybot]", "[id*='CookiebotDialog']" },
+            new[] { "#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll", "#CybotCookiebotDialogBodyLevelButtonAccept", "#CybotCookiebotDialog [data-controller*='accept']" }
+        ),
+
+        // Sourcepoint
+        new ConsentManagerDefinition(
+            "sourcepoint-cmp",
+            new[] { "[id*='sp_message_iframe']", "[class*='sp_message']", "#sp_message" },
+            new[] { "button.sp_choice_type_11", "[title*='accept' i]", "[title*='agree' i]", "[title*='kzept']", "[title*='ustimmen']" }
+        ),
+
+        // UserCentrics
+        new ConsentManagerDefinition(
+            "usercentrics",
+            new[] { "#usercentrics-root", "[data-testid='uc-accept-all-button']", "#uc-main-view" },
+            new[] { "[data-testid='uc-accept-all-button']", "#uc-btn-accept-banner", "cmm-cookie-banner .button--accept-all", "#uc-deny-all-button + .uc-button-primary" }
+        ),
+
+        // Quantcast
+        new ConsentManagerDefinition(
+            "quantcast",
+            new[] { "#qc-cmp2-ui", ".qc-cmp2-persistent-link", "[id*='qc-cmp']" },
+            new[] { "#qc-cmp2-ui button[mode='primary']", ".qc-cmp2-consent-button", ".qc-cmp2-button[label='Accept All']" }
+        ),
+
+        // Didomi
+        new ConsentManagerDefinition(
+            "didomi",
+            new[] { "#didomi-host", ".didomi-popup", "[id*='didomi']" },
+            new[] { "#didomi-notice-agree-button", ".didomi-continue-without-agreeing", ".Cmp__action--yes", "#didomi-policy-accept-all" }
+        ),
+
+        // CookieFirst
+        new ConsentManagerDefinition(
+            "cookiefirst",
+            new[] { "[data-cookiefirst-action]", "#cookiefirst", "#cf-root" },
+            new[] { "[data-cookiefirst-action='accept']", "#cf-accept", "[data-cf-action='accept']" }
+        ),
+
+        // Osano
+        new ConsentManagerDefinition(
+            "osano",
+            new[] { ".osano-cm-window", "#osano-cm" },
+            new[] { ".osano-cm-accept-all", ".osano-cm-btn-accept-all" }
+        ),
+
+        // Generic - accept all buttons (fallback)
+        new ConsentManagerDefinition(
+            "generic-accept",
+            new[] { ".cookie-banner", "#cookie-banner", "[class*='cookie-consent']", "[id*='cookie-consent']", "[class*='accept-all']", "[id*='accept-all']" },
+            new[] {
+                "button[class*='accept']:not([class*='reject']):not([class*='decline'])",
+                "button[id*='accept']:not([id*='reject']):not([id*='decline'])",
+                "a[class*='accept']:not([class*='reject']):not([class*='decline'])",
+                "[class*='accept-all']", "[id*='accept-all']",
+                "button:has-text('Accept'):not(:has-text('Reject')):not(:has-text('Decline'))",
+                "button:has-text('Agree'):not(:has-text('Disagree'))",
+                "button:has-text('OK')",
+                "button:has-text('Yes')",
+                "button:has-text('Aceptar')",
+                "button:has-text('Aceptar')",
+                "button:has-text('Akzeptieren')",
+                "button:has-text('Accepter')",
+                "button[aria-label*='accept' i]", "[title*='accept' i]",
+                "button[title*='Accept' i]", "button[title*='Aceptar' i]"
+            }
+        ),
+
+        // Generic - iframe-based consent
+        new ConsentManagerDefinition(
+            "generic-iframe",
+            new[] { "iframe[src*='consent']", "iframe[src*='cookie']", "iframe[src*='gdpr']" },
+            new[] { "button:has-text('Accept')", "button:has-text('Agree')", "button:has-text('OK')" },
+            true
+        )
+    };
+
+    /// <summary>
+    /// Attempts to handle consent banner on the current page
+    /// </summary>
+    /// <param name="page">Playwright page instance</param>
+    /// <param name="timeoutMs">Timeout for waiting for selectors</param>
+    /// <returns>True if consent was handled, false otherwise</returns>
+    public async Task<bool> HandleConsentAsync(IPage page, int timeoutMs = 5000)
+    {
+        ArgumentNullException.ThrowIfNull(page);
+
+        LogCheckingBanners(_logger);
+
+        foreach (ConsentManagerDefinition manager in ConsentManagers)
+        {
+            try
+            {
+                // Check if this consent manager is present and get the detected element
+                IElement? detectedElement = await DetectConsentManagerAsync(page, manager, timeoutMs).ConfigureAwait(false);
+                if (detectedElement == null)
+                    continue;
+
+                LogManagerDetected(_logger, manager.Id);
+
+                // Try to accept/click the consent
+                bool handled = await AcceptConsentAsync(page, manager, detectedElement, timeoutMs).ConfigureAwait(false);
+                if (handled)
+                {
+                    LogConsentHandled(_logger, manager.Id);
+
+                    // Wait a moment for the banner to disappear and page to settle
+                    await Task.Delay(TimeSpan.FromMilliseconds(1000), _timeProvider, CancellationToken.None).ConfigureAwait(false);
+
+                    // Check if banner is actually gone
+                    IElement? stillPresent = await DetectConsentManagerAsync(page, manager, 1000).ConfigureAwait(false);
+                    if (stillPresent == null)
+                    {
+                        LogBannerDismissed(_logger);
+                        return true;
+                    }
+                    else
+                    {
+                        LogBannerStillPresent(_logger);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogManagerError(_logger, ex, manager.Id);
+            }
+        }
+
+        LogNoBannersDetected(_logger);
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a specific consent manager is present on the page
+    /// </summary>
+    /// <returns>The detected element if found and visible, null otherwise</returns>
+    private async Task<IElement?> DetectConsentManagerAsync(IPage page, ConsentManagerDefinition manager, int timeoutMs)
+    {
+        foreach (string selector in manager.DetectionSelectors)
+        {
+            try
+            {
+                if (manager.IsIframe)
+                {
+                    // For iframe-based consent managers, check if iframe exists
+                    IElement? frame = await page.QuerySelectorAsync(selector).ConfigureAwait(false);
+                    if (frame != null)
+                    {
+                        LogIframeFound(_logger, selector);
+                        return frame;
+                    }
+                }
+                else
+                {
+                    // For regular selectors, check visibility
+                    IElement? element = await page.QuerySelectorAsync(selector).ConfigureAwait(false);
+                    if (element != null)
+                    {
+                        // Check if element is visible
+                        bool isVisible = await element.IsVisibleAsync().ConfigureAwait(false);
+                        if (isVisible)
+                        {
+                            LogConsentElementFound(_logger, selector);
+                            return element;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Continue to next selector
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Attempts to click the accept/agree button for a consent manager
+    /// </summary>
+    private async Task<bool> AcceptConsentAsync(IPage page, ConsentManagerDefinition manager, IElement? detectedElement, int timeoutMs)
+    {
+        // First try the acceptance selectors
+        foreach (string selector in manager.AcceptanceSelectors)
+        {
+            try
+            {
+                if (manager.IsIframe)
+                {
+                    bool clicked = await page.EvaluateAsync<bool>($@"
+                        () => {{
+                            var iframe = document.querySelector('{manager.DetectionSelectors.First().Replace("'", "\\'")}');
+                            if (iframe && iframe.contentDocument) {{
+                                var btn = iframe.contentDocument.querySelector('{selector.Replace("'", "\\'")}');
+                                if (btn) {{ btn.click(); return true; }}
+                            }}
+                            return false;
+                        }}
+                    ").ConfigureAwait(false);
+
+                    if (clicked)
+                    {
+                        LogIframeButtonClicked(_logger, selector);
+                        return true;
+                    }
+                }
+                else
+                {
+                    IElement? button = await page.QuerySelectorAsync(selector).ConfigureAwait(false);
+                    if (button != null)
+                    {
+                        bool isVisible = await button.IsVisibleAsync().ConfigureAwait(false);
+                        bool isEnabled = await button.IsEnabledAsync().ConfigureAwait(false);
+
+                        if (isVisible && isEnabled)
+                        {
+                            LogClickingConsentButton(_logger, selector);
+
+                            try
+                            {
+                                await button.ClickAsync().ConfigureAwait(false);
+                                return true;
+                            }
+                            catch
+                            {
+                                await page.EvaluateAsync<object>($"document.querySelector('{selector.Replace("'", "\\'")}')?.click()").ConfigureAwait(false);
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogClickFailed(_logger, ex, selector);
+            }
+        }
+
+        // If no acceptance button found, try clicking the detected element itself
+        // This handles cases where the detection selector returns the button directly
+        if (detectedElement != null && !manager.IsIframe)
+        {
+            try
+            {
+                bool isVisible = await detectedElement.IsVisibleAsync().ConfigureAwait(false);
+                bool isEnabled = await detectedElement.IsEnabledAsync().ConfigureAwait(false);
+
+                if (isVisible && isEnabled)
+                {
+                    LogClickingFallback(_logger);
+
+                    try
+                    {
+                        await detectedElement.ClickAsync().ConfigureAwait(false);
+                        return true;
+                    }
+                    catch
+                    {
+                        // Try to click via JavaScript as fallback
+                        await page.EvaluateAsync<object>("document.querySelector('button')?.click()").ConfigureAwait(false);
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogFallbackClickFailed(_logger, ex);
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Waits for and handles consent banner with retry logic
+    /// </summary>
+    public async Task<bool> WaitAndHandleConsentAsync(IPage page, int maxWaitMs = 10000, int checkIntervalMs = 500)
+    {
+        DateTime startTime = _timeProvider.GetUtcNow().DateTime;
+
+        while ((_timeProvider.GetUtcNow().DateTime - startTime).TotalMilliseconds < maxWaitMs)
+        {
+            bool handled = await HandleConsentAsync(page, checkIntervalMs).ConfigureAwait(false);
+            if (handled)
+                return true;
+
+            await Task.Delay(TimeSpan.FromMilliseconds(checkIntervalMs), _timeProvider, CancellationToken.None).ConfigureAwait(false);
+        }
+
+        LogBannerNotDetected(_logger, maxWaitMs);
+        return false;
+    }
+
+    /// <summary>
+    /// Definition of a consent manager with its selectors
+    /// </summary>
+// Made sealed per CA1852. If extensibility is needed in future, remove sealed and document.
+    private sealed class ConsentManagerDefinition
+    {
+        public string Id { get; }
+        public string[] DetectionSelectors { get; }
+        public string[] AcceptanceSelectors { get; }
+        public bool IsIframe { get; }
+
+        public ConsentManagerDefinition(string id, string[] detectionSelectors, string[] acceptanceSelectors, bool isIframe = false)
+        {
+            Id = id;
+            DetectionSelectors = detectionSelectors;
+            AcceptanceSelectors = acceptanceSelectors;
+            IsIframe = isIframe;
+        }
+    }
+}

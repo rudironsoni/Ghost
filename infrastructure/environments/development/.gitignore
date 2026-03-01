@@ -1,0 +1,93 @@
+# Terraform files
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform.lock.hcl
+*.tfvars.backup
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Sensitive outputs
+outputs.json
+secrets.json
+
+# SSH keys
+.ssh/
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Kubeconfig
+kubeconfig.yaml
+kubeconfig.yml
+*.kubeconfig
+.kube/
+
+# Environment files
+.env
+.env.*
+*.env
+secrets.env
+
+# Crash log files
+crash.log
+crash.*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Plans
+*.tfplan
+plan.out
+
+# Provider plugins
+.terraform.d/
+
+# Module cache
+.terraform-cache/
+
+# Local testing
+test-outputs/
+.test/
+
+# Logs
+*.log
+logs/
+
+# Archives
+*.tar
+*.tar.gz
+*.zip
+
+# Python (if using automation scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+ENV/
+
+# Node (if using automation scripts)
+node_modules/
+package-lock.json
+yarn.lock

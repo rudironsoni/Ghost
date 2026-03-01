@@ -1,0 +1,267 @@
+Build started 3/1/2026 1:15:25 AM.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" on node 1 (VSTest target(s)).
+     1>ValidateSolutionConfiguration:
+         Building solution configuration "Debug|Any CPU".
+Test run for /tmp/ghost-build/bin/Ghost.Contracts.Tests/Debug/net10.0/Ghost.Contracts.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+Test run for /tmp/ghost-build/bin/Ghost.Contracts.Inference.Tests/Debug/net10.0/Ghost.Contracts.Inference.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+The argument /tmp/ghost-build/bin/Ghost.Contracts.Tests/Debug/net10.0/Ghost.Contracts.Tests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Contracts/Ghost.Contracts.Tests/Ghost.Contracts.Tests.csproj" (7) on node 1 (VSTest target(s)).
+     7>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+     7>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Contracts/Ghost.Contracts.Tests/Ghost.Contracts.Tests.csproj" (VSTest target(s)) -- FAILED.
+The argument /tmp/ghost-build/bin/Ghost.Contracts.Inference.Tests/Debug/net10.0/Ghost.Contracts.Inference.Tests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Contracts/Ghost.Contracts.Inference.Tests/Ghost.Contracts.Inference.Tests.csproj" (10) on node 4 (VSTest target(s)).
+    10>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    10>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Contracts/Ghost.Contracts.Inference.Tests/Ghost.Contracts.Inference.Tests.csproj" (VSTest target(s)) -- FAILED.
+Test run for /tmp/ghost-build/bin/Ghost.Engine.Abstractions.Tests/Debug/net10.0/Ghost.Engine.Abstractions.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+Test run for /tmp/ghost-build/bin/Ghost.Architecture.Tests/Debug/net10.0/Ghost.Architecture.Tests.dll (.NETCoreApp,Version=v10.0)
+Test run for /tmp/ghost-build/bin/Ghost.Engine.Tests/Debug/net10.0/Ghost.Engine.Tests.dll (.NETCoreApp,Version=v10.0)
+The argument /tmp/ghost-build/bin/Ghost.Engine.Abstractions.Tests/Debug/net10.0/Ghost.Engine.Abstractions.Tests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Engine/Ghost.Engine.Abstractions.Tests/Ghost.Engine.Abstractions.Tests.csproj" (18) on node 4 (VSTest target(s)).
+    18>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    18>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Engine/Ghost.Engine.Abstractions.Tests/Ghost.Engine.Abstractions.Tests.csproj" (VSTest target(s)) -- FAILED.
+VSTest version 18.0.1 (x64)
+
+VSTest version 18.0.1 (x64)
+
+The argument /tmp/ghost-build/bin/Ghost.Architecture.Tests/Debug/net10.0/Ghost.Architecture.Tests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Architecture/Ghost.Architecture.Tests/Ghost.Architecture.Tests.csproj" (21) on node 2 (VSTest target(s)).
+    21>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    21>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Architecture/Ghost.Architecture.Tests/Ghost.Architecture.Tests.csproj" (VSTest target(s)) -- FAILED.
+The argument /tmp/ghost-build/bin/Ghost.Engine.Tests/Debug/net10.0/Ghost.Engine.Tests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Engine/Ghost.Engine.Tests/Ghost.Engine.Tests.csproj" (22) on node 1 (VSTest target(s)).
+    22>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    22>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Engine/Ghost.Engine.Tests/Ghost.Engine.Tests.csproj" (VSTest target(s)) -- FAILED.
+Test run for /tmp/ghost-build/bin/Ghost.Platform.Hosting.UnitTests/Debug/net10.0/Ghost.Platform.Hosting.UnitTests.dll (.NETCoreApp,Version=v10.0)
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.Indeed.UnitTests/Debug/net10.0/Ghost.Plugin.Indeed.UnitTests.dll (.NETCoreApp,Version=v10.0)
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.Glassdoor.UnitTests/Debug/net10.0/Ghost.Plugin.Glassdoor.UnitTests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.X.End2EndTests/Debug/net10.0/Ghost.Plugin.X.End2EndTests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+The argument /tmp/ghost-build/bin/Ghost.Platform.Hosting.UnitTests/Debug/net10.0/Ghost.Platform.Hosting.UnitTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Platform/Hosting/Ghost.Platform.Hosting.UnitTests/Ghost.Platform.Hosting.UnitTests.csproj" (32) on node 1 (VSTest target(s)).
+    32>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    32>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Platform/Hosting/Ghost.Platform.Hosting.UnitTests/Ghost.Platform.Hosting.UnitTests.csproj" (VSTest target(s)) -- FAILED.
+VSTest version 18.0.1 (x64)
+VSTest version 18.0.1 (x64)
+The argument /tmp/ghost-build/bin/Ghost.Plugin.Glassdoor.UnitTests/Debug/net10.0/Ghost.Plugin.Glassdoor.UnitTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Glassdoor/Ghost.Plugin.Glassdoor.UnitTests/Ghost.Plugin.Glassdoor.UnitTests.csproj" (35) on node 3 (VSTest target(s)).
+    35>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    35>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Glassdoor/Ghost.Plugin.Glassdoor.UnitTests/Ghost.Plugin.Glassdoor.UnitTests.csproj" (VSTest target(s)) -- FAILED.
+
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.Glassdoor.End2EndTests/Debug/net10.0/Ghost.Plugin.Glassdoor.End2EndTests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+The argument /tmp/ghost-build/bin/Ghost.Plugin.X.End2EndTests/Debug/net10.0/Ghost.Plugin.X.End2EndTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/X/Ghost.Plugin.X.End2EndTests/Ghost.Plugin.X.End2EndTests.csproj" (36) on node 2 (VSTest target(s)).
+    36>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    36>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/X/Ghost.Plugin.X.End2EndTests/Ghost.Plugin.X.End2EndTests.csproj" (VSTest target(s)) -- FAILED.
+The argument /tmp/ghost-build/bin/Ghost.Plugin.Indeed.UnitTests/Debug/net10.0/Ghost.Plugin.Indeed.UnitTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Indeed/Ghost.Plugin.Indeed.UnitTests/Ghost.Plugin.Indeed.UnitTests.csproj" (34) on node 4 (VSTest target(s)).
+    34>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    34>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Indeed/Ghost.Plugin.Indeed.UnitTests/Ghost.Plugin.Indeed.UnitTests.csproj" (VSTest target(s)) -- FAILED.
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.Google.End2EndTests/Debug/net10.0/Ghost.Plugin.Google.End2EndTests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+The argument /tmp/ghost-build/bin/Ghost.Plugin.Google.End2EndTests/Debug/net10.0/Ghost.Plugin.Google.End2EndTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Google/Ghost.Plugin.Google.End2EndTests/Ghost.Plugin.Google.End2EndTests.csproj" (39) on node 1 (VSTest target(s)).
+    39>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    39>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Google/Ghost.Plugin.Google.End2EndTests/Ghost.Plugin.Google.End2EndTests.csproj" (VSTest target(s)) -- FAILED.
+The argument /tmp/ghost-build/bin/Ghost.Plugin.Glassdoor.End2EndTests/Debug/net10.0/Ghost.Plugin.Glassdoor.End2EndTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Glassdoor/Ghost.Plugin.Glassdoor.End2EndTests/Ghost.Plugin.Glassdoor.End2EndTests.csproj" (38) on node 3 (VSTest target(s)).
+    38>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    38>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Glassdoor/Ghost.Plugin.Glassdoor.End2EndTests/Ghost.Plugin.Glassdoor.End2EndTests.csproj" (VSTest target(s)) -- FAILED.
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.Indeed.End2EndTests/Debug/net10.0/Ghost.Plugin.Indeed.End2EndTests.dll (.NETCoreApp,Version=v10.0)
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.LinkedIn.End2EndTests/Debug/net10.0/Ghost.Plugin.LinkedIn.End2EndTests.dll (.NETCoreApp,Version=v10.0)
+Test run for /tmp/ghost-build/bin/Ghost.Kernel.UnitTests/Debug/net10.0/Ghost.Kernel.UnitTests.dll (.NETCoreApp,Version=v10.0)
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.InfoJobs.End2EndTests/Debug/net10.0/Ghost.Plugin.InfoJobs.End2EndTests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+VSTest version 18.0.1 (x64)
+
+VSTest version 18.0.1 (x64)
+
+VSTest version 18.0.1 (x64)
+
+The argument /tmp/ghost-build/bin/Ghost.Plugin.Indeed.End2EndTests/Debug/net10.0/Ghost.Plugin.Indeed.End2EndTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+The argument /tmp/ghost-build/bin/Ghost.Plugin.InfoJobs.End2EndTests/Debug/net10.0/Ghost.Plugin.InfoJobs.End2EndTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Indeed/Ghost.Plugin.Indeed.End2EndTests/Ghost.Plugin.Indeed.End2EndTests.csproj" (41) on node 2 (VSTest target(s)).
+    41>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    41>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Indeed/Ghost.Plugin.Indeed.End2EndTests/Ghost.Plugin.Indeed.End2EndTests.csproj" (VSTest target(s)) -- FAILED.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/InfoJobs/Ghost.Plugin.InfoJobs.End2EndTests/Ghost.Plugin.InfoJobs.End2EndTests.csproj" (44) on node 3 (VSTest target(s)).
+    44>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    44>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/InfoJobs/Ghost.Plugin.InfoJobs.End2EndTests/Ghost.Plugin.InfoJobs.End2EndTests.csproj" (VSTest target(s)) -- FAILED.
+The argument /tmp/ghost-build/bin/Ghost.Kernel.UnitTests/Debug/net10.0/Ghost.Kernel.UnitTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+The argument /tmp/ghost-build/bin/Ghost.Plugin.LinkedIn.End2EndTests/Debug/net10.0/Ghost.Plugin.LinkedIn.End2EndTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Kernel/Ghost.Kernel.UnitTests/Ghost.Kernel.UnitTests.csproj" (43) on node 1 (VSTest target(s)).
+    43>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    43>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Kernel/Ghost.Kernel.UnitTests/Ghost.Kernel.UnitTests.csproj" (VSTest target(s)) -- FAILED.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/LinkedIn/Ghost.Plugin.LinkedIn.End2EndTests/Ghost.Plugin.LinkedIn.End2EndTests.csproj" (42) on node 4 (VSTest target(s)).
+    42>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    42>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/LinkedIn/Ghost.Plugin.LinkedIn.End2EndTests/Ghost.Plugin.LinkedIn.End2EndTests.csproj" (VSTest target(s)) -- FAILED.
+Test run for /tmp/ghost-build/bin/Ghost.Kernel.IntegrationTests/Debug/net10.0/Ghost.Kernel.IntegrationTests.dll (.NETCoreApp,Version=v10.0)
+Test run for /tmp/ghost-build/bin/Ghost.Kernel.SmokeTests/Debug/net10.0/Ghost.Kernel.SmokeTests.dll (.NETCoreApp,Version=v10.0)
+Test run for /tmp/ghost-build/bin/Ghost.Sdk.Spider.Tests/Debug/net10.0/Ghost.Sdk.Spider.Tests.dll (.NETCoreApp,Version=v10.0)
+Test run for /tmp/ghost-build/bin/Ghost.Sdk.Tests/Debug/net10.0/Ghost.Sdk.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+VSTest version 18.0.1 (x64)
+VSTest version 18.0.1 (x64)
+
+
+VSTest version 18.0.1 (x64)
+
+The argument /tmp/ghost-build/bin/Ghost.Kernel.IntegrationTests/Debug/net10.0/Ghost.Kernel.IntegrationTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+The argument /tmp/ghost-build/bin/Ghost.Sdk.Spider.Tests/Debug/net10.0/Ghost.Sdk.Spider.Tests.dll is invalid. Please use the /help option to check the list of valid arguments.
+The argument /tmp/ghost-build/bin/Ghost.Kernel.SmokeTests/Debug/net10.0/Ghost.Kernel.SmokeTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Sdk/Ghost.Sdk.Spider.Tests/Ghost.Sdk.Spider.Tests.csproj" (48) on node 4 (VSTest target(s)).
+    48>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    48>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Sdk/Ghost.Sdk.Spider.Tests/Ghost.Sdk.Spider.Tests.csproj" (VSTest target(s)) -- FAILED.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Kernel/Ghost.Kernel.IntegrationTests/Ghost.Kernel.IntegrationTests.csproj" (45) on node 2 (VSTest target(s)).
+    45>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    45>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Kernel/Ghost.Kernel.IntegrationTests/Ghost.Kernel.IntegrationTests.csproj" (VSTest target(s)) -- FAILED.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Kernel/Ghost.Kernel.SmokeTests/Ghost.Kernel.SmokeTests.csproj" (46) on node 3 (VSTest target(s)).
+    46>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    46>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Kernel/Ghost.Kernel.SmokeTests/Ghost.Kernel.SmokeTests.csproj" (VSTest target(s)) -- FAILED.
+The argument /tmp/ghost-build/bin/Ghost.Sdk.Tests/Debug/net10.0/Ghost.Sdk.Tests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Sdk/Ghost.Sdk.Tests/Ghost.Sdk.Tests.csproj" (47) on node 1 (VSTest target(s)).
+    47>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    47>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Sdk/Ghost.Sdk.Tests/Ghost.Sdk.Tests.csproj" (VSTest target(s)) -- FAILED.
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.Anthropic.UnitTests/Debug/net10.0/Ghost.Plugin.Anthropic.UnitTests.dll (.NETCoreApp,Version=v10.0)
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.Common.UnitTests/Debug/net10.0/Ghost.Plugin.Common.UnitTests.dll (.NETCoreApp,Version=v10.0)
+Test run for /tmp/ghost-build/bin/Ghost.Worker.UnitTests/Debug/net10.0/Ghost.Worker.UnitTests.dll (.NETCoreApp,Version=v10.0)
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.Glassdoor.IntegrationTests/Debug/net10.0/Ghost.Plugin.Glassdoor.IntegrationTests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+VSTest version 18.0.1 (x64)
+
+VSTest version 18.0.1 (x64)
+
+The argument /tmp/ghost-build/bin/Ghost.Plugin.Common.UnitTests/Debug/net10.0/Ghost.Plugin.Common.UnitTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+The argument /tmp/ghost-build/bin/Ghost.Plugin.Anthropic.UnitTests/Debug/net10.0/Ghost.Plugin.Anthropic.UnitTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+VSTest version 18.0.1 (x64)
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Common/Ghost.Plugin.Common.UnitTests/Ghost.Plugin.Common.UnitTests.csproj" (50) on node 3 (VSTest target(s)).
+    50>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    50>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Common/Ghost.Plugin.Common.UnitTests/Ghost.Plugin.Common.UnitTests.csproj" (VSTest target(s)) -- FAILED.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Anthropic/Ghost.Plugin.Anthropic.UnitTests/Ghost.Plugin.Anthropic.UnitTests.csproj" (49) on node 2 (VSTest target(s)).
+    49>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    49>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Anthropic/Ghost.Plugin.Anthropic.UnitTests/Ghost.Plugin.Anthropic.UnitTests.csproj" (VSTest target(s)) -- FAILED.
+
+The argument /tmp/ghost-build/bin/Ghost.Worker.UnitTests/Debug/net10.0/Ghost.Worker.UnitTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Apps/Ghost.Worker.UnitTests/Ghost.Worker.UnitTests.csproj" (51) on node 4 (VSTest target(s)).
+    51>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    51>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Apps/Ghost.Worker.UnitTests/Ghost.Worker.UnitTests.csproj" (VSTest target(s)) -- FAILED.
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.Google.UnitTests/Debug/net10.0/Ghost.Plugin.Google.UnitTests.dll (.NETCoreApp,Version=v10.0)
+The argument /tmp/ghost-build/bin/Ghost.Plugin.Glassdoor.IntegrationTests/Debug/net10.0/Ghost.Plugin.Glassdoor.IntegrationTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.Google.IntegrationTests/Debug/net10.0/Ghost.Plugin.Google.IntegrationTests.dll (.NETCoreApp,Version=v10.0)
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Glassdoor/Ghost.Plugin.Glassdoor.IntegrationTests/Ghost.Plugin.Glassdoor.IntegrationTests.csproj" (52) on node 1 (VSTest target(s)).
+    52>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    52>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Glassdoor/Ghost.Plugin.Glassdoor.IntegrationTests/Ghost.Plugin.Glassdoor.IntegrationTests.csproj" (VSTest target(s)) -- FAILED.
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.Indeed.IntegrationTests/Debug/net10.0/Ghost.Plugin.Indeed.IntegrationTests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+VSTest version 18.0.1 (x64)
+
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.InfoJobs.UnitTests/Debug/net10.0/Ghost.Plugin.InfoJobs.UnitTests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+The argument /tmp/ghost-build/bin/Ghost.Plugin.Indeed.IntegrationTests/Debug/net10.0/Ghost.Plugin.Indeed.IntegrationTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+The argument /tmp/ghost-build/bin/Ghost.Plugin.Google.IntegrationTests/Debug/net10.0/Ghost.Plugin.Google.IntegrationTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Indeed/Ghost.Plugin.Indeed.IntegrationTests/Ghost.Plugin.Indeed.IntegrationTests.csproj" (55) on node 4 (VSTest target(s)).
+    55>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    55>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Indeed/Ghost.Plugin.Indeed.IntegrationTests/Ghost.Plugin.Indeed.IntegrationTests.csproj" (VSTest target(s)) -- FAILED.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Google/Ghost.Plugin.Google.IntegrationTests/Ghost.Plugin.Google.IntegrationTests.csproj" (54) on node 3 (VSTest target(s)).
+    54>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    54>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Google/Ghost.Plugin.Google.IntegrationTests/Ghost.Plugin.Google.IntegrationTests.csproj" (VSTest target(s)) -- FAILED.
+VSTest version 18.0.1 (x64)
+
+The argument /tmp/ghost-build/bin/Ghost.Plugin.Google.UnitTests/Debug/net10.0/Ghost.Plugin.Google.UnitTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Google/Ghost.Plugin.Google.UnitTests/Ghost.Plugin.Google.UnitTests.csproj" (53) on node 2 (VSTest target(s)).
+    53>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    53>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/Google/Ghost.Plugin.Google.UnitTests/Ghost.Plugin.Google.UnitTests.csproj" (VSTest target(s)) -- FAILED.
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.InfoJobs.IntegrationTests/Debug/net10.0/Ghost.Plugin.InfoJobs.IntegrationTests.dll (.NETCoreApp,Version=v10.0)
+The argument /tmp/ghost-build/bin/Ghost.Plugin.InfoJobs.UnitTests/Debug/net10.0/Ghost.Plugin.InfoJobs.UnitTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/InfoJobs/Ghost.Plugin.InfoJobs.UnitTests/Ghost.Plugin.InfoJobs.UnitTests.csproj" (56) on node 1 (VSTest target(s)).
+    56>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    56>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/InfoJobs/Ghost.Plugin.InfoJobs.UnitTests/Ghost.Plugin.InfoJobs.UnitTests.csproj" (VSTest target(s)) -- FAILED.
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.LinkedIn.UnitTests/Debug/net10.0/Ghost.Plugin.LinkedIn.UnitTests.dll (.NETCoreApp,Version=v10.0)
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.LinkedIn.IntegrationTests/Debug/net10.0/Ghost.Plugin.LinkedIn.IntegrationTests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.OpenAI.UnitTests/Debug/net10.0/Ghost.Plugin.OpenAI.UnitTests.dll (.NETCoreApp,Version=v10.0)
+The argument /tmp/ghost-build/bin/Ghost.Plugin.InfoJobs.IntegrationTests/Debug/net10.0/Ghost.Plugin.InfoJobs.IntegrationTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/InfoJobs/Ghost.Plugin.InfoJobs.IntegrationTests/Ghost.Plugin.InfoJobs.IntegrationTests.csproj" (57) on node 4 (VSTest target(s)).
+    57>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    57>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/InfoJobs/Ghost.Plugin.InfoJobs.IntegrationTests/Ghost.Plugin.InfoJobs.IntegrationTests.csproj" (VSTest target(s)) -- FAILED.
+VSTest version 18.0.1 (x64)
+
+VSTest version 18.0.1 (x64)
+
+The argument /tmp/ghost-build/bin/Ghost.Plugin.LinkedIn.IntegrationTests/Debug/net10.0/Ghost.Plugin.LinkedIn.IntegrationTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+VSTest version 18.0.1 (x64)
+
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/LinkedIn/Ghost.Plugin.LinkedIn.IntegrationTests/Ghost.Plugin.LinkedIn.IntegrationTests.csproj" (58) on node 2 (VSTest target(s)).
+    58>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    58>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/LinkedIn/Ghost.Plugin.LinkedIn.IntegrationTests/Ghost.Plugin.LinkedIn.IntegrationTests.csproj" (VSTest target(s)) -- FAILED.
+Test run for /tmp/ghost-build/bin/Ghost.Plugin.X.UnitTests/Debug/net10.0/Ghost.Plugin.X.UnitTests.dll (.NETCoreApp,Version=v10.0)
+The argument /tmp/ghost-build/bin/Ghost.Plugin.OpenAI.UnitTests/Debug/net10.0/Ghost.Plugin.OpenAI.UnitTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/OpenAI/Ghost.Plugin.OpenAI.UnitTests/Ghost.Plugin.OpenAI.UnitTests.csproj" (60) on node 1 (VSTest target(s)).
+    60>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    60>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/OpenAI/Ghost.Plugin.OpenAI.UnitTests/Ghost.Plugin.OpenAI.UnitTests.csproj" (VSTest target(s)) -- FAILED.
+The argument /tmp/ghost-build/bin/Ghost.Plugin.LinkedIn.UnitTests/Debug/net10.0/Ghost.Plugin.LinkedIn.UnitTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/LinkedIn/Ghost.Plugin.LinkedIn.UnitTests/Ghost.Plugin.LinkedIn.UnitTests.csproj" (59) on node 3 (VSTest target(s)).
+    59>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    59>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/LinkedIn/Ghost.Plugin.LinkedIn.UnitTests/Ghost.Plugin.LinkedIn.UnitTests.csproj" (VSTest target(s)) -- FAILED.
+VSTest version 18.0.1 (x64)
+
+The argument /tmp/ghost-build/bin/Ghost.Plugin.X.UnitTests/Debug/net10.0/Ghost.Plugin.X.UnitTests.dll is invalid. Please use the /help option to check the list of valid arguments.
+     1>Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (1) is building "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/X/Ghost.Plugin.X.UnitTests/Ghost.Plugin.X.UnitTests.csproj" (61) on node 4 (VSTest target(s)).
+    61>_VSTestConsole:
+         MSB4181: The "VSTestTask" task returned false but did not log an error.
+    61>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/tests/Plugins/X/Ghost.Plugin.X.UnitTests/Ghost.Plugin.X.UnitTests.csproj" (VSTest target(s)) -- FAILED.
+     1>Done Building Project "/home/rrj/src/github/rudironsoni/Ghost/Ghost.sln" (VSTest target(s)) -- FAILED.
+
+Build FAILED.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:05.50

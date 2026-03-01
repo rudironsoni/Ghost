@@ -1,0 +1,20 @@
+{{- if .Values.monitoring.prometheusRule.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "ghost.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ghost.labels" . | nindent 4 }}
+    {{- with .Values.monitoring.prometheusRule.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: ghost-alerts
+      interval: 30s
+      rules:
+        {{- with .Values.monitoring.prometheusRule.rules }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+{{- end }}

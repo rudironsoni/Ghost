@@ -1,0 +1,35 @@
+info:
+  name: Clear DLQ
+  type: http
+  seq: 3
+  description: Clear all jobs from the Dead Letter Queue
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/admin/dlq/clear"
+
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Response confirms clearance", function() {
+          expect(res.body).to.have.property("message");
+          expect(res.body.message).to.include("cleared");
+        });
+
+docs: |-
+  ## Clear DLQ
+
+  Clear all jobs from the Dead Letter Queue.
+
+  ### Response Example (200 OK)
+  ```json
+  {
+    "message": "DLQ cleared successfully"
+  }
+  ```

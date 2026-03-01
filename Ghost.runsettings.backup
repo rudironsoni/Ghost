@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <RunConfiguration>
+    <MaxCpuCount>1</MaxCpuCount>
+    <DisableParallelization>true</DisableParallelization>
+    <TestSessionTimeout>300000</TestSessionTimeout>
+  </RunConfiguration>
+  <xUnit>
+    <ParallelizeAssembly>false</ParallelizeAssembly>
+    <ParallelizeTestCollections>false</ParallelizeTestCollections>
+    <MaxParallelThreads>1</MaxParallelThreads>
+  </xUnit>
+  <MSBuild>
+    <NodeReuse>false</NodeReuse>
+  </MSBuild>
+</RunSettings>

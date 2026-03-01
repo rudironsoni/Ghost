@@ -1,0 +1,47 @@
+info:
+  name: Boolean Search - NOT Operator
+  type: http
+  seq: 7
+  description: Test LinkedIn NOT operator - excludes jobs containing keyword
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/linkedin/jobs/search"
+
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "keywords": "manager NOT assistant",
+        "location": "United States",
+        "maxResults": 5
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Response is array", function() {
+          expect(res.body).to.be.an('array');
+        });
+
+docs: |-
+  ## Boolean Search - NOT Operator
+
+  Tests LinkedIn's NOT operator which excludes jobs containing specific keywords.
+
+  ### Query
+  `manager NOT assistant`
+
+  ### Expected Behavior
+  - Returns jobs containing "manager" but EXCLUDING those with "assistant"
+  - Use NOT to filter out unwanted roles (e.g., exclude junior/entry-level positions)
+  - NOT has higher precedence than AND but lower than quotes
+  - Alternative: use "manager -assistant" (minus sign also works)

@@ -1,0 +1,43 @@
+using System.Text.Json;
+using Ghost.Plugin.Indeed.Internal;
+using Ghost.Testing.Reliability;
+using Xunit;
+using Xunit.Abstractions;
+
+namespace Ghost.Plugin.Indeed.Tests;
+
+public class IndeedJobParserTests : ReliabilityTestBase
+{
+    public IndeedJobParserTests(ITestOutputHelper output) : base(output) { }
+    [Fact]
+    public void ParsesSampleResponse()
+    {
+        string json = @"{
+  ""data"": {
+    ""jobSearch"": {
+      ""results"": [
+        {
+          ""id"": ""abc123"",
+          ""title"": ""Software Engineer"",
+          ""employer"": { ""name"": ""ACME"" },
+          ""location"": { ""formatted"": { ""long"": ""New York, NY"" } },
+          ""description"": { ""html"": ""<p>Job</p>"" },
+          ""compensation"": { ""baseSalary"": { ""range"": { ""min"": 50000, ""max"": 100000, ""currency"": ""USD"" } } }
+        }
+      ],
+      ""pageInfo"": { ""nextCursor"": null, ""hasNextPage"": false }
+    }
+  }
+}";
+
+        using JsonDocument doc = JsonDocument.Parse(json);
+        System.Collections.Generic.IEnumerable<Ghost.Contracts.Jobs.JobListing> list = IndeedJobParser.ParseJobs(doc.RootElement);
+        Ghost.Contracts.Jobs.JobListing[] arr = System.Linq.Enumerable.ToArray(list);
+        Assert.Single(arr);
+        Assert.Equal("Software Engineer", arr[0].Title);
+        Assert.Equal("ACME", arr[0].Company);
+        Assert.Contains("New York", arr[0].Location);
+        Assert.Equal("Job", arr[0].Description);
+        Assert.Contains("50000", arr[0].Salary);
+    }
+}

@@ -1,0 +1,196 @@
+version: '3.8'
+
+# Docker Compose Canary Deployment Configuration
+# This configuration enables gradual rollout with 90% traffic to stable and 10% to canary
+
+services:
+  # Stable version service (90% of traffic)
+  ghost-stable:
+    image: ghost-scraper:stable
+    container_name: ghost-stable
+    restart: always
+
+    # Port mapping: 5000 internal to host port
+    ports:
+      - "5000:5000"
+
+    # Environment variables for production
+    environment:
+      - ENVIRONMENT=production
+      - PORT=5000
+      - LOG_LEVEL=info
+      - NODE_ENV=production
+      - MAX_WORKERS=4
+      - REQUEST_TIMEOUT=30000
+      - RETRY_ATTEMPTS=3
+      - CACHE_TTL=3600
+
+    # Health check configuration
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Volume for logs
+    volumes:
+      - logs:/var/log/ghost
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '1.0'
+          memory: 512M
+
+    # Network configuration
+    networks:
+      - ghost-network
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Dependencies
+    depends_on:
+      - nginx
+
+  # Canary version service (10% of traffic)
+  ghost-canary:
+    image: ghost-scraper:canary
+    container_name: ghost-canary
+    restart: always
+
+    # Port mapping: 5001 internal (not directly exposed)
+    ports:
+      - "5001:5001"
+
+    # Environment variables (same as stable, but with canary version indicator)
+    environment:
+      - ENVIRONMENT=production
+      - PORT=5001
+      - LOG_LEVEL=info
+      - NODE_ENV=production
+      - MAX_WORKERS=4
+      - REQUEST_TIMEOUT=30000
+      - RETRY_ATTEMPTS=3
+      - CACHE_TTL=3600
+      - CANARY_VERSION=true
+      - VERSION_TAG=canary
+
+    # Health check configuration
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Volume for logs (shared logs volume)
+    volumes:
+      - logs:/var/log/ghost
+
+    # Resource limits (slightly lower for canary)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 768M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+    # Network configuration
+    networks:
+      - ghost-network
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Dependencies
+    depends_on:
+      - nginx
+
+  # Nginx reverse proxy with canary traffic splitting
+  nginx:
+    image: nginx:alpine
+    container_name: ghost-nginx
+    restart: always
+
+    # Port mapping: 80 (HTTP) and 443 (HTTPS)
+    ports:
+      - "80:80"
+      - "443:443"
+
+    # Mount nginx configuration
+    volumes:
+      # Configuration file
+      - ./nginx-canary.conf:/etc/nginx/nginx.conf:ro
+      # SSL certificates (optional - mount if available)
+      - ./certs:/etc/nginx/certs:ro
+      # Nginx logs
+      - logs:/var/log/nginx
+
+    # Health check configuration
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+    # Network configuration
+    networks:
+      - ghost-network
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Dependencies - nginx depends on both ghost services
+    depends_on:
+      ghost-stable:
+        condition: service_healthy
+      ghost-canary:
+        condition: service_healthy
+
+# Shared volumes
+volumes:
+  logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs
+
+# Networks
+networks:
+  ghost-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

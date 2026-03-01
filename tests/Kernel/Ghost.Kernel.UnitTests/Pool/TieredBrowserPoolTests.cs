@@ -1,0 +1,376 @@
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using Ghost.Kernel;
+using Ghost.Pool;
+using Ghost.Testing;
+using Ghost.Testing.Reliability;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
+using Xunit.Abstractions;
+
+namespace Ghost.Tests.Pool;
+
+[Trait("Category", "Unit")]
+[SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "Async disposal handled by IAsyncLifetime")]
+public class TieredBrowserPoolTests : ReliabilityTestBase, IAsyncLifetime
+{
+    private GhostKernel? _kernel;
+    private TieredBrowserPool? _pool;
+
+    public TieredBrowserPoolTests(ITestOutputHelper output) : base(output) { }
+
+    public override async Task InitializeAsync()
+    {
+        await base.InitializeAsync();
+        try
+        {
+            _kernel = await GhostKernel.CreateAsync(new KernelOptions
+            {
+                Headless = true,
+                EnableStealth = false,
+                MaxConcurrentSessions = 50
+            });
+
+            var options = new TieredBrowserPoolOptions
+            {
+                Hot = new HotPoolOptions
+                {
+                    MinimumSize = 2,
+                    MaximumSize = 5,
+                    MaxAge = TimeSpan.FromMinutes(5)
+                },
+                Warm = new WarmPoolOptions
+                {
+                    MinimumSize = 3,
+                    MaximumSize = 10,
+                    MaxAge = TimeSpan.FromMinutes(10)
+                },
+                Cold = new ColdPoolOptions
+                {
+                    MaximumConcurrent = 20
+                },
+                SessionTtl = TimeSpan.FromMinutes(5),
+                HealthCheckInterval = TimeSpan.FromSeconds(5)
+            };
+
+            _pool = new TieredBrowserPool(_kernel, options, NullLogger<TieredBrowserPool>.Instance);
+
+            // Wait for pool to be ready using health state
+            await WaitForPoolReadyAsync(_pool, TimeSpan.FromSeconds(10));
+        }
+        catch
+        {
+            await DisposeAsync();
+            throw;
+        }
+    }
+
+    public override async Task DisposeAsync()
+    {
+        if (_pool != null)
+            await _pool.DisposeAsync();
+
+        if (_kernel != null)
+            await _kernel.DisposeAsync();
+
+        await base.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task HotPoolProvidesBrowserUnder500ms()
+    {
+        var stopwatch = Stopwatch.StartNew();
+        await using IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Hot);
+        stopwatch.Stop();
+
+        Assert.NotNull(session);
+        Assert.True(stopwatch.ElapsedMilliseconds < 500,
+            $"Hot pool acquisition took {stopwatch.ElapsedMilliseconds}ms, expected <500ms");
+        Assert.True(session.IsConnected);
+    }
+
+    [Fact]
+    public async Task WarmPoolProvidesBrowserUnder1500ms()
+    {
+        var stopwatch = Stopwatch.StartNew();
+        await using IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Warm);
+        stopwatch.Stop();
+
+        Assert.NotNull(session);
+        Assert.True(stopwatch.ElapsedMilliseconds < 1500,
+            $"Warm pool acquisition took {stopwatch.ElapsedMilliseconds}ms, expected <1500ms");
+        Assert.True(session.IsConnected);
+    }
+
+    [Fact]
+    public async Task ColdPoolCreatesBrowserOnDemand()
+    {
+        await using IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Cold);
+
+        Assert.NotNull(session);
+        Assert.True(session.IsConnected);
+    }
+
+    [Fact]
+    public async Task PoolScalesAutomaticallyUnderLoad()
+    {
+        Task<IBrowserSession>[] tasks = Enumerable.Range(0, 15)
+            .Select(_ => _pool!.AcquireBrowserAsync(Tier.Hot))
+            .ToArray();
+
+        IBrowserSession[] sessions = await Task.WhenAll(tasks);
+
+        Assert.All(sessions, session =>
+        {
+            Assert.NotNull(session);
+            Assert.True(session.IsConnected);
+        });
+
+        foreach (IBrowserSession? session in sessions)
+        {
+            await _pool!.ReturnBrowserAsync(session);
+        }
+    }
+
+    [Fact]
+    public async Task PoolReturnsSessionSuccessfullyToPool()
+    {
+        IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Hot);
+        Assert.NotNull(session);
+
+        await _pool.ReturnBrowserAsync(session);
+
+        PoolHealth health = await _pool.GetHealthAsync();
+        Assert.True(health.Hot.Available > 0);
+    }
+
+    [Fact]
+    public async Task PoolProvidesSeparateSessions()
+    {
+        IBrowserSession session1 = await _pool!.AcquireBrowserAsync(Tier.Hot);
+        IBrowserSession session2 = await _pool.AcquireBrowserAsync(Tier.Hot);
+
+        Assert.NotNull(session1);
+        Assert.NotNull(session2);
+        Assert.NotEqual(session1.SessionId, session2.SessionId);
+
+        await _pool.ReturnBrowserAsync(session1);
+        await _pool.ReturnBrowserAsync(session2);
+    }
+
+    [Fact]
+    public async Task GetHealthAsyncReturnsValidHealthStatus()
+    {
+        PoolHealth health = await _pool!.GetHealthAsync();
+
+        Assert.NotNull(health);
+        Assert.NotNull(health.Hot);
+        Assert.NotNull(health.Warm);
+        Assert.NotNull(health.Cold);
+
+        Assert.True(health.Hot.Total >= 0);
+        Assert.True(health.Warm.Total >= 0);
+        Assert.True(health.Cold.Total >= 0);
+
+        Assert.True(health.MemoryPressure >= 0 && health.MemoryPressure <= 1);
+    }
+
+    [Fact]
+    public async Task WarmUpAsyncCreatesExpectedNumberOfSessions()
+    {
+        await _pool!.WarmUpAsync(Tier.Hot, 3);
+
+        PoolHealth health = await _pool.GetHealthAsync();
+
+        Assert.True(health.Hot.Total >= 3);
+    }
+
+    [Fact]
+    public async Task PoolHandlesNullSessionReturnGracefully()
+    {
+        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+        {
+            await _pool!.ReturnBrowserAsync(null!);
+        });
+    }
+
+    [Fact]
+    public async Task PoolAcquisitionMetricsTrackCorrectly()
+    {
+        await _pool!.AcquireBrowserAsync(Tier.Hot);
+        await _pool.AcquireBrowserAsync(Tier.Warm);
+        await _pool.AcquireBrowserAsync(Tier.Cold);
+
+        PoolHealth health = await _pool.GetHealthAsync();
+
+        Assert.True(health.TotalAcquisitions >= 3);
+        Assert.True(health.Hot.AcquisitionCount >= 1);
+        Assert.True(health.Warm.AcquisitionCount >= 1);
+        Assert.True(health.Cold.AcquisitionCount >= 1);
+    }
+
+    [Fact]
+    public async Task PoolFallsBackToWarmWhenHotExhausted()
+    {
+        List<IBrowserSession> hotSessions = [];
+
+        for (int i = 0; i < 10; i++)
+        {
+            IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Hot);
+            hotSessions.Add(session);
+        }
+
+        PoolHealth health = await _pool!.GetHealthAsync();
+
+        Assert.True(health.Warm.AcquisitionCount > 0 || health.Cold.AcquisitionCount > 0,
+            "Pool should fallback to Warm or Cold when Hot is exhausted");
+
+        foreach (IBrowserSession session in hotSessions)
+        {
+            await _pool.ReturnBrowserAsync(session);
+        }
+    }
+
+    [Fact]
+    public async Task PoolFallsBackToColdWhenWarmExhausted()
+    {
+        List<IBrowserSession> sessions = [];
+
+        for (int i = 0; i < 20; i++)
+        {
+            IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Warm);
+            sessions.Add(session);
+        }
+
+        PoolHealth health = await _pool!.GetHealthAsync();
+
+        Assert.True(health.Cold.AcquisitionCount > 0,
+            "Pool should fallback to Cold when Warm is exhausted");
+
+        foreach (IBrowserSession session in sessions)
+        {
+            await _pool.ReturnBrowserAsync(session);
+        }
+    }
+
+    [Fact]
+    public async Task PoolHealthCheckDetectsIssues()
+    {
+        PoolHealth health = await _pool!.GetHealthAsync();
+
+        Assert.True(health.Hot.IsHealthy || health.Warm.IsHealthy || health.Cold.IsHealthy,
+            "At least one tier should be healthy");
+    }
+
+    [Fact]
+    public async Task PoolCreatesWorkingPage()
+    {
+        await using IBrowserSession session = await _pool!.AcquireBrowserAsync(Tier.Hot);
+        IPage page = await session.NewPageAsync();
+
+        Assert.NotNull(page);
+
+        await page.NavigateAsync("https://example.com");
+        string title = await page.EvaluateAsync<string>("document.title");
+
+        Assert.False(string.IsNullOrEmpty(title));
+
+        await _pool.ReturnBrowserAsync(session);
+    }
+
+    [Fact]
+    public async Task PoolRespectsConcurrentLimitForColdTier()
+    {
+        int maxConcurrent = 5; // Smaller for faster test
+        var options = new TieredBrowserPoolOptions
+        {
+            Cold = new ColdPoolOptions { MaximumConcurrent = maxConcurrent }
+        };
+
+        await using TieredBrowserPool pool = new TieredBrowserPool(_kernel!, options);
+
+        var holdSignals = Enumerable.Range(0, maxConcurrent)
+            .Select(_ => new TaskCompletionSource())
+            .ToList();
+
+        Task[] acquisitionTasks = holdSignals.Select(async tcs =>
+        {
+            IBrowserSession session = await pool.AcquireBrowserAsync(Tier.Cold);
+            await tcs.Task;
+            await pool.ReturnBrowserAsync(session);
+        }).ToArray();
+
+        PoolHealth health = await WaitForHealthStateAsync(pool, h => h.Cold.InUse == maxConcurrent);
+        Assert.Equal(maxConcurrent, health.Cold.InUse);
+
+        var extraTcs = new TaskCompletionSource<IBrowserSession>();
+        var extraTask = Task.Run(async () =>
+        {
+            IBrowserSession session = await pool.AcquireBrowserAsync(Tier.Cold);
+            extraTcs.SetResult(session);
+            await pool.ReturnBrowserAsync(session);
+        });
+
+        await Task.Yield();
+        Assert.False(extraTask.IsCompleted, "Extra acquisition should be blocked");
+
+        holdSignals[0].SetResult();
+
+        await using IBrowserSession extraSession = await extraTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        Assert.NotNull(extraSession);
+
+        foreach (TaskCompletionSource? tcs in holdSignals.Skip(1))
+        {
+            tcs.SetResult();
+        }
+
+        await Task.WhenAll(acquisitionTasks).WaitAsync(TimeSpan.FromSeconds(5));
+    }
+
+    private static async Task WaitForPoolReadyAsync(
+        TieredBrowserPool pool,
+        TimeSpan timeout)
+    {
+        using var cts = new CancellationTokenSource(timeout);
+        DateTime deadline = DateTime.UtcNow.Add(timeout);
+
+        while (DateTime.UtcNow < deadline)
+        {
+            PoolHealth health = await pool.GetHealthAsync();
+            if (health.Hot.Total >= 2 && health.Warm.Total >= 3)
+            {
+                return;
+            }
+
+            cts.Token.ThrowIfCancellationRequested();
+            await Task.Yield();
+        }
+
+        throw new TimeoutException("Pool did not initialize within timeout");
+    }
+
+    private static async Task<PoolHealth> WaitForHealthStateAsync(
+        TieredBrowserPool pool,
+        Func<PoolHealth, bool> predicate,
+        TimeSpan? timeout = null)
+    {
+        timeout ??= TimeSpan.FromSeconds(5);
+        using var cts = new CancellationTokenSource(timeout.Value);
+        DateTime deadline = DateTime.UtcNow.Add(timeout.Value);
+
+        while (DateTime.UtcNow < deadline)
+        {
+            PoolHealth health = await pool.GetHealthAsync();
+            if (predicate(health))
+            {
+                return health;
+            }
+
+            cts.Token.ThrowIfCancellationRequested();
+            await Task.Yield();
+        }
+
+        throw new TimeoutException("Health state not achieved within timeout");
+    }
+}

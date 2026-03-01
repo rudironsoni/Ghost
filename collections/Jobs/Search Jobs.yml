@@ -1,0 +1,92 @@
+info:
+  name: Search Jobs
+  type: http
+  seq: 1
+  description: Search for jobs across multiple platforms
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/jobs/search"
+
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "query": "software engineer",
+        "location": "San Francisco, CA",
+        "remoteOnly": true,
+        "jobType": "FullTime",
+        "experienceLevel": "MidLevel",
+        "postedDate": "PastWeek",
+        "maxResults": 25,
+        "sources": ["LinkedIn", "Indeed", "Glassdoor"]
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Response has jobs array", function() {
+          expect(res.body).to.have.property("jobs");
+          expect(res.body.jobs).to.be.an("array");
+        });
+
+        test("Response has success flag", function() {
+          expect(res.body).to.have.property("success");
+          expect(res.body.success).to.be.a("boolean");
+        });
+
+docs: |-
+  ## Search Jobs
+
+  Search for jobs across multiple job platforms.
+
+  ### Request Body
+  | Field | Type | Description |
+  |-------|------|-------------|
+  | query | string | Search query (e.g., "software engineer") |
+  | location | string | Location (e.g., "San Francisco, CA" or "Remote") |
+  | remoteOnly | boolean | Filter for remote jobs only |
+  | jobType | string | FullTime, PartTime, Contract, etc. |
+  | experienceLevel | string | EntryLevel, MidLevel, Senior |
+  | postedDate | string | PastDay, PastWeek, PastMonth, AnyTime |
+  | maxResults | integer | Maximum number of results (default 25) |
+  | sources | array | Platforms to search: LinkedIn, Indeed, Glassdoor, Google |
+
+  ### Response Example (200 OK)
+  ```json
+  {
+    "jobs": [
+      {
+        "id": "linkedin-45678",
+        "title": "Software Engineer - Remote",
+        "company": "CloudTech Solutions",
+        "location": "Remote (US)",
+        "description": "Join our distributed team building cloud-native applications...",
+        "salary": "$120k - $160k",
+        "jobType": "FullTime",
+        "experienceLevel": "MidLevel",
+        "postedAt": "2025-02-02T14:30:00Z",
+        "remote": true,
+        "url": "https://linkedin.com/jobs/view/45678",
+        "source": "LinkedIn",
+        "isEasyApply": true
+      }
+    ],
+    "success": true,
+    "platformErrors": [],
+    "metadata": {
+      "totalPlatforms": 3,
+      "successfulPlatforms": 3,
+      "failedPlatforms": 0,
+      "executionTimeMs": 3200
+    }
+  }
+  ```

@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ghost.Contracts.News</RootNamespace>
+    <Description>Ghost news contracts</Description>
+  </PropertyGroup>
+</Project>

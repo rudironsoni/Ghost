@@ -1,0 +1,713 @@
+---
+# Security Hardening Playbook for Ghost Platform
+# This playbook implements CIS benchmarks and security best practices
+#
+# Usage:
+#   ansible-playbook -i inventory/hosts.yml security-hardening.yml
+#   ansible-playbook -i inventory/hosts.yml security-hardening.yml --tags ssh
+#   ansible-playbook -i inventory/hosts.yml security-hardening.yml --check
+
+- name: Ghost Platform Security Hardening
+  hosts: ghost_servers
+  become: true
+  gather_facts: true
+
+  vars:
+    # SSH Configuration
+    ssh_port: 22
+    ssh_permit_root_login: "no"
+    ssh_password_authentication: "no"
+    ssh_pubkey_authentication: "yes"
+    ssh_max_auth_tries: 3
+    ssh_max_sessions: 2
+
+    # Firewall Configuration
+    firewall_allowed_tcp_ports:
+      - 22    # SSH
+      - 80    # HTTP
+      - 443   # HTTPS
+      - 8080  # Ghost API
+
+    # System Hardening
+    disable_unused_filesystems:
+      - cramfs
+      - freevxfs
+      - jffs2
+      - hfs
+      - hfsplus
+      - udf
+
+    # Audit Configuration
+    auditd_rules_enabled: true
+
+    # Password Policy
+    password_max_days: 90
+    password_min_days: 1
+    password_warn_age: 7
+    password_min_length: 14
+
+  pre_tasks:
+    - name: Display security hardening information
+      debug:
+        msg:
+          - "==================================================="
+          - "Ghost Platform Security Hardening"
+          - "==================================================="
+          - "Target Host: {{ inventory_hostname }}"
+          - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "Kernel: {{ ansible_kernel }}"
+          - "==================================================="
+      tags: always
+
+    - name: Create security hardening log
+      file:
+        path: /var/log/security-hardening
+        state: directory
+        mode: '0700'
+        owner: root
+        group: root
+      tags: always
+
+  tasks:
+    # ========================================
+    # 1. System Updates and Patching
+    # ========================================
+    - name: System Updates
+      block:
+        - name: Update package cache (Debian/Ubuntu)
+          apt:
+            update_cache: yes
+            cache_valid_time: 3600
+          when: ansible_os_family == "Debian"
+          tags: updates
+
+        - name: Upgrade all packages (Debian/Ubuntu)
+          apt:
+            upgrade: dist
+            autoremove: yes
+            autoclean: yes
+          when: ansible_os_family == "Debian"
+          tags: updates
+
+        - name: Update package cache (RedHat/CentOS)
+          yum:
+            update_cache: yes
+          when: ansible_os_family == "RedHat"
+          tags: updates
+
+        - name: Upgrade all packages (RedHat/CentOS)
+          yum:
+            name: "*"
+            state: latest
+          when: ansible_os_family == "RedHat"
+          tags: updates
+
+        - name: Check if reboot is required
+          stat:
+            path: /var/run/reboot-required
+          register: reboot_required
+          tags: updates
+
+        - name: Display reboot requirement
+          debug:
+            msg: "⚠️  System reboot required after updates"
+          when: reboot_required.stat.exists
+          tags: updates
+
+    # ========================================
+    # 2. SSH Hardening (CIS 5.2)
+    # ========================================
+    - name: SSH Hardening
+      block:
+        - name: Backup original sshd_config
+          copy:
+            src: /etc/ssh/sshd_config
+            dest: /etc/ssh/sshd_config.backup.{{ ansible_date_time.epoch }}
+            remote_src: yes
+          tags: ssh
+
+        - name: Configure SSH - Disable root login
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?PermitRootLogin'
+            line: 'PermitRootLogin {{ ssh_permit_root_login }}'
+          notify: restart sshd
+          tags: ssh
+
+        - name: Configure SSH - Disable password authentication
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?PasswordAuthentication'
+            line: 'PasswordAuthentication {{ ssh_password_authentication }}'
+          notify: restart sshd
+          tags: ssh
+
+        - name: Configure SSH - Enable pubkey authentication
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?PubkeyAuthentication'
+            line: 'PubkeyAuthentication {{ ssh_pubkey_authentication }}'
+          notify: restart sshd
+          tags: ssh
+
+        - name: Configure SSH - Set max auth tries
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?MaxAuthTries'
+            line: 'MaxAuthTries {{ ssh_max_auth_tries }}'
+          notify: restart sshd
+          tags: ssh
+
+        - name: Configure SSH - Disable X11 forwarding
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?X11Forwarding'
+            line: 'X11Forwarding no'
+          notify: restart sshd
+          tags: ssh
+
+        - name: Configure SSH - Set strong ciphers
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?Ciphers'
+            line: 'Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr'
+          notify: restart sshd
+          tags: ssh
+
+        - name: Configure SSH - Set strong MACs
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?MACs'
+            line: 'MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256'
+          notify: restart sshd
+          tags: ssh
+
+        - name: Configure SSH - Set strong KexAlgorithms
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?KexAlgorithms'
+            line: 'KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256'
+          notify: restart sshd
+          tags: ssh
+
+        - name: Configure SSH - Set client alive interval
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?ClientAliveInterval'
+            line: 'ClientAliveInterval 300'
+          notify: restart sshd
+          tags: ssh
+
+        - name: Configure SSH - Set client alive count max
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?ClientAliveCountMax'
+            line: 'ClientAliveCountMax 2'
+          notify: restart sshd
+          tags: ssh
+
+    # ========================================
+    # 3. Firewall Configuration (CIS 3.5)
+    # ========================================
+    - name: Firewall Configuration
+      block:
+        - name: Install UFW (Debian/Ubuntu)
+          apt:
+            name: ufw
+            state: present
+          when: ansible_os_family == "Debian"
+          tags: firewall
+
+        - name: Install firewalld (RedHat/CentOS)
+          yum:
+            name: firewalld
+            state: present
+          when: ansible_os_family == "RedHat"
+          tags: firewall
+
+        - name: Configure UFW - Allow SSH
+          ufw:
+            rule: allow
+            port: "{{ ssh_port }}"
+            proto: tcp
+          when: ansible_os_family == "Debian"
+          tags: firewall
+
+        - name: Configure UFW - Allow application ports
+          ufw:
+            rule: allow
+            port: "{{ item }}"
+            proto: tcp
+          loop: "{{ firewall_allowed_tcp_ports }}"
+          when: ansible_os_family == "Debian"
+          tags: firewall
+
+        - name: Configure UFW - Set default policies
+          ufw:
+            direction: "{{ item.direction }}"
+            policy: "{{ item.policy }}"
+          loop:
+            - { direction: 'incoming', policy: 'deny' }
+            - { direction: 'outgoing', policy: 'allow' }
+            - { direction: 'routed', policy: 'deny' }
+          when: ansible_os_family == "Debian"
+          tags: firewall
+
+        - name: Enable UFW
+          ufw:
+            state: enabled
+          when: ansible_os_family == "Debian"
+          tags: firewall
+
+    # ========================================
+    # 4. Kernel Hardening (CIS 3.1, 3.2)
+    # ========================================
+    - name: Kernel Hardening
+      block:
+        - name: Configure kernel parameters
+          sysctl:
+            name: "{{ item.name }}"
+            value: "{{ item.value }}"
+            state: present
+            reload: yes
+            sysctl_file: /etc/sysctl.d/99-ghost-hardening.conf
+          loop:
+            # Network hardening
+            - { name: 'net.ipv4.ip_forward', value: '0' }
+            - { name: 'net.ipv4.conf.all.send_redirects', value: '0' }
+            - { name: 'net.ipv4.conf.default.send_redirects', value: '0' }
+            - { name: 'net.ipv4.conf.all.accept_source_route', value: '0' }
+            - { name: 'net.ipv4.conf.default.accept_source_route', value: '0' }
+            - { name: 'net.ipv4.conf.all.accept_redirects', value: '0' }
+            - { name: 'net.ipv4.conf.default.accept_redirects', value: '0' }
+            - { name: 'net.ipv4.conf.all.secure_redirects', value: '0' }
+            - { name: 'net.ipv4.conf.default.secure_redirects', value: '0' }
+            - { name: 'net.ipv4.conf.all.log_martians', value: '1' }
+            - { name: 'net.ipv4.conf.default.log_martians', value: '1' }
+            - { name: 'net.ipv4.icmp_echo_ignore_broadcasts', value: '1' }
+            - { name: 'net.ipv4.icmp_ignore_bogus_error_responses', value: '1' }
+            - { name: 'net.ipv4.conf.all.rp_filter', value: '1' }
+            - { name: 'net.ipv4.conf.default.rp_filter', value: '1' }
+            - { name: 'net.ipv4.tcp_syncookies', value: '1' }
+            # IPv6 hardening
+            - { name: 'net.ipv6.conf.all.accept_ra', value: '0' }
+            - { name: 'net.ipv6.conf.default.accept_ra', value: '0' }
+            - { name: 'net.ipv6.conf.all.accept_redirects', value: '0' }
+            - { name: 'net.ipv6.conf.default.accept_redirects', value: '0' }
+            # Kernel hardening
+            - { name: 'kernel.randomize_va_space', value: '2' }
+            - { name: 'kernel.dmesg_restrict', value: '1' }
+            - { name: 'kernel.kptr_restrict', value: '2' }
+            - { name: 'fs.suid_dumpable', value: '0' }
+          tags: kernel
+
+        - name: Disable unused filesystems
+          copy:
+            dest: /etc/modprobe.d/disable-filesystems.conf
+            content: |
+              # Disable unused filesystems - Ghost Platform Security Hardening
+              {% for fs in disable_unused_filesystems %}
+              install {{ fs }} /bin/true
+              {% endfor %}
+            mode: '0644'
+          tags: kernel
+
+    # ========================================
+    # 5. Audit Configuration (CIS 4.1)
+    # ========================================
+    - name: Audit System Configuration
+      block:
+        - name: Install auditd
+          package:
+            name: auditd
+            state: present
+          tags: audit
+
+        - name: Configure auditd rules
+          copy:
+            dest: /etc/audit/rules.d/ghost-hardening.rules
+            content: |
+              # Ghost Platform Audit Rules
+
+              # Record events that modify date and time information
+              -a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time-change
+              -a always,exit -F arch=b32 -S adjtimex -S settimeofday -S stime -k time-change
+              -a always,exit -F arch=b64 -S clock_settime -k time-change
+              -a always,exit -F arch=b32 -S clock_settime -k time-change
+              -w /etc/localtime -p wa -k time-change
+
+              # Record events that modify user/group information
+              -w /etc/group -p wa -k identity
+              -w /etc/passwd -p wa -k identity
+              -w /etc/gshadow -p wa -k identity
+              -w /etc/shadow -p wa -k identity
+              -w /etc/security/opasswd -p wa -k identity
+
+              # Record events that modify network environment
+              -a always,exit -F arch=b64 -S sethostname -S setdomainname -k system-locale
+              -a always,exit -F arch=b32 -S sethostname -S setdomainname -k system-locale
+              -w /etc/issue -p wa -k system-locale
+              -w /etc/issue.net -p wa -k system-locale
+              -w /etc/hosts -p wa -k system-locale
+              -w /etc/network -p wa -k system-locale
+
+              # Record login/logout events
+              -w /var/log/faillog -p wa -k logins
+              -w /var/log/lastlog -p wa -k logins
+              -w /var/log/tallylog -p wa -k logins
+
+              # Record session initiation information
+              -w /var/run/utmp -p wa -k session
+              -w /var/log/wtmp -p wa -k logins
+              -w /var/log/btmp -p wa -k logins
+
+              # Record discretionary access control permission changes
+              -a always,exit -F arch=b64 -S chmod -S fchmod -S fchmodat -F auid>=1000 -F auid!=4294967295 -k perm_mod
+              -a always,exit -F arch=b32 -S chmod -S fchmod -S fchmodat -F auid>=1000 -F auid!=4294967295 -k perm_mod
+              -a always,exit -F arch=b64 -S chown -S fchown -S fchownat -S lchown -F auid>=1000 -F auid!=4294967295 -k perm_mod
+              -a always,exit -F arch=b32 -S chown -S fchown -S fchownat -S lchown -F auid>=1000 -F auid!=4294967295 -k perm_mod
+              -a always,exit -F arch=b64 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=1000 -F auid!=4294967295 -k perm_mod
+              -a always,exit -F arch=b32 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=1000 -F auid!=4294967295 -k perm_mod
+
+              # Record unauthorized access attempts
+              -a always,exit -F arch=b64 -S open -S openat -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k access
+              -a always,exit -F arch=b32 -S open -S openat -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k access
+              -a always,exit -F arch=b64 -S open -S openat -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k access
+              -a always,exit -F arch=b32 -S open -S openat -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k access
+
+              # Record file deletion events
+              -a always,exit -F arch=b64 -S unlink -S unlinkat -S rename -S renameat -F auid>=1000 -F auid!=4294967295 -k delete
+              -a always,exit -F arch=b32 -S unlink -S unlinkat -S rename -S renameat -F auid>=1000 -F auid!=4294967295 -k delete
+
+              # Record sudoers changes
+              -w /etc/sudoers -p wa -k scope
+              -w /etc/sudoers.d/ -p wa -k scope
+
+              # Record kernel module loading/unloading
+              -w /sbin/insmod -p x -k modules
+              -w /sbin/rmmod -p x -k modules
+              -w /sbin/modprobe -p x -k modules
+              -a always,exit -F arch=b64 -S init_module -S delete_module -k modules
+
+              # Make configuration immutable
+              -e 2
+            mode: '0640'
+          notify: restart auditd
+          tags: audit
+
+        - name: Enable and start auditd
+          service:
+            name: auditd
+            state: started
+            enabled: yes
+          tags: audit
+
+    # ========================================
+    # 6. Password Policy (CIS 5.4)
+    # ========================================
+    - name: Password Policy Configuration
+      block:
+        - name: Configure password aging - PASS_MAX_DAYS
+          lineinfile:
+            path: /etc/login.defs
+            regexp: '^PASS_MAX_DAYS'
+            line: 'PASS_MAX_DAYS {{ password_max_days }}'
+          tags: password
+
+        - name: Configure password aging - PASS_MIN_DAYS
+          lineinfile:
+            path: /etc/login.defs
+            regexp: '^PASS_MIN_DAYS'
+            line: 'PASS_MIN_DAYS {{ password_min_days }}'
+          tags: password
+
+        - name: Configure password aging - PASS_WARN_AGE
+          lineinfile:
+            path: /etc/login.defs
+            regexp: '^PASS_WARN_AGE'
+            line: 'PASS_WARN_AGE {{ password_warn_age }}'
+          tags: password
+
+        - name: Install libpam-pwquality (Debian/Ubuntu)
+          apt:
+            name: libpam-pwquality
+            state: present
+          when: ansible_os_family == "Debian"
+          tags: password
+
+        - name: Configure password quality requirements
+          lineinfile:
+            path: /etc/security/pwquality.conf
+            regexp: "{{ item.regexp }}"
+            line: "{{ item.line }}"
+          loop:
+            - { regexp: '^minlen', line: 'minlen = {{ password_min_length }}' }
+            - { regexp: '^dcredit', line: 'dcredit = -1' }  # At least 1 digit
+            - { regexp: '^ucredit', line: 'ucredit = -1' }  # At least 1 uppercase
+            - { regexp: '^lcredit', line: 'lcredit = -1' }  # At least 1 lowercase
+            - { regexp: '^ocredit', line: 'ocredit = -1' }  # At least 1 special char
+          tags: password
+
+    # ========================================
+    # 7. File Permissions (CIS 6.1)
+    # ========================================
+    - name: File Permissions Hardening
+      block:
+        - name: Set permissions on /etc/passwd
+          file:
+            path: /etc/passwd
+            owner: root
+            group: root
+            mode: '0644'
+          tags: permissions
+
+        - name: Set permissions on /etc/shadow
+          file:
+            path: /etc/shadow
+            owner: root
+            group: shadow
+            mode: '0640'
+          tags: permissions
+
+        - name: Set permissions on /etc/group
+          file:
+            path: /etc/group
+            owner: root
+            group: root
+            mode: '0644'
+          tags: permissions
+
+        - name: Set permissions on /etc/gshadow
+          file:
+            path: /etc/gshadow
+            owner: root
+            group: shadow
+            mode: '0640'
+          tags: permissions
+
+        - name: Set permissions on /etc/ssh/sshd_config
+          file:
+            path: /etc/ssh/sshd_config
+            owner: root
+            group: root
+            mode: '0600'
+          tags: permissions
+
+    # ========================================
+    # 8. Docker Security
+    # ========================================
+    - name: Docker Security Configuration
+      block:
+        - name: Create Docker daemon configuration
+          copy:
+            dest: /etc/docker/daemon.json
+            content: |
+              {
+                "live-restore": true,
+                "userland-proxy": false,
+                "no-new-privileges": true,
+                "icc": false,
+                "log-driver": "json-file",
+                "log-opts": {
+                  "max-size": "10m",
+                  "max-file": "3"
+                },
+                "default-ulimits": {
+                  "nofile": {
+                    "Name": "nofile",
+                    "Hard": 64000,
+                    "Soft": 64000
+                  }
+                }
+              }
+            mode: '0644'
+          notify: restart docker
+          tags: docker
+
+        - name: Ensure Docker socket permissions
+          file:
+            path: /var/run/docker.sock
+            owner: root
+            group: docker
+            mode: '0660'
+          tags: docker
+
+    # ========================================
+    # 9. Security Tools Installation
+    # ========================================
+    - name: Security Tools
+      block:
+        - name: Install security tools
+          package:
+            name:
+              - fail2ban
+              - aide           # Advanced Intrusion Detection Environment
+              - rkhunter       # Rootkit Hunter
+              - lynis          # Security auditing tool
+            state: present
+          tags: tools
+
+        - name: Configure fail2ban for SSH
+          copy:
+            dest: /etc/fail2ban/jail.local
+            content: |
+              [DEFAULT]
+              bantime = 3600
+              findtime = 600
+              maxretry = 3
+
+              [sshd]
+              enabled = true
+              port = {{ ssh_port }}
+              logpath = /var/log/auth.log
+              maxretry = 3
+            mode: '0644'
+          notify: restart fail2ban
+          tags: tools
+
+        - name: Enable and start fail2ban
+          service:
+            name: fail2ban
+            state: started
+            enabled: yes
+          tags: tools
+
+        - name: Initialize AIDE database
+          command: aideinit
+          args:
+            creates: /var/lib/aide/aide.db.new
+          tags: tools
+
+    # ========================================
+    # 10. Ghost Application Security
+    # ========================================
+    - name: Ghost Application Security
+      block:
+        - name: Create ghost user with restricted permissions
+          user:
+            name: ghost
+            shell: /usr/sbin/nologin
+            system: yes
+            create_home: no
+          tags: app
+
+        - name: Set strict permissions on Ghost directories
+          file:
+            path: "{{ item }}"
+            owner: ghost
+            group: ghost
+            mode: '0750'
+            state: directory
+          loop:
+            - /opt/ghost
+            - /var/lib/ghost
+          tags: app
+
+        - name: Configure AppArmor profile for Ghost (if available)
+          copy:
+            dest: /etc/apparmor.d/ghost-profile
+            content: |
+              #include <tunables/global>
+
+              /opt/ghost/ghost-api {
+                #include <abstractions/base>
+                #include <abstractions/nameservice>
+
+                # Ghost binary
+                /opt/ghost/ghost-api rix,
+
+                # Configuration files (read-only)
+                /opt/ghost/config/** r,
+
+                # Data directories (read-write)
+                /var/lib/ghost/** rw,
+
+                # Logs
+                /var/log/ghost/** w,
+
+                # Network
+                network inet stream,
+                network inet6 stream,
+
+                # Deny everything else
+                /** ix,
+              }
+            mode: '0644'
+          when: ansible_facts['apparmor'] is defined
+          tags: app
+
+  handlers:
+    - name: restart sshd
+      service:
+        name: sshd
+        state: restarted
+
+    - name: restart auditd
+      service:
+        name: auditd
+        state: restarted
+
+    - name: restart fail2ban
+      service:
+        name: fail2ban
+        state: restarted
+
+    - name: restart docker
+      service:
+        name: docker
+        state: restarted
+
+  post_tasks:
+    - name: Generate security hardening report
+      copy:
+        dest: /var/log/security-hardening/report-{{ ansible_date_time.epoch }}.txt
+        content: |
+          Ghost Platform Security Hardening Report
+          ========================================
+
+          Date: {{ ansible_date_time.iso8601 }}
+          Host: {{ inventory_hostname }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Kernel: {{ ansible_kernel }}
+
+          Hardening Applied:
+          - SSH hardening: COMPLETED
+          - Firewall configuration: COMPLETED
+          - Kernel hardening: COMPLETED
+          - Audit system: COMPLETED
+          - Password policy: COMPLETED
+          - File permissions: COMPLETED
+          - Docker security: COMPLETED
+          - Security tools: COMPLETED
+          - Application security: COMPLETED
+
+          Next Steps:
+          1. Verify SSH access with key-based authentication
+          2. Test firewall rules
+          3. Review audit logs: ausearch -k <key>
+          4. Run security audit: lynis audit system
+          5. Schedule regular AIDE checks
+          6. Configure log monitoring
+
+          Reboot Required: {{ 'YES' if reboot_required.stat.exists else 'NO' }}
+        mode: '0600'
+      tags: always
+
+    - name: Display completion message
+      debug:
+        msg:
+          - "==================================================="
+          - "Security Hardening Complete!"
+          - "==================================================="
+          - "Report saved to: /var/log/security-hardening/"
+          - ""
+          - "⚠️  IMPORTANT NEXT STEPS:"
+          - "1. Verify SSH access before logging out"
+          - "2. Test all application functionality"
+          - "3. Review firewall rules: sudo ufw status"
+          - "4. Check audit logs: sudo ausearch -ts recent"
+          - "5. Run security audit: sudo lynis audit system"
+          - ""
+          - "{{ '⚠️  REBOOT REQUIRED for kernel updates' if reboot_required.stat.exists else '✓ No reboot required' }}"
+          - "==================================================="
+      tags: always

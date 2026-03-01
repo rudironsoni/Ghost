@@ -1,0 +1,22 @@
+{
+  "Ghost": {
+    "Extensions": {
+      "LinkedIn": {
+        "Enabled": true,
+        "BaseUrl": "https://www.linkedin.com",
+        "Username": "test@example.com",
+        "Password": "test-password",
+        "SessionPool": {
+          "MaxSessions": 5,
+          "SessionTimeoutMinutes": 30
+        }
+      }
+    }
+  },
+  "TestSettings": {
+    "MockExternalServices": true,
+    "UseWireMock": true,
+    "WireMockPort": 9094,
+    "MockBrowserResponses": true
+  }
+}

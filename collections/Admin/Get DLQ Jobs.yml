@@ -1,0 +1,26 @@
+info:
+  name: Get DLQ Jobs
+  type: http
+  seq: 1
+  description: Get jobs from the Dead Letter Queue
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/admin/dlq?count={{count}}"
+
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+docs: |-
+  ## Get DLQ Jobs
+
+  Get jobs from the Dead Letter Queue.
+
+  ### Query Parameters
+  - `count` - Number of jobs to retrieve (max 100, default 10)

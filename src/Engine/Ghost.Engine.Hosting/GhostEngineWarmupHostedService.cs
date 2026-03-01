@@ -1,0 +1,30 @@
+using Ghost.Engine.Abstractions.Engine;
+using Ghost.Engine.Abstractions.Scheduler;
+using Microsoft.Extensions.Hosting;
+
+namespace Ghost.Engine.Hosting;
+
+internal sealed class GhostEngineWarmupHostedService : IHostedService
+{
+    private readonly IGhostEngine _engine;
+    private readonly IRequestScheduler _scheduler;
+
+    public GhostEngineWarmupHostedService(IGhostEngine engine, IRequestScheduler scheduler)
+    {
+        ArgumentNullException.ThrowIfNull(engine);
+        ArgumentNullException.ThrowIfNull(scheduler);
+        _engine = engine;
+        _scheduler = scheduler;
+    }
+
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        _ = _engine;
+        _ = await _scheduler.CountAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+}

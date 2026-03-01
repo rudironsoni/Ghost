@@ -1,0 +1,407 @@
+# OPA Gatekeeper Constraint: Resource Limits
+# Enforces CPU and memory requests/limits on all containers
+
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredResources
+metadata:
+  name: require-resources-all-containers
+  annotations:
+    description: "Enforce resource requests and limits on all containers"
+spec:
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+
+---
+# Additional template for validating resource ratios
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8sresourceratios
+  annotations:
+    description: "Validates that resource limits are within acceptable ratios"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sResourceRatios
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            maxCpuRatio:
+              type: number
+              description: "Maximum ratio of CPU limit to request"
+            maxMemoryRatio:
+              type: number
+              description: "Maximum ratio of memory limit to request"
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sresourceratios
+
+        # CPU ratio violation
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          cpu_request := to_millicores(container.resources.requests.cpu)
+          cpu_limit := to_millicores(container.resources.limits.cpu)
+          ratio := cpu_limit / cpu_request
+          ratio > input.parameters.maxCpuRatio
+          msg := sprintf("Container %v CPU limit/request ratio %.2f exceeds maximum %.2f", [container.name, ratio, input.parameters.maxCpuRatio])
+        }
+
+        # Memory ratio violation
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          mem_request := to_bytes(container.resources.requests.memory)
+          mem_limit := to_bytes(container.resources.limits.memory)
+          ratio := mem_limit / mem_request
+          ratio > input.parameters.maxMemoryRatio
+          msg := sprintf("Container %v memory limit/request ratio %.2f exceeds maximum %.2f", [container.name, ratio, input.parameters.maxMemoryRatio])
+        }
+
+        # Convert CPU to millicores
+        to_millicores(cpu) = millicores {
+          endswith(cpu, "m")
+          millicores := to_number(trim_suffix(cpu, "m"))
+        }
+
+        to_millicores(cpu) = millicores {
+          not endswith(cpu, "m")
+          millicores := to_number(cpu) * 1000
+        }
+
+        # Convert memory to bytes
+        to_bytes(mem) = bytes {
+          endswith(mem, "Ki")
+          bytes := to_number(trim_suffix(mem, "Ki")) * 1024
+        }
+
+        to_bytes(mem) = bytes {
+          endswith(mem, "Mi")
+          bytes := to_number(trim_suffix(mem, "Mi")) * 1024 * 1024
+        }
+
+        to_bytes(mem) = bytes {
+          endswith(mem, "Gi")
+          bytes := to_number(trim_suffix(mem, "Gi")) * 1024 * 1024 * 1024
+        }
+
+        to_bytes(mem) = bytes {
+          not contains(mem, "i")
+          bytes := to_number(mem)
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.initContainers[_]
+        }
+
+---
+# Constraint: Enforce reasonable resource ratios
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sResourceRatios
+metadata:
+  name: resource-limit-ratios
+  annotations:
+    description: "Ensure resource limits are not excessively higher than requests"
+spec:
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+
+    excludedNamespaces:
+      - kube-system
+
+  parameters:
+    # Limit should not be more than 4x the request
+    maxCpuRatio: 4.0
+    maxMemoryRatio: 2.0
+
+---
+# Template: Enforce minimum resource requirements
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8sminresources
+  annotations:
+    description: "Enforces minimum resource requests and limits"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sMinResources
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            minCpuRequest:
+              type: string
+            minMemoryRequest:
+              type: string
+            minCpuLimit:
+              type: string
+            minMemoryLimit:
+              type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sminresources
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          cpu_request := to_millicores(container.resources.requests.cpu)
+          min_cpu := to_millicores(input.parameters.minCpuRequest)
+          cpu_request < min_cpu
+          msg := sprintf("Container %v CPU request %v is below minimum %v", [container.name, container.resources.requests.cpu, input.parameters.minCpuRequest])
+        }
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          mem_request := to_bytes(container.resources.requests.memory)
+          min_mem := to_bytes(input.parameters.minMemoryRequest)
+          mem_request < min_mem
+          msg := sprintf("Container %v memory request %v is below minimum %v", [container.name, container.resources.requests.memory, input.parameters.minMemoryRequest])
+        }
+
+        to_millicores(cpu) = millicores {
+          endswith(cpu, "m")
+          millicores := to_number(trim_suffix(cpu, "m"))
+        }
+
+        to_millicores(cpu) = millicores {
+          not endswith(cpu, "m")
+          millicores := to_number(cpu) * 1000
+        }
+
+        to_bytes(mem) = bytes {
+          endswith(mem, "Mi")
+          bytes := to_number(trim_suffix(mem, "Mi")) * 1024 * 1024
+        }
+
+        to_bytes(mem) = bytes {
+          endswith(mem, "Gi")
+          bytes := to_number(trim_suffix(mem, "Gi")) * 1024 * 1024 * 1024
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+---
+# Constraint: Minimum resources for production
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sMinResources
+metadata:
+  name: minimum-resources-production
+  annotations:
+    description: "Enforce minimum resource allocations in production"
+spec:
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet"]
+
+    namespaceSelector:
+      matchLabels:
+        environment: production
+
+  parameters:
+    minCpuRequest: "100m"
+    minMemoryRequest: "128Mi"
+    minCpuLimit: "200m"
+    minMemoryLimit: "256Mi"
+
+---
+# Template: Enforce maximum resource limits (prevent resource hogging)
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8smaxresources
+  annotations:
+    description: "Enforces maximum resource limits to prevent resource hogging"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sMaxResources
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            maxCpuLimit:
+              type: string
+            maxMemoryLimit:
+              type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8smaxresources
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          cpu_limit := to_millicores(container.resources.limits.cpu)
+          max_cpu := to_millicores(input.parameters.maxCpuLimit)
+          cpu_limit > max_cpu
+          msg := sprintf("Container %v CPU limit %v exceeds maximum %v", [container.name, container.resources.limits.cpu, input.parameters.maxCpuLimit])
+        }
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          mem_limit := to_bytes(container.resources.limits.memory)
+          max_mem := to_bytes(input.parameters.maxMemoryLimit)
+          mem_limit > max_mem
+          msg := sprintf("Container %v memory limit %v exceeds maximum %v", [container.name, container.resources.limits.memory, input.parameters.maxMemoryLimit])
+        }
+
+        to_millicores(cpu) = millicores {
+          endswith(cpu, "m")
+          millicores := to_number(trim_suffix(cpu, "m"))
+        }
+
+        to_millicores(cpu) = millicores {
+          not endswith(cpu, "m")
+          millicores := to_number(cpu) * 1000
+        }
+
+        to_bytes(mem) = bytes {
+          endswith(mem, "Mi")
+          bytes := to_number(trim_suffix(mem, "Mi")) * 1024 * 1024
+        }
+
+        to_bytes(mem) = bytes {
+          endswith(mem, "Gi")
+          bytes := to_number(trim_suffix(mem, "Gi")) * 1024 * 1024 * 1024
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+---
+# Constraint: Maximum resource limits
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sMaxResources
+metadata:
+  name: maximum-resources-limit
+  annotations:
+    description: "Prevent single containers from consuming excessive resources"
+spec:
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+
+    excludedNamespaces:
+      - kube-system
+
+  parameters:
+    maxCpuLimit: "4000m"      # 4 CPU cores
+    maxMemoryLimit: "16Gi"    # 16 GB RAM
+
+---
+# ConfigMap: Resource sizing guidelines
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: resource-guidelines
+  namespace: gatekeeper-system
+data:
+  guidelines.yaml: |
+    # Ghost Application Resource Guidelines
+
+    ## Resource Requirements by Component
+
+    ### Ghost Frontend (Node.js)
+    - CPU Request: 500m
+    - CPU Limit: 1000m
+    - Memory Request: 512Mi
+    - Memory Limit: 1Gi
+
+    ### Ghost Admin (Node.js)
+    - CPU Request: 250m
+    - CPU Limit: 500m
+    - Memory Request: 256Mi
+    - Memory Limit: 512Mi
+
+    ### MySQL Database
+    - CPU Request: 1000m
+    - CPU Limit: 2000m
+    - Memory Request: 2Gi
+    - Memory Limit: 4Gi
+
+    ### Redis Cache
+    - CPU Request: 250m
+    - CPU Limit: 500m
+    - Memory Request: 512Mi
+    - Memory Limit: 1Gi
+
+    ### Nginx Proxy
+    - CPU Request: 100m
+    - CPU Limit: 200m
+    - Memory Request: 64Mi
+    - Memory Limit: 128Mi
+
+    ## Resource Ratios
+
+    - CPU Limit should be 1.5x-2x the request
+    - Memory Limit should be 1.5x-2x the request
+    - Never exceed 4x ratio (enforced by policy)
+
+    ## Minimum Requirements
+
+    All containers must specify:
+    - CPU request >= 100m
+    - Memory request >= 128Mi
+    - CPU limit >= 200m
+    - Memory limit >= 256Mi
+
+    ## Maximum Limits
+
+    Single container limits:
+    - CPU limit <= 4 cores (4000m)
+    - Memory limit <= 16Gi
+
+    ## Best Practices
+
+    1. Set requests based on average usage
+    2. Set limits to 2x peak usage
+    3. Monitor actual usage with Prometheus
+    4. Adjust based on metrics
+    5. Use HPA for horizontal scaling
+
+    ## Testing Resource Limits
+
+    ```bash
+    # Check current usage
+    kubectl top pods -n ghost-production
+
+    # View resource requests/limits
+    kubectl describe pod <pod-name> -n ghost-production
+
+    # Check OPA violations
+    kubectl get k8srequiredresources
+    kubectl get k8sresourceratios
+    kubectl get k8sminresources
+    kubectl get k8smaxresources
+    ```

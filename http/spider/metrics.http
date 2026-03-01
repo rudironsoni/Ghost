@@ -1,0 +1,54 @@
+### Prometheus Metrics
+# Get Prometheus-formatted metrics
+GET {{BASE_URL}}/metrics HTTP/1.1
+Accept: text/plain
+
+###
+
+### Spider Execution Metrics
+# Get metrics for spider executions
+GET {{BASE_URL}}/api/spider/metrics HTTP/1.1
+Accept: application/json
+Authorization: Bearer {{API_KEY}}
+
+###
+
+### Request Rate Metrics
+# Get request rate and throughput metrics
+GET {{BASE_URL}}/api/spider/metrics/requests HTTP/1.1
+Accept: application/json
+Authorization: Bearer {{API_KEY}}
+
+###
+
+### Error Rate Metrics
+# Get error rate and failure statistics
+GET {{BASE_URL}}/api/spider/metrics/errors HTTP/1.1
+Accept: application/json
+Authorization: Bearer {{API_KEY}}
+
+###
+
+### Performance Metrics
+# Get performance and latency metrics
+GET {{BASE_URL}}/api/spider/metrics/performance HTTP/1.1
+Accept: application/json
+Authorization: Bearer {{API_KEY}}
+
+###
+
+### Queue Metrics
+# Get queue depth and processing metrics
+GET {{BASE_URL}}/api/spider/metrics/queue HTTP/1.1
+Accept: application/json
+Authorization: Bearer {{API_KEY}}
+
+###
+
+### Memory Usage Metrics
+# Get memory and resource usage metrics
+GET {{BASE_URL}}/api/spider/metrics/memory HTTP/1.1
+Accept: application/json
+Authorization: Bearer {{API_KEY}}
+
+###

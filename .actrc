@@ -1,0 +1,12 @@
+# Act configuration for Ghost
+# Use medium-sized image for faster startup
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+
+# Bind mount the repository
+--bind
+
+# Reuse containers for faster subsequent runs
+--reuse
+
+# Local .env file for secrets
+--env-file .env

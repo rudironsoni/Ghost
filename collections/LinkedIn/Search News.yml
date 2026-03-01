@@ -1,0 +1,59 @@
+info:
+  name: Search News
+  type: http
+  seq: 4
+  description: Search for news articles
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/linkedin/news/search"
+
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "query": "artificial intelligence",
+        "maxResults": 10
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("Response is array", function() {
+          expect(res.body).to.be.an("array");
+        });
+
+docs: |-
+  ## Search News
+
+  Search for news articles.
+
+  ### Request Body
+  | Field | Type | Description |
+  |-------|------|-------------|
+  | query | string | Search query |
+  | maxResults | integer | Maximum results |
+
+  ### Response Example (200 OK)
+  ```json
+  [
+    {
+      "id": "news-123",
+      "title": "AI Revolution in Tech Industry",
+      "content": "The latest developments in artificial intelligence are transforming...",
+      "summary": "New AI models show promising results in software development tasks",
+      "source": "TechNews Daily",
+      "url": "https://technews.com/ai-revolution",
+      "publishedAt": "2025-02-01T08:00:00Z",
+      "category": "Technology"
+    }
+  ]
+  ```

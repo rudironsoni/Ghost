@@ -1,0 +1,145 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghost-webapi
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost-webapi
+    app.kubernetes.io/component: service
+    app.kubernetes.io/part-of: ghost-platform
+    tier: backend
+  annotations:
+    description: "Ghost WebAPI ClusterIP service"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "5000"
+    prometheus.io/path: "/metrics"
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb" # For AWS NLB
+spec:
+  type: ClusterIP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800 # 3 hours
+
+  selector:
+    app.kubernetes.io/name: ghost-webapi
+    app.kubernetes.io/component: api
+
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: http
+  - name: metrics
+    protocol: TCP
+    port: 9090
+    targetPort: metrics
+
+  # IP Family Policy (for dual-stack support)
+  ipFamilyPolicy: PreferDualStack
+  ipFamilies:
+  - IPv4
+  - IPv6
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghost-webapi-headless
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost-webapi
+    app.kubernetes.io/component: service
+    app.kubernetes.io/part-of: ghost-platform
+    tier: backend
+    service-type: headless
+  annotations:
+    description: "Ghost WebAPI headless service for StatefulSet or direct pod access"
+spec:
+  type: ClusterIP
+  clusterIP: None # Headless service
+
+  selector:
+    app.kubernetes.io/name: ghost-webapi
+    app.kubernetes.io/component: api
+
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: http
+  - name: metrics
+    protocol: TCP
+    port: 9090
+    targetPort: metrics
+
+  publishNotReadyAddresses: true # Include not-ready pods in DNS
+---
+# Optional: LoadBalancer service for direct external access (cloud environments)
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: ghost-webapi-lb
+#   namespace: ghost
+#   labels:
+#     app.kubernetes.io/name: ghost-webapi
+#     app.kubernetes.io/component: service
+#     app.kubernetes.io/part-of: ghost-platform
+#     tier: backend
+#     service-type: loadbalancer
+#   annotations:
+#     description: "Ghost WebAPI LoadBalancer service for external access"
+#     service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+#     service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+#     service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+#     service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+#     service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:region:account-id:certificate/certificate-id"
+# spec:
+#   type: LoadBalancer
+#   externalTrafficPolicy: Local # Preserve client IP
+#   sessionAffinity: ClientIP
+#   sessionAffinityConfig:
+#     clientIP:
+#       timeoutSeconds: 10800
+#
+#   selector:
+#     app.kubernetes.io/name: ghost-webapi
+#     app.kubernetes.io/component: api
+#
+#   ports:
+#   - name: https
+#     protocol: TCP
+#     port: 443
+#     targetPort: http
+#   - name: http
+#     protocol: TCP
+#     port: 80
+#     targetPort: http
+---
+# Optional: NodePort service for testing or hybrid environments
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: ghost-webapi-nodeport
+#   namespace: ghost
+#   labels:
+#     app.kubernetes.io/name: ghost-webapi
+#     app.kubernetes.io/component: service
+#     app.kubernetes.io/part-of: ghost-platform
+#     tier: backend
+#     service-type: nodeport
+#   annotations:
+#     description: "Ghost WebAPI NodePort service for testing"
+# spec:
+#   type: NodePort
+#
+#   selector:
+#     app.kubernetes.io/name: ghost-webapi
+#     app.kubernetes.io/component: api
+#
+#   ports:
+#   - name: http
+#     protocol: TCP
+#     port: 80
+#     targetPort: http
+#     nodePort: 30080 # Optional: specific node port

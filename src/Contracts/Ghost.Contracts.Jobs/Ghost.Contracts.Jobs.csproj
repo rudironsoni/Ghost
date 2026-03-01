@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ghost.Contracts.Jobs</RootNamespace>
+    <Description>Ghost jobs platform contracts</Description>
+  </PropertyGroup>
+</Project>

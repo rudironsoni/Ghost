@@ -1,0 +1,185 @@
+using System.Diagnostics;
+using Ghost.Cloud.Api.Middleware;
+using Ghost.Cloud.Api.Observability;
+using Ghost.Cloud.Contracts.Delivery;
+using Ghost.Cloud.Contracts.Endpoints;
+using Ghost.Cloud.Contracts.Runs;
+using Ghost.Cloud.Grains.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Ghost.Cloud.Api.Endpoints;
+
+public static class ScrapeEndpoints
+{
+    public static IEndpointRouteBuilder MapScrapeEndpoints(this IEndpointRouteBuilder app)
+    {
+        RouteGroupBuilder api = app.MapGroup("/v1/endpoints")
+            .WithTags("Scrape Endpoints")
+            .WithOpenApi();
+
+        api.MapPost("/{endpointId}:trigger", async (
+            string endpointId,
+            [FromBody] TriggerScrapeRequest request,
+            [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey,
+            [FromServices] IClusterClient clusterClient,
+            [FromServices] IEndpointValidator validator,
+            HttpContext context,
+            CancellationToken ct) =>
+        {
+            using Activity? activity = CloudApiTelemetry.ActivitySource.StartActivity("CloudApi.Endpoint.TriggerAsync");
+            activity?.SetTag("ghost.endpoint.id", endpointId);
+            activity?.SetTag("ghost.mode", "async");
+            CloudApiTelemetry.RecordRunTriggerRequest("async");
+
+            if (!context.TryGetTenantId(out Guid? tenantId))
+            {
+                CloudApiTelemetry.RecordRunTriggerFailure("TENANT_REQUIRED", "async");
+                activity?.SetStatus(ActivityStatusCode.Error, "Tenant ID is required.");
+                return Results.BadRequest(new { Error = "Tenant ID is required." });
+            }
+            Guid resolvedTenantId = tenantId ?? throw new InvalidOperationException("Tenant ID resolution failed.");
+            activity?.SetTag("ghost.tenant.id", resolvedTenantId);
+
+            IEndpointGrain endpointGrain = clusterClient.GetGrain<IEndpointGrain>(endpointId);
+
+            EndpointManifest manifest;
+            try
+            {
+                manifest = await endpointGrain.GetManifestAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                CloudApiTelemetry.RecordRunTriggerFailure("ENDPOINT_NOT_FOUND", "async");
+                activity?.SetStatus(ActivityStatusCode.Error, "Endpoint not found.");
+                return Results.NotFound(new { Error = "Endpoint not found" });
+            }
+
+            // Validate input against schema
+            if (!await validator.ValidateAsync(manifest.InputSchema, request.Input).ConfigureAwait(false))
+            {
+                CloudApiTelemetry.RecordRunTriggerFailure("INPUT_VALIDATION_FAILED", "async");
+                activity?.SetStatus(ActivityStatusCode.Error, "Input validation failed.");
+                return Results.BadRequest(new { Error = "Input validation failed" });
+            }
+
+            string runId = GenerateRunId(idempotencyKey);
+            activity?.SetTag("ghost.run.id", runId);
+
+            IScrapeRunGrain runGrain = clusterClient.GetGrain<IScrapeRunGrain>(runId);
+            ScrapeRunStatus status = await runGrain.TriggerAsync(new ScrapeRunRequest
+            {
+                EndpointId = endpointId,
+                Input = request.Input,
+                Delivery = request.Delivery,
+                IdempotencyKey = idempotencyKey,
+                RequestedMode = "async",
+                TenantId = resolvedTenantId
+            }).ConfigureAwait(false);
+
+            if (status.Status == "Failed")
+            {
+                CloudApiTelemetry.RecordRunTriggerFailure(status.ErrorCode ?? "RUN_FAILED", "async");
+                activity?.SetStatus(ActivityStatusCode.Error, status.ErrorMessage);
+                return Results.BadRequest(new { Error = status.ErrorMessage, ErrorCode = status.ErrorCode });
+            }
+
+            activity?.SetStatus(ActivityStatusCode.Ok);
+
+            return Results.Accepted($"/v1/runs/{runId}", new TriggerScrapeResponse
+            {
+                RunId = runId,
+                Status = status.Status,
+                ResultSinkUri = BuildResultUri(request.Delivery),
+                EstimatedCompletion = DateTimeOffset.UtcNow.AddMinutes(5)
+            });
+        });
+
+        api.MapPost("/{endpointId}:scrape", async (
+            string endpointId,
+            [FromBody] TriggerScrapeRequest request,
+            [FromServices] IClusterClient clusterClient,
+            [FromServices] IEndpointValidator validator,
+            HttpContext context,
+            CancellationToken ct) =>
+        {
+            using Activity? activity = CloudApiTelemetry.ActivitySource.StartActivity("CloudApi.Endpoint.ScrapeSync");
+            activity?.SetTag("ghost.endpoint.id", endpointId);
+            activity?.SetTag("ghost.mode", "sync");
+            CloudApiTelemetry.RecordRunTriggerRequest("sync");
+
+            if (!context.TryGetTenantId(out Guid? tenantId))
+            {
+                CloudApiTelemetry.RecordRunTriggerFailure("TENANT_REQUIRED", "sync");
+                activity?.SetStatus(ActivityStatusCode.Error, "Tenant ID is required.");
+                return Results.BadRequest(new { Error = "Tenant ID is required." });
+            }
+            Guid resolvedTenantId = tenantId ?? throw new InvalidOperationException("Tenant ID resolution failed.");
+            activity?.SetTag("ghost.tenant.id", resolvedTenantId);
+
+            IEndpointGrain endpointGrain = clusterClient.GetGrain<IEndpointGrain>(endpointId);
+
+            EndpointManifest manifest;
+            try
+            {
+                manifest = await endpointGrain.GetManifestAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                CloudApiTelemetry.RecordRunTriggerFailure("ENDPOINT_NOT_FOUND", "sync");
+                activity?.SetStatus(ActivityStatusCode.Error, "Endpoint not found.");
+                return Results.NotFound(new { Error = "Endpoint not found" });
+            }
+
+            // Validate input against schema
+            if (!await validator.ValidateAsync(manifest.InputSchema, request.Input).ConfigureAwait(false))
+            {
+                CloudApiTelemetry.RecordRunTriggerFailure("INPUT_VALIDATION_FAILED", "sync");
+                activity?.SetStatus(ActivityStatusCode.Error, "Input validation failed.");
+                return Results.BadRequest(new { Error = "Input validation failed" });
+            }
+
+            string runId = GenerateRunId(null);
+            activity?.SetTag("ghost.run.id", runId);
+            IScrapeRunGrain runGrain = clusterClient.GetGrain<IScrapeRunGrain>(runId);
+
+            ScrapeRunStatus status = await runGrain.TriggerAsync(new ScrapeRunRequest
+            {
+                EndpointId = endpointId,
+                Input = request.Input,
+                RequestedMode = "sync",
+                TenantId = resolvedTenantId
+            }).ConfigureAwait(false);
+
+            if (status.Status == "Failed")
+            {
+                CloudApiTelemetry.RecordRunTriggerFailure(status.ErrorCode ?? "RUN_FAILED", "sync");
+                activity?.SetStatus(ActivityStatusCode.Error, status.ErrorMessage);
+                return Results.BadRequest(new { Error = status.ErrorMessage, ErrorCode = status.ErrorCode });
+            }
+
+            activity?.SetStatus(ActivityStatusCode.Ok);
+
+            return Results.Accepted($"/v1/runs/{runId}", new TriggerScrapeResponse
+            {
+                RunId = runId,
+                Status = status.Status
+            });
+        });
+
+        return app;
+    }
+
+    private static string GenerateRunId(string? idempotencyKey) =>
+        idempotencyKey != null
+            ? Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(idempotencyKey)))[..22]
+            : Guid.NewGuid().ToString("N");
+
+    private static string? BuildResultUri(DeliveryConfig? config) =>
+        config?.ResultSink?.Type switch
+        {
+            "s3" => $"s3://{config.ResultSink.Uri}",
+            "gcs" => $"gs://{config.ResultSink.Uri}",
+            "azure" => $"azure://{config.ResultSink.Uri}",
+            _ => null
+        };
+}

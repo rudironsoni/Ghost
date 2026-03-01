@@ -1,0 +1,53 @@
+{
+  "mcpServers": {
+    "serena": {
+      "description": "Semantic code analysis and editing toolkit",
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "ide",
+        "--project",
+        "."
+      ],
+      "env": {}
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "YOUR_API_KEY"
+      }
+    },
+    "microsoftdocs-mcp": {
+      "description": "Microsoft Learn documentation MCP",
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp"
+    },
+    "mcp-windbg": {
+      "description": "WinDbg crash and dump analysis MCP",
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/svnscha/mcp-windbg@v0.12.2",
+        "mcp-windbg"
+      ],
+      "env": {}
+    },
+    "deepwiki": {
+      "description": "DeepWiki MCP for documentation access",
+      "type": "http",
+      "url": "https://mcp.deepwiki.com/mcp"
+    },
+    "github": {
+      "description": "GitHub MCP for repository operations, PRs, and issues",
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/"
+    }
+  }
+}

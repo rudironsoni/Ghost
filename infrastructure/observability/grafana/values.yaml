@@ -1,0 +1,347 @@
+# Grafana Helm Values for Ghost Enterprise Observability
+# Chart: grafana/grafana
+
+nameOverride: ghost-grafana
+fullnameOverride: ghost-grafana
+
+## Grafana deployment configuration
+replicas: 2
+
+## Image configuration
+image:
+  repository: grafana/grafana
+  tag: 10.3.3
+  pullPolicy: IfNotPresent
+
+## Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3000"
+
+## Ingress configuration
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  hosts:
+    - grafana.ghost.example.com
+  tls:
+    - secretName: grafana-tls
+      hosts:
+        - grafana.ghost.example.com
+
+## Resources
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+## Persistence
+persistence:
+  enabled: true
+  storageClassName: fast-ssd
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+
+## Admin credentials (use secret in production)
+adminUser: admin
+# adminPassword: <set-via-secret>
+admin:
+  existingSecret: grafana-admin-credentials
+  userKey: admin-user
+  passwordKey: admin-password
+
+## Grafana configuration
+grafana.ini:
+  server:
+    root_url: https://grafana.ghost.example.com
+    serve_from_sub_path: false
+
+  database:
+    type: postgres
+    host: postgres.production.svc.cluster.local:5432
+    name: grafana
+    user: grafana
+    password: $__file{/etc/secrets/db-password}
+    ssl_mode: require
+
+  security:
+    admin_user: admin
+    admin_password: $__file{/etc/secrets/admin-password}
+    secret_key: $__file{/etc/secrets/secret-key}
+    disable_gravatar: true
+    cookie_secure: true
+    cookie_samesite: strict
+    strict_transport_security: true
+
+  auth:
+    disable_login_form: false
+    oauth_auto_login: false
+
+  auth.anonymous:
+    enabled: false
+
+  # LDAP/SSO integration
+  # auth.ldap:
+  #   enabled: true
+  #   config_file: /etc/grafana/ldap.toml
+
+  # auth.generic_oauth:
+  #   enabled: true
+  #   name: OAuth
+  #   allow_sign_up: true
+  #   client_id: $__file{/etc/secrets/oauth-client-id}
+  #   client_secret: $__file{/etc/secrets/oauth-client-secret}
+  #   scopes: openid profile email
+  #   auth_url: https://oauth.example.com/authorize
+  #   token_url: https://oauth.example.com/token
+  #   api_url: https://oauth.example.com/userinfo
+
+  users:
+    allow_sign_up: false
+    auto_assign_org: true
+    auto_assign_org_role: Viewer
+
+  log:
+    mode: console
+    level: info
+
+  metrics:
+    enabled: true
+    basic_auth_username: prometheus
+    basic_auth_password: $__file{/etc/secrets/metrics-password}
+
+  alerting:
+    enabled: true
+    execute_alerts: true
+
+  unified_alerting:
+    enabled: true
+
+  feature_toggles:
+    enable: publicDashboards
+
+## Datasources
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      access: proxy
+      url: http://ghost-prometheus.monitoring.svc.cluster.local:9090
+      isDefault: true
+      jsonData:
+        timeInterval: 30s
+        httpMethod: POST
+        queryTimeout: 300s
+        incrementalQuerying: true
+        incrementalQueryOverlapWindow: 10m
+        disableRecordingRules: false
+        customQueryParameters: ""
+      editable: false
+
+    - name: Loki
+      type: loki
+      access: proxy
+      url: http://ghost-loki.monitoring.svc.cluster.local:3100
+      jsonData:
+        maxLines: 1000
+        derivedFields:
+          - datasourceUid: tempo
+            matcherRegex: "traceID=(\\w+)"
+            name: TraceID
+            url: "$${__value.raw}"
+      editable: false
+
+    # - name: Tempo
+    #   type: tempo
+    #   access: proxy
+    #   url: http://ghost-tempo.monitoring.svc.cluster.local:3100
+    #   jsonData:
+    #     httpMethod: GET
+    #     tracesToLogs:
+    #       datasourceUid: loki
+    #       filterByTraceID: true
+    #       filterBySpanID: true
+    #       tags: ['job', 'instance', 'pod', 'namespace']
+    #   editable: false
+
+    - name: PostgreSQL
+      type: postgres
+      access: proxy
+      url: postgres.production.svc.cluster.local:5432
+      database: ghost
+      user: grafana_readonly
+      secureJsonData:
+        password: $__file{/etc/secrets/postgres-password}
+      jsonData:
+        sslmode: require
+        postgresVersion: 1400
+        timescaledb: false
+      editable: false
+
+## Dashboard providers
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+    - name: 'default'
+      orgId: 1
+      folder: 'Ghost'
+      type: file
+      disableDeletion: false
+      updateIntervalSeconds: 30
+      allowUiUpdates: true
+      options:
+        path: /var/lib/grafana/dashboards/default
+
+    - name: 'infrastructure'
+      orgId: 1
+      folder: 'Infrastructure'
+      type: file
+      disableDeletion: false
+      updateIntervalSeconds: 30
+      allowUiUpdates: true
+      options:
+        path: /var/lib/grafana/dashboards/infrastructure
+
+    - name: 'application'
+      orgId: 1
+      folder: 'Application'
+      type: file
+      disableDeletion: false
+      updateIntervalSeconds: 30
+      allowUiUpdates: true
+      options:
+        path: /var/lib/grafana/dashboards/application
+
+## Dashboard ConfigMaps
+dashboardsConfigMaps:
+  infrastructure: grafana-dashboards-infrastructure
+  application: grafana-dashboards-application
+  database: grafana-dashboards-database
+
+## Plugins to install
+plugins:
+  - grafana-piechart-panel
+  - grafana-clock-panel
+  - grafana-simple-json-datasource
+  - redis-datasource
+  - grafana-polystat-panel
+  - grafana-worldmap-panel
+
+## SMTP configuration for alerting
+smtp:
+  enabled: true
+  host: smtp.example.com:587
+  user: grafana@example.com
+  password: $__file{/etc/secrets/smtp-password}
+  fromAddress: grafana@example.com
+  fromName: Ghost Grafana
+  startTLSPolicy: MandatoryStartTLS
+
+## Extra secrets to mount
+extraSecretMounts:
+  - name: grafana-secrets
+    secretName: grafana-secrets
+    defaultMode: 0440
+    mountPath: /etc/secrets
+    readOnly: true
+
+## Environment variables
+env:
+  GF_INSTALL_PLUGINS: ""
+  GF_PATHS_PLUGINS: /var/lib/grafana/plugins
+  GF_RENDERING_SERVER_URL: http://grafana-image-renderer.monitoring.svc.cluster.local:8081/render
+  GF_RENDERING_CALLBACK_URL: http://ghost-grafana.monitoring.svc.cluster.local/
+  GF_LOG_FILTERS: rendering:debug
+
+## Sidecar for dashboard auto-discovery
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    labelValue: "1"
+    folder: /tmp/dashboards
+    defaultFolderName: null
+    searchNamespace: ALL
+    provider:
+      allowUiUpdates: true
+      foldersFromFilesStructure: true
+
+  datasources:
+    enabled: true
+    label: grafana_datasource
+    labelValue: "1"
+    searchNamespace: ALL
+
+## Affinity rules for high availability
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchExpressions:
+        - key: app.kubernetes.io/name
+          operator: In
+          values:
+          - grafana
+      topologyKey: kubernetes.io/hostname
+
+## Service account
+serviceAccount:
+  create: true
+  name: grafana
+  annotations: {}
+
+## RBAC
+rbac:
+  create: true
+  pspEnabled: false
+  namespaced: false
+
+## Network policy
+networkPolicy:
+  enabled: true
+  ingress: true
+  egress:
+    enabled: true
+    ports:
+      - port: 53
+        protocol: UDP
+      - port: 53
+        protocol: TCP
+      - port: 443
+        protocol: TCP
+      - port: 9090
+        protocol: TCP
+      - port: 3100
+        protocol: TCP
+
+## Image renderer (for PDF/PNG exports)
+imageRenderer:
+  enabled: true
+  replicas: 1
+  image:
+    repository: grafana/grafana-image-renderer
+    tag: latest
+  service:
+    port: 8081
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

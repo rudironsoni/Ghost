@@ -1,0 +1,520 @@
+# OPA Gatekeeper Constraint: Block Privileged Containers
+# Enforces Pod Security Standards to prevent privileged container execution
+
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPSPPrivilegedContainer
+metadata:
+  name: block-privileged-containers
+  annotations:
+    description: "Block creation of privileged containers in Ghost environments"
+spec:
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+
+    # Allow privileged containers only in system namespaces
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPSPHostNamespace
+metadata:
+  name: block-host-namespaces
+  annotations:
+    description: "Block use of host PID, IPC, and network namespaces"
+spec:
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+
+    excludedNamespaces:
+      - kube-system
+
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPSPReadOnlyRootFilesystem
+metadata:
+  name: require-readonly-root-filesystem
+  annotations:
+    description: "Require containers to use read-only root filesystem"
+spec:
+  enforcementAction: warn  # Warn initially, can be changed to deny
+
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet"]
+
+    namespaceSelector:
+      matchLabels:
+        environment: production
+
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPSPAllowPrivilegeEscalationContainer
+metadata:
+  name: block-privilege-escalation
+  annotations:
+    description: "Prevent containers from escalating privileges"
+spec:
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+
+    excludedNamespaces:
+      - kube-system
+
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPSPRunAsNonRoot
+metadata:
+  name: require-run-as-nonroot
+  annotations:
+    description: "Require containers to run as non-root user"
+spec:
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPSPHostFilesystem
+metadata:
+  name: block-host-filesystem
+  annotations:
+    description: "Block mounting host filesystem paths"
+spec:
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+
+    excludedNamespaces:
+      - kube-system
+
+  parameters:
+    # Empty list means no host paths are allowed
+    allowedHostPaths: []
+
+---
+# Template: Block dangerous capabilities
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8spspcapabilities
+  annotations:
+    description: "Controls Linux capabilities that can be added to containers"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPCapabilities
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            allowedCapabilities:
+              type: array
+              items:
+                type: string
+            requiredDropCapabilities:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spspcapabilities
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          has_disallowed_capabilities(container)
+          msg := sprintf("Container %v has disallowed capabilities", [container.name])
+        }
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          missing_drop_capabilities(container)
+          msg := sprintf("Container %v must drop all capabilities and add only those required", [container.name])
+        }
+
+        has_disallowed_capabilities(container) {
+          allowed := {c | c := input.parameters.allowedCapabilities[_]}
+          added := {c | c := container.securityContext.capabilities.add[_]}
+          disallowed := added - allowed
+          count(disallowed) > 0
+        }
+
+        missing_drop_capabilities(container) {
+          required := {c | c := input.parameters.requiredDropCapabilities[_]}
+          provided := {c | c := container.securityContext.capabilities.drop[_]}
+          missing := required - provided
+          count(missing) > 0
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.initContainers[_]
+        }
+
+---
+# Constraint: Restrict capabilities
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPSPCapabilities
+metadata:
+  name: restrict-capabilities
+  annotations:
+    description: "Drop all capabilities and allow only specific ones"
+spec:
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+
+    excludedNamespaces:
+      - kube-system
+
+  parameters:
+    # Only these capabilities can be added
+    allowedCapabilities:
+      - "NET_BIND_SERVICE"  # Bind to ports < 1024
+      - "CHOWN"             # Change file ownership
+      - "SETGID"            # Set GID
+      - "SETUID"            # Set UID
+
+    # These capabilities MUST be dropped
+    requiredDropCapabilities:
+      - "ALL"
+
+---
+# Template: Block host ports
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8spsphostports
+  annotations:
+    description: "Blocks use of host ports in containers"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPHostPorts
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            allowedHostPorts:
+              type: array
+              items:
+                type: object
+                properties:
+                  min:
+                    type: integer
+                  max:
+                    type: integer
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spsphostports
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          port := container.ports[_]
+          hostPort := port.hostPort
+          hostPort > 0
+          not is_allowed_port(hostPort)
+          msg := sprintf("Container %v uses disallowed hostPort %v", [container.name, hostPort])
+        }
+
+        is_allowed_port(port) {
+          range := input.parameters.allowedHostPorts[_]
+          port >= range.min
+          port <= range.max
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+---
+# Constraint: Block host ports
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPSPHostPorts
+metadata:
+  name: block-host-ports
+  annotations:
+    description: "Prevent containers from binding to host ports"
+spec:
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+
+    excludedNamespaces:
+      - kube-system
+      - ingress-nginx
+
+  parameters:
+    # Empty list means no host ports are allowed
+    allowedHostPorts: []
+
+---
+# Template: Enforce seccomp profile
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8spspseccomp
+  annotations:
+    description: "Requires seccomp profile to be set"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPSeccomp
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            allowedProfiles:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spspseccomp
+
+        violation[{"msg": msg}] {
+          not input_seccomp_allowed
+          msg := "Seccomp profile is not set or not allowed"
+        }
+
+        input_seccomp_allowed {
+          profile := input.review.object.spec.securityContext.seccompProfile.type
+          profile == input.parameters.allowedProfiles[_]
+        }
+
+        input_seccomp_allowed {
+          container := input_containers[_]
+          profile := container.securityContext.seccompProfile.type
+          profile == input.parameters.allowedProfiles[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+---
+# Constraint: Require seccomp profile
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPSPSeccomp
+metadata:
+  name: require-seccomp-profile
+  annotations:
+    description: "Require RuntimeDefault or Localhost seccomp profile"
+spec:
+  enforcementAction: warn  # Start with warn, move to deny after validation
+
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet"]
+
+    namespaceSelector:
+      matchLabels:
+        environment: production
+
+  parameters:
+    allowedProfiles:
+      - "RuntimeDefault"
+      - "Localhost"
+
+---
+# ConfigMap: Security context best practices
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-context-guide
+  namespace: gatekeeper-system
+data:
+  best-practices.yaml: |
+    # Ghost Application Security Context Best Practices
+
+    ## Recommended Security Context for Ghost Pods
+
+    ```yaml
+    securityContext:
+      # Pod-level settings
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      fsGroupChangePolicy: "OnRootMismatch"
+      seccompProfile:
+        type: RuntimeDefault
+
+      # Container-level settings
+      containers:
+      - name: ghost
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - NET_BIND_SERVICE  # Only if binding to port < 1024
+          seccompProfile:
+            type: RuntimeDefault
+
+        # Use tmpfs for writable directories
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /var/cache/ghost
+
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+    ```
+
+    ## Security Policies Enforced
+
+    1. **No Privileged Containers**
+       - privileged: false (enforced)
+
+    2. **No Host Namespaces**
+       - hostPID: false (enforced)
+       - hostIPC: false (enforced)
+       - hostNetwork: false (enforced)
+
+    3. **No Host Ports**
+       - Do not use hostPort
+       - Use Services and Ingress instead
+
+    4. **No Host Path Volumes**
+       - Do not mount host filesystem
+       - Use PVCs, ConfigMaps, Secrets, or emptyDir
+
+    5. **Run as Non-Root**
+       - runAsNonRoot: true (enforced)
+       - runAsUser: >= 1000 (recommended)
+
+    6. **Read-Only Root Filesystem**
+       - readOnlyRootFilesystem: true (recommended)
+       - Use volumes for writable directories
+
+    7. **Drop All Capabilities**
+       - capabilities.drop: [ALL] (enforced)
+       - Only add required capabilities
+
+    8. **No Privilege Escalation**
+       - allowPrivilegeEscalation: false (enforced)
+
+    9. **Seccomp Profile**
+       - Use RuntimeDefault or Localhost profile
+
+    ## Exceptions
+
+    System namespaces are excluded from some policies:
+    - kube-system: System components may need elevated privileges
+    - kube-public: Public cluster information
+    - ingress-nginx: Ingress controller may bind to host ports
+
+    ## Testing Security Context
+
+    ```bash
+    # View pod security context
+    kubectl get pod <pod-name> -n ghost-production -o jsonpath='{.spec.securityContext}' | jq
+
+    # Check for violations
+    kubectl get constraints
+
+    # Describe a violation
+    kubectl describe k8spspprivilegedcontainer block-privileged-containers
+    ```
+
+    ## Common Issues and Solutions
+
+    ### Issue: Ghost needs to write files
+    **Solution**: Use read-only root filesystem with volumes
+    ```yaml
+    securityContext:
+      readOnlyRootFilesystem: true
+    volumeMounts:
+    - name: content
+      mountPath: /var/lib/ghost/content
+    ```
+
+    ### Issue: Running on port 80/443
+    **Solution**: Add NET_BIND_SERVICE capability OR run on port > 1024
+    ```yaml
+    # Option 1: Add capability
+    capabilities:
+      add: ["NET_BIND_SERVICE"]
+
+    # Option 2: Use high port (recommended)
+    containerPort: 2368
+    service:
+      port: 80
+      targetPort: 2368
+    ```
+
+    ### Issue: File permissions on mounted volumes
+    **Solution**: Set fsGroup
+    ```yaml
+    securityContext:
+      fsGroup: 1000
+      fsGroupChangePolicy: "OnRootMismatch"
+    ```

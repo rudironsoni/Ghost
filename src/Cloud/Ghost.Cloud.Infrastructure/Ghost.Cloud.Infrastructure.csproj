@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Ghost.Cloud.Infrastructure</RootNamespace>
+    <Description>Ghost Cloud infrastructure layer for persistence and event storage</Description>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Microsoft.Orleans.Sdk" />
+    <PackageReference Include="Microsoft.Orleans.EventSourcing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Ghost.Cloud.Contracts/Ghost.Cloud.Contracts.csproj" />
+  </ItemGroup>
+</Project>

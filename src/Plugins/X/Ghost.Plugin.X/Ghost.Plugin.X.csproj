@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Ghost.Plugin.X</RootNamespace>
+    <Description>Ghost X plugin</Description>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Platform\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
+    <ProjectReference Include="..\..\..\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Contracts\Ghost.Contracts.Social\Ghost.Contracts.Social.csproj" />
+    <ProjectReference Include="..\..\..\Contracts\Ghost.Contracts.Simulation\Ghost.Contracts.Simulation.csproj" />
+  </ItemGroup>
+</Project>

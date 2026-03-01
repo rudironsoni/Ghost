@@ -1,0 +1,261 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ghost
+  labels:
+    app: ghost
+    component: scraping
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ghost-worker-config
+  namespace: ghost
+data:
+  REDIS_HOST: "redis-service.ghost.svc.cluster.local"
+  REDIS_PORT: "6379"
+  LOG_LEVEL: "Information"
+  MAX_CONCURRENT_SESSIONS: "5"
+  SESSION_TIMEOUT_SECONDS: "300"
+  WORKER_HEALTH_CHECK_INTERVAL_SECONDS: "30"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ghost-worker-secrets
+  namespace: ghost
+type: Opaque
+stringData:
+  # Replace with actual values in production
+  REDIS_PASSWORD: "your-redis-password-here"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ghost-worker
+  namespace: ghost
+  labels:
+    app: ghost
+    component: worker
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ghost
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: ghost
+        component: worker
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: ghost-worker
+        image: ghost-worker:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: ghost-worker-config
+              key: REDIS_HOST
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: ghost-worker-config
+              key: REDIS_PORT
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ghost-worker-secrets
+              key: REDIS_PASSWORD
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: ghost-worker-config
+              key: LOG_LEVEL
+        - name: MAX_CONCURRENT_SESSIONS
+          valueFrom:
+            configMapKeyRef:
+              name: ghost-worker-config
+              key: MAX_CONCURRENT_SESSIONS
+        - name: SESSION_TIMEOUT_SECONDS
+          valueFrom:
+            configMapKeyRef:
+              name: ghost-worker-config
+              key: SESSION_TIMEOUT_SECONDS
+        - name: WORKER_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        ports:
+        - name: metrics
+          containerPort: 8080
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: browser-cache
+          mountPath: /app/browser-data
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: browser-cache
+        emptyDir:
+          sizeLimit: 5Gi
+      - name: tmp
+        emptyDir:
+          sizeLimit: 1Gi
+      # Security context for running Playwright in container
+      securityContext:
+        runAsNonRoot: false
+        runAsUser: 0
+      # Node affinity for better resource distribution
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - ghost
+                - key: component
+                  operator: In
+                  values:
+                  - worker
+              topologyKey: kubernetes.io/hostname
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghost-worker-service
+  namespace: ghost
+  labels:
+    app: ghost
+    component: worker
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: ghost
+    component: worker
+
+---
+# Redis deployment for job queue (simple single-instance for now)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: ghost
+  labels:
+    app: ghost
+    component: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ghost
+      component: redis
+  template:
+    metadata:
+      labels:
+        app: ghost
+        component: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        args:
+        - redis-server
+        - --requirepass
+        - $(REDIS_PASSWORD)
+        - --appendonly
+        - "yes"
+        - --maxmemory
+        - "2gb"
+        - --maxmemory-policy
+        - allkeys-lru
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ghost-worker-secrets
+              key: REDIS_PASSWORD
+        ports:
+        - name: redis
+          containerPort: 6379
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+      volumes:
+      - name: redis-data
+        emptyDir:
+          sizeLimit: 10Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: ghost
+  labels:
+    app: ghost
+    component: redis
+spec:
+  type: ClusterIP
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: 6379
+    protocol: TCP
+  selector:
+    app: ghost
+    component: redis

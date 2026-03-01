@@ -1,0 +1,57 @@
+info:
+  name: Get Social Profile
+  type: http
+  seq: 3
+  description: Get LinkedIn social profile by ID
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/linkedin/social/profile/{{profileId}}"
+
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200 or 404", function() {
+          expect(res.status).to.be.oneOf([200, 404]);
+        });
+
+docs: |-
+  ## Get Social Profile
+
+  Get LinkedIn social profile by ID.
+
+  ### Path Parameters
+  - `profileId` - Profile ID (e.g., "john-doe")
+
+  ### Response Example (200 OK)
+  ```json
+  {
+    "id": "john-doe",
+    "name": "John Doe",
+    "username": "johndoe",
+    "bio": "Software Engineer at TechCorp",
+    "followersCount": 1500,
+    "followingCount": 500,
+    "createdAt": "2015-01-15T00:00:00Z",
+    "experience": [
+      {
+        "title": "Senior Software Engineer",
+        "company": "TechCorp Inc.",
+        "startDate": "2020-01-01",
+        "endDate": null,
+        "isCurrent": true
+      }
+    ],
+    "education": [
+      {
+        "institution": "Stanford University",
+        "degree": "B.S. Computer Science",
+        "fieldOfStudy": "Computer Science",
+        "startDate": "2010-09-01",
+        "endDate": "2014-06-01"
+      }
+    ]
+  }
+  ```

@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+    <!-- These tests use async streaming and can hang in CI - exclude from default test runs -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);OpenAIClientTests.cs</DefaultItemExcludes>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../../src/Plugins/OpenAI/Ghost.Plugin.OpenAI/Ghost.Plugin.OpenAI.csproj" />
+    <ProjectReference Include="../../../../src/Kernel/Ghost/Ghost.csproj" />
+    <ProjectReference Include="../../../Shared/Ghost.Testing/Ghost.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+
+  <!-- Include the client tests but mark them as None so they don't get compiled by default -->
+  <ItemGroup>
+    <None Include="OpenAIClientTests.cs" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,230 @@
+# OPA Gatekeeper Constraint: Allowed Container Registries
+# Enforces that all container images come from approved registries
+
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sAllowedRepos
+metadata:
+  name: allowed-container-registries
+  annotations:
+    description: "Enforce approved container registries for Ghost application"
+spec:
+  # Enforcement action: deny, dryrun, or warn
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet", "ReplicaSet"]
+      - apiGroups: ["batch"]
+        kinds: ["Job", "CronJob"]
+
+    # Apply to all namespaces except system namespaces
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+      - kube-node-lease
+      - gatekeeper-system
+      - cert-manager
+      - ingress-nginx
+
+  parameters:
+    # Allowed container registries
+    repos:
+      # Production registry (ECR)
+      - "123456789012.dkr.ecr.us-east-1.amazonaws.com/ghost"
+      - "123456789012.dkr.ecr.us-east-1.amazonaws.com/ghost-admin"
+
+      # Docker Hub official images (verified)
+      - "docker.io/library/"
+      - "docker.io/ghost:"
+
+      # GitHub Container Registry (for CI/CD)
+      - "ghcr.io/tryghost/"
+      - "ghcr.io/YOUR_ORG/"
+
+      # Google Container Registry (if using GCP)
+      - "gcr.io/ghost-project/"
+
+      # HashiCorp official images
+      - "docker.io/hashicorp/vault:"
+      - "docker.io/hashicorp/consul:"
+
+      # Monitoring and observability
+      - "docker.io/grafana/grafana:"
+      - "docker.io/prom/prometheus:"
+      - "docker.io/prom/node-exporter:"
+      - "quay.io/prometheus/"
+
+      # Security scanning
+      - "docker.io/aquasec/trivy:"
+      - "ghcr.io/aquasecurity/trivy:"
+
+      # Database images (official)
+      - "docker.io/library/mysql:"
+      - "docker.io/library/redis:"
+      - "docker.io/library/postgres:"
+
+      # Message queue
+      - "docker.io/library/rabbitmq:"
+      - "docker.io/confluentinc/cp-kafka:"
+
+      # Nginx and proxy
+      - "docker.io/library/nginx:"
+      - "docker.io/nginxinc/nginx-unprivileged:"
+
+      # Certificate management
+      - "quay.io/jetstack/cert-manager-controller:"
+      - "quay.io/jetstack/cert-manager-webhook:"
+      - "quay.io/jetstack/cert-manager-cainjector:"
+
+---
+# Dry-run mode for testing (warn only)
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sAllowedRepos
+metadata:
+  name: allowed-repos-staging
+  annotations:
+    description: "Staging environment - warn on unapproved registries"
+spec:
+  enforcementAction: warn  # Only warn, don't block
+
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+
+    namespaceSelector:
+      matchLabels:
+        environment: staging
+
+  parameters:
+    repos:
+      - "123456789012.dkr.ecr.us-east-1.amazonaws.com/"
+      - "docker.io/"
+      - "ghcr.io/"
+      - "gcr.io/"
+      - "quay.io/"
+
+---
+# Additional Configuration: Require image tags (no :latest)
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8sblocklatestimages
+  annotations:
+    description: "Blocks use of :latest tag in container images"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sBlockLatestImages
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sblocklatestimages
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          image := container.image
+          endswith(image, ":latest")
+          msg := sprintf("Container %v uses :latest tag which is not allowed: %v", [container.name, image])
+        }
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          image := container.image
+          not contains(image, ":")
+          msg := sprintf("Container %v has no tag specified (implicit :latest): %v", [container.name, image])
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.initContainers[_]
+        }
+
+---
+# Constraint: Block :latest images in production
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sBlockLatestImages
+metadata:
+  name: block-latest-images-production
+  annotations:
+    description: "Prevent use of :latest tag in production environments"
+spec:
+  enforcementAction: deny
+
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+
+    namespaceSelector:
+      matchLabels:
+        environment: production
+
+---
+# ConfigMap: Registry allowlist documentation
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: registry-allowlist-docs
+  namespace: gatekeeper-system
+data:
+  README.md: |
+    # Container Registry Allowlist
+
+    ## Approved Registries
+
+    ### Production Registries
+    - **AWS ECR**: `123456789012.dkr.ecr.us-east-1.amazonaws.com/ghost`
+      - Primary registry for Ghost application images
+      - Scanned with Trivy and Clair
+      - Requires IAM authentication
+
+    - **GitHub Container Registry**: `ghcr.io/YOUR_ORG/`
+      - Used for CI/CD pipelines
+      - Public images for open-source components
+
+    ### Official Images Only
+    - Docker Hub: Only verified official images allowed
+    - Must use specific tags, not :latest
+
+    ## Adding New Registries
+
+    1. Security review required
+    2. Update `allowed-repos.yaml`
+    3. Apply with: `kubectl apply -f allowed-repos.yaml`
+    4. Verify with: `kubectl get k8sallowedrepos`
+
+    ## Exceptions
+
+    System namespaces are excluded:
+    - kube-system
+    - kube-public
+    - gatekeeper-system
+    - cert-manager
+
+    ## Monitoring
+
+    View violations:
+    ```bash
+    kubectl get k8sallowedrepos allowed-container-registries -o yaml
+    ```
+
+    ## Emergency Override
+
+    In case of emergency, change enforcement to 'warn':
+    ```bash
+    kubectl patch k8sallowedrepos allowed-container-registries \
+      --type='json' -p='[{"op": "replace", "path": "/spec/enforcementAction", "value":"warn"}]'
+    ```

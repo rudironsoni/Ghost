@@ -1,0 +1,117 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ghost-ssd
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: storage-class
+    app.kubernetes.io/part-of: ghost-platform
+    storage-tier: ssd
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+    description: "SSD-backed storage for high-performance workloads"
+provisioner: kubernetes.io/aws-ebs # Change based on cloud provider
+parameters:
+  type: gp3 # AWS EBS gp3 volumes (SSD)
+  fsType: ext4
+  encrypted: "true"
+  iops: "3000"
+  throughput: "125"
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Retain # Change to Delete for non-production
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ghost-ssd-retain
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: storage-class
+    app.kubernetes.io/part-of: ghost-platform
+    storage-tier: ssd
+    retention-policy: retain
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+    description: "SSD-backed storage with retain policy for critical data"
+provisioner: kubernetes.io/aws-ebs # Change based on cloud provider
+parameters:
+  type: gp3
+  fsType: ext4
+  encrypted: "true"
+  iops: "3000"
+  throughput: "125"
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ghost-standard
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: storage-class
+    app.kubernetes.io/part-of: ghost-platform
+    storage-tier: standard
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+    description: "Standard storage for general-purpose workloads"
+provisioner: kubernetes.io/aws-ebs # Change based on cloud provider
+parameters:
+  type: gp2 # AWS EBS gp2 volumes
+  fsType: ext4
+  encrypted: "true"
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ghost-backup
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: storage-class
+    app.kubernetes.io/part-of: ghost-platform
+    storage-tier: backup
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+    description: "Cost-effective storage for backups and archives"
+provisioner: kubernetes.io/aws-ebs # Change based on cloud provider
+parameters:
+  type: sc1 # AWS EBS Cold HDD
+  fsType: ext4
+  encrypted: "true"
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+---
+# For GCP environments, use:
+# apiVersion: storage.k8s.io/v1
+# kind: StorageClass
+# metadata:
+#   name: ghost-ssd-gcp
+# provisioner: kubernetes.io/gce-pd
+# parameters:
+#   type: pd-ssd
+#   replication-type: regional-pd
+#   fstype: ext4
+# volumeBindingMode: WaitForFirstConsumer
+# allowVolumeExpansion: true
+# reclaimPolicy: Retain
+---
+# For Azure environments, use:
+# apiVersion: storage.k8s.io/v1
+# kind: StorageClass
+# metadata:
+#   name: ghost-ssd-azure
+# provisioner: kubernetes.io/azure-disk
+# parameters:
+#   storageaccounttype: Premium_LRS
+#   kind: Managed
+#   fsType: ext4
+# volumeBindingMode: WaitForFirstConsumer
+# allowVolumeExpansion: true
+# reclaimPolicy: Retain

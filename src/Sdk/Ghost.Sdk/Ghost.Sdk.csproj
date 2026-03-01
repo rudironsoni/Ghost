@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Ghost.Sdk</RootNamespace>
+    <Description>Ghost SDK - Meta-package for quick setup</Description>
+    <LangVersion>preview</LangVersion>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+  </PropertyGroup>
+
+  <!-- Expose internals to test project -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ghost.Sdk.Tests" />
+  </ItemGroup>
+
+  <!-- Package references -->
+  <ItemGroup>
+    <PackageReference Include="HtmlAgilityPack" />
+  </ItemGroup>
+
+  <!-- Include all main packages -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\Kernel\Ghost\Ghost.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghost.Contracts\Ghost.Contracts.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Inference\Ghost.Contracts.Inference.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Social\Ghost.Contracts.Social.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghost.Contracts.Jobs\Ghost.Contracts.Jobs.csproj" />
+    <ProjectReference Include="..\..\Contracts\Ghost.Contracts.News\Ghost.Contracts.News.csproj" />
+    <ProjectReference Include="..\..\Platform\Hosting\Ghost.Hosting\Ghost.Hosting.csproj" />
+    <ProjectReference Include="..\..\Sdk\Ghost.Sdk.Spider\Ghost.Sdk.Spider.csproj" />
+  </ItemGroup>
+</Project>

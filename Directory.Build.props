@@ -1,0 +1,115 @@
+<Project>
+  <!-- Ghost Monorepo - Global Build Properties -->
+
+  <PropertyGroup>
+    <!-- Lockstep versioning - all packages share same version -->
+    <GhostVersion>1.0.0</GhostVersion>
+    <Version>$(GhostVersion)</Version>
+    <AssemblyVersion>$(GhostVersion)</AssemblyVersion>
+    <FileVersion>$(GhostVersion)</FileVersion>
+    <InformationalVersion>$(GhostVersion)</InformationalVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Common settings -->
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <!-- Zero tolerance for warnings - Principal Engineer standard -->
+    <!-- All warnings must be fixed, not suppressed -->
+    <!-- Zero tolerance: All warnings must be fixed, not suppressed -->
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Package metadata -->
+    <Authors>Ghost Team</Authors>
+    <Company>Ghost</Company>
+    <Product>Ghost</Product>
+    <Copyright>Copyright (c) 2026 Ghost</Copyright>
+    <RepositoryUrl>https://github.com/rudironsoni/Ghost</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Build output - using /tmp to avoid stale artifacts -->
+    <BaseOutputPath>/tmp/ghost-build/bin/$(MSBuildProjectName)/</BaseOutputPath>
+    <BaseIntermediateOutputPath>/tmp/ghost-build/obj/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
+    <PackageOutputPath>/tmp/ghost-build/packages/</PackageOutputPath>
+    <!-- Enable automatic AssemblyInfo generation for versioning attributes -->
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Disable MSBuild node reuse to prevent test hangs (Ghost-2ny) -->
+    <UseSharedCompilation>false</UseSharedCompilation>
+    <DisableMSBuildNodeReuse>true</DisableMSBuildNodeReuse>
+  </PropertyGroup>
+
+  <!-- Layer detection -->
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Kernel'))">
+    <GhostLayer>Kernel</GhostLayer>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Contracts'))">
+    <GhostLayer>Contracts</GhostLayer>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Platform'))">
+    <GhostLayer>Platform</GhostLayer>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Engine'))">
+    <GhostLayer>Engine</GhostLayer>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Plugins'))">
+    <GhostLayer>Plugins</GhostLayer>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Sdk'))">
+    <GhostLayer>Sdk</GhostLayer>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Cloud'))">
+    <GhostLayer>Cloud</GhostLayer>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('src/Apps'))">
+    <GhostLayer>Apps</GhostLayer>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('tests'))">
+    <GhostLayer>Tests</GhostLayer>
+    <IsPackable>false</IsPackable>
+    <!-- Test projects use preview features extensively -->
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('samples'))">
+    <GhostLayer>Samples</GhostLayer>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- Ensure repository README is included in NuGet packages so PackageReadmeFile resolves -->
+  <ItemGroup>
+    <!-- Use MSBuildThisFileDirectory to reference repo root README from any project.
+         Force forward-slash separators for cross-platform compatibility. -->
+    <None Include="$(MSBuildThisFileDirectory.Replace('\', '/'))README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>

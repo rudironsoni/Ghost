@@ -1,0 +1,43 @@
+info:
+  name: Search LinkedIn Jobs
+  type: http
+  seq: 2
+  description: Search LinkedIn jobs using Ghost.Sdk.Spider
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/linkedin/jobs/search"
+
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "query": "software engineer",
+        "location": "San Francisco, CA",
+        "remoteOnly": false,
+        "maxResults": 20
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+docs: |-
+  ## Search LinkedIn Jobs
+
+  Search LinkedIn jobs using Ghost.Sdk.Spider entity extraction.
+
+  ### Request Body
+  | Field | Type | Description |
+  |-------|------|-------------|
+  | query | string | Search query |
+  | location | string | Location |
+  | remoteOnly | boolean | Remote jobs only |
+  | maxResults | integer | Maximum results |

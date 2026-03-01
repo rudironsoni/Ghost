@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ghost.Engine.Tests</RootNamespace>
+    <Description>Ghost engine runtime tests</Description>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../src/Engine/Ghost.Engine/Ghost.Engine.csproj" />
+    <ProjectReference Include="../../../src/Engine/Ghost.Engine.Abstractions/Ghost.Engine.Abstractions.csproj" />
+    <ProjectReference Include="../../../tests/Shared/Ghost.Testing/Ghost.Testing.csproj" />
+  </ItemGroup>
+</Project>
