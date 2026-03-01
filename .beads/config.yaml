@@ -3,13 +3,12 @@ database: dolt
 
 # Dolt-specific settings
 dolt:
-  # Use Dolt in remote mode to connect directly to DoltHub.
   mode: remote
-  # Local server connection details (not used in remote mode)
-  # host: 127.0.0.1
-  # port: 13929
+  host: 127.0.0.1
+  port: 3307
+  database: beads_Ghost
 
-# Sync mode (dolt-native keeps Dolt as source-of-truth with JSONL export)
+# Sync mode
 sync:
   mode: dolt-native
 
