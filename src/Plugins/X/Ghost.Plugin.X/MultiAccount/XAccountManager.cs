@@ -106,8 +106,8 @@ public class XAccount
 /// </summary>
 public partial class XAccountManager : IXAccountManager
 {
-    private readonly Dictionary<string, XAccount> _accounts = [];
-    private readonly List<string> _accountIds = [];
+    private readonly Dictionary<string, XAccount> _accounts = new Dictionary<string, XAccount>();
+    private readonly List<string> _accountIds = new List<string>();
     private int _currentIndex;
     private readonly object _lock = new();
     private readonly ILogger<XAccountManager> _logger;

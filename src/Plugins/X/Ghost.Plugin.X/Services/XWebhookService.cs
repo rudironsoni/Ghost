@@ -49,7 +49,7 @@ public class XEventArgs : EventArgs
     /// <summary>
     /// Gets additional metadata about the event.
     /// </summary>
-    public Dictionary<string, object> Metadata { get; set; } = [];
+    public Dictionary<string, object> Metadata { get; set; } = new Dictionary<string, object>();
 }
 
 /// <summary>

@@ -51,19 +51,20 @@ public class XOptions
     public string Country { get; set; } = "US";
 
     /// <summary>
-    /// Gets the maximum tweet length (280 characters).
+    /// Gets or sets the maximum tweet length (280 characters).
+    /// Instance-configurable via IOptions<XOptions>.
     /// </summary>
-    public static int MaxTweetLength => 280;
+    public int MaxTweetLength { get; set; } = 280;
 
     /// <summary>
-    /// Gets the maximum number of media attachments per tweet (4 for images).
+    /// Gets or sets the maximum number of media attachments per tweet (4 for images).
     /// </summary>
-    public static int MaxMediaAttachments => 4;
+    public int MaxMediaAttachments { get; set; } = 4;
 
     /// <summary>
-    /// Gets the maximum number of video attachments per tweet (1).
+    /// Gets or sets the maximum number of video attachments per tweet (1).
     /// </summary>
-    public static int MaxVideoAttachments => 1;
+    public int MaxVideoAttachments { get; set; } = 1;
 
     /// <summary>
     /// Gets or sets the maximum file size for images in MB.

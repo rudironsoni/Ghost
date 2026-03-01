@@ -37,7 +37,7 @@ public sealed class XPostContentSplitter
 
         // Split into sentences while respecting URLs
         List<string> sentences = ExtractSentences(content);
-        List<string> parts = [];
+        List<string> parts = new List<string>();
         var currentPart = new StringBuilder();
 
         foreach (string sentence in sentences)
@@ -96,14 +96,14 @@ public sealed class XPostContentSplitter
     /// </summary>
     private static List<string> ExtractSentences(string content)
     {
-        List<string> sentences = [];
+        List<string> sentences = new List<string>();
         string urlPattern = @"https?://[^\s]+";
         var urls = Regex.Matches(content, urlPattern).Select(m => m.Value).ToList();
 
         // Replace URLs with placeholders
         string tempContent = content;
         int urlIndex = 0;
-        Dictionary<string, string> urlMap = [];
+        Dictionary<string, string> urlMap = new Dictionary<string, string>();
 
         foreach (string? url in urls)
         {
@@ -157,7 +157,7 @@ public sealed class XPostContentSplitter
     /// </summary>
     private List<string> SplitLongSentence(string sentence)
     {
-        List<string> chunks = [];
+        List<string> chunks = new List<string>();
         string[] words = sentence.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var currentChunk = new StringBuilder();
 
@@ -209,7 +209,7 @@ public sealed class XPostContentSplitter
     /// </summary>
     private List<string> SplitLongWord(string word)
     {
-        List<string> chunks = [];
+        List<string> chunks = new List<string>();
         int position = 0;
 
         while (position < word.Length)
@@ -229,7 +229,7 @@ public sealed class XPostContentSplitter
     /// </summary>
     private List<string> AddThreadNumbering(List<string> parts)
     {
-        List<string> numbered = [];
+        List<string> numbered = new List<string>();
         int totalParts = parts.Count;
 
         for (int i = 0; i < parts.Count; i++)
