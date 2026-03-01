@@ -247,7 +247,7 @@ public sealed class StatsCollector : IStatsCollector
     {
         // Return snapshot copies for every tracked spider so callers receive
         // consistent, atomic views of the counters rather than live references.
-        var result = new Dictionary<string, SpiderStats>();
+        Dictionary<string, SpiderStats> result = new Dictionary<string, SpiderStats>();
         foreach (var kv in _stats)
         {
             result[kv.Key] = GetStats(kv.Key);
