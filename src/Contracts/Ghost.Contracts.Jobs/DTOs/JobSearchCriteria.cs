@@ -34,12 +34,7 @@ public sealed record JobSearchCriteria
     /// <summary>
     /// Text query matching title, company, or description.
     /// </summary>
-    [JsonPropertyName("query")]
-    public string? Query
-    {
-        get => _query ?? Keywords;
-        init => _query = value;
-    }
+    // Query property is implemented above as a forwarding property to Keywords.
 
     /// <summary>
     /// Alternative name for Query field (accepts 'keywords' in JSON).
