@@ -1,5 +1,5 @@
 using System.Reflection;
-// using System.Text.RegularExpressions; // already included above
+using System.Threading.Tasks;
 using Ghost.Contracts.Simulation;
 using Ghost.Contracts.Social;
 using Microsoft.Extensions.Options;
@@ -213,7 +213,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
             string content = request.Content.ToLowerInvariant();
 
             // Check for excessive hashtags
-            int hashtagCount = Regex.Matches(request.Content, @"#\w+").Count;
+            int hashtagCount = Regex.Matches(request.Content ?? string.Empty, @"#\w+").Count;
             if (hashtagCount > 5)
             {
                 warnings.Add(new ValidationError
@@ -226,7 +226,7 @@ public sealed class XSimulationValidator : IXPlatformSimulationValidator
             }
 
             // Check for excessive mentions
-            int mentionCount = Regex.Matches(request.Content, @"@\w+").Count;
+            int mentionCount = Regex.Matches(request.Content ?? string.Empty, @"@\w+").Count;
             if (mentionCount > 5)
             {
                 warnings.Add(new ValidationError
