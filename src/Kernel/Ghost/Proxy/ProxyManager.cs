@@ -6,10 +6,13 @@ using Microsoft.Extensions.Options;
 
 namespace Ghost.Proxy;
 
-[SuppressMessage("Performance", "CA1848:Use LoggerMessage delegates", Justification = "Proxy infrastructure - single error log")]
-[SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Instance methods for consistency")]
 public sealed class ProxyManager : IProxyManager, IDisposable
 {
+    // LoggerMessage delegates (EventIds 1100-1109)
+    private static readonly Action<ILogger, string, Exception?> _healthCheckFailedForProvider = LoggerMessage.Define<string>(
+        LogLevel.Error,
+        new EventId(1100, nameof(ProxyManager)),
+        "Health check failed for provider {Provider}");
     private readonly ProxyConfiguration _config;
     private readonly ILogger<ProxyManager> _logger;
     private readonly TimeProvider _timeProvider;
@@ -271,7 +274,7 @@ public sealed class ProxyManager : IProxyManager, IDisposable
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Health check failed for provider {Provider}", entry.Config.Name);
+                    _healthCheckFailedForProvider(_logger, entry.Config.Name, ex);
                 }
             }
         });
