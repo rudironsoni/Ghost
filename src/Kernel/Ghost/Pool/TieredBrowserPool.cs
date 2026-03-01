@@ -201,7 +201,10 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
             return pooled.Session;
         }
 
-        pooled?.Dispose();
+        if (pooled != null)
+        {
+            await pooled.DisposeAsync().ConfigureAwait(false);
+        }
 
         return await AcquireFromWarmPoolAsync(ct).ConfigureAwait(false);
     }
@@ -214,7 +217,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
 
             if (pooled.IsExpired(_options.Warm.MaxAge))
             {
-                pooled.Dispose();
+                await pooled.DisposeAsync().ConfigureAwait(false);
                 return await CreateNewSessionAsync(ct).ConfigureAwait(false);
             }
 
@@ -490,7 +493,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
         });
     }
 
-    private Task CleanupExpiredSessionsAsync()
+    private async Task CleanupExpiredSessionsAsync()
     {
         List<PooledBrowserSession> hotExpired = [];
         List<PooledBrowserSession> warmExpired = [];
@@ -515,7 +518,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
         {
             if (_hotPool.TryTake(out _))
             {
-                session.Dispose();
+                await session.DisposeAsync().ConfigureAwait(false);
             }
         }
 
@@ -523,7 +526,7 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
         {
             if (_warmPool.TryTake(out _))
             {
-                session.Dispose();
+                await session.DisposeAsync().ConfigureAwait(false);
             }
         }
 
@@ -534,8 +537,6 @@ public sealed class TieredBrowserPool : ITieredBrowserPool
                 _cleanedUpExpired(_logger, hotExpired.Count, warmExpired.Count, null);
             }
         }
-
-        return Task.CompletedTask;
     }
 
     private static double GetMemoryPressure()
