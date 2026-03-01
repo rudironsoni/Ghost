@@ -22,4 +22,9 @@ if ! command -v bd >/dev/null 2>&1; then
     exit 0
 fi
 
+# Ensure bd runs in remote mode so hooks don't attempt to start a local Dolt server.
+# The BD_REMOTE env var is respected by bd to prefer remote dolt access.
+export BD_DOLT_MODE=remote
+export BD_REMOTE_URL="https://doltremote.dolthub.com/r/rudironsoni/Ghost"
+
 exec bd hooks run pre-commit "$@"

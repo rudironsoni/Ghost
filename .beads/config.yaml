@@ -3,11 +3,11 @@ database: dolt
 
 # Dolt-specific settings
 dolt:
-  mode: server
-  host: 127.0.0.1
-  port: 3307
-  user: root
-  db: beads_Ghost
+  # Use Dolt in remote mode so hooks do not require a local Dolt server.
+  # Valid values: server | remote
+  mode: remote
+  # When running in remote mode, server-specific connection settings are
+  # ignored. The remote repository is defined below under `remote.url`.
 
 # Sync mode (dolt-native keeps Dolt as source-of-truth with JSONL export)
 sync:

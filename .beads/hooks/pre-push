@@ -16,4 +16,8 @@ if ! command -v bd >/dev/null 2>&1; then
     exit 0
 fi
 
+# Force bd to use remote DoltHub access for CI/Hook execution.
+export BD_DOLT_MODE=remote
+export BD_REMOTE_URL="https://doltremote.dolthub.com/r/rudironsoni/Ghost"
+
 exec bd hooks run pre-push "$@"

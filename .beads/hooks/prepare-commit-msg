@@ -21,4 +21,8 @@ if ! command -v bd >/dev/null 2>&1; then
     exit 0
 fi
 
+# Ensure remote mode for hooks
+export BD_DOLT_MODE=remote
+export BD_REMOTE_URL="https://doltremote.dolthub.com/r/rudironsoni/Ghost"
+
 exec bd hooks run prepare-commit-msg "$@"
