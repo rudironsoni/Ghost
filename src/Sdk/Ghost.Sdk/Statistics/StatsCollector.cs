@@ -199,9 +199,37 @@ public sealed class StatsCollector : IStatsCollector
     {
         ArgumentNullException.ThrowIfNull(spiderId);
 
-        return _stats.TryGetValue(spiderId, out SpiderStats? stats)
-            ? stats
-            : new SpiderStats { SpiderId = spiderId };
+        // Return a snapshot copy of the current stats to avoid exposing
+        // the live mutable instance and to ensure we read counters
+        // atomically. This prevents torn/write-tearing issues on some
+        // platforms and gives callers a consistent view.
+        if (!_stats.TryGetValue(spiderId, out SpiderStats? stats))
+        {
+            return new SpiderStats { SpiderId = spiderId };
+        }
+
+        // Read numeric counters atomically from the backing counters store
+        _counters.TryGetValue(spiderId, out StatsCounters? counters);
+        long req = counters is null ? 0 : Interlocked.Read(ref counters.RequestCount);
+        long resp = counters is null ? 0 : Interlocked.Read(ref counters.ResponseCount);
+        long err = counters is null ? 0 : Interlocked.Read(ref counters.ErrorCount);
+        long items = counters is null ? 0 : Interlocked.Read(ref counters.ItemCount);
+
+        // Create a snapshot copy - copy concurrent collections into fresh ones
+        var statusCopy = new System.Collections.Concurrent.ConcurrentDictionary<int, long>(stats.StatusCodeDistribution);
+
+        return new SpiderStats
+        {
+            SpiderId = stats.SpiderId,
+            StartTime = stats.StartTime,
+            TotalDuration = stats.TotalDuration,
+            AverageResponseTime = stats.AverageResponseTime,
+            StatusCodeDistribution = statusCopy,
+            RequestCount = req,
+            ResponseCount = resp,
+            ErrorCount = err,
+            ItemCount = items
+        };
     }
 
     /// <summary>
@@ -217,6 +245,14 @@ public sealed class StatsCollector : IStatsCollector
     /// </remarks>
     public Dictionary<string, SpiderStats> GetAllStats()
     {
-        return new Dictionary<string, SpiderStats>(_stats);
+        // Return snapshot copies for every tracked spider so callers receive
+        // consistent, atomic views of the counters rather than live references.
+        var result = new Dictionary<string, SpiderStats>();
+        foreach (var kv in _stats)
+        {
+            result[kv.Key] = GetStats(kv.Key);
+        }
+
+        return result;
     }
 }
