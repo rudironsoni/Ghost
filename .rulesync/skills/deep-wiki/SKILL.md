@@ -5,7 +5,7 @@ license: MIT
 targets: ['claudecode', 'codexcli', 'opencode', 'geminicli', 'antigravity', 'agentsmd']
 tags: ['wiki', 'documentation', 'plugin']
 version: '1.0.0'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 invocable: true
 ---
 

@@ -5,7 +5,7 @@ license: MIT
 targets: ['*']
 tags: ['foundation', 'dotnet', 'skill']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
@@ -385,6 +385,7 @@ Suppression is acceptable ONLY when:
 // ACCEPTABLE: documented justification
 [SuppressMessage("Reliability", "CA2007:ConfigureAwait",
     Justification = "ASP.NET Core has no SynchronizationContext")]
+// TODO: Audit suppression - add justification or remove if not applicable
 public async Task<Order> GetOrderAsync(int id, CancellationToken ct)
 {
     return await _repo.GetByIdAsync(id, ct);
@@ -392,6 +393,7 @@ public async Task<Order> GetOrderAsync(int id, CancellationToken ct)
 
 // NOT ACCEPTABLE: no justification, hides a real issue
 #pragma warning disable CA1062
+// TODO: Audit suppression - add justification or remove
 public void Process(string input) { }  // input could be null
 #pragma warning restore CA1062
 

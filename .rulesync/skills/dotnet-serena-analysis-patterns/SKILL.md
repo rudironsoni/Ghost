@@ -4,7 +4,7 @@ description: 'Code analysis patterns using Serena MCP for architecture validatio
 targets: ['*']
 tags: ['dotnet', 'serena', 'analysis', 'architecture', 'patterns', 'skill']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 license: 'MIT'
 ---
 

@@ -7,7 +7,7 @@ description: >-
 targets: ['*']
 tags: ['dotnet', 'skill', 'mcp', 'monitoring']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 license: MIT
 claudecode:
   model: inherit

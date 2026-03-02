@@ -69,13 +69,13 @@ Run rulesync in a containerized environment:
 
 ```bash
 # Pull image
-docker pull ghcr.io/rudironsoni/dotnet-harness:latest
+docker pull ghcr.io/rudironsoni/dotnet-agent-harness:latest
 
 # Run rulesync commands
-docker run --rm -v $(pwd):/workspace ghcr.io/rudironsoni/dotnet-harness:latest rulesync --version
+docker run --rm -v $(pwd):/workspace ghcr.io/rudironsoni/dotnet-agent-harness:latest rulesync --version
 
 # Interactive shell
-docker run --rm -it -v $(pwd):/workspace ghcr.io/rudironsoni/dotnet-harness:latest bash
+docker run --rm -it -v $(pwd):/workspace ghcr.io/rudironsoni/dotnet-agent-harness:latest bash
 ```
 
 ### Docker Compose
@@ -84,7 +84,7 @@ docker run --rm -it -v $(pwd):/workspace ghcr.io/rudironsoni/dotnet-harness:late
 version: '3.8'
 services:
   rulesync:
-    image: ghcr.io/rudironsoni/dotnet-harness:latest
+    image: ghcr.io/rudironsoni/dotnet-agent-harness:latest
     volumes:
       - .:/workspace
     working_dir: /workspace
@@ -93,10 +93,10 @@ services:
 
 ## GitHub Actions
 
-Use the official dotnet-harness action:
+Use the official dotnet-agent-harness action:
 
 ```yaml
-- uses: rudironsoni/dotnet-harness/.github/actions/dotnet-harness@main
+- uses: rudironsoni/dotnet-agent-harness/.github/actions/dotnet-agent-harness@main
   with:
     targets: '*'
     features: '*'

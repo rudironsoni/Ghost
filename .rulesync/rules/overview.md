@@ -1,13 +1,13 @@
 ---
 root: true
 targets: ['*']
-description: 'dotnet-harness: Comprehensive .NET development skills for all AI agents'
+description: 'dotnet-agent-harness: Comprehensive .NET development skills for all AI agents'
 globs: ['**/*']
 antigravity:
   trigger: always_on
 ---
 
-# dotnet-harness
+# dotnet-agent-harness
 
 Comprehensive .NET development guidance for modern C#, ASP.NET Core, MAUI, Blazor, and cloud-native apps.
 
@@ -27,7 +27,7 @@ For full toolkit installation in a project:
 
 ````bash
 
-rulesync fetch rudironsoni/dotnet-harness:.rulesync
+rulesync fetch rudironsoni/dotnet-agent-harness:.rulesync
 rulesync generate --targets "*" --features "*"
 
 ```bash
@@ -37,7 +37,7 @@ If you use declarative sources:
 ```jsonc
 
 {
-  "sources": [{ "source": "rudironsoni/dotnet-harness", "path": ".rulesync" }],
+  "sources": [{ "source": "rudironsoni/dotnet-agent-harness", "path": ".rulesync" }],
 }
 
 ```json

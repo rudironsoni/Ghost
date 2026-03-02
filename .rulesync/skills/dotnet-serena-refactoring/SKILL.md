@@ -4,7 +4,7 @@ description: 'Symbol-level refactoring with automatic reference updates using Se
 targets: ['*']
 tags: ['dotnet', 'serena', 'refactoring', 'productivity', 'skill']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 license: 'MIT'
 ---
 

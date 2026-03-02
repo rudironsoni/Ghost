@@ -1,5 +1,5 @@
 ---
-description: 'Initialize dotnet-harness context for this repository'
+description: 'Initialize dotnet-agent-harness context for this repository'
 targets: ['*']
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash']
@@ -9,7 +9,7 @@ antigravity:
   trigger: '/init-project'
 ---
 
-Initialize dotnet-harness context for this repository.
+Initialize dotnet-agent-harness context for this repository.
 
 1. Invoke [skill:dotnet-advisor].
 2. Invoke [skill:dotnet-version-detection].

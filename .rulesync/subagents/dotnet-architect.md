@@ -7,7 +7,7 @@ description:
 targets: ['*']
 tags: ['dotnet', 'agent']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 claudecode:
   model: inherit
   allowed-tools:
@@ -16,7 +16,7 @@ claudecode:
     - Glob
     - Bash
 opencode:
-  mode: 'primary'
+  mode: primary
   hidden: false
   tools:
     bash: true

@@ -194,7 +194,8 @@ public class UnoNavigationTests : IClassFixture<UnoWasmFixture>
 public async Task LoginForm_SubmitValid_NavigatesToDashboard()
 {
     await _page.FillAsync("[data-testid='username-input']", "testuser");
-    await _page.FillAsync("[data-testid='password-input']", "P@ssw0rd!");
+    // Use placeholder test credentials; do not expose real passwords in docs
+    await _page.FillAsync("[data-testid='password-input']", "<TEST_PASSWORD_PLACEHOLDER>");
     await _page.ClickAsync("[data-testid='login-button']");
 
     // Wait for navigation after login
@@ -312,7 +313,8 @@ public abstract class LoginTestsBase
     public async Task Login_ValidCredentials_ShowsDashboard()
     {
         await FillFieldAsync("username-input", "alice");
-        await FillFieldAsync("password-input", "P@ssw0rd!");
+        // Use placeholder test credentials in examples
+        await FillFieldAsync("password-input", "<TEST_PASSWORD_PLACEHOLDER>");
         await ClickAsync("login-button");
 
         await WaitForElementAsync("dashboard-title");

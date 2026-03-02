@@ -5,7 +5,7 @@ license: MIT
 targets: ['*']
 tags: ['cicd', 'dotnet', 'skill']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
@@ -181,7 +181,7 @@ metadata:
   name: order-api-secrets
 type: Opaque
 stringData:
-  connection-string: 'Host=postgres;Database=orders;Username=app;Password=secret'
+  connection-string: 'Host=postgres;Database=orders;Username=app;Password=<DB_PASSWORD_PLACEHOLDER>'
 
 ```text
 
@@ -296,7 +296,7 @@ services:
       - '8080:8080'
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=orders;Username=app;Password=devpassword
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=orders;Username=app;Password=<DB_PASSWORD_PLACEHOLDER>
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     depends_on:
       postgres:

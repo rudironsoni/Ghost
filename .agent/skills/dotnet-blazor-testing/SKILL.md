@@ -243,13 +243,14 @@ public async Task LoginForm_SubmitValid_CallsAuthService()
     var cut = RenderComponent<LoginForm>();
 
     cut.Find("[data-testid='email']").Change("user@example.com");
-    cut.Find("[data-testid='password']").Change("P@ssw0rd!");
+    // Use placeholder password in examples/tests in docs
+    cut.Find("[data-testid='password']").Change("<TEST_PASSWORD_PLACEHOLDER>");
     cut.Find("[data-testid='login-form']").Submit();
 
     // Wait for async submission
     cut.WaitForState(() => cut.Instance.IsAuthenticated);
 
-    await authService.Received(1).LoginAsync("user@example.com", "P@ssw0rd!");
+    await authService.Received(1).LoginAsync("user@example.com", "<TEST_PASSWORD_PLACEHOLDER>");
 }
 
 ```text

@@ -5,7 +5,7 @@ license: MIT
 targets: ['*']
 tags: ['foundation', 'dotnet', 'skill']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
@@ -17,7 +17,7 @@ opencode:
 
 # dotnet-advisor
 
-Router and index skill for **dotnet-harness**. Always loaded. Routes .NET development queries to the appropriate
+Router and index skill for **dotnet-agent-harness**. Always loaded. Routes .NET development queries to the appropriate
 specialist skills based on context.
 
 ## Scope
@@ -250,15 +250,15 @@ Before any .NET guidance, determine the project's target framework:
 
 ### 21. Intelligence & Recommendations `implemented`
 
-- [skill:dotnet-harness-recommender] -- AI-powered skill recommendations
+- [skill:dotnet-agent-harness-recommender] -- AI-powered skill recommendations
 
 **Commands:**
 
-- `/dotnet-harness:search` -- Semantic skill search (see commands/)
+- `/dotnet-agent-harness:search` -- Semantic skill search (see commands/)
 
 ### 22. Skill Management `implemented`
 
-- [skill:dotnet-harness-manifest] -- Skill manifest management: dependencies, conflicts, version resolution
+- [skill:dotnet-agent-harness-manifest] -- Skill manifest management: dependencies, conflicts, version resolution
 
 ### 23. Serena MCP Integration `implemented`
 

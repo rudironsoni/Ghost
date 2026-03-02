@@ -7,7 +7,7 @@ description: >-
 targets: ['*']
 tags: ['dotnet', 'skill', 'mcp', 'discovery']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 license: MIT
 claudecode:
   model: inherit
@@ -159,7 +159,7 @@ exit 0
 
 ```bash
 # Discover and update config
-dotnet-harness:mcp-discovery:update-config
+dotnet-agent-harness:mcp-discovery:update-config
 
 # This appends to .rulesync/mcp.json:
 {
