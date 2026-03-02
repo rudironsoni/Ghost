@@ -373,6 +373,7 @@ Suppression is acceptable ONLY when:
 // ACCEPTABLE: documented justification
 [SuppressMessage("Reliability", "CA2007:ConfigureAwait",
     Justification = "ASP.NET Core has no SynchronizationContext")]
+// TODO: Audit suppression - add justification or remove if not applicable
 public async Task<Order> GetOrderAsync(int id, CancellationToken ct)
 {
     return await _repo.GetByIdAsync(id, ct);
@@ -380,6 +381,7 @@ public async Task<Order> GetOrderAsync(int id, CancellationToken ct)
 
 // NOT ACCEPTABLE: no justification, hides a real issue
 #pragma warning disable CA1062
+// TODO: Audit suppression - add justification or remove
 public void Process(string input) { }  // input could be null
 #pragma warning restore CA1062
 

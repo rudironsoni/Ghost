@@ -138,7 +138,7 @@ exit 0
 
 ```bash
 # Discover and update config
-dotnet-harness:mcp-discovery:update-config
+dotnet-agent-harness:mcp-discovery:update-config
 
 # This appends to .rulesync/mcp.json:
 {

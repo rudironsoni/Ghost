@@ -4,7 +4,7 @@ description: 'Efficient code navigation using Serena MCP symbol operations inste
 targets: ['*']
 tags: ['dotnet', 'serena', 'navigation', 'productivity', 'skill']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 license: 'MIT'
 ---
 

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "dotnet-harness: smart defaults for .NET development",
+  "description": "dotnet-agent-harness: smart defaults for .NET development",
   "hooks": {
     "sessionStart": [
       {
@@ -40,7 +40,7 @@
       "beforeSubmitPrompt": [
         {
           "type": "command",
-          "command": "# Inline user-prompt-dotnet-reminder.sh: Inject XML reminder for .NET projects. set -uo pipefail; SLN_COUNT=\"$(find . -maxdepth 3 \\( -name '*.sln' -o -name '*.slnx' \\) 2>/dev/null | wc -l | tr -d ' ')\" || SLN_COUNT=0; CSPROJ_COUNT=\"$(find . -maxdepth 3 -name '*.csproj' 2>/dev/null | wc -l | tr -d ' ')\" || CSPROJ_COUNT=0; CS_COUNT=\"$(find . -maxdepth 4 -name '*.cs' 2>/dev/null | wc -l | tr -d ' ')\" || CS_COUNT=0; HAS_GLOBAL_JSON=false; [ -f \"global.json\" ] && HAS_GLOBAL_JSON=true; MSG=\"\"; if [ \"$SLN_COUNT\" -gt 0 ] || [ \"$CSPROJ_COUNT\" -gt 0 ] || [ \"$CS_COUNT\" -gt 0 ] || [ \"$HAS_GLOBAL_JSON\" = true ]; then MSG='<system-reminder><dotnet-harness-routing>1. Mandatory first action: invoke [skill:dotnet-advisor]. 2. Do not plan, reason, design, or implement until [skill:dotnet-advisor] has been invoked. 3. Follow advisor routing and invoke the relevant downstream skills. 4. Apply standards defined by the routed skills.</dotnet-harness-routing></system-reminder>'; fi; if command -v jq &>/dev/null; then jq -n --arg ctx \"$MSG\" '{hookSpecificOutput: {hookEventName: \"UserPromptSubmit\", additionalContext: $ctx}}'; else ESCAPED=\"$(printf '%s' \"$MSG\" | sed 's/\\\\/\\\\\\\\/g; s/\"/\\\\\"/g' | tr '\\n' ' ')\"; printf '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"%s\"}}\\n' \"$ESCAPED\"; fi; exit 0",
+          "command": "# Inline user-prompt-dotnet-reminder.sh: Inject XML reminder for .NET projects. set -uo pipefail; SLN_COUNT=\"$(find . -maxdepth 3 \\( -name '*.sln' -o -name '*.slnx' \\) 2>/dev/null | wc -l | tr -d ' ')\" || SLN_COUNT=0; CSPROJ_COUNT=\"$(find . -maxdepth 3 -name '*.csproj' 2>/dev/null | wc -l | tr -d ' ')\" || CSPROJ_COUNT=0; CS_COUNT=\"$(find . -maxdepth 4 -name '*.cs' 2>/dev/null | wc -l | tr -d ' ')\" || CS_COUNT=0; HAS_GLOBAL_JSON=false; [ -f \"global.json\" ] && HAS_GLOBAL_JSON=true; MSG=\"\"; if [ \"$SLN_COUNT\" -gt 0 ] || [ \"$CSPROJ_COUNT\" -gt 0 ] || [ \"$CS_COUNT\" -gt 0 ] || [ \"$HAS_GLOBAL_JSON\" = true ]; then MSG='<system-reminder><dotnet-agent-harness-routing>1. Mandatory first action: invoke [skill:dotnet-advisor]. 2. Do not plan, reason, design, or implement until [skill:dotnet-advisor] has been invoked. 3. Follow advisor routing and invoke the relevant downstream skills. 4. Apply standards defined by the routed skills.</dotnet-agent-harness-routing></system-reminder>'; fi; if command -v jq &>/dev/null; then jq -n --arg ctx \"$MSG\" '{hookSpecificOutput: {hookEventName: \"UserPromptSubmit\", additionalContext: $ctx}}'; else ESCAPED=\"$(printf '%s' \"$MSG\" | sed 's/\\\\/\\\\\\\\/g; s/\"/\\\\\"/g' | tr '\\n' ' ')\"; printf '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"%s\"}}\\n' \"$ESCAPED\"; fi; exit 0",
           "timeout": 10
         }
       ]

@@ -7,7 +7,7 @@ license: MIT
 targets: ['*']
 tags: ['github', 'mcp', 'repository', 'skill', 'vcs/git']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']

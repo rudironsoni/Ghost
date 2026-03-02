@@ -142,7 +142,8 @@ public class ManualSetupTests : IAsyncLifetime
         await _page.GotoAsync("https://localhost:5001/login");
 
         await _page.FillAsync("[data-testid='email']", "user@example.com");
-        await _page.FillAsync("[data-testid='password']", "P@ssw0rd!");
+        // Use placeholder password in docs/examples
+        await _page.FillAsync("[data-testid='password']", "<TEST_PASSWORD_PLACEHOLDER>");
         await _page.ClickAsync("[data-testid='login-btn']");
 
         await Expect(_page).ToHaveURLAsync(new Regex("/dashboard"));

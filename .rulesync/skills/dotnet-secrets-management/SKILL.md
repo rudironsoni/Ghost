@@ -5,7 +5,7 @@ license: MIT
 targets: ['*']
 tags: ['security', 'dotnet', 'skill']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
@@ -65,15 +65,17 @@ commits.
 
 ### Setup
 
-````bash
+```bash
 
+# Do NOT commit real secrets; use dotnet user-secrets or env vars
 # Initialize user secrets for a project (creates UserSecretsId in csproj)
 dotnet user-secrets init
 
-# Set individual secrets
-dotnet user-secrets set "ConnectionStrings:DefaultDb" "Server=localhost;Database=myapp;User=sa;Password=dev123"
-dotnet user-secrets set "Smtp:ApiKey" "SG.dev-key-here"
-dotnet user-secrets set "Jwt:SigningKey" "dev-signing-key-min-32-chars-long!!"
+# Set individual secrets (placeholders shown)
+# (placeholders shown; do NOT use real secrets in shell history)
+dotnet user-secrets set "ConnectionStrings:DefaultDb" "Server=localhost;Database=myapp;User=sa;Password=<DB_PASSWORD_PLACEHOLDER>"
+dotnet user-secrets set "Smtp:ApiKey" "<SENDGRID_API_KEY_PLACEHOLDER>"
+dotnet user-secrets set "Jwt:SigningKey" "<JWT_SIGNING_KEY_PLACEHOLDER>"
 
 # List current secrets
 dotnet user-secrets list
@@ -84,35 +86,35 @@ dotnet user-secrets remove "Smtp:ApiKey"
 # Clear all secrets
 dotnet user-secrets clear
 
-```text
+```
 
 ### How It Works
 
 User secrets are stored at:
+
 - **Windows:** `%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json`
 - **macOS/Linux:** `~/.microsoft/usersecrets/<UserSecretsId>/secrets.json`
 
 The `secrets.json` file is plain JSON with the same structure as `appsettings.json`:
 
 ```json
-
 {
   "ConnectionStrings": {
-    "DefaultDb": "Server=localhost;Database=myapp;User=sa;Password=dev123"
+    "DefaultDb": "Server=localhost;Database=myapp;User=sa;Password=<DB_PASSWORD_PLACEHOLDER>"
   },
   "Smtp": {
-    "ApiKey": "SG.dev-key-here"
+    "ApiKey": "<SENDGRID_API_KEY_PLACEHOLDER>"
   },
   "Jwt": {
-    "SigningKey": "dev-signing-key-min-32-chars-long!!"
+    "SigningKey": "<JWT_SIGNING_KEY_PLACEHOLDER>"
   }
 }
-
-```text
+```
 
 ### Loading in Code
 
-User secrets are loaded automatically by `WebApplication.CreateBuilder` and `Host.CreateDefaultBuilder` when `DOTNET_ENVIRONMENT` or `ASPNETCORE_ENVIRONMENT` is `Development`:
+User secrets are loaded automatically by `WebApplication.CreateBuilder` and `Host.CreateDefaultBuilder` when
+`DOTNET_ENVIRONMENT` or `ASPNETCORE_ENVIRONMENT` is `Development`:
 
 ```csharp
 
@@ -121,7 +123,7 @@ var builder = WebApplication.CreateBuilder(args);
 // User secrets are already loaded. Access them via IConfiguration:
 var connectionString = builder.Configuration.GetConnectionString("DefaultDb");
 
-```text
+```
 
 For non-web hosts (console apps, worker services):
 
@@ -135,15 +137,17 @@ if (builder.Environment.IsDevelopment())
     builder.Configuration.AddUserSecrets<Program>();
 }
 
-```text
+```
 
-**Gotcha:** User secrets are not encrypted -- they are just stored outside the repo. They are appropriate for development only, never for production.
+**Gotcha:** User secrets are not encrypted -- they are just stored outside the repo. They are appropriate for
+development only, never for production.
 
 ---
 
 ## Environment Variables (Production)
 
-Environment variables are the standard mechanism for injecting secrets into production applications without touching the filesystem.
+Environment variables are the standard mechanism for injecting secrets into production applications without touching the
+filesystem.
 
 ### Configuration Precedence
 
@@ -163,13 +167,13 @@ In the default ASP.NET Core configuration stack, environment variables override 
 
 # These environment variables map to configuration sections:
 export ConnectionStrings__DefaultDb="Server=prod-db;Database=myapp;..."
-export Smtp__ApiKey="SG.production-key"
-export Jwt__SigningKey="production-signing-key-256-bits"
+export Smtp__ApiKey="<SENDGRID_API_KEY_PLACEHOLDER>"
+export Jwt__SigningKey="<JWT_SIGNING_KEY_PLACEHOLDER>"
 
 # With a prefix (recommended to avoid collisions):
 export MYAPP_ConnectionStrings__DefaultDb="Server=prod-db;..."
 
-```text
+```
 
 ```csharp
 
@@ -179,23 +183,21 @@ builder.Configuration.AddEnvironmentVariables(prefix: "MYAPP_");
 // Access the same way as any configuration source:
 var smtpKey = builder.Configuration["Smtp:ApiKey"];
 
-```text
+```
 
 ### Container Environments
 
 ```yaml
-
 # docker-compose.yml -- inject secrets via environment
 services:
   api:
     image: myapp:latest
     environment:
-      - ConnectionStrings__DefaultDb=Server=db;Database=myapp;User=sa;Password=${DB_PASSWORD}
+      - ConnectionStrings__DefaultDb=Server=db;Database=myapp;User=sa;Password=<DB_PASSWORD_PLACEHOLDER>
       - Smtp__ApiKey=${SMTP_API_KEY}
     env_file:
-      - .env  # NOT committed to source control
-
-```text
+      - .env # NOT committed to source control
+```
 
 ```dockerfile
 
@@ -204,9 +206,10 @@ services:
 ENV ASPNETCORE_URLS=http://+:8080
 # NEVER: ENV ConnectionStrings__DefaultDb="Server=..."
 
-```dockerfile
+```
 
-**Gotcha:** Environment variables are visible to all processes under the same user. In multi-tenant container environments, use container-level isolation (Kubernetes secrets, Docker secrets) rather than host-level env vars.
+**Gotcha:** Environment variables are visible to all processes under the same user. In multi-tenant container
+environments, use container-level isolation (Kubernetes secrets, Docker secrets) rather than host-level env vars.
 
 ---
 
@@ -247,9 +250,6 @@ builder.Services
     .ValidateDataAnnotations()
     .ValidateOnStart(); // Fail fast if secrets are missing
 
-```text
-
-```csharp
 
 // Inject and use
 public sealed class TokenService(IOptions<JwtOptions> jwtOptions)
@@ -273,11 +273,14 @@ public sealed class TokenService(IOptions<JwtOptions> jwtOptions)
     }
 }
 
-```text
+```
 
-> Options classes must use `{ get; set; }` (not `{ get; init; }`) because the configuration binder and `PostConfigure` need to mutate properties after construction. Use data annotation attributes (`[Required]`, `[MinLength]`) for validation.
+> Options classes must use `{ get; set; }` (not `{ get; init; }`) because the configuration binder and `PostConfigure`
+> need to mutate properties after construction. Use data annotation attributes (`[Required]`, `[MinLength]`) for
+> validation.
 
-**Gotcha:** `ValidateOnStart()` catches missing secrets at application startup rather than at first use. Always use it for secrets-bearing options to fail fast with a clear error message.
+**Gotcha:** `ValidateOnStart()` catches missing secrets at application startup rather than at first use. Always use it
+for secrets-bearing options to fail fast with a clear error message.
 
 ---
 
@@ -327,7 +330,7 @@ public sealed class SmtpOptionsChangeLogger(
 // Registration:
 builder.Services.AddHostedService<SmtpOptionsChangeLogger>();
 
-```text
+```
 
 ```csharp
 
@@ -364,7 +367,7 @@ public sealed class DualKeyTokenValidator(IOptionsMonitor<JwtOptions> optionsMon
     }
 }
 
-```text
+```
 
 ### Rotation Checklist
 
@@ -378,9 +381,11 @@ public sealed class DualKeyTokenValidator(IOptionsMonitor<JwtOptions> optionsMon
 
 ## Managed Identity (Production Best Practice)
 
-Managed identity eliminates secrets entirely for cloud-hosted applications by using the platform's identity system to authenticate to services.
+Managed identity eliminates secrets entirely for cloud-hosted applications by using the platform's identity system to
+authenticate to services.
 
-**Concept:** Instead of storing a connection string with a password, the application authenticates to the database/service using its platform-assigned identity. No secret to manage, rotate, or leak.
+**Concept:** Instead of storing a connection string with a password, the application authenticates to the
+database/service using its platform-assigned identity. No secret to manage, rotate, or leak.
 
 ```csharp
 
@@ -391,14 +396,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 // No password in the connection string -- identity is resolved from the environment
 
-```text
+```
 
 **When to use managed identity:**
+
 - Production and staging environments hosted on cloud platforms
 - Any service-to-service communication where the platform supports identity federation
 - Database connections, message queue access, storage access
 
 **When you still need secrets:**
+
 - Third-party APIs that only support API keys
 - Legacy systems without identity federation
 - Local development (use user secrets as a fallback)
@@ -412,30 +419,27 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 ```csharp
 
 // NEVER: hardcoded secrets in source code
-private const string ApiKey = "sk-live-abc123def456";           // WRONG
-private const string ConnectionString = "Server=prod;Password=secret"; // WRONG
+// Replaced real keys with placeholders. Do NOT store real keys in source.
+private const string ApiKey = "<API_KEY_PLACEHOLDER>"; // WRONG: hardcoded secret
+private const string ConnectionString = "Server=prod-db;Database=myapp;User=sa;Password=<DB_PASSWORD_PLACEHOLDER>"; // WRONG: hardcoded secret
 
-```csharp
+```
 
 **Fix:** Use user secrets (dev) or environment variables (production). See sections above.
 
 ### Secrets in appsettings.json
 
 ```json
-
-// NEVER: real credentials in appsettings.json (committed to repo)
 {
   "ConnectionStrings": {
-    "DefaultDb": "Server=prod-db;Password=RealPassword123!"
+    "DefaultDb": "Server=prod-db;Password=<DB_PASSWORD_PLACEHOLDER>"
   }
 }
-
-```text
+```
 
 **Fix:** `appsettings.json` should contain only non-sensitive defaults. Use placeholder values that fail visibly:
 
 ```json
-
 {
   "ConnectionStrings": {
     "DefaultDb": "Server=localhost;Database=myapp;Integrated Security=true"
@@ -444,17 +448,17 @@ private const string ConnectionString = "Server=prod;Password=secret"; // WRONG
     "ApiKey": "REPLACE_VIA_ENV_OR_USER_SECRETS"
   }
 }
-
-```text
+```
 
 ### Hardcoded Connection Strings
 
 ```csharp
 
 // NEVER: connection strings directly in code
-var connection = new SqlConnection("Server=prod-db;Database=myapp;User=sa;Password=P@ssw0rd!");
+// Use IConfiguration or environment variables instead of hardcoded credentials.
+var connection = new SqlConnection("Server=prod-db;Database=myapp;User=sa;Password=<DB_PASSWORD_PLACEHOLDER>"); // WRONG
 
-```csharp
+```
 
 **Fix:** Always resolve connection strings from `IConfiguration`:
 
@@ -474,7 +478,7 @@ public sealed class OrderRepository(IOptions<DatabaseOptions> options)
     private readonly string _connectionString = options.Value.ConnectionString;
 }
 
-```text
+```
 
 ### Logging Secrets
 
@@ -484,7 +488,7 @@ public sealed class OrderRepository(IOptions<DatabaseOptions> options)
 logger.LogInformation("Using API key: {ApiKey}", apiKey);       // WRONG
 logger.LogDebug("Connection string: {Conn}", connectionString); // WRONG
 
-```csharp
+```
 
 **Fix:** Log that a secret was loaded, not its value:
 
@@ -493,18 +497,24 @@ logger.LogDebug("Connection string: {Conn}", connectionString); // WRONG
 logger.LogInformation("API key configured: {IsConfigured}", !string.IsNullOrEmpty(apiKey));
 logger.LogInformation("Database connection configured for {Server}", new SqlConnectionStringBuilder(connectionString).DataSource);
 
-```csharp
+```
 
 ---
 
 ## Agent Gotchas
 
-1. **Do not generate code with hardcoded secrets** -- always use `IConfiguration` or `IOptions<T>` to resolve secrets. Even in examples, use placeholder values.
-2. **Do not put real secrets in `appsettings.json`** -- it is committed to source control. Use user secrets for development, environment variables for production.
-3. **Do not use `{ get; init; }` on Options classes** -- the configuration binder requires mutable setters. Use `{ get; set; }` with data annotation validation instead.
-4. **Do not skip `ValidateOnStart()`** -- without it, missing secrets cause runtime failures at first use rather than a clear startup error.
-5. **Do not log secret values** -- log whether a secret is configured (`IsConfigured: true/false`) or metadata (server name from connection string), never the value.
-6. **Do not use `IOptions<T>` for secrets that rotate** -- use `IOptionsMonitor<T>` for runtime-reloadable secrets so rotation does not require a restart.
+1. **Do not generate code with hardcoded secrets** -- always use `IConfiguration` or `IOptions<T>` to resolve secrets.
+   Even in examples, use placeholder values.
+2. **Do not put real secrets in `appsettings.json`** -- it is committed to source control. Use user secrets for
+   development, environment variables for production.
+3. **Do not use `{ get; init; }` on Options classes** -- the configuration binder requires mutable setters. Use
+   `{ get; set; }` with data annotation validation instead.
+4. **Do not skip `ValidateOnStart()`** -- without it, missing secrets cause runtime failures at first use rather than a
+   clear startup error.
+5. **Do not log secret values** -- log whether a secret is configured (`IsConfigured: true/false`) or metadata (server
+   name from connection string), never the value.
+6. **Do not use `IOptions<T>` for secrets that rotate** -- use `IOptionsMonitor<T>` for runtime-reloadable secrets so
+   rotation does not require a restart.
 7. **Do not bake secrets into Docker images** -- use environment variables or mounted secrets at container runtime.
 
 ---
@@ -525,7 +535,6 @@ logger.LogInformation("Database connection configured for {Server}", new SqlConn
 - [ASP.NET Core Security](https://learn.microsoft.com/en-us/aspnet/core/security/?view=aspnetcore-10.0)
 - [Secure Coding Guidelines for .NET](https://learn.microsoft.com/en-us/dotnet/standard/security/secure-coding-guidelines)
 - [Use Managed Identities](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview)
-````
 
 ## Code Navigation (Serena MCP)
 

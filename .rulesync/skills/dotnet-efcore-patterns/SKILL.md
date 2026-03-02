@@ -5,7 +5,7 @@ license: MIT
 targets: ['*']
 tags: ['architecture', 'dotnet', 'skill']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
@@ -278,7 +278,7 @@ dotnet ef migrations bundle \
     --self-contained
 
 # Run in production -- pass connection string explicitly via --connection
-./efbundle --connection "Host=prod-db;Database=myapp;Username=deploy;Password=..."
+./efbundle --connection "Host=prod-db;Database=myapp;Username=deploy;Password=<DB_PASSWORD_PLACEHOLDER>"
 
 # Alternatively, configure the bundle to read from an environment variable
 # by setting the connection string key in your DbContext's OnConfiguring or

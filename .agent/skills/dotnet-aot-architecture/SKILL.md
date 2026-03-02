@@ -198,6 +198,15 @@ factory patterns that use explicit construction.
 // BAD: Reflection-based creation -- breaks under AOT
 public T CreateHandler<T>() where T : class
     => (T)Activator.CreateInstance(typeof(T))!;
+// NOTE: Activator.CreateInstance uses runtime reflection and is AOT-unfriendly.
+// Prefer factory registration or explicit constructors in AOT builds. For example:
+
+// Registration:
+// services.AddSingleton<Func<Type, object>>(sp => t => ActivatorUtilities.CreateInstance(sp, t));
+
+// Better (AOT-safe):
+// services.AddSingleton<IPaymentProcessorFactory, PaymentProcessorFactory>();
+// Then resolve via factory.Create("Stripe");
 
 // GOOD: Factory with explicit registration
 public class HandlerFactory

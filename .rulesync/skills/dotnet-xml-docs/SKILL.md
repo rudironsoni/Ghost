@@ -5,7 +5,7 @@ license: MIT
 targets: ['*']
 tags: ['foundation', 'dotnet', 'skill']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
@@ -84,6 +84,7 @@ When `GenerateDocumentationFile` is enabled, the compiler emits CS1591 warnings 
 ```csharp
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+// TODO: Audit suppression - add justification or remove
 public class InternalServiceHelper
 {
     // This type is internal-facing despite being public

@@ -5,7 +5,7 @@ license: MIT
 targets: ['*']
 tags: ['testing', 'dotnet', 'skill']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
@@ -14,6 +14,8 @@ codexcli:
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 ---
+
+Source: kevintsengtw/dotnet-testing-agent-skills (MIT). Ported into dotnet-agent-harness.
 
 # dotnet-testing-strategy
 
@@ -384,6 +386,7 @@ Assert.True(order.IsExpired(fakeTime));
 - [Integration tests in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests)
 - [NSubstitute documentation](https://nsubstitute.github.io/help/getting-started/)
 - [TimeProvider in .NET 8](https://learn.microsoft.com/en-us/dotnet/api/system.timeprovider)
+
 ````
 
 ## Code Navigation (Serena MCP)
@@ -395,20 +398,25 @@ Assert.True(order.IsExpired(fakeTime));
 3. **Track references**: `serena_find_referencing_symbols` for impact analysis
 4. **Precise edits**: `serena_replace_symbol_body` for clean modifications
 
-**When to use Serena vs traditional tools:**
+### When to use Serena vs traditional tools
 
 - **Use Serena**: Navigation, refactoring, dependency analysis, precise edits
 - **Use Read/Grep**: Reading full files, pattern matching, simple text operations
 - **Fallback**: If Serena unavailable, traditional tools work fine
 
-**Example workflow:**
+### Example workflow
 
-```text
-# Instead of:
+````text
+
+# Instead of
+
 Read: src/Services/OrderService.cs
 Grep: "public void ProcessOrder"
 
-# Use:
+# Use
+
 serena_find_symbol: "OrderService/ProcessOrder"
 serena_get_symbols_overview: "src/Services/OrderService.cs"
-```
+
+```text
+````

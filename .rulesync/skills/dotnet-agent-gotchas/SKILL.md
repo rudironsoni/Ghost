@@ -5,7 +5,7 @@ license: MIT
 targets: ['*']
 tags: ['foundation', 'dotnet', 'skill']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
@@ -55,7 +55,6 @@ and UI contexts. Another common mistake is fire-and-forget calls that silently s
 ### Anti-Pattern
 
 ````csharp
-
 // WRONG: blocking on async -- deadlock risk in synchronization contexts
 public Order GetOrder(int id)
 {
@@ -70,7 +69,6 @@ public void ProcessOrder(Order order)
 }
 
 ```text
-
 ### Corrected
 
 ```csharp
@@ -89,7 +87,6 @@ public async Task ProcessOrderAsync(Order order, CancellationToken ct = default)
 }
 
 ```text
-
 See [skill:dotnet-csharp-async-patterns] for full async/await guidance including `ValueTask`, `ConfigureAwait`, and
 cancellation propagation.
 
@@ -115,7 +112,7 @@ that have been deprecated/replaced. ASP.NET Core shared-framework packages must 
 <PackageReference Include="Swashbuckle.AspNetCore" Version="7.0.0" />
 <!-- Swashbuckle is still valid when Swagger UI is needed, but not the default choice -->
 
-```text
+````
 
 ### Corrected
 
@@ -132,7 +129,7 @@ that have been deprecated/replaced. ASP.NET Core shared-framework packages must 
 <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
 <!-- Swashbuckle remains a valid choice when Swagger UI features are needed -->
 
-```text
+```
 
 See [skill:dotnet-csproj-reading] for project file conventions and central package management guidance.
 
@@ -160,7 +157,7 @@ var html = client.DownloadString("https://example.com");
 using var rng = new RNGCryptoServiceProvider();
 rng.GetBytes(buffer);
 
-```text
+```
 
 ### Corrected
 
@@ -180,7 +177,7 @@ public class MyService(HttpClient httpClient)
 // CORRECT: modern RandomNumberGenerator (static API)
 RandomNumberGenerator.Fill(buffer);
 
-```text
+```
 
 See [skill:dotnet-security-owasp] for the full deprecated security pattern catalog and OWASP mitigations.
 
@@ -193,7 +190,7 @@ broken `ProjectReference` paths.
 
 ### Anti-Pattern
 
-```xml
+````xml
 
 <!-- WRONG: using Microsoft.NET.Sdk for a web project -->
 <Project Sdk="Microsoft.NET.Sdk">
@@ -275,9 +272,9 @@ public string GetUserName(int id)
     return user.Name;
 }
 
-```text
+````
 
-```xml
+````xml
 
 <!-- CORRECT: enable nullable context in .csproj -->
 <PropertyGroup>
@@ -311,7 +308,7 @@ public static partial struct LogMessages // struct is invalid for LoggerMessage
 {
 }
 
-```text
+````
 
 ### Corrected
 
@@ -330,7 +327,7 @@ public static partial class Log
     public static partial void ProcessingItem(ILogger logger, string item);
 }
 
-```text
+```
 
 See [skill:dotnet-csharp-source-generators] for source generator configuration, diagnostics, and debugging.
 
@@ -343,10 +340,11 @@ fixing the underlying reflection/dynamic usage. Suppression hides runtime failur
 
 ### Anti-Pattern
 
-```csharp
+````csharp
 
 // WRONG: suppressing trim warning instead of fixing it
 #pragma warning disable IL2026
+// TODO: Audit suppression - add justification or remove
 var type = Type.GetType(typeName); // reflection not trim-safe
 var instance = Activator.CreateInstance(type!);
 #pragma warning restore IL2026
@@ -374,7 +372,7 @@ public object CreateInstance(
         ?? throw new InvalidOperationException($"Cannot create {type.Name}");
 }
 
-```text
+````
 
 ```xml
 
@@ -386,7 +384,7 @@ public object CreateInstance(
 <IsTrimmable>true</IsTrimmable>
 <!-- IsTrimmable auto-enables trim analyzer for libraries -->
 
-```text
+```
 
 See [skill:dotnet-csproj-reading] for MSBuild property guidance on trimming and AOT configuration.
 
@@ -411,7 +409,7 @@ public class OrderServiceTests
     public void CalculateTotal_ReturnsCorrectSum() { }
 }
 
-```text
+```
 
 ```xml
 
@@ -426,11 +424,11 @@ public class OrderServiceTests
   </ItemGroup>
 </Project>
 
-```text
+```
 
 ### Corrected
 
-```xml
+````xml
 
 <!-- CORRECT: test project in tests/ directory with proper configuration -->
 <Project Sdk="Microsoft.NET.Sdk">
@@ -479,11 +477,11 @@ public class OrderProcessor(IOrderRepository repo) // repo is captured as single
 // builder.Services.AddScoped<IOrderRepository, OrderRepository>(); // forgot this line
 // InvalidOperationException: Unable to resolve service for type 'IOrderRepository'
 
-```text
+````
 
-### Corrected
+### Corrected (DI)
 
-```csharp
+````csharp
 
 // CORRECT: lifetimes must not capture shorter-lived dependencies
 builder.Services.AddScoped<OrderProcessor>(); // scoped, matches repository lifetime
@@ -503,7 +501,6 @@ public class OrderProcessor(IServiceScopeFactory scopeFactory)
 }
 
 ```text
-
 See [skill:dotnet-csharp-dependency-injection] for lifetime rules, registration patterns, and service scope management.
 
 ---
@@ -531,7 +528,7 @@ public void CriticalBusinessLogic_WorksCorrectly() { }
 public void ImportantEdgeCase() { }
 #endif
 
-```text
+````
 
 **Fix:** Investigate and fix the underlying issue. If a test is genuinely flaky due to timing, use `[Retry]` (xUnit v3)
 or fix the non-determinism. Never disable tests to achieve a green build.
@@ -549,7 +546,7 @@ result.Process();
 // RED FLAG: project-level suppression hiding real issues
 // <NoWarn>CS8618;CS8625;IL2026</NoWarn>
 
-```text
+```
 
 **Fix:** Address the underlying nullability or trim issues. Add proper null checks, use nullable annotations correctly,
 or apply `[DynamicallyAccessedMembers]` for trim warnings.
@@ -571,7 +568,7 @@ catch (Exception ex)
     // TODO: add logging
 }
 
-```text
+```
 
 **Fix:** At minimum, log the exception. Prefer catching specific exception types and handling them appropriately.
 
@@ -586,7 +583,7 @@ public void Process(string input) { }
 // RED FLAG: disabling analyzer rules in .editorconfig globally
 // dotnet_diagnostic.CA1062.severity = none
 
-```text
+```
 
 **Fix:** Fix the code to satisfy the analyzer rule, or provide a documented justification in the suppression attribute:
 `[SuppressMessage("Design", "CA1062", Justification = "Input validated by middleware")]`.
@@ -604,7 +601,7 @@ public async Task CreateOrder_Succeeds()
     // no Assert -- this test proves nothing
 }
 
-```text
+```
 
 **Fix:** Every test must have at least one assertion that validates the expected behavior. If the test is for side
 effects, assert on the side effect (database state, published events, log output).
@@ -620,8 +617,6 @@ effects, assert on the side effect (database state, published events, log output
 - [skill:dotnet-testing-strategy] -- test type decisions, organization, naming conventions
 - [skill:dotnet-security-owasp] -- OWASP mitigations, deprecated security API catalog
 
-
-
 ## Code Navigation (Serena MCP)
 
 **Primary approach:** Use Serena symbol operations for efficient code navigation:
@@ -632,11 +627,13 @@ effects, assert on the side effect (database state, published events, log output
 4. **Precise edits**: `serena_replace_symbol_body` for clean modifications
 
 **When to use Serena vs traditional tools:**
+
 - ✅ **Use Serena**: Navigation, refactoring, dependency analysis, precise edits
 - ✅ **Use Read/Grep**: Reading full files, pattern matching, simple text operations
 - ✅ **Fallback**: If Serena unavailable, traditional tools work fine
 
 **Example workflow:**
+
 ```text
 # Instead of:
 Read: src/Services/OrderService.cs
@@ -646,10 +643,10 @@ Grep: "public void ProcessOrder"
 serena_find_symbol: "OrderService/ProcessOrder"
 serena_get_symbols_overview: "src/Services/OrderService.cs"
 ```
+
 ## References
 
 - [Common .NET Compiler Errors](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-messages/)
 - [.NET Trimming Warnings](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/fixing-warnings)
 - [NuGet Package Reference](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files)
 - [Dependency Injection Lifetime Guidelines](https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection-guidelines)
-````

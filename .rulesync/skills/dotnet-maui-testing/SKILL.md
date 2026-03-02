@@ -5,7 +5,7 @@ license: MIT
 targets: ['*']
 tags: ['testing', 'dotnet', 'skill']
 version: '0.0.1'
-author: 'dotnet-harness'
+author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
@@ -200,7 +200,8 @@ public class LoginTests : IClassFixture<AppiumFixture>
         usernameField.Clear();
         usernameField.SendKeys("testuser");
         passwordField.Clear();
-        passwordField.SendKeys("P@ssw0rd!");
+        // Use placeholder password in examples
+        passwordField.SendKeys("<TEST_PASSWORD_PLACEHOLDER>");
         loginButton.Click();
 
         // Wait for navigation
@@ -295,7 +296,8 @@ public class LoginPage
 public void Login_ValidUser_ReachesHomePage()
 {
     var loginPage = new LoginPage(_driver);
-    var homePage = loginPage.Login("alice", "P@ssw0rd!");
+    // Use placeholder password in examples
+    var homePage = loginPage.Login("alice", "<TEST_PASSWORD_PLACEHOLDER>");
 
     Assert.True(homePage.IsLoaded);
 }
@@ -474,7 +476,7 @@ public static MauiApp CreateMauiApp()
   native accessibility identifier on every platform.
 - **Run tests against real emulators/simulators, not just unit tests.** MAUI rendering, navigation, and platform
   services behave differently than in-memory tests.
-- **Use explicit waits, never implicit waits or delays.** `WebDriverWait` with a condition is reliable; `Thread.Sleep`
+ - **Use explicit waits, never implicit waits or delays.** `WebDriverWait` with a condition is reliable; avoid `Thread.Sleep`.
   and implicit waits hide timing issues.
 - **Tag platform-specific tests with `[Trait]` and `Assert.SkipWhen`.** xUnit v3's native skip support allows running
   the correct tests per platform in CI without failures from unsupported features.

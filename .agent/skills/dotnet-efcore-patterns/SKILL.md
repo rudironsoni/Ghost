@@ -265,7 +265,7 @@ dotnet ef migrations bundle \
     --self-contained
 
 # Run in production -- pass connection string explicitly via --connection
-./efbundle --connection "Host=prod-db;Database=myapp;Username=deploy;Password=..."
+./efbundle --connection "Host=prod-db;Database=myapp;Username=deploy;Password=<DB_PASSWORD_PLACEHOLDER>"
 
 # Alternatively, configure the bundle to read from an environment variable
 # by setting the connection string key in your DbContext's OnConfiguring or
