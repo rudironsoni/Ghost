@@ -64,7 +64,7 @@ public static class RegionDetector
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Region detection failed: {ex.Message}");
             return PrivacyRegulation.Unknown;
         }
     }
@@ -163,7 +163,7 @@ public static class RegionDetector
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Region detection failed: {ex.Message}");
             // Continue to next detection method
         }
 

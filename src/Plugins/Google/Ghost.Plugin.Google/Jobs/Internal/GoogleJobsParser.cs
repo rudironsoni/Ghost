@@ -200,7 +200,7 @@ public static class GoogleJobsParser
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Widget key parsing failed: {ex.Message}");
+                        _logger.LogError(ex, "Widget key parsing failed");
                         keyIndex++;
                     }
                 }
@@ -291,7 +291,7 @@ public static class GoogleJobsParser
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to extract job from JobSpy format: {ex.Message}");
+            _logger.LogError(ex, "Failed to extract job from JobSpy format");
             return null;
         }
     }
@@ -331,7 +331,7 @@ public static class GoogleJobsParser
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Script tag JSON parsing failed: {ex.Message}");
+                        _logger.LogError(ex, "Script tag JSON parsing failed");
                         // Continue to next match
                     }
                 }
@@ -431,7 +431,7 @@ public static class GoogleJobsParser
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"AF_initDataCallback JSON parsing failed: {ex.Message}");
+                        _logger.LogError(ex, "AF_initDataCallback JSON parsing failed");
                         // Continue to next match
                     }
                 }
@@ -496,7 +496,7 @@ public static class GoogleJobsParser
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"JSON-LD parsing failed: {ex.Message}");
+                    _logger.LogError(ex, "JSON-LD parsing failed");
                     // Continue to next match
                 }
             }
@@ -604,7 +604,7 @@ public static class GoogleJobsParser
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to extract job from JSON-LD: {ex.Message}");
+            _logger.LogError(ex, "Failed to extract job from JSON-LD");
             return null;
         }
     }
@@ -913,7 +913,7 @@ public static class GoogleJobsParser
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to get string at index: {ex.Message}");
+            _logger.LogError(ex, "Failed to get string at index");
         }
         return null;
     }

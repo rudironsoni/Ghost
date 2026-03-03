@@ -126,7 +126,7 @@ public partial class XAuthenticator
             }
             finally
             {
-                try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to dispose page: {ex.Message}"); }
+                try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "Failed to dispose page"); }
             }
         }
         catch (Exception ex)

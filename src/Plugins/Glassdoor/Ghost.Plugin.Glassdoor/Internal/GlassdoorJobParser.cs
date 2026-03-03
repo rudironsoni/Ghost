@@ -22,7 +22,7 @@ public static class GlassdoorJobParser
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
+            _logger.LogError(ex, "Error");
             return Array.Empty<JobListing>();
         }
     }
@@ -147,7 +147,7 @@ public static class GlassdoorJobParser
                 Source = "Glassdoor"
             };
         }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); return null; }
+        catch (Exception ex) { _logger.LogError(ex, "Error"); return null; }
     }
 
     private static string? GetString(JsonElement el, params string[] names)
@@ -170,7 +170,7 @@ public static class GlassdoorJobParser
                     }
                 }
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
+            catch (Exception ex) { _logger.LogError(ex, "Error"); }
         }
         return null;
     }
@@ -183,7 +183,7 @@ public static class GlassdoorJobParser
             if (v.ValueKind == JsonValueKind.Number && v.TryGetDouble(out double d)) return d;
             if (v.ValueKind == JsonValueKind.String && double.TryParse(v.GetString(), out d)) return d;
         }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
+        catch (Exception ex) { _logger.LogError(ex, "Error"); }
         return null;
     }
 }

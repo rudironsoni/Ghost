@@ -207,11 +207,11 @@ public sealed class GlassdoorSearchScraper : IDisposable
             {
                 if (page != null)
                 {
-                    try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
+                    try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "Error"); }
                 }
                 if (session != null)
                 {
-                    try { await session.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
+                    try { await session.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "Error"); }
                 }
             }
         }
@@ -686,7 +686,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                             return extractedJobs;
                         }
                     }
-                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to parse JSON from script tag: {ex.Message}"); }
+                    catch (Exception ex) { _logger.LogError(ex, "$1"); }
                 }
             }
 
@@ -762,7 +762,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                                 });
                             }
                         }
-                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to extract job from HTML regex: {ex.Message}"); }
+                        catch (Exception ex) { _logger.LogError(ex, "$1"); }
                     }
 
                     if (jobs.Count > 0)
@@ -775,7 +775,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
         catch (Exception ex)
         {
             // Log error but don't throw
-            System.Diagnostics.Debug.WriteLine($"Regex extraction error: {ex.Message}");
+            _logger.LogError(ex, "$1");
         }
 
         return jobs;
@@ -829,7 +829,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                 }
             }
         }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to enumerate JSON array: {ex.Message}"); }
+        catch (Exception ex) { _logger.LogError(ex, "$1"); }
 
         return jobs;
     }
@@ -890,7 +890,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                 };
             }
         }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to extract job from JSON element: {ex.Message}"); }
+        catch (Exception ex) { _logger.LogError(ex, "$1"); }
 
         return null;
     }
@@ -908,7 +908,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                         return str;
                 }
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to get JSON property value: {ex.Message}"); }
+            catch (Exception ex) { _logger.LogError(ex, "$1"); }
         }
         return null;
     }

@@ -406,17 +406,17 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
 
     public Task<IReadOnlyList<JobApplication>> GetApplicationsAsync(ApplicationsFilter? filter = null, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        return Task.FromResult<IReadOnlyList<JobApplication>>(Array.Empty<JobApplication>());
     }
 
     public Task SaveJobAsync(string jobId, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        return Task.FromResult<IReadOnlyList<JobApplication>>(Array.Empty<JobApplication>());
     }
 
     public Task<IReadOnlyList<JobListing>> GetSavedJobsAsync(CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        return Task.FromResult<IReadOnlyList<JobApplication>>(Array.Empty<JobApplication>());
     }
 
     public async IAsyncEnumerable<JobListing> SearchJobsAsync(string keywords, string location, int limit = 25, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)

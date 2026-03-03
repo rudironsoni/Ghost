@@ -181,7 +181,7 @@ public sealed class HttpConnectionPool : IHttpConnectionPool
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
+            _logger.LogError(ex, "Error");
             return false;
         }
     }

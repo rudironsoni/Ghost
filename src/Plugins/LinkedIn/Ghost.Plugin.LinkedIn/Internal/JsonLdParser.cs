@@ -142,7 +142,7 @@ internal sealed class JsonLdParser
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to parse JSON-LD: {ex.Message}");
+                _logger.LogError(ex, "Failed to parse JSON-LD");
             }
         }
 

@@ -238,11 +238,11 @@ public sealed class GlassdoorBrowserClient : IDisposable
             {
                 if (page != null)
                 {
-                    try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
+                    try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "Error"); }
                 }
                 if (session != null)
                 {
-                    try { await session.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
+                    try { await session.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "Error"); }
                 }
             }
         }
@@ -642,7 +642,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                             return extractedJobs;
                         }
                     }
-                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
+                    catch (Exception ex) { _logger.LogError(ex, "Error"); }
                 }
             }
 
@@ -718,7 +718,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                                 });
                             }
                         }
-                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
+                        catch (Exception ex) { _logger.LogError(ex, "Error"); }
                     }
 
                     if (jobs.Count > 0)
@@ -731,7 +731,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
         catch (Exception ex)
         {
             // Log error but don't throw
-            System.Diagnostics.Debug.WriteLine($"Regex extraction error: {ex.Message}");
+            _logger.LogError(ex, "$1");
         }
 
         return jobs;
@@ -785,7 +785,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                 }
             }
         }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
+        catch (Exception ex) { _logger.LogError(ex, "Error"); }
 
         return jobs;
     }
@@ -846,7 +846,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                 };
             }
         }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
+        catch (Exception ex) { _logger.LogError(ex, "Error"); }
 
         return null;
     }
@@ -864,7 +864,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                         return str;
                 }
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
+            catch (Exception ex) { _logger.LogError(ex, "Error"); }
         }
         return null;
     }
@@ -907,7 +907,7 @@ public sealed class GlassdoorBrowserClient : IDisposable
                         break;
                     }
                 }
-                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
+                catch (Exception ex) { _logger.LogError(ex, "Error"); }
             }
 
             if (jobs.Count == 0)

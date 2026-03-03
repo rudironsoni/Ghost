@@ -76,7 +76,7 @@ public partial class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         catch (Exception ex)
         {
             // Logging failed - cannot log the failure, but don't crash
-            System.Diagnostics.Debug.WriteLine($"Logging error during construction: {ex.Message}");
+            _logger.LogError(ex, "Logging error during construction");
         }
     }
 
@@ -108,7 +108,7 @@ public partial class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         catch (Exception ex)
         {
             // Logging should never fail the operation
-            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+            _logger.LogError(ex, "Logging error");
         }
 
         // determine which scrapers to run based on criteria.Sources
@@ -126,7 +126,7 @@ public partial class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             catch (Exception ex)
         {
             // Logging should never fail the operation
-            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+            _logger.LogError(ex, "Logging error");
         }
             var lower = new HashSet<string>((criteriaNonNull.Sources ?? new List<string>()).Select(s => s?.ToLowerInvariant() ?? string.Empty));
             try
@@ -140,7 +140,7 @@ public partial class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             catch (Exception ex)
         {
             // Logging should never fail the operation
-            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+            _logger.LogError(ex, "Logging error");
         }
             scrapersToRun = (_scrapers ?? Enumerable.Empty<IJobScraper>())
                 .Where(s => lower.Contains(s.PlatformName?.ToLowerInvariant() ?? string.Empty));
@@ -161,7 +161,7 @@ public partial class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         catch (Exception ex)
         {
             // Logging should never fail the operation
-            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+            _logger.LogError(ex, "Logging error");
         }
 
         var platformErrors = new ConcurrentBag<PlatformError>();
@@ -240,7 +240,7 @@ public partial class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         catch (Exception ex)
         {
             // Logging should never fail the operation
-            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+            _logger.LogError(ex, "Logging error");
         }
 
         // determine which scrapers to run based on criteria.Sources
@@ -259,7 +259,7 @@ public partial class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             catch (Exception ex)
         {
             // Logging should never fail the operation
-            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+            _logger.LogError(ex, "Logging error");
         }
             var lower = new HashSet<string>((criteriaNonNull.Sources ?? new List<string>()).Select(s => s?.ToLowerInvariant() ?? string.Empty));
             // log normalized requested sources for debugging
@@ -274,7 +274,7 @@ public partial class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
             catch (Exception ex)
         {
             // Logging should never fail the operation
-            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+            _logger.LogError(ex, "Logging error");
         }
             scrapersToRun = (_scrapers ?? Enumerable.Empty<IJobScraper>())
                 .Where(s => lower.Contains(s.PlatformName?.ToLowerInvariant() ?? string.Empty));
@@ -296,7 +296,7 @@ public partial class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
         catch (Exception ex)
         {
             // Logging should never fail the operation
-            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+            _logger.LogError(ex, "Logging error");
         }
 
         Task<IReadOnlyList<JobListing>>[] tasks = (scrapersToRun ?? Enumerable.Empty<IJobScraper>()).Select(s => Task.Run(async () =>
@@ -344,7 +344,7 @@ public partial class AggregatedJobClient : Ghost.Contracts.Jobs.IJobClient
                 catch (Exception ex)
         {
             // Logging should never fail the operation
-            System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
+            _logger.LogError(ex, "Logging error");
         }
             }
             return new JobListing { Id = jobId };

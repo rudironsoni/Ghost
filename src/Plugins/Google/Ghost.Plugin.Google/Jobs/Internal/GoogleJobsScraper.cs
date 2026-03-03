@@ -133,7 +133,7 @@ public class GoogleJobsScraper
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to parse JSON-LD job: {ex.Message}");
+            _logger.LogError(ex, "Failed to parse JSON-LD job");
         }
         return null;
     }
@@ -190,7 +190,7 @@ public class GoogleJobsScraper
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Failed to extract job from HTML node: {ex.Message}");
+                        _logger.LogError(ex, "Failed to extract job from HTML node");
                     }
                 }
 
@@ -223,7 +223,7 @@ public class GoogleJobsScraper
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to extract job from node: {ex.Message}");
+            _logger.LogError(ex, "Failed to extract job from node");
             return null;
         }
 

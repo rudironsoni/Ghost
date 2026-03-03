@@ -246,7 +246,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Warm-up navigation failed: {ex.Message}");
+            _logger.LogError(ex, "Warm-up navigation failed");
         }
     }
 
@@ -263,7 +263,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Rate limit check failed: {ex.Message}");
+            _logger.LogError(ex, "Rate limit check failed");
         }
     }
 
@@ -300,14 +300,14 @@ public sealed class GuestJobSearch : IGuestJobSearch
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to save session state: {ex.Message}");
+            _logger.LogError(ex, "Failed to save session state");
         }
     }
 
     private static async Task DisposePageAsync(IPage? page)
     {
         if (page is null) return;
-        try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to dispose page: {ex.Message}"); }
+        try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "Failed to dispose page"); }
     }
 
     private void ReleaseSession(IBrowserSession? session)
@@ -422,7 +422,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to log debug result: {ex.Message}");
+            _logger.LogError(ex, "Failed to log debug result");
         }
     }
 

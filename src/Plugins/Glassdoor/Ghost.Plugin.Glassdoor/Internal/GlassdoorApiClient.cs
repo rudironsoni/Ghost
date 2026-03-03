@@ -155,7 +155,7 @@ public sealed class GlassdoorApiClient : IDisposable
                     await httpSession.ExecuteAsync(() => request, ct).ConfigureAwait(false)).ConfigureAwait(false);
                 string html = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
-                try { await System.IO.File.WriteAllTextAsync("logs/glassdoor_csrf.html", html, ct).ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to write debug file: {ex.Message}"); }
+                try { await System.IO.File.WriteAllTextAsync("logs/glassdoor_csrf.html", html, ct).ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "$1"); }
 
                 LogTokenExtraction($"Received HTML response: {html.Length} characters");
 
@@ -173,7 +173,7 @@ public sealed class GlassdoorApiClient : IDisposable
                         await httpSession.ExecuteAsync(() => altRequest, ct).ConfigureAwait(false)).ConfigureAwait(false);
                     html = await altRes.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
-                    try { await System.IO.File.WriteAllTextAsync("logs/glassdoor_csrf_alt.html", html, ct).ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to write debug file: {ex.Message}"); }
+                    try { await System.IO.File.WriteAllTextAsync("logs/glassdoor_csrf_alt.html", html, ct).ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "$1"); }
 
                     if (IsConsentOrBlockedPage(html))
                     {
@@ -233,7 +233,7 @@ public sealed class GlassdoorApiClient : IDisposable
             string html = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             // DEBUG: Write raw HTML to file
-            try { await System.IO.File.WriteAllTextAsync("logs/glassdoor_csrf.html", html, ct).ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to write debug file: {ex.Message}"); }
+            try { await System.IO.File.WriteAllTextAsync("logs/glassdoor_csrf.html", html, ct).ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "$1"); }
 
             LogTokenExtraction($"Received HTML response: {html.Length} characters");
 
@@ -252,7 +252,7 @@ public sealed class GlassdoorApiClient : IDisposable
                 HttpResponseMessage altRes = await _retryPolicy.ExecuteAsync(async () => await _http!.SendAsync(altRequest, ct).ConfigureAwait(false)).ConfigureAwait(false);
                 html = await altRes.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
-                try { await System.IO.File.WriteAllTextAsync("logs/glassdoor_csrf_alt.html", html, ct).ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to write debug file: {ex.Message}"); }
+                try { await System.IO.File.WriteAllTextAsync("logs/glassdoor_csrf_alt.html", html, ct).ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "$1"); }
 
                 // If still blocked, use fallback token
                 if (IsConsentOrBlockedPage(html))
@@ -303,7 +303,7 @@ public sealed class GlassdoorApiClient : IDisposable
             string logMessage = $"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff}] {message}\n";
             System.IO.File.AppendAllText("logs/glassdoor_token_extraction.log", logMessage);
         }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to write token log: {ex.Message}"); }
+        catch (Exception ex) { _logger.LogError(ex, "$1"); }
     }
 
     /// <summary>
@@ -695,18 +695,18 @@ public sealed class GlassdoorApiClient : IDisposable
                     break;
                 default:
                     // Unknown free-text location: leave fallback but log the value
-                    try { System.IO.File.AppendAllText("logs/glassdoor_location_resolve.log", $"Unknown location '{location}' - falling back to default ({defaultLocationId})\n"); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to write log: {ex.Message}"); }
+                    try { System.IO.File.AppendAllText("logs/glassdoor_location_resolve.log", $"Unknown location '{location}' - falling back to default ({defaultLocationId})\n"); } catch (Exception ex) { _logger.LogError(ex, "$1"); }
                     break;
             }
         }
         else
         {
             // No location provided - log that we're using default remote
-            try { System.IO.File.AppendAllText("logs/glassdoor_location_resolve.log", $"No location provided - using default ({defaultLocationId})\n"); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to write log: {ex.Message}"); }
+            try { System.IO.File.AppendAllText("logs/glassdoor_location_resolve.log", $"No location provided - using default ({defaultLocationId})\n"); } catch (Exception ex) { _logger.LogError(ex, "$1"); }
         }
 
         // Also log the final resolved mapping for transparency
-        try { System.IO.File.AppendAllText("logs/glassdoor_location_resolve.log", $"Resolved location '{location}' => id={resolvedLocationId}, type={resolvedLocationType}\n"); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to write log: {ex.Message}"); }
+        try { System.IO.File.AppendAllText("logs/glassdoor_location_resolve.log", $"Resolved location '{location}' => id={resolvedLocationId}, type={resolvedLocationType}\n"); } catch (Exception ex) { _logger.LogError(ex, "$1"); }
 
         // Build filter params (empty for basic search)
         List<object> filterParams = [];
@@ -822,7 +822,7 @@ public sealed class GlassdoorApiClient : IDisposable
             string html = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             // Log the HTML for debugging
-            try { await System.IO.File.WriteAllTextAsync("logs/glassdoor_simple_http.html", html, ct).ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to write debug file: {ex.Message}"); }
+            try { await System.IO.File.WriteAllTextAsync("logs/glassdoor_simple_http.html", html, ct).ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "$1"); }
 
             LogTokenExtraction($"Simple HTTP: Received {html.Length} characters");
 
@@ -831,7 +831,7 @@ public sealed class GlassdoorApiClient : IDisposable
 
             if (!string.IsNullOrEmpty(jobsJson))
             {
-                try { await System.IO.File.WriteAllTextAsync("logs/glassdoor_simple_http_parsed.json", jobsJson, ct).ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to write debug file: {ex.Message}"); }
+                try { await System.IO.File.WriteAllTextAsync("logs/glassdoor_simple_http_parsed.json", jobsJson, ct).ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "$1"); }
                 LogTokenExtraction($"Simple HTTP: Successfully parsed {jobsJson.Length} characters of JSON");
                 return jobsJson;
             }
@@ -885,7 +885,7 @@ public sealed class GlassdoorApiClient : IDisposable
                             break;
                         }
                     }
-                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Job extraction failed: {ex.Message}"); }
+                    catch (Exception ex) { _logger.LogError(ex, "Job extraction failed"); }
                 }
             }
 
@@ -968,7 +968,7 @@ public sealed class GlassdoorApiClient : IDisposable
                 }
             }
         }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Job extraction failed: {ex.Message}"); }
+        catch (Exception ex) { _logger.LogError(ex, "Job extraction failed"); }
 
         return jobs;
     }
@@ -1042,7 +1042,7 @@ public sealed class GlassdoorApiClient : IDisposable
                 }
             }
         }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Job extraction failed: {ex.Message}"); }
+        catch (Exception ex) { _logger.LogError(ex, "Job extraction failed"); }
 
         return null;
     }
@@ -1149,12 +1149,12 @@ public sealed class GlassdoorApiClient : IDisposable
                                 }
                             }
                         }
-                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Job field extraction failed: {ex.Message}"); }
+                        catch (Exception ex) { _logger.LogError(ex, "$1"); }
                     }
                 }
             }
         }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Job list extraction failed: {ex.Message}"); }
+        catch (Exception ex) { _logger.LogError(ex, "$1"); }
 
         return jobs;
     }
@@ -1238,7 +1238,7 @@ public sealed class GlassdoorApiClient : IDisposable
 
                 string json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
-                try { await System.IO.File.WriteAllTextAsync($"logs/glassdoor_search.json", json, ct).ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to write debug file: {ex.Message}"); }
+                try { await System.IO.File.WriteAllTextAsync($"logs/glassdoor_search.json", json, ct).ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "$1"); }
 
                 (bool hasErrors, bool shouldRetry) = ParseGraphQLErrors(json);
 
@@ -1337,7 +1337,7 @@ public sealed class GlassdoorApiClient : IDisposable
             LogTokenExtraction($"SearchLegacyAsync: Response length={json.Length}");
 
             // DEBUG: Write raw JSON to file
-            try { await System.IO.File.WriteAllTextAsync($"logs/glassdoor_search.json", json, ct).ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to write debug file: {ex.Message}"); }
+            try { await System.IO.File.WriteAllTextAsync($"logs/glassdoor_search.json", json, ct).ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "$1"); }
 
             // Parse GraphQL response for errors
             (bool hasErrors, bool shouldRetry) = ParseGraphQLErrors(json);

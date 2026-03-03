@@ -25,7 +25,7 @@ public sealed class InfoJobsPlugin : IExtension
             Console.WriteLine("Configuring InfoJobsPlugin...");
             Console.Out.Flush();
         }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to write to console: {ex.Message}"); }
+        catch (Exception ex) { _logger.LogError(ex, "Failed to write to console"); }
 
         // bind using configuration section
         services.Configure<InfoJobsOptions>(configuration.GetSection("Ghost:Extensions:InfoJobs"));
@@ -38,12 +38,12 @@ public sealed class InfoJobsPlugin : IExtension
         {
             Console.WriteLine($"InfoJobs options: Enabled = {rootOpts.Enabled}");
         }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to write to console: {ex.Message}"); }
+        catch (Exception ex) { _logger.LogError(ex, "Failed to write to console"); }
 
         // InfoJobs Job Client
         if (rootOpts.Enabled)
         {
-            try { Console.WriteLine("Registering InfoJobClient..."); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to write to console: {ex.Message}"); }
+            try { Console.WriteLine("Registering InfoJobClient..."); } catch (Exception ex) { _logger.LogError(ex, "Failed to write to console"); }
             services.AddHttpClient<Internal.InfoJobsApiClient>()
                 .AddTypedClient((httpClient, sp) =>
                 {
