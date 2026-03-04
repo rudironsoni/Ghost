@@ -22,7 +22,7 @@ public sealed class InfoJobsPlugin : IExtension
         // diagnostic logging to help determine whether extension is applied and options bound
         try
         {
-            Console.WriteLine("Configuring InfoJobsPlugin...");
+            
             Console.Out.Flush();
         }
         catch (Exception ex) { _logger.LogError(ex, "Failed to write to console"); }
@@ -43,7 +43,7 @@ public sealed class InfoJobsPlugin : IExtension
         // InfoJobs Job Client
         if (rootOpts.Enabled)
         {
-            try { Console.WriteLine("Registering InfoJobClient..."); } catch (Exception ex) { _logger.LogError(ex, "Failed to write to console"); }
+            try { Console.WriteLine("Registering InfoJobClient..."); 
             services.AddHttpClient<Internal.InfoJobsApiClient>()
                 .AddTypedClient((httpClient, sp) =>
                 {
