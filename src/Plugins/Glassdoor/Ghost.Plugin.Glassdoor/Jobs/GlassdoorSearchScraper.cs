@@ -207,11 +207,11 @@ public sealed class GlassdoorSearchScraper : IDisposable
             {
                 if (page != null)
                 {
-                    try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "Error"); }
+                    try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex, "Error"); }
                 }
                 if (session != null)
                 {
-                    try { await session.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "Error"); }
+                    try { await session.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex, "Error"); }
                 }
             }
         }
@@ -686,7 +686,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                             return extractedJobs;
                         }
                     }
-                    catch (Exception ex) { _logger.LogError(ex, "$1"); }
+                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex, "$1"); }
                 }
             }
 
@@ -762,7 +762,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                                 });
                             }
                         }
-                        catch (Exception ex) { _logger.LogError(ex, "$1"); }
+                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex, "$1"); }
                     }
 
                     if (jobs.Count > 0)
@@ -775,7 +775,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
         catch (Exception ex)
         {
             // Log error but don't throw
-            _logger.LogError(ex, "$1");
+            System.Diagnostics.Debug.WriteLine(ex, "$1");
         }
 
         return jobs;
@@ -829,7 +829,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                 }
             }
         }
-        catch (Exception ex) { _logger.LogError(ex, "$1"); }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex, "$1"); }
 
         return jobs;
     }
@@ -890,7 +890,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                 };
             }
         }
-        catch (Exception ex) { _logger.LogError(ex, "$1"); }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex, "$1"); }
 
         return null;
     }
@@ -908,7 +908,7 @@ public sealed class GlassdoorSearchScraper : IDisposable
                         return str;
                 }
             }
-            catch (Exception ex) { _logger.LogError(ex, "$1"); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex, "$1"); }
         }
         return null;
     }

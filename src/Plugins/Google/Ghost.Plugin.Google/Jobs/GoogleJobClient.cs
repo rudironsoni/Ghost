@@ -282,7 +282,7 @@ public sealed class GoogleJobClient : Ghost.IJobScraper
     }
 
     public Task<JobApplication> ApplyAsync(string jobId, ApplicationDetails details, CancellationToken ct = default)
-        => Task.FromResult(new JobApplication { JobId = jobId, Status = ApplicationStatus.NotApplied, AppliedAt = null });
+        => Task.FromResult(new JobApplication { JobId = jobId, Status = "NotApplied" });
 
     public Task<IReadOnlyList<JobApplication>> GetApplicationsAsync(ApplicationsFilter? filter = null, CancellationToken ct = default)
         => Task.FromResult<IReadOnlyList<JobApplication>>(Array.Empty<JobApplication>());
