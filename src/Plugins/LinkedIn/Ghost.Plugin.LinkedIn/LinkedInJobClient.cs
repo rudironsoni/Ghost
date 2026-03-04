@@ -416,7 +416,7 @@ public sealed class LinkedInJobClient : Ghost.IJobScraper
 
     public Task<IReadOnlyList<JobListing>> GetSavedJobsAsync(CancellationToken ct = default)
     {
-        return Task.FromResult<IReadOnlyList<JobApplication>>(Array.Empty<JobApplication>());
+        return Task.FromResult<IReadOnlyList<JobListing>>(Array.Empty<JobListing>());
     }
 
     public async IAsyncEnumerable<JobListing> SearchJobsAsync(string keywords, string location, int limit = 25, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)

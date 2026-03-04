@@ -4,17 +4,20 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Ghost.Contracts.Jobs;
+using Microsoft.Extensions.Logging;
 
 namespace Ghost.Plugin.LinkedIn.Internal;
 
 internal sealed class JsonLdParser
 {
     private readonly IJsonLdExtractor _extractor;
+    private readonly ILogger<JsonLdParser> _logger;
 
-    public JsonLdParser(IJsonLdExtractor extractor)
+    public JsonLdParser(IJsonLdExtractor extractor, ILogger<JsonLdParser> logger)
     {
         ArgumentNullException.ThrowIfNull(extractor);
         _extractor = extractor;
+        _logger = logger;
     }
 
     public JobListing? Parse(string html, string jobId, string url)
@@ -142,7 +145,7 @@ internal sealed class JsonLdParser
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to parse JSON-LD");
+                _logger?.LogError(ex, "Failed to parse JSON-LD");
             }
         }
 

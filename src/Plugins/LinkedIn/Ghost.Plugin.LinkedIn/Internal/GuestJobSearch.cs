@@ -236,7 +236,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
         await page.NavigateAsync(url, navOptions, ct: ct).ConfigureAwait(false);
     }
 
-    private static async Task WarmUpPageAsync(IPage page, CancellationToken ct)
+    private async Task WarmUpPageAsync(IPage page, CancellationToken ct)
     {
         try
         {
@@ -304,7 +304,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
         }
     }
 
-    private static async Task DisposePageAsync(IPage? page)
+    private async Task DisposePageAsync(IPage? page)
     {
         if (page is null) return;
         try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "Failed to dispose page"); }
@@ -410,11 +410,11 @@ public sealed class GuestJobSearch : IGuestJobSearch
         var extractor = (Ghost.IJsonLdExtractor?)Activator.CreateInstance(
             Type.GetType("Ghost.Utilities.JsonLdExtractor, Ghost.Core") ??
             typeof(Ghost.Utilities.JsonLdExtractor));
-        var parser = new JsonLdParser(extractor!);
+        var parser = new JsonLdParser(extractor!, null!);
         return parser.Parse(html, jobId, url);
     }
 
-    private static void LogDebugResult(string jobId, JobListing? parsed)
+    private void LogDebugResult(string jobId, JobListing? parsed)
     {
         try
         {
