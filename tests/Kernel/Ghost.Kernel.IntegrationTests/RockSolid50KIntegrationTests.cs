@@ -51,21 +51,14 @@ public class RockSolid50KIntegrationTests
             {
                 await circuitBreaker.ExecuteAsync<string>(() => throw new Exception("Failure"));
             }
-            catch { }
+            catch
+            {
+                // Expected - intentionally causing failures to test circuit breaker threshold
+            }
         }
 
         // Assert
         Assert.Equal(CircuitState.Open, circuitBreaker.State);
     }
 
-    [Fact]
-    public void Placeholder_ResilienceTests()
-    {
-        // Placeholder for additional resilience tests
-        // These tests require refactoring to match current API surface
-        Assert.True(true);
-    }
 }
-
-// Placeholder classes for compilation
-public class CircuitBreakerOpenException : Exception { }

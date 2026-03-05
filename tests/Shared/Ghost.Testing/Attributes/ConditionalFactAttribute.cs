@@ -29,18 +29,19 @@ public class ConditionalFactAttribute : FactAttribute
                 nameof(platform));
         }
 
-        if (!IsPlatformEnabled(platform))
+        // Tests run by default unless explicitly disabled via environment variable
+        if (IsPlatformDisabled(platform))
         {
-            string envVar = $"GHOST_ENABLE_{platform.ToUpperInvariant()}_TESTS";
-            Skip = $"{platform} tests disabled. Set {envVar}=true to enable. " +
-                   $"These tests require external API access and cannot run in CI.";
+            string envVar = $"GHOST_DISABLE_{platform.ToUpperInvariant()}_TESTS";
+            Skip = $"{platform} tests disabled. Unset {envVar} or set it to 'false' to enable.";
         }
     }
 
-    private static bool IsPlatformEnabled(string platform)
+    private static bool IsPlatformDisabled(string platform)
     {
-        string envVar = $"GHOST_ENABLE_{platform.ToUpperInvariant()}_TESTS";
+        string envVar = $"GHOST_DISABLE_{platform.ToUpperInvariant()}_TESTS";
         string? value = Environment.GetEnvironmentVariable(envVar);
+        // Default to enabled (false) if not set, check if explicitly disabled
         return bool.TryParse(value, out bool result) && result;
     }
 }

@@ -178,6 +178,7 @@ public class WebSocketAdapterTests : IDisposable
             }
             catch
             {
+                // Client disconnected or connection error - exit receive loop
                 break;
             }
         }
@@ -211,6 +212,7 @@ public class WebSocketAdapterTests : IDisposable
             }
             catch
             {
+                // Client disconnected or connection error - exit receive loop
                 break;
             }
         }
@@ -273,6 +275,7 @@ public class WebSocketAdapterTests : IDisposable
             }
             catch
             {
+                // Client disconnected or connection error - exit receive loop
                 break;
             }
         }
@@ -305,6 +308,7 @@ public class WebSocketAdapterTests : IDisposable
             }
             catch
             {
+                // Client disconnected or connection error - exit receive loop
                 break;
             }
         }
@@ -324,18 +328,29 @@ public class WebSocketAdapterTests : IDisposable
                     }
                     socket.Dispose();
                 }
-                catch { }
+                catch
+                {
+                    // Socket may already be disposed or in invalid state - ignore cleanup errors
+                }
             }
             _serverSockets.Clear();
         }
 
         foreach (var disposable in _disposables)
         {
-            try { disposable.Dispose(); } catch { }
+            try { disposable.Dispose(); }
+            catch
+            {
+                // Item may already be disposed - ignore cleanup errors
+            }
         }
         _disposables.Clear();
 
-        try { _server?.Dispose(); } catch { }
+        try { _server?.Dispose(); }
+        catch
+        {
+            // Server may already be disposed or in invalid state - ignore cleanup errors
+        }
         GC.SuppressFinalize(this);
     }
 

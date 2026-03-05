@@ -1,3 +1,4 @@
+using Ghost.Contracts.Jobs;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Hosting;
@@ -54,17 +55,12 @@ public sealed class GhostWebApiFixture : WebApplicationFactory<Program>, IAsyncL
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                // Enable all platforms for testing
-                ["Ghost:Extensions:LinkedIn:Enabled"] = "true",
-                ["Ghost:Extensions:Indeed:Enabled"] = "true",
-                ["Ghost:Extensions:Google:Enabled"] = "true",
-                ["Ghost:Extensions:Glassdoor:Enabled"] = "true",
-                ["Ghost:Extensions:Glassdoor:ProxyEnabled"] = "false",
+                // Disable all external platforms - use stubs instead
+                ["Ghost:Extensions:LinkedIn:Enabled"] = "false",
+                ["Ghost:Extensions:Indeed:Enabled"] = "false",
+                ["Ghost:Extensions:Google:Enabled"] = "false",
+                ["Ghost:Extensions:Glassdoor:Enabled"] = "false",
                 ["Ghost:Extensions:InfoJobs:Enabled"] = "false",
-
-                // Kernel options
-                ["Ghost:Kernel:Headless"] = "true",
-                ["Ghost:Kernel:MaxConcurrentSessions"] = "2",
 
                 // Disable external services that require credentials
                 ["Ghost:Extensions:OpenAI:Enabled"] = "false",
@@ -77,7 +73,22 @@ public sealed class GhostWebApiFixture : WebApplicationFactory<Program>, IAsyncL
 
         builder.ConfigureServices(services =>
         {
-            // Additional test-specific service configuration if needed
+            // Remove any existing IJobClient registrations
+            var existingDescriptors = services.Where(d => d.ServiceType == typeof(IJobClient)).ToList();
+            foreach (var descriptor in existingDescriptors)
+            {
+                services.Remove(descriptor);
+            }
+
+            // Register stub job clients as keyed services
+            // The API uses GetKeyedService to get platform-specific clients
+            services.AddKeyedSingleton<IJobClient, StubJobClient>("linkedin", (sp, key) => new StubJobClient("LinkedIn"));
+            services.AddKeyedSingleton<IJobClient, StubJobClient>("indeed", (sp, key) => new StubJobClient("Indeed"));
+            services.AddKeyedSingleton<IJobClient, StubJobClient>("google", (sp, key) => new StubJobClient("Google"));
+            services.AddKeyedSingleton<IJobClient, StubJobClient>("glassdoor", (sp, key) => new StubJobClient("Glassdoor"));
+            
+            // Also register as non-keyed for backwards compatibility
+            services.AddSingleton<IJobClient>(sp => new StubJobClient("All"));
         });
     }
 

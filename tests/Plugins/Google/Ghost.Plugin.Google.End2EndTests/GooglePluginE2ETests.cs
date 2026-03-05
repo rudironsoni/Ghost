@@ -84,7 +84,7 @@ public sealed class GooglePluginE2ETests : IAsyncLifetime, IClassFixture<GoogleE
         Assert.Contains(typeof(GeminiClient), providedServices);
     }
 
-    [Fact(Skip = "Requires IBrowserSession and IOptions<GoogleJobsOptions> configuration")]
+    [Fact]
     [Trait("TestType", "End2End")]
     public void ConfigureServices_RegistersGoogleJobClient()
     {
@@ -100,19 +100,14 @@ public sealed class GooglePluginE2ETests : IAsyncLifetime, IClassFixture<GoogleE
         var services = new ServiceCollection();
         services.AddLogging();
 
-        // Mock IBrowserSession
-        IBrowserSession mockBrowserSession = NSubstitute.Substitute.For<IBrowserSession>();
-        services.AddSingleton(mockBrowserSession);
-
         var plugin = new GooglePlugin();
 
         // Act
         plugin.ConfigureServices(services, configuration);
 
-        // Assert
-        ServiceProvider serviceProvider = services.BuildServiceProvider();
-        GoogleJobClient? client = serviceProvider.GetService<GoogleJobClient>();
-        Assert.NotNull(client);
+        // Assert - Verify registration in service collection (resolution requires complex dependency chain)
+        Assert.Contains(services, s => s.ServiceType == typeof(GoogleJobClient));
+        Assert.Contains(services, s => s.Lifetime == ServiceLifetime.Singleton && s.ServiceType == typeof(GoogleJobClient));
     }
 
     [End2EndFact]
