@@ -1,7 +1,0 @@
-{
-  "parallelizeAssembly": false,
-  "parallelizeTestCollections": false,
-  "maxParallelThreads": 1,
-  "testSessionTimeout": 300000,
-  "longRunningTestSeconds": 120
-}
