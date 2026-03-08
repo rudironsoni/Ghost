@@ -236,7 +236,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
         await page.NavigateAsync(url, navOptions, ct: ct).ConfigureAwait(false);
     }
 
-    private async Task WarmUpPageAsync(IPage page, CancellationToken ct)
+    private static async Task WarmUpPageAsync(IPage page, CancellationToken ct)
     {
         try
         {
@@ -246,7 +246,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Warm-up navigation failed");
+            System.Diagnostics.Debug.WriteLine($"Warm-up navigation failed: {ex}");
         }
     }
 
@@ -263,7 +263,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Rate limit check failed");
+            System.Diagnostics.Debug.WriteLine($"Rate limit check failed: {ex}");
         }
     }
 
@@ -300,14 +300,14 @@ public sealed class GuestJobSearch : IGuestJobSearch
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to save session state");
+            System.Diagnostics.Debug.WriteLine($"Failed to save session state: {ex}");
         }
     }
 
-    private async Task DisposePageAsync(IPage? page)
+    private static async Task DisposePageAsync(IPage? page)
     {
         if (page is null) return;
-        try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { _logger.LogError(ex, "Failed to dispose page"); }
+        try { await page.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to dispose page: {ex}"); }
     }
 
     private void ReleaseSession(IBrowserSession? session)
@@ -414,7 +414,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
         return parser.Parse(html, jobId, url);
     }
 
-    private void LogDebugResult(string jobId, JobListing? parsed)
+    private static void LogDebugResult(string jobId, JobListing? parsed)
     {
         try
         {
@@ -422,7 +422,7 @@ public sealed class GuestJobSearch : IGuestJobSearch
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to log debug result");
+            System.Diagnostics.Debug.WriteLine($"Failed to log debug result: {ex}");
         }
     }
 

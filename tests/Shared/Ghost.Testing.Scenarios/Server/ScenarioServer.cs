@@ -78,7 +78,7 @@ public sealed class ScenarioServer : IDisposable
         registry.RegisterRoutes(app);
 
         // Start the server
-        await app.StartAsync(cancellationToken);
+        await app.StartAsync(cancellationToken).ConfigureAwait(false);
 
         ILogger<ScenarioServer> logger = app.Services.GetRequiredService<ILogger<ScenarioServer>>();
         if (logger.IsEnabled(LogLevel.Information))
@@ -114,7 +114,7 @@ public sealed class ScenarioServer : IDisposable
             return;
         }
 
-        await _host.StopAsync(cancellationToken);
+        await _host.StopAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public void Dispose()

@@ -39,7 +39,7 @@ internal static class LinkedInRateLimitDetector
             }
             catch (Exception ex)
             {
-                logger?.LogError(ex, "Failed to get page content");
+                System.Diagnostics.Debug.WriteLine($"Failed to get page content: {ex}");
             }
 
             if (!string.IsNullOrEmpty(html))
@@ -51,7 +51,7 @@ internal static class LinkedInRateLimitDetector
                 }
                 else
                 {
-                    try { if (logger is not null) s_logNoRateLimit(logger, null); } catch (Exception ex) { logger?.LogError(ex, "Failed to log"); }
+                    try { if (logger is not null) s_logNoRateLimit(logger, null); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to log: {ex}"); }
                 }
             }
         }

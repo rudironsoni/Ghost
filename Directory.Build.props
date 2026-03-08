@@ -21,8 +21,6 @@
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <!-- Zero tolerance for warnings - Principal Engineer standard -->
     <!-- All warnings must be fixed, not suppressed -->
-    <!-- Zero tolerance: All warnings must be fixed, not suppressed -->
-    <NoWarn>$(NoWarn);CA1848;CA2007;IDE0008</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>
