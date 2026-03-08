@@ -11,8 +11,8 @@
     "errorOccurred": [
       {
         "type": "command",
-        "bash": "bash .rulesync/hooks/inline-error-recovery.sh",
-        "timeoutSec": 30,
+        "bash": "bash .rulesync/hooks/dotnet-agent-harness-slopwatch.sh",
+        "timeoutSec": 60,
         "async": true
       }
     ]

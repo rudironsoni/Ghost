@@ -3,8 +3,8 @@
 # Error Recovery Hook for dotnet-agent-harness
 # Extracts analyzer codes from build/test output and suggests relevant skills
 #
-# Usage: <build-output> | bash .rulesync/hooks/error-recovery.sh
-#   Or:  echo '<build-output>' | bash .rulesync/hooks/error-recovery.sh
+# Usage: <build-output> | bash .rulesync/hooks/dotnet-agent-harness-error-recovery.sh
+#   Or:  echo '<build-output>' | bash .rulesync/hooks/dotnet-agent-harness-error-recovery.sh
 #
 
 set -uo pipefail

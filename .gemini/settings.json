@@ -50,7 +50,7 @@
           },
           {
             "type": "command",
-            "command": "bash .rulesync/hooks/session-start.sh mcp-health",
+            "command": "bash .rulesync/hooks/dotnet-agent-harness-session-start.sh mcp-health",
             "timeout": 30
           }
         ]
@@ -62,7 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .rulesync/hooks/post-edit-roslyn.sh",
+            "command": "bash .rulesync/hooks/dotnet-agent-harness-post-edit-roslyn.sh",
             "timeout": 60
           },
           {
@@ -72,7 +72,7 @@
           },
           {
             "type": "command",
-            "command": "bash .rulesync/hooks/slopwatch-advisory.sh",
+            "command": "bash .rulesync/hooks/dotnet-agent-harness-slopwatch.sh",
             "timeout": 60
           }
         ]
@@ -82,7 +82,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .rulesync/hooks/inline-error-recovery.sh",
+            "command": "bash .rulesync/hooks/dotnet-agent-harness-inline-error-recovery.sh",
             "timeout": 30
           }
         ]

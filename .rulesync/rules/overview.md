@@ -1,6 +1,6 @@
 ---
 root: true
-targets: ['agentsmd', 'claudecode', 'copilot', 'geminicli', 'codexcli', 'factorydroid', 'antigravity']
+targets: ['agentsmd', 'claudecode', 'copilot', 'geminicli', 'codexcli', 'factorydroid', 'antigravity', 'opencode']
 description: 'dotnet-agent-harness: Comprehensive .NET development skills for all AI agents'
 globs: ['**/*']
 antigravity:

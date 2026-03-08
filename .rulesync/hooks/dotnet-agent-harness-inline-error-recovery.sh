@@ -11,7 +11,7 @@ INPUT="$(cat)"
 [[ -z "$INPUT" ]] && exit 0
 
 # Call the main error recovery script
-RESULT="$(echo "$INPUT" | bash "$(dirname "$0")/error-recovery.sh")"
+RESULT="$(echo "$INPUT" | bash "$(dirname "$0")/dotnet-agent-harness-error-recovery.sh")"
 
 # Extract count
 COUNT="$(echo "$RESULT" | jq -r '.count // 0')"
