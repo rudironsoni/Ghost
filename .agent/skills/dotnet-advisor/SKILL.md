@@ -253,10 +253,6 @@ Before any .NET guidance, determine the project's target framework:
 - [skill:dotnet-serena-refactoring] -- Symbol-level refactoring with automatic reference updates
 - [skill:dotnet-serena-analysis-patterns] -- Architecture validation and pattern detection
 
-### 24. Testing & Debugging `implemented`
-
-- [skill:dotnet-windbg-debugging] -- WinDbg MCP: crash dumps, hangs, high CPU, memory triage (any Windows app)
-
 ---
 
 ## MCP-Aware Routing
@@ -271,7 +267,6 @@ The dotnet-agent-harness supports multiple MCP servers for enhanced functionalit
 | Official docs | microsoftdocs-mcp | Web search | `microsoftdocs-mcp_microsoft_docs_search` |
 | Third-party docs | context7 | Web search | Context7 API |
 | Project docs | deepwiki | Read markdown | DeepWiki API |
-| Crash debugging | mcp-windbg | Manual WinDbg | WinDbg MCP |
 | GitHub ops | github | gh CLI | GitHub MCP |
 
 ### Code Navigation (Serena MCP)
@@ -486,10 +481,6 @@ Use this decision tree to load the right skills for the current task.
 ### AI & LLM Integration
 
 - Microsoft Agent Framework, AI agents, workflows, tools -> [skill:dotnet-microsoft-agent-framework]
-
-### Debugging
-
-- Windows app crash, hang, freeze, high CPU, memory leak, dump analysis, WinDbg, cdb -> [skill:dotnet-windbg-debugging]
 
 ### Specialist Agent Routing
 

@@ -127,7 +127,6 @@ exit 0
 | ----------------- | ----- | ------------ | ------ | ----------------- |
 | serena            | stdio | Full         | Active | Semantic analysis |
 | context7          | http  | Full         | Active | Library docs      |
-| mcp-windbg        | stdio | Windows      | Active | Debugging         |
 | microsoftdocs-mcp | http  | Full         | Active | MS Learn          |
 | deepwiki          | http  | Full         | Active | Wiki search       |
 | github            | http  | Full         | New    | GitHub API        |

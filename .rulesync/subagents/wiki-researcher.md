@@ -8,9 +8,19 @@ author: 'dotnet-agent-harness'
 claudecode:
   model: inherit
   allowed-tools: ['Read', 'Grep', 'Glob']
+opencode:
+  mode: 'subagent'
+  tools:
+    bash: false
+    edit: false
+    write: false
+copilot:
+  tools: ['read', 'search']
 codexcli:
   short-description: 'Read-only evidence-first wiki researcher'
   sandbox_mode: read-only
+geminicli:
+  tools: ['read', 'search']
 ---
 
 # wiki-researcher

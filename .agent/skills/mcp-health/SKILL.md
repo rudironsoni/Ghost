@@ -37,7 +37,6 @@ Launch local processes via stdio transport:
 
 - **serena** -- Semantic code analysis (Language Server Protocol)
 - **context7** -- Library documentation lookup
-- **mcp-windbg** -- Windows debugging tools
 
 ### http Servers (Remote)
 

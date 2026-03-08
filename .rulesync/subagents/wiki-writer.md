@@ -8,8 +8,18 @@ author: 'dotnet-agent-harness'
 claudecode:
   model: inherit
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Edit', 'Write']
+opencode:
+  mode: 'subagent'
+  tools:
+    bash: true
+    edit: true
+    write: true
+copilot:
+  tools: ['read', 'search', 'execute', 'edit']
 codexcli:
   short-description: 'Wiki documentation writer with diagram support'
+geminicli:
+  tools: ['read', 'search', 'execute', 'edit']
 ---
 
 # wiki-writer

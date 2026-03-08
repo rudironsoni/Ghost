@@ -18,7 +18,6 @@ The following MCP servers are configured in `.rulesync/mcp.json`:
 | **serena** | stdio | Semantic code analysis | Symbol-level navigation, refactoring, dependency analysis, precise code edits |
 | **context7** | http | Documentation intelligence | Up-to-date library/framework documentation queries, API discovery |
 | **microsoftdocs-mcp** | http | Official Microsoft documentation | First-party .NET/ASP.NET/Azure docs, authoritative API references |
-| **mcp-windbg** | stdio | Windows debugging | Crash dump analysis, hang detection, memory leak triage |
 | **deepwiki** | http | Repository documentation | Project-specific docs, wiki content, generated documentation |
 | **github** | http | Repository operations | PRs, issues, Actions, repository metadata |
 
@@ -41,10 +40,6 @@ Need third-party library documentation?
 
 Need project-specific documentation?
   YES -> [mcp:deepwiki] for repo wiki/docs
-  NO -> Continue...
-
-Need Windows debugging/crash analysis?
-  YES -> [mcp:mcp-windbg] for dump analysis
   NO -> Continue...
 
 Need GitHub operations?
@@ -130,25 +125,6 @@ Need GitHub operations?
 
 **Fallback:** Read files from docs/ or wiki/ directories directly.
 
-#### WinDbg MCP
-
-**Preferred for:**
-- Analyzing crash dumps (.dmp files)
-- Diagnosing application hangs
-- Memory leak investigation
-- High CPU usage analysis
-
-**Tool mapping:**
-- `mcp-windbg` commands for dump analysis
-- Crash triage and root cause identification
-
-**When to use:**
-- ✅ Windows application crashes in production
-- ✅ Memory-related issues in native/managed code
-- ✅ Performance issues requiring dump analysis
-
-**Fallback:** Manual WinDbg CLI usage or Visual Studio dump analysis.
-
 #### GitHub MCP
 
 **Preferred for:**
@@ -218,17 +194,15 @@ Every session should validate MCP server health:
 
 ```json
 {
-  "mcpHealth": {
+    "mcpHealth": {
     "serena": { "status": "available", "type": "stdio" },
     "microsoftdocs-mcp": { "status": "available", "type": "http" },
     "context7": { "status": "unavailable", "type": "http", "reason": "network_timeout" },
     "deepwiki": { "status": "available", "type": "http" },
-    "mcp-windbg": { "status": "unavailable", "type": "stdio", "reason": "command_not_found" },
     "github": { "status": "available", "type": "http" }
   },
   "recommendations": [
-    "context7 unavailable: Use web search for third-party docs",
-    "mcp-windbg unavailable: Install uvx or use manual WinDbg"
+    "context7 unavailable: Use web search for third-party docs"
   ]
 }
 ```
@@ -241,7 +215,6 @@ Every session should validate MCP server health:
 | microsoftdocs-mcp | No official doc queries | Use web search with microsoft.com/learn |
 | context7 | No third-party docs | Use web search or library READMEs |
 | deepwiki | No repo docs | Read markdown files directly |
-| mcp-windbg | No automated dump analysis | Manual WinDbg or Visual Studio |
 | github | No repo operations | Use gh CLI or web interface |
 
 ## MCP Usage Patterns by Agent
@@ -305,7 +278,6 @@ When adding new MCP servers:
 |----------|---------|----------|
 | **Code Intelligence** | serena | Navigation, refactoring, analysis |
 | **Documentation** | microsoftdocs-mcp, context7, deepwiki | Research, validation, examples |
-| **Debugging** | mcp-windbg | Crash analysis, performance triage |
 | **Operations** | github | Repository management |
 
 ### Performance Considerations

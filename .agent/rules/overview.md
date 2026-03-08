@@ -1,12 +1,6 @@
 ---
-root: true
-targets: ['agentsmd', 'claudecode', 'copilot', 'geminicli', 'codexcli', 'factorydroid', 'antigravity']
-description: 'dotnet-agent-harness: Comprehensive .NET development skills for all AI agents'
-globs: ['**/*']
-antigravity:
-  trigger: always_on
+trigger: always_on
 ---
-
 # dotnet-agent-harness
 
 Comprehensive .NET development guidance for modern C#, ASP.NET Core, MAUI, Blazor, and cloud-native apps.

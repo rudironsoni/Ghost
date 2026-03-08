@@ -201,9 +201,6 @@ get_fallback_recommendation() {
         deepwiki)
             echo "Read markdown files from docs/ or wiki/ directories"
             ;;
-        mcp-windbg)
-            echo "Use manual WinDbg or Visual Studio for dump analysis"
-            ;;
         github)
             echo "Use gh CLI or web interface for GitHub operations"
             ;;

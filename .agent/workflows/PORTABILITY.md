@@ -1,4 +1,7 @@
 ---
+description: >-
+  Analysis of 27 commands for target portability classification across all
+  supported platforms
 trigger: /PORTABILITY
 turbo: true
 ---
