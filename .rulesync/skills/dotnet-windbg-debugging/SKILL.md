@@ -1,9 +1,11 @@
 ---
 name: dotnet-windbg-debugging
+category: developer-experience
+subcategory: cli
 description: Debugs Windows apps via WinDbg MCP. Crash, hang, high-CPU, and memory triage from dumps or live attach.
 license: MIT
 targets: ['*']
-tags: ['foundation', 'dotnet', 'skill']
+tags: [foundation, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for foundation tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-windbg-debugging

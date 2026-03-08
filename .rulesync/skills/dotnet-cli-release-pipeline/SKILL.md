@@ -1,9 +1,11 @@
 ---
 name: dotnet-cli-release-pipeline
+category: operations
+subcategory: release
 description: Releases CLI tools. GitHub Actions build matrix, artifact staging, Releases, checksums.
 license: MIT
 targets: ['*']
-tags: ['cicd', 'dotnet', 'skill']
+tags: [cicd, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for cicd tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-cli-release-pipeline

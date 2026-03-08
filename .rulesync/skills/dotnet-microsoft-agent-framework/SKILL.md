@@ -1,10 +1,11 @@
 ---
 name: dotnet-microsoft-agent-framework
-description:
-  Integrates AI/LLM via Microsoft Agent Framework. Agents, workflows, tools, MCP servers, multi-agent orchestration.
+category: developer-experience
+subcategory: cli
+description: 'Integrates AI/LLM via Microsoft Agent Framework. Agents, workflows, tools, MCP servers, multi-agent orchestration.'
 license: MIT
 targets: ['*']
-tags: ['foundation', 'dotnet', 'skill']
+tags: [foundation, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -14,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for AI agent development'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-microsoft-agent-framework

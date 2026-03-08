@@ -3,16 +3,30 @@ name: dotnet-scaffold-project
 description: Creates a new .NET project. Generates solution with CPM, analyzers, editorconfig, SourceLink.
 license: MIT
 targets: ['*']
-tags: ['foundation', 'dotnet', 'skill']
-version: '0.0.1'
+category: developer-experience
+subcategory: project
+tags:
+  - tooling
+  - dotnet
+  - skill
+  - project
+  - scaffolding
+version: '1.0.0'
 author: 'dotnet-agent-harness'
 invocable: true
+related_skills:
+  - dotnet-project-structure
+  - dotnet-project-analysis
+  - dotnet-version-detection
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: '.NET skill guidance for foundation tasks'
+  short-description: '.NET skill guidance for project tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-scaffold-project

@@ -52,76 +52,60 @@ version: '2.1.0'
 
 ## Workflow
 
-1. **Build manifest** -- Run [dotnet-agent-harness:build-manifest] to generate `.rulesync/manifest/skill-manifest.json`
-2. **Validate dependencies** -- Check all skills have valid dependency declarations
-3. **Resolve conflicts** -- Identify and report skill conflicts
-4. **Generate graph** -- Create dependency visualization for complex scenarios
+1. **Inspect catalog metadata** -- Run [dotnet-agent-harness:profile] for a catalog item or the whole catalog.
+2. **Trace dependencies** -- Run [dotnet-agent-harness:graph] to follow references between skills, subagents, personas, and commands.
+3. **Run repository validation** -- Use `dotnet agent-harness validate` before relying on new metadata changes.
+4. **Check exported inventories** -- Inspect `.dotnet-agent-harness/exports/mcp/manifest.json` and `.dotnet-agent-harness/exports/mcp-report.json` when you need the checked-in MCP bundle view.
 
 ## Commands
 
-### Build Manifest
+### Catalog Profile
 
 ```bash
-/dotnet-agent-harness:build-manifest
+/dotnet-agent-harness:profile <catalog-item-id> [--format text|json]
 ```
 
-Generates `skill-manifest.json` from all skill frontmatter.
-
-### Validate Dependencies
-
-```bash
-/dotnet-agent-harness:validate-dependencies <skill-name>
-```
-
-Checks if a skill's dependencies are satisfiable.
-
-### Check Conflicts
-
-```bash
-/dotnet-agent-harness:check-conflicts
-```
-
-Identifies skill conflicts across the toolkit.
+Shows item metadata, tags, references, and approximate size.
 
 ### Dependency Graph
 
 ```bash
-/dotnet-agent-harness:graph --format mermaid
+/dotnet-agent-harness:graph --item <catalog-item-id> --format mermaid
 ```
 
-Generates dependency visualization.
+Generates a dependency visualization from catalog references.
+
+### Repository Validation
+
+```bash
+dotnet agent-harness validate
+```
+
+Runs repo validation checks before or after manifest-related changes.
 
 ## Manifest Schema
 
-Location: `.rulesync/manifest/schema.json`
+There are two different manifest shapes in this repository:
+
+- `.dotnet-agent-harness/metadata/skill-manifest.schema.json` is the primary schema for authored toolkit metadata.
+- `.dotnet-agent-harness/exports/mcp/manifest.json` is the compact MCP export bundle manifest. It does not use the
+  old per-skill object map shape.
+- `.dotnet-agent-harness/exports/mcp-report.json` is the richer export report with per-item prompt/resource listings and
+  resolved references.
+
+Current MCP bundle manifest example:
 
 ```json
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "properties": {
-    "version": { "type": "string" },
-    "generated_at": { "type": "string", "format": "date-time" },
-    "skills": {
-      "type": "object",
-      "patternProperties": {
-        "^[a-z-]+$": {
-          "type": "object",
-          "properties": {
-            "name": { "type": "string" },
-            "version": { "type": "string" },
-            "description": { "type": "string" },
-            "tags": { "type": "array", "items": { "type": "string" } },
-            "depends_on": { "type": "array", "items": { "type": "string" } },
-            "optional": { "type": "array", "items": { "type": "string" } },
-            "conflicts_with": { "type": "array", "items": { "type": "string" } },
-            "file_path": { "type": "string" },
-            "line_count": { "type": "integer" }
-          }
-        }
-      }
-    }
-  }
+  "generatedAtUtc": "2026-03-06T11:51:41.7827192+00:00",
+  "sourceOfTruth": "../../.rulesync",
+  "repoRoot": "../..",
+  "platform": "geminicli",
+  "kind": "all",
+  "promptCount": 47,
+  "resourceCount": 240,
+  "promptIndexPath": "./prompts/index.json",
+  "resourceIndexPath": "./resources/index.json"
 }
 ```
 
@@ -139,35 +123,30 @@ Location: `.rulesync/manifest/schema.json`
 ### Basic Dependency Check
 
 ```bash
-# Check if dotnet-efcore-patterns can be loaded
-dotnet-agent-harness:validate-dependencies dotnet-efcore-patterns
+# Inspect one catalog item
+dotnet agent-harness profile dotnet-efcore-patterns --format json
 
 # Output:
-# ✓ dotnet-version-detection (found)
-# ✓ dotnet-project-analysis (found)
-# ✓ All dependencies satisfied
+# tags, references, source path, and token estimate
 ```
 
-### Conflict Detection
+### Dependency Visualization
 
 ```bash
-# Check for conflicts
-dotnet-agent-harness:check-conflicts
+# Graph the reachable references
+dotnet agent-harness graph --item dotnet-advisor --depth 2 --format mermaid
 
 # Output:
-# ⚠ Conflict detected:
-#   dotnet-efcore-patterns conflicts with: legacy-ef-core-patterns
-#   Both cannot be loaded simultaneously
+# Mermaid graph of related catalog items
 ```
 
-### Build Full Manifest
+### Validate Repository Metadata
 
 ```bash
-# Generate complete manifest
-dotnet-agent-harness:build-manifest
+# Validate the current repository state
+dotnet agent-harness validate
 
-# Creates: .rulesync/manifest/skill-manifest.json
-# Size: ~50KB for 131 skills
+# Confirms repo metadata and authored content are internally consistent
 ```
 
 ## Best Practices
@@ -192,7 +171,9 @@ The [skill:dotnet-advisor] uses the manifest to:
 - [skill:dotnet-advisor] -- skill routing and delegation
 - [skill:dotnet-project-analysis] -- project context detection
 - [skill:dotnet-version-detection] -- TFM and SDK detection
-- `.rulesync/manifest/schema.json` -- manifest JSON schema
+- `.dotnet-agent-harness/metadata/skill-manifest.schema.json` -- manifest JSON schema
+- `.dotnet-agent-harness/exports/mcp/manifest.json` -- checked-in MCP export manifest
+- `.dotnet-agent-harness/exports/mcp-report.json` -- checked-in MCP export report
 
 ## Code Navigation (Serena MCP)
 

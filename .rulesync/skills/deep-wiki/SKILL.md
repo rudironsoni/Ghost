@@ -1,12 +1,21 @@
 ---
 name: deep-wiki
+category: developer-experience
+subcategory: cli
 description: AI-powered wiki generation for code repositories with commands, agents, and skills
 license: MIT
 targets: ['claudecode', 'codexcli', 'opencode', 'geminicli', 'antigravity', 'agentsmd']
-tags: ['wiki', 'documentation', 'plugin']
+tags: [wiki, documentation, plugin]
 version: '1.0.0'
 author: 'dotnet-agent-harness'
 invocable: true
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: 'Toolkit guidance for deep-wiki'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # deep-wiki

@@ -1,18 +1,23 @@
 ---
 name: dotnet-agent-gotchas
+category: fundamentals
+subcategory: coding-standards
 description: Flags agent mistakes in .NET code -- async misuse, NuGet errors, deprecated APIs, DI.
 license: MIT
 targets: ['*']
-tags: ['foundation', 'dotnet', 'skill']
+tags: [foundation, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
 codexcli:
   short-description: '.NET skill guidance for foundation tasks'
+geminicli: {}
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+antigravity: {}
 ---
 
 # dotnet-agent-gotchas

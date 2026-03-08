@@ -27,6 +27,10 @@ copilot:
   tools: ['read', 'search', 'execute', 'edit']
 codexcli:
   sandbox_mode: 'inherit'
+geminiclaude:
+  tools: ['read', 'search']
+antigravity:
+  description: 'C# concurrency specialist'
 ---
 
 # dotnet-csharp-concurrency-specialist

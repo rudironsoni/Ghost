@@ -1,0 +1,19 @@
+name: Skill Testing Framework contract
+description: Validate that the framework skill documents the core assertions and structure.
+tests:
+  - name: Frontmatter name matches
+    expected:
+      frontmatter:
+        name: dotnet-agent-harness-test-framework
+  - name: Documents supported assertions
+    expected:
+      output_contains:
+        - "output_contains"
+        - "output_matches"
+        - "file_exists"
+        - "no_errors"
+  - name: Documents regression coverage
+    expected:
+      output_contains:
+        - "Regression"
+        - "test-cases/"

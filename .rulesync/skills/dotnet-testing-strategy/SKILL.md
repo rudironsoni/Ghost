@@ -1,18 +1,23 @@
 ---
 name: dotnet-testing-strategy
+category: testing
+subcategory: fundamentals
 description: Decides how to test .NET code. Unit vs integration vs E2E decision tree, test doubles.
 license: MIT
 targets: ['*']
-tags: ['testing', 'dotnet', 'skill']
+tags: [testing, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
 codexcli:
   short-description: '.NET skill guidance for testing tasks'
+geminicli: {}
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+antigravity: {}
 ---
 
 Source: kevintsengtw/dotnet-testing-agent-skills (MIT). Ported into dotnet-agent-harness.

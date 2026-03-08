@@ -1,5 +1,7 @@
 ---
 name: dotnet-testing-autofixture-customization
+category: testing
+subcategory: test-data
 description: |
   Complete guide for AutoFixture advanced customization techniques. Use when you need to customize AutoFixture builders or handle special type test data generation rules. Covers DataAnnotations automatic integration, ISpecimenBuilder implementation, priority management. Includes DateTime/numeric range builders, generic design, and fluent extension methods.
   Keywords: autofixture customization, autofixture customize, autofixture customization, specimen builder, ISpecimenBuilder, RandomDateTimeSequenceGenerator, NumericRangeBuilder, DataAnnotations autofixture, fixture.Customizations, Insert(0), custom builder, NoSpecimen, generic builder
@@ -10,6 +12,13 @@ metadata:
   version: '1.0.0'
   tags: 'autofixture, customization, test-data, specimen-builder, data-annotations'
   related_skills: 'autofixture-basics, autodata-xunit-integration, autofixture-bogus-integration'
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-testing-autofixture-customization'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 Source: kevintsengtw/dotnet-testing-agent-skills (MIT). Ported into dotnet-agent-harness.

@@ -1,9 +1,11 @@
 ---
 name: dotnet-efcore-architecture
+category: data
+subcategory: ef-core
 description: Designs EF Core data layer architecture. Read/write split, aggregate boundaries, N+1 governance.
 license: MIT
 targets: ['*']
-tags: ['architecture', 'dotnet', 'skill']
+tags: [architecture, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for architecture tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-efcore-architecture

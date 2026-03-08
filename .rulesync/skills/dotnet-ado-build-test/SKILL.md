@@ -1,9 +1,11 @@
 ---
 name: dotnet-ado-build-test
+category: operations
+subcategory: ci-cd
 description: Configures .NET build/test in Azure DevOps. DotNetCoreCLI task, Artifacts, test results.
 license: MIT
 targets: ['*']
-tags: ['testing', 'dotnet', 'skill']
+tags: [testing, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for testing tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-ado-build-test

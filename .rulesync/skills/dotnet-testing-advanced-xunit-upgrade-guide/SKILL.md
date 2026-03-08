@@ -1,5 +1,7 @@
 ---
 name: dotnet-testing-advanced-xunit-upgrade-guide
+category: testing
+subcategory: fundamentals
 description: |
   Complete guide for upgrading xUnit 2.9.x to 3.x. Use when upgrading xUnit v2 to v3 or understanding xUnit v3 new features and breaking changes. Covers package updates, async void fixes, IAsyncLifetime adjustments. Includes new features: Assert.Skip, Explicit Tests, Matrix Theory, Assembly Fixtures.
   Keywords: xunit upgrade, xunit v3, xunit 3.x, xunit migration, xunit upgrade, xunit.v3, OutputType Exe, IAsyncLifetime v3, Assert.Skip, SkipUnless, SkipWhen, Explicit attribute, MatrixTheoryData, AssemblyFixture, breaking changes
@@ -10,6 +12,13 @@ metadata:
   version: '1.0.0'
   tags: 'xunit, upgrade, migration, v3, breaking-changes, testing-framework'
   related_skills: 'xunit-project-setup, unit-test-fundamentals'
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-testing-advanced-xunit-upgrade-guide'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 Source: kevintsengtw/dotnet-testing-agent-skills (MIT). Ported into dotnet-agent-harness.

@@ -1,11 +1,20 @@
 ---
 name: dotnet-serena-code-navigation
+category: developer-experience
+subcategory: serena
 description: 'Efficient code navigation using Serena MCP symbol operations instead of text search'
 targets: ['*']
-tags: ['dotnet', 'serena', 'navigation', 'productivity', 'skill']
+tags: [dotnet, serena, navigation, productivity, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 license: 'MIT'
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-serena-code-navigation'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-serena-code-navigation

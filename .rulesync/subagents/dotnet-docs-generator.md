@@ -25,6 +25,8 @@ opencode:
     write: true
 copilot:
   tools: ['read', 'search', 'execute', 'edit']
+codexcli:
+  short-description: '.NET specialist subagent for dotnet-docs-generator'
 ---
 
 # dotnet-docs-generator
@@ -80,6 +82,29 @@ Always load these skills before starting documentation work:
    - **Issue templates** -- Bug report and feature request templates with .NET-specific fields (target framework,
      runtime version, OS).
    - **PR template** -- Checklist covering tests, documentation updates, breaking changes.
+
+## Decision Tree
+
+```text
+API documentation needed?
+  YES -> DocFX, OpenAPI/Swagger, source-generated docs
+  NO -> Focus on conceptual and tutorial documentation
+
+Target audience?
+  Developers -> API reference, architecture guides, quick starts
+  End users -> Tutorials, feature guides, FAQ
+  Contributors -> Setup guides, contribution guidelines
+
+Documentation format?
+  Markdown -> Universal, version control friendly
+  XML docs -> Required for API reference generation
+  Hybrid -> XML for APIs, Markdown for guides
+
+Hosting platform?
+  GitHub Pages -> Jekyll, VitePress, Docusaurus
+  Azure DevOps Wiki -> Special formatting requirements
+  ReadTheDocs -> Sphinx, custom domain support
+```
 
 ## Trigger Lexicon
 

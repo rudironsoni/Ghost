@@ -3,13 +3,31 @@ name: dotnet-testing-unit-test-fundamentals
 description: |
   .NET unit test fundamentals and FIRST principles specialized skill. Used when creating unit tests, understanding testing basics, learning 3A Pattern, and mastering testing best practices. Covers FIRST principles, AAA Pattern, Fact/Theory, testing pyramid, etc.
   Keywords: unit test, unit test, unit testing, test fundamentals, testing fundamentals, FIRST principle, FIRST principle, 3A pattern, AAA pattern, Arrange Act Assert, Fact, Theory, InlineData, how to write tests, testing best practices, create unit test
-targets: ['*']
 license: MIT
+targets: ['*']
+category: testing
+subcategory: fundamentals
+tags:
+  - dotnet
+  - testing
+  - fundamentals
+  - unit-test
+  - xunit
+  - first-principles
 metadata:
   author: Kevin Tseng
   version: '1.0.0'
-  tags: '.NET, testing, unit test, FIRST, AAA pattern, xUnit'
-  related_skills: 'xunit-project-setup, test-naming-conventions, awesome-assertions-guide'
+related_skills:
+  - dotnet-testing-test-naming-conventions
+  - dotnet-testing-xunit-project-setup
+  - dotnet-testing-awesome-assertions-guide
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-testing-unit-test-fundamentals'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 Source: kevintsengtw/dotnet-testing-agent-skills (MIT). Ported into dotnet-agent-harness.

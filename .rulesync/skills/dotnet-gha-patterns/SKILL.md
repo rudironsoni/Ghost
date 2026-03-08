@@ -1,9 +1,11 @@
 ---
 name: dotnet-gha-patterns
+category: operations
+subcategory: ci-cd
 description: Composes GitHub Actions workflows. Reusable workflows, composite actions, matrix, caching.
 license: MIT
 targets: ['*']
-tags: ['cicd', 'dotnet', 'skill']
+tags: [cicd, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for cicd tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-gha-patterns

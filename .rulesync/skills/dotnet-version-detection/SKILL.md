@@ -1,19 +1,24 @@
 ---
 name: dotnet-version-detection
+category: developer-experience
+subcategory: project
 description: Detects TFM/SDK from .csproj, global.json, Directory.Build.props. Runs first.
 license: MIT
 targets: ['*']
-tags: ['csharp', 'dotnet', 'skill']
+tags: [csharp, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
   model: haiku
+copilot: {}
 codexcli:
   short-description: '.NET skill guidance for csharp tasks'
+geminicli: {}
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+antigravity: {}
 ---
 
 ````! dotnet --version 2>/dev/null

@@ -3,16 +3,30 @@ name: dotnet-maui-development
 description: Builds .NET MAUI mobile apps. Project structure, XAML/MVVM, platform services, caveats.
 license: MIT
 targets: ['*']
-tags: ['ui', 'dotnet', 'skill']
-version: '0.0.1'
+category: ui-frameworks
+subcategory: maui
+tags:
+  - platforms
+  - dotnet
+  - skill
+  - maui
+  - mobile
+version: '1.0.0'
 author: 'dotnet-agent-harness'
 invocable: true
+related_skills:
+  - dotnet-maui-aot
+  - dotnet-maui-testing
+  - dotnet-ui-chooser
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: '.NET skill guidance for ui tasks'
+  short-description: '.NET skill guidance for maui tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-maui-development

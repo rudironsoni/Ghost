@@ -1,12 +1,21 @@
 ---
 name: wiki-researcher
+category: developer-experience
+subcategory: cli
 description: Deep research with evidence-based analysis
 license: MIT
 targets: ['claudecode', 'codexcli']
-tags: ['wiki', 'research', 'analysis']
+tags: [wiki, research, analysis]
 version: '1.0.0'
 author: 'microsoft'
 invocable: true
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: 'Toolkit guidance for wiki-researcher'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # wiki-researcher

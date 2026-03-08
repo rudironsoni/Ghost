@@ -1,9 +1,11 @@
 ---
 name: dotnet-spectre-console
+category: developer-experience
+subcategory: cli
 description: Renders rich console output. Spectre.Console tables, trees, progress, prompts, live displays.
 license: MIT
 targets: ['*']
-tags: ['foundation', 'dotnet', 'skill']
+tags: [foundation, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for foundation tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-spectre-console

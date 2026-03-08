@@ -3,16 +3,30 @@ name: dotnet-efcore-patterns
 description: EF Core, DbContext, AsNoTracking, query splitting.
 license: MIT
 targets: ['*']
-tags: ['architecture', 'dotnet', 'skill']
-version: '0.0.1'
+category: data
+subcategory: ef-core
+tags:
+  - data
+  - dotnet
+  - skill
+  - ef-core
+  - database
+version: '1.0.0'
 author: 'dotnet-agent-harness'
 invocable: true
+related_skills:
+  - dotnet-efcore-architecture
+  - dotnet-data-access-strategy
+  - dotnet-domain-modeling
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: '.NET skill guidance for architecture tasks'
+  short-description: '.NET skill guidance for data tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-efcore-patterns

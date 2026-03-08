@@ -1,5 +1,7 @@
 ---
 name: dotnet-testing-datetime-testing-timeprovider
+category: testing
+subcategory: specialized
 description: |
   Specialized skill for testing time-dependent logic using TimeProvider. Use when testing DateTime, controlling time flow, handling timezone conversions, and testing expiration logic. Covers TimeProvider abstraction, FakeTimeProvider time control, time freezing and fast-forwarding.
   Keywords: datetime, time testing, TimeProvider, FakeTimeProvider, DateTime.Now, time-dependent, cache expiration, token expiration, Microsoft.Bcl.TimeProvider, GetUtcNow, SetUtcNow, Advance, time freeze, time freezing, time fast-forward
@@ -10,6 +12,13 @@ metadata:
   version: '1.0.0'
   tags: '.NET, testing, TimeProvider, DateTime, time testing'
   related_skills: 'unit-test-fundamentals, nsubstitute-mocking, filesystem-testing-abstractions'
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-testing-datetime-testing-timeprovider'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 Source: kevintsengtw/dotnet-testing-agent-skills (MIT). Ported into dotnet-agent-harness.

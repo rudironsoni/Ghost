@@ -1,6 +1,18 @@
 ---
-description: Generate audience-specific onboarding guides
+name: deep-wiki-onboard
+description: '$1'
 targets: ['*']
+portability: copilot-gemini
+flattening-risk: low
+simulated: true
+version: '0.0.1'
+author: 'dotnet-agent-harness'
+claudecode:
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash']
+copilot:
+  description: 'Generate onboarding guides'
+codexcli:
+  sandbox_mode: 'read-only'
 ---
 
 # /deep-wiki:onboard

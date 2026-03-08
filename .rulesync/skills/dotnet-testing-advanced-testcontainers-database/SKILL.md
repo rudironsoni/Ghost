@@ -1,5 +1,7 @@
 ---
 name: dotnet-testing-advanced-testcontainers-database
+category: testing
+subcategory: integration
 description: |
   Specialized skill for containerized database testing using Testcontainers. Use when testing real database behavior, using SQL Server/PostgreSQL/MySQL containers, testing EF Core/Dapper. Covers container startup, database migrations, test isolation, container sharing.
   Keywords: testcontainers, container testing, database testing, MsSqlContainer, PostgreSqlContainer, MySqlContainer, EF Core testing, Dapper testing, Testcontainers.MsSql, Testcontainers.PostgreSql, GetConnectionString, IAsyncLifetime, CollectionFixture
@@ -10,6 +12,13 @@ metadata:
   version: '1.0.0'
   tags: '.NET, testing, Testcontainers, database, SQL Server, PostgreSQL'
   related_skills: 'advanced-testcontainers-nosql, advanced-aspnet-integration-testing, advanced-aspire-testing'
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-testing-advanced-testcontainers-database'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 Source: kevintsengtw/dotnet-testing-agent-skills (MIT). Ported into dotnet-agent-harness.

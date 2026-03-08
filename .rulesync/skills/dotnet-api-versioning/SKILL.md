@@ -1,9 +1,11 @@
 ---
 name: dotnet-api-versioning
+category: web
+subcategory: minimal-apis
 description: Versions HTTP APIs. Asp.Versioning.Http/Mvc, URL segment, header, query string, sunset.
 license: MIT
 targets: ['*']
-tags: ['api', 'dotnet', 'skill']
+tags: [api, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for api tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-api-versioning

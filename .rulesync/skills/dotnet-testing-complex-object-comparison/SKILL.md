@@ -1,5 +1,7 @@
 ---
 name: dotnet-testing-complex-object-comparison
+category: testing
+subcategory: assertions
 description: |
   Specialized skill for handling complex object comparison and deep validation. Use when you need to compare deep objects, exclude specific properties, handle circular references, or validate DTOs/Entities. Covers BeEquivalentTo, Excluding, Including, custom comparison rules, etc.
   Keywords: object comparison, deep comparison, BeEquivalentTo, DTO comparison, Entity validation, excluding properties, circular reference, Excluding, Including, ExcludingNestedObjects, RespectingRuntimeTypes, WithStrictOrdering, ignore timestamp, exclude timestamp
@@ -10,6 +12,13 @@ metadata:
   version: '1.0.0'
   tags: '.NET, testing, object comparison, BeEquivalentTo, AwesomeAssertions'
   related_skills: 'awesome-assertions-guide, autofixture-basics, test-data-builder-pattern'
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-testing-complex-object-comparison'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 Source: kevintsengtw/dotnet-testing-agent-skills (MIT). Ported into dotnet-agent-harness.

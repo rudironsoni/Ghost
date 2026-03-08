@@ -58,6 +58,7 @@ Scoring factors:
 
 ```bash
 /dotnet-agent-harness:recommend
+dotnet agent-harness recommend --format json
 ```
 
 Analyzes current project and outputs:
@@ -78,26 +79,18 @@ Recommended Skills (based on project analysis):
    Why: Retry, circuit breaker patterns
 ```
 
-### Filter by Category
+### Filter by Platform and Category
 
 ```bash
+/dotnet-agent-harness:recommend --platform codexcli
 /dotnet-agent-harness:recommend --category data
 /dotnet-agent-harness:recommend --category testing
 /dotnet-agent-harness:recommend --category security
+dotnet agent-harness recommend --platform codexcli --category data --format json
 ```
 
-### Interactive Mode
-
-```bash
-/dotnet-agent-harness:recommend --interactive
-```
-
-Guides through:
-
-1. Project type selection
-2. Technology stack questions
-3. Architecture pattern questions
-4. Generates prioritized skill list
+Use `--platform` when you need only artifacts that map cleanly to a specific runtime surface. For example,
+`--platform codexcli` excludes command-only content, while `--platform geminicli` excludes subagent-only content.
 
 ## Integration with Hooks
 

@@ -1,5 +1,7 @@
 ---
 name: dotnet-testing-advanced
+category: testing
+subcategory: fundamentals
 description: |
   .NET advanced testing skills overview and navigation center. Triggered when users ask about "integration testing", "API testing", "containerized testing", "microservice testing", "test framework migration", "Testcontainers", "Aspire testing", and other advanced testing needs. Recommends appropriate sub-skills based on specific requirements, covering integration testing, Testcontainers, Aspire testing, framework upgrades, and other 8 advanced skills.
   Keywords: integration testing, integration testing, API testing, advanced testing, advanced testing, testcontainers, aspire testing, WebApplicationFactory, TestServer, database test, database testing, EF Core test, MongoDB test, Redis test, Docker test, container testing, microservice test, microservice testing, .NET Aspire, xUnit upgrade, TUnit, framework migration
@@ -12,6 +14,13 @@ metadata:
   related_skills: 'dotnet-testing'
   skill_count: 8
   skill_type: 'overview'
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-testing-advanced'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 Source: kevintsengtw/dotnet-testing-agent-skills (MIT). Ported into dotnet-agent-harness.

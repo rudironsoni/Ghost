@@ -1,9 +1,11 @@
 ---
 name: dotnet-secrets-management
+category: security
+subcategory: secrets
 description: Manages secrets and sensitive config. User secrets, environment variables, rotation.
 license: MIT
 targets: ['*']
-tags: ['security', 'dotnet', 'skill']
+tags: [security, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for security tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-secrets-management

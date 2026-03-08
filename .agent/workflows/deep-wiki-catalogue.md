@@ -1,5 +1,5 @@
 ---
-description: Generate hierarchical wiki structure as JSON
+description: $1
 trigger: /deep-wiki-catalogue
 turbo: true
 ---

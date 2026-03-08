@@ -1,5 +1,5 @@
 ---
-description: Generate llms.txt for LLM-friendly project access
+description: $1
 trigger: /deep-wiki-llms
 turbo: true
 ---

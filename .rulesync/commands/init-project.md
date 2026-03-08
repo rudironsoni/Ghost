@@ -1,15 +1,26 @@
 ---
-description: 'Initialize dotnet-agent-harness context for this repository'
+name: init-project
+description: 'Initialize a new project with dotnet-agent-harness guidance'
 targets: ['*']
+portability: claude-opencode
+flattening-risk: medium
+simulated: true
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
-  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash']
+  allowed-tools: ['Read', 'Glob', 'Grep', 'EditFile', 'Bash']
 copilot:
-  description: 'Initialize .NET project context and load routing'
+  description: 'Initialize a new project with dotnet-agent-harness guidance'
+codexcli:
+  sandbox_mode: 'read-only'
 antigravity:
   trigger: '/init-project'
 ---
 
 Initialize dotnet-agent-harness context for this repository.
+
+If the runtime tool is installed, prefer `dotnet agent-harness bootstrap` when you need persistent repo setup, RuleSync
+configuration, and generated target files. This command remains analysis-only.
 
 1. Invoke [skill:dotnet-advisor].
 2. Invoke [skill:dotnet-version-detection].

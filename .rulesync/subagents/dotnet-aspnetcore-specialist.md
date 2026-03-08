@@ -2,8 +2,8 @@
 name: dotnet-aspnetcore-specialist
 description:
   'Analyzes ASP.NET Core middleware, request pipelines, minimal API design, DI lifetime selection, and diagnostic
-  scenarios. Routes Blazor to [skill:dotnet-blazor-specialist], security to [skill:dotnet-security-reviewer], async
-  internals to [skill:dotnet-async-performance-specialist].'
+  scenarios. Routes Blazor to [subagent:dotnet-blazor-specialist], security to [subagent:dotnet-security-reviewer],
+  async internals to [subagent:dotnet-async-performance-specialist].'
 targets: ['*']
 tags: ['dotnet', 'subagent']
 version: '0.0.1'
@@ -25,6 +25,8 @@ opencode:
     write: true
 copilot:
   tools: ['read', 'search', 'execute', 'edit']
+codexcli:
+  short-description: '.NET specialist subagent for dotnet-aspnetcore-specialist'
 ---
 
 # dotnet-aspnetcore-specialist
@@ -149,9 +151,9 @@ Is this a diagnostic scenario?
 
 ## Explicit Boundaries
 
-- **Does NOT handle Blazor or Razor components** -- Blazor Server/WASM rendering, component lifecycle, and Razor syntax are the domain of [skill:dotnet-blazor-specialist]
-- **Does NOT handle security auditing** -- OWASP compliance, vulnerability scanning, and cryptographic assessment belong to [skill:dotnet-security-reviewer]
-- **Does NOT handle async performance internals** -- ValueTask correctness, ConfigureAwait decisions, IO.Pipelines, and ThreadPool tuning are the domain of [skill:dotnet-async-performance-specialist]
+- **Does NOT handle Blazor or Razor components** -- Blazor Server/WASM rendering, component lifecycle, and Razor syntax are the domain of [subagent:dotnet-blazor-specialist]
+- **Does NOT handle security auditing** -- OWASP compliance, vulnerability scanning, and cryptographic assessment belong to [subagent:dotnet-security-reviewer]
+- **Does NOT handle async performance internals** -- ValueTask correctness, ConfigureAwait decisions, IO.Pipelines, and ThreadPool tuning are the domain of [subagent:dotnet-async-performance-specialist]
 - **Does NOT modify code** -- Uses Read, Grep, Glob, and Bash (read-only) only; produces findings and recommendations
 
 ## Trigger Lexicon

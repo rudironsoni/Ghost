@@ -1,5 +1,7 @@
 ---
 name: dotnet-testing-autofixture-nsubstitute-integration
+category: testing
+subcategory: mocking
 description: |
   AutoFixture and NSubstitute Integration Guide - Implementing Auto-Mocking. Use when you need to automatically create mock objects and simplify testing of complex dependency injection. Covers AutoNSubstituteDataAttribute, Frozen mechanism, Greedy construction strategy. Includes customized handling for special dependencies like IMapper (AutoMapper/Mapster).
   Keywords: autofixture nsubstitute, auto mocking, AutoNSubstituteDataAttribute, auto-mocking, Frozen, AutoNSubstituteCustomization, AutoFixture.AutoNSubstitute, Greedy, fixture.Freeze, Received(), Returns(), IMapper, AutoMapper, Mapster, mapper testing
@@ -10,6 +12,13 @@ metadata:
   version: '1.0.0'
   tags: 'autofixture, nsubstitute, auto-mocking, dependency-injection, xunit, testing'
   related_skills: 'nsubstitute-mocking, autofixture-basics, autodata-xunit-integration'
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-testing-autofixture-nsubstitute-integration'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 Source: kevintsengtw/dotnet-testing-agent-skills (MIT). Ported into dotnet-agent-harness.

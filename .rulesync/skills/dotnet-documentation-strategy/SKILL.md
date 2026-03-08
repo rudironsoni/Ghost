@@ -1,9 +1,11 @@
 ---
 name: dotnet-documentation-strategy
+category: developer-experience
+subcategory: docs
 description: Chooses documentation tooling. Starlight, Docusaurus, DocFX decision tree, migration paths.
 license: MIT
 targets: ['*']
-tags: ['csharp', 'dotnet', 'skill']
+tags: [csharp, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for csharp tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-documentation-strategy

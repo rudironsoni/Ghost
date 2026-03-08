@@ -1,9 +1,11 @@
 ---
 name: dotnet-trimming
+category: performance
+subcategory: aot
 description: Trims .NET 8+ apps and libraries. Annotations, ILLink descriptors, IL2xxx warnings, IsTrimmable.
 license: MIT
 targets: ['*']
-tags: ['aot', 'dotnet', 'skill']
+tags: [aot, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for aot tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-trimming

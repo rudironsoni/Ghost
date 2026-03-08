@@ -1,5 +1,5 @@
 ---
-description: Deep research with evidence-based analysis
+description: $1
 trigger: /deep-wiki-research
 turbo: true
 ---

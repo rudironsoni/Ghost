@@ -3,16 +3,30 @@ name: dotnet-minimal-apis
 description: Builds ASP.NET Core Minimal APIs -- route groups, filters, TypedResults, OpenAPI.
 license: MIT
 targets: ['*']
-tags: ['api', 'dotnet', 'skill']
-version: '0.0.1'
+category: web
+subcategory: minimal-apis
+tags:
+  - web
+  - dotnet
+  - skill
+  - minimal-apis
+  - api
+version: '1.0.0'
 author: 'dotnet-agent-harness'
 invocable: true
+related_skills:
+  - dotnet-architecture-patterns
+  - dotnet-middleware-patterns
+  - dotnet-api-versioning
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: '.NET skill guidance for api tasks'
+  short-description: '.NET skill guidance for web tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-minimal-apis

@@ -1,11 +1,18 @@
 ---
 name: deep-research
-description:
-  Use when user requests research requiring multiple sources, comprehensive analysis, or synthesis across topics -
-  technical research, domain knowledge gathering, market analysis, or learning about complex subjects
+category: developer-experience
+subcategory: cli
+description: 'Use when user requests research requiring multiple sources, comprehensive analysis, or synthesis across topics - technical research, domain knowledge gathering, market analysis, or learning about complex subjects'
 targets: ['*']
 license: MIT
 invocable: true
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: 'Toolkit guidance for deep-research'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # Deep Research

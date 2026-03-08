@@ -1,88 +1,40 @@
 ---
-description:
-  'Analyze skill performance locally. Measure load time, execution duration, and resource usage without telemetry.'
+name: dotnet-agent-harness-profile
+description: '$1'
 targets: ['*']
+portability: copilot-gemini
+flattening-risk: low
+simulated: true
+version: '0.0.1'
+author: 'dotnet-agent-harness'
+claudecode:
+  allowed-tools: ['Read', 'Glob', 'Bash']
+copilot:
+  description: 'Generate agent profile'
+codexcli:
+  sandbox_mode: 'read-only'
 ---
 
 # /dotnet-agent-harness:profile
 
-Local performance analysis for skills and commands.
+Use the runtime catalog profiler instead of hand-counting content.
 
-## Usage
+## Execution Contract
 
-```bash
-/dotnet-agent-harness:profile [skill-name] [options]
-```
-
-## Parameters
-
-- `skill-name`: Skill to profile (omit for full report)
-- `--session`: Analyze current session
-- `--export`: Export results to file
-- `--format`: Output format (`text`, `json`, `html`)
-
-## Examples
+Run one of:
 
 ```bash
-# Profile specific skill
-/dotnet-agent-harness:profile dotnet-csharp-coding-standards
-
-# Full session analysis
-/dotnet-agent-harness:profile --session
-
-# Export detailed report
-/dotnet-agent-harness:profile --session --format html --export profile-report.html
-
-# Compare skill performance
-/dotnet-agent-harness:profile dotnet-efcore-patterns --compare dotnet-dapper
+dotnet agent-harness profile [--format text|json]
+dotnet agent-harness profile <catalog-item-id> [--format text|json]
 ```
-
-## Local Analysis Only
-
-**No telemetry is collected. All data stays local.**
-
-Metrics stored in: `.dotnet-agent-harness/analytics/`
-
-## Metrics Captured
-
-- **Load Time**: Time to parse and load skill
-- **Execution Duration**: Time to process queries
-- **Token Usage**: Estimated tokens consumed (local calculation)
-- **Cache Hit Rate**: Local cache effectiveness
-- **Cross-reference Resolution**: Time to resolve `skill references` references
 
 ## Output
 
-```text
-Performance Profile: dotnet-csharp-coding-standards
-═══════════════════════════════════════════════════
+- without an id: catalog totals, line counts, and load-time summary
+- with an id: item metadata, file path, tags, references, and approximate token estimate
 
-Load Performance:
-  Parse time: 12ms
-  Frontmatter validation: 3ms
-  Total load: 15ms
+## Example
 
-Execution Metrics:
-  Average query time: 45ms
-  Token estimate: 2,400 tokens
-  Cache hit rate: 78%
-
-Cross-References:
-  References resolved: 12
-  Average resolution time: 8ms
-
-Recommendations:
-  ✓ Consider caching frequently-accessed skills
-  ✓ Preload dependencies for faster response
+```bash
+dotnet agent-harness profile reviewer --format json
 ```
-
-## Session Analysis
-
-Analyzes current session patterns:
-
-- Most-used skills
-- Average response times
-- Skill combinations frequently used together
-- Recommendations for optimization
-
-**All analysis is performed locally. No data leaves your machine.**

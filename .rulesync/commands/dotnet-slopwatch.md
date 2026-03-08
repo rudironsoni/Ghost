@@ -1,10 +1,18 @@
 ---
+name: dotnet-slopwatch
 description: 'Run Slopwatch quality gate for .NET projects'
 targets: ['*']
+portability: antigravity
+flattening-risk: low
+simulated: false
+version: '0.0.1'
+author: 'dotnet-agent-harness'
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash']
 copilot:
   description: 'Run Slopwatch analyze and report findings'
+codexcli:
+  sandbox_mode: 'read-only'
 antigravity:
   trigger: '/dotnet-slopwatch'
 ---

@@ -1,9 +1,11 @@
 ---
 name: dotnet-winforms-basics
+category: ui-frameworks
+subcategory: winforms
 description: Builds WinForms on .NET 8+. High-DPI, dark mode (experimental), DI patterns, modernization.
 license: MIT
 targets: ['*']
-tags: ['ui', 'dotnet', 'skill']
+tags: [ui, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for ui tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-winforms-basics

@@ -1,12 +1,21 @@
 ---
 name: wiki-onboarding
+category: developer-experience
+subcategory: cli
 description: Generates audience-specific onboarding guides
 license: MIT
 targets: ['claudecode', 'codexcli']
-tags: ['wiki', 'onboarding', 'documentation']
+tags: [wiki, onboarding, documentation]
 version: '1.0.0'
 author: 'microsoft'
 invocable: true
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: 'Toolkit guidance for wiki-onboarding'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # wiki-onboarding

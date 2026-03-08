@@ -1,5 +1,5 @@
 ---
-description: Package wiki as VitePress dark-theme site
+description: $1
 trigger: /deep-wiki-build
 turbo: true
 ---

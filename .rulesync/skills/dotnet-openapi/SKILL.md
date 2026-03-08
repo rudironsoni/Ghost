@@ -1,9 +1,11 @@
 ---
 name: dotnet-openapi
+category: web
+subcategory: minimal-apis
 description: Generates OpenAPI docs. MS.AspNetCore.OpenApi (.NET 9+), Swashbuckle migration, NSwag.
 license: MIT
 targets: ['*']
-tags: ['api', 'dotnet', 'skill']
+tags: [api, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for api tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-openapi

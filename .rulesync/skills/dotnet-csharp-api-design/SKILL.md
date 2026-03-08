@@ -1,9 +1,11 @@
 ---
 name: dotnet-csharp-api-design
+category: fundamentals
+subcategory: coding-standards
 description: Designs public .NET APIs. Naming, parameter ordering, return types, error patterns, extensions.
 license: MIT
 targets: ['*']
-tags: ['api', 'dotnet', 'skill']
+tags: [api, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for api tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-csharp-api-design

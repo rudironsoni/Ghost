@@ -1,9 +1,11 @@
 ---
 name: dotnet-ui-testing-core
+category: ui-frameworks
+subcategory: maui
 description: Tests UI across frameworks. Page objects, test selectors, async waits, accessibility.
 license: MIT
 targets: ['*']
-tags: ['testing', 'dotnet', 'skill']
+tags: [testing, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for testing tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-ui-testing-core

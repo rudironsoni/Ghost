@@ -3,16 +3,30 @@ name: dotnet-blazor-patterns
 description: Architects Blazor apps. Hosting models, render modes, routing, streaming, prerender.
 license: MIT
 targets: ['*']
-tags: ['ui', 'dotnet', 'skill']
-version: '0.0.1'
+category: ui-frameworks
+subcategory: blazor
+tags:
+  - platforms
+  - dotnet
+  - skill
+  - blazor
+  - web
+version: '1.0.0'
 author: 'dotnet-agent-harness'
 invocable: true
+related_skills:
+  - dotnet-blazor-components
+  - dotnet-blazor-auth
+  - dotnet-blazor-testing
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: '.NET skill guidance for ui tasks'
+  short-description: '.NET skill guidance for blazor tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-blazor-patterns

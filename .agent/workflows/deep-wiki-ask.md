@@ -1,5 +1,5 @@
 ---
-description: Ask questions about the repository
+description: $1
 trigger: /deep-wiki-ask
 turbo: true
 ---

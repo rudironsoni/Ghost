@@ -1,5 +1,7 @@
 ---
 name: dotnet-testing-nsubstitute-mocking
+category: testing
+subcategory: mocking
 description: |
   Using NSubstitute to create test doubles (Mock, Stub, Spy) specialized skill. Used when isolating external dependencies, simulating interface behavior, and validating method calls. Covers Substitute.For, Returns, Received, Throws and complete guidance.
   Keywords: mock, stub, spy, nsubstitute, mock, test double, test double, IRepository, IService, Substitute.For, Returns, Received, Throws, Arg.Any, Arg.Is, isolate dependencies, simulate external services, dependency injection testing
@@ -10,6 +12,13 @@ metadata:
   version: '1.0.0'
   tags: '.NET, testing, NSubstitute, mock, stub, test double'
   related_skills: 'autofixture-nsubstitute-integration, unit-test-fundamentals, private-internal-testing'
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-testing-nsubstitute-mocking'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 Source: kevintsengtw/dotnet-testing-agent-skills (MIT). Ported into dotnet-agent-harness.

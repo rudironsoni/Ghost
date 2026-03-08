@@ -1,5 +1,5 @@
 ---
-description: Generate Node.js script to convert wiki to Azure DevOps Wiki format
+description: $1
 trigger: /deep-wiki-ado
 turbo: true
 ---

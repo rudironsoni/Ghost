@@ -1,5 +1,7 @@
 ---
 name: dotnet-testing-autofixture-bogus-integration
+category: testing
+subcategory: test-data
 description: |
   Complete guide for AutoFixture and Bogus integration. Use when you need to combine AutoFixture with Bogus to generate test data that is both anonymous and realistic. Covers SpecimenBuilder integration, hybrid generators, test data factories, and circular reference handling.
   Keywords: autofixture bogus integration, autofixture bogus, bogus integration, Faker, EmailSpecimenBuilder, PhoneSpecimenBuilder, NameSpecimenBuilder, realistic test data, semantic data, hybrid generator, HybridTestDataGenerator, OmitOnRecursionBehavior, circular reference
@@ -10,6 +12,13 @@ metadata:
   version: '1.0.0'
   tags: 'autofixture, bogus, test-data, faker, integration, semantic-data'
   related_skills: 'autofixture-basics, bogus-fake-data, test-data-builder-pattern'
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-testing-autofixture-bogus-integration'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 Source: kevintsengtw/dotnet-testing-agent-skills (MIT). Ported into dotnet-agent-harness.

@@ -1,9 +1,11 @@
 ---
 name: dotnet-blazor-components
+category: web
+subcategory: blazor
 description: Implements Blazor components. Lifecycle, state management, JS interop, EditForm, QuickGrid.
 license: MIT
 targets: ['*']
-tags: ['ui', 'dotnet', 'skill']
+tags: [ui, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for ui tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-blazor-components

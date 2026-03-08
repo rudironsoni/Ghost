@@ -1,11 +1,13 @@
 ---
 name: mcp-health
+category: developer-experience
+subcategory: cli
 description: >-
   Validates MCP server connectivity and health. Checks stdio and http MCP servers for availability, reports connection
   status, and provides fallback guidance. Triggers on: mcp health, check mcp, validate mcp, mcp status, mcp
   connectivity.
 targets: ['*']
-tags: ['dotnet', 'skill', 'mcp', 'monitoring']
+tags: [dotnet, skill, mcp, monitoring]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 license: MIT
@@ -24,6 +26,10 @@ opencode:
     write: false
 copilot:
   tools: ['read', 'search', 'execute']
+codexcli:
+  short-description: 'Toolkit guidance for mcp-health'
+geminicli: {}
+antigravity: {}
 ---
 
 # MCP Health

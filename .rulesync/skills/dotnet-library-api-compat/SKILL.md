@@ -1,9 +1,11 @@
 ---
 name: dotnet-library-api-compat
+category: developer-experience
+subcategory: cli
 description: Maintains library compatibility. Binary/source compat rules, type forwarders, SemVer impact.
 license: MIT
 targets: ['*']
-tags: ['api', 'dotnet', 'skill']
+tags: [api, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for api tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-library-api-compat

@@ -1,5 +1,7 @@
 ---
 name: dotnet-testing-test-data-builder-pattern
+category: testing
+subcategory: fundamentals
 description: |
   Test Data Builder Pattern complete implementation guide. Used when using builder pattern to create maintainable test data or simplify complex object test preparation. Covers fluent interface, semantic methods, default value design, and Builder composition patterns.
   Keywords: test data builder, builder pattern test, test data builder, object mother, fluent interface, fluent interface, UserBuilder, ProductBuilder, .With(), .Build(), AUser(), test data preparation, complex object creation, semantic testing
@@ -10,6 +12,13 @@ metadata:
   version: '1.0.0'
   tags: 'test-data-builder, builder-pattern, fluent-interface, test-readability'
   related_skills: 'autofixture-basics, bogus-fake-data, autofixture-bogus-integration'
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-testing-test-data-builder-pattern'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 Source: kevintsengtw/dotnet-testing-agent-skills (MIT). Ported into dotnet-agent-harness.

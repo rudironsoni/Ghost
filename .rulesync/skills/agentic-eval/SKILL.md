@@ -1,5 +1,7 @@
 ---
 name: agentic-eval
+category: developer-experience
+subcategory: cli
 location: file:///.rulesync/skills/agentic-eval/SKILL.md
 description: >-
   Patterns and techniques for evaluating and improving AI agent outputs.
@@ -8,6 +10,13 @@ license: MIT
 metadata:
   author: GitHub, Inc. (derived)
   version: '0.0.1'
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: 'Toolkit guidance for agentic-eval'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 Portions derived from github/awesome-copilot (MIT License). Used under MIT License.

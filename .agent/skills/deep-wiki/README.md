@@ -43,9 +43,9 @@ copilot --plugin-dir ./deep-wiki
 | `/deep-wiki:build`            | Package generated wiki as a VitePress site with dark theme                                  |
 | `/deep-wiki:deploy`           | Generate GitHub Actions workflow to deploy wiki to GitHub Pages                             |
 
-## Agents
+## Subagents
 
-| Agent             | Description                                                               |
+| Subagent          | Description                                                               |
 | ----------------- | ------------------------------------------------------------------------- |
 | `wiki-architect`  | Analyzes repos, generates structured catalogues + onboarding architecture |
 | `wiki-writer`     | Generates pages with dark-mode Mermaid diagrams and deep citations        |
@@ -217,7 +217,7 @@ deep-wiki/
 │   │   └── SKILL.md         # llms.txt generation for LLM-friendly access
 │   └── wiki-ado-convert/
 │       └── SKILL.md         # Azure DevOps Wiki conversion
-├── agents/                   # Custom agents (visible in /agents)
+├── subagents/                # Supported RuleSync subagents
 │   ├── wiki-architect.md
 │   ├── wiki-writer.md
 │   └── wiki-researcher.md

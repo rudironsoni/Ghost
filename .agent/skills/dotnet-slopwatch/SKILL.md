@@ -25,7 +25,7 @@ that make builds/tests pass without fixing real problems.
 ## Prerequisites
 
 - .NET 8.0+ SDK
-- `Slopwatch.Cmd` NuGet package (v0.3.3+)
+- `Slopwatch.Cmd` NuGet package (v0.4.0+)
 
 Cross-references: [skill:dotnet-tool-management] for general dotnet tool installation mechanics.
 
@@ -44,7 +44,7 @@ Add to `.config/dotnet-tools.json`:
   "isRoot": true,
   "tools": {
     "slopwatch.cmd": {
-      "version": "0.3.3",
+      "version": "0.4.0",
       "commands": ["slopwatch"],
       "rollForward": false
     }
@@ -70,6 +70,20 @@ dotnet tool install --global Slopwatch.Cmd
 ```bash
 
 See [skill:dotnet-tool-management] for tool manifest conventions and restore patterns.
+
+### Harness Bootstrap (Recommended for Multi-Agent Repos)
+
+If this repository already uses `dotnet-agent-harness`, prefer the runtime bootstrap path:
+
+```bash
+dotnet agent-harness bootstrap \
+  --profile platform-native \
+  --enable-pack dotnet-intelligence \
+  --run-rulesync
+```
+
+This installs `Slopwatch.Cmd` into the local tool manifest, writes `.slopwatch/config.json`, and enables advisory
+post-edit hook reporting through the generated RuleSync hooks. Hard enforcement still happens in runtime validation.
 
 ---
 
@@ -124,48 +138,19 @@ Valid reasons: third-party library forces a pattern, intentional rate-limiting d
 
 ## Configuration
 
-Create `.slopwatch/slopwatch.json` to customize rules and exclusions:
+Create `.slopwatch/config.json` to manage suppressions intentionally:
 
 ```json
 
 {
-  "minSeverity": "warning",
-  "rules": {
-    "SW001": { "enabled": true, "severity": "error" },
-    "SW002": { "enabled": true, "severity": "warning" },
-    "SW003": { "enabled": true, "severity": "error" },
-    "SW004": { "enabled": true, "severity": "warning" },
-    "SW005": { "enabled": true, "severity": "warning" },
-    "SW006": { "enabled": true, "severity": "warning" }
-  },
-  "exclude": [
-    "**/Generated/**",
-    "**/obj/**",
-    "**/bin/**"
-  ]
+  "globalSuppressions": [],
+  "suppressions": []
 }
 
 ```text
 
-### Strict Mode (Recommended for LLM Sessions)
-
-Elevate all rules to errors during LLM coding sessions:
-
-```json
-
-{
-  "minSeverity": "warning",
-  "rules": {
-    "SW001": { "enabled": true, "severity": "error" },
-    "SW002": { "enabled": true, "severity": "error" },
-    "SW003": { "enabled": true, "severity": "error" },
-    "SW004": { "enabled": true, "severity": "error" },
-    "SW005": { "enabled": true, "severity": "error" },
-    "SW006": { "enabled": true, "severity": "error" }
-  }
-}
-
-```text
+Use `slopwatch analyze -d . --fail-on warning` in CI and runtime validation when you want warnings to fail the quality
+gate.
 
 ---
 
@@ -229,6 +214,10 @@ The `--hook` flag:
 - Outputs errors to stderr in readable format
 - Blocks the edit on warnings/errors (exit code 2)
 - Claude sees the error and can fix it immediately
+
+When using the toolkit's shared RuleSync hooks, the generated harness keeps this advisory-only by design. Findings are
+surfaced back to the agent as context, while `dotnet agent-harness validate --mode repo --run` remains the blocking
+quality gate.
 
 This is the pattern used by projects like BrighterCommand/Brighter.
 

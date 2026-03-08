@@ -1,19 +1,24 @@
 ---
 name: dotnet-project-analysis
+category: developer-experience
+subcategory: project
 description: Analyzes .NET solution layout and build config -- .sln, .csproj, CPM.
 license: MIT
 targets: ['*']
-tags: ['foundation', 'dotnet', 'skill']
+tags: [foundation, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
   model: haiku
+copilot: {}
 codexcli:
   short-description: '.NET skill guidance for foundation tasks'
+geminicli: {}
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+antigravity: {}
 ---
 
 ````! find . -maxdepth 3 ( -name "*.csproj" -o -name "*.sln" -o -name "*.slnx" ) 2>/dev/null | head -20

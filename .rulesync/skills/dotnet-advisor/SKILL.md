@@ -1,18 +1,23 @@
 ---
 name: dotnet-advisor
+category: developer-experience
+subcategory: analyzers
 description: Routes .NET/C# work to domain skills. Loads coding-standards for code paths.
 license: MIT
 targets: ['*']
-tags: ['foundation', 'dotnet', 'skill']
+tags: [foundation, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
 codexcli:
   short-description: '.NET skill guidance for foundation tasks'
+geminicli: {}
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+antigravity: {}
 ---
 
 # dotnet-advisor
@@ -272,7 +277,22 @@ Before any .NET guidance, determine the project's target framework:
 
 ---
 
-## Code Navigation (Serena MCP)
+## MCP-Aware Routing
+
+The dotnet-agent-harness supports multiple MCP servers for enhanced functionality. Always check MCP availability before routing and prefer MCPs over traditional tools when available.
+
+### MCP Server Priority
+
+| Task | Primary MCP | Fallback | Tool |
+|------|-------------|----------|------|
+| Code navigation | serena | Read + Grep | `serena_find_symbol`, `serena_get_symbols_overview` |
+| Official docs | microsoftdocs-mcp | Web search | `microsoftdocs-mcp_microsoft_docs_search` |
+| Third-party docs | context7 | Web search | Context7 API |
+| Project docs | deepwiki | Read markdown | DeepWiki API |
+| Crash debugging | mcp-windbg | Manual WinDbg | WinDbg MCP |
+| GitHub ops | github | gh CLI | GitHub MCP |
+
+### Code Navigation (Serena MCP)
 
 **Primary approach:** Use Serena symbol operations for efficient code navigation:
 
@@ -297,6 +317,31 @@ Grep: "public void ProcessOrder"
 # Use:
 serena_find_symbol: "OrderService/ProcessOrder"
 serena_get_symbols_overview: "src/Services/OrderService.cs"
+```
+
+### Documentation Queries (MicrosoftDocs MCP)
+
+**Primary approach:** Query official Microsoft documentation before web search:
+
+1. **Search docs**: `microsoftdocs-mcp_microsoft_docs_search` for API queries
+2. **Code samples**: `microsoftdocs-mcp_microsoft_code_sample_search` for examples
+3. **Full articles**: `microsoftdocs-mcp_microsoft_docs_fetch` for deep reading
+
+**When to use MicrosoftDocs MCP:**
+
+- ✅ Before implementing Microsoft APIs
+- ✅ For authoritative TFM/version compatibility
+- ✅ Security and compliance guidance
+- ✅ Breaking changes and migration paths
+
+**Example workflow:**
+
+```text
+# Instead of web search:
+Search: "ASP.NET Core 9 minimal API rate limiting"
+
+# Use:
+microsoftdocs-mcp_microsoft_docs_search: "ASP.NET Core rate limiting minimal API"
 ```
 
 ## Routing Logic
@@ -468,11 +513,11 @@ Use this decision tree to load the right skills for the current task.
 
 For complex analysis that benefits from domain expertise, delegate to specialist agents:
 
-- Async/await performance, ValueTask, ConfigureAwait, IO.Pipelines -> [skill:dotnet-async-performance-specialist]
-- ASP.NET Core middleware, request pipeline, DI lifetimes, diagnostic scenarios -> [skill:dotnet-aspnetcore-specialist]
+- Async/await performance, ValueTask, ConfigureAwait, IO.Pipelines -> [subagent:dotnet-async-performance-specialist]
+- ASP.NET Core middleware, request pipeline, DI lifetimes, diagnostic scenarios -> [subagent:dotnet-aspnetcore-specialist]
 - Test architecture, test type selection, test data management, microservice testing ->
-  [skill:dotnet-testing-specialist]
-- Cloud deployment, .NET Aspire, AKS, CI/CD pipelines, distributed tracing -> [skill:dotnet-cloud-specialist]
+  [subagent:dotnet-testing-specialist]
+- Cloud deployment, .NET Aspire, AKS, CI/CD pipelines, distributed tracing -> [subagent:dotnet-cloud-specialist]
 - Microsoft Agent Framework: agent design, workflow orchestration, multi-agent patterns, tool integration ->
-  [skill:dotnet-microsoft-agent-framework-specialist]
-- General code review (correctness, performance, security, architecture) -> [skill:dotnet-code-review-agent]
+  [subagent:dotnet-microsoft-agent-framework-specialist]
+- General code review (correctness, performance, security, architecture) -> [subagent:dotnet-code-review-agent]

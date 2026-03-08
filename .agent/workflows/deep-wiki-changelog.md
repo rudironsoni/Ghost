@@ -1,5 +1,5 @@
 ---
-description: Generate structured changelog from git commits
+description: $1
 trigger: /deep-wiki-changelog
 turbo: true
 ---

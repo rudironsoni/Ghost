@@ -1,5 +1,5 @@
 ---
-description: Generate single wiki page with dark-mode diagrams
+description: $1
 trigger: /deep-wiki-page
 turbo: true
 ---

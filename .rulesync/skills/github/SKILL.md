@@ -1,11 +1,11 @@
 ---
 name: github
-description:
-  'GitHub MCP Server integration for repository operations, pull requests, issues, and GitHub Actions. Triggers on:
-  github mcp, github operations, pull request, issue, repository, github actions, commit, branch, merge.'
+category: developer-experience
+subcategory: cli
+description: 'GitHub MCP Server integration for repository operations, pull requests, issues, and GitHub Actions. Triggers on: github mcp, github operations, pull request, issue, repository, github actions, commit, branch, merge.'
 license: MIT
 targets: ['*']
-tags: ['github', 'mcp', 'repository', 'skill', 'vcs/git']
+tags: [github, mcp, repository, skill, vcs/git]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +13,11 @@ claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+codexcli:
+  short-description: 'Toolkit guidance for github'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # GitHub MCP

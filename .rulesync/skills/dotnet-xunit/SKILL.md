@@ -3,16 +3,30 @@ name: dotnet-xunit
 description: Authors xUnit v3 tests -- Facts, Theories, fixtures, parallelism, IAsyncLifetime.
 license: MIT
 targets: ['*']
-tags: ['testing', 'dotnet', 'skill']
-version: '0.0.1'
+category: testing
+subcategory: frameworks
+tags:
+  - testing
+  - dotnet
+  - skill
+  - xunit
+  - frameworks
+version: '1.0.0'
 author: 'dotnet-agent-harness'
 invocable: true
+related_skills:
+  - dotnet-testing-unit-test-fundamentals
+  - dotnet-testing-advanced-xunit-upgrade-guide
+  - dotnet-testing-xunit-project-setup
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
 codexcli:
-  short-description: '.NET skill guidance for testing tasks'
+  short-description: '.NET skill guidance for xunit tasks'
+geminicli: {}
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+antigravity: {}
 ---
 
 # dotnet-xunit

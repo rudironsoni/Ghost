@@ -24,6 +24,13 @@ opencode:
     write: false
 copilot:
   tools: ['read', 'search', 'execute']
+codexcli:
+  short-description: '$1'
+  sandbox_mode: inherit
+geminiclaude:
+  tools: ['read', 'search']
+antigravity:
+  description: '.NET architecture advisor'
 ---
 
 # dotnet-architect
@@ -31,13 +38,34 @@ copilot:
 Architecture advisor subagent for .NET projects. Performs read-only analysis of project context, then recommends
 approaches based on detected frameworks, versions, and constraints.
 
-## Preloaded Skills
+## Preloaded Skills & MCPs
 
-Always load these foundation skills before analysis:
+Always load these foundation skills and MCP servers before analysis:
 
+### Skills
 - [skill:dotnet-advisor] -- router/index for all .NET skills; consult its catalog to find specialist skills
 - [skill:dotnet-version-detection] -- detect target framework, SDK version, and preview features
 - [skill:dotnet-project-analysis] -- understand solution structure, project references, and package management
+
+### MCP Servers (Preferred)
+
+For architecture analysis, prioritize these MCPs in order:
+
+1. **[mcp:serena]** -- Semantic code analysis
+   - Use for: Understanding existing solution structure, finding key classes
+   - Tools: `serena_get_symbols_overview`, `serena_find_symbol`
+   - When: First step for any existing codebase analysis
+
+2. **[mcp:microsoftdocs-mcp]** -- Official .NET documentation
+   - Use for: Validating framework choices against official guidance
+   - Tools: `microsoftdocs-mcp_microsoft_docs_search`
+   - When: Recommending patterns or validating architectural decisions
+
+3. **[mcp:deepwiki]** -- Repository documentation
+   - Use for: Checking project-specific conventions and ADRs
+   - When: Understanding existing project patterns
+
+**Fallback:** If MCPs unavailable, use traditional Read/Grep/Glob tools.
 
 ## Workflow
 
@@ -89,6 +117,26 @@ Architecture guidance:
 - **SOLID application** -- Apply SRP at the class level (one reason to change), OCP via strategy and specification
   patterns (not switch statements), and DIP at layer boundaries (Infrastructure implements interfaces defined in
   Application). See [skill:dotnet-solid-principles] for detailed patterns.
+
+## Decision Tree
+
+```text
+Complex business logic and multiple external dependencies?
+  YES -> Clean Architecture (Domain/Application/Infrastructure/Web layers)
+  NO -> Vertical slices or minimal APIs for simple CRUD
+
+Need cross-platform UI (mobile + web + desktop)?
+  YES -> Consider MAUI, Uno Platform, or Blazor Hybrid
+  NO -> Blazor Server/WASM or traditional MVC/API
+
+Performance critical (startup, memory, AOT)?
+  YES -> Native AOT, structs, Span<T>, source generators
+  NO -> Standard patterns with readability priority
+
+Existing large codebase with controllers?
+  Keep controllers -> Gradual migration to minimal APIs
+  New project -> Start with minimal APIs (.NET 8+)
+```
 
 ## Trigger Lexicon
 

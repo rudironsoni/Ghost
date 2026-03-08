@@ -1,11 +1,14 @@
 ---
-description: Initialize dotnet-agent-harness context for this repository
+description: Initialize a new project with dotnet-agent-harness guidance
 trigger: /init-project
 turbo: true
 ---
 # Workflow: /init-project
 
 Initialize dotnet-agent-harness context for this repository.
+
+If the runtime tool is installed, prefer `dotnet agent-harness bootstrap` when you need persistent repo setup, RuleSync
+configuration, and generated target files. This command remains analysis-only.
 
 1. Invoke [skill:dotnet-advisor].
 2. Invoke [skill:dotnet-version-detection].

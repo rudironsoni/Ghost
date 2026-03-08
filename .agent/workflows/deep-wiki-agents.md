@@ -1,5 +1,5 @@
 ---
-description: Generate AGENTS.md files for coding agent context
+description: $1
 trigger: /deep-wiki-agents
 turbo: true
 ---

@@ -1,5 +1,7 @@
 ---
 name: dotnet-testing-private-internal-testing
+category: testing
+subcategory: specialized
 description: |
   Guide for Private and Internal member testing strategies. Use when you need to test private or internal members, configure InternalsVisibleTo, or evaluate testability design. Covers design-first thinking, reflection testing, strategy pattern refactoring, AbstractLogger pattern, and decision frameworks.
   Keywords: private method testing, internal testing, InternalsVisibleTo, reflection testing, GetMethod BindingFlags, Meziantou.MSBuild.InternalsVisibleTo, testability design, strategy pattern refactoring, testability
@@ -10,6 +12,13 @@ metadata:
   version: '1.0.0'
   tags: 'private-testing, internal-testing, InternalsVisibleTo, reflection, testability, design'
   related_skills: 'nsubstitute-mocking, unit-test-fundamentals, test-naming-conventions'
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-testing-private-internal-testing'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 Source: kevintsengtw/dotnet-testing-agent-skills (MIT). Ported into dotnet-agent-harness.

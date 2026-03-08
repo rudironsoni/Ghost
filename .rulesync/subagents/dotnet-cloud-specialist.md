@@ -2,8 +2,8 @@
 name: dotnet-cloud-specialist
 description:
   'Plans cloud deployment, .NET Aspire orchestration, AKS configuration, multi-stage CI/CD pipelines, distributed
-  tracing, and infrastructure-as-code for .NET apps. Routes architecture to [skill:dotnet-architect], container images
-  to [skill:dotnet-containers], security to [skill:dotnet-security-reviewer].'
+  tracing, and infrastructure-as-code for .NET apps. Routes architecture to [subagent:dotnet-architect], container
+  images to [skill:dotnet-containers], security to [subagent:dotnet-security-reviewer].'
 targets: ['*']
 tags: ['dotnet', 'subagent']
 version: '0.0.1'
@@ -25,6 +25,8 @@ opencode:
     write: true
 copilot:
   tools: ['read', 'search', 'execute', 'edit']
+codexcli:
+  short-description: '.NET specialist subagent for dotnet-cloud-specialist'
 ---
 
 # dotnet-cloud-specialist
@@ -124,10 +126,10 @@ Is the question about infrastructure-as-code?
 
 ## Explicit Boundaries
 
-- **Does NOT handle general application architecture** -- Layered architecture, vertical slices, domain modeling, and service decomposition are the domain of [skill:dotnet-architect]
+- **Does NOT handle general application architecture** -- Layered architecture, vertical slices, domain modeling, and service decomposition are the domain of [subagent:dotnet-architect]
 - **Does NOT handle container image optimization** -- Multi-stage build tuning, base image selection, and layer caching are covered in [skill:dotnet-containers]
-- **Does NOT handle security auditing** -- Secret exposure, OWASP compliance, and authentication configuration belong to [skill:dotnet-security-reviewer]
-- **Does NOT handle performance profiling** -- Runtime performance analysis and benchmark interpretation belong to [skill:dotnet-performance-analyst]
+- **Does NOT handle security auditing** -- Secret exposure, OWASP compliance, and authentication configuration belong to [subagent:dotnet-security-reviewer]
+- **Does NOT handle performance profiling** -- Runtime performance analysis and benchmark interpretation belong to [subagent:dotnet-performance-analyst]
 - **Does NOT modify code** -- Uses Read, Grep, Glob, and Bash (read-only) only; produces findings and recommendations
 
 ## Trigger Lexicon

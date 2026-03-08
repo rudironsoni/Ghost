@@ -1,5 +1,7 @@
 ---
 name: dotnet-testing-autodata-xunit-integration
+category: testing
+subcategory: test-data
 description: |
   Complete guide for AutoFixture and xUnit integration. Use when you need to use AutoData or InlineAutoData to simplify xUnit parameterized test data preparation. Covers custom Customization and test data attributes to improve test readability and maintainability.
   Keywords: AutoData, InlineAutoData, AutoFixture xUnit, [AutoData], [InlineAutoData], AutoDataAttribute, ICustomization, DataAttribute, parameterized test, Theory AutoData, MemberAutoData, test data attributes, fixture.Customize
@@ -10,6 +12,13 @@ metadata:
   version: '1.0.0'
   tags: 'autofixture, xunit, autodata, theory, parameterized-tests, customization'
   related_skills: 'autofixture-basics, autofixture-customization, autofixture-nsubstitute-integration'
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-testing-autodata-xunit-integration'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 Source: kevintsengtw/dotnet-testing-agent-skills (MIT). Ported into dotnet-agent-harness.

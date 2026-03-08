@@ -23,6 +23,10 @@ copilot:
   tools: ['read', 'search']
 codexcli:
   sandbox_mode: 'read-only'
+geminiclaude:
+  tools: ['read', 'search']
+antigravity:
+  description: 'Security review specialist'
 ---
 
 # dotnet-security-reviewer
@@ -103,6 +107,31 @@ This agent's guidance is grounded in publicly available content from:
 > **Disclaimer:** This agent applies publicly documented guidance. It does not represent or speak for the named
 > knowledge sources.
 
+## Decision Tree
+
+```text
+Input validation present on all entry points?
+  NO -> Critical: SQL injection, XSS, command injection risk
+  YES -> Check for parameterized queries, output encoding
+
+Authentication required for sensitive operations?
+  NO -> Critical: IDOR, unauthorized access risk
+  YES -> Verify authorization checks, principle of least privilege
+
+Secrets in code or config files?
+  YES -> Critical: Hardcoded credentials, connection strings
+  NO -> Check for proper secrets management (User Secrets, Key Vault)
+
+Cryptography in use?
+  YES -> Check algorithms: AES-256, SHA-256+, PBKDF2/bcrypt/Argon2
+         Avoid: MD5, SHA-1, DES, custom crypto
+  NO -> Review transport security (HTTPS/TLS 1.2+)
+
+External dependencies?
+  YES -> Check for known vulnerabilities (CVE scan)
+  NO -> Review third-party package trustworthiness
+```
+
 ## Trigger Lexicon
 
 This agent activates on security review queries including: "security review", "review for vulnerabilities", "check for
@@ -118,7 +147,7 @@ secrets", "OWASP compliance", "security audit", "find security issues", "check f
 - "Scan for SQL injection and XSS vulnerabilities in the data access layer"
 - "Review the cookie and session configuration for security best practices"
 
-## Read-Only Constraints
+## Explicit Boundaries
 
 - **Never modify files** -- use Read, Grep, and Glob only
 - **Never execute application code** -- do not run `dotnet run`, `dotnet test`, or any command that starts the

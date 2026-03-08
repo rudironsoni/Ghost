@@ -1,5 +1,5 @@
 ---
-description: Generate complete wiki with pages and onboarding
+description: $1
 trigger: /deep-wiki-generate
 turbo: true
 ---

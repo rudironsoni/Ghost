@@ -1,59 +1,43 @@
 ---
-description:
-  'Search skills by keywords, tags, categories, or semantic similarity. Filter by platform, topic, or usage patterns.'
+name: dotnet-agent-harness-search
+description: '$1'
 targets: ['*']
+portability: claude-opencode
+flattening-risk: medium
+simulated: true
+version: '0.0.1'
+author: 'dotnet-agent-harness'
+claudecode:
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash']
+copilot:
+  description: 'Search skills by keyword'
+codexcli:
+  sandbox_mode: 'read-only'
 ---
 
 # /dotnet-agent-harness:search
 
-Find skills by keyword, category, or functionality within the dotnet-agent-harness toolkit.
+Use the local runtime instead of manually scanning `.rulesync/`.
 
-## Usage
+## Execution Contract
 
-```bash
-/dotnet-agent-harness:search <query> [options]
-```
-
-## Parameters
-
-- `query`: Search terms (keywords, tags, or natural language description)
-- `--category`: Filter by category (e.g., `ui`, `data`, `testing`, `cloud`)
-- `--platform`: Filter by target platform (e.g., `claudecode`, `opencode`, `copilot`)
-- `--tag`: Filter by specific tag
-- `--limit`: Maximum results (default: 20)
-
-## Examples
+Run:
 
 ```bash
-# Search for skills related to authentication
-/dotnet-agent-harness:search authentication
-
-# Find all Blazor-related skills
-/dotnet-agent-harness:search blazor --category ui
-
-# Search for testing skills compatible with OpenCode
-/dotnet-agent-harness:search "xunit testing" --platform opencode --tag testing
-
-# Find skills for database operations
-/dotnet-agent-harness:search "entity framework" --category data
+dotnet agent-harness search <query> [--kind skill|subagent|command|persona] [--category value] [--platform value] [--limit N] [--format text|json]
 ```
 
-## Output
+Do not reimplement catalog ranking in the prompt. Execute the command first, then summarize the returned results.
 
-Results include:
+## Notes
 
-- Skill name and description
-- Categories and tags
-- Platform compatibility
-- Usage examples
+- `--kind` narrows results to `skill`, `subagent`, `command`, or `persona`
+- `--category` matches tags, names, and descriptions
+- `--platform` filters to generated target compatibility
+- `--limit` defaults to `10`
 
-## Implementation
+## Example
 
-This command searches:
-
-1. Skill names and descriptions
-2. Tags and categories
-3. Trigger phrases
-4. Knowledge source references
-
-Results are ranked by relevance and frequency of use.
+```bash
+dotnet agent-harness search "xunit testing" --kind skill --platform opencode --limit 5 --format json
+```

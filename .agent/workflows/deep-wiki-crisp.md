@@ -1,5 +1,5 @@
 ---
-description: 'Fast wiki generation (concise, rate-limit-friendly)'
+description: $1
 trigger: /deep-wiki-crisp
 turbo: true
 ---

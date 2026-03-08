@@ -1,6 +1,18 @@
 ---
-description: Generate complete wiki with pages and onboarding
+name: deep-wiki-generate
+description: '$1'
 targets: ['*']
+portability: claude-opencode
+flattening-risk: medium
+simulated: true
+version: '0.0.1'
+author: 'dotnet-agent-harness'
+claudecode:
+  allowed-tools: ['Read', 'Glob', 'Bash']
+copilot:
+  description: 'Generate comprehensive wiki'
+codexcli:
+  sandbox_mode: 'read-only'
 ---
 
 # /deep-wiki:generate

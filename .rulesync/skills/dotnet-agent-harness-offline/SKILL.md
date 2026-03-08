@@ -1,12 +1,21 @@
 ---
 name: dotnet-agent-harness-offline
+category: developer-experience
+subcategory: cli
 description: 'Offline mode with local caching for air-gapped environments'
 targets: ['*']
-tags: ['harness', 'offline', 'cache']
+tags: [harness, offline, cache]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 license: MIT
 invocable: true
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-agent-harness-offline'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # Offline Mode

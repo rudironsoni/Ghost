@@ -25,6 +25,8 @@ opencode:
     write: true
 copilot:
   tools: ['read', 'search', 'execute', 'edit']
+codexcli:
+  short-description: '.NET specialist subagent for dotnet-maui-specialist'
 ---
 
 # dotnet-maui-specialist
@@ -70,6 +72,27 @@ Always load these skills before analysis:
      may not exist yet)
    - [skill:dotnet-ui-chooser] for framework selection decision tree when user is evaluating alternatives (soft
      dependency -- skill may not exist yet)
+
+## Decision Tree
+
+```text
+Target platforms?
+  Mobile only -> Focus on iOS/Android optimizations
+  Desktop only -> Windows, macOS specific considerations
+  All platforms -> Shared code maximum, platform specifics minimal
+
+UI complexity?
+  Native controls -> Use platform handlers, custom renderers sparingly
+  Custom UI -> GraphicsView, SkiaSharp for custom drawing
+
+Device features needed?
+  Sensors/Camera -> Check platform permissions, abstraction APIs
+  Background tasks -> Platform-specific implementations required
+
+Performance requirements?
+  High -> Native AOT compilation, trimming enabled, compiled bindings
+  Standard -> Focus on startup time, memory management
+```
 
 ## Trigger Lexicon
 

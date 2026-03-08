@@ -3,16 +3,30 @@ name: dotnet-containers
 description: Containerizes .NET apps. Multi-stage Dockerfiles, SDK container publish (.NET 8+), rootless.
 license: MIT
 targets: ['*']
-tags: ['architecture', 'dotnet', 'skill']
-version: '0.0.1'
+category: operations
+subcategory: containers
+tags:
+  - devops
+  - dotnet
+  - skill
+  - containers
+  - docker
+version: '1.0.0'
 author: 'dotnet-agent-harness'
 invocable: true
+related_skills:
+  - dotnet-container-deployment
+  - dotnet-native-aot
+  - dotnet-gha-publish
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: '.NET skill guidance for architecture tasks'
+  short-description: '.NET skill guidance for container tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-containers

@@ -1,19 +1,24 @@
 ---
 name: dotnet-solution-navigation
+category: developer-experience
+subcategory: project
 description: Orients in .NET solutions -- entry points, .sln/.slnx, dependency graphs, config.
 license: MIT
 targets: ['*']
-tags: ['csharp', 'dotnet', 'skill']
+tags: [csharp, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
   model: haiku
+copilot: {}
 codexcli:
   short-description: '.NET skill guidance for csharp tasks'
+geminicli: {}
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+antigravity: {}
 ---
 
 ````! find . -maxdepth 2 ( -name "*.sln" -o -name "*.slnx" ) 2>/dev/null | head -5

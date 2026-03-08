@@ -1,5 +1,5 @@
 ---
-description: Generate GitHub Actions workflow to deploy wiki
+description: $1
 trigger: /deep-wiki-deploy
 turbo: true
 ---

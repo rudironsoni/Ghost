@@ -1,11 +1,20 @@
 ---
 name: dotnet-serena-analysis-patterns
+category: developer-experience
+subcategory: serena
 description: 'Code analysis patterns using Serena MCP for architecture validation and pattern detection'
 targets: ['*']
-tags: ['dotnet', 'serena', 'analysis', 'architecture', 'patterns', 'skill']
+tags: [dotnet, serena, analysis, architecture, patterns, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 license: 'MIT'
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: '.NET skill guidance for dotnet-serena-analysis-patterns'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-serena-analysis-patterns

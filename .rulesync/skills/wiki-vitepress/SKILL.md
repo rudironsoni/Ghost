@@ -1,12 +1,21 @@
 ---
 name: wiki-vitepress
+category: developer-experience
+subcategory: cli
 description: Packages wiki as VitePress dark-theme site
 license: MIT
 targets: ['claudecode', 'codexcli']
-tags: ['wiki', 'vitepress', 'documentation']
+tags: [wiki, vitepress, documentation]
 version: '1.0.0'
 author: 'microsoft'
 invocable: true
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: 'Toolkit guidance for wiki-vitepress'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # wiki-vitepress

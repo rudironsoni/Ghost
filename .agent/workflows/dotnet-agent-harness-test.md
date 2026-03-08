@@ -1,7 +1,5 @@
 ---
-description: >-
-  Test skills against defined test cases. Validate skill logic, output format,
-  and cross-references.
+description: $1
 trigger: /dotnet-agent-harness-test
 turbo: true
 ---
@@ -9,70 +7,34 @@ turbo: true
 
 # /dotnet-agent-harness:test
 
-Validate skill functionality with unit tests.
+Run the local skill-test harness instead of interpreting `test-cases/` manually.
 
-## Usage
+## Execution Contract
 
-```bash
-/dotnet-agent-harness:test <skill-name> [options]
-```
-
-## Parameters
-
-- `skill-name`: Name of skill to test (or `all` for all skills)
-- `--verbose`: Show detailed test output
-- `--format`: Output format (`text`, `json`, `junit`)
-- `--fail-fast`: Stop on first failure
-
-## Examples
+Run:
 
 ```bash
-# Test a specific skill
-/dotnet-agent-harness:test dotnet-csharp-coding-standards
-
-# Run all tests with JSON output
-/dotnet-agent-harness:test all --format json
-
-# Test with detailed output
-/dotnet-agent-harness:test dotnet-efcore-patterns --verbose
-
-# Test for CI/CD
-/dotnet-agent-harness:test all --format junit --fail-fast
+dotnet agent-harness test [skill <skill-name|all>|eval] [--format text|json|junit] [--filter value] [--fail-fast] [--platform codexcli] [--trials 3] [--unloaded-check] [--output path]
 ```
 
-## Test Cases
+## Notes
 
-Skills can include test cases in `test-cases/`:
+- `test skill all` runs the entire authored skill suite
+- `test eval` runs the cross-harness eval matrix from `tests/eval/cases/`
+- `--platform` and `--trials` switch the command into eval mode when no explicit `eval` token is present
+- `--unloaded-check` filters eval execution to retirement/unloaded cases
+- `--format junit` is intended for CI systems
+- `--filter` narrows test selection to matching case names
+- `--fail-fast` stops on the first failing check
 
-```yaml
-# .rulesync/skills/dotnet-example/test-cases/001-basic.yml
-name: 'Basic validation'
-input:
-  query: 'How should I name private fields?'
-expected_output_contains:
-  - '_camelCase'
-  - 'private fields'
-validation:
-  - pattern: "_\\w+"
-    description: 'Should suggest underscore prefix'
+## Example
+
+```bash
+dotnet agent-harness test all --format junit --output results.xml
 ```
 
-## Output
-
-```text
-Testing dotnet-csharp-coding-standards...
-✓ Frontmatter validation
-✓ Cross-reference check
-✓ Test case 1: Basic validation
-✓ Test case 2: Edge cases
-
-3 passed, 0 failed
+```bash
+dotnet agent-harness test eval --platform codexcli --trials 3 --unloaded-check --artifact-id codex-retirement
 ```
-
-## Exit Codes
-
-- `0`: All tests passed
-- `1`: One or more tests failed
-- `2`: Invalid skill name or configuration error
 
 // turbo

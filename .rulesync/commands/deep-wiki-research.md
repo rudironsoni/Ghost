@@ -1,6 +1,18 @@
 ---
-description: Deep research with evidence-based analysis
+name: deep-wiki-research
+description: '$1'
 targets: ['*']
+portability: claude-opencode
+flattening-risk: high
+simulated: true
+version: '0.0.1'
+author: 'dotnet-agent-harness'
+claudecode:
+  allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'WebSearch']
+copilot:
+  description: 'Deep research with citations'
+codexcli:
+  sandbox_mode: 'read-only'
 ---
 
 # /deep-wiki:research

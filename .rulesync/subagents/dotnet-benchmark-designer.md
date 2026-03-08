@@ -25,6 +25,8 @@ opencode:
     write: true
 copilot:
   tools: ['read', 'search', 'execute', 'edit']
+codexcli:
+  short-description: '.NET specialist subagent for dotnet-benchmark-designer'
 ---
 
 # dotnet-benchmark-designer
@@ -95,6 +97,28 @@ When reviewing or designing benchmarks, verify each item:
 | Unrepresentative data    | Testing with trivial input (empty string, size=1)                | Add `[Params]` with realistic sizes (10, 100, 1000)                               |
 | GC state leakage         | Previous benchmark's allocations triggering GC in next benchmark | Use `[IterationCleanup]` or `Server GC` configuration                             |
 
+## Decision Tree
+
+```text
+What to benchmark?
+  Algorithm -> Focus on Big-O, input size variation
+  Database -> Connection pooling, query optimization, N+1
+  API endpoint -> Request/response time, throughput, concurrency
+  Memory -> Allocations, GC pressure, object lifetime
+
+Baseline established?
+  NO -> Create baseline first, then optimize
+  YES -> Compare against baseline, measure improvement
+
+Environment controlled?
+  NO -> Multiple runs, statistical significance, variance analysis
+  YES -> Single representative run acceptable
+
+BenchmarkDotNet setup?
+  Simple -> [SimpleJob], quick iteration
+  Complex -> [MemoryDiagnoser], [HardwareCounters], multiple runtimes
+```
+
 ## Trigger Lexicon
 
 This agent activates on benchmark design queries including: "design a benchmark", "benchmark this algorithm", "review
@@ -104,7 +128,7 @@ baseline".
 
 ## Explicit Boundaries
 
-- **Does NOT interpret profiling data** -- delegates to [skill:dotnet-performance-analyst] for analyzing flame graphs,
+- **Does NOT interpret profiling data** -- delegates to [subagent:dotnet-performance-analyst] for analyzing flame graphs,
   heap dumps, and runtime diagnostics
 - **Does NOT own CI pipeline setup** -- references [skill:dotnet-ci-benchmarking] for GitHub Actions workflow
   integration; focuses on benchmark class design

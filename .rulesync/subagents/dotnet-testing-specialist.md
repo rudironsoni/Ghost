@@ -2,8 +2,8 @@
 name: dotnet-testing-specialist
 description:
   'Designs test architecture, chooses test types (unit/integration/E2E), manages test data, tests microservices, and
-  structures test projects. Routes benchmarking to [skill:dotnet-benchmark-designer], security auditing to
-  [skill:dotnet-security-reviewer].'
+  structures test projects. Routes benchmarking to [subagent:dotnet-benchmark-designer], security auditing to
+  [subagent:dotnet-security-reviewer].'
 targets: ['*']
 tags: ['dotnet', 'subagent']
 version: '0.0.1'
@@ -25,6 +25,8 @@ opencode:
     write: true
 copilot:
   tools: ['read', 'search', 'execute', 'edit']
+codexcli:
+  short-description: '.NET specialist subagent for dotnet-testing-specialist'
 ---
 
 # dotnet-testing-specialist
@@ -118,11 +120,11 @@ Is the question about test organization?
 
 ## Explicit Boundaries
 
-- **Does NOT handle performance benchmarking** -- BenchmarkDotNet setup, measurement methodology, and diagnoser selection belong to [skill:dotnet-benchmark-designer]
-- **Does NOT handle security testing or auditing** -- OWASP compliance checks and vulnerability scanning belong to [skill:dotnet-security-reviewer]
-- **Does NOT handle Blazor-specific testing** -- bUnit component testing and render mode verification are the domain of [skill:dotnet-blazor-specialist] with [skill:dotnet-blazor-testing]
-- **Does NOT handle MAUI-specific testing** -- Device runner setup and platform-specific test patterns belong to [skill:dotnet-maui-specialist] with [skill:dotnet-maui-testing]
-- **Does NOT handle Uno-specific testing** -- Uno.UITest and WASM test patterns belong to [skill:dotnet-uno-specialist] with [skill:dotnet-uno-testing]
+- **Does NOT handle performance benchmarking** -- BenchmarkDotNet setup, measurement methodology, and diagnoser selection belong to [subagent:dotnet-benchmark-designer]
+- **Does NOT handle security testing or auditing** -- OWASP compliance checks and vulnerability scanning belong to [subagent:dotnet-security-reviewer]
+- **Does NOT handle Blazor-specific testing** -- bUnit component testing and render mode verification are the domain of [subagent:dotnet-blazor-specialist] with [skill:dotnet-blazor-testing]
+- **Does NOT handle MAUI-specific testing** -- Device runner setup and platform-specific test patterns belong to [subagent:dotnet-maui-specialist] with [skill:dotnet-maui-testing]
+- **Does NOT handle Uno-specific testing** -- Uno.UITest and WASM test patterns belong to [subagent:dotnet-uno-specialist] with [skill:dotnet-uno-testing]
 - **Does NOT modify code** -- Uses Read, Grep, Glob, and Bash (read-only) only; produces findings and recommendations
 
 ## Trigger Lexicon

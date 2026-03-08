@@ -3,16 +3,30 @@ name: dotnet-solid-principles
 description: Applies SOLID and DRY principles. C# anti-patterns, fixes, SRP compliance checks.
 license: MIT
 targets: ['*']
-tags: ['cicd', 'dotnet', 'skill']
-version: '0.0.1'
+category: fundamentals
+subcategory: design-principles
+tags:
+  - dotnet
+  - skill
+  - solid
+  - dry
+  - design-principles
+version: '1.0.0'
 author: 'dotnet-agent-harness'
 invocable: true
+related_skills:
+  - dotnet-csharp-coding-standards
+  - dotnet-csharp-api-design
+  - dotnet-csharp-code-smells
 claudecode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
 codexcli:
-  short-description: '.NET skill guidance for cicd tasks'
+  short-description: '.NET skill guidance for design principles'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-solid-principles

@@ -1,11 +1,11 @@
 ---
 name: dotnet-agent-harness-hooks
-description:
-  Hooks and MCP server guide for dotnet-agent-harness. How hooks behave, how to disable them, MCP configuration and
-  troubleshooting.
+category: developer-experience
+subcategory: cli
+description: 'Hooks and MCP server guide for dotnet-agent-harness. How hooks behave, how to disable them, MCP configuration and troubleshooting.'
 license: MIT
 targets: ['*']
-tags: ['hooks', 'mcp', 'claude-code', 'dotnet', 'tooling']
+tags: [hooks, mcp, claude-code, dotnet, tooling]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -15,6 +15,9 @@ codexcli:
   short-description: 'Hooks + MCP integration guide'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-agent-harness-hooks

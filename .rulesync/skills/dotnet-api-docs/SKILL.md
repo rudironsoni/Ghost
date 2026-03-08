@@ -1,9 +1,11 @@
 ---
 name: dotnet-api-docs
+category: web
+subcategory: minimal-apis
 description: Generates API documentation. DocFX setup, OpenAPI-as-docs, doc-code sync, versioned docs.
 license: MIT
 targets: ['*']
-tags: ['api', 'dotnet', 'skill']
+tags: [api, dotnet, skill]
 version: '0.0.1'
 author: 'dotnet-agent-harness'
 invocable: true
@@ -13,6 +15,9 @@ codexcli:
   short-description: '.NET skill guidance for api tasks'
 opencode:
   allowed-tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit']
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # dotnet-api-docs

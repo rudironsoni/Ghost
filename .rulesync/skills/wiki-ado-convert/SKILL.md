@@ -1,12 +1,21 @@
 ---
 name: wiki-ado-convert
+category: developer-experience
+subcategory: cli
 description: Converts VitePress wiki to Azure DevOps Wiki-compatible format
 license: MIT
 targets: ['claudecode', 'codexcli']
-tags: ['wiki', 'azure-devops', 'conversion']
+tags: [wiki, azure-devops, conversion]
 version: '1.0.0'
 author: 'microsoft'
 invocable: true
+claudecode: {}
+opencode: {}
+codexcli:
+  short-description: 'Toolkit guidance for wiki-ado-convert'
+copilot: {}
+geminicli: {}
+antigravity: {}
 ---
 
 # wiki-ado-convert

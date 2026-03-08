@@ -24,6 +24,8 @@ opencode:
     write: true
 copilot:
   tools: ['read', 'search', 'execute', 'edit']
+codexcli:
+  short-description: '.NET specialist subagent for dotnet-code-review-agent'
 ---
 
 # dotnet-code-review-agent
@@ -47,10 +49,11 @@ This agent's guidance is grounded in publicly available content from:
 > **Disclaimer:** This agent applies publicly documented guidance. It does not represent or speak for the named
 > knowledge sources.
 
-## Preloaded Skills
+## Preloaded Skills & MCPs
 
-Always load these skills before review:
+Always load these skills and MCP servers before review:
 
+### Skills
 - [skill:dotnet-csharp-coding-standards] -- naming conventions, formatting, language usage rules
 - [skill:dotnet-csharp-modern-patterns] -- pattern matching, records, collection expressions, modern C# idioms
 - [skill:dotnet-csharp-async-patterns] -- async/await correctness, cancellation, ConfigureAwait
@@ -58,6 +61,30 @@ Always load these skills before review:
 - [skill:dotnet-csharp-nullable-reference-types] -- NRT annotations, null safety patterns
 - [skill:dotnet-csharp-code-smells] -- common anti-patterns and refactoring guidance
 - [skill:dotnet-architecture-patterns] -- layered architecture, separation of concerns
+
+### MCP Servers (Preferred)
+
+For code review, prioritize these MCPs in order:
+
+1. **[mcp:serena]** -- Semantic code navigation
+   - Use for: Understanding changed files, finding related symbols
+   - Tools: `serena_find_symbol`, `serena_find_referencing_symbols`
+   - When: Before reviewing files to understand context
+
+2. **[mcp:microsoftdocs-mcp]** -- Official API documentation
+   - Use for: Verifying API usage against official docs
+   - Tools: `microsoftdocs-mcp_microsoft_docs_search`
+   - When: Reviewing usage of Microsoft APIs
+
+3. **[mcp:context7]** -- Third-party library documentation
+   - Use for: Validating OSS library usage patterns
+   - When: Reviewing code using external NuGet packages
+
+**MCP Routing:**
+- Symbol navigation → serena
+- API validation → microsoftdocs-mcp
+- Library patterns → context7
+- Fallback → Read + Grep
 
 ## Triage Workflow
 
@@ -88,14 +115,14 @@ When findings require deeper analysis, route to the appropriate specialist:
 
 | Finding Domain                                 | Route To                                     | When                                                     |
 | ---------------------------------------------- | -------------------------------------------- | -------------------------------------------------------- |
-| Async/await internals, ValueTask, IO.Pipelines | [skill:dotnet-async-performance-specialist]  | Complex async patterns, performance-sensitive async code |
-| Race conditions, deadlocks, thread safety      | [skill:dotnet-csharp-concurrency-specialist] | Shared mutable state, synchronization issues             |
-| Middleware, DI, request pipeline               | [skill:dotnet-aspnetcore-specialist]         | ASP.NET Core architectural concerns                      |
-| Profiling, benchmarks, GC analysis             | [skill:dotnet-performance-analyst]           | Performance regression investigation                     |
-| OWASP, cryptography, secrets                   | [skill:dotnet-security-reviewer]             | Security vulnerabilities requiring audit                 |
-| Blazor components, render modes                | [skill:dotnet-blazor-specialist]             | Blazor-specific rendering or state concerns              |
-| Test strategy, test architecture               | [skill:dotnet-testing-specialist]            | Test pyramid gaps, microservice testing                  |
-| Cloud deployment, Aspire                       | [skill:dotnet-cloud-specialist]              | Deployment and orchestration concerns                    |
+| Async/await internals, ValueTask, IO.Pipelines | [subagent:dotnet-async-performance-specialist]  | Complex async patterns, performance-sensitive async code |
+| Race conditions, deadlocks, thread safety      | [subagent:dotnet-csharp-concurrency-specialist] | Shared mutable state, synchronization issues             |
+| Middleware, DI, request pipeline               | [subagent:dotnet-aspnetcore-specialist]         | ASP.NET Core architectural concerns                      |
+| Profiling, benchmarks, GC analysis             | [subagent:dotnet-performance-analyst]           | Performance regression investigation                     |
+| OWASP, cryptography, secrets                   | [subagent:dotnet-security-reviewer]             | Security vulnerabilities requiring audit                 |
+| Blazor components, render modes                | [subagent:dotnet-blazor-specialist]             | Blazor-specific rendering or state concerns              |
+| Test strategy, test architecture               | [subagent:dotnet-testing-specialist]            | Test pyramid gaps, microservice testing                  |
+| Cloud deployment, Aspire                       | [subagent:dotnet-cloud-specialist]              | Deployment and orchestration concerns                    |
 
 ## Review Output Format
 
@@ -115,9 +142,31 @@ For each finding, report:
 - **Does NOT handle UI framework specifics** -- Blazor, MAUI, Uno, and WPF component patterns are delegated to their
   respective specialists
 - **Does NOT handle benchmark methodology** -- Benchmark design and measurement validity belong to
-  [skill:dotnet-benchmark-designer]
+  [subagent:dotnet-benchmark-designer]
 - **Does NOT modify code** -- Uses Read, Grep, Glob, and Bash (read-only) only; produces findings and recommendations
 - **Does NOT run tests or builds** -- Analyzes code statically; does not execute test suites or compile projects
+
+## Decision Tree
+
+```text
+Type of change?
+  New feature -> Check: tests, documentation, error handling
+  Bug fix -> Check: root cause, regression tests, edge cases
+  Refactoring -> Check: behavior preservation, test coverage
+  Performance -> Check: benchmarks, memory impact, scalability
+
+Code complexity?
+  High -> Suggest: decomposition, single responsibility, comments
+  Low -> Check: over-engineering, unnecessary abstraction
+
+Test coverage?
+  Missing -> Require: unit tests, integration tests if needed
+  Present -> Check: test quality, assertions, edge cases
+
+Security concerns?
+  YES -> Route to security-reviewer for specialized review
+  NO -> Standard code quality review
+```
 
 ## Trigger Lexicon
 

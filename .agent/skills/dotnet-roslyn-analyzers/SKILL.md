@@ -4,307 +4,156 @@ description: >-
   Authors Roslyn analyzers. DiagnosticAnalyzer, CodeFixProvider,
   CodeRefactoring, multi-version.
 ---
-# dotnet-roslyn-analyzers
+# Roslyn Analyzer Hooks
 
-Guidance for **authoring** custom Roslyn analyzers, code fix providers, code refactoring providers, and diagnostic
-suppressors. Covers project setup, DiagnosticDescriptor conventions, analysis context registration, code fix actions,
-code refactoring actions, multi-Roslyn-version targeting (3.8 through 4.14), testing with
-Microsoft.CodeAnalysis.Testing, NuGet packaging, and performance best practices.
+## Overview
 
-For extended code examples (CodeRefactoringProvider implementation, multi-version project structure, test matrix
-configuration), see `details.md` in this skill directory.
+Comprehensive Roslyn analyzer integration for dotnet-agent-harness providing real-time code analysis through agent hooks and enforced quality gates via git hooks.
 
-## Scope
+## Architecture
 
-- DiagnosticAnalyzer authoring and analysis context registration
-- CodeFixProvider and CodeRefactoringProvider implementation
-- Multi-Roslyn-version targeting (3.8 through 4.14)
-- Testing with Microsoft.CodeAnalysis.Testing
-- NuGet packaging for analyzer assemblies
+### Layer 1: Agent-Level Hooks (Real-time)
+- **Trigger**: Post-edit on .cs files
+- **Execution**: Async with 60s timeout
+- **Scope**: Single file analysis
+- **Output**: JSON with violations + skill recommendations
 
-## Out of scope
+### Layer 2: Git Hooks (Commit/Push)
+- **pre-commit**: Staged files analysis + dotnet format
+- **pre-push**: Full solution build + tests + doc validation
+- **Enforcement**: Blocks on errors and warnings
 
-- Consuming and configuring existing analyzers (CA rules, severity) -- see [skill:dotnet-add-analyzers]
-- Authoring source generators (IIncrementalGenerator) -- see [skill:dotnet-csharp-source-generators]
-- Naming conventions -- see [skill:dotnet-csharp-coding-standards]
+## Configuration
 
-Cross-references: [skill:dotnet-csharp-source-generators] for shared Roslyn packaging concepts and IIncrementalGenerator
-patterns, [skill:dotnet-add-analyzers] for consuming and configuring analyzers, [skill:dotnet-testing-strategy] for
-general test organization and framework selection, [skill:dotnet-csharp-coding-standards] for naming conventions applied
-to analyzer code.
+### Environment Variables
 
----
+```bash
+# Skip all analyzer checks (default: false, analyzers run by default)
+export DOTNET_AGENT_HARNESS_SKIP_ANALYZERS=true
 
-## Project Setup
+# Configure timeout (default: 60 seconds)
+export DOTNET_AGENT_HARNESS_ANALYZER_TIMEOUT=120
 
-Analyzer projects **must** target `netstandard2.0`. The compiler loads analyzers into various host processes (Visual
-Studio on .NET Framework/Mono, MSBuild on .NET Core, `dotnet build` CLI) -- targeting `net8.0+` breaks compatibility
-with hosts that do not run on that runtime.
+# Minimum severity to report (Error/Warning/Info)
+export DOTNET_AGENT_HARNESS_ANALYZER_SEVERITY=Warning
 
-````xml
+# Execution mode (sync/async)
+export DOTNET_AGENT_HARNESS_ANALYZER_MODE=async
+```
 
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
-    <IsRoslynComponent>true</IsRoslynComponent>
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
+### Project-Level (.editorconfig)
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" PrivateAssets="all" />
-  </ItemGroup>
-</Project>
+```ini
+[*.cs]
+# Enable all analyzers
+dotnet_analyzer_diagnostic.severity = warning
 
-```csharp
+# Category-based configuration
+dotnet_analyzer_diagnostic.category-security.severity = error
+dotnet_analyzer_diagnostic.category-performance.severity = warning
 
-- `EnforceExtendedAnalyzerRules` enables RS-series meta-diagnostics that catch common analyzer authoring mistakes.
-- `IsRoslynComponent` enables IDE tooling support for the project.
-- `LangVersion>latest` lets you write modern C# in the analyzer itself while still targeting `netstandard2.0`.
-- All Roslyn SDK packages must use `PrivateAssets="all"` to avoid shipping them as transitive dependencies.
+# Specific rule overrides
+dotnet_diagnostic.CA2007.severity = suggestion  # ConfigureAwait
+dotnet_diagnostic.CA1816.severity = error       # GC.SuppressFinalize
+```
 
----
+## Analyzer Packages
 
-## DiagnosticAnalyzer
+### Essential (Always Enabled)
+- **Microsoft.CodeAnalysis.NetAnalyzers** - Built-in .NET analyzers
+- **Roslynator.Analyzers** - Refactoring and code improvements
+- **Roslynator.CodeAnalysis.Analyzers** - Code analysis rules
+- **Roslynator.Formatting.Analyzers** - Formatting rules
 
-Every analyzer inherits from `DiagnosticAnalyzer` and must be decorated with `[DiagnosticAnalyzer(LanguageNames.CSharp)]`.
+### Optional
+- **StyleCop.Analyzers** - Style consistency (enable/disable via EnableStyleCop)
+- **Meziantou.Analyzer** - Performance analyzers (EnableMeziantouAnalyzer)
 
-```csharp
+### CI Only (High Performance Impact)
+- **SonarAnalyzer.CSharp** - Security and code smells (+522% build time)
 
-[DiagnosticAnalyzer(LanguageNames.CSharp)]
-public sealed class NoPublicFieldsAnalyzer : DiagnosticAnalyzer
-{
-    public const string DiagnosticId = "MYLIB001";
+## Analyzer-to-Skill Routing
 
-    private static readonly DiagnosticDescriptor Rule = new(
-        id: DiagnosticId,
-        title: "Public fields should be properties",
-        messageFormat: "Field '{0}' is public; use a property instead",
-        category: "Design",
-        defaultSeverity: DiagnosticSeverity.Warning,
-        isEnabledByDefault: true,
-        helpLinkUri: $"https://example.com/docs/rules/{DiagnosticId}");
+| Analyzer Code | Skill | Description |
+|--------------|-------|-------------|
+| CA2007 | dotnet-csharp-async-patterns | Do not directly await a Task |
+| CA2008 | dotnet-csharp-async-patterns | TaskScheduler required |
+| CA1816 | dotnet-gc-memory | GC.SuppressFinalize |
+| CA2000 | dotnet-gc-memory | Dispose objects before losing scope |
+| CA1822 | dotnet-performance-patterns | Mark members as static |
+| CA1860 | dotnet-performance-patterns | Avoid Enumerable.Any() |
+| CA2100 | dotnet-security-owasp | SQL injection prevention |
+| CA5350 | dotnet-security-owasp | Weak cryptographic algorithms |
+| CA1001 | dotnet-architecture-patterns | IDisposable pattern |
+| CA1063 | dotnet-architecture-patterns | Implement IDisposable correctly |
 
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; }
-        = ImmutableArray.Create(Rule);
+Full mappings in `.rulesync/analyzer-to-skill.json`
 
-    public override void Initialize(AnalysisContext context)
-    {
-        context.EnableConcurrentExecution();
-        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
-        context.RegisterSymbolAction(AnalyzeField, SymbolKind.Field);
-    }
+## Git Hooks Installation
 
-    private static void AnalyzeField(SymbolAnalysisContext context)
-    {
-        var field = (IFieldSymbol)context.Symbol;
-        if (field.DeclaredAccessibility == Accessibility.Public
-            && !field.IsConst && !field.IsReadOnly)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Rule, field.Locations[0], field.Name));
-        }
-    }
-}
+### Automatic (Recommended)
 
-```text
+```bash
+# Run setup script
+bash .githooks/setup.sh
+```
 
-### Analysis Context Registration
+### Manual
 
-| Method | Granularity | Use When |
-|--------|-------------|----------|
-| `RegisterSyntaxNodeAction` | Individual syntax nodes | Pattern matching on specific syntax |
-| `RegisterSymbolAction` | Declared symbols | Checking symbol-level properties |
-| `RegisterOperationAction` | IL-level operations | Analyzing semantic operations |
-| `RegisterSyntaxTreeAction` | Entire syntax tree | File-level checks |
-| `RegisterCompilationStartAction` | Compilation start | Accumulate state across compilation |
-| `RegisterCompilationAction` | Full compilation | One-shot analysis after all files |
+```bash
+# Copy hooks to .git/hooks/
+cp .githooks/pre-commit .git/hooks/
+cp .githooks/pre-push .git/hooks/
+chmod +x .git/hooks/pre-commit .git/hooks/pre-push
+```
 
----
+### Bypass Hooks
 
-## DiagnosticDescriptor Conventions
+```bash
+# Skip analyzer checks for this commit
+DOTNET_AGENT_HARNESS_SKIP_ANALYZERS=true git commit -m "message"
 
-### ID Prefix Patterns
+# Bypass all hooks (not recommended)
+git commit --no-verify -m "message"
+```
 
-| Pattern | Example | When |
-|---------|---------|------|
-| `PROJ###` | `MYLIB001` | Single-project analyzers |
-| `AREA####` | `PERF0001` | Category-scoped analyzers |
-| `XX####` | `MA0042` | Short-prefix convention |
+## Performance Considerations
 
-Avoid prefixes reserved by the .NET platform: `CA`, `CS`, `RS`, `IDE`, `IL`, `SYSLIB`.
+| Configuration | Build Time Impact | When to Use |
+|--------------|-------------------|-------------|
+| NetAnalyzers only | +15% | Development (default) |
+| + Roslynator | +98% | Development with refactoring |
+| + StyleCop | +49% | Style enforcement |
+| Full Suite (CI) | +522% | CI/CD pipelines only |
 
-### Severity Selection
+## Troubleshooting
 
-| Severity | Use When |
-|----------|----------|
-| `Error` | Code will not work correctly at runtime |
-| `Warning` | Code works but violates best practices |
-| `Info` | Suggestion for improvement |
-| `Hidden` | IDE-only refactoring suggestion |
+### Analysis Timeouts
 
-Default to `Warning` for most rules. Always provide a non-null `helpLinkUri` (RS1015 enforces this).
+Increase timeout:
+```bash
+export DOTNET_AGENT_HARNESS_ANALYZER_TIMEOUT=120
+```
 
----
+### Memory Issues
 
-## CodeFixProvider
-
-Code fix providers offer automated corrections for diagnostics. Key patterns:
-
-- **EquivalenceKey:** Every `CodeAction` must have a unique `equivalenceKey` for FixAll support (RS1010, RS1011)
-- **Document vs. Solution modification:** Use `createChangedDocument` for single-file fixes, `createChangedSolution` for cross-file renames
-- **Trivia preservation:** Always transfer leading/trailing trivia from replaced nodes
-- **FixAllProvider:** Return `WellKnownFixAllProviders.BatchFixer` for batch-applicable fixes
-
-See `details.md` for the complete CodeFixProvider implementation with property conversion.
-
----
-
-## DiagnosticSuppressor
-
-Conditionally suppresses diagnostics from other analyzers when EditorConfig cannot express the suppression condition. Requires Roslyn 3.8+.
-
-| Approach | Use When |
-|----------|----------|
-| EditorConfig severity override | Suppression applies unconditionally |
-| `[SuppressMessage]` attribute | Suppression applies to a specific location |
-| `DiagnosticSuppressor` | Suppression depends on code structure or patterns |
-
----
-
-## Multi-Roslyn-Version Targeting
-
-### Version Boundaries
-
-| Roslyn Version | Ships With | Key APIs Added |
-|---------------|------------|----------------|
-| 3.8 | VS 16.8 / .NET 5 SDK | `DiagnosticSuppressor` |
-| 4.2 | VS 17.2 / .NET 6 SDK | Improved incremental analysis |
-| 4.4 | VS 17.4 / .NET 7 SDK | `ForAttributeWithMetadataName` |
-| 4.8 | VS 17.8 / .NET 8 U1 | `CollectionExpression` support |
-| 4.14 | VS 17.14 / .NET 10 SDK | Latest API surface |
-
-Use conditional compilation constants (`ROSLYN_X_Y_OR_GREATER`) and version-specific NuGet paths (`analyzers/dotnet/roslyn{version}/cs/`). See `details.md` for the complete multi-version project structure.
-
----
-
-## Testing Analyzers
-
-Use `Microsoft.CodeAnalysis.Testing` for ergonomic analyzer testing:
-
-```csharp
-
-using Verify = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerVerifier<
-    NoPublicFieldsAnalyzer,
-    Microsoft.CodeAnalysis.Testing.DefaultVerifier>;
-
-public class NoPublicFieldsAnalyzerTests
-{
-    [Fact]
-    public async Task PublicField_ReportsDiagnostic()
-    {
-        var test = """
-            public class MyClass
-            {
-                public int {|MYLIB001:Value|};
-            }
-            """;
-        await Verify.VerifyAnalyzerAsync(test);
-    }
-}
-
-```text
-
-### Diagnostic Markup Syntax
-
-| Markup | Meaning |
-|--------|---------|
-| `[|text|]` | Diagnostic expected on `text` (single descriptor) |
-| `{|DIAG_ID:text|}` | Diagnostic with specific ID expected |
-
----
-
-## NuGet Packaging
-
-Analyzers ship as NuGet packages with assemblies in `analyzers/dotnet/cs/`, not `lib/`.
-
+For large solutions, disable heavy analyzers:
 ```xml
-
 <PropertyGroup>
-  <IncludeBuildOutput>false</IncludeBuildOutput>
-  <DevelopmentDependency>true</DevelopmentDependency>
-  <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+  <RunSonarAnalyzer>false</RunSonarAnalyzer>
 </PropertyGroup>
+```
 
-<ItemGroup>
-  <None Include="$(OutputPath)\$(AssemblyName).dll"
-        Pack="true"
-        PackagePath="analyzers/dotnet/cs" />
-</ItemGroup>
+### False Positives
 
-```text
-
----
-
-## Performance Best Practices
-
-- **Resolve types once per compilation** inside `RegisterCompilationStartAction`, not per-node/symbol callbacks
-- **Cache `SupportedDiagnostics`** as `ImmutableArray` field, not expression-bodied property
-- **Enable concurrent execution** -- always call `context.EnableConcurrentExecution()`
-- **Filter early** -- register for the most specific `SyntaxKind` possible
-- **Avoid `Compilation.GetSemanticModel()`** -- use the `SemanticModel` from the analysis context (RS1030)
-
----
-
-## Common Meta-Diagnostics (RS-Series)
-
-| ID | Title | What It Catches |
-|----|-------|-----------------|
-| RS1001 | Missing `DiagnosticAnalyzerAttribute` | Analyzer class missing attribute |
-| RS1008 | Avoid storing per-compilation data | Instance fields with compilation data |
-| RS1010 | Create code actions with unique `EquivalenceKey` | Missing equivalence key |
-| RS1015 | Provide non-null `helpLinkUri` | Empty help link |
-| RS1016 | Code fix providers should provide FixAll support | Missing `GetFixAllProvider()` |
-| RS1024 | Symbols should be compared for equality | Using `==` instead of `SymbolEqualityComparer` |
-| RS1026 | Enable concurrent execution | Missing `EnableConcurrentExecution()` |
-| RS1030 | Do not invoke `Compilation.GetSemanticModel()` | Using wrong semantic model source |
-| RS1041 | Compiler extensions should target `netstandard2.0` | Wrong target framework |
-
----
+Disable specific rules in .editorconfig:
+```ini
+dotnet_diagnostic.CA1707.severity = none
+```
 
 ## References
 
-- [Tutorial: Write your first analyzer and code fix](https://learn.microsoft.com/en-us/dotnet/csharp/roslyn-sdk/tutorials/how-to-write-csharp-analyzer-code-fix)
-- [Roslyn SDK overview](https://learn.microsoft.com/en-us/dotnet/csharp/roslyn-sdk/)
-- [Microsoft.CodeAnalysis.Testing](https://github.com/dotnet/roslyn-sdk/tree/main/src/Microsoft.CodeAnalysis.Testing)
-- [Analyzer NuGet packaging conventions](https://learn.microsoft.com/en-us/nuget/guides/analyzers-conventions)
-- [dotnet/roslyn-analyzers (RS diagnostic source)](https://github.com/dotnet/roslyn-analyzers)
-- [Meziantou.Analyzer (exemplar project)](https://github.com/meziantou/Meziantou.Analyzer)
-````
-
-## Code Navigation (Serena MCP)
-
-**Primary approach:** Use Serena symbol operations for efficient code navigation:
-
-1. **Find definitions**: `serena_find_symbol` instead of text search
-2. **Understand structure**: `serena_get_symbols_overview` for file organization
-3. **Track references**: `serena_find_referencing_symbols` for impact analysis
-4. **Precise edits**: `serena_replace_symbol_body` for clean modifications
-
-**When to use Serena vs traditional tools:**
-
-- **Use Serena**: Navigation, refactoring, dependency analysis, precise edits
-- **Use Read/Grep**: Reading full files, pattern matching, simple text operations
-- **Fallback**: If Serena unavailable, traditional tools work fine
-
-**Example workflow:**
-
-```text
-# Instead of:
-Read: src/Services/OrderService.cs
-Grep: "public void ProcessOrder"
-
-# Use:
-serena_find_symbol: "OrderService/ProcessOrder"
-serena_get_symbols_overview: "src/Services/OrderService.cs"
-```
+- [Roslyn Analyzer Configuration](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/configuration-options)
+- [Performance Impact Analysis](https://www.meziantou.net/understanding-the-impact-of-roslyn-analyzers-on-the-build-time.htm)
+- [Analyzer-to-Skill Mappings](../analyzer-to-skill.json)
+- [Git Hooks Setup](../../.githooks/setup.sh)
